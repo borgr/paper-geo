@@ -260,17 +260,19 @@ def _changes(cfg):
 
 def phase_diff(cfg) -> None:
     n = 0
-    for r, ch in _changes(cfg):
+    for r, cur, ch in _changes(cfg):
         n += 1
-        print(f"\n{r['repo']}  (★{r['stars']})")
+        print(f"\n{r['repo']}  (★{cur['stargazers_count']}, live)")
         for k, v in ch.items():
             if k == "topics":
-                cur = sorted(r["current_topics"] or [])
-                print(f"  topics:      {cur or '[]'}  ->  {sorted(v)}")
+                print(f"  topics:      {sorted(cur['topics'] or []) or '[]'}  ->  {sorted(v)}")
             elif k == "CITATION.cff":
-                print(f"  CITATION.cff: + cites '{r['paper'][:56]}'")
+                print(f"  CITATION.cff: + cites paper '{r['paper_slug']}'")
+            elif k == "description":
+                print(f"  description: {cur['description']!r}")
+                print(f"            -> {v!r}")
             else:
-                print(f"  {k}: {r['current_' + k]!r}  ->  {v!r}")
+                print(f"  {k}: {cur.get(k)!r}  ->  {v!r}")
     print(f"\n{n} repos would change. Nothing has been written.")
 
 
@@ -284,8 +286,12 @@ def phase_apply(cfg, yes: bool) -> None:
         name = r["repo"]
         try:
             if "topics" in ch:
-                gh("api", "-X", "PUT", f"repos/{name}/topics",
-                   "-f", "names[]=" + ",".join(ch["topics"]))
+                # One -f per topic. A comma-joined value is rejected 422 by the
+                # topics endpoint, which validates each name individually.
+                args = []
+                for t in ch["topics"]:
+                    args += ["-f", f"names[]={t}"]
+                gh("api", "-X", "PUT", f"repos/{name}/topics", *args)
             patch = {k: ch[k] for k in ("description", "homepage") if k in ch}
             for k, v in patch.items():
                 gh("api", "-X", "PATCH", f"repos/{name}", "-f", f"{k}={v}")
