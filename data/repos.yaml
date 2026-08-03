@@ -1,0 +1,919 @@
+generated_by: scripts/sweep_github.py propose
+note: 'Edit freely -- re-running propose preserves description, topics, homepage, kind, skip and reviewed.
+  Set `reviewed: true` to freeze a repo against future model proposals. Then run: diff, apply.'
+repos:
+- repo: borgr/paper-sharpener
+  stars: 10
+  current_description: Code and skills for academic writing
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: 'Agentic Claude Code skills for academic writing: review simulation, revision, and prose
+    improvement.'
+  topics:
+  - academic-writing
+  - agentic-skills
+  - claude-code
+  - large-language-models
+  - peer-review
+  - research-tools
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: 'Agentic Claude Code skills for academic writing: review simulation, revision, and prose
+      improvement.'
+    topics:
+    - academic-writing
+    - claude-code
+    - agentic-skills
+    - research-tools
+    - peer-review
+    - large-language-models
+    generic_gloss: agentic skills that help you write and revise academic papers
+    kind: tool
+    confidence: high
+  kind: tool
+  generic_gloss: agentic skills that help you write and revise academic papers
+- repo: borgr/GEC_UD_divergences
+  stars: 9
+  current_description: null
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: Extracts syntactic divergences between grammatical-error-correction edits and dependency
+    parses, producing m2 files and confusion matrices.
+  topics:
+  - dependency-parsing
+  - evaluation
+  - grammatical-error-correction
+  - nlp
+  - universal-dependencies
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Extracts syntactic divergences between grammatical-error-correction edits and dependency
+      parses, producing m2 files and confusion matrices.
+    topics:
+    - grammatical-error-correction
+    - universal-dependencies
+    - dependency-parsing
+    - evaluation
+    - nlp
+    generic_gloss: syntactic divergences between error-correction edits and dependency parses
+    kind: paper-code
+    confidence: medium
+  kind: paper-code
+  generic_gloss: syntactic divergences between error-correction edits and dependency parses
+- repo: borgr/USim
+  stars: 8
+  current_description: monolingual sentence similarity measure
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: Reference-less semantic similarity metric for grammatical error correction, built on UCCA
+    semantic parsing (NAACL 2018).
+  topics:
+  - evaluation-metrics
+  - grammatical-error-correction
+  - nlp
+  - semantic-parsing
+  - sentence-similarity
+  - ucca
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Reference-less semantic similarity metric for grammatical error correction, built on
+      UCCA semantic parsing (NAACL 2018).
+    topics:
+    - grammatical-error-correction
+    - sentence-similarity
+    - semantic-parsing
+    - evaluation-metrics
+    - ucca
+    - nlp
+    generic_gloss: reference-less semantic similarity metric for grammatical error correction
+    kind: paper-code
+    confidence: high
+  kind: paper-code
+  generic_gloss: reference-less semantic similarity metric for grammatical error correction
+- repo: borgr/DORA
+  stars: 7
+  current_description: 'Supplementary code for "DORA The Explorer: Directed Outreaching Reinforcement
+    Action-Selection"'
+  current_topics: []
+  current_homepage: null
+  paper: '{DORA} The Explorer: Directed Outreaching Reinforcement Action-Selection'
+  paper_slug: dora-the-explorer-directed-outreaching-reinforcement-action
+  description: Directed exploration in reinforcement learning via E-values; supplementary code for the
+    ICLR 2018 DORA paper.
+  topics:
+  - atari
+  - deep-reinforcement-learning
+  - exploration
+  - reinforcement-learning
+  homepage: https://borgr.github.io/papers/dora-the-explorer-directed-outreaching-reinforcement-action/
+  write_citation_cff: true
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Directed exploration in reinforcement learning via E-values; supplementary code for the
+      ICLR 2018 DORA paper.
+    topics:
+    - reinforcement-learning
+    - exploration
+    - deep-reinforcement-learning
+    - atari
+    - nlp-free
+    generic_gloss: directed exploration in reinforcement learning using E-values
+    kind: paper-code
+    confidence: high
+  kind: paper-code
+  generic_gloss: directed exploration in reinforcement learning using E-values
+- repo: borgr/ordert
+  stars: 7
+  current_description: Code for The Grammar-Learning Trajectories of Neural Language Models
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: Code for studying the order in which neural language models acquire grammatical phenomena
+    during pretraining.
+  topics:
+  - computational-linguistics
+  - grammar
+  - language-models
+  - pretraining
+  - probing
+  - transformers
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Code for studying the order in which neural language models acquire grammatical phenomena
+      during pretraining.
+    topics:
+    - language-models
+    - pretraining
+    - transformers
+    - grammar
+    - probing
+    - computational-linguistics
+    generic_gloss: the order in which language models learn grammatical phenomena
+    kind: paper-code
+    confidence: high
+  kind: paper-code
+  generic_gloss: the order in which language models learn grammatical phenomena
+- repo: borgr/tutEval
+  stars: 6
+  current_description: Tutorial on LLM Evaluation in LREC
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: 'Materials for the LREC-COLING 2024 tutorial on evaluating large language models: benchmarks,
+    prompts, metrics, and manual evaluation.'
+  topics:
+  - benchmarks
+  - evaluation-metrics
+  - large-language-models
+  - llm-evaluation
+  - nlp
+  - tutorial
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: 'Materials for the LREC-COLING 2024 tutorial on evaluating large language models: benchmarks,
+      prompts, metrics, and manual evaluation.'
+    topics:
+    - llm-evaluation
+    - benchmarks
+    - evaluation-metrics
+    - large-language-models
+    - tutorial
+    - nlp
+    generic_gloss: tutorial on how to evaluate large language models
+    kind: guide
+    confidence: high
+  kind: guide
+  generic_gloss: tutorial on how to evaluate large language models
+- repo: borgr/EoE
+  stars: 3
+  current_description: Automatic Metric Validation for Grammatical Error Correction
+  current_topics: []
+  current_homepage: https://ktilana.wixsite.com/leshem-choshen
+  paper: null
+  paper_slug: null
+  description: Automatic validation of grammatical-error-correction metrics using MAEGE lattices (ACL
+    2018).
+  topics:
+  - evaluation-metrics
+  - grammatical-error-correction
+  - meta-evaluation
+  - nlp
+  homepage: https://ktilana.wixsite.com/leshem-choshen
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Automatic validation of grammatical-error-correction metrics using MAEGE lattices (ACL
+      2018).
+    topics:
+    - grammatical-error-correction
+    - evaluation-metrics
+    - meta-evaluation
+    - nlp
+    generic_gloss: automatically validating grammatical error correction metrics
+    kind: paper-code
+    confidence: high
+  kind: paper-code
+  generic_gloss: automatically validating grammatical error correction metrics
+- repo: borgr/paper_updated
+  stars: 3
+  current_description: How to get updated with all the new papers? List of ways
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: A curated list of ways to keep up with newly published research papers.
+  topics:
+  - academic-resources
+  - awesome-list
+  - literature-review
+  - research-tools
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: A curated list of ways to keep up with newly published research papers.
+    topics:
+    - research-tools
+    - literature-review
+    - academic-resources
+    - awesome-list
+    generic_gloss: ways to keep up with newly published papers
+    kind: guide
+    confidence: high
+  kind: guide
+  generic_gloss: ways to keep up with newly published papers
+- repo: borgr/gcn_tf
+  stars: 2
+  current_description: syntactic graph convolutional network (syntactic gcn sgcn) with gating for tensorflow
+  current_topics: []
+  current_homepage: https://ktilana.wixsite.com/leshem-choshen
+  paper: null
+  paper_slug: null
+  description: TensorFlow implementation of a labelled, gated syntactic graph convolutional network (SGCN).
+  topics:
+  - graph-convolutional-networks
+  - nlp
+  - semantic-role-labeling
+  - syntax
+  - tensorflow
+  homepage: https://ktilana.wixsite.com/leshem-choshen
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: TensorFlow implementation of a labelled, gated syntactic graph convolutional network
+      (SGCN).
+    topics:
+    - graph-convolutional-networks
+    - tensorflow
+    - semantic-role-labeling
+    - syntax
+    - nlp
+    generic_gloss: syntactic graph convolutional network implementation
+    kind: tool
+    confidence: high
+  kind: tool
+  generic_gloss: syntactic graph convolutional network implementation
+- repo: borgr/assess_learner_language
+  stars: 1
+  current_description: These are pieces of code aimed for assesing the autocorrection of learner language
+    (error correction)
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: Code for evaluating automatic correction of language-learner text, including human-evaluation
+    and metric-comparison tooling.
+  topics:
+  - evaluation
+  - grammatical-error-correction
+  - human-evaluation
+  - learner-corpora
+  - nlp
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Code for evaluating automatic correction of language-learner text, including human-evaluation
+      and metric-comparison tooling.
+    topics:
+    - grammatical-error-correction
+    - evaluation
+    - learner-corpora
+    - human-evaluation
+    - nlp
+    generic_gloss: evaluating automatic correction of language-learner writing
+    kind: paper-code
+    confidence: medium
+  kind: paper-code
+  generic_gloss: evaluating automatic correction of language-learner writing
+- repo: borgr/GEC_BOTHER
+  stars: 1
+  current_description: null
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: Crowdsourced human judgments of how much different grammatical errors bother readers, with
+    per-error-type weights.
+  topics:
+  - crowdsourcing
+  - evaluation-metrics
+  - grammatical-error-correction
+  - human-evaluation
+  - nlp
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Crowdsourced human judgments of how much different grammatical errors bother readers,
+      with per-error-type weights.
+    topics:
+    - grammatical-error-correction
+    - human-evaluation
+    - crowdsourcing
+    - evaluation-metrics
+    - nlp
+    generic_gloss: how much different grammatical errors bother readers
+    kind: paper-code
+    confidence: medium
+  kind: paper-code
+  generic_gloss: how much different grammatical errors bother readers
+- repo: borgr/grant_search
+  stars: 1
+  current_description: null
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: Agentic skill for finding AI research grants and funding calls.
+  topics:
+  - agentic-skills
+  - claude-code
+  - research-funding
+  - research-tools
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Agentic skill for finding AI research grants and funding calls.
+    topics:
+    - research-tools
+    - research-funding
+    - claude-code
+    - agentic-skills
+    generic_gloss: agentic skill for finding AI research grants
+    kind: tool
+    confidence: high
+  kind: tool
+  generic_gloss: agentic skill for finding AI research grants
+- repo: borgr/IBGEC
+  stars: 1
+  current_description: Code and Data release for the papre Inherent Biases in Grammatical Error Correction
+    and Text Simplification
+  current_topics: []
+  current_homepage: https://ktilana.wixsite.com/leshem-choshen
+  paper: null
+  paper_slug: null
+  description: Code and data for inherent biases in grammatical error correction and text simplification,
+    including 2,500 human-written correction and simplification tasks.
+  topics:
+  - bias
+  - dataset
+  - grammatical-error-correction
+  - human-annotation
+  - nlp
+  - text-simplification
+  homepage: https://ktilana.wixsite.com/leshem-choshen
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Code and data for inherent biases in grammatical error correction and text simplification,
+      including 2,500 human-written correction and simplification tasks.
+    topics:
+    - grammatical-error-correction
+    - text-simplification
+    - dataset
+    - human-annotation
+    - bias
+    - nlp
+    generic_gloss: inherent biases in grammatical error correction and text simplification
+    kind: paper-code
+    confidence: high
+  kind: paper-code
+  generic_gloss: inherent biases in grammatical error correction and text simplification
+- repo: borgr/l---l
+  stars: 1
+  current_description: our project
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: 'Early exploratory project: Ruby scripts over brain-region XML data.'
+  topics: []
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: 'Early exploratory project: Ruby scripts over brain-region XML data.'
+    topics: []
+    generic_gloss: ''
+    kind: other
+    confidence: low
+  kind: other
+- repo: borgr/PoissonBinomial
+  stars: 1
+  current_description: A module with functions to compute Poisson Binomial distribution pmf cmf etc.
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: Python module computing Poisson binomial PMF, CDF, mean and standard deviation via recursive
+    and FFT methods.
+  topics:
+  - numerical-methods
+  - probability
+  - python
+  - scipy
+  - statistics
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Python module computing Poisson binomial PMF, CDF, mean and standard deviation via recursive
+      and FFT methods.
+    topics:
+    - statistics
+    - probability
+    - numerical-methods
+    - python
+    - scipy
+    generic_gloss: ''
+    kind: tool
+    confidence: high
+  kind: tool
+- repo: borgr/arXiv_stuck
+  stars: 0
+  current_description: Wondering why your paper is stuck on arXiv? A moderator's thoughts
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: An arXiv moderator's explanation of why submissions get held, stuck, or rejected.
+  topics:
+  - academic-publishing
+  - arxiv
+  - preprints
+  - research-tools
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: An arXiv moderator's explanation of why submissions get held, stuck, or rejected.
+    topics:
+    - arxiv
+    - academic-publishing
+    - preprints
+    - research-tools
+    generic_gloss: why arXiv submissions get held, stuck, or rejected
+    kind: guide
+    confidence: high
+  kind: guide
+  generic_gloss: why arXiv submissions get held, stuck, or rejected
+- repo: borgr/ATProto-links-bot
+  stars: 0
+  current_description: Bot that feeds the links from CoLab discord to be online
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: Relays paper links shared in the CoLab Discord to Bluesky and Semble, via a scheduled GitHub
+    Action.
+  topics:
+  - atproto
+  - automation
+  - bluesky
+  - discord-bot
+  - python
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Relays paper links shared in the CoLab Discord to Bluesky and Semble, via a scheduled
+      GitHub Action.
+    topics:
+    - bluesky
+    - atproto
+    - discord-bot
+    - automation
+    - python
+    generic_gloss: bot that reposts Discord paper links to Bluesky
+    kind: tool
+    confidence: high
+  kind: tool
+  generic_gloss: bot that reposts Discord paper links to Bluesky
+- repo: borgr/autofly
+  stars: 0
+  current_description: a code for an autonomous copter navigation with computer vision
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: Autonomous multicopter navigation using computer vision, with onboard and simulator code.
+  topics:
+  - autonomous-navigation
+  - computer-vision
+  - drones
+  - robotics
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Autonomous multicopter navigation using computer vision, with onboard and simulator code.
+    topics:
+    - computer-vision
+    - robotics
+    - drones
+    - autonomous-navigation
+    generic_gloss: ''
+    kind: other
+    confidence: medium
+  kind: other
+- repo: borgr/auto_challenge_sets
+  stars: 0
+  current_description: Automatically Extracting Challenge Sets for Non-local Phenomena in Neural Machine
+    Translation git repo
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: Automatically extracts challenge sets for non-local phenomena to evaluate neural machine
+    translation (CoNLL 2019).
+  topics:
+  - challenge-sets
+  - evaluation
+  - machine-translation
+  - neural-machine-translation
+  - nlp
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Automatically extracts challenge sets for non-local phenomena to evaluate neural machine
+      translation (CoNLL 2019).
+    topics:
+    - machine-translation
+    - evaluation
+    - challenge-sets
+    - neural-machine-translation
+    - nlp
+    generic_gloss: automatically extracted challenge sets for machine translation evaluation
+    kind: paper-code
+    confidence: high
+  kind: paper-code
+  generic_gloss: automatically extracted challenge sets for machine translation evaluation
+- repo: borgr/borgr.github.io
+  stars: 0
+  current_description: Leshem Choshen Bio
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: Personal academic homepage.
+  topics:
+  - personal-website
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Personal academic homepage.
+    topics:
+    - personal-website
+    generic_gloss: ''
+    kind: website
+    confidence: high
+  kind: website
+- repo: borgr/C-course
+  stars: 0
+  current_description: C-Course materials
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: Teaching materials for an introductory C programming course.
+  topics:
+  - c
+  - course-materials
+  - teaching
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Teaching materials for an introductory C programming course.
+    topics:
+    - teaching
+    - c
+    - course-materials
+    generic_gloss: ''
+    kind: teaching
+    confidence: high
+  kind: teaching
+- repo: borgr/chara
+  stars: 0
+  current_description: Gis based buddy finding
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: GIS-based buddy-finding prototype. No code or documentation published.
+  topics: []
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: GIS-based buddy-finding prototype. No code or documentation published.
+    topics: []
+    generic_gloss: ''
+    kind: other
+    confidence: low
+  kind: other
+- repo: borgr/chera
+  stars: 0
+  current_description: null
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: null
+  topics: []
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: ''
+    topics: []
+    generic_gloss: ''
+    kind: other
+    confidence: low
+  kind: other
+- repo: borgr/facultips
+  stars: 0
+  current_description: Tips for applying to be a professor
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: 'A guide to applying for tenure-track faculty positions: research and teaching statements,
+    recommendations, and job talks.'
+  topics:
+  - academia
+  - career-advice
+  - faculty-jobs
+  - research-tools
+  - tenure-track
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: 'A guide to applying for tenure-track faculty positions: research and teaching statements,
+      recommendations, and job talks.'
+    topics:
+    - academia
+    - career-advice
+    - faculty-jobs
+    - tenure-track
+    - research-tools
+    generic_gloss: how to apply for a professor or tenure-track faculty job
+    kind: guide
+    confidence: high
+  kind: guide
+  generic_gloss: how to apply for a professor or tenure-track faculty job
+- repo: borgr/intro2cs
+  stars: 0
+  current_description: null
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: Exercise solutions from an introduction-to-computer-science course.
+  topics:
+  - computer-science
+  - course-materials
+  - python
+  - teaching
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Exercise solutions from an introduction-to-computer-science course.
+    topics:
+    - teaching
+    - computer-science
+    - course-materials
+    - python
+    generic_gloss: ''
+    kind: teaching
+    confidence: medium
+  kind: teaching
+- repo: borgr/languageClustering
+  stars: 0
+  current_description: null
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: Compares phonology-based automatic methods for clustering and classifying language families.
+  topics:
+  - clustering
+  - computational-linguistics
+  - historical-linguistics
+  - language-families
+  - phonology
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Compares phonology-based automatic methods for clustering and classifying language families.
+    topics:
+    - computational-linguistics
+    - phonology
+    - clustering
+    - language-families
+    - historical-linguistics
+    generic_gloss: clustering language families from phonological features
+    kind: paper-code
+    confidence: medium
+  kind: paper-code
+  generic_gloss: clustering language families from phonological features
+- repo: borgr/post
+  stars: 0
+  current_description: Postdoc tips a post doctoral guide to how to look for a good post
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: A guide to finding and applying for a good postdoc position.
+  topics:
+  - academia
+  - career-advice
+  - postdoc
+  - research-tools
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: A guide to finding and applying for a good postdoc position.
+    topics:
+    - academia
+    - career-advice
+    - postdoc
+    - research-tools
+    generic_gloss: how to find and apply for a postdoc
+    kind: guide
+    confidence: high
+  kind: guide
+  generic_gloss: how to find and apply for a postdoc
+- repo: borgr/publications
+  stars: 0
+  current_description: null
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: Pipeline that maintains a publications CV on Overleaf from Google Scholar, resolving arXiv
+    preprints to their published BibTeX.
+  topics:
+  - academic-writing
+  - automation
+  - bibliography
+  - bibtex
+  - google-scholar
+  - research-tools
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Pipeline that maintains a publications CV on Overleaf from Google Scholar, resolving
+      arXiv preprints to their published BibTeX.
+    topics:
+    - bibliography
+    - bibtex
+    - google-scholar
+    - academic-writing
+    - automation
+    - research-tools
+    generic_gloss: pipeline that builds a publications CV from Google Scholar and BibTeX
+    kind: tool
+    confidence: high
+  kind: tool
+  generic_gloss: pipeline that builds a publications CV from Google Scholar and BibTeX
+- repo: borgr/social-follow
+  stars: 0
+  current_description: Follow researcher-collaborators across Bluesky, Twitter/X, and LinkedIn from a
+    CSV — Bluesky auto-follow, others as reviewed manual lists. Legitimate, no scraping.
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: Follows research collaborators across Bluesky, Twitter/X and LinkedIn from a CSV, with
+    a human review step and no scraping.
+  topics:
+  - academia
+  - atproto
+  - automation
+  - bluesky
+  - research-tools
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Follows research collaborators across Bluesky, Twitter/X and LinkedIn from a CSV, with
+      a human review step and no scraping.
+    topics:
+    - bluesky
+    - atproto
+    - academia
+    - automation
+    - research-tools
+    generic_gloss: find and follow your research collaborators across social networks
+    kind: tool
+    confidence: high
+  kind: tool
+  generic_gloss: find and follow your research collaborators across social networks
+- repo: borgr/wit3scripts
+  stars: 0
+  current_description: scripts for processing wit3
+  current_topics: []
+  current_homepage: null
+  paper: null
+  paper_slug: null
+  description: Wrapper scripts for preprocessing the WIT3 multilingual TED-talk translation corpus with
+    configurable languages and one-line execution.
+  topics:
+  - corpus-processing
+  - machine-translation
+  - nlp
+  - parallel-corpus
+  homepage: null
+  write_citation_cff: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Wrapper scripts for preprocessing the WIT3 multilingual TED-talk translation corpus with
+      configurable languages and one-line execution.
+    topics:
+    - machine-translation
+    - corpus-processing
+    - parallel-corpus
+    - nlp
+    generic_gloss: preprocessing scripts for the WIT3 TED-talk translation corpus
+    kind: tool
+    confidence: high
+  kind: tool
+  generic_gloss: preprocessing scripts for the WIT3 TED-talk translation corpus

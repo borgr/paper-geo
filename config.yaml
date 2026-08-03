@@ -1,0 +1,79 @@
+# paper-geo configuration.
+#
+# Everything researcher-specific lives here. To reuse this tool, fork the repo,
+# replace this file and data/identity.yaml, and empty data/sidecars/.
+
+identity:
+  name: Leshem Choshen
+  # Every form your name appears in. Used to match authorship and to warn about
+  # records that use a variant you did not intend.
+  name_variants:
+    - Leshem Choshen
+    - Choshen, Leshem
+    - L. Choshen
+  orcid: 0000-0002-0085-6496
+  # The one URL that goes in ORCID, Semantic Scholar, arXiv, LinkedIn and every
+  # JSON-LD sameAs. Pick one and never change it.
+  canonical_url: https://borgr.github.io
+  email: leshem.choshen@weizmann.ac.il
+  job_title: Postdoctoral Researcher
+  affiliations:
+    - MIT-IBM Watson AI Lab
+    - IBM Research
+    - Weizmann Institute of Science   # incoming PI
+
+ids:
+  # Two records today: the split that halves author-level retrieval. Keep both
+  # listed until the merge lands, so the collector sees the whole corpus.
+  semantic_scholar: ["41019330", "2283849613"]
+  semantic_scholar_primary: "41019330"
+  openalex: ["A5040286212"]
+  openalex_duplicates: ["A5139793343", "A5126704705", "A5123980057", "A5134416019"]
+  google_scholar: 8b8IhUYAAAAJ
+  dblp: Leshem Choshen
+  github: borgr
+  huggingface: borgr          # note: the `leshem` HF account is a stub, not this one
+  wikidata: null                   # to be created
+  linkedin: leshemchoshen
+
+sources:
+  # The bibliography stays authoritative in its own repo; we only read it.
+  bibtex_url: https://raw.githubusercontent.com/borgr/publications/master/enhanced.bib
+  acl_anthology_person: https://aclanthology.org/people/leshem-choshen/
+  # Optional: local checkout of borgr/publications. When set, `update.py --refresh-bib`
+  # runs that repo's own update.py first (refreshing Scholar counts and re-resolving
+  # arXiv -> published BibTeX) and reads the bib from disk instead of over HTTP.
+  # One source of truth per fact: publications owns the bibliography, we only consume it.
+  publications_path: null
+
+llm:
+  # Used by scripts/propose_topics.py for repo topics/descriptions and sidecar drafts.
+  # Two modes:
+  #   skill (default) - emits build/llm_tasks.json for an agent session to fill in.
+  #                     No API key needed. Use interactively or via the paper-geo skill.
+  #   api             - calls the Anthropic API directly. Needed for unattended reruns
+  #                     (cron); requires ANTHROPIC_API_KEY or an `ant auth login` profile.
+  mode: skill
+  model: claude-opus-5
+  effort: medium
+
+site:
+  repo: borgr/borgr.github.io
+  base_url: https://borgr.github.io
+  papers_path: /papers
+  # Written into every generated page; ar5iv covers pre-2024 arXiv papers that
+  # have no LaTeXML HTML rendering.
+  ar5iv_fallback: true
+
+github_sweep:
+  # Forks are excluded: they are not yours to describe, and topics on a fork are
+  # noise rather than signal.
+  include_forks: false
+  # Applied to every repo the sweep touches, on top of per-repo topics.
+  base_topics: []
+  # Repos to leave completely alone.
+  exclude: []
+
+visibility:
+  # Engines to probe in measure/visibility.py.
+  engines: [chatgpt, claude, perplexity, google-ai-mode]

@@ -1,0 +1,43 @@
+# Human decisions that must survive every rerun.
+#
+# The collector re-derives everything from live sources each time it runs, so any
+# judgment call made by hand has to live here or it gets silently undone on the
+# next run. This is the only hand-edited file the collector reads.
+
+# Titles the collector flagged as `similar_but_distinct` that are in fact ONE
+# paper. Each group is merged into a single record. The first title listed wins
+# for display; the rest contribute their ids, abstracts, and citation counts.
+#
+# The collector deliberately refuses to auto-merge these: the guard that keeps
+# "BabyLM Turns 3" and "BabyLM Turns 4" apart also blocks LaTeX-mangled variants
+# and subtitle-prefix pairs. Flagging and deciding here is the intended workflow.
+force_merge:
+  - - "Q\\({}^{\\mbox{2}}\\): Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question Generation and Question Answering"
+    - "{ extdollar}Q2{ extdollar}: Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question Generation and Question Answering"
+  - - "Genie: Achieving Human Parity in Content-Grounded Datasets Generation"
+    - "Achieving Human Parity in Content-Grounded Datasets Generation"
+  - - "The Mighty ToRR: A Benchmark for Table Reasoning and Robustness"
+    - "The Mighty ToRR: A Benchmark for Table Reasoning and Robustness in LLMs"
+
+# Title pairs that look near-identical but are genuinely different papers.
+# Listing them here suppresses the `similar_but_distinct` flag so the review
+# queue stays short across reruns.
+force_distinct:
+  - - "Findings of the {B}aby{LM} Challenge: Sample-Efficient Pretraining on Developmentally Plausible Corpora"
+    - "Findings of the Second {B}aby{LM} Challenge: Sample-Efficient Pretraining on Developmentally Plausible Corpora"
+  - - "Call for Papers - The BabyLM Challenge: Sample-efficient pretraining on a developmentally plausible corpus"
+    - "[Call for Papers] The 2nd BabyLM Challenge: Sample-efficient pretraining on a developmentally plausible corpus"
+
+# Records to drop entirely: metadata damage rather than real papers.
+# "Journal of Memory and Language" is a venue name that a source extracted as a
+# paper title -- the exact failure mode Google Scholar's own docs warn about.
+# Fix it upstream too (Semantic Scholar correction), then it stops reappearing.
+drop:
+  - "Journal of Memory and Language"
+
+# Per-paper field corrections, keyed by slug. Applied last, over everything the
+# collector derived. Use sparingly -- prefer fixing the upstream source so the
+# correction propagates to Scholar, S2, and OpenAlex rather than just to us.
+fields: {}
+  # ties-merging-resolving-interference-when-merging-models:
+  #   venue: "NeurIPS 2023"

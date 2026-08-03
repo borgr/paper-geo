@@ -1,0 +1,3 @@
+build/
+*.err
+__pycache__/
