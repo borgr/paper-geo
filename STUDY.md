@@ -225,7 +225,9 @@ lever on that, and it's a lever no index or publisher can pull for you.
 ## Part 2 — Audit of the actual current state
 
 Measured, not assumed. Corpus assembled from both Semantic Scholar author
-records; 122 unique papers; run `audit.py` in this directory to reproduce.
+records; 122 unique papers at the time of this snapshot. Reproduce with
+`python scripts/collect.py`, which supersedes it (135 papers after duplicate
+merging); `scripts/audit_snapshot.py` is the original standalone version.
 
 ```
 papers                             122
