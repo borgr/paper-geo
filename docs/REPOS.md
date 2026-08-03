@@ -107,6 +107,9 @@ repo**.
   legitimately have no topics.
 - Forks get nothing. They are not yours to describe, and topics on a fork are
   noise. 60 of the 90 repos are forks and are excluded.
+- Validated on every run: `schema/repos.schema.json` caps the list at 8, requires
+  the lowercase-hyphen format, and rejects duplicates. It caught an over-long
+  description on its first run.
 
 ## Description rules
 
@@ -128,9 +131,15 @@ python update.py --apply               # write it
 ```
 
 `reviewed: true` on a repo freezes it permanently against future proposals. That
-flag is the whole idempotency story for this track: re-running `propose` refreshes
-stars, current topics, and paper links, and carries forward `description`,
-`topics`, `homepage`, `kind`, `generic_gloss`, `skip`, and `reviewed`.
+flag is the whole idempotency story for this track: re-running `propose` adds newly
+created repos and refreshes paper links, and carries forward every field you or the
+model set.
+
+`repos.yaml` holds **desired state only** — no stars, no `current_*` mirrors of
+GitHub. Those duplicated data that already lives on GitHub, churned the file on
+every run, and went stale between runs. `diff` fetches live state at the moment it
+runs, so it always compares intent against reality rather than against a snapshot.
+Schema: [`schema/repos.schema.json`](../schema/repos.schema.json).
 
 ## Priority order
 
