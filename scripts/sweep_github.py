@@ -168,10 +168,15 @@ _OWNED = ("description", "topics", "homepage", "kind", "generic_gloss",
 
 
 def phase_propose(cfg) -> None:
-    """Refresh live GitHub state; preserve every human/model-owned field.
+    """Refresh the repo LIST; store intent only.
+
+    Observed GitHub state (stars, current description, current topics) is
+    deliberately NOT stored. It already lives on GitHub, it changes constantly --
+    so storing it makes every run produce a noisy diff -- and a stored copy goes
+    stale, which means `diff` would compare against a snapshot instead of reality.
+    `diff` fetches live state at the moment it runs.
 
     Re-runnable: new repos get a fresh entry, existing entries keep their edits.
-    This is why the sweep can be wired into a scheduled update without risk.
     """
     papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers", [])
     out = os.path.join(DATA, "repos.yaml")
@@ -179,67 +184,66 @@ def phase_propose(cfg) -> None:
     repos = list_repos(cfg)
     linked = link_papers(repos, papers)
     site = cfg["site"]["base_url"]
-    proposal, added = [], []
+    proposal, added, gone = [], [], []
     for r in sorted(repos, key=lambda r: -r["stargazers_count"]):
-        was = prior.get(r["full_name"], {})
-        p = linked.get(r["full_name"])
-        entry = {
-            # --- refreshed from GitHub every run ---
-            "repo": r["full_name"],
-            "stars": r["stargazers_count"],
-            "current_description": r["description"],
-            "current_topics": r["topics"],
-            "current_homepage": r["homepage"] or None,
-            "paper": p["title"] if p else was.get("paper"),
-            "paper_slug": p["slug"] if p else was.get("paper_slug"),
-        }
-        # --- owned fields: carried forward, defaulted only when absent ---
-        for f in _OWNED:
-            if f in was:
-                entry[f] = was[f]
+        name = r["full_name"]
+        entry = dict(prior.get(name) or {})
+        entry["repo"] = name
+        p = linked.get(name)
+        if p:
+            entry["paper_slug"] = p["slug"]
         entry.setdefault("description", r["description"])
         entry.setdefault("topics", [])
         entry.setdefault("homepage", r["homepage"] or
                          (f"{site}/papers/{p['slug']}/" if p else None))
         entry.setdefault("write_citation_cff", bool(p))
+        entry.setdefault("write_links_block", bool(p))
         entry.setdefault("skip", False)
         entry.setdefault("reviewed", False)
-        if not was:
-            added.append(r["full_name"])
+        # Drop observed-state fields left over from older runs of this script.
+        for stale in ("stars", "current_description", "current_topics",
+                      "current_homepage", "paper"):
+            entry.pop(stale, None)
+        if name not in prior:
+            added.append(name)
         proposal.append(entry)
+    gone = [n for n in prior if n not in {r["repo"] for r in proposal}]
 
     write_yaml(out, {
         "generated_by": "scripts/sweep_github.py propose",
-        "note": ("Edit freely -- re-running propose preserves description, topics, "
-                 "homepage, kind, skip and reviewed. Set `reviewed: true` to freeze "
-                 "a repo against future model proposals. Then run: diff, apply."),
+        "note": ("Desired state, not observed state -- live GitHub values are fetched "
+                 "at diff time. Edit freely; re-running propose preserves every field "
+                 "here. Set `reviewed: true` to freeze a repo against future model "
+                 "proposals. Schema: schema/repos.schema.json"),
         "repos": proposal,
     })
-    need_desc = [r["repo"] for r in proposal if not r.get("description")]
-    no_topics = [r["repo"] for r in proposal if not r.get("topics")]
     print(f"wrote {out}: {len(proposal)} repos ({len(added)} new)")
     if added:
-        print(f"  new since last run:  {', '.join(added)}")
-    print(f"  linked to a paper:   {sum(1 for r in proposal if r.get('paper'))}")
-    print(f"  reviewed (frozen):   {sum(1 for r in proposal if r.get('reviewed'))}")
-    print(f"  still need topics:   {len(no_topics)}")
-    print(f"  still need a description: {len(need_desc)}")
-    if no_topics or need_desc:
+        print(f"  new since last run: {', '.join(added)}")
+    if gone:
+        print(f"  no longer present (kept in file): {', '.join(gone)}")
+    print(f"  reviewed (frozen):  {sum(1 for r in proposal if r.get('reviewed'))}")
+    need = [r["repo"] for r in proposal if not r.get("topics") or not r.get("description")]
+    print(f"  need topics or a description: {len(need)}")
+    if need:
         print("\nnext: python scripts/propose_topics.py")
 
 
 def _changes(cfg):
+    """Yield (entry, live, changes) by comparing desired state to LIVE GitHub state."""
     prop = (read_yaml(os.path.join(DATA, "repos.yaml")) or {}).get("repos", [])
+    live = {r["full_name"]: r for r in list_repos(cfg)}
     for r in prop:
-        if r.get("skip"):
+        cur = live.get(r["repo"])
+        if r.get("skip") or cur is None:
             continue
         ch = {}
-        if r.get("topics") and sorted(r["topics"]) != sorted(r["current_topics"] or []):
+        if r.get("topics") and sorted(r["topics"]) != sorted(cur["topics"] or []):
             ch["topics"] = r["topics"]
-        if r.get("description") and r["description"] != r["current_description"]:
+        if r.get("description") and r["description"] != cur["description"]:
             ch["description"] = r["description"]
         home = r.get("homepage")
-        if home and home != r["current_homepage"]:
+        if home and home != (cur["homepage"] or None):
             site = cfg["site"]["base_url"] + cfg["site"]["papers_path"]
             page = os.path.join(BUILD, "site", "papers",
                                 (r.get("paper_slug") or ""), "index.html")
@@ -251,7 +255,7 @@ def _changes(cfg):
         if r.get("write_citation_cff") and r.get("paper_slug"):
             ch["CITATION.cff"] = r["paper_slug"]
         if ch:
-            yield r, ch
+            yield r, cur, ch
 
 
 def phase_diff(cfg) -> None:
@@ -276,7 +280,7 @@ def phase_apply(cfg, yes: bool) -> None:
     papers = {p["slug"]: p for p in
               (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers", [])}
     repos = {r["full_name"]: r for r in list_repos(cfg)}
-    for r, ch in _changes(cfg):
+    for r, cur, ch in _changes(cfg):
         name = r["repo"]
         try:
             if "topics" in ch:

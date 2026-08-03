@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/borgr/paper-geo/schema/repos.schema.json",
+  "title": "data/repos.yaml",
+  "description": "Desired state for each repository. This file holds INTENT, not observed GitHub state: no stars, no 'current_*' mirrors. Live state is fetched at diff time, so the file never churns and a diff is always against reality rather than a stale copy.",
+  "type": "object",
+  "required": ["repos"],
+  "additionalProperties": false,
+  "properties": {
+    "generated_by": {"type": "string"},
+    "note": {"type": "string"},
+    "repos": {"type": "array", "items": {"$ref": "#/$defs/repo"}}
+  },
+  "$defs": {
+    "repo": {
+      "type": "object",
+      "required": ["repo"],
+      "additionalProperties": false,
+      "properties": {
+        "repo": {
+          "type": "string",
+          "pattern": "^[^/]+/[^/]+$",
+          "description": "owner/name. The only identifying field."
+        },
+        "description": {
+          "type": ["string", "null"],
+          "maxLength": 160,
+          "description": "One line: what the thing IS and what it is FOR. No marketing. Lead with the generic phrasing, not the coined name."
+        },
+        "topics": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,49}$"},
+          "description": "3-8 GitHub topics, or empty. Omit rather than guess: a wrong topic misleads retrieval. Padding is keyword stuffing."
+        },
+        "homepage": {
+          "type": ["string", "null"],
+          "format": "uri",
+          "description": "Published site for this repo, or its paper page. Writes are deferred while the target does not exist yet."
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["paper-code", "guide", "tool", "dataset", "website", "teaching", "other"],
+          "description": "Decides the treatment. See docs/REPOS.md -- guide and paper-code get different READMEs, and only paper-code gets CITATION.cff."
+        },
+        "generic_gloss": {
+          "type": "string",
+          "description": "For a coined name, the plain phrase someone would actually search for. Empty when the name is already descriptive."
+        },
+        "paper_slug": {
+          "type": ["string", "null"],
+          "description": "Slug in data/papers.yaml, when this repo backs a paper."
+        },
+        "write_citation_cff": {
+          "type": "boolean",
+          "description": "Generate CITATION.cff from the paper's verbatim BibTeX. Only meaningful with a paper_slug."
+        },
+        "write_links_block": {
+          "type": "boolean",
+          "description": "Maintain a generated links block in the README, between paper-geo markers, carrying the paper's full link set."
+        },
+        "skip": {
+          "type": "boolean",
+          "description": "Exclude from the sweep entirely."
+        },
+        "reviewed": {
+          "type": "boolean",
+          "description": "A human has checked this entry. Freezes it permanently against future model proposals."
+        },
+        "notes": {"type": "string"},
+        "llm_proposal": {
+          "$ref": "#/$defs/proposal",
+          "description": "Raw model output, kept for audit. Promoted into the fields above only when reviewed is false."
+        },
+        "_deferred": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Machine-written: changes withheld this run, with the reason."
+        }
+      }
+    },
+    "proposal": {
+      "type": "object",
+      "required": ["description", "topics", "generic_gloss", "kind", "confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "description": {"type": "string"},
+        "topics": {"type": "array", "items": {"type": "string"}},
+        "generic_gloss": {"type": "string"},
+        "kind": {"type": "string"},
+        "confidence": {"type": "string", "enum": ["high", "medium", "low"]}
+      }
+    }
+  }
+}

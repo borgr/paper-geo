@@ -1,115 +1,134 @@
-# Does any of this work?
+# Can we tell whether this works?
 
-Three different questions, three different instruments. Conflating them is the
-main way GEO work becomes unfalsifiable.
+Three questions. Two are cheaply and reliably measurable. One — the causal one —
+mostly is not, at this scale, and this file says so rather than dressing up an
+underpowered design.
 
-| | Question | Instrument | Trustworthy? |
+| | Question | Instrument | Verdict |
 |---|---|---|---|
-| **A** | Did the work get done? | `update.py` counters | Yes — deterministic |
-| **B** | Is the work retrieved and cited? | prompt-space panel | Yes, with matched controls |
-| **C** | Is the work described *correctly*? | claim-fidelity scoring | Yes — and it's the novel part |
+| **A** | Did the work get done, and is it still done? | counters + validator | **Build it.** Deterministic, free, runs every time |
+| **C** | Is the work described *correctly* right now? | claim-fidelity scoring | **Build it.** Diagnostic, not causal — produces a worklist |
+| **B** | Did our changes *cause* more citations? | a controlled comparison | **Probably don't.** One design survives scrutiny; even it is marginal |
 
 **A is not evidence for B.** "103 papers now have a journal-ref" is a completed
-task, not an outcome. Most published GEO case studies stop at A and present it as
-B, which is why the field's evidence base is so thin.
+task. Most published GEO case studies stop at A and present it as B.
 
 ---
 
-## A. Infrastructure counters (already running)
+## Why B is hard here — the arithmetic
 
-Every `update.py` run prints them and `WORKLIST.md` records what's left. Track the
-series over time; a regression means something upstream broke.
+The earlier version of this file proposed randomising at the paper level:
+sidecar half the corpus, hold half back, compare. That design does not survive
+a power calculation.
 
-Diff two runs to see movement:
+Suppose the base rate of "your paper is cited in the answer" is 15%, and the
+treatment lifts it to 25% — a large effect, +67% relative. With 65 papers per arm:
 
-```bash
-git -C . log --oneline -- data/papers.yaml    # each run is a commit
-git diff HEAD~1 HEAD -- data/papers.yaml
+```
+pooled p = 0.20,  SE = sqrt(2 · 0.2 · 0.8 / 65) = 0.070
+z = 0.10 / 0.070 = 1.43        ->  power ≈ 30%
+n needed for 80% power         ≈  250 papers per arm
 ```
 
-Cost: free. Interpretation: unambiguous. Value as evidence of impact: zero.
+So: **underpowered by about 4×, for an effect larger than anyone should expect.**
 
----
+The "1,000 triples per round" framing in the earlier draft was misleading, and
+worth correcting explicitly. The unit looks like (paper × question × engine), but
+whether a paper gets cited is overwhelmingly a *paper-level* property, so the
+intra-cluster correlation is high. With 16 observations per paper and ICC ≈ 0.5,
+the variance inflation is `1 + 15(0.5) = 8.5`, and the effective sample size
+collapses back to roughly the number of papers. Counting triples does not buy
+power when the outcome is a property of the cluster.
 
-## B. The prompt-space panel — a real experiment is available here
+The other three objections are also correct, and two of them are fatal:
 
-The design that makes this worth doing: **you have 135 papers, so you have an N.**
-Almost nobody attempting GEO does, which is why almost nobody has run a controlled
-test. This is the part worth writing up.
-
-### Design
-
-**Unit of analysis:** a (paper, question, engine) triple.
-
-**Treatment:** the sidecar + generated page + Q&A block. Assign at the *paper*
-level, stratified by citation-count decile and publication year, half treated and
-half held back. Roll the control arm in later — the point of holding it back is
-having a same-period comparison, not withholding permanently.
-
-**Why stratify:** citation count is the dominant confound for every outcome here.
-An unstratified split would mostly measure "famous papers get cited more".
-
-**Prompts:** 3–5 questions per paper, written from the sidecar's `qa.q` list —
-which means writing the sidecars *first*, for both arms, and only publishing the
-treated arm's pages. Otherwise the prompt set is contaminated by knowing which
-papers you optimised.
-
-**Engines:** ChatGPT (Bing), Claude (Brave), Perplexity (own index), Google AI
-Mode. They use different retrieval backends, so per-engine reporting is mandatory
-— a pooled number hides the only interesting variation.
-
-**Outcomes, per triple:**
-
-| Outcome | Coding |
+| Objection | Verdict |
 |---|---|
-| `cited` | your work appears in the citations at all — the retrieval question |
-| `primary` | it's the main source of the answer — the selection question |
-| `correct` | the claim attributed to you matches your sidecar — the fidelity question |
-| `surface` | which URL got cited (arXiv / your site / GitHub / HF / third party) |
-
-`surface` is worth its own attention: it tells you *which* of your surfaces is
-doing the work, which no amount of theory will.
-
-**Cadence:** monthly, same day of month, all arms in the same session. Engines
-change under you constantly; a matched same-session comparison is the only way to
-get a usable baseline out of a moving target.
-
-### Confounds to state rather than pretend away
-
-- **No stable baseline.** Engines change weekly. This is why treatment and control
-  must be measured in the *same session*, never against a historical number.
-- **No blinding.** The treatment is public. Nothing to do about it; state it.
-- **Non-independence.** Papers by the same author on the same topic aren't
-  independent draws. Cluster by topic in any test.
-- **Sample size.** ~65 treated papers × 4 questions × 4 engines ≈ 1,000 triples per
-  round. Enough for a moderate effect, underpowered for a small one. Say so.
-- **The prompt set is yours.** You chose questions your work answers. That inflates
-  absolute rates and is fine for a treated-vs-control *difference*, but the absolute
-  numbers are not generalizable and shouldn't be quoted as if they were.
-
-### What would falsify the whole approach
-
-Worth writing down in advance so the answer means something:
-
-- No `cited` difference between arms after two rounds → the paper-level work
-  (Tier 2 of STUDY.md) doesn't move retrieval, and effort should go to Tier 3
-  (Wikipedia, READMEs, third-party coverage).
-- `cited` improves but `correct` doesn't → the pages are being retrieved and the
-  claims ignored. The sidecar format is wrong, not the idea.
-- Both improve equally in both arms → something else changed (an engine update,
-  a citation milestone). The control arm is what lets you see this at all.
+| Can't compare to the past — AI search barely existed then | **Correct.** No historical baseline is usable. Only same-session comparisons work |
+| Papers differ too much to compare to each other | **Correct in practice.** Randomisation handles this in expectation, but not at n=65 |
+| Compare to other authors? | **Fatal.** Author prominence dwarfs any metadata effect. Do not attempt this |
 
 ---
 
-## C. Claim fidelity — the distinctive measurement
+## The one design where the confounds actually cancel
 
-For work already well known, the failure mode isn't being unfindable. It's being
-found and described wrongly: overstated, mis-scoped, or credited to the wrong
-sub-claim. Nobody measures this, and the sidecar is the only lever on it.
+If B is worth anything here, it is this: **move the randomisation below the
+paper.**
 
-**Method.** For each paper with a sidecar, ask each engine: *"What did <paper>
-find, and under what conditions does it hold?"* Score the answer against the
-sidecar's `claims`:
+Write sidecars for *every* paper — you want them regardless. But have each
+sidecar's Q&A block cover only a **random half of that paper's questions**. Then
+compare `cited` on covered vs uncovered questions **within the same paper**.
+
+Why this fixes the objections:
+
+- Paper prominence, citation count, venue, topic, year, and the whole "me factor"
+  are **identical across arms** — they are the same paper. They difference out
+  instead of needing to be balanced.
+- The unit is a question, not a paper: ~135 papers × 6 questions ≈ 800 questions,
+  ~400 per arm, with the contrast taken *within* cluster. This is a paired design,
+  so the dominant variance component is removed rather than inflating the estimate.
+- Nothing is withheld permanently. You add the uncovered questions afterwards.
+- **Spillover biases toward null.** An uncovered question may still be helped by
+  the page existing at all, which makes the estimate conservative — the good
+  direction for a bet you might otherwise want to believe.
+
+Honest assessment: this is powered for something like a 7–10 percentage-point
+within-paper difference, not for a subtle one. It is the only version I would
+report, and it is nearly free because the sidecars are work you want anyway. If
+that doesn't clear your bar, **skip B.** Choosing not to run a study that would
+be uninterpretable is the right call, not a gap.
+
+### If you skip B
+
+Then the honest framing of the whole project is: Tier 0 and Tier 1 of
+[../STUDY.md](../STUDY.md) rest on platform documentation and directly measured
+gaps and need no experiment. Tier 2 (pages, sidecars, Q&A) is a **bet on a
+plausible mechanism**, held because it is cheap and because its secondary payoff
+(fidelity, measured by C) is real and separately checkable. Say that in public
+rather than implying a result nobody has.
+
+---
+
+## A. Structural and format checks — build these
+
+Cheap, deterministic, and they cover exactly what you said: format and structure.
+They verify the work exists and stays existing, which is a real class of failure
+(metadata gets reverted, pages 404, an index re-splits a profile).
+
+Already running, printed by every `update.py`:
+
+- coverage counters: journal-ref, HTML surface, HF page, sidecar, verbatim BibTeX
+- `scripts/validate.py` against `schema/*.json` — malformed edits fail loudly
+- the cross-check jsonschema can't express: every `qa.answers` id resolves to a
+  real claim
+
+Worth adding, all mechanical:
+
+| Check | Catches |
+|---|---|
+| Every URL in `links` returns 200 | link rot, ar5iv outages, moved publisher pages |
+| Highwire tags present and complete on each generated page | Scholar silently ignoring a page for a missing mandatory tag |
+| JSON-LD parses and validates as `ScholarlyArticle` | markup errors that make structured data worthless |
+| `sameAs` on the site ⊇ `links` in the data | a surface we know about but never asserted |
+| Abstract visible without JS on each page | the SPA failure mode — fine in Google, empty to Claude |
+| Robots/CDN allow `GPTBot`, `OAI-SearchBot`, `ClaudeBot`, `PerplexityBot` | silent exclusion from three of four engines |
+| One canonical page per paper, no duplicate titles across our own surfaces | Scholar's documented duplicate-title drop |
+| Claim text identical across page, README, and model card | corroboration fragmenting through drift |
+
+That last one is the interesting structural test: it enforces the "say it the same
+way" rule mechanically instead of by discipline.
+
+---
+
+## C. Claim fidelity — build this, but as a diagnostic
+
+Reframing from the earlier draft, because it matters: **C does not need to be an
+experiment to be useful.** Asked as "which of my papers are currently being
+described wrongly?", it produces a ranked worklist — actionable regardless of
+whether we can attribute the improvement to anything.
+
+Method: for each paper with a sidecar, ask each engine *"What did <paper> find,
+and under what conditions does it hold?"* Score against the sidecar's `claims`:
 
 | Score | Meaning |
 |---|---|
@@ -117,54 +136,30 @@ sidecar's `claims`:
 | 1 | claim correct, scope dropped or overstated |
 | 0 | claim wrong, or attributed to the wrong finding |
 
-Scope-dropping is the interesting cell. LLM summaries overstate scientific
-conclusions ~5× more often than human ones, so a shift from 1 → 2 is the effect
-this whole approach is really claiming, and it's measurable in a way "visibility"
-isn't.
+The 1s are the interesting cell — claim right, scope gone. That is the documented
+failure mode (LLM summaries overstate scientific conclusions ~5× more often than
+human ones) and it is the thing the sidecar is actually for.
 
-Score with a model against the sidecar, then hand-verify a stratified 20% — the
-grader is the measurement instrument and needs its own validation.
+Grade with a model against the sidecar, then hand-check a stratified 20%: the
+grader is the instrument and needs its own validation before its output means
+anything.
 
----
-
-## What can be automated, and what can't
-
-`measure/visibility.py` (not yet written) can: build the prompt set from the
-sidecars, hit engines with an API where one exists, record `cited` / `primary` /
-`surface` by URL matching, store one row per triple, diff against last month.
-
-It can't: judge `correct` without a grader you've validated, or use ChatGPT's and
-Google AI Mode's consumer surfaces, which have no API for this. Those need manual
-runs or a browser harness — budget for it, and report which engines were sampled
-how.
+Run it on the top 20 papers, monthly. Output: a list of papers to fix, not a
+p-value. If a paper scores 0 repeatedly, that is a concrete bug in how the work is
+represented, and worth chasing independent of any theory about why.
 
 ---
 
-## Cheap instruments worth adding now
+## Cheap instruments worth adding regardless
 
-- **Referrer analytics** on the site (Plausible or GA4). Referrals from
-  `chatgpt.com`, `perplexity.ai`, `claude.ai`, `gemini.google.com` are ground truth
-  that an AI answer sent a human to you. Caveat: AI answers frequently don't get
-  clicked, so this floors the effect badly — treat a rise as evidence, a flat line
-  as uninformative.
-- **Scholar / S2 / OpenAlex counters over time**, already collected. Slow, heavily
-  confounded, and not attributable to this work — useful as a sanity check that
-  nothing broke, not as an outcome.
-- **Crawler hits.** GitHub Pages gives no logs. Putting Cloudflare in front would
-  show `GPTBot`, `ClaudeBot`, `PerplexityBot`, `OAI-SearchBot` by user-agent —
-  the earliest possible signal that P1 has noticed a new page, weeks before any
-  answer cites it. Cheapest high-value addition on this list.
-
----
-
-## Honest prior
-
-Tier 0 and Tier 1 of [../STUDY.md](../STUDY.md) rest on platform documentation and
-directly measured gaps — those will work, and B/C are not really needed to justify
-them. Tier 2 (pages, sidecars, Q&A) is a plausible transfer from consumer-product
-GEO experiments to scholarly retrieval, and that transfer is **untested**. Tier 3
-has the best observational evidence and the worst automatability.
-
-So the measurement plan is aimed squarely at Tier 2, because that's the part that
-could be wrong. If it is wrong, the experiment says so within two rounds, and the
-effort moves to Tier 3.
+- **Crawler hits.** Cloudflare in front of the site would show `GPTBot`,
+  `ClaudeBot`, `PerplexityBot`, `OAI-SearchBot` by user-agent — the earliest
+  possible signal that a page has been noticed, weeks before any answer cites it.
+  Highest value per unit of effort on this list. GitHub Pages gives no logs.
+- **Referrer analytics** (Plausible/GA4). Referrals from `chatgpt.com`,
+  `perplexity.ai`, `claude.ai` are ground truth that an AI answer sent a human to
+  you. AI answers frequently aren't clicked, so a rise is evidence and a flat line
+  is uninformative.
+- **Scholar / S2 / OpenAlex counters over time.** Already collected. Slow, heavily
+  confounded, not attributable. Useful as a tripwire that something broke, not as
+  an outcome.

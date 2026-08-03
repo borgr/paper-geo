@@ -50,9 +50,26 @@ Retrieved by citation-shaped queries. The lever is a bidirectional paper↔repo 
 - **`CITATION.cff`** — GitHub renders a "Cite this repository" widget from it, and
   it is machine-readable. **0 of 9 flagship repos had one.** Generated from the
   paper's verbatim `bibtex`.
-- **arXiv link in the README** — Hugging Face extracts the id from it and
-  auto-tags the repo on the paper page, cross-listing it with any models and
-  datasets. This is the cheapest paper↔repo edge that exists.
+- **A generated links block in the README** — not just the arXiv link. The repo
+  should carry the paper's *whole* link set, the same way the paper page does:
+  paper, HTML rendering, HF paper page, data, models, project page. Three reasons:
+  Hugging Face extracts the arXiv id and auto-tags the repo on the paper page
+  (cheapest paper↔repo edge there is); GitHub is heavily crawled, so a README link
+  to the canonical paper page is a real P1 edge; and it is the corroboration
+  mechanism — the same link set asserted on a second high-authority domain.
+
+  Maintained between markers so it is regenerable without touching hand-written
+  prose, and controlled by `write_links_block` on the repo entry:
+
+  ```markdown
+  <!-- paper-geo:links:start -->
+  ...generated...
+  <!-- paper-geo:links:end -->
+  ```
+
+  Where the same paper has repos owned by several people, every one of those
+  blocks should point at the **same** canonical paper page rather than each
+  owner publishing their own — see [SHARED.md §10](SHARED.md#10-duplication-which-kind-helps-which-kind-hurts).
 - **README states the finding, with the number**, not just usage instructions.
   For method questions the README, not the PDF, is what gets cited.
 - `homepage` → the paper's page on the site, once generated. Until then the

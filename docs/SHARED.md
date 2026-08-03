@@ -115,3 +115,57 @@ ceremony: these writes land on public records that other people's tooling reads.
 See [MEASURE.md](MEASURE.md). Infrastructure counts ("103 papers missing a
 journal-ref") verify the work was *done*. They say nothing about whether it
 *worked*. Those are different claims and need different instruments.
+
+---
+
+## 10. Duplication: which kind helps, which kind hurts
+
+The question comes up as soon as co-authors or students run this too. The answer
+is not uniform — it depends on *what* is duplicated, and the two cases point in
+opposite directions.
+
+### Duplicating a claim across owners — **helps**
+
+Retrieval systems weight assertions that recur across independent sources and drop
+single-source ones. A co-author's README carrying the same canonical claim
+sentence is a genuine independent corroboration. So is the model card, the project
+site, and the talk abstract.
+
+This is the mechanism in §5, and more owners makes it stronger, not weaker —
+**provided the wording is identical.** Two co-authors independently paraphrasing
+the same finding produces two competing near-duplicate claims, which is the
+fragmentation problem multiplied by the number of authors. That is the real risk
+of this spreading, and it is a wording problem, not a duplication problem.
+
+### Duplicating a canonical page across owners — **hurts**
+
+N personal sites each hosting their own landing page for the same paper is
+actively harmful:
+
+- Duplicate-content handling picks one canonical and discards the rest, so the
+  authority splits instead of accumulating.
+- Scholar's own docs name duplicate titles across repositories as a failure mode
+  that can make papers **vanish** as presumed duplicates.
+- Every copy is one more thing to drift out of date.
+
+### The rule
+
+**Share the source. Duplicate the pointer. Never duplicate the page.**
+
+| | Where it lives | Who owns it |
+|---|---|---|
+| The sidecar (claims, scope, misreadings) | one file, one place | one owner per paper — usually first author |
+| The canonical paper page | exactly one URL | whoever's site or the project site |
+| Links to that page | every co-author's README, repo, site, profile | everyone |
+| The claim sentence, verbatim | everywhere | everyone, identically |
+| Scholarly-graph listings (ORCID, S2, DBLP) | every co-author lists it | everyone — this is expected and correct, not duplication |
+
+Concretely, when a co-author owns a paper's page, set `canonical_page` on that
+paper (`schema/papers.schema.json`) and we link to it instead of generating a
+competing one. If a page must be mirrored anyway, `rel=canonical` must point at
+the original.
+
+A collaborator forking this tool and running it on *their* corpus is unambiguously
+good — they are labelling their own repos and asserting their own identity graph.
+The only collision is per-paper pages for shared papers, and `canonical_page`
+resolves it.
