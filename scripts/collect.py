@@ -23,8 +23,9 @@ import time
 import xml.etree.ElementTree as ET
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (DATA, arxiv_id, get, get_json, load_config, norm_title,  # noqa: E402
-                    parse_bibtex, read_yaml, slugify, split_authors, write_yaml)
+from common import (DATA, arxiv_id, clean_bibtex, clean_latex, get, get_json,  # noqa: E402
+                    load_config, norm_title, parse_bibtex, read_yaml, short_venue,
+                    slugify, split_authors, write_yaml)
 
 ARXIV_NS = {"a": "http://www.w3.org/2005/Atom", "ar": "http://arxiv.org/schemas/atom"}
 
@@ -102,7 +103,7 @@ def merge_s2(papers: list[dict], cfg) -> None:
     for aid in cfg["ids"]["semantic_scholar"]:
         url = (f"https://api.semanticscholar.org/graph/v1/author/{aid}/papers"
                "?fields=title,year,externalIds,citationCount,venue,abstract,"
-               "openAccessPdf&limit=500")
+               "authors,openAccessPdf&limit=500")
         d = get_json(url)
         if not d:
             print(f"  ! S2 author {aid} unavailable", file=sys.stderr)
@@ -126,6 +127,11 @@ def merge_s2(papers: list[dict], cfg) -> None:
             p["doi"] = p.get("doi") or ext.get("DOI")
             p["abstract"] = p.get("abstract") or sp.get("abstract")
             p["s2_corpus_id"] = ext.get("CorpusId")
+            # S2-only records arrive with no authors from the bibliography, which
+            # leaves them without the three highwire tags Scholar requires.
+            if not p.get("authors"):
+                p["authors"] = [a["name"] for a in (sp.get("authors") or [])
+                                if a.get("name")]
         time.sleep(2)
 
 
@@ -424,7 +430,28 @@ def main() -> None:
         papers = apply_overrides(papers, ov)
         print(f"  overrides: {before - len(papers)} records folded or dropped", file=sys.stderr)
 
+    # Slugs are truncated, so two long titles can collide -- which silently made
+    # one paper overwrite the other's page. Disambiguate deterministically (year,
+    # then a title hash) so a slug never changes between runs.
+    import hashlib
+    from collections import Counter
+    counts = Counter(p["slug"] for p in papers)
     for p in papers:
+        if counts[p["slug"]] > 1:
+            base = p["slug"]
+            cand = f"{base}-{p['year']}" if p.get("year") else base
+            if sum(1 for q in papers if q is not p and q["slug"] == base
+                   and q.get("year") == p.get("year")):
+                cand = f"{base}-{hashlib.sha1(p['title'].encode()).hexdigest()[:6]}"
+            p["slug"] = cand
+
+    for p in papers:
+        # Display copies. The raw title stays in `title` for matching against
+        # sources; everything user- or crawler-facing uses these.
+        p["title_display"] = clean_latex(p.get("title")) or p.get("title")
+        p["venue_display"] = short_venue(p.get("venue"))
+        if p.get("bibtex"):
+            p["bibtex"] = clean_bibtex(p["bibtex"])
         p.pop("_norm", None)
         # DBLP escapes underscores for LaTeX; that leaks into URLs and breaks them.
         for f in ("url", "doi"):

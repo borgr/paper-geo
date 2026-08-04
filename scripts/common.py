@@ -176,6 +176,54 @@ def arxiv_id(entry: dict) -> str | None:
     return None
 
 
+_MATH = {r"\({}^{\mbox{2}}\)": "\u00b2", r"\({}^{\mbox{3}}\)": "\u00b3",
+         r"$^2$": "\u00b2", r"$^3$": "\u00b3", "{ extdollar}": "$"}
+
+
+def clean_latex(s: str | None) -> str:
+    """Human-readable text from a BibTeX field.
+
+    Titles arrive with protective braces ({DORA}), math wrappers, and escaped
+    ampersands. Leaving those in means they show up in the page heading, the
+    highwire citation_title, and the JSON-LD -- i.e. in exactly the fields Scholar
+    matches on. The raw form is still published verbatim in the BibTeX block, so
+    nothing is lost by cleaning the display copy.
+    """
+    if not s:
+        return ""
+    for k, v in _MATH.items():
+        s = s.replace(k, v)
+    s = re.sub(r"\\[a-zA-Z]+\{([^{}]*)\}", r"\1", s)   # \emph{x} -> x
+    s = re.sub(r"\\[a-zA-Z]+\s?", "", s)                # stray \command
+    s = s.replace("{", "").replace("}", "")
+    s = s.replace("\\&", "&").replace("\\_", "_").replace("\\%", "%").replace("$", "")
+    return " ".join(s.split())
+
+
+def short_venue(v: str | None, limit: int = 110) -> str:
+    """Trim a venue at a word boundary, never mid-word."""
+    v = clean_latex(v)
+    if len(v) <= limit:
+        return v
+    cut = v[:limit].rsplit(" ", 1)[0].rstrip(" ,;:-")
+    return cut + "\u2026"
+
+
+def clean_bibtex(raw: str | None) -> str:
+    """Published BibTeX: verbatim, minus fields that only work in one person's build.
+
+    `pretitle={\COL\META}` is a private macro from the source bibliography's own
+    CV template. Publishing it verbatim hands readers an entry that fails to
+    compile, which defeats the point of publishing a citation at all. Everything
+    else -- crucially the citation key -- is untouched.
+    """
+    if not raw:
+        return ""
+    out = re.sub(r"^\s*pretitle\s*=\s*\{[^{}]*\}\s*,?\s*\n?", "", raw,
+                 flags=re.M)
+    return re.sub(r"\n\s*\n+", "\n", out).strip()
+
+
 def slugify(s: str, maxlen: int = 60) -> str:
     s = unicodedata.normalize("NFKD", s or "")
     s = "".join(c for c in s if not unicodedata.combining(c))

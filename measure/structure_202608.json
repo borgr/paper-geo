@@ -1,0 +1,107 @@
+[
+ {
+  "check": "every paper has a slug",
+  "coverage": "135/135"
+ },
+ {
+  "check": "every paper has a title",
+  "coverage": "135/135"
+ },
+ {
+  "check": "abstract present (Scholar requires a visible one)",
+  "coverage": "115/135"
+ },
+ {
+  "check": "verbatim BibTeX captured",
+  "coverage": "118/135"
+ },
+ {
+  "check": "crawlable HTML surface exists",
+  "coverage": "109/135"
+ },
+ {
+  "check": "arXiv journal-ref set (Scholar citation matching)",
+  "coverage": "6/109"
+ },
+ {
+  "check": "HF paper page exists",
+  "coverage": "59/109"
+ },
+ {
+  "check": "HF page claimed by us",
+  "coverage": "35/109"
+ },
+ {
+  "check": "sidecar written",
+  "coverage": "1/135"
+ },
+ {
+  "check": "no duplicate titles among our own pages",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "check": "no unresolved same-or-different flags",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "check": "no ownership conflicts",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "check": "site built",
+  "ok": true,
+  "detail": "135 paper pages"
+ },
+ {
+  "check": "all JSON-LD parses",
+  "ok": true,
+  "detail": "0 invalid"
+ },
+ {
+  "check": "all pages have the 3 mandatory highwire tags",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "check": "all pages declare rel=canonical",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "check": "all pages readable without JavaScript",
+  "ok": false,
+  "detail": "4 thin"
+ },
+ {
+  "check": "pages with neither abstract nor one-liner",
+  "coverage": "20/135"
+ },
+ {
+  "check": "robots.txt names every AI crawler",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "check": "sitemap.xml present",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "check": "llms.txt present",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "check": "ownership manifest present",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "check": "claim sentence identical across surfaces",
+  "ok": true,
+  "detail": ""
+ }
+]

@@ -22,6 +22,8 @@ things only a human can do (`WORKLIST.md`).
 | [docs/REPOS.md](docs/REPOS.md) | 30 repos. Topics, descriptions, the three `kind`s, `CITATION.cff` |
 | [docs/COLLAB.md](docs/COLLAB.md) | co-author ownership protocol: who owns a page, who links to it |
 | [docs/MEASURE.md](docs/MEASURE.md) | how to tell whether any of it worked |
+| [USAGE.md](USAGE.md) | how a human runs it: refresh, new paper, sidecars, co-authors |
+| [docs/COLLAB.md](docs/COLLAB.md) | ownership protocol when co-authors run this too |
 | [STUDY.md](STUDY.md) | the evidence and mechanism behind all of it |
 
 Only 1 of 30 repos maps to a paper — paper code mostly lives in collaborators'
@@ -46,7 +48,13 @@ python update.py --apply            # write it
 | `collect` | bibliography + Semantic Scholar + arXiv + Hugging Face → one record per paper | `data/papers.yaml` |
 | `repos` | refresh GitHub repo state, preserving prior edits | `data/repos.yaml` |
 | `propose` | label repos that still lack topics or a description | `build/llm_tasks.json` |
+| `ownership` | reconcile paper ownership with collaborators' manifests | `paper-geo.json` |
+| `validate` | schema-check every data file | — |
 | `worklist` | rank what only a human can do, by citations | `WORKLIST.md` |
+
+Then, separately: `scripts/build_site.py --deploy` publishes the site,
+`scripts/links_block.py` maintains README link blocks, `measure/check_structure.py`
+and `measure/fidelity.py` are the two measurement instruments.
 
 Run one with `--step <name>`. Add `--refresh-bib` to re-run the upstream
 `publications` pipeline first (needs `sources.publications_path` in `config.yaml`).

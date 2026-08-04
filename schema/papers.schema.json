@@ -259,6 +259,14 @@
             "type": "string"
           },
           "description": "Set when more than one party claims this paper. Never auto-resolved -- a duplicated canonical page is the harm this whole mechanism exists to prevent."
+        },
+        "title_display": {
+          "type": "string",
+          "description": "Title with LaTeX braces and math wrappers resolved. Used in headings, highwire citation_title, and JSON-LD; `title` keeps the raw form for source matching."
+        },
+        "venue_display": {
+          "type": "string",
+          "description": "Venue trimmed at a word boundary for display."
         }
       }
     }

@@ -50,6 +50,7 @@ topics across every repo, and a venue name sitting in an index as a paper title.
 | [docs/REPOS.md](docs/REPOS.md) | the repos track — topics, descriptions, `CITATION.cff` |
 | [docs/COLLAB.md](docs/COLLAB.md) | co-author ownership protocol: who owns a page, who links to it |
 | [docs/MEASURE.md](docs/MEASURE.md) | how to tell whether it worked, including a controlled design |
+| [USAGE.md](USAGE.md) | **how to run it** — routine refresh, new paper, sidecars, co-authors |
 | [SKILL.md](SKILL.md) | agent entry point (Claude Code skill) |
 
 ## Design rules
@@ -75,6 +76,14 @@ find your work" and "is honest scholarship" is large, and this stays inside it.
 
 ## Status
 
-Working: collection, deduplication, override layer, repo labelling, the GitHub
-sweep, the worklist. Not yet built: the site generator (per-paper pages, JSON-LD,
-`llms.txt`, sitemap), the Hugging Face indexer, and `measure/visibility.py`.
+All of it runs. See [USAGE.md](USAGE.md).
+
+Collection and deduplication, the override layer, repo labelling and the GitHub
+sweep, collaborator ownership reconciliation, the site generator (135 paper pages
+with `ScholarlyArticle` JSON-LD, highwire meta, per-paper `llms.txt`, sitemap,
+robots), the README links block, the Hugging Face worklist, schema validation, and
+the two measurement instruments.
+
+Deliberately not automated: arXiv journal-refs (no write API), Hugging Face paper
+indexing and authorship claims (needs an authenticated browser session), and the
+claims inside a sidecar (only an author can rank which limitation binds).

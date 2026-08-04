@@ -53,11 +53,10 @@ Visit the URL once to index it, then claim authorship.
 - [ ] <https://hf.co/papers/2010.09459>  (15 cites)
 - [ ] <https://hf.co/papers/2510.24081>  (10 cites)
 
-## Sidecars not written (135/135)
+## Sidecars not written (134/135)
 
 The one input no tool can supply: claims, scope conditions, terminology, common misreadings. ~10 min each; do them by citation count.
 
-- [ ] `data/sidecars/ties-merging-resolving-interference-when-merging-models.md`  (855 cites) TIES-Merging: Resolving Interference When Merging Models
 - [ ] `data/sidecars/tinybenchmarks-evaluating-llms-with-fewer-examples.md`  (276 cites) tinyBenchmarks: evaluating LLMs with fewer examples
 - [ ] `data/sidecars/active-learning-for-bert-an-empirical-study.md`  (244 cites) Active Learning for {BERT:} An Empirical Study
 - [ ] `data/sidecars/findings-of-the-b-aby-lm-challenge-sample-efficient-pretrain.md`  (232 cites) Findings of the {B}aby{LM} Challenge: Sample-Efficient P
@@ -67,8 +66,9 @@ The one input no tool can supply: claims, scope conditions, terminology, common 
 - [ ] `data/sidecars/on-the-weaknesses-of-reinforcement-learning-for-neural-machi.md`  (127 cites) On the Weaknesses of Reinforcement Learning for Neural M
 - [ ] `data/sidecars/fusing-finetuned-models-for-better-pretraining.md`  (120 cites) Fusing finetuned models for better pretraining
 - [ ] `data/sidecars/disentqa-disentangling-parametric-and-contextual-knowledge-w.md`  (119 cites) DisentQA: Disentangling Parametric and Contextual Knowle
+- [ ] `data/sidecars/model-merging-with-svd-to-tie-the-knots.md`  (111 cites) Model merging with SVD to tie the Knots
 
-## Repo labels awaiting your review (30/30)
+## Repo labels awaiting your review (30/31)
 
 Check `data/repos.yaml`, fix anything wrong, set `reviewed: true` to freeze it, then `python scripts/sweep_github.py diff`.
 
