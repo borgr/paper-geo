@@ -22,9 +22,8 @@ things only a human can do (`WORKLIST.md`).
 | [docs/REPOS.md](docs/REPOS.md) | 30 repos. Topics, descriptions, the three `kind`s, `CITATION.cff` |
 | [docs/COLLAB.md](docs/COLLAB.md) | co-author ownership protocol: who owns a page, who links to it |
 | [docs/MEASURE.md](docs/MEASURE.md) | how to tell whether any of it worked |
-| [docs/SETUP.md](docs/SETUP.md) | the one-time account checklist (ORCID, Scholar, Wikidata, HF) |
+| [docs/SETUP.md](docs/SETUP.md) | the one-time account checklist — ORCID, arXiv ownership, Scholar, Wikidata, HF, Zenodo |
 | [USAGE.md](USAGE.md) | how a human runs it: refresh, new paper, sidecars, co-authors |
-| [docs/COLLAB.md](docs/COLLAB.md) | ownership protocol when co-authors run this too |
 | [STUDY.md](STUDY.md) | the evidence and mechanism behind all of it |
 
 Only 1 of 30 repos maps to a paper — paper code mostly lives in collaborators'
@@ -42,7 +41,7 @@ python scripts/sweep_github.py diff # exactly what would change on GitHub
 python update.py --apply            # write it
 ```
 
-`update.py` runs four steps, each independently re-runnable:
+`update.py` runs seven steps, each independently re-runnable:
 
 | Step | Does | Writes |
 |---|---|---|
@@ -50,7 +49,8 @@ python update.py --apply            # write it
 | `repos` | refresh GitHub repo state, preserving prior edits | `data/repos.yaml` |
 | `propose` | label repos that still lack topics or a description | `build/llm_tasks.json` |
 | `ownership` | reconcile paper ownership with collaborators' manifests | `paper-geo.json` |
-| `validate` | schema-check every data file | — |
+| `audit` | live-read the surfaces we don't control — ORCID, arXiv authority records, Wikidata, HF, S2 — and regenerate their payloads | `tasks/*` |
+| `validate` | schema-check every data file, plus regression checks for bugs already shipped once | — |
 | `worklist` | rank what only a human can do, by citations | `WORKLIST.md` |
 
 Then, separately: `scripts/build_site.py --deploy` publishes the site,
@@ -111,10 +111,12 @@ legitimate caveats to sound confident; precise claim plus explicit scope.
 ## New paper just posted
 
 1. `python update.py --refresh-bib` — picks it up and reports what it needs.
-2. Index and claim its Hugging Face paper page: `hf.co/papers/<arxiv-id>`.
-3. Once it has a venue, add the journal-ref to the arXiv record (see `WORKLIST.md`).
-4. Write its sidecar.
-5. If it has a repo: `python update.py --step repos` then label and apply.
+2. Claim it on arXiv unless you submitted it — arXiv ownership defaults to whoever
+   pressed submit, and step 4 is impossible without it (`tasks/arxiv_ownership.md`).
+3. Index and claim its Hugging Face paper page: `hf.co/papers/<arxiv-id>`.
+4. Once it has a venue, add the journal-ref to the arXiv record (see `WORKLIST.md`).
+5. Write its sidecar.
+6. If it has a repo: `python update.py --step repos` then label and apply.
 
 ## Recording a decision so it survives reruns
 

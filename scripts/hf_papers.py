@@ -17,7 +17,11 @@ pages are created first and you can stop whenever.
 
 Usage:
     python scripts/hf_papers.py            # report + write the clickable worklist
-    python scripts/hf_papers.py --verify   # re-check which pages now exist
+    python scripts/hf_papers.py --live     # re-check every page first (recommended)
+    python scripts/hf_papers.py --verify   # re-check only the previously-missing ones
+
+Without --live the state comes from the last collect.py run, which goes stale the
+moment you start clicking. --live costs ~30s and is worth it before a work session.
 """
 from __future__ import annotations
 
@@ -34,16 +38,30 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--verify", action="store_true",
                     help="re-check which pages now exist, after working the list")
+    ap.add_argument("--live", action="store_true",
+                    help="re-check every page against the HF API before reporting")
     args = ap.parse_args()
     cfg = load_config()
     me = cfg["ids"]["huggingface"]
     papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {})["papers"]
-    have_arxiv = [p for p in papers if p.get("arxiv")]
-    by_cites = sorted(have_arxiv, key=lambda p: -(p.get("citations") or 0))
+    # One entry per arXiv id: a couple of papers carry two records (a retitled
+    # version), and the same page twice reads as two jobs on a hand-worked list.
+    have_arxiv, seen = [], set()
+    for p in sorted(papers, key=lambda p: -(p.get("citations") or 0)):
+        if p.get("arxiv") and p["arxiv"] not in seen:
+            seen.add(p["arxiv"])
+            have_arxiv.append(p)
+    by_cites = have_arxiv
 
-    missing = [p for p in by_cites if p.get("hf_indexed") is False]
-    unclaimed = [p for p in by_cites
-                 if p.get("hf_indexed") and not p.get("hf_claimed_by_me")]
+    if args.live:
+        from audit_identity import hf_state, hf_worklist_file
+        print(f"checking {len(by_cites)} pages live ...", flush=True)
+        missing, unclaimed, claimed = hf_state(by_cites, me)
+        print(f"wrote {hf_worklist_file(missing, unclaimed, claimed)}")
+    else:
+        missing = [p for p in by_cites if p.get("hf_indexed") is False]
+        unclaimed = [p for p in by_cites
+                     if p.get("hf_indexed") and not p.get("hf_claimed_by_me")]
 
     print(f"arXiv papers: {len(have_arxiv)}   no HF page: {len(missing)}   "
           f"page exists but not claimed by {me}: {len(unclaimed)}")

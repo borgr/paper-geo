@@ -1,6 +1,7 @@
 # What still needs a human
 
 Regenerate with `python update.py`. Ordered by leverage.
+Live state of the external surfaces: `tasks/identity_audit.md`.
 
 ## Once-only identity fixes
 
@@ -10,7 +11,7 @@ blocked on a logged-in account you own, not on knowing what to do.
 
 ### 1. Populate ORCID  — do this one first
 
-`0000-0002-0085-6496` currently lists **0 works**. This is the highest-leverage
+`0000-0002-0085-6496` currently lists **0 public works**. This is the highest-leverage
 item on the page, because it is also the lever for the other three: Semantic
 Scholar's disambiguation uses ORCID, and OpenAlex is actively running
 ORCID-driven merges of split profiles. Fixing ORCID makes both of those more
@@ -18,6 +19,11 @@ likely to fix themselves, and keeps them fixed.
 
 Order matters, and the docs are easy to misread:
 
+0. **Set default visibility to *Everyone* first** — *Account settings →
+   Visibility preferences*. Only the public API is readable by Semantic
+   Scholar, OpenAlex and Crossref, and a record whose works are *trusted
+   parties* looks identical to an empty one from outside. Importing before
+   this means importing into a place nothing can see.
 1. **Turn on auto-update** for Crossref and DataCite — *Works → Search &
    link*, authorise both, grant standing permission. Covers only works whose
    deposited metadata already carries your iD, so this fixes the *future*.
@@ -85,13 +91,20 @@ prohibition on creating an item about yourself; the requirement is accuracy,
 not distance. `tasks/wikidata.qs` therefore contains identifiers and
 affiliations only — no claims about importance, nothing unsourced.
 
-**What I need from you:** a logged-in Wikidata account. Then:
+**What I need from you:** a logged-in Wikidata account, then ~15 minutes
+following **`tasks/wikidata_manual.md`** — it lists every statement as
+(property name, value) in the order the editor asks for them.
 
-1. Log in at <https://www.wikidata.org>.
-2. Open <https://quickstatements.toolforge.org/#/batch>, authorise it once.
-3. Paste `tasks/wikidata.qs`, run it, and copy the new Q-number.
-4. Put that Q-number in `config.yaml` → `ids.wikidata` and redeploy; it then
-   appears in the site's `sameAs` array.
+**Do not start with QuickStatements.** It requires an *autoconfirmed* account
+— 4 days old and 50 edits — and fails with an authorisation error rather than
+telling you why, which is the most likely reason a first attempt stalls.
+`tasks/wikidata.qs` stays for when the account qualifies.
+
+When done: put the Q-number in `config.yaml` → `ids.wikidata` and redeploy; it
+then appears in the site's `sameAs` array. Then optionally spend ten more
+minutes on <https://author-disambiguator.toolforge.org> upgrading the paper
+items that carry your name as a bare string (`P2093`) to link the new item
+(`P50`) — that is what makes it a hub rather than an orphan.
 
 **Why it is not automatic:** Wikidata writes require an authenticated account,
 and an unattended bot account needs community approval. Creating an item about
@@ -113,61 +126,83 @@ can merge profiles, set the display name, and remove wrong works.
 `tasks/openalex_merge.md` has the exact profile IDs to paste.
 `support@openalex.org` is the fallback.
 
+## arXiv: claim ownership of 57 papers  — before the journal-refs
+
+Registered as author on **48** of **105** arXiv papers. arXiv tracks this separately from
+authorship: it defaults to whoever pressed submit, so a co-authored corpus
+is mostly not yours as far as arXiv is concerned. Two consequences:
+
+1. **You cannot edit a paper you do not own**, so the journal-ref section
+   below is blocked on this for those papers.
+2. <https://arxiv.org/a/0000-0002-0085-6496> — the public author page you get
+   from linking ORCID, with an Atom feed and an embeddable widget — lists
+   only the papers you own.
+
+Instant with the paper password (ask the submitting co-author; it is in
+their acceptance email): <https://arxiv.org/auth/need-paper-password>.
+Without it, <https://arxiv.org/auth/request-ownership> — staff verify in a
+couple of days, no co-author needed, so batch the long tail there.
+
+Full list, citation-ordered: `tasks/arxiv_ownership.md`.
+
 ## arXiv journal-ref missing (103 papers)
 
 Scholar matches citations and merges preprint/published versions on exactly these fields. No write API -- one web form each, so do them by citation count.
 
-- [ ] `2306.01708` (855 cites) -> Advances in Neural Information Processing Systems 36  <https://arxiv.org/abs/2306.01708>
-- [ ] `2402.14992` (279 cites) -> Forty-first International Conference on Machine Lear  <https://arxiv.org/abs/2402.14992>
-- [ ] `2412.03304` (181 cites) -> Proceedings of the 63rd Annual Meeting of the Associ  <https://arxiv.org/abs/2412.03304>
+**55 of these are marked (blocked)**: you are not a registered
+author on them, so the form will refuse. Claim ownership first (above).
+
+- [ ] `2306.01708` (855 cites) -> Advances in Neural Information Processing Systems 36  <https://arxiv.org/abs/2306.01708>  **(blocked)**
+- [ ] `2402.14992` (279 cites) -> Forty-first International Conference on Machine Lear  <https://arxiv.org/abs/2402.14992>  **(blocked)**
+- [ ] `2412.03304` (181 cites) -> Proceedings of the 63rd Annual Meeting of the Associ  <https://arxiv.org/abs/2412.03304>  **(blocked)**
 - [ ] `2104.08202` (167 cites) -> CoRR  <https://arxiv.org/abs/2104.08202>
 - [ ] `1907.01752` (127 cites) -> 8th International Conference on Learning Representat  <https://arxiv.org/abs/1907.01752>
 - [ ] `2204.03044` (120 cites) -> ArXiv  <https://arxiv.org/abs/2204.03044>
 - [ ] `2211.05655` (119 cites) -> Proceedings of the 61st Annual Meeting of the Associ  <https://arxiv.org/abs/2211.05655>
-- [ ] `2410.19735` (111 cites) -> International Conference on Learning Representations  <https://arxiv.org/abs/2410.19735>
-- [ ] `2507.16806` (98 cites) -> The Fourteenth International Conference on Learning   <https://arxiv.org/abs/2507.16806>
-- [ ] `2402.16842` (90 cites) -> Forty-first International Conference on Machine Lear  <https://arxiv.org/abs/2402.16842>
+- [ ] `2410.19735` (111 cites) -> International Conference on Learning Representations  <https://arxiv.org/abs/2410.19735>  **(blocked)**
+- [ ] `2507.16806` (98 cites) -> The Fourteenth International Conference on Learning   <https://arxiv.org/abs/2507.16806>  **(blocked)**
+- [ ] `2402.16842` (90 cites) -> Forty-first International Conference on Machine Lear  <https://arxiv.org/abs/2402.16842>  **(blocked)**
 - [ ] `2405.17202` (83 cites) -> The Thirty-eighth Annual Conference on Neural Inform  <https://arxiv.org/abs/2405.17202>
-- [ ] `2301.11796` (82 cites) -> CoRR  <https://arxiv.org/abs/2301.11796>
+- [ ] `2301.11796` (82 cites) -> CoRR  <https://arxiv.org/abs/2301.11796>  **(blocked)**
 
-## Hugging Face paper page missing (47)
+## Hugging Face paper page missing (35)
 
-Reflects the last `collect.py` run -- re-run it before working this
-list or you will redo what you already did.
+Log in to Hugging Face first: an unauthenticated visit creates nothing
+(verified, 0 of 50). Visiting the URL while logged in *is* the action --
+there is no form.
 
-`python scripts/hf_papers.py` writes a clickable list to
-`build/hf_worklist.html`. An unauthenticated visit creates nothing
-(verified: 0 of 50), so log in to Hugging Face first, then click
-through. Afterwards: `python scripts/hf_papers.py --verify`.
+Full list: `tasks/hf_worklist.md`. Clickable, and re-checked live:
+`python scripts/hf_papers.py --live`.
 
-- [ ] <https://hf.co/papers/2410.19735>  (111 cites)
-- [ ] <https://hf.co/papers/1907.08971>  (77 cites)
-- [ ] <https://hf.co/papers/2302.04863>  (71 cites)
-- [ ] <https://hf.co/papers/1911.10763>  (70 cites)
-- [ ] <https://hf.co/papers/1804.04012>  (70 cites)
-- [ ] <https://hf.co/papers/2109.06096>  (41 cites)
-- [ ] <https://hf.co/papers/1903.02953>  (38 cites)
-- [ ] <https://hf.co/papers/1804.11254>  (38 cites)
-- [ ] <https://hf.co/papers/1804.03824>  (36 cites)
-- [ ] <https://hf.co/papers/1804.11225>  (35 cites)
+- [ ] <https://hf.co/papers/1906.03897>  (31 cites)
+- [ ] <https://hf.co/papers/2203.10581>  (28 cites)
+- [ ] <https://hf.co/papers/1905.05543>  (25 cites)
+- [ ] <https://hf.co/papers/2010.11032>  (23 cites)
+- [ ] <https://hf.co/papers/2208.01483>  (21 cites)
+- [ ] <https://hf.co/papers/2602.16763>  (20 cites)
+- [ ] <https://hf.co/papers/1909.06814>  (20 cites)
+- [ ] <https://hf.co/papers/2408.10646>  (17 cites)
+- [ ] <https://hf.co/papers/2402.07891>  (16 cites)
+- [ ] <https://hf.co/papers/2104.06400>  (16 cites)
 
-## Hugging Face page indexed but not claimed by you (27)
+## Hugging Face page indexed but not claimed by you (37)
 
 Claims need admin approval, so a request you have already submitted
 still shows here until it is validated -- your name will have no
-linked user until then. Re-run `collect.py` before assuming one
-failed.
+linked user until then. That is pending, not failed.
+
+Full list: `tasks/hf_worklist.md`.
 
 - [ ] <https://hf.co/papers/2504.08165>  (232 cites)
 - [ ] <https://hf.co/papers/1907.01752>  (127 cites)
 - [ ] <https://hf.co/papers/2211.05655>  (119 cites)
+- [ ] <https://hf.co/papers/2410.19735>  (111 cites)
 - [ ] <https://hf.co/papers/2507.16806>  (98 cites)
+- [ ] <https://hf.co/papers/1907.08971>  (77 cites)
+- [ ] <https://hf.co/papers/2302.04863>  (71 cites)
+- [ ] <https://hf.co/papers/1911.10763>  (70 cites)
+- [ ] <https://hf.co/papers/1804.04012>  (70 cites)
 - [ ] <https://hf.co/papers/2412.05149>  (62 cites)
-- [ ] <https://hf.co/papers/2404.00459>  (46 cites)
-- [ ] <https://hf.co/papers/2502.10645>  (33 cites)
-- [ ] <https://hf.co/papers/2412.06540>  (26 cites)
-- [ ] <https://hf.co/papers/2410.11840>  (22 cites)
-- [ ] <https://hf.co/papers/2503.01622>  (21 cites)
 
 ## Sidecars not written (134/135)
 

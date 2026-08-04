@@ -63,17 +63,23 @@ python update.py --refresh-bib      # picks it up; tells you what it still needs
 
 Then, in this order — highest value first:
 
-1. **Index its Hugging Face paper page.** `python scripts/hf_papers.py` writes
-   `build/hf_worklist.html`; log in to HF, click through it, then
-   `python scripts/hf_papers.py --verify`. This can't be automated — an
-   unauthenticated visit creates nothing.
-2. **Once it has a venue, add the journal-ref on arXiv.** `WORKLIST.md` gives you
+1. **Claim it on arXiv**, unless you were the submitter. `tasks/arxiv_ownership.md`
+   says whether you own it; if not, ask the submitting co-author for the paper
+   password (<https://arxiv.org/auth/need-paper-password>, instant) or file
+   <https://arxiv.org/auth/request-ownership>. Everything in step 3 is blocked
+   until this lands.
+2. **Index its Hugging Face paper page.** `python scripts/hf_papers.py --live`
+   writes `tasks/hf_worklist.md` (and `build/hf_worklist.html` to click through);
+   log in to HF first, then `python scripts/hf_papers.py --verify`. This can't be
+   automated — an unauthenticated visit creates nothing.
+3. **Once it has a venue, add the journal-ref on arXiv.** `WORKLIST.md` gives you
    the link and the venue string. One web form per paper; no API exists. This is
-   what Scholar matches citations on, so it's worth more than it looks.
-3. **Write the sidecar** (below).
-4. **If it has a repo:** `python update.py --step repos`, label it, then
+   what Scholar matches citations on, so it's worth more than it looks — and it
+   needs step 1.
+4. **Write the sidecar** (below).
+5. **If it has a repo:** `python update.py --step repos`, label it, then
    `sweep_github.py diff` → `apply`.
-5. **Rebuild and deploy** the site.
+6. **Rebuild and deploy** the site.
 
 ---
 
@@ -164,20 +170,38 @@ papers is a good outcome.
 
 ---
 
-## The four identity fixes
+## The one-time identity fixes
 
 ```bash
-python scripts/identity_tasks.py
+python scripts/audit_identity.py     # what is still open, read live, no login
+python scripts/identity_tasks.py     # the payload for each fix
 ```
 
-Writes `build/orcid_import.bib`, `build/orcid_dois.txt`, `build/wikidata.qs`,
-`build/s2_merge.md`, `build/openalex_merge.md`. Step-by-step instructions for each
-are in `WORKLIST.md` — including why none of them can be automated (each needs a
-logged-in account you own).
+The audit is the one to re-run: it reads ORCID, arXiv's authority records, Wikidata
+and Hugging Face through their public APIs and writes
+[`tasks/identity_audit.md`](tasks/identity_audit.md). Every row is checkable without
+a login even though every *fix* needs one — so you can tell what is actually done
+rather than what you remember doing.
 
-Do ORCID first. It is also the lever for the other two: Semantic Scholar
-disambiguates on ORCID, and OpenAlex is running ORCID-driven merges of split
-profiles.
+`identity_tasks.py` writes the payloads into [`tasks/`](tasks/) — committed on
+purpose, since these are lists a human works through over days:
+
+| file | for |
+|---|---|
+| `orcid_dois.txt` | ORCID *Add DOI*, citation-ordered — the reliable route |
+| `orcid_import.bib` | ORCID *Add BibTeX*, DOI-bearing entries first |
+| `wikidata_manual.md` | creating the author item by hand — **start here** |
+| `wikidata.qs` | the same item as a batch; needs an autoconfirmed account |
+| `s2_merge.md` | papers to pull onto the claimed Semantic Scholar page |
+| `openalex_merge.md` | what to paste into the OpenAlex correction form |
+| `arxiv_ownership.md` | arXiv papers you are not a registered author on |
+| `hf_worklist.md` | HF pages to index, then to claim |
+
+Order: **ORCID first**, then arXiv ownership. ORCID is the lever for two of the
+others — Semantic Scholar disambiguates on it, and OpenAlex is running ORCID-driven
+merges of split profiles — and arXiv ownership is a hard prerequisite for every
+journal-ref. The full checklist, with the reasoning and the routes that don't work,
+is [`docs/SETUP.md`](docs/SETUP.md).
 
 ## Checking whether it's working
 
@@ -221,7 +245,7 @@ Semantic Scholar, and OpenAlex instead of only to you.
 
 | Command | Does | Writes anything? |
 |---|---|---|
-| `update.py` | all six steps | no |
+| `update.py` | all seven steps | no |
 | `update.py --step <name>` | one step | no |
 | `update.py --refresh-bib` | refresh the bibliography first | no |
 | `update.py --apply` | + push approved repo changes | **yes, GitHub** |
@@ -231,8 +255,9 @@ Semantic Scholar, and OpenAlex instead of only to you.
 | `scripts/ownership.py [--manifest] [--claim-all]` | reconcile with co-authors | local only |
 | `scripts/links_block.py propose\|diff\|apply` | links block in paper-code READMEs | apply: **yes** |
 | `scripts/build_site.py [--deploy]` | generate the site | deploy: **yes** |
-| `scripts/hf_papers.py [--verify]` | HF worklist / re-check | no |
-| `scripts/identity_tasks.py` | payloads for the four identity fixes | local only |
+| `scripts/hf_papers.py [--live] [--verify]` | HF worklist / re-check | local only |
+| `scripts/audit_identity.py [--no-hf]` | live-read ORCID, arXiv, Wikidata, HF, S2 | local only |
+| `scripts/identity_tasks.py` | payloads for the one-time identity fixes | local only |
 | `scripts/validate.py` | schema check + shipped-bug regressions + selftest | no |
 | `measure/check_structure.py [--links]` | the "A" checks | no |
 | `measure/fidelity.py [--ingest]` | the "C" diagnostic | no |

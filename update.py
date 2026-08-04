@@ -21,6 +21,7 @@ runs the steps in order and then tells you what a human still has to do.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import subprocess
 import sys
@@ -29,7 +30,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 from common import DATA, load_config, read_yaml  # noqa: E402
 
-STEPS = ("collect", "repos", "propose", "ownership", "validate", "worklist")
+STEPS = ("collect", "repos", "propose", "ownership", "audit", "validate", "worklist")
 
 
 def run(argv: list[str], cwd: str | None = None) -> int:
@@ -66,6 +67,19 @@ def step_ownership(cfg, args) -> None:
     run(argv)
 
 
+def step_audit(cfg, args) -> None:
+    """Live-read the identity surfaces we do not control and regenerate the payloads.
+
+    Runs the Hugging Face pass too, even though collect.py just fetched the same
+    pages. The duplication costs ~30s in a multi-minute run and buys the guarantee
+    that the two hand-worked lists came from one moment in time; deciding at read
+    time which of two differently-aged sources is fresher is how a worklist starts
+    sending you back to pages you already did.
+    """
+    run([sys.executable, "scripts/audit_identity.py"])
+    run([sys.executable, "scripts/identity_tasks.py"])
+
+
 def step_validate(cfg, args) -> None:
     """Fail loudly on a malformed hand edit or a bad model proposal."""
     run([sys.executable, "scripts/validate.py"])
@@ -76,13 +90,23 @@ def step_worklist(cfg, args) -> None:
     papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers", [])
     repos = (read_yaml(os.path.join(DATA, "repos.yaml")) or {}).get("repos", [])
     ident, ids = cfg["identity"], cfg["ids"]
+    # Written by the audit step. Absent (audit skipped) = fall back to stored state
+    # rather than guessing, and say so where it matters.
+    state = {}
+    try:
+        with open(os.path.join(ROOT, "build", "identity_state.json")) as f:
+            state = json.load(f)
+    except (OSError, ValueError):
+        pass
+    unowned = set(state.get("arxiv_unowned") or [])
 
     def top(pred, n=8):
         return sorted([p for p in papers if pred(p)],
                       key=lambda p: -(p.get("citations") or 0))[:n]
 
     lines = ["# What still needs a human", "",
-             "Regenerate with `python update.py`. Ordered by leverage.", ""]
+             "Regenerate with `python update.py`. Ordered by leverage.",
+             "Live state of the external surfaces: `tasks/identity_audit.md`.", ""]
 
     n_strays = sum(1 for p in papers
                     if p.get("s2_author_record") in
@@ -96,7 +120,8 @@ def step_worklist(cfg, args) -> None:
         "",
         "### 1. Populate ORCID  — do this one first",
         "",
-        f"`{ident['orcid']}` currently lists **0 works**. This is the highest-leverage",
+        f"`{ident['orcid']}` currently lists "
+        f"**{state.get('orcid_public_works', 0)} public works**. This is the highest-leverage",
         "item on the page, because it is also the lever for the other three: Semantic",
         "Scholar's disambiguation uses ORCID, and OpenAlex is actively running",
         "ORCID-driven merges of split profiles. Fixing ORCID makes both of those more",
@@ -104,6 +129,11 @@ def step_worklist(cfg, args) -> None:
         "",
         "Order matters, and the docs are easy to misread:",
         "",
+        "0. **Set default visibility to *Everyone* first** — *Account settings →",
+        "   Visibility preferences*. Only the public API is readable by Semantic",
+        "   Scholar, OpenAlex and Crossref, and a record whose works are *trusted",
+        "   parties* looks identical to an empty one from outside. Importing before",
+        "   this means importing into a place nothing can see.",
         "1. **Turn on auto-update** for Crossref and DataCite — *Works → Search &",
         "   link*, authorise both, grant standing permission. Covers only works whose",
         "   deposited metadata already carries your iD, so this fixes the *future*.",
@@ -173,13 +203,20 @@ def step_worklist(cfg, args) -> None:
         "not distance. `tasks/wikidata.qs` therefore contains identifiers and",
         "affiliations only — no claims about importance, nothing unsourced.",
         "",
-        "**What I need from you:** a logged-in Wikidata account. Then:",
+        "**What I need from you:** a logged-in Wikidata account, then ~15 minutes",
+        "following **`tasks/wikidata_manual.md`** — it lists every statement as",
+        "(property name, value) in the order the editor asks for them.",
         "",
-        "1. Log in at <https://www.wikidata.org>.",
-        "2. Open <https://quickstatements.toolforge.org/#/batch>, authorise it once.",
-        "3. Paste `tasks/wikidata.qs`, run it, and copy the new Q-number.",
-        "4. Put that Q-number in `config.yaml` → `ids.wikidata` and redeploy; it then",
-        "   appears in the site's `sameAs` array.",
+        "**Do not start with QuickStatements.** It requires an *autoconfirmed* account",
+        "— 4 days old and 50 edits — and fails with an authorisation error rather than",
+        "telling you why, which is the most likely reason a first attempt stalls.",
+        "`tasks/wikidata.qs` stays for when the account qualifies.",
+        "",
+        "When done: put the Q-number in `config.yaml` → `ids.wikidata` and redeploy; it",
+        "then appears in the site's `sameAs` array. Then optionally spend ten more",
+        "minutes on <https://author-disambiguator.toolforge.org> upgrading the paper",
+        "items that carry your name as a bare string (`P2093`) to link the new item",
+        "(`P50`) — that is what makes it a hub rather than an orphan.",
         "",
         "**Why it is not automatic:** Wikidata writes require an authenticated account,",
         "and an unattended bot account needs community approval. Creating an item about",
@@ -202,43 +239,85 @@ def step_worklist(cfg, args) -> None:
         "`support@openalex.org` is the fallback.",
         "",
     ]
+    if state.get("arxiv_registered") is not None and unowned:
+        lines += [f"## arXiv: claim ownership of {len(unowned)} papers  — before the journal-refs",
+                  "",
+                  f"Registered as author on **{state['arxiv_registered']}** of "
+                  f"**{state['arxiv_total']}** arXiv papers. arXiv tracks this separately from",
+                  "authorship: it defaults to whoever pressed submit, so a co-authored corpus",
+                  "is mostly not yours as far as arXiv is concerned. Two consequences:",
+                  "",
+                  "1. **You cannot edit a paper you do not own**, so the journal-ref section",
+                  "   below is blocked on this for those papers.",
+                  f"2. <https://arxiv.org/a/{ident['orcid']}> — the public author page you get",
+                  "   from linking ORCID, with an Atom feed and an embeddable widget — lists",
+                  "   only the papers you own.",
+                  "",
+                  "Instant with the paper password (ask the submitting co-author; it is in",
+                  "their acceptance email): <https://arxiv.org/auth/need-paper-password>.",
+                  "Without it, <https://arxiv.org/auth/request-ownership> — staff verify in a",
+                  "couple of days, no co-author needed, so batch the long tail there.",
+                  "",
+                  "Full list, citation-ordered: `tasks/arxiv_ownership.md`.",
+                  ""]
+
     missing_jr = top(lambda p: p.get("arxiv") and not p.get("arxiv_journal_ref"), 12)
     if missing_jr:
+        blocked = sum(1 for p in papers if p.get("arxiv") in unowned
+                      and not p.get("arxiv_journal_ref"))
         lines += [f"## arXiv journal-ref missing ({sum(1 for p in papers if p.get('arxiv') and not p.get('arxiv_journal_ref'))} papers)",
                   "",
                   "Scholar matches citations and merges preprint/published versions on exactly "
                   "these fields. No write API -- one web form each, so do them by citation count.",
                   ""]
+        if blocked:
+            lines += [f"**{blocked} of these are marked (blocked)**: you are not a registered",
+                      "author on them, so the form will refuse. Claim ownership first (above).",
+                      ""]
         for p in missing_jr:
             venue = (p.get("venue") or "?")[:52]
+            flag = "  **(blocked)**" if p["arxiv"] in unowned else ""
             lines.append(f"- [ ] `{p['arxiv']}` ({p.get('citations') or 0} cites) -> {venue}  "
-                         f"<https://arxiv.org/abs/{p['arxiv']}>")
+                         f"<https://arxiv.org/abs/{p['arxiv']}>{flag}")
         lines.append("")
 
-    no_hf = top(lambda p: p.get("arxiv") and p.get("hf_indexed") is False, 10)
+    # Prefer the audit's live sets over the collector's cached flags where present:
+    # this list is worked by hand over days, and a stale copy sends you back to
+    # pages you already did -- which is what happened the first time round.
+    hf_missing = set(state.get("hf_missing") or [])
+    hf_unclaimed = set(state.get("hf_unclaimed") or [])
+    live_hf = state.get("hf_missing") is not None
+
+    no_hf = top(lambda p: (p["arxiv"] in hf_missing) if live_hf
+                else (p.get("arxiv") and p.get("hf_indexed") is False), 10)
     if no_hf:
-        lines += [f"## Hugging Face paper page missing ({sum(1 for p in papers if p.get('hf_indexed') is False and p.get('arxiv'))})",
+        n = len(hf_missing) if live_hf else sum(
+            1 for p in papers if p.get("hf_indexed") is False and p.get("arxiv"))
+        lines += [f"## Hugging Face paper page missing ({n})",
                   "",
-                  "Reflects the last `collect.py` run -- re-run it before working this",
-                  "list or you will redo what you already did.",
+                  "Log in to Hugging Face first: an unauthenticated visit creates nothing",
+                  "(verified, 0 of 50). Visiting the URL while logged in *is* the action --",
+                  "there is no form.",
                   "",
-                  "`python scripts/hf_papers.py` writes a clickable list to",
-                  "`build/hf_worklist.html`. An unauthenticated visit creates nothing",
-                  "(verified: 0 of 50), so log in to Hugging Face first, then click",
-                  "through. Afterwards: `python scripts/hf_papers.py --verify`.",
+                  "Full list: `tasks/hf_worklist.md`. Clickable, and re-checked live:",
+                  "`python scripts/hf_papers.py --live`.",
                   ""]
         for p in no_hf:
             lines.append(f"- [ ] <https://hf.co/papers/{p['arxiv']}>  ({p.get('citations') or 0} cites)")
         lines.append("")
 
-    unclaimed = top(lambda p: p.get("hf_indexed") and not p.get("hf_claimed_by_me"), 10)
+    unclaimed = top(lambda p: (p["arxiv"] in hf_unclaimed) if live_hf
+                    else (p.get("hf_indexed") and not p.get("hf_claimed_by_me")), 10)
     if unclaimed:
-        lines += [f"## Hugging Face page indexed but not claimed by you ({sum(1 for p in papers if p.get('hf_indexed') and not p.get('hf_claimed_by_me'))})",
+        n = len(hf_unclaimed) if live_hf else sum(
+            1 for p in papers if p.get("hf_indexed") and not p.get("hf_claimed_by_me"))
+        lines += [f"## Hugging Face page indexed but not claimed by you ({n})",
                   "",
                   "Claims need admin approval, so a request you have already submitted",
                   "still shows here until it is validated -- your name will have no",
-                  "linked user until then. Re-run `collect.py` before assuming one",
-                  "failed.",
+                  "linked user until then. That is pending, not failed.",
+                  "",
+                  "Full list: `tasks/hf_worklist.md`.",
                   ""]
         for p in unclaimed:
             lines.append(f"- [ ] <https://hf.co/papers/{p['arxiv']}>  ({p.get('citations') or 0} cites)")
@@ -286,8 +365,8 @@ def main() -> None:
     cfg = load_config()
 
     fns = {"collect": step_collect, "repos": step_repos, "propose": step_propose,
-           "ownership": step_ownership, "validate": step_validate,
-           "worklist": step_worklist}
+           "ownership": step_ownership, "audit": step_audit,
+           "validate": step_validate, "worklist": step_worklist}
     for name in ([args.step] if args.step else STEPS):
         print(f"\n{'=' * 62}\n== {name}\n{'=' * 62}")
         fns[name](cfg, args)
