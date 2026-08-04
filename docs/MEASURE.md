@@ -156,6 +156,26 @@ Already running, printed by every `update.py`:
 - the cross-check jsonschema can't express: every `qa.answers` id resolves to a
   real claim
 
+**Regression policy.** Every bug that has shipped gets one check, and those checks
+run *unconditionally* in `scripts/validate.py`. That last word is the actual
+lesson: the original design put them in a branch that only executed when
+`jsonschema` was absent, so installing `jsonschema` silently skipped them — which
+is how a duplicate slug reached production and quietly cost one paper its page. A
+check behind a conditional is not a check.
+
+| Shipped bug | Guard |
+|---|---|
+| Invalid JSON-LD from string-concatenated LaTeX | `check_structure.py`: all JSON-LD parses |
+| Duplicate slug silently overwrote a page | `validate.py`: duplicate-slug check |
+| S2-only records lacked authors → no highwire tags | `check_structure.py`: 3 mandatory tags on every page |
+| LaTeX braces leaked into headings and `citation_title` | `validate.py`: no `{}$\\` in `*_display` fields |
+| Private `pretitle` macro shipped in published BibTeX | `validate.py`: `pretitle` rejected |
+| Topics call built comma-joined → 422 | `validate.py` `selftest()`: asserts the arg builder |
+| Two parties claiming one paper | `validate.py` + `check_structure.py` |
+
+`selftest()` covers the cases with no data footprint — a wrongly-built API call
+looks fine in every data file, so it needs an assertion on the code path itself.
+
 Worth adding, all mechanical:
 
 | Check | Catches |

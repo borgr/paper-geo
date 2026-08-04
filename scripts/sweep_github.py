@@ -58,6 +58,15 @@ def gh(*args: str) -> str:
     return r.stdout
 
 
+def gh_topics_args(topics: list[str]) -> list[str]:
+    """One -f per topic. A comma-joined value is rejected 422 by the endpoint,
+    which validates each name individually. Asserted in validate.py selftest."""
+    args = []
+    for t in topics:
+        args += ["-f", f"names[]={t}"]
+    return args
+
+
 def gh_json(path: str, jq: str | None = None):
     args = ["api", path]
     if jq:
@@ -286,12 +295,8 @@ def phase_apply(cfg, yes: bool) -> None:
         name = r["repo"]
         try:
             if "topics" in ch:
-                # One -f per topic. A comma-joined value is rejected 422 by the
-                # topics endpoint, which validates each name individually.
-                args = []
-                for t in ch["topics"]:
-                    args += ["-f", f"names[]={t}"]
-                gh("api", "-X", "PUT", f"repos/{name}/topics", *args)
+                gh("api", "-X", "PUT", f"repos/{name}/topics",
+                   *gh_topics_args(ch["topics"]))
             patch = {k: ch[k] for k in ("description", "homepage") if k in ch}
             for k, v in patch.items():
                 gh("api", "-X", "PATCH", f"repos/{name}", "-f", f"{k}={v}")

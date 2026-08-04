@@ -44,8 +44,81 @@ def with_jsonschema(doc, schema, label: str) -> list[str]:
 TOPIC_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,49}$")
 
 
+# ---------------------------------------------------------------- regressions
+#
+# One check per bug that has actually shipped. These run UNCONDITIONALLY: the
+# original design put them in a jsonschema-absent fallback, so installing
+# jsonschema silently skipped them -- which is why a duplicate slug reached
+# production and quietly cost one paper its page.
+
+_LATEX_RESIDUE = re.compile(r"[{}$\\]")
+_PRIVATE_BIB = re.compile(r"^\s*pretitle\s*=", re.M)
+
+
+def regressions(papers: list[dict], repos: list[dict]) -> list[str]:
+    errs = []
+
+    # Bug: two truncated titles produced the same slug, so one paper's generated
+    # page overwrote the other's. Silent -- 134 pages where 135 were expected.
+    seen = {}
+    for p in papers:
+        if p.get("slug") in seen:
+            errs.append(f"papers.yaml: duplicate slug {p['slug']!r} "
+                        f"({seen[p['slug']]!r} and {p.get('title', '')[:40]!r}) -- "
+                        "one page would overwrite the other")
+        seen[p.get("slug")] = p.get("title", "")[:40]
+
+    # Bug: LaTeX braces and math wrappers leaked into page headings and into
+    # citation_title, i.e. into the field Scholar matches on.
+    for p in papers:
+        for f in ("title_display", "venue_display"):
+            if p.get(f) and _LATEX_RESIDUE.search(p[f]):
+                errs.append(f"papers.yaml: {p.get('slug')}: {f} still contains LaTeX "
+                            f"markup: {p[f][:56]!r}")
+
+    # Bug: a private LaTeX macro from the source bibliography shipped in published
+    # BibTeX, handing readers an entry that fails to compile.
+    for p in papers:
+        if p.get("bibtex") and _PRIVATE_BIB.search(p["bibtex"]):
+            errs.append(f"papers.yaml: {p.get('slug')}: published BibTeX still "
+                        "contains a private `pretitle` field")
+
+    # Bug: the topics API call was built comma-joined, which the endpoint rejects
+    # 422. Guard the data side; the call construction is covered by selftest().
+    for r in repos:
+        for t in r.get("topics") or []:
+            if "," in str(t) or " " in str(t):
+                errs.append(f"repos.yaml: {r.get('repo')}: topic {t!r} contains a "
+                            "comma or space -- the topics endpoint rejects it")
+
+    # Bug: a paper claimed by two parties would get two canonical pages, which is
+    # the duplicate-title failure this whole mechanism exists to avoid.
+    for p in papers:
+        if p.get("owner_conflict"):
+            errs.append(f"papers.yaml: {p.get('slug')}: claimed by "
+                        f"{p['owner_conflict']} -- resolve before publishing")
+    return errs
+
+
+def selftest() -> list[str]:
+    """Assertions about code paths that broke once and are not data-visible."""
+    errs = []
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from sweep_github import gh_topics_args
+    args = gh_topics_args(["a-b", "c"])
+    if args != ["-f", "names[]=a-b", "-f", "names[]=c"]:
+        errs.append(f"sweep_github.gh_topics_args regressed: {args!r} -- a "
+                    "comma-joined value is rejected 422 by the topics endpoint")
+    from common import clean_latex, clean_bibtex
+    if clean_latex("{DORA} The $x$ Explorer") != "DORA The x Explorer":
+        errs.append("common.clean_latex regressed on braces or math")
+    if "pretitle" in clean_bibtex("@a{k,\n  pretitle={\\COL},\n  title={T}\n}"):
+        errs.append("common.clean_bibtex no longer strips pretitle")
+    return errs
+
+
 def fallback_repos(doc) -> list[str]:
-    """The checks that catch real mistakes, without the dependency."""
+    """Type and shape checks for when jsonschema is unavailable."""
     schema = load_schema("repos")
     allowed = set(schema["$defs"]["repo"]["properties"])
     kinds = set(schema["$defs"]["repo"]["properties"]["kind"]["enum"])
@@ -152,13 +225,19 @@ def main() -> None:
         have_js = False
 
     errs: list[str] = []
+    docs = {}
     for name, fname, fb in (("repos", "repos.yaml", fallback_repos),
                             ("papers", "papers.yaml", fallback_papers)):
         doc = read_yaml(os.path.join(DATA, fname))
+        docs[name] = doc
         if doc is None:
             continue
         errs += (with_jsonschema(doc, load_schema(name), fname) if have_js
                  else fb(doc))
+    # Always, regardless of jsonschema: these encode bugs that have shipped.
+    errs += regressions((docs.get("papers") or {}).get("papers", []),
+                        (docs.get("repos") or {}).get("repos", []))
+    errs += selftest()
     errs += check_sidecars()
 
     if not have_js:

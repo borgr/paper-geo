@@ -160,6 +160,21 @@ papers is a good outcome.
 
 ---
 
+## The four identity fixes
+
+```bash
+python scripts/identity_tasks.py
+```
+
+Writes `build/orcid_import.bib`, `build/orcid_dois.txt`, `build/wikidata.qs`,
+`build/s2_merge.md`, `build/openalex_merge.md`. Step-by-step instructions for each
+are in `WORKLIST.md` — including why none of them can be automated (each needs a
+logged-in account you own).
+
+Do ORCID first. It is also the lever for the other two: Semantic Scholar
+disambiguates on ORCID, and OpenAlex is running ORCID-driven merges of split
+profiles.
+
 ## Checking whether it's working
 
 ```bash
@@ -213,6 +228,7 @@ Semantic Scholar, and OpenAlex instead of only to you.
 | `scripts/links_block.py propose\|diff\|apply` | links block in paper-code READMEs | apply: **yes** |
 | `scripts/build_site.py [--deploy]` | generate the site | deploy: **yes** |
 | `scripts/hf_papers.py [--verify]` | HF worklist / re-check | no |
-| `scripts/validate.py` | schema check | no |
+| `scripts/identity_tasks.py` | payloads for the four identity fixes | local only |
+| `scripts/validate.py` | schema check + shipped-bug regressions + selftest | no |
 | `measure/check_structure.py [--links]` | the "A" checks | no |
 | `measure/fidelity.py [--ingest]` | the "C" diagnostic | no |

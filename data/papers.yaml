@@ -76,8 +76,6 @@ papers:
   venue_display: 'Advances in Neural Information Processing Systems 36: Annual Conference on Neural Information
     Processing…'
   has_sidecar: true
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/icml/PoloWCSXY24
   slug: tinybenchmarks-evaluating-llms-with-fewer-examples
   title: 'tinyBenchmarks: evaluating LLMs with fewer examples'
@@ -113,7 +111,7 @@ papers:
     \  timestamp    = {Mon, 02 Sep 2024 16:45:29 +0200},\n  biburl       = {https://dblp.org/rec/conf/icml/PoloWCSXY24.bib},\n\
     \  bibsource    = {dblp computer science bibliography, https://dblp.org}\n}"
   s2_author_record: '2283849613'
-  citations: 276
+  citations: 279
   s2_corpus_id: 267897919
   arxiv_comment: Proceedings of the 41st International Conference on Machine Learning (ICML)
   arxiv_html: true
@@ -142,8 +140,6 @@ papers:
   venue_display: Forty-first International Conference on Machine Learning, ICML 2024, Vienna, Austria,
     July 21-27, 2024
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/emnlp/Ein-DorHGSDCDAK20
   slug: active-learning-for-bert-an-empirical-study
   title: Active Learning for {BERT:} An Empirical Study
@@ -203,8 +199,6 @@ papers:
   venue_display: Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing,
     EMNLP 2020, Online…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: warstadt2023findings
   slug: findings-of-the-b-aby-lm-challenge-sample-efficient-pretrain
   title: 'Findings of the {B}aby{LM} Challenge: Sample-Efficient Pretraining on Developmentally Plausible
@@ -264,7 +258,14 @@ papers:
   arxiv_comment: 'Published in Proceedings of BabyLM. Please cite the published version on ACL anthology:
     http://aclanthology.org/2023.conll-babylm.1/'
   arxiv_html: true
-  hf_indexed: false
+  hf_indexed: true
+  hf_upvotes: 0
+  hf_claimed_authors: 0
+  hf_claimed_by_me: false
+  hf_github_repo: null
+  hf_github_stars: null
+  hf_n_models: 0
+  hf_n_datasets: 0
   links:
     arxiv: https://arxiv.org/abs/2504.08165
     arxiv_pdf: https://arxiv.org/pdf/2504.08165
@@ -280,8 +281,6 @@ papers:
   venue_display: Proceedings of the BabyLM Challenge at the 27th Conference on Computational Natural Language
     Learning
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: singh2024global
   slug: global-mmlu-understanding-and-addressing-cultural-and-lingui
   title: 'Global {MMLU}: Understanding and Addressing Cultural and Linguistic Biases in Multilingual Evaluation'
@@ -387,8 +386,6 @@ papers:
   venue_display: 'Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics
     (Volume 1: Long…'
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/nature/SlonimBABBBCCDE21
   slug: an-autonomous-debating-system
   title: An autonomous debating system
@@ -490,8 +487,6 @@ papers:
   title_display: An autonomous debating system
   venue_display: Nat.
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/corr/abs-2104-08202
   slug: q-2-evaluating-factual-consistency-in-knowledge-grounded-dia
   title: 'Q\({}^{\mbox{2}}\): Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question
@@ -563,8 +558,6 @@ papers:
     and Question Answering'
   venue_display: CoRR
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/iclr/ChoshenFAA20
   slug: on-the-weaknesses-of-reinforcement-learning-for-neural-machi
   title: On the Weaknesses of Reinforcement Learning for Neural Machine Translation
@@ -606,7 +599,14 @@ papers:
   merged_from:
   - DBLP:conf/iclr/ChoshenFAA20
   - DBLP:journals/corr/abs-1907-01752
-  hf_indexed: false
+  hf_indexed: true
+  hf_upvotes: 0
+  hf_claimed_authors: 0
+  hf_claimed_by_me: false
+  hf_github_repo: null
+  hf_github_stars: null
+  hf_n_models: 0
+  hf_n_datasets: 0
   links:
     arxiv: https://arxiv.org/abs/1907.01752
     arxiv_pdf: https://arxiv.org/pdf/1907.01752
@@ -620,8 +620,6 @@ papers:
   venue_display: 8th International Conference on Learning Representations, ICLR 2020, Addis Ababa, Ethiopia,
     April 26-30, 2020
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: Choshen2022FusingFM
   slug: fusing-finetuned-models-for-better-pretraining
   title: Fusing finetuned models for better pretraining
@@ -679,8 +677,6 @@ papers:
   title_display: Fusing finetuned models for better pretraining
   venue_display: ArXiv
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/acl/NeemanAHCSA23
   slug: disentqa-disentangling-parametric-and-contextual-knowledge-w
   title: 'DisentQA: Disentangling Parametric and Contextual Knowledge with Counterfactual Question Answering'
@@ -731,7 +727,14 @@ papers:
   merged_from:
   - DBLP:conf/acl/NeemanAHCSA23
   - DBLP:journals/corr/abs-2211-05655
-  hf_indexed: false
+  hf_indexed: true
+  hf_upvotes: 0
+  hf_claimed_authors: 0
+  hf_claimed_by_me: false
+  hf_github_repo: null
+  hf_github_stars: null
+  hf_n_models: 0
+  hf_n_datasets: 0
   links:
     arxiv: https://arxiv.org/abs/2211.05655
     arxiv_pdf: https://arxiv.org/pdf/2211.05655
@@ -748,8 +751,6 @@ papers:
   venue_display: 'Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics
     (Volume 1: Long…'
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: null
   slug: model-merging-with-svd-to-tie-the-knots
   title: Model merging with SVD to tie the Knots
@@ -797,8 +798,6 @@ papers:
   title_display: Model merging with SVD to tie the Knots
   venue_display: International Conference on Learning Representations
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: damani2026beyond
   slug: beyond-binary-rewards-training-lm-s-to-reason-about-their-un
   title: 'Beyond Binary Rewards: Training {LM}s to Reason About Their Uncertainty'
@@ -852,7 +851,7 @@ papers:
 
     }'
   s2_author_record: '2283849613'
-  citations: 97
+  citations: 98
   acl: null
   s2_corpus_id: 280675947
   arxiv_journal_ref: null
@@ -880,8 +879,6 @@ papers:
   title_display: 'Beyond Binary Rewards: Training LMs to Reason About Their Uncertainty'
   venue_display: The Fourteenth International Conference on Learning Representations
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/coling/DinKCG24
   slug: jump-to-conclusions-short-cutting-transformers-with-linear-t
   title: 'Jump to Conclusions: Short-Cutting Transformers with Linear Transformations'
@@ -955,8 +952,6 @@ papers:
   venue_display: Proceedings of the 2024 Joint International Conference on Computational Linguistics,
     Language Resources and…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/icml/ZhuGNBGCGY024
   slug: asymmetry-in-low-rank-adapters-of-foundation-models
   title: Asymmetry in Low-Rank Adapters of Foundation Models
@@ -1029,8 +1024,6 @@ papers:
   venue_display: Forty-first International Conference on Machine Learning, ICML 2024, Vienna, Austria,
     July 21-27, 2024
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: poloefficient
   slug: efficient-multi-prompt-evaluation-of-llms
   title: Efficient multi-prompt evaluation of LLMs
@@ -1096,8 +1089,6 @@ papers:
   title_display: Efficient multi-prompt evaluation of LLMs
   venue_display: The Thirty-eighth Annual Conference on Neural Information Processing Systems
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/corr/abs-2301-11796
   slug: call-for-papers-the-babylm-challenge-sample-efficient-pretra
   title: 'Call for Papers - The BabyLM Challenge: Sample-efficient pretraining on a developmentally plausible
@@ -1165,8 +1156,6 @@ papers:
     plausible corpus'
   venue_display: CoRR
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/acl/GleizeSCDMAS19
   slug: are-you-convinced-choosing-the-more-convincing-evidence-with
   title: Are You Convinced? Choosing the More Convincing Evidence with a Siamese Network
@@ -1231,8 +1220,6 @@ papers:
   venue_display: Proceedings of the 57th Conference of the Association for Computational Linguistics,
     ACL 2019, Florence…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/acl/ShnarchPDGHCAS18
   slug: will-it-blend-blending-weak-and-strong-labeled-data-in-a-neu
   title: Will it Blend? Blending Weak and Strong Labeled Data in a Neural Network for Argumentation Mining
@@ -1287,8 +1274,6 @@ papers:
   venue_display: Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics,
     ACL 2018, Melbourne…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/emnlp/GuetaVRSKC23
   slug: knowledge-is-a-region-in-weight-space-for-fine-tuned-languag
   title: Knowledge is a Region in Weight Space for Fine-tuned Language Models
@@ -1355,8 +1340,6 @@ papers:
   venue_display: 'Findings of the Association for Computational Linguistics: EMNLP 2023, Singapore, December
     6-10, 2023'
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/aaai/Ein-DorSDHSGAGC20
   slug: corpus-wide-argument-mining-a-working-solution
   title: Corpus Wide Argument Mining - {A} Working Solution
@@ -1430,8 +1413,6 @@ papers:
   venue_display: The Thirty-Fourth AAAI Conference on Artificial Intelligence, AAAI 2020, The Thirty-Second
     Innovative…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/iclr/FoxCL18
   slug: dora-the-explorer-directed-outreaching-reinforcement-action
   title: '{DORA} The Explorer: Directed Outreaching Reinforcement Action-Selection'
@@ -1486,8 +1467,6 @@ papers:
   venue_display: 6th International Conference on Learning Representations, ICLR 2018, Vancouver, BC, Canada,
     April 30 - May 3…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: yadav2024survey
   slug: a-survey-on-model-moerging-recycling-and-routing-among-speci
   title: 'A Survey on Model MoErging: Recycling and Routing Among Specialized Experts for Collaborative
@@ -1571,8 +1550,6 @@ papers:
     Learning'
   venue_display: Transactions on Machine Learning Research
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/naacl/PerlitzBGAESSSC24
   slug: efficient-benchmarking-of-language-models
   title: Efficient Benchmarking (of Language Models)
@@ -1654,8 +1631,6 @@ papers:
   venue_display: Proceedings of the 2024 Conference of the North American Chapter of the Association for
     Computational…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/corr/abs-2405-09605
   slug: elements-of-world-knowledge-ewok-a-cognition-inspired-framew
   title: Elements of World Knowledge {(EWOK):} {A} cognition-inspired framework for evaluating basic world
@@ -1748,8 +1723,6 @@ papers:
     world knowledge in language models'
   venue_display: CoRR
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/acl/Don-YehiyaVRSC23
   slug: cold-fusion-collaborative-descent-for-distributed-multitask
   title: 'ColD Fusion: Collaborative Descent for Distributed Multitask Finetuning'
@@ -1822,8 +1795,6 @@ papers:
   venue_display: 'Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics
     (Volume 1: Long…'
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/icml/HacohenCW20
   slug: let-s-agree-to-agree-neural-networks-share-classification-or
   title: 'Let''s Agree to Agree: Neural Networks Share Classification Order on Real Datasets'
@@ -1887,8 +1858,6 @@ papers:
   venue_display: Proceedings of the 37th International Conference on Machine Learning, ICML 2020, 13-18
     July 2020, Virtual…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: hu-etal-2024-findings
   slug: findings-of-the-second-b-aby-lm-challenge-sample-efficient-p
   title: 'Findings of the Second {B}aby{LM} Challenge: Sample-Efficient Pretraining on Developmentally
@@ -1979,8 +1948,6 @@ papers:
     Plausible Corpora'
   venue_display: The 2nd BabyLM Challenge at the 28th Conference on Computational Natural Language Learning
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: schwartz2024numerologic
   slug: n-umero-l-ogic-number-encoding-for-enhanced-llm-s-numerical
   title: '{N}umero{L}ogic: Number Encoding for Enhanced {LLM}s'' Numerical Reasoning'
@@ -2057,8 +2024,6 @@ papers:
   title_display: 'NumeroLogic: Number Encoding for Enhanced LLMs'' Numerical Reasoning'
   venue_display: Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/acl/ChoshenHWA22
   slug: the-grammar-learning-trajectories-of-neural-language-models
   title: The Grammar-Learning Trajectories of Neural Language Models
@@ -2125,8 +2090,6 @@ papers:
   venue_display: 'Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics
     (Volume 1: Long…'
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/corr/abs-2404-06214
   slug: call-for-papers-the-2nd-babylm-challenge-sample-efficient-pr
   title: '[Call for Papers] The 2nd BabyLM Challenge: Sample-efficient pretraining on a developmentally
@@ -2200,8 +2163,6 @@ papers:
     plausible corpus'
   venue_display: CoRR
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/semeval/HershcovichACSR19
   slug: semeval-2019-task-1-cross-lingual-semantic-parsing-with-ucca
   title: 'SemEval-2019 Task 1: Cross-lingual Semantic Parsing with {UCCA}'
@@ -2263,8 +2224,6 @@ papers:
   venue_display: Proceedings of the 13th International Workshop on Semantic Evaluation, SemEval@NAACL-HLT
     2019, Minneapolis…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/acl/AbendC18
   slug: inherent-biases-in-reference-based-evaluation-for-grammatica-4eccd3
   title: Inherent Biases in Reference-based Evaluation for Grammatical Error Correction
@@ -2319,8 +2278,6 @@ papers:
   venue_display: Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics,
     ACL 2018, Melbourne…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/corr/abs-2401-14367
   slug: genie-achieving-human-parity-in-content-grounded-datasets-ge
   title: 'Genie: Achieving Human Parity in Content-Grounded Datasets Generation'
@@ -2394,8 +2351,6 @@ papers:
   title_display: 'Genie: Achieving Human Parity in Content-Grounded Datasets Generation'
   venue_display: CoRR
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/naacl/ChoshenA18
   slug: reference-less-measure-of-faithfulness-for-grammatical-error
   title: Reference-less Measure of Faithfulness for Grammatical Error Correction
@@ -2453,8 +2408,6 @@ papers:
   venue_display: Proceedings of the 2018 Conference of the North American Chapter of the Association for
     Computational…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/acl/AbendC18a
   slug: automatic-metric-validation-for-grammatical-error-correction
   title: Automatic Metric Validation for Grammatical Error Correction
@@ -2509,8 +2462,6 @@ papers:
   venue_display: Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics,
     ACL 2018, Melbourne…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: null
   slug: babylm-turns-3-call-for-papers-for-the-2025-babylm-workshop
   title: 'BabyLM Turns 3: Call for papers for the 2025 BabyLM workshop'
@@ -2571,8 +2522,6 @@ papers:
   title_display: 'BabyLM Turns 3: Call for papers for the 2025 BabyLM workshop'
   venue_display: arXiv.org
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/bea/KantorKCCLTMS19
   slug: learning-to-combine-grammatical-error-corrections
   title: Learning to combine Grammatical Error Corrections
@@ -2643,8 +2592,6 @@ papers:
   venue_display: Proceedings of the Fourteenth Workshop on Innovative Use of NLP for Building Educational
     Applications…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: wilcox2024bigger
   slug: bigger-is-not-always-better-the-importance-of-human-scale-la
   title: 'Bigger is not always better: The importance of human-scale language modeling for psycholinguistics'
@@ -2680,8 +2627,6 @@ papers:
   title_display: 'Bigger is not always better: The importance of human-scale language modeling for psycholinguistics'
   venue_display: Journal of Memory and Language
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/emnlp/ChoshenVDSK23
   slug: where-to-start-analyzing-the-potential-value-of-intermediate
   title: Where to start? Analyzing the potential value of intermediate models
@@ -2750,8 +2695,6 @@ papers:
   venue_display: Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing,
     EMNLP 2023…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/acl/ShnarchGHDCAS22
   slug: cluster-tune-boost-cold-start-performance-in-text-classifica
   title: 'Cluster {\&} Tune: Boost Cold Start Performance in Text Classification'
@@ -2816,8 +2759,6 @@ papers:
   venue_display: 'Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics
     (Volume 1: Long…'
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: gabrielsson2025compress
   slug: compress-then-serve-serving-thousands-of-lo-ra-adapters-with
   title: 'Compress then Serve: Serving Thousands of Lo{RA} Adapters with Little Overhead'
@@ -2890,8 +2831,6 @@ papers:
   title_display: 'Compress then Serve: Serving Thousands of LoRA Adapters with Little Overhead'
   venue_display: Forty-second International Conference on Machine Learning
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/acl/AkyurekACWA24
   slug: deductive-closure-training-of-language-models-for-coherence
   title: Deductive Closure Training of Language Models for Coherence, Accuracy, and Updatability
@@ -2963,8 +2902,6 @@ papers:
   venue_display: Findings of the Association for Computational Linguistics, ACL 2024, Bangkok, Thailand
     and virtual meeting…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: polo2024sloth
   slug: sloth-scaling-laws-for-llm-skills-to-predict-multi-benchmark
   title: 'Sloth: scaling laws for {LLM} skills to predict multi-benchmark performance across families'
@@ -3037,8 +2974,6 @@ papers:
   title_display: 'Sloth: scaling laws for LLM skills to predict multi-benchmark performance across families'
   venue_display: The Thirty-ninth Annual Conference on Neural Information Processing Systems
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/acl/ChoshenEHSA19
   slug: the-language-of-legal-and-illegal-activity-on-the-darknet
   title: The Language of Legal and Illegal Activity on the Darknet
@@ -3101,8 +3036,6 @@ papers:
   venue_display: Proceedings of the 57th Conference of the Association for Computational Linguistics,
     ACL 2019, Florence…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/corr/abs-2407-21530
   slug: data-contamination-report-from-the-2024-conda-shared-task
   title: Data Contamination Report from the 2024 {CONDA} Shared Task
@@ -3200,8 +3133,6 @@ papers:
   title_display: Data Contamination Report from the 2024 CONDA Shared Task
   venue_display: CoRR
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/conll/ChoshenNBA20
   slug: classifying-syntactic-errors-in-learner-language
   title: Classifying Syntactic Errors in Learner Language
@@ -3259,8 +3190,6 @@ papers:
   venue_display: Proceedings of the 24th Conference on Computational Natural Language Learning, CoNLL
     2020, Online, November…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: choshen2024hitchhiker
   slug: a-hitchhiker-s-guide-to-scaling-law-estimation
   title: A Hitchhiker's Guide to Scaling Law Estimation
@@ -3322,8 +3251,6 @@ papers:
   title_display: A Hitchhiker's Guide to Scaling Law Estimation
   venue_display: Forty-second International Conference on Machine Learning
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: bandel2024unitxt
   slug: unitxt-flexible-shareable-and-reusable-data-preparation-and
   title: 'Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluation for Generative {AI}'
@@ -3415,8 +3342,6 @@ papers:
   venue_display: Proceedings of the 2024 Conference of the North American Chapter of the Association for
     Computational…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: habba-etal-2025-dove
   slug: dove-a-large-scale-multi-dimensional-predictions-dataset-tow
   title: '{DOVE}: A Large-Scale Multi-Dimensional Predictions Dataset Towards Meaningful {LLM} Evaluation'
@@ -3497,8 +3422,6 @@ papers:
   title_display: 'DOVE: A Large-Scale Multi-Dimensional Predictions Dataset Towards Meaningful LLM Evaluation'
   venue_display: 'Findings of the Association for Computational Linguistics: ACL 2025'
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: yadav2025compeft
   slug: com-peft-compression-for-communicating-parameter-efficient-u
   title: 'Com{PEFT}: Compression for Communicating Parameter Efficient Updates via Sparsification and
@@ -3582,8 +3505,6 @@ papers:
     and Quantization'
   venue_display: Transactions on Machine Learning Research
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: perlitz2024llm
   slug: do-these-llm-benchmarks-agree-fixing-benchmark-evaluation-wi
   title: Do These LLM Benchmarks Agree? Fixing Benchmark Evaluation with BenchBench
@@ -3649,8 +3570,6 @@ papers:
   title_display: Do These LLM Benchmarks Agree? Fixing Benchmark Evaluation with BenchBench
   venue_display: ''
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/emnlp/ShnarchHGDKCCEZW22
   slug: label-sleuth-from-unlabeled-text-to-a-classifier-in-a-few-ho
   title: 'Label Sleuth: From Unlabeled Text to a Classifier in a Few Hours'
@@ -3717,8 +3636,91 @@ papers:
   venue_display: Proceedings of the The 2022 Conference on Empirical Methods in Natural Language Processing,
     EMNLP 2022…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
+- key: akhtar2026aibenchmarksplateausystematic
+  slug: when-ai-benchmarks-plateau-a-systematic-study-of-benchmark-s
+  title: 'When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation'
+  authors:
+  - Mubashara Akhtar
+  - Anka Reuel
+  - Prajna Soni
+  - Sanchit Ahuja
+  - Pawan Sasanka Ammanamanchi
+  - Ruchit Rawal
+  - Vilém Zouhar
+  - Srishti Yadav
+  - Chenxi Whitehouse
+  - Dayeon Ki
+  - Jennifer Mickel
+  - Leshem Choshen
+  - Marek Šuppa
+  - Jan Batzner
+  - Jenny Chim
+  - Jeba Sania
+  - Yanan Long
+  - Hossein A. Rahmani
+  - Christina Knight
+  - Yiyang Nan
+  - Jyoutir Raj
+  - Yu Fan
+  - Shubham Singh
+  - Subramanyam Sahoo
+  - Eliya Habba
+  - Usman Gohar
+  - Siddhesh Pawar
+  - Robert Scholz
+  - Arjun Subramonian
+  - Jingwei Ni
+  - Mykel Kochenderfer
+  - Sanmi Koyejo
+  - Mrinmaya Sachan
+  - Stella Biderman
+  - Zeerak Talat
+  - Avijit Ghosh
+  - Irene Solaiman
+  year: 2026
+  venue: null
+  type: misc
+  doi: 10.48550/arXiv.2602.16763
+  arxiv: '2602.16763'
+  url: https://arxiv.org/abs/2602.16763
+  abstract: Artificial intelligence benchmarks are an important mechanism for measuring model progress
+    and guiding deployment decisions. However, benchmarks quickly"saturate", making it difficult to differentiate
+    models and diminishing their long-term value. In this study, we define benchmark saturation and analyze
+    it across 60 language model benchmarks using 14 properties that relate to saturation. We find that
+    nearly half of the our benchmarks exhibit saturation, with rates increasing with age. Further, we
+    find that resilience to saturation is impacted by expert-curation, not by public test data. Our results
+    suggest that design choices can extend benchmark longevity and inform more durable evaluation approaches.
+  bibtex: "@misc{akhtar2026aibenchmarksplateausystematic,\ntitle={When AI Benchmarks Plateau: A Systematic\
+    \ Study of Benchmark Saturation}, \n      author={Mubashara Akhtar and Anka Reuel and Prajna Soni\
+    \ and Sanchit Ahuja and Pawan Sasanka Ammanamanchi and Ruchit Rawal and Vilém Zouhar and Srishti Yadav\
+    \ and Chenxi Whitehouse and Dayeon Ki and Jennifer Mickel and Leshem Choshen and Marek Šuppa and Jan\
+    \ Batzner and Jenny Chim and Jeba Sania and Yanan Long and Hossein A. Rahmani and Christina Knight\
+    \ and Yiyang Nan and Jyoutir Raj and Yu Fan and Shubham Singh and Subramanyam Sahoo and Eliya Habba\
+    \ and Usman Gohar and Siddhesh Pawar and Robert Scholz and Arjun Subramonian and Jingwei Ni and Mykel\
+    \ Kochenderfer and Sanmi Koyejo and Mrinmaya Sachan and Stella Biderman and Zeerak Talat and Avijit\
+    \ Ghosh and Irene Solaiman},\n      year={2026},\n      eprint={2602.16763},\n      archivePrefix={arXiv},\n\
+    \      primaryClass={cs.AI},\n      url={https://arxiv.org/abs/2602.16763}, \n}"
+  s2_author_record: '2283849613'
+  citations: 20
+  acl: null
+  s2_corpus_id: 285787943
+  arxiv_journal_ref: null
+  arxiv_doi: null
+  arxiv_comment: Accepted at ICML 2026
+  arxiv_html: true
+  hf_indexed: false
+  links:
+    arxiv: https://arxiv.org/abs/2602.16763
+    arxiv_pdf: https://arxiv.org/pdf/2602.16763
+    html: https://arxiv.org/html/2602.16763
+    html_source: arxiv
+    huggingface: https://huggingface.co/papers/2602.16763
+    alphaxiv: https://www.alphaxiv.org/abs/2602.16763
+    doi: https://doi.org/10.48550/arXiv.2602.16763
+    semantic_scholar: https://www.semanticscholar.org/paper/285787943
+  title_display: 'When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation'
+  venue_display: ''
+  has_sidecar: false
 - key: zipnn
   slug: zipnn-lossless-compression-for-ai-models
   title: 'ZipNN: Lossless Compression for AI Models'
@@ -3789,8 +3791,6 @@ papers:
   title_display: 'ZipNN: Lossless Compression for AI Models'
   venue_display: 2025 IEEE 18th International Conference on Cloud Computing (CLOUD)
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/conll/ChoshenA19
   slug: automatically-extracting-challenge-sets-for-non-local-phenom
   title: Automatically Extracting Challenge Sets for Non-Local Phenomena in Neural Machine Translation
@@ -3848,95 +3848,6 @@ papers:
   venue_display: Proceedings of the 23rd Conference on Computational Natural Language Learning, CoNLL
     2019, Hong Kong, China…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
-- key: akhtar2026aibenchmarksplateausystematic
-  slug: when-ai-benchmarks-plateau-a-systematic-study-of-benchmark-s
-  title: 'When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation'
-  authors:
-  - Mubashara Akhtar
-  - Anka Reuel
-  - Prajna Soni
-  - Sanchit Ahuja
-  - Pawan Sasanka Ammanamanchi
-  - Ruchit Rawal
-  - Vilém Zouhar
-  - Srishti Yadav
-  - Chenxi Whitehouse
-  - Dayeon Ki
-  - Jennifer Mickel
-  - Leshem Choshen
-  - Marek Šuppa
-  - Jan Batzner
-  - Jenny Chim
-  - Jeba Sania
-  - Yanan Long
-  - Hossein A. Rahmani
-  - Christina Knight
-  - Yiyang Nan
-  - Jyoutir Raj
-  - Yu Fan
-  - Shubham Singh
-  - Subramanyam Sahoo
-  - Eliya Habba
-  - Usman Gohar
-  - Siddhesh Pawar
-  - Robert Scholz
-  - Arjun Subramonian
-  - Jingwei Ni
-  - Mykel Kochenderfer
-  - Sanmi Koyejo
-  - Mrinmaya Sachan
-  - Stella Biderman
-  - Zeerak Talat
-  - Avijit Ghosh
-  - Irene Solaiman
-  year: 2026
-  venue: null
-  type: misc
-  doi: 10.48550/arXiv.2602.16763
-  arxiv: '2602.16763'
-  url: https://arxiv.org/abs/2602.16763
-  abstract: Artificial intelligence benchmarks are an important mechanism for measuring model progress
-    and guiding deployment decisions. However, benchmarks quickly"saturate", making it difficult to differentiate
-    models and diminishing their long-term value. In this study, we define benchmark saturation and analyze
-    it across 60 language model benchmarks using 14 properties that relate to saturation. We find that
-    nearly half of the our benchmarks exhibit saturation, with rates increasing with age. Further, we
-    find that resilience to saturation is impacted by expert-curation, not by public test data. Our results
-    suggest that design choices can extend benchmark longevity and inform more durable evaluation approaches.
-  bibtex: "@misc{akhtar2026aibenchmarksplateausystematic,\ntitle={When AI Benchmarks Plateau: A Systematic\
-    \ Study of Benchmark Saturation}, \n      author={Mubashara Akhtar and Anka Reuel and Prajna Soni\
-    \ and Sanchit Ahuja and Pawan Sasanka Ammanamanchi and Ruchit Rawal and Vilém Zouhar and Srishti Yadav\
-    \ and Chenxi Whitehouse and Dayeon Ki and Jennifer Mickel and Leshem Choshen and Marek Šuppa and Jan\
-    \ Batzner and Jenny Chim and Jeba Sania and Yanan Long and Hossein A. Rahmani and Christina Knight\
-    \ and Yiyang Nan and Jyoutir Raj and Yu Fan and Shubham Singh and Subramanyam Sahoo and Eliya Habba\
-    \ and Usman Gohar and Siddhesh Pawar and Robert Scholz and Arjun Subramonian and Jingwei Ni and Mykel\
-    \ Kochenderfer and Sanmi Koyejo and Mrinmaya Sachan and Stella Biderman and Zeerak Talat and Avijit\
-    \ Ghosh and Irene Solaiman},\n      year={2026},\n      eprint={2602.16763},\n      archivePrefix={arXiv},\n\
-    \      primaryClass={cs.AI},\n      url={https://arxiv.org/abs/2602.16763}, \n}"
-  s2_author_record: '2283849613'
-  citations: 19
-  acl: null
-  s2_corpus_id: 285787943
-  arxiv_journal_ref: null
-  arxiv_doi: null
-  arxiv_comment: Accepted at ICML 2026
-  arxiv_html: true
-  hf_indexed: false
-  links:
-    arxiv: https://arxiv.org/abs/2602.16763
-    arxiv_pdf: https://arxiv.org/pdf/2602.16763
-    html: https://arxiv.org/html/2602.16763
-    html_source: arxiv
-    huggingface: https://huggingface.co/papers/2602.16763
-    alphaxiv: https://www.alphaxiv.org/abs/2602.16763
-    doi: https://doi.org/10.48550/arXiv.2602.16763
-    semantic_scholar: https://www.semanticscholar.org/paper/285787943
-  title_display: 'When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation'
-  venue_display: ''
-  has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: shabtay2025livexiv
   slug: livexiv-a-multi-modal-live-benchmark-based-on-arxiv-papers-c
   title: LiveXiv - A Multi-Modal live benchmark based on Arxiv papers content
@@ -4020,8 +3931,6 @@ papers:
   title_display: LiveXiv - A Multi-Modal live benchmark based on Arxiv papers content
   venue_display: The Thirteenth International Conference on Learning Representations
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: ifergan2024beneath
   slug: beneath-the-surface-of-consistency-exploring-cross-lingual-k
   title: 'Beneath the Surface of Consistency: Exploring Cross-lingual Knowledge Representation Sharing
@@ -4055,7 +3964,7 @@ papers:
     \ Knowledge Representation Sharing in LLMs},\n  author={Ifergan, Maxim and Choshen, Leshem and Aharoni,\
     \ Roee and Szpektor, Idan and Abend, Omri},\n  journal={NAACL},\n  year={2025}\n}"
   s2_author_record: '41019330'
-  citations: 16
+  citations: 17
   acl: null
   s2_corpus_id: 271909348
   arxiv_journal_ref: null
@@ -4076,8 +3985,6 @@ papers:
     Sharing in LLMs'
   venue_display: NAACL
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/acl/Ashury-TahanGSC24
   slug: label-efficient-model-selection-for-text-generation
   title: Label-Efficient Model Selection for Text Generation
@@ -4140,8 +4047,6 @@ papers:
   venue_display: 'Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics
     (Volume 1: Long…'
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/emnlp/Don-YehiyaCA23
   slug: human-learning-by-model-feedback-the-dynamics-of-iterative-p
   title: 'Human Learning by Model Feedback: The Dynamics of Iterative Prompting with Midjourney'
@@ -4208,8 +4113,6 @@ papers:
   venue_display: Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing,
     EMNLP 2023…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/corr/abs-2311-07682
   slug: fuse-to-forget-bias-reduction-and-selective-memorization-thr
   title: 'Fuse to Forget: Bias Reduction and Selective Memorization through Model Fusion'
@@ -4270,8 +4173,6 @@ papers:
   title_display: 'Fuse to Forget: Bias Reduction and Selective Memorization through Model Fusion'
   venue_display: CoRR
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/naacl/SlobodkinCA21
   slug: mediators-in-determining-what-processing-bert-performs-first
   title: Mediators in Determining what Processing {BERT} Performs First
@@ -4334,8 +4235,6 @@ papers:
   venue_display: Proceedings of the 2021 Conference of the North American Chapter of the Association for
     Computational…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DonYehiya2024TheFO
   slug: the-future-of-open-human-feedback
   title: The Future of Open Human Feedback
@@ -4416,8 +4315,6 @@ papers:
   title_display: The Future of Open Human Feedback
   venue_display: Nature Machine Intelligence
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/corr/abs-2404-15198
   slug: lossless-and-near-lossless-compression-for-foundation-models
   title: Lossless and Near-Lossless Compression for Foundation Models
@@ -4477,8 +4374,6 @@ papers:
   title_display: Lossless and Near-Lossless Compression for Foundation Models
   venue_display: CoRR
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/emnlp/ShnarchCMAS20
   slug: unsupervised-expressive-rules-provide-explainability-and-ass
   title: Unsupervised Expressive Rules Provide Explainability and Assist Human Experts Grasping New Domains
@@ -4552,8 +4447,6 @@ papers:
   venue_display: 'Findings of the Association for Computational Linguistics: EMNLP 2020, Online Event,
     16-20 November 2020'
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/corr/abs-2407-10944
   slug: naturally-occurring-feedback-is-common-extractable-and-usefu
   title: Naturally Occurring Feedback is Common, Extractable and Useful
@@ -4610,8 +4503,6 @@ papers:
   title_display: Naturally Occurring Feedback is Common, Extractable and Useful
   venue_display: ''
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: ashurytahan2025mightytorrbenchmarktable
   slug: the-mighty-torr-a-benchmark-for-table-reasoning-and-robustne
   title: 'The Mighty ToRR: A Benchmark for Table Reasoning and Robustness'
@@ -4677,8 +4568,6 @@ papers:
   title_display: 'The Mighty ToRR: A Benchmark for Table Reasoning and Robustness'
   venue_display: arXiv
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/starsem/SlobodkinCA22
   slug: semantics-aware-attention-improves-neural-machine-translatio
   title: Semantics-aware Attention Improves Neural Machine Translation
@@ -4745,8 +4634,6 @@ papers:
   venue_display: Proceedings of the 11th Joint Conference on Lexical and Computational Semantics, *SEM@NAACL-HLT
     2022…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: charpentier-etal-2025-findings
   slug: findings-of-the-third-b-aby-lm-challenge-accelerating-langua
   title: 'Findings of the Third {B}aby{LM} Challenge: Accelerating Language Modeling Research with Cognitively
@@ -4832,8 +4719,6 @@ papers:
     Cognitively Plausible Data'
   venue_display: Proceedings of the First BabyLM Workshop
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/emnlp/Don-YehiyaCA22
   slug: prequel-quality-estimation-of-machine-translation-outputs-in
   title: 'PreQuEL: Quality Estimation of Machine Translation Outputs in Advance'
@@ -4896,8 +4781,6 @@ papers:
   venue_display: Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing,
     EMNLP 2022, Abu…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/corr/abs-2104-02310
   slug: serrant-a-syntactic-classifier-for-english-grammatical-error
   title: '{SERRANT:} a syntactic classifier for English Grammatical Error Types'
@@ -4942,8 +4825,6 @@ papers:
   title_display: 'SERRANT: a syntactic classifier for English Grammatical Error Types'
   venue_display: CoRR
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: don-yehiya-etal-2025-sharelm
   slug: the-s-hare-lm-collection-and-plugin-contributing-human-model
   title: 'The {S}hare{LM} Collection and Plugin: Contributing Human-Model Chats for the Benefit of the
@@ -5017,8 +4898,6 @@ papers:
   venue_display: 'Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics
     (Volume 3: System…'
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/corr/abs-2407-13696
   slug: benchmark-agreement-testing-done-right-a-guide-for-llm-bench
   title: 'Benchmark Agreement Testing Done Right: {A} Guide for {LLM} Benchmark Evaluation'
@@ -5092,8 +4971,6 @@ papers:
   title_display: 'Benchmark Agreement Testing Done Right: A Guide for LLM Benchmark Evaluation'
   venue_display: CoRR
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: chang2025globalpiqaevaluatingphysical
   slug: global-piqa-evaluating-physical-commonsense-reasoning-across
   title: 'Global PIQA: Evaluating Physical Commonsense Reasoning Across 100+ Languages and Cultures'
@@ -5562,8 +5439,6 @@ papers:
   title_display: 'Global PIQA: Evaluating Physical Commonsense Reasoning Across 100+ Languages and Cultures'
   venue_display: ''
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: saroufim2025neurips
   slug: neurips-2023-llm-efficiency-fine-tuning-competition
   title: Neurips 2023 llm efficiency fine-tuning competition
@@ -5628,8 +5503,6 @@ papers:
   title_display: Neurips 2023 llm efficiency fine-tuning competition
   venue_display: arXiv preprint arXiv:2503.13507
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: choshen2024navigating
   slug: navigating-the-modern-evaluation-landscape-considerations-in
   title: 'Navigating the Modern Evaluation Landscape: Considerations in Benchmarks and Frameworks for
@@ -5677,8 +5550,6 @@ papers:
   venue_display: Proceedings of the 2024 Joint International Conference on Computational Linguistics,
     Language Resources and…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/coling/YehudaiCFA22
   slug: reinforcement-learning-with-large-action-spaces-for-neural-m
   title: Reinforcement Learning with Large Action Spaces for Neural Machine Translation
@@ -5747,8 +5618,6 @@ papers:
   venue_display: Proceedings of the 29th International Conference on Computational Linguistics, COLING
     2022, Gyeongju…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/lrec/Lertvittayakumjorn22
   slug: grasp-a-library-for-extracting-and-exploring-human-interpret
   title: 'GrASP: {A} Library for Extracting and Exploring Human-Interpretable Textual Patterns'
@@ -5817,8 +5686,6 @@ papers:
   venue_display: Proceedings of the Thirteenth Language Resources and Evaluation Conference, LREC 2022,
     Marseille, France…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/corr/abs-2101-12640
   slug: transition-based-graph-decoder-for-neural-machine-translatio
   title: Transition based Graph Decoder for Neural Machine Translation
@@ -5867,8 +5734,85 @@ papers:
   title_display: Transition based Graph Decoder for Neural Machine Translation
   venue_display: CoRR
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
+- key: bandel2026generalagentevaluation
+  slug: general-agent-evaluation
+  title: General Agent Evaluation
+  authors:
+  - Elron Bandel
+  - Asaf Yehudai
+  - Lilach Eden
+  - Yehoshua Sagron
+  - Yotam Perlitz
+  - Elad Venezian
+  - Natalia Razinkov
+  - Natan Ergas
+  - Shlomit Shachor Ifergan
+  - Segev Shlomov
+  - Michal Jacovi
+  - Leshem Choshen
+  - Liat Ein-Dor
+  - Yoav Katz
+  - Michal Shmueli-Scheuer
+  year: 2026
+  venue: null
+  type: misc
+  doi: 10.48550/arXiv.2602.22953
+  arxiv: '2602.22953'
+  url: https://arxiv.org/abs/2602.22953
+  abstract: 'General-purpose agents perform tasks in unfamiliar environments without domain-specific manual
+    customization. Yet no study has systematically measured how agent architecture shapes performance
+    across heterogeneous protocols and diverse unfamiliar environments. This is the first systematic study,
+    comparing tool-calling, MCP, code-generation, and CLI agents on the same benchmarks with the same
+    models. Two gaps blocked such a study: existing harnesses require per-benchmark wiring or fixed protocol
+    classes (web for BrowserGym, CLI for Harbor), and benchmarks themselves expect human-authored prompts,
+    context, and integration glue. To enable this study, we contribute (1) a unifying protocol that bridges
+    existing benchmark and agent protocols; (2) an evaluation harness that surfaces any benchmark to any
+    general-purpose agent and backbone model; and (3) the first Open General Agent Leaderboard of agent
+    configurations, a full factorial over 5 agent architectures x 5 backbone LLMs (three closed-source,
+    two open-weight) x 6 benchmarks spanning software engineering, customer service, deep research, and
+    personal assistance. We find that (i) general agents adapt to every tested domain without per-domain
+    customization; (ii) agent architecture choice swings results by up to 12pp within a single model,
+    yet backbone model choice dominates overall performance; (iii) on 4 of 6 tested benchmarks, top general
+    agents are indistinguishable from the leading heavily-customized domain-specific agents; (iv) open-weight
+    models tested exhibit"generality sinks"absent from frontier closed-source models: they consistently
+    collapse on specific agent architectures or benchmarks; (v) a behavioral failure analysis reveals
+    architecture-distinctive error signatures that aggregate scoring cannot discriminate. Code, harness,
+    leaderboard, and traces are at https://www.exgentic.ai.'
+  bibtex: "@misc{bandel2026generalagentevaluation,\ntitle={General Agent Evaluation}, \n      author={Elron\
+    \ Bandel and Asaf Yehudai and Lilach Eden and Yehoshua Sagron and Yotam Perlitz and Elad Venezian\
+    \ and Natalia Razinkov and Natan Ergas and Shlomit Shachor Ifergan and Segev Shlomov and Michal Jacovi\
+    \ and Leshem Choshen and Liat Ein-Dor and Yoav Katz and Michal Shmueli-Scheuer},\n      year={2026},\n\
+    \      eprint={2602.22953},\n      archivePrefix={arXiv},\n      primaryClass={cs.AI},\n      url={https://arxiv.org/abs/2602.22953},\
+    \ \n}"
+  s2_author_record: '2283849613'
+  citations: 7
+  acl: null
+  s2_corpus_id: 286082826
+  arxiv_journal_ref: null
+  arxiv_doi: null
+  arxiv_comment: Presented at the ICLR 2026 Workshop on Agents in the Wild
+  arxiv_html: true
+  hf_indexed: true
+  hf_upvotes: 12
+  hf_claimed_authors: 3
+  hf_claimed_by_me: false
+  hf_github_repo: https://github.com/Exgentic/exgentic
+  hf_github_stars: 67
+  hf_n_models: 10
+  hf_n_datasets: 3
+  links:
+    arxiv: https://arxiv.org/abs/2602.22953
+    arxiv_pdf: https://arxiv.org/pdf/2602.22953
+    html: https://arxiv.org/html/2602.22953
+    html_source: arxiv
+    huggingface: https://huggingface.co/papers/2602.22953
+    alphaxiv: https://www.alphaxiv.org/abs/2602.22953
+    doi: https://doi.org/10.48550/arXiv.2602.22953
+    semantic_scholar: https://www.semanticscholar.org/paper/286082826
+    code: https://github.com/Exgentic/exgentic
+  title_display: General Agent Evaluation
+  venue_display: ''
+  has_sidecar: false
 - key: suarez2026commonlid
   slug: commonlid-re-evaluating-state-of-the-art-language-identifica
   title: 'CommonLID: Re-evaluating State-of-the-Art Language Identification Performance on Web Data'
@@ -5934,8 +5878,6 @@ papers:
     Data'
   venue_display: arXiv preprint arXiv:2601.18026
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: guertler2025textarena
   slug: textarena
   title: TextArena
@@ -5993,8 +5935,6 @@ papers:
   title_display: TextArena
   venue_display: arXiv preprint arXiv:2504.11442
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/corr/abs-2404-18923
   slug: holmes-benchmark-the-linguistic-competence-of-language-model
   title: 'Holmes: Benchmark the Linguistic Competence of Language Models'
@@ -6061,89 +6001,6 @@ papers:
   title_display: 'Holmes: Benchmark the Linguistic Competence of Language Models'
   venue_display: CoRR (accepted to TaCL)
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
-- key: bandel2026generalagentevaluation
-  slug: general-agent-evaluation
-  title: General Agent Evaluation
-  authors:
-  - Elron Bandel
-  - Asaf Yehudai
-  - Lilach Eden
-  - Yehoshua Sagron
-  - Yotam Perlitz
-  - Elad Venezian
-  - Natalia Razinkov
-  - Natan Ergas
-  - Shlomit Shachor Ifergan
-  - Segev Shlomov
-  - Michal Jacovi
-  - Leshem Choshen
-  - Liat Ein-Dor
-  - Yoav Katz
-  - Michal Shmueli-Scheuer
-  year: 2026
-  venue: null
-  type: misc
-  doi: 10.48550/arXiv.2602.22953
-  arxiv: '2602.22953'
-  url: https://arxiv.org/abs/2602.22953
-  abstract: 'General-purpose agents perform tasks in unfamiliar environments without domain-specific manual
-    customization. Yet no study has systematically measured how agent architecture shapes performance
-    across heterogeneous protocols and diverse unfamiliar environments. This is the first systematic study,
-    comparing tool-calling, MCP, code-generation, and CLI agents on the same benchmarks with the same
-    models. Two gaps blocked such a study: existing harnesses require per-benchmark wiring or fixed protocol
-    classes (web for BrowserGym, CLI for Harbor), and benchmarks themselves expect human-authored prompts,
-    context, and integration glue. To enable this study, we contribute (1) a unifying protocol that bridges
-    existing benchmark and agent protocols; (2) an evaluation harness that surfaces any benchmark to any
-    general-purpose agent and backbone model; and (3) the first Open General Agent Leaderboard of agent
-    configurations, a full factorial over 5 agent architectures x 5 backbone LLMs (three closed-source,
-    two open-weight) x 6 benchmarks spanning software engineering, customer service, deep research, and
-    personal assistance. We find that (i) general agents adapt to every tested domain without per-domain
-    customization; (ii) agent architecture choice swings results by up to 12pp within a single model,
-    yet backbone model choice dominates overall performance; (iii) on 4 of 6 tested benchmarks, top general
-    agents are indistinguishable from the leading heavily-customized domain-specific agents; (iv) open-weight
-    models tested exhibit"generality sinks"absent from frontier closed-source models: they consistently
-    collapse on specific agent architectures or benchmarks; (v) a behavioral failure analysis reveals
-    architecture-distinctive error signatures that aggregate scoring cannot discriminate. Code, harness,
-    leaderboard, and traces are at https://www.exgentic.ai.'
-  bibtex: "@misc{bandel2026generalagentevaluation,\ntitle={General Agent Evaluation}, \n      author={Elron\
-    \ Bandel and Asaf Yehudai and Lilach Eden and Yehoshua Sagron and Yotam Perlitz and Elad Venezian\
-    \ and Natalia Razinkov and Natan Ergas and Shlomit Shachor Ifergan and Segev Shlomov and Michal Jacovi\
-    \ and Leshem Choshen and Liat Ein-Dor and Yoav Katz and Michal Shmueli-Scheuer},\n      year={2026},\n\
-    \      eprint={2602.22953},\n      archivePrefix={arXiv},\n      primaryClass={cs.AI},\n      url={https://arxiv.org/abs/2602.22953},\
-    \ \n}"
-  s2_author_record: '2283849613'
-  citations: 6
-  acl: null
-  s2_corpus_id: 286082826
-  arxiv_journal_ref: null
-  arxiv_doi: null
-  arxiv_comment: Presented at the ICLR 2026 Workshop on Agents in the Wild
-  arxiv_html: true
-  hf_indexed: true
-  hf_upvotes: 12
-  hf_claimed_authors: 3
-  hf_claimed_by_me: false
-  hf_github_repo: https://github.com/Exgentic/exgentic
-  hf_github_stars: 66
-  hf_n_models: 10
-  hf_n_datasets: 3
-  links:
-    arxiv: https://arxiv.org/abs/2602.22953
-    arxiv_pdf: https://arxiv.org/pdf/2602.22953
-    html: https://arxiv.org/html/2602.22953
-    html_source: arxiv
-    huggingface: https://huggingface.co/papers/2602.22953
-    alphaxiv: https://www.alphaxiv.org/abs/2602.22953
-    doi: https://doi.org/10.48550/arXiv.2602.22953
-    semantic_scholar: https://www.semanticscholar.org/paper/286082826
-    code: https://github.com/Exgentic/exgentic
-  title_display: General Agent Evaluation
-  venue_display: ''
-  has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/corr/abs-2108-10763
   slug: comsum-commit-messages-summarization-and-meaning-preservatio
   title: 'ComSum: Commit Messages Summarization and Meaning Preservation'
@@ -6188,8 +6045,6 @@ papers:
   title_display: 'ComSum: Commit Messages Summarization and Meaning Preservation'
   venue_display: CoRR
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: ashury2026errormap
   slug: errormap-and-erroratlas-charting-the-failure-landscape-of-la
   title: 'ErrorMap and ErrorAtlas: Charting the Failure Landscape of Large Language Models'
@@ -6245,8 +6100,6 @@ papers:
   title_display: 'ErrorMap and ErrorAtlas: Charting the Failure Landscape of Large Language Models'
   venue_display: arXiv preprint arXiv:2601.15812
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: fittschen2025pretraining
   slug: pretraining-language-models-for-diachronic-linguistic-change
   title: Pretraining Language Models for Diachronic Linguistic Change Discovery
@@ -6311,8 +6164,6 @@ papers:
   title_display: Pretraining Language Models for Diachronic Linguistic Change Discovery
   venue_display: EACL
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: null
   slug: do-llms-benefit-from-their-own-words
   title: Do LLMs Benefit From Their Own Words?
@@ -6372,8 +6223,6 @@ papers:
   title_display: Do LLMs Benefit From Their Own Words?
   venue_display: arXiv.org
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: jumelet2025babybabellm
   slug: babybabellm-a-multilingual-benchmark-of-developmentally-plau
   title: 'BabyBabelLM: A Multilingual Benchmark of Developmentally Plausible Training Data'
@@ -6453,8 +6302,6 @@ papers:
   title_display: 'BabyBabelLM: A Multilingual Benchmark of Developmentally Plausible Training Data'
   venue_display: EACL
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: zhang2024unforgettable
   slug: unforgettable-generalization-in-language-models
   title: Unforgettable Generalization in Language Models
@@ -6518,8 +6365,6 @@ papers:
   title_display: Unforgettable Generalization in Language Models
   venue_display: First Conference on Language Modeling
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: null
   slug: mindgames-a-live-arena-for-evaluating-social-and-strategic-r
   title: 'MINDGAMES: A Live Arena for Evaluating Social and Strategic Reasoning in Multi-Agent LLMs'
@@ -6625,8 +6470,6 @@ papers:
     LLMs'
   venue_display: arXiv.org
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: null
   slug: cube-a-standard-for-unifying-agent-benchmarks
   title: 'CUBE: A Standard for Unifying Agent Benchmarks'
@@ -6694,8 +6537,6 @@ papers:
   title_display: 'CUBE: A Standard for Unifying Agent Benchmarks'
   venue_display: arXiv.org
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: null
   slug: from-kmmlu-redux-to-pro-a-professional-korean-benchmark-suit
   title: 'From KMMLU-Redux to Pro: A Professional Korean Benchmark Suite for LLM Evaluation'
@@ -7243,8 +7084,6 @@ papers:
   title_display: 'From KMMLU-Redux to Pro: A Professional Korean Benchmark Suite for LLM Evaluation'
   venue_display: Conference on Empirical Methods in Natural Language Processing
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: ashury2026robustness
   slug: robustness-as-an-emergent-property-of-task-performance
   title: Robustness as an Emergent Property of Task Performance
@@ -7297,8 +7136,6 @@ papers:
   title_display: Robustness as an Emergent Property of Task Performance
   venue_display: arXiv preprint arXiv:2602.03344
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: rahamim2026will
   slug: will-it-merge-on-the-causes-of-model-mergeability
   title: Will it Merge? On The Causes of Model Mergeability
@@ -7355,8 +7192,6 @@ papers:
   title_display: Will it Merge? On The Causes of Model Mergeability
   venue_display: arXiv preprint arXiv:2601.06672
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: null
   slug: mediocrity-is-the-key-for-llm-as-a-judge-anchor-selection
   title: Mediocrity is the key for LLM as a Judge Anchor Selection
@@ -7415,8 +7250,6 @@ papers:
   title_display: Mediocrity is the key for LLM as a Judge Anchor Selection
   venue_display: Annual Meeting of the Association for Computational Linguistics
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: hilel2025llm
   slug: llm-hypnosis-exploiting-user-feedback-for-unauthorized-knowl
   title: 'LLM Hypnosis: Exploiting User Feedback for Unauthorized Knowledge Injection to All Users'
@@ -7467,8 +7300,6 @@ papers:
   title_display: 'LLM Hypnosis: Exploiting User Feedback for Unauthorized Knowledge Injection to All Users'
   venue_display: arXiv preprint arXiv:2507.02850
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/conll/PatelCA22
   slug: on-neurons-invariant-to-sentence-structural-changes-in-neura
   title: On Neurons Invariant to Sentence Structural Changes in Neural Machine Translation
@@ -7528,8 +7359,6 @@ papers:
   venue_display: Proceedings of the 26th Conference on Computational Natural Language Learning, CoNLL
     2022, Abu Dhabi, United…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: null
   slug: semeval-2019-shared-task-cross-lingual-semantic-parsing-with
   title: 'SemEval 2019 Shared Task: Cross-lingual Semantic Parsing with UCCA - Call for Participation'
@@ -7583,8 +7412,6 @@ papers:
   title_display: 'SemEval 2019 Shared Task: Cross-lingual Semantic Parsing with UCCA - Call for Participation'
   venue_display: arXiv.org
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: null
   slug: babylm-turns-4-and-goes-multilingual-call-for-papers-for-the
   title: 'BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026 BabyLM Workshop'
@@ -7643,8 +7470,6 @@ papers:
   title_display: 'BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026 BabyLM Workshop'
   venue_display: arXiv.org
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: null
   slug: every-eval-ever-a-unifying-schema-and-community-repository-f
   title: 'Every Eval Ever: A Unifying Schema and Community Repository for AI Evaluation Results'
@@ -7744,8 +7569,6 @@ papers:
   title_display: 'Every Eval Ever: A Unifying Schema and Community Repository for AI Evaluation Results'
   venue_display: ''
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: null
   slug: automated-discovery-has-no-universally-superior-harness
   title: Automated Discovery Has No Universally Superior Harness
@@ -7807,8 +7630,6 @@ papers:
   title_display: Automated Discovery Has No Universally Superior Harness
   venue_display: ''
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: fandina2025safesafetymetricautomatic
   slug: how-safe-is-your-safety-metric-automatic-concatenation-tests
   title: How Safe is Your Safety Metric? Automatic Concatenation Tests for Metric Reliability
@@ -7862,8 +7683,6 @@ papers:
   title_display: How Safe is Your Safety Metric? Automatic Concatenation Tests for Metric Reliability
   venue_display: ''
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: cai2025latentvariableframeworkscaling
   slug: a-latent-variable-framework-for-scaling-laws-in-large-langua
   title: A Latent Variable Framework for Scaling Laws in Large Language Models
@@ -7921,8 +7740,6 @@ papers:
   title_display: A Latent Variable Framework for Scaling Laws in Large Language Models
   venue_display: ''
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: warstadt2024insights
   slug: insights-from-the-first-babylm-challenge-training-sample-eff
   title: 'Insights from the first BabyLM Challenge: Training sample-efficient language models on a developmentally
@@ -7958,8 +7775,6 @@ papers:
     on a developmentally plausible corpus'
   venue_display: Proceedings of the Annual Meeting of the Cognitive Science Society
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/conll/ChoshenA22
   slug: enhancing-the-transformer-decoder-with-transition-based-synt
   title: Enhancing the Transformer Decoder with Transition-based Syntax
@@ -8016,8 +7831,6 @@ papers:
   venue_display: Proceedings of the 26th Conference on Computational Natural Language Learning, CoNLL
     2022, Abu Dhabi, United…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/corr/abs-2106-00745
   slug: part-of-speech-and-universal-dependency-effects-on-english-a
   title: Part of Speech and Universal Dependency effects on English Arabic Machine Translation
@@ -8065,8 +7878,6 @@ papers:
   title_display: Part of Speech and Universal Dependency effects on English Arabic Machine Translation
   venue_display: CoRR
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: null
   slug: all-neural-networks-are-created-equal
   title: All Neural Networks are Created Equal
@@ -8091,8 +7902,6 @@ papers:
   title_display: All Neural Networks are Created Equal
   venue_display: arXiv.org
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: bandel2026agentic
   slug: position-agentic-systems-should-be-general
   title: 'Position: Agentic Systems Should be General'
@@ -8143,8 +7952,6 @@ papers:
   title_display: 'Position: Agentic Systems Should be General'
   venue_display: ''
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: null
   slug: cross-lingual-exploration-for-parametric-knowledge
   title: Cross-Lingual Exploration for Parametric Knowledge
@@ -8193,8 +8000,6 @@ papers:
   title_display: Cross-Lingual Exploration for Parametric Knowledge
   venue_display: ''
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: null
   slug: instructions-shape-production-of-language-not-processing
   title: Instructions Shape Production of Language, not Processing
@@ -8245,8 +8050,6 @@ papers:
   title_display: Instructions Shape Production of Language, not Processing
   venue_display: arXiv.org
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: null
   slug: evaluation-cards-an-interpretive-layer-for-ai-evaluation-rep
   title: 'Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting'
@@ -8347,8 +8150,6 @@ papers:
   title_display: 'Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting'
   venue_display: ''
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: null
   slug: stop-guessing-when-to-stop-testing-efficient-model-evaluatio
   title: 'Stop Guessing When to Stop Testing: Efficient Model Evaluation with Just Enough Data'
@@ -8399,8 +8200,6 @@ papers:
   title_display: 'Stop Guessing When to Stop Testing: Efficient Model Evaluation with Just Enough Data'
   venue_display: Annual Meeting of the Association for Computational Linguistics
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: null
   slug: resolving-interference-ri-disentangling-models-for-improved
   title: 'Resolving Interference (RI): Disentangling Models for Improved Model Merging'
@@ -8451,8 +8250,6 @@ papers:
   title_display: 'Resolving Interference (RI): Disentangling Models for Improved Model Merging'
   venue_display: arXiv.org
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: vetzler2025crisp
   slug: crisp-complex-reasoning-with-interpretable-step-based-plans
   title: 'CRISP: Complex Reasoning with Interpretable Step-based Plans'
@@ -8506,8 +8303,6 @@ papers:
   title_display: 'CRISP: Complex Reasoning with Interpretable Step-based Plans'
   venue_display: arXiv preprint arXiv:2507.08037
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: zhang2025can
   slug: can-gradient-descent-simulate-prompting
   title: Can Gradient Descent Simulate Prompting?
@@ -8558,8 +8353,6 @@ papers:
   title_display: Can Gradient Descent Simulate Prompting?
   venue_display: arXiv preprint arXiv:2506.20989
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: knots
   slug: tie-the-knots-model-merging-with-svd
   title: 'Tie the KnOTS: Model Merging with SVD'
@@ -8583,8 +8376,6 @@ papers:
   title_display: 'Tie the KnOTS: Model Merging with SVD'
   venue_display: ICLR
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: tam2024llm
   slug: llm-merging-building-llm-s-efficiently-through-merging
   title: '{LLM} Merging: Building {LLM}s Efficiently through Merging'
@@ -8627,8 +8418,6 @@ papers:
   title_display: 'LLM Merging: Building LLMs Efficiently through Merging'
   venue_display: NeurIPS 2024 Competition Track
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: pagliardini2024denseformer
   slug: denseformer-enhancing-information-flow-in-transformers-via-d
   title: 'DenseFormer: Enhancing Information Flow in Transformers via Depth Weighted Averaging'
@@ -8651,8 +8440,6 @@ papers:
   title_display: 'DenseFormer: Enhancing Information Flow in Transformers via Depth Weighted Averaging'
   venue_display: arXiv preprint arXiv:2402.02622
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: hild
   slug: high-dimensional-learning-dynamics-2024-the-emergence-of-str
   title: 'High-dimensional Learning Dynamics 2024: The Emergence of Structure and Reasoning Workshop at
@@ -8694,8 +8481,6 @@ papers:
     at ICML24'
   venue_display: ICML
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: stlm
   slug: super-tiny-language-models
   title: Super Tiny Language Models
@@ -8720,8 +8505,6 @@ papers:
   title_display: Super Tiny Language Models
   venue_display: arXiv preprint arXiv:2405.14159
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: lmeval
   slug: a-framework-for-few-shot-language-model-evaluation
   title: A framework for few-shot language model evaluation
@@ -8771,8 +8554,6 @@ papers:
   title_display: A framework for few-shot language model evaluation
   venue_display: Zenodo
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: bhaskar-etal-2024-heuristic
   slug: the-heuristic-core-understanding-subnetwork-generalization-i
   title: 'The Heuristic Core: Understanding Subnetwork Generalization in Pretrained Language Models'
@@ -8830,8 +8611,6 @@ papers:
   venue_display: 'Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics
     (Volume 1: Long…'
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: fandina2024can
   slug: can-you-trust-your-metric-automatic-concatenation-based-test
   title: Can You Trust Your Metric? Automatic Concatenation-Based Tests for Metric Validity
@@ -8857,8 +8636,6 @@ papers:
   title_display: Can You Trust Your Metric? Automatic Concatenation-Based Tests for Metric Validity
   venue_display: arXiv preprint arXiv:2408.12259
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: dubey2024llama
   slug: the-llama-3-herd-of-models
   title: The llama 3 herd of models
@@ -8889,8 +8666,6 @@ papers:
   title_display: The llama 3 herd of models
   venue_display: arXiv preprint arXiv:2407.21783
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: charpentier2023not
   slug: not-all-layers-are-equally-as-important-every-layer-counts-b
   title: 'Not all layers are equally as important: Every Layer Counts BERT'
@@ -8911,8 +8686,6 @@ papers:
   title_display: 'Not all layers are equally as important: Every Layer Counts BERT'
   venue_display: arXiv preprint arXiv:2311.02265
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:conf/conll/KaridiCPA23
   slug: muler-detailed-and-scalable-reference-based-evaluation
   title: 'MuLER: Detailed and Scalable Reference-based Evaluation'
@@ -8973,8 +8746,6 @@ papers:
   venue_display: Proceedings of the 27th Conference on Computational Natural Language Learning, CoNLL
     2023, Singapore…
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/corr/abs-2306-01708
   slug: resolving-interference-when-merging-models
   title: Resolving Interference When Merging Models
@@ -9042,8 +8813,6 @@ papers:
   title_display: Resolving Interference When Merging Models
   venue_display: CoRR
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: wortsman2022model
   slug: model-soups-averaging-weights-of-multiple-fine-tuned-models
   title: 'Model soups: averaging weights of multiple fine-tuned models improves accuracy without increasing
@@ -9077,8 +8846,6 @@ papers:
     increasing inference time'
   venue_display: ICML
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/corr/abs-2205-05730
   slug: some-grammatical-errors-are-frequent-others-are-important
   title: Some Grammatical Errors are Frequent, Others are Important
@@ -9126,8 +8893,6 @@ papers:
   title_display: Some Grammatical Errors are Frequent, Others are Important
   venue_display: CoRR
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: helm
   slug: holistic-evaluation-of-language-models
   title: Holistic evaluation of language models
@@ -9158,8 +8923,6 @@ papers:
   title_display: Holistic evaluation of language models
   venue_display: arXiv preprint arXiv:2211.09110
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: matena2021merging
   slug: merging-models-with-fisher-weighted-averaging
   title: Merging models with fisher-weighted averaging
@@ -9179,8 +8942,6 @@ papers:
   title_display: Merging models with fisher-weighted averaging
   venue_display: arXiv:2111.09832
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: DBLP:journals/corr/abs-1804-11254
   slug: inherent-biases-in-reference-based-evaluation-for-grammatica-2018
   title: Inherent Biases in Reference-based Evaluation for Grammatical Error Correction and Text Simplification
@@ -9226,8 +8987,6 @@ papers:
     Simplification
   venue_display: CoRR
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: vaswani2017attention
   slug: attention-is-all-you-need
   title: Attention is all you need
@@ -9246,8 +9005,6 @@ papers:
   title_display: Attention is all you need
   venue_display: Advances in Neural Information Processing Systems
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: gilkerson2017mapping
   slug: mapping-the-early-language-environment-using-all-day-recordi
   title: Mapping the early language environment using all-day recordings and automated analysis
@@ -9276,8 +9033,6 @@ papers:
   title_display: Mapping the early language environment using all-day recordings and automated analysis
   venue_display: American journal of speech-language pathology
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: harari2014sapiens
   slug: sapiens-a-brief-history-of-humankind
   title: 'Sapiens: A brief history of humankind'
@@ -9296,8 +9051,6 @@ papers:
   title_display: 'Sapiens: A brief history of humankind'
   venue_display: Random House
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: cohen2006european
   slug: european-public-acceptance-of-euthanasia-socio-demographic-a
   title: 'European public acceptance of euthanasia: socio-demographic and cultural factors associated
@@ -9326,5 +9079,3 @@ papers:
     with the acceptance of euthanasia in 33 European countries'
   venue_display: Social science & medicine
   has_sidecar: false
-  owner: null
-  owner_source: unclaimed

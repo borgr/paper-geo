@@ -84,23 +84,114 @@ def step_worklist(cfg, args) -> None:
     lines = ["# What still needs a human", "",
              "Regenerate with `python update.py`. Ordered by leverage.", ""]
 
-    lines.append("## Once-only identity fixes")
-    if len(ids["semantic_scholar"]) > 1:
-        lines.append(f"- [ ] **Merge the {len(ids['semantic_scholar'])} Semantic Scholar author "
-                     f"records** into {ids['semantic_scholar_primary']}. Claim the primary, then "
-                     "email support to merge the others; do not claim two pages. Splits "
-                     "author-level retrieval across every S2-backed tool.")
-    if not ids.get("wikidata"):
-        lines.append("- [ ] **Create a Wikidata item** (no notability bar) and put the QID in "
-                     "`config.yaml` -> `ids.wikidata`. Feeds Google's Knowledge Graph and gives "
-                     "every JSON-LD `sameAs` a real target.")
-    lines.append(f"- [ ] **Populate ORCID {ident['orcid']}** via the Crossref + DataCite "
-                 "Search & Link wizards and enable standing auto-update.")
-    if ids.get("openalex_duplicates"):
-        lines.append(f"- [ ] **Merge {len(ids['openalex_duplicates'])} duplicate OpenAlex author "
-                     "records** into " + ids["openalex"][0] + ".")
-    lines.append("")
-
+    n_strays = sum(1 for p in papers
+                    if p.get("s2_author_record") in
+                    [a for a in ids["semantic_scholar"] if a != ids["semantic_scholar_primary"]])
+    lines += [
+        "## Once-only identity fixes",
+        "",
+        "Run `python scripts/identity_tasks.py` first -- it writes the payload for each",
+        "of these into `build/`. Every one is blocked on a logged-in account, not on",
+        "knowing what to do.",
+        "",
+        "### 1. Populate ORCID  — do this one first",
+        "",
+        f"`{ident['orcid']}` currently lists **0 works**. This is the highest-leverage",
+        "item on the page, because it is also the lever for the other three: Semantic",
+        "Scholar's disambiguation uses ORCID, and OpenAlex is actively running",
+        "ORCID-driven merges of split profiles. Fixing ORCID makes both of those more",
+        "likely to fix themselves, and keeps them fixed.",
+        "",
+        "Order matters, and the docs are easy to misread:",
+        "",
+        "1. **Turn on auto-update** — <https://orcid.org/my-orcid> → *Works* → the",
+        "   Crossref and DataCite entries under **Search & link**, and grant standing",
+        "   permission. This only covers works whose deposited metadata already",
+        "   contains your iD, so it fixes the future, not the backlog. arXiv DOIs are",
+        "   DataCite; published DOIs are Crossref — you want both.",
+        "2. **Search & link for the backlog** — same menu, *Crossref Metadata Search*",
+        "   and *DataCite*, then Scopus and DBLP if they find anything the first two",
+        "   missed. This is the route that produces registry-sourced works, which are",
+        "   trusted more than self-asserted ones.",
+        "3. **Only for whatever is left**, import `build/orcid_import.bib` via *Add*",
+        "   *works → Add BibTeX*. Last resort deliberately: works you add yourself",
+        "   carry your own name as the source, and can duplicate what auto-update",
+        "   later pulls from Crossref for the same paper.",
+        "",
+        f"`build/orcid_dois.txt` has the {sum(1 for p in papers if p.get('doi'))} DOIs,",
+        "citation-ordered, if you would rather paste them one at a time.",
+        "",
+        "I cannot do this for you: writing to an ORCID record needs an OAuth token with",
+        "`/activities/update` scope, which only you can grant. The public API is",
+        "read-only.",
+        "",
+        f"### 2. Semantic Scholar — {n_strays} papers on the wrong record",
+        "",
+        f"Claimed: <https://www.semanticscholar.org/author/{ids['semantic_scholar_primary']}>  ",
+        " ".join(f"Secondary: <https://www.semanticscholar.org/author/{a}>"
+                 for a in ids["semantic_scholar"]
+                 if a != ids["semantic_scholar_primary"]),
+        "",
+        "**Do we have to?** It is the single biggest retrieval loss on this page: every",
+        "Semantic-Scholar-backed tool — Elicit, Consensus, SciSpace, most literature",
+        "agents — resolves an author to one page, so each of them currently sees about",
+        "half your corpus and ranks both halves lower.",
+        "",
+        "**Is there a way, given support ignored you?** Yes, and it does not need them.",
+        "There is no self-service *merge*, but a claimed page can pull papers across:",
+        "",
+        "1. Open the claimed page → **Edit Author Page** → **Add Papers**.",
+        "2. Paste the paper's S2 URL, select it, choose *the author is correct, but the*",
+        "   *paper is missing from my author page*, Submit. ~24h to appear.",
+        "3. Repeat. `build/s2_merge.md` lists all of them citation-ordered with URLs,",
+        "   so stopping early still captures most of the loss.",
+        "",
+        "Do **not** claim the second page as well — their docs prohibit holding two",
+        "claims, and it makes the split harder to undo later. If you want to chase",
+        "support again, the durable argument is the ORCID: quote it and ask them to",
+        "merge on that basis.",
+        "",
+        "### 3. Create a Wikidata item",
+        "",
+        "**Is this an acceptable use?** Yes. Wikidata's notability policy is not",
+        "Wikipedia's: criterion 2 admits any *clearly identifiable entity describable",
+        "with serious, publicly available references*, and criterion 3 admits items that",
+        "*fulfil a structural need* — which is exactly what an author item with an ORCID",
+        "and published papers is. Hundreds of thousands of researcher items exist,",
+        "mostly auto-created from ORCID and Crossref. Unlike Wikipedia there is no",
+        "prohibition on creating an item about yourself; the requirement is accuracy,",
+        "not distance. `build/wikidata.qs` therefore contains identifiers and",
+        "affiliations only — no claims about importance, nothing unsourced.",
+        "",
+        "**What I need from you:** a logged-in Wikidata account. Then:",
+        "",
+        "1. Log in at <https://www.wikidata.org>.",
+        "2. Open <https://quickstatements.toolforge.org/#/batch>, authorise it once.",
+        "3. Paste `build/wikidata.qs`, run it, and copy the new Q-number.",
+        "4. Put that Q-number in `config.yaml` → `ids.wikidata` and redeploy; it then",
+        "   appears in the site's `sameAs` array.",
+        "",
+        "**Why it is not automatic:** Wikidata writes require an authenticated account,",
+        "and an unattended bot account needs community approval. Creating an item about",
+        "yourself should also be a decision you make knowingly rather than one a script",
+        "makes for you.",
+        "",
+        f"### 4. OpenAlex — {len(ids.get('openalex_duplicates') or [])} duplicate profiles",
+        "",
+        "Lowest priority: the duplicates hold a handful of works between them against",
+        "140+ on the main profile, so this is tidying.",
+        "",
+        "**Preferred route: do nothing here and fix ORCID.** OpenAlex disambiguation is",
+        "ORCID-driven and they are currently running ORCID-based merges of split",
+        "profiles, so this may resolve itself.",
+        "",
+        "**If you want it now:** the *Fixing Author Profiles* form linked from",
+        "<https://help.openalex.org/hc/en-us/articles/27714298573719-Fix-errors-in-OpenAlex>",
+        "can merge profiles, set the display name, and remove wrong works.",
+        "`build/openalex_merge.md` has the exact profile IDs to paste.",
+        "`support@openalex.org` is the fallback.",
+        "",
+    ]
     missing_jr = top(lambda p: p.get("arxiv") and not p.get("arxiv_journal_ref"), 12)
     if missing_jr:
         lines += [f"## arXiv journal-ref missing ({sum(1 for p in papers if p.get('arxiv') and not p.get('arxiv_journal_ref'))} papers)",
@@ -117,14 +208,28 @@ def step_worklist(cfg, args) -> None:
     no_hf = top(lambda p: p.get("arxiv") and p.get("hf_indexed") is False, 10)
     if no_hf:
         lines += [f"## Hugging Face paper page missing ({sum(1 for p in papers if p.get('hf_indexed') is False and p.get('arxiv'))})",
-                  "", "Visit the URL once to index it, then claim authorship.", ""]
+                  "",
+                  "Reflects the last `collect.py` run -- re-run it before working this",
+                  "list or you will redo what you already did.",
+                  "",
+                  "`python scripts/hf_papers.py` writes a clickable list to",
+                  "`build/hf_worklist.html`. An unauthenticated visit creates nothing",
+                  "(verified: 0 of 50), so log in to Hugging Face first, then click",
+                  "through. Afterwards: `python scripts/hf_papers.py --verify`.",
+                  ""]
         for p in no_hf:
             lines.append(f"- [ ] <https://hf.co/papers/{p['arxiv']}>  ({p.get('citations') or 0} cites)")
         lines.append("")
 
     unclaimed = top(lambda p: p.get("hf_indexed") and not p.get("hf_claimed_by_me"), 10)
     if unclaimed:
-        lines += [f"## Hugging Face page indexed but not claimed by you ({sum(1 for p in papers if p.get('hf_indexed') and not p.get('hf_claimed_by_me'))})", ""]
+        lines += [f"## Hugging Face page indexed but not claimed by you ({sum(1 for p in papers if p.get('hf_indexed') and not p.get('hf_claimed_by_me'))})",
+                  "",
+                  "Claims need admin approval, so a request you have already submitted",
+                  "still shows here until it is validated -- your name will have no",
+                  "linked user until then. Re-run `collect.py` before assuming one",
+                  "failed.",
+                  ""]
         for p in unclaimed:
             lines.append(f"- [ ] <https://hf.co/papers/{p['arxiv']}>  ({p.get('citations') or 0} cites)")
         lines.append("")

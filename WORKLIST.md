@@ -3,35 +3,133 @@
 Regenerate with `python update.py`. Ordered by leverage.
 
 ## Once-only identity fixes
-- [ ] **Merge the 2 Semantic Scholar author records** into 41019330. Claim the primary, then email support to merge the others; do not claim two pages. Splits author-level retrieval across every S2-backed tool.
-- [ ] **Create a Wikidata item** (no notability bar) and put the QID in `config.yaml` -> `ids.wikidata`. Feeds Google's Knowledge Graph and gives every JSON-LD `sameAs` a real target.
-- [ ] **Populate ORCID 0000-0002-0085-6496** via the Crossref + DataCite Search & Link wizards and enable standing auto-update.
-- [ ] **Merge 4 duplicate OpenAlex author records** into A5040286212.
+
+Run `python scripts/identity_tasks.py` first -- it writes the payload for each
+of these into `build/`. Every one is blocked on a logged-in account, not on
+knowing what to do.
+
+### 1. Populate ORCID  — do this one first
+
+`0000-0002-0085-6496` currently lists **0 works**. This is the highest-leverage
+item on the page, because it is also the lever for the other three: Semantic
+Scholar's disambiguation uses ORCID, and OpenAlex is actively running
+ORCID-driven merges of split profiles. Fixing ORCID makes both of those more
+likely to fix themselves, and keeps them fixed.
+
+Order matters, and the docs are easy to misread:
+
+1. **Turn on auto-update** — <https://orcid.org/my-orcid> → *Works* → the
+   Crossref and DataCite entries under **Search & link**, and grant standing
+   permission. This only covers works whose deposited metadata already
+   contains your iD, so it fixes the future, not the backlog. arXiv DOIs are
+   DataCite; published DOIs are Crossref — you want both.
+2. **Search & link for the backlog** — same menu, *Crossref Metadata Search*
+   and *DataCite*, then Scopus and DBLP if they find anything the first two
+   missed. This is the route that produces registry-sourced works, which are
+   trusted more than self-asserted ones.
+3. **Only for whatever is left**, import `build/orcid_import.bib` via *Add*
+   *works → Add BibTeX*. Last resort deliberately: works you add yourself
+   carry your own name as the source, and can duplicate what auto-update
+   later pulls from Crossref for the same paper.
+
+`build/orcid_dois.txt` has the 101 DOIs,
+citation-ordered, if you would rather paste them one at a time.
+
+I cannot do this for you: writing to an ORCID record needs an OAuth token with
+`/activities/update` scope, which only you can grant. The public API is
+read-only.
+
+### 2. Semantic Scholar — 46 papers on the wrong record
+
+Claimed: <https://www.semanticscholar.org/author/41019330>  
+Secondary: <https://www.semanticscholar.org/author/2283849613>
+
+**Do we have to?** It is the single biggest retrieval loss on this page: every
+Semantic-Scholar-backed tool — Elicit, Consensus, SciSpace, most literature
+agents — resolves an author to one page, so each of them currently sees about
+half your corpus and ranks both halves lower.
+
+**Is there a way, given support ignored you?** Yes, and it does not need them.
+There is no self-service *merge*, but a claimed page can pull papers across:
+
+1. Open the claimed page → **Edit Author Page** → **Add Papers**.
+2. Paste the paper's S2 URL, select it, choose *the author is correct, but the*
+   *paper is missing from my author page*, Submit. ~24h to appear.
+3. Repeat. `build/s2_merge.md` lists all of them citation-ordered with URLs,
+   so stopping early still captures most of the loss.
+
+Do **not** claim the second page as well — their docs prohibit holding two
+claims, and it makes the split harder to undo later. If you want to chase
+support again, the durable argument is the ORCID: quote it and ask them to
+merge on that basis.
+
+### 3. Create a Wikidata item
+
+**Is this an acceptable use?** Yes. Wikidata's notability policy is not
+Wikipedia's: criterion 2 admits any *clearly identifiable entity describable
+with serious, publicly available references*, and criterion 3 admits items that
+*fulfil a structural need* — which is exactly what an author item with an ORCID
+and published papers is. Hundreds of thousands of researcher items exist,
+mostly auto-created from ORCID and Crossref. Unlike Wikipedia there is no
+prohibition on creating an item about yourself; the requirement is accuracy,
+not distance. `build/wikidata.qs` therefore contains identifiers and
+affiliations only — no claims about importance, nothing unsourced.
+
+**What I need from you:** a logged-in Wikidata account. Then:
+
+1. Log in at <https://www.wikidata.org>.
+2. Open <https://quickstatements.toolforge.org/#/batch>, authorise it once.
+3. Paste `build/wikidata.qs`, run it, and copy the new Q-number.
+4. Put that Q-number in `config.yaml` → `ids.wikidata` and redeploy; it then
+   appears in the site's `sameAs` array.
+
+**Why it is not automatic:** Wikidata writes require an authenticated account,
+and an unattended bot account needs community approval. Creating an item about
+yourself should also be a decision you make knowingly rather than one a script
+makes for you.
+
+### 4. OpenAlex — 4 duplicate profiles
+
+Lowest priority: the duplicates hold a handful of works between them against
+140+ on the main profile, so this is tidying.
+
+**Preferred route: do nothing here and fix ORCID.** OpenAlex disambiguation is
+ORCID-driven and they are currently running ORCID-based merges of split
+profiles, so this may resolve itself.
+
+**If you want it now:** the *Fixing Author Profiles* form linked from
+<https://help.openalex.org/hc/en-us/articles/27714298573719-Fix-errors-in-OpenAlex>
+can merge profiles, set the display name, and remove wrong works.
+`build/openalex_merge.md` has the exact profile IDs to paste.
+`support@openalex.org` is the fallback.
 
 ## arXiv journal-ref missing (103 papers)
 
 Scholar matches citations and merges preprint/published versions on exactly these fields. No write API -- one web form each, so do them by citation count.
 
 - [ ] `2306.01708` (855 cites) -> Advances in Neural Information Processing Systems 36  <https://arxiv.org/abs/2306.01708>
-- [ ] `2402.14992` (276 cites) -> Forty-first International Conference on Machine Lear  <https://arxiv.org/abs/2402.14992>
+- [ ] `2402.14992` (279 cites) -> Forty-first International Conference on Machine Lear  <https://arxiv.org/abs/2402.14992>
 - [ ] `2412.03304` (181 cites) -> Proceedings of the 63rd Annual Meeting of the Associ  <https://arxiv.org/abs/2412.03304>
 - [ ] `2104.08202` (167 cites) -> CoRR  <https://arxiv.org/abs/2104.08202>
 - [ ] `1907.01752` (127 cites) -> 8th International Conference on Learning Representat  <https://arxiv.org/abs/1907.01752>
 - [ ] `2204.03044` (120 cites) -> ArXiv  <https://arxiv.org/abs/2204.03044>
 - [ ] `2211.05655` (119 cites) -> Proceedings of the 61st Annual Meeting of the Associ  <https://arxiv.org/abs/2211.05655>
 - [ ] `2410.19735` (111 cites) -> International Conference on Learning Representations  <https://arxiv.org/abs/2410.19735>
-- [ ] `2507.16806` (97 cites) -> The Fourteenth International Conference on Learning   <https://arxiv.org/abs/2507.16806>
+- [ ] `2507.16806` (98 cites) -> The Fourteenth International Conference on Learning   <https://arxiv.org/abs/2507.16806>
 - [ ] `2402.16842` (90 cites) -> Forty-first International Conference on Machine Lear  <https://arxiv.org/abs/2402.16842>
 - [ ] `2405.17202` (83 cites) -> The Thirty-eighth Annual Conference on Neural Inform  <https://arxiv.org/abs/2405.17202>
 - [ ] `2301.11796` (82 cites) -> CoRR  <https://arxiv.org/abs/2301.11796>
 
-## Hugging Face paper page missing (50)
+## Hugging Face paper page missing (47)
 
-Visit the URL once to index it, then claim authorship.
+Reflects the last `collect.py` run -- re-run it before working this
+list or you will redo what you already did.
 
-- [ ] <https://hf.co/papers/2504.08165>  (232 cites)
-- [ ] <https://hf.co/papers/1907.01752>  (127 cites)
-- [ ] <https://hf.co/papers/2211.05655>  (119 cites)
+`python scripts/hf_papers.py` writes a clickable list to
+`build/hf_worklist.html`. An unauthenticated visit creates nothing
+(verified: 0 of 50), so log in to Hugging Face first, then click
+through. Afterwards: `python scripts/hf_papers.py --verify`.
+
 - [ ] <https://hf.co/papers/2410.19735>  (111 cites)
 - [ ] <https://hf.co/papers/1907.08971>  (77 cites)
 - [ ] <https://hf.co/papers/2302.04863>  (71 cites)
@@ -39,25 +137,33 @@ Visit the URL once to index it, then claim authorship.
 - [ ] <https://hf.co/papers/1804.04012>  (70 cites)
 - [ ] <https://hf.co/papers/2109.06096>  (41 cites)
 - [ ] <https://hf.co/papers/1903.02953>  (38 cites)
+- [ ] <https://hf.co/papers/1804.11254>  (38 cites)
+- [ ] <https://hf.co/papers/1804.03824>  (36 cites)
+- [ ] <https://hf.co/papers/1804.11225>  (35 cites)
 
-## Hugging Face page indexed but not claimed by you (24)
+## Hugging Face page indexed but not claimed by you (27)
 
-- [ ] <https://hf.co/papers/2507.16806>  (97 cites)
+Claims need admin approval, so a request you have already submitted
+still shows here until it is validated -- your name will have no
+linked user until then. Re-run `collect.py` before assuming one
+failed.
+
+- [ ] <https://hf.co/papers/2504.08165>  (232 cites)
+- [ ] <https://hf.co/papers/1907.01752>  (127 cites)
+- [ ] <https://hf.co/papers/2211.05655>  (119 cites)
+- [ ] <https://hf.co/papers/2507.16806>  (98 cites)
 - [ ] <https://hf.co/papers/2412.05149>  (62 cites)
 - [ ] <https://hf.co/papers/2404.00459>  (46 cites)
 - [ ] <https://hf.co/papers/2502.10645>  (33 cites)
 - [ ] <https://hf.co/papers/2412.06540>  (26 cites)
 - [ ] <https://hf.co/papers/2410.11840>  (22 cites)
 - [ ] <https://hf.co/papers/2503.01622>  (21 cites)
-- [ ] <https://hf.co/papers/2410.10783>  (18 cites)
-- [ ] <https://hf.co/papers/2010.09459>  (15 cites)
-- [ ] <https://hf.co/papers/2510.24081>  (10 cites)
 
 ## Sidecars not written (134/135)
 
 The one input no tool can supply: claims, scope conditions, terminology, common misreadings. ~10 min each; do them by citation count.
 
-- [ ] `data/sidecars/tinybenchmarks-evaluating-llms-with-fewer-examples.md`  (276 cites) tinyBenchmarks: evaluating LLMs with fewer examples
+- [ ] `data/sidecars/tinybenchmarks-evaluating-llms-with-fewer-examples.md`  (279 cites) tinyBenchmarks: evaluating LLMs with fewer examples
 - [ ] `data/sidecars/active-learning-for-bert-an-empirical-study.md`  (244 cites) Active Learning for {BERT:} An Empirical Study
 - [ ] `data/sidecars/findings-of-the-b-aby-lm-challenge-sample-efficient-pretrain.md`  (232 cites) Findings of the {B}aby{LM} Challenge: Sample-Efficient P
 - [ ] `data/sidecars/global-mmlu-understanding-and-addressing-cultural-and-lingui.md`  (181 cites) Global {MMLU}: Understanding and Addressing Cultural and
