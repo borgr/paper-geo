@@ -76,6 +76,7 @@
           "pattern": "^\\d{4}\\.\\d{4,5}$"
         },
         "doi": {
+          "description": "Only a DOI a source actually asserted. The arXiv DataCite DOI is derivable from arxiv and so is filled in at the point of use by common.paper_doi(), not stored here, where it could shadow a publisher DOI registered later.",
           "type": [
             "string",
             "null"

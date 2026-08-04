@@ -40,25 +40,35 @@ themselves — and keeps them fixed after future re-clustering.
       <https://arxiv.org/user/confirm_orcid_id>. Two payoffs: it puts your iD into
       arXiv's DataCite metadata, which is what makes DataCite auto-update fire on
       future preprints, and it creates the public author page in item 2.
-- [ ] **Fill the backlog.** Three routes, in order of how well they work:
-      1. *Add DOI* (**most reliable**) — resolves server-side against
-         Crossref/DataCite and creates a properly-sourced work. One at a time;
-         `tasks/orcid_dois.txt` is citation-ordered so stopping early still helps.
-      2. *Search & link → Crossref Metadata Search* — the standard route, but the
-         wizard is genuinely flaky and can hang. If it does, don't fight it.
-      3. *Add works → Add BibTeX*, using `tasks/orcid_import.bib`. ORCID **groups
-         works that share an identifier**, so a DOI-bearing entry merges with the
-         registry copy when auto-update later finds it rather than showing as a
-         duplicate. The file is split: DOI-bearing entries first (safe), then the
-         handful without a DOI (nothing to group on — those can stand alone).
+- [ ] **Fill the backlog in ONE upload.** *Works → + Add → Add BibTeX* →
+      `tasks/orcid_import.bib`. Do not work through the DOI form 100 times.
+
+      The standard advice prefers *Add DOI* because self-asserted BibTeX works are
+      lower-trust and can duplicate what auto-update later adds. That objection is
+      real but **narrow: it only applies to entries with no identifier**, because
+      ORCID *groups works that share one*. So the generated file removes the failure
+      mode instead of accepting it — every entry that can carry a DOI now does, with
+      missing ones filled from arXiv's own DataCite DOI (`10.48550/arXiv.<id>`, which
+      arXiv registers for **every** paper, back to the oldest ids). DOI-bearing
+      entries come first; the handful with no identifier anywhere are last, and
+      those are the only ones worth importing by hand or skipping.
+- [ ] `tasks/orcid_dois.txt` is the same works one at a time. Keep it for spot-fixing
+      a single record; it is not the bulk route.
+- [ ] *Search & link → Crossref Metadata Search* — the wizard everyone recommends. It
+      is genuinely flaky and can hang. If it does, don't fight it; the upload above
+      already covers the same works.
 - [ ] **Fill the profile fields that are actually facets**, not decoration:
       - *Also known as* — every form your name appears in. This is what a
         disambiguation model matches when a citation uses a variant.
-      - *Websites & social links* — your **canonical URL**, and nothing that
-        competes with it. If an old site-builder page is listed here, replace it: it
-        competes for the same identity, and Wix/Squarespace/Notion pages are
-        JS-rendered, so AI crawlers that don't run JavaScript see an empty document.
-      - *Keywords* — 5–10 phrases someone would actually type. Not coined names.
+      - *Websites & social links* — the **canonical URL must be present**. A second
+        personal page (a site builder, a lab page) is not a problem *because it
+        exists* — it's a problem when the canonical one is missing and the two are
+        never declared to be the same person. List both, canonical first, and make
+        sure each site links to the other. See §5.
+      - *Keywords* — 5–10 phrases someone would actually type. Not coined names, and
+        not single words: `model merging` is a query, `merging` isn't. Derive them
+        from what you actually publish on rather than what you'd like to be known
+        for — the point is matching real queries, not positioning.
       - *Employment* and *Education* — what powers institutional disambiguation.
 - [ ] Put your iD in your email signature and on every paper you submit. That's the
       mechanism that makes auto-update work without you.
@@ -96,13 +106,23 @@ corpus, because it defaults to whoever pressed submit.
       comes first.
 - [ ] **Share the paper password with all co-authors** on your own future
       submissions. Costs nothing, and saves each of them the claim form.
-- [ ] **Check the HTML rendering.** arXiv renders LaTeX submissions to HTML and is
-      backfilling the older corpus; where it exists it's linked under the PDF on the
-      abstract page. HTML is what a crawler that doesn't parse PDFs can read. You can
-      preview it during submission — worth a look, since unsupported LaTeX packages
-      are what break conversion. For older papers with no HTML, ar5iv
-      (`ar5iv.org/abs/<id>`) is the community fallback, and this tool links it
-      automatically.
+- [ ] **HTML rendering: mostly not actionable, and worth knowing why so you don't
+      spend time on it.** arXiv renders LaTeX to HTML for submissions from late 2023
+      on and is *gradually backfilling* the older corpus, so a paper without HTML
+      today may get it later. But there is **no author-facing way to request it** —
+      no form, no button. The only thing that reliably produces HTML is a submission
+      whose LaTeX converts, which means:
+      - **Don't post a new version just to get HTML.** Extra versions fragment
+        citation matching, and that costs more than the HTML gains. If you're posting
+        a v2 anyway (camera-ready, corrections), preview the HTML while you're there.
+      - **Future submissions:** follow arXiv's LaTeX best-practice guide and preview
+        the conversion at submission — unsupported packages are what break it. This is
+        the only point where you have real leverage.
+      - **Existing HTML that renders badly** can be reported in-page (the *Open
+        Issue* button, or `Ctrl+?`). That's a genuine fix, unlike requesting new HTML.
+      - **Papers with no HTML:** ar5iv (`ar5iv.org/abs/<id>`) is the community
+        fallback and this tool already links it automatically on every such paper, so
+        the crawler-readable version exists whether or not arXiv gets there.
 - [ ] **Pick the license deliberately on new submissions.** arXiv's default
       perpetual non-exclusive license grants distribution rights to arXiv and
       *limits re-use by anyone else*; CC BY permits redistribution and derivative
@@ -119,17 +139,33 @@ corpus, because it defaults to whoever pressed submit.
       paper is missing from my author page"*. `tasks/s2_merge.md` lists them
       citation-ordered. Support can merge for you, but quote your ORCID — that's the
       argument they can act on mechanically.
-- [ ] **Google Scholar:** profile public, verified institutional email, photo,
-      correct affiliation, homepage = your canonical URL. Merge duplicate entries and
-      add missing articles by hand. Fill the five *interests* — they're a real facet,
-      linked and searchable, and they drive "related authors".
+- [ ] **Google Scholar** — five concrete things, in order of payoff:
+      1. **The five *interests*.** These are links, not tags: each one is a browsable
+         Scholar page and they drive "related authors". Empty is the common state and
+         a pure loss. Use the top five of `identity.keywords`.
+      2. **Profile public** (it defaults to private) and email verified against the
+         institutional domain — that's what makes the profile authoritative for the
+         name.
+      3. **Merge duplicate entries.** Select the duplicates → *Merge*. Scholar splits
+         preprint and published records when the journal-ref is missing, which is the
+         same root cause as the arXiv work in §2 — fix it there and fewer appear here.
+      4. **Homepage = the canonical URL**, and affiliation matching ORCID's employment.
+      5. Turn on *email alerts for new citations* — not visibility, but it's how you
+         notice a mis-attributed paper early, while it's still one record.
 - [ ] **OpenAlex:** check for split profiles. Prefer fixing ORCID over filing
       anything — see item 6.
 - [ ] **dblp:** check your author page isn't split across name variants, and that
       no one else's work is on it. Corrections take 8+ weeks, so file early.
-- [ ] **OpenReview:** fill the ORCID, DBLP and homepage fields, and list name
-      variants. It's where submissions and reviews live in ML, and its profile data
-      propagates into venue metadata.
+- [ ] **OpenReview:** it looks complete because submissions populate it, but the
+      fields that matter for identity are the ones *you* type and nothing fills:
+      ORCID, DBLP, Semantic Scholar, GitHub, homepage, and **every name variant plus
+      every past email**. Those emails are what merge your duplicate `~Name1` /
+      `~Name2` profiles, which is the failure mode here — check for a second profile
+      under an old institutional address. Also confirm *Expertise* is filled, and that
+      the affiliation history has no gaps (it's used for conflict-of-interest, so gaps
+      cause real problems beyond retrieval). The API is behind a bot challenge, so
+      this one can't be audited from here — check it by hand at
+      <https://openreview.net/profile>.
 - [ ] **ACL Anthology** (or your field's equivalent): confirm your person page
       exists and is not duplicated.
 
@@ -151,6 +187,12 @@ requirement is accuracy, not distance.
 - [ ] *Not* QuickStatements, at least not at first: it requires an **autoconfirmed**
       account (4 days old, 50 edits) and fails with an authorisation error rather
       than telling you why. `tasks/wikidata.qs` is there for when you qualify.
+- [ ] **Getting to 50 edits is not a chore you do separately.** The follow-up below
+      *is* the 50 edits: reassigning your papers from author-name-string to author
+      link is one edit per paper, and you have well over 50 papers. So the order is
+      create the item by hand → work Author Disambiguator → you are autoconfirmed as
+      a side effect, with QuickStatements available for any future batch. Nothing
+      needs to be padded, and no make-work edits — those are frowned on anyway.
 - [ ] Record the new Q-number in `config.yaml` → `ids.wikidata` and rebuild, so it
       lands in the site's `sameAs` array.
 - [ ] **Follow-up worth doing:** some of your papers probably already exist as
@@ -159,16 +201,37 @@ requirement is accuracy, not distance.
       pointing at your Q-number is what turns an isolated item into a hub that
       resolves. <https://author-disambiguator.toolforge.org> does it in bulk.
 
-## 5. One canonical URL, and make it machine-readable
+## 5. One canonical URL — and what to do with the page humans actually visit
 
-- [ ] Pick one URL and never change it. Static hosting beats a site builder here:
-      AI crawlers largely don't execute JavaScript, so a JS-rendered page can rank
-      fine in Google and be **empty** to Claude or Perplexity.
-- [ ] Put that exact string in ORCID, Semantic Scholar, Google Scholar, arXiv,
-      GitHub, OpenReview, LinkedIn, and every JSON-LD `sameAs`. Same string
-      everywhere — this is what lets engines fuse the identity.
-- [ ] **Retire or redirect the old ones.** A second personal page is not extra
-      coverage, it's a second candidate identity for the same person.
+The canonical URL is the **machine anchor**: the string that goes in every identity
+field so engines fuse the profiles. That is a different job from *where you send
+humans*, and conflating the two is what makes this question feel unanswerable.
+
+- [ ] **Pick the machine anchor on stability, not content.** It must be a URL you
+      will never change, on hosting that serves real HTML. A site builder loses on
+      both counts — not because it's bad, but because "might be replaced one day" is
+      disqualifying for a string you're about to write into a dozen registries.
+- [ ] **Keep the human site.** A second page is not a penalty. It becomes one only
+      while nothing declares the two to be the same person, because then an engine
+      has two candidate homepages and no basis to merge them.
+- [ ] **Declare the link, in both directions.** List the human site in `sameAs`
+      (`identity.other_pages` in `config.yaml` does this automatically) and in ORCID
+      *Websites & social links* next to the canonical URL. Then add a plain
+      `<a href>` from the human site back to the canonical one. Two links and the
+      competition stops.
+- [ ] **Check what a crawler actually sees on the site-builder page** before assuming
+      it carries your content. Fetch it with JavaScript disabled and count the text.
+      The failure is worse than "fewer words": nav items are frequently rendered as
+      *unlinked text*, so a crawler cannot even discover the Publications page —
+      there are no `href`s to follow, and the content is unreachable rather than
+      merely thin.
+- [ ] **Worth ~$10/year:** a domain you own, pointed at the static site. It makes the
+      canonical URL survive every future platform change, and it's also the
+      prerequisite for crawler logs (see the measurement section) — a
+      `*.github.io` subdomain can't be put behind a CDN, so you can't see who
+      fetched it.
+- [ ] Put the canonical string in ORCID, Semantic Scholar, Google Scholar, arXiv,
+      GitHub, OpenReview, LinkedIn, and every JSON-LD `sameAs`. Identical each time.
 - [ ] `Person` JSON-LD with `sameAs` listing every profile. Check for placeholder
       values; a stub site with `you@example.com` in its structured data is asserting
       something false.
@@ -198,10 +261,26 @@ requirement is accuracy, not distance.
 - [ ] The paper's arXiv link in the repo README — Hugging Face extracts the id and
       cross-lists the repo on the paper page automatically.
 - [ ] **Zenodo ↔ GitHub**, for repos that are a research artifact rather than
-      scratch: switch the repo on in Zenodo, cut a release, and every future release
-      gets a DOI plus a concept DOI covering all versions. That makes the code a
-      citable object with DataCite metadata — so it enters OpenAlex and can accrue
-      citations of its own, instead of being an untracked URL in a footnote.
+      scratch. This turns code into a citable object with DataCite metadata, so it
+      enters OpenAlex and can accrue citations of its own instead of being an
+      untracked URL in a footnote. Exact steps, because the ordering trips people:
+      1. Sign in to <https://zenodo.org> **with GitHub** (that's what creates the
+         link; a separate Zenodo account won't see your repos).
+      2. <https://zenodo.org/account/settings/github/> → find the repo → flip the
+         switch **on**. Nothing is archived yet; the switch installs a webhook.
+      3. **Then** cut a GitHub release (`Releases → Draft a new release`, tag it,
+         publish). The webhook only fires on releases created *after* the switch —
+         existing tags are not picked up, which is the step people miss.
+      4. Zenodo mints **two** DOIs: one for that release, and a **concept DOI** that
+         always resolves to the newest version. Cite the concept DOI in the paper and
+         README; cite the version DOI when reproducibility depends on exact code.
+      5. Add the concept DOI to `CITATION.cff` (`doi:`) and put Zenodo's badge in the
+         README. GitHub then renders "Cite this repository" with the DOI in it.
+      6. Fix the Zenodo record's metadata once — authors with ORCIDs, license, and the
+         **related identifier** `is supplement to` → your paper's DOI. That last field
+         is what joins code and paper in DataCite, and it does not fill itself in.
+      - Skip this for scratch repos. A DOI on abandoned code is noise, and every
+        record is permanent.
 - [ ] Hugging Face: claim your account, then index and claim a paper page per arXiv
       paper. **Requires a logged-in browser** — an unauthenticated visit creates
       nothing. `tasks/hf_worklist.md`, regenerated live by `audit_identity.py`.
@@ -225,14 +304,42 @@ You can't measure citations caused (see [MEASURE.md](MEASURE.md) for why, at thi
 sample size). You *can* measure the two stages before that, which is where the
 failures actually are:
 
-- [ ] **Google Search Console** and **Bing Webmaster Tools** — verify the site,
-      submit the sitemap. Both then tell you whether pages are crawled and indexed
-      at all, which is the difference between "nobody asks" and "nobody can see it".
-      Bing matters beyond Bing: several answer engines read its index.
-- [ ] **Crawler logs.** GitHub Pages gives you none. Putting the site behind
-      Cloudflare's free tier gets you per-user-agent request logs — the only direct
-      evidence of whether `GPTBot`, `ClaudeBot` and `PerplexityBot` fetch your pages,
-      and the fastest way to catch a WAF rule quietly blocking them.
+**Works today, no domain needed:**
+
+- [ ] **Google Search Console** — verify by adding the HTML-tag or file to the site
+      (works fine on `*.github.io`), submit `sitemap.xml`. Then *Pages* tells you
+      crawled-vs-indexed per URL, and *Performance* gives real queries that surfaced
+      your pages. This is the difference between "nobody asks" and "nobody can see
+      it", and they are opposite problems.
+- [ ] **Bing Webmaster Tools** — same, and it matters beyond Bing: several answer
+      engines read Bing's index, so a page missing here is missing from them too. It
+      can import the Search Console verification, so this is two minutes.
+- [ ] **Analytics won't answer this.** Google Analytics, Plausible, Cloudflare Web
+      Analytics are all JavaScript beacons, and the crawlers you care about don't run
+      JavaScript — so they are invisible in exactly the tool you'd reach for. Same
+      trap for a tracking-pixel image: most AI crawlers fetch the HTML and no
+      subresources, so the pixel never loads and the log stays empty. **An empty log
+      would read as "no crawlers came" when it means "the method can't see them".**
+
+**Needs a custom domain (~$10/year), and this is the only way to get real crawler
+evidence:**
+
+- [ ] **Server-side request logs, via a CDN in front of the site.** GitHub Pages
+      exposes no logs, and you **cannot** put a `*.github.io` subdomain behind
+      Cloudflare — proxying requires controlling the domain's nameservers. So the
+      sequence is: buy a domain → point it at GitHub Pages (custom domain in repo
+      settings) → move DNS to Cloudflare's free plan → proxy on.
+- [ ] What you get for that: Cloudflare's free tier includes **AI Crawl Control**
+      (formerly AI Audit), a per-crawler view of which AI services fetched which
+      paths. That is direct evidence `GPTBot` / `ClaudeBot` / `PerplexityBot` /
+      `OAI-SearchBot` reached your pages — plus the fastest way to catch a firewall
+      rule silently blocking them, which is the common silent failure and is
+      undetectable from outside.
+- [ ] The domain pays for itself twice: it also makes the canonical URL survive any
+      future hosting change (§5), which a platform subdomain does not.
+
+**Local, every run:**
+
 - [ ] `python measure/check_structure.py` for our own artifacts, and
       `python scripts/audit_identity.py` for the external ones.
 

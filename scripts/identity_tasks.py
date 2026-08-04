@@ -26,7 +26,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import DATA, ROOT, load_config, read_yaml  # noqa: E402
+from common import DATA, ROOT, load_config, paper_doi, read_yaml  # noqa: E402
 
 TASKS = os.path.join(ROOT, "tasks")
 
@@ -43,45 +43,73 @@ EMPLOYER_Q = {"MIT-IBM Watson AI Lab": Q["MIT"], "IBM Research": Q["IBM Research
               "Weizmann Institute of Science": Q["Weizmann Institute of Science"]}
 
 
+_HAS_DOI = re.compile(r"(?im)^\s*doi\s*=")
+_ENTRY_HEAD = re.compile(r"^(\s*@\w+\s*\{[^,]*,)")
+
+
+def _with_doi_field(entry: str, doi: str) -> str:
+    """Insert `doi = {...}` into a BibTeX entry that lacks one.
+
+    This is the difference between a safe bulk import and a duplicating one, and it
+    is invisible from the metadata: 40 of these entries had a DOI in *our* record and
+    no `doi` field in the *entry text*, so the earlier version of this file labelled
+    them "safe to import, groups by identifier" while handing ORCID nothing to group
+    on. ORCID reads the entry, not our YAML.
+    """
+    if not doi or _HAS_DOI.search(entry):
+        return entry
+    m = _ENTRY_HEAD.match(entry)
+    if not m:
+        return entry
+    return entry[:m.end()] + f'\n  doi          = {{{doi}}},' + entry[m.end():]
+
+
 def orcid_files(cfg, papers) -> tuple[str, str, int]:
     """BibTeX + DOI list for populating ORCID.
 
-    Order matters and the docs are easy to misread: auto-update only covers works
-    whose *deposited metadata already contains your iD*, so it fixes the future,
-    not the backlog. Search & Link fills the backlog from the registries. A BibTeX
-    import is the last resort, because works sourced from you personally are lower
-    trust than Crossref/DataCite-sourced ones and can duplicate what auto-update
-    later adds. Hence: auto-update first, wizards second, this file third.
+    The BibTeX file is the *primary* route, not the fallback it was written as: it is
+    one upload for the whole backlog against one form submission per paper. The usual
+    warning against it -- that self-asserted works are lower trust and duplicate what
+    auto-update later adds -- only bites for entries with no identifier, because ORCID
+    groups works that share one. So the fix is to make sure every entry carries a DOI
+    (see _with_doi_field), after which the objection mostly evaporates.
+
+    Auto-update still comes first in time, but it only covers works whose *deposited
+    metadata already contains your iD* -- it fixes the future, not the backlog.
     """
-    # ORCID groups works that share an identifier, so a BibTeX entry carrying a
-    # DOI merges with the Crossref-sourced version when auto-update later finds it,
-    # rather than showing as a duplicate. Entries WITHOUT a DOI have nothing to
-    # group on, so those are the only genuinely risky ones -- sorted last, and
-    # counted separately so you can stop before them.
-    with_doi = [p for p in papers if p.get("bibtex") and p.get("doi")]
-    without = [p for p in papers if p.get("bibtex") and not p.get("doi")]
-    with_doi.sort(key=lambda p: -(p.get("citations") or 0))
-    without.sort(key=lambda p: -(p.get("citations") or 0))
-    entries = ([f"% ---- {len(with_doi)} entries WITH a DOI: safe to import, ORCID "
-                f"groups them with the registry copy by identifier ----"]
-               + [p["bibtex"] for p in with_doi]
-               + [f"% ---- {len(without)} entries WITHOUT a DOI: nothing for ORCID to "
-                  f"group on, so these can show as standalone duplicates later ----"]
-               + [p["bibtex"] for p in without])
+    have = [p for p in papers if p.get("bibtex")]
+    # Emit the DOI-bearing entries first and count them from the *emitted text*, so
+    # the header cannot claim a grouping guarantee the file does not deliver.
+    prepared = [(p, _with_doi_field(p["bibtex"].strip(), paper_doi(p) or "")) for p in have]
+    prepared.sort(key=lambda t: -(t[0].get("citations") or 0))
+    with_doi = [t for t in prepared if _HAS_DOI.search(t[1])]
+    without = [t for t in prepared if not _HAS_DOI.search(t[1])]
+    entries = ([f"% ---- {len(with_doi)} entries WITH a DOI: safe to import in one go. "
+                f"ORCID groups works by identifier, so each merges with the "
+                f"Crossref/DataCite copy rather than duplicating it. ----",
+                "% Missing DOIs were filled from arXiv (10.48550/arXiv.<id>), which "
+                "arXiv registers for every paper."]
+               + [t[1] for t in with_doi]
+               + [f"% ---- {len(without)} entries WITHOUT any DOI: no identifier to "
+                  f"group on, so these are the only ones that can show as standalone "
+                  f"duplicates later. Import them last, or not at all. ----"]
+               + [t[1] for t in without])
     bib = os.path.join(TASKS, "orcid_import.bib")
     with open(bib, "w") as f:
-        f.write("\n\n".join(e.strip() for e in entries) + "\n")
+        f.write("\n\n".join(entries) + "\n")
 
     dois, seen = [], set()
     for p in sorted(papers, key=lambda p: -(p.get("citations") or 0)):
-        d = (p.get("doi") or "").strip()
+        d = (paper_doi(p) or "").strip()
         if d and d.lower() not in seen:
             seen.add(d.lower())
             dois.append(f"{d}\t{p.get('title_display') or p['title']}")
     doi_path = os.path.join(TASKS, "orcid_dois.txt")
     with open(doi_path, "w") as f:
-        f.write("\n".join(dois) + "\n")
-    return bib, doi_path, len(entries)
+        f.write("# The bulk route is orcid_import.bib -- one upload instead of this\n"
+                "# list one form at a time. Keep this for spot-fixing single works.\n"
+                + "\n".join(dois) + "\n")
+    return bib, doi_path, len(with_doi) + len(without)
 
 
 def wikidata_qs(cfg, papers) -> str:
@@ -309,8 +337,8 @@ def main() -> None:
     s2, n_strays = s2_merge(cfg, papers)
     oa = openalex_merge(cfg)
     print("wrote:")
-    print(f"  {bib}   ({n} entries, for ORCID's BibTeX importer)")
-    print(f"  {dois}   (DOI list, for the Add DOI path -- the reliable one)")
+    print(f"  {bib}   ({n} entries -- ONE upload: Works + Add > Add BibTeX)")
+    print(f"  {dois}   (same works one at a time, for spot-fixing)")
     print(f"  {manual}   (create the Wikidata item by hand -- START HERE)")
     print(f"  {qs}   (same item as a QuickStatements batch; needs an autoconfirmed account)")
     print(f"  {s2}   ({n_strays} papers to pull onto the claimed S2 page)")

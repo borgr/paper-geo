@@ -25,7 +25,8 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import BUILD, DATA, load_config, norm_title, read_yaml, write_yaml  # noqa: E402
+from common import (BUILD, DATA, load_config, norm_title, paper_doi, read_yaml,  # noqa: E402
+                    write_yaml)
 
 # Controlled vocabulary: GitHub topics must be lowercase, dashed, <=50 chars.
 # Matched case-insensitively against repo name + description + README.
@@ -160,8 +161,8 @@ def citation_cff(paper: dict, repo: dict, cfg) -> str:
         lines.append(f'  year: {paper["year"]}')
     if paper.get("venue"):
         lines.append(f'  collection-title: "{paper["venue"][:180].replace(chr(34), chr(39))}"')
-    if paper.get("doi"):
-        lines.append(f'  doi: "{paper["doi"]}"')
+    if paper_doi(paper):
+        lines.append(f'  doi: "{paper_doi(paper)}"')
     if paper.get("arxiv"):
         lines.append(f'  url: "https://arxiv.org/abs/{paper["arxiv"]}"')
     return "\n".join(lines) + "\n"

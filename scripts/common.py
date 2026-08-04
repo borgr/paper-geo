@@ -176,6 +176,25 @@ def arxiv_id(entry: dict) -> str | None:
     return None
 
 
+def paper_doi(p: dict) -> str | None:
+    """The best DOI for a paper, falling back to its arXiv DataCite DOI.
+
+    arXiv registers a DataCite DOI for every paper at 10.48550/arXiv.<id>, including
+    the oldest ids. That matters well beyond tidiness: ORCID *groups* works that share
+    an identifier, so an entry carrying a DOI merges with the registry-sourced copy
+    instead of becoming a second record, and "Add DOI" can only resolve an entry that
+    has one. A paper with no DOI anywhere is the only kind that can duplicate.
+
+    Preference order is publisher DOI, then whatever DOI the author registered with
+    arXiv, then the arXiv DOI itself -- most specific claim first.
+    """
+    if p.get("doi"):
+        return p["doi"]
+    if p.get("arxiv_doi"):
+        return p["arxiv_doi"]
+    return f"10.48550/arXiv.{p['arxiv']}" if p.get("arxiv") else None
+
+
 _MATH = {r"\({}^{\mbox{2}}\)": "\u00b2", r"\({}^{\mbox{3}}\)": "\u00b3",
          r"$^2$": "\u00b2", r"$^3$": "\u00b3", "{ extdollar}": "$"}
 

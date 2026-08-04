@@ -32,16 +32,26 @@ Order matters, and the docs are easy to misread:
    <https://arxiv.org/user/confirm_orcid_id>. This is what puts your iD into
    arXiv's DataCite metadata, which is what makes step 1 work on future
    preprints.
-3. **Fill the backlog.** *Add DOI* is the reliable route: it resolves
-   server-side against Crossref/DataCite and creates a properly-sourced work.
-   `tasks/orcid_dois.txt` has the 101 DOIs,
-   citation-ordered, so stopping early still captures most of the value.
-4. **Or bulk-import** `tasks/orcid_import.bib` via *Add works → Add BibTeX*.
-   Less risky than it first appears: ORCID **groups works that share an
-   identifier**, so a DOI-bearing entry merges with the registry copy when
-   auto-update later finds it rather than showing as a duplicate. The file is
-   split — DOI-bearing entries first, then the few without a DOI, which are
-   the only ones with nothing to group on.
+3. **Fill the backlog in one upload:** *Works → + Add → Add BibTeX* →
+   `tasks/orcid_import.bib`. One action for the whole corpus. The usual
+   warning against BibTeX import — self-asserted works duplicate what
+   auto-update later adds — only applies to entries with **no identifier**,
+   because ORCID *groups works that share one*. So the file is built to remove
+   that failure mode: every entry that can carry a DOI now does, with missing
+   ones filled from arXiv's own DataCite DOI (`10.48550/arXiv.<id>`, which
+   arXiv registers for every paper, back to the oldest). DOI-bearing entries
+   come first, then the handful with no identifier anywhere — import those
+   last, or skip them.
+4. **`tasks/orcid_dois.txt` is the same works one at a time**, for spot-fixing
+   a single record later. Do not work through it by hand; that is 100+ form
+   submissions for what step 3 does in one.
+
+5. **Fill the facet fields**, which are separate from works and take two
+   minutes: *Also known as* (name variants), *Keywords*, and *Websites &
+   social links* — the canonical URL `https://borgr.github.io` must be there,
+   alongside any other personal page rather than instead of it, so the two
+   fuse instead of competing. `tasks/identity_audit.md` lists exactly which of
+   these are still missing, with the keyword list ready to paste.
 
 **If the wizards misbehave, that is expected, not you:** the *Crossref
 Metadata Search* wizard is genuinely flaky and hangs. *Scopus* looks empty
@@ -165,27 +175,7 @@ author on them, so the form will refuse. Claim ownership first (above).
 - [ ] `2405.17202` (83 cites) -> The Thirty-eighth Annual Conference on Neural Inform  <https://arxiv.org/abs/2405.17202>
 - [ ] `2301.11796` (82 cites) -> CoRR  <https://arxiv.org/abs/2301.11796>  **(blocked)**
 
-## Hugging Face paper page missing (35)
-
-Log in to Hugging Face first: an unauthenticated visit creates nothing
-(verified, 0 of 50). Visiting the URL while logged in *is* the action --
-there is no form.
-
-Full list: `tasks/hf_worklist.md`. Clickable, and re-checked live:
-`python scripts/hf_papers.py --live`.
-
-- [ ] <https://hf.co/papers/1906.03897>  (31 cites)
-- [ ] <https://hf.co/papers/2203.10581>  (28 cites)
-- [ ] <https://hf.co/papers/1905.05543>  (25 cites)
-- [ ] <https://hf.co/papers/2010.11032>  (23 cites)
-- [ ] <https://hf.co/papers/2208.01483>  (21 cites)
-- [ ] <https://hf.co/papers/2602.16763>  (20 cites)
-- [ ] <https://hf.co/papers/1909.06814>  (20 cites)
-- [ ] <https://hf.co/papers/2408.10646>  (17 cites)
-- [ ] <https://hf.co/papers/2402.07891>  (16 cites)
-- [ ] <https://hf.co/papers/2104.06400>  (16 cites)
-
-## Hugging Face page indexed but not claimed by you (37)
+## Hugging Face page indexed but not claimed by you (72)
 
 Claims need admin approval, so a request you have already submitted
 still shows here until it is validated -- your name will have no

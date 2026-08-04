@@ -161,8 +161,16 @@ def merge_arxiv(papers: list[dict]) -> None:
     for p in papers:
         if p.get("arxiv"):
             p.update(meta.get(p["arxiv"], {}))
-            # HTML rendering exists for post-2023 submissions only; ar5iv covers the rest.
+            # HTML exists for LaTeX submissions from late 2023 on, and arXiv is
+            # gradually backfilling older ones -- so False means "not yet", not
+            # "never". There is no author-facing way to request it; the only lever is
+            # a submission whose LaTeX converts. ar5iv covers the gap meanwhile.
             p["arxiv_html"] = bool(get(f"https://arxiv.org/html/{p['arxiv']}", retries=1))
+            # Note: the arXiv DataCite DOI (10.48550/arXiv.<id>) is deliberately NOT
+            # written here. Storing it would let it shadow a publisher DOI that shows
+            # up later, and it is derivable from the id anyway -- so it is computed at
+            # the point of use by common.paper_doi(). papers.yaml holds only what a
+            # source actually asserted.
 
 
 def merge_hf(papers: list[dict], cfg) -> None:

@@ -15,6 +15,26 @@ identity:
   # The one URL that goes in ORCID, Semantic Scholar, arXiv, LinkedIn and every
   # JSON-LD sameAs. Pick one and never change it.
   canonical_url: https://borgr.github.io
+  # A second personal page is fine as long as it is declared to be the same person.
+  # Listed in the site's sameAs and in ORCID alongside the canonical URL, so the two
+  # fuse instead of competing as separate candidate homepages.
+  other_pages:
+    - https://ktilana.wixsite.com/leshem-choshen
+  # For ORCID's Keywords field and Google Scholar's five interest slots -- both are
+  # real, linked, searchable facets. Derived from what the corpus is actually about,
+  # ordered by weight in it. Multi-word: `model merging` is a query someone types,
+  # `merging` is not. No coined names -- those are in the papers' own `aliases`.
+  keywords:
+    - natural language processing
+    - evaluation of language models
+    - model merging
+    - benchmark reliability
+    - language model pretraining
+    - human feedback
+    - language acquisition
+    - grammatical error correction
+    - machine translation evaluation
+    - efficient evaluation
   email: leshem.choshen@weizmann.ac.il
   job_title: Postdoctoral Researcher
   affiliations:

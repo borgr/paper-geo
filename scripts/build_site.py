@@ -35,7 +35,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import BUILD, DATA, load_config, read_yaml  # noqa: E402
+from common import BUILD, DATA, load_config, paper_doi, read_yaml  # noqa: E402
 from ownership import write_manifest  # noqa: E402
 
 OUT = os.path.join(BUILD, "site")
@@ -118,6 +118,11 @@ def person_jsonld(cfg) -> dict:
         same.append(f"https://www.linkedin.com/in/{ids['linkedin']}/")
     if ids.get("wikidata"):
         same.append(f"https://www.wikidata.org/wiki/{ids['wikidata']}")
+    # Other personal pages belong here rather than being quietly retired. sameAs is
+    # the assertion "these URLs are the same person", which is what stops a second
+    # homepage being read as a second candidate identity. Omitting it does not make
+    # the page go away; it just leaves the two unlinked.
+    same += list(ident.get("other_pages") or [])
     return {
         "@context": "https://schema.org",
         "@type": "Person",
@@ -160,8 +165,11 @@ def article_jsonld(p: dict, sc: dict, cfg) -> dict:
         d["datePublished"] = str(p["year"])
     if p.get("venue"):
         d["isPartOf"] = {"@type": "Periodical", "name": p.get("venue_display") or p["venue"][:250]}
-    if p.get("doi"):
-        d["identifier"] = f"https://doi.org/{p['doi']}"
+    # paper_doi() rather than p["doi"]: an arXiv-only paper still has a resolvable
+    # DataCite DOI, and identifier is how a consumer joins this page to a record it
+    # already holds.
+    if paper_doi(p):
+        d["identifier"] = f"https://doi.org/{paper_doi(p)}"
     if p.get("abstract"):
         d["abstract"] = p["abstract"]
     if sc.get("one_liner"):
@@ -201,8 +209,8 @@ def highwire(p: dict, cfg) -> str:
         tag = ("citation_conference_title" if p.get("type") == "inproceedings"
                else "citation_journal_title")
         out.append(f'  <meta name="{tag}" content="{E(venue)}">')
-    if p.get("doi"):
-        out.append(f'  <meta name="citation_doi" content="{E(p["doi"])}">')
+    if paper_doi(p):
+        out.append(f'  <meta name="citation_doi" content="{E(paper_doi(p))}">')
     if p.get("arxiv"):
         out.append(f'  <meta name="citation_arxiv_id" content="{E(p["arxiv"])}">')
     if p.get("abstract"):

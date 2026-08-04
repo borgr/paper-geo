@@ -284,6 +284,13 @@ def main() -> None:
     has_canon = any(canon in (u or "").rstrip("/") for u in url_vals)
     missing_variants = [v for v in ident["name_variants"]
                         if v != ident["name"] and v not in orc["other_names"]]
+    # Other personal pages count as satisfied when *listed*, not when removed: a
+    # second page declared to be the same person fuses with the canonical one, and
+    # only an undeclared one competes with it.
+    other_pages = [u for u in (ident.get("other_pages") or [])
+                   if not any(u.rstrip("/") in (v or "").rstrip("/") for v in url_vals)]
+    want_kw = [k for k in (ident.get("keywords") or [])
+               if k.lower() not in {k2.lower() for k2 in orc["keywords"]}]
 
     def status(ok: bool) -> str:
         return "ok" if ok else "**fix**"
@@ -296,7 +303,11 @@ def main() -> None:
          f"| ORCID works (public) | {orc['works']} of {len(papers)} | {status(orc['works'] > 0)} |",
          f"| ORCID canonical URL | {'present' if has_canon else 'absent'} | {status(has_canon)} |",
          f"| ORCID name variants | {len(orc['other_names'])} listed | {status(not missing_variants)} |",
-         f"| ORCID keywords | {len(orc['keywords'])} | {status(bool(orc['keywords']))} |",
+         f"| ORCID keywords | {len(orc['keywords'])} of "
+         f"{len(ident.get('keywords') or [])} | {status(not want_kw)} |",
+         f"| ORCID lists other personal pages | "
+         f"{len((ident.get('other_pages') or [])) - len(other_pages)} of "
+         f"{len(ident.get('other_pages') or [])} | {status(not other_pages)} |",
          f"| ORCID employment/education | {orc['employments']}/{orc['educations']} | {status(orc['employments'] > 0)} |",
          f"| arXiv registered author | {len(reg) if reg is not None else '—'} of {len({p['arxiv'] for p in ax})} | {status(n_gap == 0)} |",
          f"| Wikidata author item | {wd or 'none'} | {status(bool(wd))} |"]
@@ -312,7 +323,12 @@ def main() -> None:
               "public API, which is the only thing Semantic Scholar, OpenAlex and Crossref",
               "read. So before importing, set **Account settings → Visibility preferences**",
               "to *Everyone*, or the import lands somewhere nothing can see.",
-              "", "Then `tasks/orcid_dois.txt` (Add DOI) or `tasks/orcid_import.bib`", ""]
+              "",
+              "Then one upload: *Works → + Add → Add BibTeX* → `tasks/orcid_import.bib`.",
+              "Not the DOI form 100 times — every entry in that file now carries a DOI",
+              "(missing ones filled from arXiv), and ORCID groups works by identifier, so",
+              "the whole file merges with the registry copies instead of duplicating them.",
+              ""]
     if not has_canon:
         L += ["## ORCID researcher URLs point somewhere else", "",
               "Listed: " + (", ".join(f"`{u}`" for u in url_vals) or "none") + "  ",
@@ -327,10 +343,20 @@ def main() -> None:
               "*Also known as* is what a disambiguation model matches on when a citation",
               "uses a different form. Add: " +
               ", ".join(f"`{v}`" for v in missing_variants), ""]
-    if not orc["keywords"]:
-        L += ["## ORCID keywords empty", "",
-              "Free, and one of the few facets ORCID exposes for subject search. 5–10",
-              "phrases someone would type, not coined names.", ""]
+    if want_kw:
+        L += ["## ORCID keywords to add", "",
+              "One of the few facets ORCID exposes for subject search, and free. Multi-word",
+              "phrases someone would actually type — `model merging` is a query, `merging`",
+              "is not — and no coined names, which have no lexical path from any real",
+              "question. The same list fills Google Scholar's five interest slots (pick the",
+              "top five). Edit `config.yaml` → `identity.keywords` to change it.", "",
+              *[f"- [ ] {k}" for k in want_kw], ""]
+    if other_pages:
+        L += ["## Other personal pages not declared on ORCID", "",
+              "Not a demand to delete them. A second page is only a problem while nothing",
+              "says it is the same person — then two candidate homepages compete. Listing it",
+              "in *Websites & social links* next to the canonical URL is what fuses them.", "",
+              *[f"- [ ] {u}" for u in other_pages], ""]
     if reg is not None and n_gap:
         L += [f"## arXiv: {n_gap} papers you are not registered as author on", "",
               "The biggest finding here, and a prerequisite rather than a task: you cannot",
@@ -374,6 +400,8 @@ def main() -> None:
                   "orcid_has_canonical_url": has_canon,
                   "orcid_missing_variants": missing_variants,
                   "orcid_keywords": len(orc["keywords"]),
+                  "orcid_missing_keywords": want_kw,
+                  "orcid_missing_other_pages": other_pages,
                   "arxiv_registered": len(reg) if reg is not None else None,
                   "arxiv_total": len({p["arxiv"] for p in ax}),
                   "arxiv_unowned": [p["arxiv"] for p in ax
