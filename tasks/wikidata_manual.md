@@ -25,7 +25,9 @@ which looks like a hit and is not one.
   (a description is what separates you from a namesake; it must not repeat the
   label, and Wikidata rejects an item whose label+description pair already
   exists)
-- **Aliases:** `Choshen, Leshem`, `L. Choshen`
+- **Aliases** — add each as its own entry, not one comma-joined string:
+    - Choshen, Leshem
+    - L. Choshen
 
 ## 3. Add these statements
 
@@ -48,8 +50,10 @@ autocomplete resolved to the right thing.
 | Google Scholar author ID | `P1960` | 8b8IhUYAAAAJ |  |
 | Semantic Scholar author ID | `P4012` | 41019330 |  |
 | OpenAlex ID | `P10283` | A5040286212 |  |
-| GitHub username | `P2037` | borgr |  |
 | DBLP author ID | `P2456` | Leshem_Choshen |  |
+| GitHub username | `P2037` | borgr |  |
+| Hugging Face user ID | `P12201` | borgr |  |
+| LinkedIn personal profile ID | `P6634` | leshemchoshen |  |
 
 Identifier values (ORCID, the author IDs) are plain strings — Wikidata
 validates the format and will refuse a malformed one, which is a useful check

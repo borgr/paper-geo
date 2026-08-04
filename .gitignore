@@ -1,3 +1,4 @@
 build/
 *.err
 __pycache__/
+.DS_Store

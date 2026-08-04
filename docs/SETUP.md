@@ -19,6 +19,32 @@ actually done rather than what you remember doing.
 
 ---
 
+## Dated follow-ups
+
+Several steps here finish somewhere else, days later, and the thing to do next only
+becomes possible once they land. That makes them the easiest work in the whole
+document to lose. They live in this file rather than in a reminder because a
+conversational reminder dies with the session, and because the *reason* to come back
+needs to be written down next to what to do about it.
+
+Move a line to done by deleting it. Check the state with `audit_identity.py` first —
+it reads the same things live, so it can tell you whether the wait is over.
+
+| revisit | what landed | what it unlocks |
+|---|---|---|
+| **2026-08-06** | arXiv ownership requests (submitted 2026-08-04; staff verify in 1–3 days) | the journal-ref backfill below, and the `arxiv.org/a/<orcid>` author page becoming complete |
+| **2026-08-06** | same batch — check `2507.08924` specifically | it will **not** clear on its own: `request-ownership` name-matches against the author list, and that paper's list has no form of your name. Switch to <https://arxiv.org/auth/need-paper-password> with the password from the submitter, which does not name-match. See `tasks/arxiv_name_fixes.md`. |
+| **2026-08-11** | Wikidata account 4 days old + 50 edits via Author Disambiguator | autoconfirmed, so `tasks/wikidata.qs` can run through QuickStatements for any future batch |
+| **2026-10-04** | ORCID auto-update and the S2/OpenAlex ORCID-driven re-clustering run on their own schedule | re-check whether the duplicate Semantic Scholar and OpenAlex author records merged themselves. Filing a support ticket before this date is work you may not need to do. |
+
+After the arXiv batch clears, the next action is the largest remaining manual queue
+in the project: **journal-ref and DOI on every published paper you now own**
+(<https://arxiv.org/jref>, one form each). That is what merges a paper's preprint and
+published Scholar records into one entry, so it is also the fix for most of the
+duplicate pairs in §3. `python scripts/identity_tasks.py` writes the list.
+
+---
+
 ## 1. ORCID — populate it, then wire it everywhere
 
 **Why first:** it's the lever for items 2 and 6. Semantic Scholar disambiguates on
@@ -52,6 +78,12 @@ themselves — and keeps them fixed after future re-clustering.
       arXiv registers for **every** paper, back to the oldest ids). DOI-bearing
       entries come first; the handful with no identifier anywhere are last, and
       those are the only ones worth importing by hand or skipping.
+      **Once the upload lands**, `audit_identity.py` reads the public works count back
+      and reports it. Two things are worth doing in the same session, because they are
+      the difference between a full record and a *findable* one, and neither is filled
+      by the import: the **canonical URL** in *Websites & social links*, and the
+      **keywords**. A record with 117 works and no URL and no keywords is a list of
+      papers that resolves to nobody.
 - [ ] `tasks/orcid_dois.txt` is the same works one at a time. Keep it for spot-fixing
       a single record; it is not the bulk route.
 - [ ] *Search & link → Crossref Metadata Search* — the wizard everyone recommends. It
@@ -65,10 +97,9 @@ themselves — and keeps them fixed after future re-clustering.
         exists* — it's a problem when the canonical one is missing and the two are
         never declared to be the same person. List both, canonical first, and make
         sure each site links to the other. See §5.
-      - *Keywords* — 5–10 phrases someone would actually type. Not coined names, and
-        not single words: `model merging` is a query, `merging` isn't. Derive them
-        from what you actually publish on rather than what you'd like to be known
-        for — the point is matching real queries, not positioning.
+      - *Keywords* — the whole of `identity.keywords`; ORCID sets no cap. How to
+        choose them, and the four other places they belong, is a section of its
+        own: [Keywords](#keywords-choosing-them-and-where-they-go).
       - *Employment* and *Education* — what powers institutional disambiguation.
 - [ ] Put your iD in your email signature and on every paper you submit. That's the
       mechanism that makes auto-update work without you.
@@ -142,14 +173,25 @@ corpus, because it defaults to whoever pressed submit.
 - [ ] **Google Scholar** — five concrete things, in order of payoff:
       1. **The five *interests*.** These are links, not tags: each one is a browsable
          Scholar page and they drive "related authors". Empty is the common state and
-         a pure loss. Use the top five of `identity.keywords`.
+         a pure loss. Use the top five of `identity.keywords` — and *ranked*, because
+         five slots against eleven candidates makes this a choice rather than a list.
+         See [Keywords](#keywords-choosing-them-and-where-they-go).
       2. **Profile public** (it defaults to private) and email verified against the
          institutional domain — that's what makes the profile authoritative for the
          name.
       3. **Merge duplicate entries.** Select the duplicates → *Merge*. Scholar splits
          preprint and published records when the journal-ref is missing, which is the
          same root cause as the arXiv work in §2 — fix it there and fewer appear here.
-      4. **Homepage = the canonical URL**, and affiliation matching ORCID's employment.
+      4. **Homepage = the canonical URL** — the machine anchor (§5), not the
+         site-builder page, even though this is one of the very few identity fields a
+         human actually clicks. It still goes here for two reasons: Scholar is a
+         high-authority domain whose outbound link is crawled and carries weight to
+         whatever it points at, and the entire value of a canonical string is that it
+         is *the same string* everywhere — one sympathetic exception recreates the two
+         competing homepages that §5 exists to prevent. Serve the human case on the
+         page instead: a prominent link to the human site at the top of the canonical
+         one costs a visitor one hop and costs the machine anchor nothing.
+         Affiliation should match ORCID's employment exactly.
       5. Turn on *email alerts for new citations* — not visibility, but it's how you
          notice a mis-attributed paper early, while it's still one record.
 - [ ] **OpenAlex:** check for split profiles. Prefer fixing ORCID over filing
@@ -260,10 +302,36 @@ humans*, and conflating the two is what makes this question feel unanswerable.
       repository" widget from it and it's machine-readable.
 - [ ] The paper's arXiv link in the repo README — Hugging Face extracts the id and
       cross-lists the repo on the paper page automatically.
-- [ ] **Zenodo ↔ GitHub**, for repos that are a research artifact rather than
-      scratch. This turns code into a citable object with DataCite metadata, so it
-      enters OpenAlex and can accrue citations of its own instead of being an
-      untracked URL in a footnote. Exact steps, because the ordering trips people:
+- [ ] **Zenodo ↔ GitHub.** This turns code into a citable object with DataCite
+      metadata, so it enters OpenAlex and can accrue citations of its own instead of
+      being an untracked URL in a footnote.
+
+      **Which repos, though** — the deciding question is not "is there a paper" but
+      *"is there anything citable here that the paper's own citation does not already
+      cover?"* Three cases, and only one of them is a clear yes:
+
+      - **Artifact with no paper of its own** — a tool, a harness, a dataset loader, a
+        set of trained checkpoints. **Yes, always.** This is where the whole gain sits.
+        Without a DOI this work has no citable form at all: it can only ever appear as
+        a bare URL in someone's footnote, which no index counts, so the citations
+        simply do not exist as data. A DOI is the difference between uncounted and
+        counted.
+      - **Code that implements a paper you also published** — *usually not needed, and
+        the reason is worth understanding.* Minting a second DOI for the same
+        contribution gives citers two things to cite and splits the count, plus a
+        second permanent record to keep correct. Do it anyway when either of these
+        applies: reproducibility depends on the exact code state (people need to cite
+        a *version*, not the paper), or a venue or funder requires a deposited
+        artifact. Then remove the split rather than living with it: set
+        `preferred-citation` in `CITATION.cff` to the **paper**, so GitHub's "Cite this
+        repository" widget hands out the paper citation while the Zenodo DOI stays
+        available for anyone who specifically needs to cite the code. The tool writes
+        that field for you.
+      - **Scratch, coursework, forks, one-off scripts** — no. Zenodo records are
+        permanent and cannot be withdrawn on a whim; a DOI on abandoned code is a
+        maintenance obligation you took on for no retrieval gain.
+
+      Exact steps, because the ordering trips people:
       1. Sign in to <https://zenodo.org> **with GitHub** (that's what creates the
          link; a separate Zenodo account won't see your repos).
       2. <https://zenodo.org/account/settings/github/> → find the repo → flip the
@@ -278,9 +346,10 @@ humans*, and conflating the two is what makes this question feel unanswerable.
          README. GitHub then renders "Cite this repository" with the DOI in it.
       6. Fix the Zenodo record's metadata once — authors with ORCIDs, license, and the
          **related identifier** `is supplement to` → your paper's DOI. That last field
-         is what joins code and paper in DataCite, and it does not fill itself in.
-      - Skip this for scratch repos. A DOI on abandoned code is noise, and every
-        record is permanent.
+         is what joins code and paper in DataCite, and it does not fill itself in. It
+         is also what makes the two-DOI case above harmless: once the link exists, an
+         index can see one contribution with two representations rather than two
+         unrelated objects.
 - [ ] Hugging Face: claim your account, then index and claim a paper page per arXiv
       paper. **Requires a logged-in browser** — an unauthenticated visit creates
       nothing. `tasks/hf_worklist.md`, regenerated live by `audit_identity.py`.
@@ -298,6 +367,115 @@ humans*, and conflating the two is what makes this question feel unanswerable.
 
 ---
 
+## Which link goes where
+
+"Add your links to your profiles" is the advice everywhere and it is useless, because
+the answer is different per field and the differences are the whole point. Four rules
+cover every case below:
+
+1. **A field that holds exactly one URL gets the canonical URL. No exceptions.** Its
+   value comes from being the same string in every registry; the first sympathetic
+   exception ("but humans read this one") is what recreates two competing homepages.
+2. **A field that holds many URLs gets everything, canonical first.** A second
+   personal page is only a problem while nothing says the two are the same person.
+   Listing both *is* the statement that fixes it.
+3. **A typed identifier field gets the bare id, never a URL.** `borgr`, not
+   `https://github.com/borgr`. Typed fields are format-validated and traversable by
+   tools; a URL pasted into one either fails validation or silently degrades to text.
+4. **A per-paper surface gets per-paper links.** A repo's website field pointing at
+   your homepage wastes the one slot that could have pointed at the paper. Your
+   homepage is reachable from the paper page anyway.
+
+| where | field | what goes in it |
+|---|---|---|
+| **ORCID** | *Websites & social links* (many) | canonical URL first, then the human site, then GitHub, Scholar, Semantic Scholar, LinkedIn, HF. This is the one profile that should hold *all* of them — every other service reads ORCID, so it is the hub rather than another leaf. |
+| **Google Scholar** | *Homepage* (one) | canonical URL. Rule 1 — see §3.4 for why, since this is the field where the temptation is strongest. |
+| **Semantic Scholar** | claimed page → homepage | canonical URL. Plus your ORCID, which is the field their disambiguation actually consumes. |
+| **arXiv** | — | nothing to paste. There is no author URL field; the ORCID link (§1) is the mechanism, and `arxiv.org/a/<orcid>` is the page you get out. Embed its `myarticles` widget on your own site if you want the flow reversed. |
+| **GitHub profile** | *Website* (one) + *Social accounts* (4) | canonical URL in Website; Scholar, ORCID, LinkedIn, HF in the four social slots. Almost nobody fills those four, and they render as icons that both humans and crawlers follow. |
+| **GitHub repo** | *About → Website* (one) | **the paper's page on your site** — not your homepage. Rule 4. For a repo with no paper, your homepage is the fallback. |
+| **GitHub repo** | README, near the top | the arXiv `abs` link, the paper page, and the Zenodo badge if there is one. The arXiv link is load-bearing beyond being a link: **the HF Hub parses the id out of the README and cross-lists your repo on the paper page automatically**, so this one line buys a backlink from a domain you do not control. |
+| **GitHub repo** | `CITATION.cff` | the paper DOI under `preferred-citation`, and the Zenodo concept DOI at top level if it exists. Generated for you. |
+| **OpenReview** | *Homepage, ORCID, DBLP, Semantic Scholar, GitHub, LinkedIn* | all of them. These are typed fields, they are empty by default, and submissions never fill them — this is the profile that looks complete and is not. |
+| **LinkedIn** | *Contact info → Websites* (3) + *Featured* | canonical URL, human site, Scholar. |
+| **Wikidata** | `P856` *official website* (one) | canonical URL, and **only** that. Everything else has a typed property — see `tasks/wikidata_followup.md`. This is rule 3 at its starkest: a profile URL added beside P856 does not become queryable, it just adds a second candidate homepage. |
+| **Wikidata** | typed identifier properties | ORCID, Scholar, Semantic Scholar, OpenAlex, DBLP, GitHub, HF, LinkedIn, OpenReview — as bare ids. Generated into `tasks/wikidata_manual.md`. |
+| **HF profile** | homepage / GitHub / X fields | canonical URL and the ids. |
+| **HF model / dataset card** | README body + frontmatter | the paper page, the arXiv link (same auto-extraction as above), the code repo. Per-paper surface, so per-paper links. |
+| **Zenodo record** | *Related identifiers* | the paper DOI as `is supplement to`, and the repo URL. §7. |
+| **Your site** | JSON-LD `sameAs` | every profile above, automatically, from `config.yaml`. Nothing to do by hand — which is the reason `config.yaml` is worth keeping accurate even for ids you think are dormant. |
+| **The paper PDF itself** | footnote on page 1 | the code repo and the paper page. The only one of these a reader ever sees, and the only one you cannot retrofit after publication. |
+
+The rows that say *generated* are done by `identity_tasks.py` / `sweep_github.py` /
+`build_site.py`; the rest are logins, and `audit_identity.py` checks the ones with a
+public API afterwards.
+
+## Keywords: choosing them, and where they go
+
+**What makes one good.** A keyword is a *query*, not a label. Five tests, in
+descending order of how often they change an answer:
+
+1. **Would someone who does not already know your work type it?** This is the test
+   that rules out coined names. `TIES-Merging` is not a keyword, it is an alias — it
+   belongs in a paper's `aliases` field, where the tool pairs it with a generic gloss.
+   `model merging` is what gets typed.
+2. **Is it more than one word?** Single words are ambiguous and you will not win them.
+   `evaluation` competes with the entire internet; `evaluation of language models` is
+   a phrase with an actual population of authors, and you can be near the top of it.
+3. **Do you have a *cluster* of papers on it?** These are comparative facets — a
+   Scholar interest is a browsable page that ranks everyone who claimed it. One paper
+   puts you at the bottom of that page, which is worse than absent because it spends a
+   slot. Ten puts you near the top. Count before adding.
+4. **Is it the field's term or yours?** Where two names exist for the same thing, the
+   one with more papers wins, even if the other is better. You are matching queries,
+   not naming things.
+5. **Is it mid-abstraction?** `natural language processing` is unwinnable but earns
+   membership in the right neighbourhood, so one or two of those are worth having.
+   `reference-free MT evaluation with pretrained metrics` is precise and nobody types
+   it. The bulk should sit in between.
+
+**Is more better? No — and for different reasons in each place.** Google Scholar takes
+five and they are links, so the eleven in `identity.keywords` have to be *ranked*, and
+an eleventh keyword can only get in by displacing one that would have ranked. ORCID
+has no cap, but keywords there feed disambiguation rather than ranking: a profile
+claiming thirty things matches all of them weakly, which is the opposite of the goal.
+Ten to fifteen is where each still carries weight. On the site itself, padding is
+keyword stuffing, which is measured-negative — see [../STUDY.md](../STUDY.md).
+
+**What you are most likely missing.** Not a phrase — a *cluster*. The gap that
+matters is a group of five or more of your papers that no current keyword covers,
+because that is retrieval you have earned and are not collecting. Work it in two
+passes over your own bibliography: for each keyword, count the papers it plausibly
+covers and cut anything at one; then look for a subject with several papers and no
+keyword pointing at it. Two things to weigh while you are there:
+
+- **Overlap eats the Scholar five.** Four of the current eleven are evaluation
+  variants (`evaluation of language models`, `benchmark reliability`, `machine
+  translation evaluation`, `efficient evaluation`). That is fine in ORCID, where they
+  are separate facets. In the five Scholar slots it means most of your profile says
+  one thing — so consolidate deliberately there rather than by accident.
+- **Dropping a topic you have stopped working on is a real trade, not a tidy-up.** A
+  cluster of older papers is exactly where you rank highest, because the field moved
+  on and you are still on the page. Currency is a fine reason to drop one; just make
+  it a decision rather than a side effect of updating the list.
+
+**Where they go** — the same set, five different shapes:
+
+| where | how many | shape |
+|---|---|---|
+| **Google Scholar** *interests* | exactly 5, ranked | one per slot, verbatim, lowercase as written |
+| **ORCID** *Keywords* | all of them | one per entry — **not** one comma-joined string, which is the same mistake that broke the Wikidata aliases |
+| **OpenReview** *Expertise* | all of them | each with the years you worked on it; the years are a field there and they are used |
+| **LinkedIn** *Skills* + headline | top ~5 | Skills is a matched facet there, not decoration |
+| **Your site** `Person.knowsAbout` | all of them | automatic, from `config.yaml` |
+
+Two places they should **not** go: GitHub repo topics, which are per-repo and describe
+that code rather than you, and the body text of any page, which is stuffing. And
+`identity.keywords` in `config.yaml` is the single source — edit there, re-run
+`audit_identity.py`, and it will tell you which of the above are out of date.
+
+---
+
 ## How to tell any of it landed
 
 You can't measure citations caused (see [MEASURE.md](MEASURE.md) for why, at this
@@ -306,14 +484,42 @@ failures actually are:
 
 **Works today, no domain needed:**
 
-- [ ] **Google Search Console** — verify by adding the HTML-tag or file to the site
-      (works fine on `*.github.io`), submit `sitemap.xml`. Then *Pages* tells you
-      crawled-vs-indexed per URL, and *Performance* gives real queries that surfaced
-      your pages. This is the difference between "nobody asks" and "nobody can see
-      it", and they are opposite problems.
-- [ ] **Bing Webmaster Tools** — same, and it matters beyond Bing: several answer
-      engines read Bing's index, so a page missing here is missing from them too. It
-      can import the Search Console verification, so this is two minutes.
+These two are the highest-value items left in the whole document, because they are the
+only free way to distinguish **"nobody asks"** from **"nobody can see it"** — opposite
+problems with opposite fixes, indistinguishable from outside. Neither needs a domain.
+Fifteen minutes, once.
+
+- [ ] **Google Search Console.** <https://search.google.com/search-console>
+      1. *Add property* → **URL prefix** (not Domain — Domain verification needs DNS,
+         which you do not control on `*.github.io`) → `https://borgr.github.io`.
+      2. Choose the **HTML tag** method and copy just the `content="..."` value — the
+         token, not the whole tag.
+      3. Paste it into `config.yaml` → `site.verification.google`, then
+         `python scripts/build_site.py --deploy`.
+      4. Wait for the deploy (a minute or two), then press *Verify*.
+      5. *Sitemaps* → submit `sitemap.xml`. Generated already, so it is one paste.
+
+      **Why through the config and not by hand:** `--deploy` empties the Pages repo
+      before copying `build/site` into it. An HTML file you upload yourself survives
+      until the next deploy and then vanishes, at which point the property silently
+      un-verifies and the reports stop — with nothing connecting the two events weeks
+      apart. Anything that has to persist must be generated. The `--deploy` step is
+      *before* pressing Verify for the same reason: the tag has to be live first.
+
+      What you get: *Pages* gives crawled-vs-indexed per URL — the one report that
+      would tell you if all 135 paper pages are being crawled and dropped, which no
+      other tool here can see. *Performance* gives the real queries that surfaced them.
+- [ ] **Bing Webmaster Tools.** <https://www.bing.com/webmasters>
+      1. *Add site* → try **Import from Google Search Console** first; if it works,
+         you are done and can skip the rest.
+      2. Otherwise add `https://borgr.github.io` manually, take the **HTML Meta Tag**
+         token, and put it in `site.verification.bing` — same generate-and-deploy
+         sequence as above. Both tokens can be set in one pass.
+      3. Submit the same `sitemap.xml`.
+
+      Worth more than Bing's search share suggests: **ChatGPT's search grounding leans
+      on Bing's index**, so a page missing here is missing from an answer engine you
+      actually care about — and this is the only place that will tell you.
 - [ ] **Analytics won't answer this.** Google Analytics, Plausible, Cloudflare Web
       Analytics are all JavaScript beacons, and the crawlers you care about don't run
       JavaScript — so they are invisible in exactly the tool you'd reach for. Same

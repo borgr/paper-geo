@@ -1,0 +1,37 @@
+# arXiv author-name problems
+
+Checked **105** arXiv records against your name variants: **2 misspelled**, **1 missing you entirely**.
+
+This is upstream of everything else. Hugging Face, Semantic Scholar, OpenAlex
+and Google Scholar all build author identity from arXiv metadata, so a name
+that is wrong here is wrong in all of them at once — and it does not read as a
+typo to them, it reads as a different person, who then owns that paper's
+citations and cannot be merged into you.
+
+## Misspelled — 2
+
+Fix the author list in the arXiv metadata. You must own the paper first
+(`arxiv_ownership.md`); metadata changes go through *Update this article*
+on your submission page. A name correction is a metadata edit, not a new
+version of the paper.
+
+Note the ordering trap: <https://arxiv.org/auth/request-ownership> matches
+your name against the author list, and on these papers that list is the
+thing that is wrong — so the request can bounce. If it does, ask the
+submitting co-author for the paper password instead
+(<https://arxiv.org/auth/need-paper-password>), which does not name-match.
+
+- [ ] [`2410.10783`](https://arxiv.org/abs/2410.10783) — reads **Leshem Chosen** — LiveXiv - A Multi-Modal live benchmark based on Arxiv papers
+- [ ] [`2409.02228`](https://arxiv.org/abs/2409.02228) — reads **Leshem Chosen** — Unforgettable Generalization in Language Models
+
+## Missing you entirely — 1
+
+arXiv's author list for these does not contain anything close to your
+name. Either the submitter left you off, or the bibliography entry points
+at the wrong arXiv id — check which before asking anyone to change
+anything. If the paper is genuinely yours, only the submitter can add you;
+an ownership request will fail the name match.
+
+- [ ] [`2507.08924`](https://arxiv.org/abs/2507.08924) — From KMMLU-Redux to Pro: A Professional Korean Benchmark Sui
+      arXiv lists: Seokhee Hong, Sunkyoung Kim, Guijin Son, Soyeon Kim, Yeonjung Hong, Jinsik Lee
+

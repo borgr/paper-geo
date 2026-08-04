@@ -26,13 +26,14 @@ identity:
   # `merging` is not. No coined names -- those are in the papers' own `aliases`.
   keywords:
     - natural language processing
+    - artificial intelligence
     - evaluation of language models
     - model merging
     - benchmark reliability
     - language model pretraining
     - human feedback
     - language acquisition
-    - grammatical error correction
+    - efficient pretraining
     - machine translation evaluation
     - efficient evaluation
   email: leshem.choshen@weizmann.ac.il
@@ -53,8 +54,13 @@ ids:
   dblp: Leshem Choshen
   github: borgr
   huggingface: borgr          # note: the `leshem` HF account is a stub, not this one
-  wikidata: null                   # to be created
+  wikidata: Q140867203             # created by hand 2026-08-04; see tasks/wikidata_manual.md
   linkedin: leshemchoshen
+  # Left null on purpose rather than guessed. `~Leshem_Choshen1` is the usual form,
+  # but if a duplicate profile exists yours may be `~Leshem_Choshen2`, and the wrong
+  # value published as a Wikidata identifier is worse than a missing one. Open
+  # openreview.net, check the id in your profile URL, paste it here.
+  openreview: null
 
 sources:
   # The bibliography stays authoritative in its own repo; we only read it.
@@ -100,6 +106,18 @@ site:
   # Written into every generated page; ar5iv covers pre-2024 arXiv papers that
   # have no LaTeXML HTML rendering.
   ar5iv_fallback: true
+  # Search Console and Bing Webmaster Tools ownership tokens. Both are the `content`
+  # value of the HTML-tag verification option, which is the one to choose: --deploy
+  # empties the Pages repo before copying build/site into it, so a verification *file*
+  # you upload by hand survives exactly until the next deploy and then vanishes,
+  # un-verifying the property with nothing to link cause to effect.
+  #
+  # These two consoles are the only free way to see crawled-vs-indexed counts and the
+  # queries people actually used. Bing matters more than its market share suggests:
+  # ChatGPT's search grounding leans on Bing's index.
+  verification:
+    google: null    # Search Console > Add property > URL prefix > HTML tag
+    bing: null      # Bing Webmaster Tools > Add site > HTML Meta Tag
 
 github_sweep:
   # Forks are excluded: they are not yours to describe, and topics on a fork are

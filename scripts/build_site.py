@@ -57,6 +57,28 @@ def read_sidecar(slug: str) -> dict:
     return fm
 
 
+def verification_meta(cfg) -> str:
+    """Search Console / Bing ownership meta tags, on the homepage only.
+
+    Generated rather than pasted, because `--deploy` deletes everything in the Pages
+    repo before copying build/site over it. A verification file dropped in by hand
+    survives until the next run and then silently disappears, at which point the
+    property un-verifies and the reports stop -- with nothing to connect the two
+    events. Anything that must persist has to be produced here.
+
+    The meta-tag method is used for both services in preference to their file
+    methods: one config value each, one place to look, and it cannot be orphaned by
+    a rename.
+    """
+    v = (cfg.get("site") or {}).get("verification") or {}
+    out = ""
+    if v.get("google"):
+        out += f'  <meta name="google-site-verification" content="{E(v["google"])}">\n'
+    if v.get("bing"):
+        out += f'  <meta name="msvalidate.01" content="{E(v["bing"])}">\n'
+    return out
+
+
 def page(title: str, body: str, *, head: str = "", canonical: str = "") -> str:
     """One minimal, no-JS document shell."""
     can = f'\n  <link rel="canonical" href="{E(canonical)}">' if canonical else ""
@@ -135,6 +157,13 @@ def person_jsonld(cfg) -> dict:
         "jobTitle": ident["job_title"],
         "affiliation": [{"@type": "Organization", "name": a}
                         for a in ident["affiliations"]],
+        # The same list that goes into ORCID's Keywords and Scholar's five interests.
+        # knowsAbout is the schema.org field for it, and this is the one surface where
+        # we control the markup completely -- so if the phrases are worth choosing at
+        # all, leaving them out here is the cheapest omission on the list. It is also
+        # the honest place for the full set: Scholar takes five, and the other six say
+        # something true about the corpus that would otherwise go unstated anywhere.
+        "knowsAbout": list(ident.get("keywords") or []),
         "sameAs": same,
     }
 
@@ -441,7 +470,7 @@ def build(cfg) -> dict:
     home.append("</ul>")
     with open(os.path.join(OUT, "index.html"), "w") as f:
         f.write(page(ident["name"], "\n".join(home),
-                     head=jsonld(person_jsonld(cfg)),
+                     head=jsonld(person_jsonld(cfg)) + verification_meta(cfg),
                      canonical=site + "/"))
 
     # ---- site llms.txt

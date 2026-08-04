@@ -11,7 +11,7 @@ blocked on a logged-in account you own, not on knowing what to do.
 
 ### 1. Populate ORCID  — do this one first
 
-`0000-0002-0085-6496` currently lists **0 public works**. This is the highest-leverage
+`0000-0002-0085-6496` currently lists **117 public works**. This is the highest-leverage
 item on the page, because it is also the lever for the other three: Semantic
 Scholar's disambiguation uses ORCID, and OpenAlex is actively running
 ORCID-driven merges of split profiles. Fixing ORCID makes both of those more
@@ -136,9 +136,9 @@ can merge profiles, set the display name, and remove wrong works.
 `tasks/openalex_merge.md` has the exact profile IDs to paste.
 `support@openalex.org` is the fallback.
 
-## arXiv: claim ownership of 57 papers  — before the journal-refs
+## arXiv: claim ownership of 1 papers  — before the journal-refs
 
-Registered as author on **48** of **105** arXiv papers. arXiv tracks this separately from
+Registered as author on **105** of **105** arXiv papers. arXiv tracks this separately from
 authorship: it defaults to whoever pressed submit, so a co-authored corpus
 is mostly not yours as far as arXiv is concerned. Two consequences:
 
@@ -159,23 +159,23 @@ Full list, citation-ordered: `tasks/arxiv_ownership.md`.
 
 Scholar matches citations and merges preprint/published versions on exactly these fields. No write API -- one web form each, so do them by citation count.
 
-**55 of these are marked (blocked)**: you are not a registered
+**1 of these are marked (blocked)**: you are not a registered
 author on them, so the form will refuse. Claim ownership first (above).
 
-- [ ] `2306.01708` (855 cites) -> Advances in Neural Information Processing Systems 36  <https://arxiv.org/abs/2306.01708>  **(blocked)**
-- [ ] `2402.14992` (279 cites) -> Forty-first International Conference on Machine Lear  <https://arxiv.org/abs/2402.14992>  **(blocked)**
-- [ ] `2412.03304` (181 cites) -> Proceedings of the 63rd Annual Meeting of the Associ  <https://arxiv.org/abs/2412.03304>  **(blocked)**
+- [ ] `2306.01708` (855 cites) -> Advances in Neural Information Processing Systems 36  <https://arxiv.org/abs/2306.01708>
+- [ ] `2402.14992` (279 cites) -> Forty-first International Conference on Machine Lear  <https://arxiv.org/abs/2402.14992>
+- [ ] `2412.03304` (181 cites) -> Proceedings of the 63rd Annual Meeting of the Associ  <https://arxiv.org/abs/2412.03304>
 - [ ] `2104.08202` (167 cites) -> CoRR  <https://arxiv.org/abs/2104.08202>
 - [ ] `1907.01752` (127 cites) -> 8th International Conference on Learning Representat  <https://arxiv.org/abs/1907.01752>
 - [ ] `2204.03044` (120 cites) -> ArXiv  <https://arxiv.org/abs/2204.03044>
 - [ ] `2211.05655` (119 cites) -> Proceedings of the 61st Annual Meeting of the Associ  <https://arxiv.org/abs/2211.05655>
-- [ ] `2410.19735` (111 cites) -> International Conference on Learning Representations  <https://arxiv.org/abs/2410.19735>  **(blocked)**
-- [ ] `2507.16806` (98 cites) -> The Fourteenth International Conference on Learning   <https://arxiv.org/abs/2507.16806>  **(blocked)**
-- [ ] `2402.16842` (90 cites) -> Forty-first International Conference on Machine Lear  <https://arxiv.org/abs/2402.16842>  **(blocked)**
+- [ ] `2410.19735` (111 cites) -> International Conference on Learning Representations  <https://arxiv.org/abs/2410.19735>
+- [ ] `2507.16806` (98 cites) -> The Fourteenth International Conference on Learning   <https://arxiv.org/abs/2507.16806>
+- [ ] `2402.16842` (90 cites) -> Forty-first International Conference on Machine Lear  <https://arxiv.org/abs/2402.16842>
 - [ ] `2405.17202` (83 cites) -> The Thirty-eighth Annual Conference on Neural Inform  <https://arxiv.org/abs/2405.17202>
-- [ ] `2301.11796` (82 cites) -> CoRR  <https://arxiv.org/abs/2301.11796>  **(blocked)**
+- [ ] `2301.11796` (82 cites) -> CoRR  <https://arxiv.org/abs/2301.11796>
 
-## Hugging Face page indexed but not claimed by you (72)
+## Hugging Face page indexed but not claimed by you (2)
 
 Claims need admin approval, so a request you have already submitted
 still shows here until it is validated -- your name will have no
@@ -183,16 +183,8 @@ linked user until then. That is pending, not failed.
 
 Full list: `tasks/hf_worklist.md`.
 
-- [ ] <https://hf.co/papers/2504.08165>  (232 cites)
-- [ ] <https://hf.co/papers/1907.01752>  (127 cites)
-- [ ] <https://hf.co/papers/2211.05655>  (119 cites)
-- [ ] <https://hf.co/papers/2410.19735>  (111 cites)
-- [ ] <https://hf.co/papers/2507.16806>  (98 cites)
-- [ ] <https://hf.co/papers/1907.08971>  (77 cites)
-- [ ] <https://hf.co/papers/2302.04863>  (71 cites)
-- [ ] <https://hf.co/papers/1911.10763>  (70 cites)
-- [ ] <https://hf.co/papers/1804.04012>  (70 cites)
-- [ ] <https://hf.co/papers/2412.05149>  (62 cites)
+- [ ] <https://hf.co/papers/2410.10783>  (18 cites)
+- [ ] <https://hf.co/papers/2409.02228>  (4 cites)
 
 ## Sidecars not written (134/135)
 

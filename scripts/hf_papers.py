@@ -56,8 +56,15 @@ def main() -> None:
     if args.live:
         from audit_identity import hf_state, hf_worklist_file
         print(f"checking {len(by_cites)} pages live ...", flush=True)
-        missing, unclaimed, claimed = hf_state(by_cites, me)
-        print(f"wrote {hf_worklist_file(missing, unclaimed, claimed)}")
+        st = hf_state(by_cites, me,
+                      [cfg["identity"]["name"]] + list(cfg["identity"].get("name_variants") or []))
+        print(f"wrote {hf_worklist_file(st)}")
+        missing, unclaimed = st["missing"], st["unclaimed"]
+        if st["pending"]:
+            print(f"{len(st['pending'])} claims are in moderation -- nothing to redo.")
+        if st["blocked"]:
+            print(f"{len(st['blocked'])} pages carry no author string resembling your "
+                  f"name and cannot be claimed; see tasks/arxiv_name_fixes.md.")
     else:
         missing = [p for p in by_cites if p.get("hf_indexed") is False]
         unclaimed = [p for p in by_cites

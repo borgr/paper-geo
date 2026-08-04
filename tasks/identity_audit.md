@@ -6,27 +6,22 @@ which is why it can be re-run — the fixes all need one.
 
 | surface | state | |
 |---|---|---|
-| ORCID works (public) | 0 of 135 | **fix** |
+| ORCID works (public) | 117 of 135 | ok |
 | ORCID canonical URL | absent | **fix** |
 | ORCID name variants | 2 listed | ok |
-| ORCID keywords | 0 of 10 | **fix** |
+| ORCID keywords | 0 of 11 | **fix** |
 | ORCID lists other personal pages | 1 of 1 | ok |
 | ORCID employment/education | 1/1 | ok |
-| arXiv registered author | 48 of 105 | **fix** |
-| Wikidata author item | none | **fix** |
+| arXiv registered author | 104 of 105 | **fix** |
+| Wikidata author item | Q140867203 | ok |
+| Wikidata item complete | 6 gaps | **fix** |
+| HF pages indexed | 105 of 105 | ok |
+| HF pages claimed | 102 of 104 claimable | **fix** |
+| HF pages not claimable (name wrong upstream) | 1 | see arXiv row |
+| arXiv records misspelling your name | 2 | **fix** |
+| arXiv records omitting you | 1 | **fix** |
+| arXiv papers missing from your bibliography | 1 | **check** |
 | Semantic Scholar records | 2 | **fix** |
-
-## ORCID has 0 public works
-
-Note the *public*: an item set to “trusted parties” is invisible to the
-public API, which is the only thing Semantic Scholar, OpenAlex and Crossref
-read. So before importing, set **Account settings → Visibility preferences**
-to *Everyone*, or the import lands somewhere nothing can see.
-
-Then one upload: *Works → + Add → Add BibTeX* → `tasks/orcid_import.bib`.
-Not the DOI form 100 times — every entry in that file now carries a DOI
-(missing ones filled from arXiv), and ORCID groups works by identifier, so
-the whole file merges with the registry copies instead of duplicating them.
 
 ## ORCID researcher URLs point somewhere else
 
@@ -48,27 +43,49 @@ question. The same list fills Google Scholar's five interest slots (pick the
 top five). Edit `config.yaml` → `identity.keywords` to change it.
 
 - [ ] natural language processing
+- [ ] artificial intelligence
 - [ ] evaluation of language models
 - [ ] model merging
 - [ ] benchmark reliability
 - [ ] language model pretraining
 - [ ] human feedback
 - [ ] language acquisition
-- [ ] grammatical error correction
+- [ ] efficient pretraining
 - [ ] machine translation evaluation
 - [ ] efficient evaluation
 
-## arXiv: 57 papers you are not registered as author on
+## arXiv: 1 papers you are not registered as author on
 
 The biggest finding here, and a prerequisite rather than a task: you cannot
 add a journal-ref to a paper you do not own. Full list and both claim
 routes: [arxiv_ownership.md](arxiv_ownership.md).
 
-## No Wikidata author item
+## Wikidata item Q140867203 exists — a correction and 2 identifiers to add
 
-Searched by ORCID (P496), Semantic Scholar (P4012), Google Scholar (P1960)
-and GitHub (P2037) — no item claims any of them. Name search is not used
-here on purpose: it returns *paper* items that merely mention you.
+An alias was stored as one string with its markdown intact (``Choshen, Leshem`, `L. Choshen``), so it matches nothing. Fix that first.
 
-Walkthrough: [wikidata_manual.md](wikidata_manual.md).
+Full diff, plus the Author Disambiguator walkthrough that both links your
+papers and clears the 50-edit gate: [wikidata_followup.md](wikidata_followup.md).
+
+## 1 arXiv papers you own are not in your bibliography
+
+Read off `arxiv.org/a/<orcid>`, which is the only place this shows up: the
+collector starts from the .bib, so a paper missing there is invisible to
+every other check here. Add it to the bibliography (or, if the claim was a
+mistake, unclaim it on arXiv).
+
+- [ ] <https://arxiv.org/abs/2604.12843>
+
+## Hugging Face: 0 to index, 2 to claim, 1 blocked
+
+Live counts, not the ones cached in `papers.yaml`. Lists:
+[hf_worklist.md](hf_worklist.md).
+
+## arXiv metadata misspells your name on 2 papers
+
+Upstream of every other surface here — Hugging Face, Semantic Scholar,
+OpenAlex and Scholar all read arXiv's author list, so one wrong character
+creates one wrong author in all of them, holding citations that cannot be
+merged back. Details and the fix order:
+[arxiv_name_fixes.md](arxiv_name_fixes.md).
 

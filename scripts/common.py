@@ -163,6 +163,79 @@ def split_authors(bibtex_author: str | None) -> list[str]:
     return out
 
 
+# Every external id we hold, mapped to the Wikidata property that is *typed* for it.
+#
+# The point of the table is that none of these belong in `official website` (P856).
+# P856 takes exactly one value -- the canonical URL -- and a profile URL dropped in
+# beside it does not become queryable, it just adds a second candidate homepage. The
+# typed property is strictly better: it renders as a link anyway, it is validated
+# against a format constraint, tools like Scholia and Author Disambiguator traverse
+# it, and a SPARQL query can hop from the id to the record. So "should arXiv go in
+# too?" resolves to: yes, but as an identifier, and only where a property exists.
+#
+# arXiv is the instructive exception. P4594 exists but its format is the *legacy*
+# author id (`choshen_l_1`); neither plausible legacy id resolves for this account,
+# because arXiv's current author identity is the ORCID link. P496 already carries it,
+# and arxiv.org/a/<orcid> is derived from that -- so there is nothing to add.
+WD_IDENTIFIERS = [
+    ("P496", "ORCID iD", lambda c: c["identity"]["orcid"]),
+    ("P1960", "Google Scholar author ID", lambda c: c["ids"]["google_scholar"]),
+    ("P4012", "Semantic Scholar author ID", lambda c: c["ids"]["semantic_scholar_primary"]),
+    ("P10283", "OpenAlex ID", lambda c: (c["ids"]["openalex"] or [None])[0]),
+    ("P2456", "DBLP author ID", lambda c: (c["ids"]["dblp"] or "").replace(" ", "_")),
+    ("P2037", "GitHub username", lambda c: c["ids"]["github"]),
+    ("P12201", "Hugging Face user ID", lambda c: c["ids"].get("huggingface")),
+    ("P6634", "LinkedIn personal profile ID", lambda c: c["ids"].get("linkedin")),
+    ("P8964", "OpenReview.net profile ID", lambda c: c["ids"].get("openreview")),
+    ("P856", "official website", lambda c: c["identity"]["canonical_url"]),
+]
+
+
+def norm_name(s: str) -> str:
+    """Fold a personal name for comparison: accents, punctuation, case, spacing."""
+    s = unicodedata.normalize("NFKD", s or "")
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    return " ".join(re.sub(r"[^\w\s]", " ", s).lower().split())
+
+
+def name_match(candidate: str, variants) -> str:
+    """Classify an author string against your known name forms.
+
+    Returns "exact", "near", or "" — and the middle value is the one that earns this
+    function's existence. Two of these papers carry "Leshem Chosen" in the *arXiv*
+    metadata, one character off, which means every index built from arXiv metadata
+    files them under a person who does not otherwise exist. That is not a cosmetic
+    typo: it is an identity split, and it is invisible to an exact-match check, which
+    reports the author as simply absent and sends you looking for the wrong problem.
+
+    "near" is deliberately narrow -- same first name and a surname within one or two
+    characters, or a whole-string similarity above .88. A looser rule starts matching
+    genuine other people, and a false "that is you" is worse here than a miss.
+    """
+    import difflib
+
+    c = norm_name(candidate)
+    if not c:
+        return ""
+    for v in variants:
+        n = norm_name(v)
+        if not n:
+            continue
+        if c == n:
+            return "exact"
+        # "Choshen, Leshem" vs "Leshem Choshen": order carries no information here.
+        if sorted(c.split()) == sorted(n.split()):
+            return "exact"
+        cp, np_ = c.split(), n.split()
+        if cp and np_ and cp[0] == np_[0] and cp[-1] != np_[-1]:
+            r = difflib.SequenceMatcher(None, cp[-1], np_[-1]).ratio()
+            if r >= 0.8 and abs(len(cp[-1]) - len(np_[-1])) <= 2:
+                return "near"
+        if difflib.SequenceMatcher(None, c, n).ratio() >= 0.88:
+            return "near"
+    return ""
+
+
 def arxiv_id(entry: dict) -> str | None:
     """Extract a bare arXiv id from eprint / url / doi fields."""
     if entry.get("eprint") and (entry.get("eprinttype", "arxiv").lower() == "arxiv"

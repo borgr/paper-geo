@@ -26,7 +26,8 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import DATA, ROOT, load_config, paper_doi, read_yaml  # noqa: E402
+from common import (DATA, ROOT, WD_IDENTIFIERS, load_config, paper_doi,  # noqa: E402
+                    read_yaml)
 
 TASKS = os.path.join(ROOT, "tasks")
 
@@ -144,11 +145,13 @@ def wikidata_qs(cfg, papers) -> str:
     for a in ident["affiliations"]:
         if a in EMPLOYER_Q:
             add(P["employer"], EMPLOYER_Q[a])
-    add(P["google_scholar"], f'"{ids["google_scholar"]}"')
-    add(P["semantic_scholar"], f'"{ids["semantic_scholar_primary"]}"')
-    add(P["openalex"], f'"{ids["openalex"][0].rsplit("/", 1)[-1]}"')
-    add(P["github"], f'"{ids["github"]}"')
-    add(P["dblp"], f'"{ids["dblp"].replace(" ", "_")}"')
+    # Identifiers from the shared table rather than a second hand-kept list: this
+    # file, the by-hand guide and the audit's completeness check all have to name the
+    # same properties, and three copies is how one of them silently lags the others.
+    for pid, _label, pick in WD_IDENTIFIERS:
+        v = pick(cfg)
+        if v and pid not in (P["orcid"], P["website"]):
+            add(pid, f'"{str(v).rsplit("/", 1)[-1] if pid == P["openalex"] else v}"')
     path = os.path.join(TASKS, "wikidata.qs")
     with open(path, "w") as f:
         f.write("\n".join(L) + "\n")
@@ -179,11 +182,11 @@ def wikidata_manual(cfg) -> str:
     for a in ident["affiliations"]:
         if a in EMPLOYER_Q:
             rows.append(("employer", "P108", a, EMPLOYER_Q[a]))
-    rows += [("Google Scholar author ID", "P1960", ids["google_scholar"], ""),
-             ("Semantic Scholar author ID", "P4012", ids["semantic_scholar_primary"], ""),
-             ("OpenAlex ID", "P10283", ids["openalex"][0].rsplit("/", 1)[-1], ""),
-             ("GitHub username", "P2037", ids["github"], ""),
-             ("DBLP author ID", "P2456", ids["dblp"].replace(" ", "_"), "")]
+    for pid, label, pick in WD_IDENTIFIERS:
+        v = pick(cfg)
+        if v and pid not in (P["orcid"], P["website"]):
+            rows.append((label, pid,
+                         str(v).rsplit("/", 1)[-1] if pid == P["openalex"] else v, ""))
     aliases = [v for v in ident["name_variants"] if v != ident["name"]]
 
     L = ["# Wikidata: create the author item by hand", "",
@@ -206,7 +209,12 @@ def wikidata_manual(cfg) -> str:
          "  (a description is what separates you from a namesake; it must not repeat the",
          "  label, and Wikidata rejects an item whose label+description pair already",
          "  exists)",
-         "- **Aliases:** " + ", ".join(f"`{a}`" for a in aliases),
+         # One per line and no backticks. Comma-joining them inside backticks is
+         # exactly how the first attempt at this went wrong: the rendered string was
+         # pasted whole into the single-alias box, producing one alias containing two
+         # names and two stray backticks, which matches no citation at all.
+         "- **Aliases** — add each as its own entry, not one comma-joined string:",
+         *[f"    - {a}" for a in aliases],
          "",
          "## 3. Add these statements", "",
          "In the editor, click *+ Add statement*, type the **property name** — it",
@@ -336,10 +344,17 @@ def main() -> None:
     manual = wikidata_manual(cfg)
     s2, n_strays = s2_merge(cfg, papers)
     oa = openalex_merge(cfg)
+    # Once the item exists, pointing at the creation guide is worse than not
+    # mentioning it: the reader has to work out that the file no longer applies.
+    made = cfg["ids"].get("wikidata")
     print("wrote:")
     print(f"  {bib}   ({n} entries -- ONE upload: Works + Add > Add BibTeX)")
     print(f"  {dois}   (same works one at a time, for spot-fixing)")
-    print(f"  {manual}   (create the Wikidata item by hand -- START HERE)")
+    if made:
+        print(f"  {manual}   (already done -- item is {made}; what is left is in "
+              f"tasks/wikidata_followup.md)")
+    else:
+        print(f"  {manual}   (create the Wikidata item by hand -- START HERE)")
     print(f"  {qs}   (same item as a QuickStatements batch; needs an autoconfirmed account)")
     print(f"  {s2}   ({n_strays} papers to pull onto the claimed S2 page)")
     print(f"  {oa}")
