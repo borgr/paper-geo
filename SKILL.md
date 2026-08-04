@@ -20,6 +20,7 @@ things only a human can do (`WORKLIST.md`).
 | [docs/SHARED.md](docs/SHARED.md) | rules that apply to both — identity, chunking, coined names, what not to do |
 | [docs/PAPERS.md](docs/PAPERS.md) | 135 papers. Claims, metadata correctness, sidecars, the `links` map |
 | [docs/REPOS.md](docs/REPOS.md) | 30 repos. Topics, descriptions, the three `kind`s, `CITATION.cff` |
+| [docs/COLLAB.md](docs/COLLAB.md) | co-author ownership protocol: who owns a page, who links to it |
 | [docs/MEASURE.md](docs/MEASURE.md) | how to tell whether any of it worked |
 | [STUDY.md](STUDY.md) | the evidence and mechanism behind all of it |
 

@@ -57,6 +57,22 @@ llm:
   model: claude-opus-5
   effort: medium
 
+collaboration:
+  # Who owns each paper's canonical page. Exactly one owner per paper: duplicating
+  # a canonical page splits authority and can trip Scholar's duplicate-title drop,
+  # while duplicating the *pointer* to it is pure gain. See docs/COLLAB.md.
+  #
+  # `me` is the identity that claims ownership in our own published manifest.
+  me: borgr
+  # Peers running paper-geo (or just publishing a manifest). Each URL is fetched
+  # on every run; a paper claimed by a peer switches to link-only mode locally.
+  # Order is the tie-break when two peers claim the same paper -- but a genuine
+  # conflict is flagged for a human, never silently resolved.
+  peers: []
+  #  - https://example.github.io/paper-geo.json
+  # Default suggestion when nobody has claimed a paper yet. Advisory only.
+  default_owner_rule: first_author
+
 site:
   repo: borgr/borgr.github.io
   base_url: https://borgr.github.io

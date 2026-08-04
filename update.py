@@ -29,7 +29,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 from common import DATA, load_config, read_yaml  # noqa: E402
 
-STEPS = ("collect", "repos", "propose", "validate", "worklist")
+STEPS = ("collect", "repos", "propose", "ownership", "validate", "worklist")
 
 
 def run(argv: list[str], cwd: str | None = None) -> int:
@@ -58,6 +58,12 @@ def step_repos(cfg, args) -> None:
 def step_propose(cfg, args) -> None:
     """Ask a model to label repos that still lack topics or a description."""
     run([sys.executable, "scripts/propose_topics.py"])
+
+
+def step_ownership(cfg, args) -> None:
+    """Reconcile with collaborators on who owns each paper's canonical page."""
+    argv = [sys.executable, "scripts/ownership.py", "--manifest"]
+    run(argv)
 
 
 def step_validate(cfg, args) -> None:
@@ -165,7 +171,8 @@ def main() -> None:
     cfg = load_config()
 
     fns = {"collect": step_collect, "repos": step_repos, "propose": step_propose,
-           "validate": step_validate, "worklist": step_worklist}
+           "ownership": step_ownership, "validate": step_validate,
+           "worklist": step_worklist}
     for name in ([args.step] if args.step else STEPS):
         print(f"\n{'=' * 62}\n== {name}\n{'=' * 62}")
         fns[name](cfg, args)

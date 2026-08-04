@@ -78,6 +78,60 @@ report, and it is nearly free because the sidecars are work you want anyway. If
 that doesn't clear your bar, **skip B.** Choosing not to run a study that would
 be uninterpretable is the right call, not a gap.
 
+### What the experiment costs, if the treatment works
+
+The right way to decide is: assume the treatment works, and price the experiment.
+
+**The naive cost looks bad and isn't the real one.** "Half the questions uncovered
+for the duration" sounds like forfeiting half the benefit. It isn't, for four
+reasons:
+
+1. **Only the marginal layer is withheld.** Every paper still gets its page,
+   JSON-LD, links map, abstract, canonical claim sentence, and misreadings. The
+   randomised element is *which specific questions get explicit Q&A coverage* — the
+   top layer, not the bulk.
+2. **Spillover.** An uncovered question is still served by the page's abstract and
+   claims, so the control arm is partial-treatment, not zero. (Which is also why
+   the estimate is conservative.)
+3. **It's a delay, not a forfeit.** After the experiment you add the uncovered
+   questions. Against papers with 5–20 year lifespans, delaying half the Q&A
+   coverage by one quarter is a rounding error.
+4. **It can ride the rollout you were already doing.** You are going to write 135
+   sidecars incrementally over months regardless — you will *have* partial coverage
+   during that window whether or not you call it an experiment. Randomising which
+   questions come first costs approximately nothing extra.
+
+Put a number on it: ~135 papers × ~4 months × half coverage ≈ 270 paper-months of
+half-coverage, against a corpus lifetime on the order of 16,000 paper-months.
+**Under 2% of lifetime coverage, and recoverable.**
+
+**The real costs are elsewhere, and they're the ones to weigh:**
+
+| Cost | Size |
+|---|---|
+| Measurement labour | The dominant one. 2 rounds × ~800 questions × 4 engines, and two engines have no API for this — manual runs or a browser harness. Tens of hours, or a build |
+| Discipline | Recording the assignment and not back-filling early. Cheap but easy to fumble |
+| **Mis-reading a null** | The real hazard. At ~50% power a null is weak evidence, and it would be easy to conclude "Tier 2 doesn't work" when the honest statement is "no *large* effect detected" |
+
+**And the payoff if it doesn't work:** you stop writing sidecars for 135 papers
+(~22 hours) and stop maintaining them indefinitely, and you redirect that effort to
+Tier 3 where the observational evidence is better. That asymmetry is what makes a
+cheap version worth it.
+
+**Recommendation.** Run a deliberately reduced version: randomise question coverage
+on the **top ~40 papers only** — the ones you'd sidecar first anyway — for two
+rounds, and treat it as a go/no-go pilot rather than an estimate. Powered for
+roughly a 12–15pp difference, so it detects "this clearly helps" and nothing
+subtler. Pre-commit in writing to reading a null as *no large effect*, not *no
+effect*. If even that feels like overhead, skip it — the cost of skipping is that
+Tier 2 stays an honest bet, which is a defensible position to hold in public.
+
+**Free second contrast, no extra work:** you will roll sidecars out over time
+anyway. Randomise the *order within each citation tier* instead of strictly by
+citation count. You still do high-citation papers early, but you get
+contemporaneous treated/untreated pairs matched on tier — a stepped-wedge design
+for the price of shuffling a list.
+
 ### If you skip B
 
 Then the honest framing of the whole project is: Tier 0 and Tier 1 of
