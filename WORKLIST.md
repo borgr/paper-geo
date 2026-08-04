@@ -5,8 +5,8 @@ Regenerate with `python update.py`. Ordered by leverage.
 ## Once-only identity fixes
 
 Run `python scripts/identity_tasks.py` first -- it writes the payload for each
-of these into `build/`. Every one is blocked on a logged-in account, not on
-knowing what to do.
+of these into `tasks/` -- committed, so browsable on GitHub. Every one is
+blocked on a logged-in account you own, not on knowing what to do.
 
 ### 1. Populate ORCID  — do this one first
 
@@ -18,22 +18,32 @@ likely to fix themselves, and keeps them fixed.
 
 Order matters, and the docs are easy to misread:
 
-1. **Turn on auto-update** — <https://orcid.org/my-orcid> → *Works* → the
-   Crossref and DataCite entries under **Search & link**, and grant standing
-   permission. This only covers works whose deposited metadata already
-   contains your iD, so it fixes the future, not the backlog. arXiv DOIs are
-   DataCite; published DOIs are Crossref — you want both.
-2. **Search & link for the backlog** — same menu, *Crossref Metadata Search*
-   and *DataCite*, then Scopus and DBLP if they find anything the first two
-   missed. This is the route that produces registry-sourced works, which are
-   trusted more than self-asserted ones.
-3. **Only for whatever is left**, import `build/orcid_import.bib` via *Add*
-   *works → Add BibTeX*. Last resort deliberately: works you add yourself
-   carry your own name as the source, and can duplicate what auto-update
-   later pulls from Crossref for the same paper.
+1. **Turn on auto-update** for Crossref and DataCite — *Works → Search &
+   link*, authorise both, grant standing permission. Covers only works whose
+   deposited metadata already carries your iD, so this fixes the *future*.
+   Published DOIs are Crossref; arXiv DOIs are DataCite — you want both.
+2. **Link your arXiv account to ORCID** —
+   <https://arxiv.org/user/confirm_orcid_id>. This is what puts your iD into
+   arXiv's DataCite metadata, which is what makes step 1 work on future
+   preprints.
+3. **Fill the backlog.** *Add DOI* is the reliable route: it resolves
+   server-side against Crossref/DataCite and creates a properly-sourced work.
+   `tasks/orcid_dois.txt` has the 101 DOIs,
+   citation-ordered, so stopping early still captures most of the value.
+4. **Or bulk-import** `tasks/orcid_import.bib` via *Add works → Add BibTeX*.
+   Less risky than it first appears: ORCID **groups works that share an
+   identifier**, so a DOI-bearing entry merges with the registry copy when
+   auto-update later finds it rather than showing as a duplicate. The file is
+   split — DOI-bearing entries first, then the few without a DOI, which are
+   the only ones with nothing to group on.
 
-`build/orcid_dois.txt` has the 101 DOIs,
-citation-ordered, if you would rather paste them one at a time.
+**If the wizards misbehave, that is expected, not you:** the *Crossref
+Metadata Search* wizard is genuinely flaky and hangs. *Scopus* looks empty
+because Scopus indexes little arXiv/ACL content and the wizard wants a Scopus
+Author ID you may not have. **dblp has no connect button because dblp is not
+an ORCID wizard** — it only ingests iDs harvested from publisher metadata and
+the ORCID dump, and never pushes works out. Skip all three and use *Add DOI*
+or the BibTeX import.
 
 I cannot do this for you: writing to an ORCID record needs an OAuth token with
 `/activities/update` scope, which only you can grant. The public API is
@@ -55,7 +65,7 @@ There is no self-service *merge*, but a claimed page can pull papers across:
 1. Open the claimed page → **Edit Author Page** → **Add Papers**.
 2. Paste the paper's S2 URL, select it, choose *the author is correct, but the*
    *paper is missing from my author page*, Submit. ~24h to appear.
-3. Repeat. `build/s2_merge.md` lists all of them citation-ordered with URLs,
+3. Repeat. `tasks/s2_merge.md` lists all of them citation-ordered with URLs,
    so stopping early still captures most of the loss.
 
 Do **not** claim the second page as well — their docs prohibit holding two
@@ -72,14 +82,14 @@ with serious, publicly available references*, and criterion 3 admits items that
 and published papers is. Hundreds of thousands of researcher items exist,
 mostly auto-created from ORCID and Crossref. Unlike Wikipedia there is no
 prohibition on creating an item about yourself; the requirement is accuracy,
-not distance. `build/wikidata.qs` therefore contains identifiers and
+not distance. `tasks/wikidata.qs` therefore contains identifiers and
 affiliations only — no claims about importance, nothing unsourced.
 
 **What I need from you:** a logged-in Wikidata account. Then:
 
 1. Log in at <https://www.wikidata.org>.
 2. Open <https://quickstatements.toolforge.org/#/batch>, authorise it once.
-3. Paste `build/wikidata.qs`, run it, and copy the new Q-number.
+3. Paste `tasks/wikidata.qs`, run it, and copy the new Q-number.
 4. Put that Q-number in `config.yaml` → `ids.wikidata` and redeploy; it then
    appears in the site's `sameAs` array.
 
@@ -100,7 +110,7 @@ profiles, so this may resolve itself.
 **If you want it now:** the *Fixing Author Profiles* form linked from
 <https://help.openalex.org/hc/en-us/articles/27714298573719-Fix-errors-in-OpenAlex>
 can merge profiles, set the display name, and remove wrong works.
-`build/openalex_merge.md` has the exact profile IDs to paste.
+`tasks/openalex_merge.md` has the exact profile IDs to paste.
 `support@openalex.org` is the fallback.
 
 ## arXiv journal-ref missing (103 papers)

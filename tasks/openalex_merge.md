@@ -1,0 +1,33 @@
+# OpenAlex: merge duplicate author profiles
+
+Keep: https://openalex.org/A5040286212
+Merge in: https://openalex.org/A5139793343
+Merge in: https://openalex.org/A5126704705
+Merge in: https://openalex.org/A5123980057
+Merge in: https://openalex.org/A5134416019
+
+## Route 1 — let ORCID do it (preferred, no form)
+
+OpenAlex's disambiguation is ORCID-driven, and they are actively running
+ORCID-based merges of split profiles. Populating ORCID is therefore likely
+to fix this without a request, and fixes it durably rather than once.
+
+## Route 2 — the curation form
+
+OpenAlex publishes Google Forms for curation requests, linked from
+<https://help.openalex.org/hc/en-us/articles/27714298573719-Fix-errors-in-OpenAlex>
+(*Fixing Author Profiles*). That form can merge multiple author profiles
+into one, set the preferred display name, and remove wrongly-attached works.
+Include:
+
+- the profile to keep: `https://openalex.org/A5040286212`
+- the profiles to merge in: `A5139793343`, `A5126704705`, `A5123980057`, `A5134416019`
+- your ORCID: `0000-0002-0085-6496`
+- the display name to keep: `Leshem Choshen`
+
+`support@openalex.org` is the fallback if the form does not cover a case.
+
+## Scale check
+The duplicates hold a handful of works between them against 140+ on the main
+profile, so this is tidying, not a broken profile. Do it after ORCID and the
+Semantic Scholar merge.

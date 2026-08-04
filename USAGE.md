@@ -10,6 +10,10 @@ or `--yes`.
 
 ## Once, at setup
 
+The account-level checklist — ORCID, Semantic Scholar, Google Scholar, Wikidata,
+Hugging Face, canonical URL — is [docs/SETUP.md](docs/SETUP.md). Do that first; it
+is independent of this tool and pays for everything else. Below is just the tool.
+
 ```bash
 pip install pyyaml jsonschema          # jsonschema is optional but catches more
 gh auth login                          # the sweep and deploy use the gh CLI

@@ -4,11 +4,15 @@
 Each of these is blocked on an authenticated account, not on knowing what to do.
 So this generates the exact payload and prints the exact clicks:
 
-    build/orcid_import.bib   BibTeX for ORCID's "Add works" importer
-    build/orcid_dois.txt     the DOI list, for the wizard/DOI-lookup path
-    build/wikidata.qs        QuickStatements to create the author item
-    build/s2_merge.md        the papers to pull onto the claimed S2 page
-    build/openalex_merge.md  what to put in the OpenAlex correction form
+    tasks/orcid_import.bib   BibTeX for ORCID's "Add works" importer
+    tasks/orcid_dois.txt     the DOI list, for the Add DOI path
+    tasks/wikidata.qs        QuickStatements to create the author item
+    tasks/s2_merge.md        the papers to pull onto the claimed S2 page
+    tasks/openalex_merge.md  what to put in the OpenAlex correction form
+
+These go in tasks/ rather than build/ on purpose: they are worklists a human reads
+and works through over days, so they need to be committed, browsable on GitHub, and
+diffable between runs. build/ is gitignored scratch.
 
 Property and item IDs below were looked up against Wikidata, not recalled.
 
@@ -22,7 +26,9 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import BUILD, DATA, load_config, read_yaml  # noqa: E402
+from common import DATA, ROOT, load_config, read_yaml  # noqa: E402
+
+TASKS = os.path.join(ROOT, "tasks")
 
 # Verified against wbsearchentities.
 P = {"instance_of": "P31", "occupation": "P106", "employer": "P108",
@@ -47,8 +53,22 @@ def orcid_files(cfg, papers) -> tuple[str, str, int]:
     trust than Crossref/DataCite-sourced ones and can duplicate what auto-update
     later adds. Hence: auto-update first, wizards second, this file third.
     """
-    entries = [p["bibtex"] for p in papers if p.get("bibtex")]
-    bib = os.path.join(BUILD, "orcid_import.bib")
+    # ORCID groups works that share an identifier, so a BibTeX entry carrying a
+    # DOI merges with the Crossref-sourced version when auto-update later finds it,
+    # rather than showing as a duplicate. Entries WITHOUT a DOI have nothing to
+    # group on, so those are the only genuinely risky ones -- sorted last, and
+    # counted separately so you can stop before them.
+    with_doi = [p for p in papers if p.get("bibtex") and p.get("doi")]
+    without = [p for p in papers if p.get("bibtex") and not p.get("doi")]
+    with_doi.sort(key=lambda p: -(p.get("citations") or 0))
+    without.sort(key=lambda p: -(p.get("citations") or 0))
+    entries = ([f"% ---- {len(with_doi)} entries WITH a DOI: safe to import, ORCID "
+                f"groups them with the registry copy by identifier ----"]
+               + [p["bibtex"] for p in with_doi]
+               + [f"% ---- {len(without)} entries WITHOUT a DOI: nothing for ORCID to "
+                  f"group on, so these can show as standalone duplicates later ----"]
+               + [p["bibtex"] for p in without])
+    bib = os.path.join(TASKS, "orcid_import.bib")
     with open(bib, "w") as f:
         f.write("\n\n".join(e.strip() for e in entries) + "\n")
 
@@ -58,7 +78,7 @@ def orcid_files(cfg, papers) -> tuple[str, str, int]:
         if d and d.lower() not in seen:
             seen.add(d.lower())
             dois.append(f"{d}\t{p.get('title_display') or p['title']}")
-    doi_path = os.path.join(BUILD, "orcid_dois.txt")
+    doi_path = os.path.join(TASKS, "orcid_dois.txt")
     with open(doi_path, "w") as f:
         f.write("\n".join(dois) + "\n")
     return bib, doi_path, len(entries)
@@ -96,7 +116,7 @@ def wikidata_qs(cfg, papers) -> str:
     add(P["openalex"], f'"{ids["openalex"][0].rsplit("/", 1)[-1]}"')
     add(P["github"], f'"{ids["github"]}"')
     add(P["dblp"], f'"{ids["dblp"].replace(" ", "_")}"')
-    path = os.path.join(BUILD, "wikidata.qs")
+    path = os.path.join(TASKS, "wikidata.qs")
     with open(path, "w") as f:
         f.write("\n".join(L) + "\n")
     return path
@@ -114,7 +134,7 @@ def s2_merge(cfg, papers) -> tuple[str, int]:
     others = [a for a in ids["semantic_scholar"] if a != primary]
     strays = sorted([p for p in papers if p.get("s2_author_record") in others],
                     key=lambda p: -(p.get("citations") or 0))
-    path = os.path.join(BUILD, "s2_merge.md")
+    path = os.path.join(TASKS, "s2_merge.md")
     L = [f"# Semantic Scholar: pull {len(strays)} papers onto the claimed page", "",
          f"Claimed (primary): https://www.semanticscholar.org/author/{primary}",
          *[f"Secondary:         https://www.semanticscholar.org/author/{o}" for o in others],
@@ -150,7 +170,7 @@ def openalex_merge(cfg) -> str:
     ids = cfg["ids"]
     keep = ids["openalex"][0].rsplit("/", 1)[-1]
     dups = [d.rsplit("/", 1)[-1] for d in ids.get("openalex_duplicates") or []]
-    path = os.path.join(BUILD, "openalex_merge.md")
+    path = os.path.join(TASKS, "openalex_merge.md")
     L = ["# OpenAlex: merge duplicate author profiles", "",
          f"Keep: https://openalex.org/{keep}",
          *[f"Merge in: https://openalex.org/{d}" for d in dups], "",
@@ -184,7 +204,7 @@ def openalex_merge(cfg) -> str:
 def main() -> None:
     cfg = load_config()
     papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {})["papers"]
-    os.makedirs(BUILD, exist_ok=True)
+    os.makedirs(TASKS, exist_ok=True)
     bib, dois, n = orcid_files(cfg, papers)
     qs = wikidata_qs(cfg, papers)
     s2, n_strays = s2_merge(cfg, papers)

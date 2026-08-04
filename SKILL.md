@@ -22,6 +22,7 @@ things only a human can do (`WORKLIST.md`).
 | [docs/REPOS.md](docs/REPOS.md) | 30 repos. Topics, descriptions, the three `kind`s, `CITATION.cff` |
 | [docs/COLLAB.md](docs/COLLAB.md) | co-author ownership protocol: who owns a page, who links to it |
 | [docs/MEASURE.md](docs/MEASURE.md) | how to tell whether any of it worked |
+| [docs/SETUP.md](docs/SETUP.md) | the one-time account checklist (ORCID, Scholar, Wikidata, HF) |
 | [USAGE.md](USAGE.md) | how a human runs it: refresh, new paper, sidecars, co-authors |
 | [docs/COLLAB.md](docs/COLLAB.md) | ownership protocol when co-authors run this too |
 | [STUDY.md](STUDY.md) | the evidence and mechanism behind all of it |

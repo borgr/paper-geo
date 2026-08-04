@@ -45,6 +45,7 @@ topics across every repo, and a venue name sitting in an index as a paper title.
 | | |
 |---|---|
 | [STUDY.md](STUDY.md) | what's actually known about SEO/GEO/AI retrieval, graded by evidence quality, including what's claimed but measured null |
+| [docs/SETUP.md](docs/SETUP.md) | **the one-time checklist** — ORCID, Scholar, Wikidata, HF, in order |
 | [docs/SHARED.md](docs/SHARED.md) | rules for both tracks: identity, chunking, coined names, what not to do |
 | [docs/PAPERS.md](docs/PAPERS.md) | the papers track — metadata correctness, the `links` map, sidecars |
 | [docs/REPOS.md](docs/REPOS.md) | the repos track — topics, descriptions, `CITATION.cff` |

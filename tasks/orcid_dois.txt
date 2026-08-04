@@ -1,0 +1,101 @@
+10.52202/075280-0310	TIES-Merging: Resolving Interference When Merging Models
+10.48550/ARXIV.2402.14992	tinyBenchmarks: evaluating LLMs with fewer examples
+10.18653/V1/2020.EMNLP-MAIN.638	Active Learning for BERT: An Empirical Study
+10.18653/v1/2023.conll-babylm.1	Findings of the BabyLM Challenge: Sample-Efficient Pretraining on Developmentally Plausible Corpora
+10.18653/v1/2025.acl-long.919	Global MMLU: Understanding and Addressing Cultural and Linguistic Biases in Multilingual Evaluation
+10.1038/S41586-021-03215-W	An autonomous debating system
+10.18653/v1/2021.emnlp-main.619	Q²: Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question Generation and Question Answering
+10.48550/arXiv.2204.03044	Fusing finetuned models for better pretraining
+10.18653/V1/2023.ACL-LONG.559	DisentQA: Disentangling Parametric and Contextual Knowledge with Counterfactual Question Answering
+10.48550/arXiv.2410.19735	Model merging with SVD to tie the Knots
+10.48550/arXiv.2507.16806	Beyond Binary Rewards: Training LMs to Reason About Their Uncertainty
+10.48550/ARXIV.2303.09435	Jump to Conclusions: Short-Cutting Transformers with Linear Transformations
+10.48550/ARXIV.2402.16842	Asymmetry in Low-Rank Adapters of Foundation Models
+10.48550/ARXIV.2405.17202	Efficient multi-prompt evaluation of LLMs
+10.48550/ARXIV.2301.11796	Call for Papers - The BabyLM Challenge: Sample-efficient pretraining on a developmentally plausible corpus
+10.18653/V1/P19-1093	Are You Convinced? Choosing the More Convincing Evidence with a Siamese Network
+10.18653/V1/P18-2095	Will it Blend? Blending Weak and Strong Labeled Data in a Neural Network for Argumentation Mining
+10.18653/V1/2023.FINDINGS-EMNLP.95	Knowledge is a Region in Weight Space for Fine-tuned Language Models
+10.1609/AAAI.V34I05.6270	Corpus Wide Argument Mining - A Working Solution
+10.48550/arXiv.2408.07057	A Survey on Model MoErging: Recycling and Routing Among Specialized Experts for Collaborative Learning
+10.18653/V1/2024.NAACL-LONG.139	Efficient Benchmarking (of Language Models)
+10.48550/ARXIV.2405.09605	Elements of World Knowledge (EWOK): A cognition-inspired framework for evaluating basic world knowledge in language models
+10.18653/V1/2023.ACL-LONG.46	ColD Fusion: Collaborative Descent for Distributed Multitask Finetuning
+10.48550/arXiv.2412.05149	Findings of the Second BabyLM Challenge: Sample-Efficient Pretraining on Developmentally Plausible Corpora
+10.18653/v1/2024.emnlp-main.12	NumeroLogic: Number Encoding for Enhanced LLMs' Numerical Reasoning
+10.18653/V1/2022.ACL-LONG.568	The Grammar-Learning Trajectories of Neural Language Models
+10.48550/ARXIV.2404.06214	[Call for Papers] The 2nd BabyLM Challenge: Sample-efficient pretraining on a developmentally plausible corpus
+10.18653/V1/S19-2001	SemEval-2019 Task 1: Cross-lingual Semantic Parsing with UCCA
+10.18653/V1/P18-1059	Inherent Biases in Reference-based Evaluation for Grammatical Error Correction
+10.48550/ARXIV.2401.14367	Genie: Achieving Human Parity in Content-Grounded Datasets Generation
+10.18653/V1/N18-2020	Reference-less Measure of Faithfulness for Grammatical Error Correction
+10.18653/V1/P18-1127	Automatic Metric Validation for Grammatical Error Correction
+10.48550/arXiv.2502.10645	BabyLM Turns 3: Call for papers for the 2025 BabyLM workshop
+10.18653/V1/W19-4414	Learning to combine Grammatical Error Corrections
+10.1016/j.jml.2025.104650	Bigger is not always better: The importance of human-scale language modeling for psycholinguistics
+10.18653/V1/2023.EMNLP-MAIN.90	Where to start? Analyzing the potential value of intermediate models
+10.18653/V1/2022.ACL-LONG.526	Cluster & Tune: Boost Cold Start Performance in Text Classification
+10.48550/ARXIV.2407.00066	Compress then Serve: Serving Thousands of LoRA Adapters with Little Overhead
+10.48550/ARXIV.2401.08574	Deductive Closure Training of Language Models for Coherence, Accuracy, and Updatability
+10.48550/arXiv.2412.06540	Sloth: scaling laws for LLM skills to predict multi-benchmark performance across families
+10.18653/V1/P19-1419	The Language of Legal and Illegal Activity on the Darknet
+10.48550/ARXIV.2407.21530	Data Contamination Report from the 2024 CONDA Shared Task
+10.18653/V1/2020.CONLL-1.7	Classifying Syntactic Errors in Learner Language
+10.48550/arXiv.2410.11840	A Hitchhiker's Guide to Scaling Law Estimation
+10.18653/v1/2024.naacl-demo.21	Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluation for Generative AI
+10.18653/v1/2025.findings-acl.611	DOVE: A Large-Scale Multi-Dimensional Predictions Dataset Towards Meaningful LLM Evaluation
+10.48550/ARXIV.2311.13171	ComPEFT: Compression for Communicating Parameter Efficient Updates via Sparsification and Quantization
+10.18653/V1/2022.EMNLP-DEMOS.16	Label Sleuth: From Unlabeled Text to a Classifier in a Few Hours
+10.48550/arXiv.2602.16763	When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation
+10.1109/CLOUD67622.2025.00028	ZipNN: Lossless Compression for AI Models
+10.18653/V1/K19-1028	Automatically Extracting Challenge Sets for Non-Local Phenomena in Neural Machine Translation
+10.48550/arXiv.2410.10783	LiveXiv - A Multi-Modal live benchmark based on Arxiv papers content
+10.48550/arXiv.2408.10646	Beneath the Surface of Consistency: Exploring Cross-lingual Knowledge Representation Sharing in LLMs
+10.48550/ARXIV.2402.07891	Label-Efficient Model Selection for Text Generation
+10.18653/V1/2023.EMNLP-MAIN.253	Human Learning by Model Feedback: The Dynamics of Iterative Prompting with Midjourney
+10.48550/ARXIV.2311.07682	Fuse to Forget: Bias Reduction and Selective Memorization through Model Fusion
+10.18653/V1/2021.NAACL-MAIN.8	Mediators in Determining what Processing BERT Performs First
+10.1038/s42256-025-01038-2	The Future of Open Human Feedback
+10.48550/ARXIV.2404.15198	Lossless and Near-Lossless Compression for Foundation Models
+10.18653/V1/2020.FINDINGS-EMNLP.243	Unsupervised Expressive Rules Provide Explainability and Assist Human Experts Grasping New Domains
+10.48550/arXiv.2502.19412	The Mighty ToRR: A Benchmark for Table Reasoning and Robustness
+10.18653/V1/2022.STARSEM-1.3	Semantics-aware Attention Improves Neural Machine Translation
+10.18653/v1/2025.babylm-main.28	Findings of the Third BabyLM Challenge: Accelerating Language Modeling Research with Cognitively Plausible Data
+10.18653/V1/2022.EMNLP-MAIN.767	PreQuEL: Quality Estimation of Machine Translation Outputs in Advance
+10.18653/v1/2025.acl-demo.17	The ShareLM Collection and Plugin: Contributing Human-Model Chats for the Benefit of the Community
+10.48550/ARXIV.2407.13696	Benchmark Agreement Testing Done Right: A Guide for LLM Benchmark Evaluation
+10.48550/arXiv.2510.24081	Global PIQA: Evaluating Physical Commonsense Reasoning Across 100+ Languages and Cultures
+10.48550/arXiv.2503.13507	Neurips 2023 llm efficiency fine-tuning competition
+10.63317/2bh2m233ea9r	Navigating the Modern Evaluation Landscape: Considerations in Benchmarks and Frameworks for Large Language Models (LLMs)
+10.48550/ARXIV.2210.03053	Reinforcement Learning with Large Action Spaces for Neural Machine Translation
+10.63317/3n2tjf9emh64	GrASP: A Library for Extracting and Exploring Human-Interpretable Textual Patterns
+10.48550/arXiv.2602.22953	General Agent Evaluation
+10.48550/arXiv.2601.18026	CommonLID: Re-evaluating State-of-the-Art Language Identification Performance on Web Data
+10.48550/arXiv.2504.11442	TextArena
+10.48550/ARXIV.2404.18923	Holmes: Benchmark the Linguistic Competence of Language Models
+10.48550/arXiv.2601.15812	ErrorMap and ErrorAtlas: Charting the Failure Landscape of Large Language Models
+10.18653/v1/2026.findings-eacl.241	Pretraining Language Models for Diachronic Linguistic Change Discovery
+10.48550/arXiv.2602.24287	Do LLMs Benefit From Their Own Words?
+10.48550/arXiv.2510.10159	BabyBabelLM: A Multilingual Benchmark of Developmentally Plausible Training Data
+10.48550/arXiv.2409.02228	Unforgettable Generalization in Language Models
+10.48550/arXiv.2605.29512	MINDGAMES: A Live Arena for Evaluating Social and Strategic Reasoning in Multi-Agent LLMs
+10.48550/arXiv.2603.15798	CUBE: A Standard for Unifying Agent Benchmarks
+10.18653/v1/2025.findings-emnlp.1038	From KMMLU-Redux to Pro: A Professional Korean Benchmark Suite for LLM Evaluation
+10.48550/arXiv.2602.03344	Robustness as an Emergent Property of Task Performance
+10.48550/arXiv.2601.06672	Will it Merge? On The Causes of Model Mergeability
+10.48550/arXiv.2603.16848	Mediocrity is the key for LLM as a Judge Anchor Selection
+10.48550/arXiv.2507.02850	LLM Hypnosis: Exploiting User Feedback for Unauthorized Knowledge Injection to All Users
+10.18653/V1/2022.CONLL-1.14	On Neurons Invariant to Sentence Structural Changes in Neural Machine Translation
+10.48550/arXiv.2602.20092	BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026 BabyLM Workshop
+10.48550/arXiv.2512.06553	A Latent Variable Framework for Scaling Laws in Large Language Models
+10.18653/V1/2022.CONLL-1.27	Enhancing the Transformer Decoder with Transition-based Syntax
+10.48550/arXiv.2605.11206	Instructions Shape Production of Language, not Processing
+10.18653/v1/2026.findings-acl.43	Stop Guessing When to Stop Testing: Efficient Model Evaluation with Just Enough Data
+10.48550/arXiv.2603.13467	Resolving Interference (RI): Disentangling Models for Improved Model Merging
+10.48550/arXiv.2507.08037	CRISP: Complex Reasoning with Interpretable Step-based Plans
+10.48550/arXiv.2506.20989	Can Gradient Descent Simulate Prompting?
+10.5281/zenodo.12608602	A framework for few-shot language model evaluation
+10.18653/v1/2024.acl-long.774	The Heuristic Core: Understanding Subnetwork Generalization in Pretrained Language Models
+10.18653/V1/2023.CONLL-1.29	MuLER: Detailed and Scalable Reference-based Evaluation
+10.48550/ARXIV.2306.01708	Resolving Interference When Merging Models
+10.48550/ARXIV.2205.05730	Some Grammatical Errors are Frequent, Others are Important
