@@ -14,7 +14,7 @@ Scholar, OpenAlex, Crossref and publisher submission systems read it as your
 assertion of authorship, and a claim on a famous paper is the kind of error
 someone eventually notices and reads uncharitably.
 
-## Confirmed not yours (13)
+## Confirmed not yours (1)
 
 The collector rejected each of these because no form of your name appears
 in the author list from any source. Delete them.
@@ -26,31 +26,37 @@ together, which makes them faster to find than searching by title.
 
 | # | title | ORCID put-code |
 |---|---|---|
-| 1 | The Heuristic Core: Understanding Subnetwork Generalization in Pretrained Lang | `222732429` |
-| 2 | A framework for few-shot language model evaluation | `222732431` |
-| 3 | DenseFormer: Enhancing Information Flow in Transformers via Depth Weighted Ave | `222732440` |
-| 4 | Super Tiny Language Models | `222732415` |
-| 5 | The llama 3 herd of models | `222732462` |
-| 6 | Not all layers are equally as important: Every Layer Counts BERT | `222732473` |
-| 7 | Holistic evaluation of language models | `222732409` |
-| 8 | Model soups: averaging weights of multiple fine-tuned models improves accuracy | `222732433` |
-| 9 | Merging models with fisher-weighted averaging | `222732410` |
-| 10 | Attention is all you need | `222732451` |
-| 11 | Mapping the early language environment using all-day recordings and automated  | `222732425` |
-| 12 | Sapiens: A brief history of humankind | `222732453` |
-| 13 | European public acceptance of euthanasia: socio-demographic and cultural facto | `222732414` |
+| 1 | DenseFormer: Enhancing Information Flow in Transformers via Depth Weighted Ave | `222732440` |
 
 The put-code is the record's internal id, shown in the URL when you open a
 work. It is here so you can confirm you are deleting the right entry when two
 titles are similar.
 
-## On ORCID, unknown to us (3)
+## Listed twice (3 papers, 6 entries)
 
-Not necessarily wrong — a paper missing from the bibliography looks exactly
-like this. **Check before deleting.** If it is yours, the fix is upstream in
-the bibliography, not here.
+One paper, two ORCID works. ORCID groups works that share an external
+identifier; these pairs share none, because one entry carries the publisher
+DOI and the other carries arXiv's `10.48550/arXiv.<id>` DOI. The titles
+differ too — usually a preprint title that changed on acceptance, or a
+subtitle typed into one entry and not the other — so they do not even look
+like the same paper on the page.
 
-- Resolving Interference When Merging Models  (`222732441`)
-- Transition based Graph Decoder for Neural Machine Translation  (`222732428`)
-- Inherent Biases in Reference-based Evaluation for Grammatical Error
-                  Correction and Text Simplification  (`222732469`)
+**Delete the preprint entry, keep the published one.** The published entry
+carries the venue, and the venue is what a disambiguator matches on. Nothing
+is lost: the arXiv version stays reachable from the paper page, and if
+DataCite auto-update later re-adds it, it will arrive with your iD attached
+and can be left alone.
+
+**Or, if you would rather keep both visible:** open the published entry,
+*Add identifier* → type `doi`, value = the arXiv DOI below. Two identifiers
+on one work is what makes ORCID fold the group. More clicks, same result.
+
+| paper | keep | delete |
+|---|---|---|
+| TIES-Merging: Resolving Interference When Me | `222732441` — Resolving Interference When Mergin | `222732361` — TIES-Merging: Resolving Interferen |
+| Enhancing the Transformer Decoder with Trans | `222732435` — Enhancing the Transformer Decoder  | `222732428` — Transition based Graph Decoder for |
+| Inherent Biases in Reference-based Evaluatio | `222732470` — Inherent Biases in Reference-based | `222732469` — Inherent Biases in Reference-based |
+
+The order in the table is the order the record returns them, *not* which to
+delete — open both put-codes and delete the one whose *Source* line shows no
+venue. Deleting is *Works* → the entry → **⋮ / Actions** → *Delete*.

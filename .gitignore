@@ -2,3 +2,6 @@ build/
 *.err
 __pycache__/
 .DS_Store
+
+# Wikidata bot password, read by scripts/wikidata_apply.py. Never commit.
+.wikidata_bot

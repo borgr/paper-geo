@@ -40,7 +40,8 @@ from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, WD_IDENTIFIERS, get, get_json,  # noqa: E402
-                    load_config, name_match, norm_name, norm_title, read_yaml)
+                    load_config, name_match, norm_name, norm_title, paper_doi,
+                    read_yaml, synth_bibtex)
 
 TASKS = os.path.join(ROOT, "tasks")
 ATOM = {"a": "http://www.w3.org/2005/Atom"}
@@ -89,13 +90,21 @@ def orcid_public(orcid: str) -> dict:
     # clicked through a wizard and nothing was granted".
     sources = {}
     for g in ((act.get("works") or {}).get("group") or []):
+        # The group's external ids are what ORCID itself groups on, and they are the
+        # only reliable key back to the corpus: a title changes between preprint and
+        # proceedings ("Transition based Graph Decoder" -> "Enhancing the Transformer
+        # Decoder with Transition-based Syntax") and a subtitle gets dropped
+        # ("TIES-Merging: Resolving Interference" -> "Resolving Interference"), and
+        # both then look like works we have never heard of. Identifiers do not drift.
+        ids = [((e.get("external-id-type") or "").lower(), e.get("external-id-value") or "")
+               for e in ((g.get("external-ids") or {}).get("external-id") or [])]
         for i, s in enumerate(g.get("work-summary") or []):
             src = ((s.get("source") or {}).get("source-name") or {}).get("value") or "(self)"
             sources[src] = sources.get(src, 0) + 1
             if i == 0:
                 t = ((s.get("title") or {}).get("title") or {}).get("value")
                 if t:
-                    titles.append((t, s.get("put-code")))
+                    titles.append((t, s.get("put-code"), ids))
     affs = {}
     for sect in ("employments", "educations"):
         rows = []
@@ -103,12 +112,19 @@ def orcid_public(orcid: str) -> dict:
             for summary in (g.get("summaries") or []):
                 v = next(iter(summary.values()), {}) or {}
                 sd, ed = v.get("start-date") or {}, v.get("end-date") or {}
+                # Who asserted the entry. An affiliation added by the institution
+                # itself is read-only for the researcher: ORCID offers *Delete*, and
+                # no *Edit*. Reporting "add the degree to the Role field" on one of
+                # those sends someone looking for a control that is not there.
+                src = ((v.get("source") or {}).get("source-name") or {}).get("value")
                 rows.append({
                     "org": ((v.get("organization") or {}).get("name")),
                     "role": v.get("role-title"),
                     "dept": v.get("department-name"),
                     "start": (sd.get("year") or {}).get("value"),
                     "end": (ed.get("year") or {}).get("value") if ed else None,
+                    "source": src,
+                    "put": v.get("put-code"),
                 })
         affs[sect] = rows
     return {
@@ -213,9 +229,14 @@ def wikidata_gaps(qid: str, cfg) -> dict:
     # table cell into the single-alias box, so several names became one string that
     # matches nothing.
     bad_aliases = [a for a in aliases if "`" in a or a.count(",") > 1]
+    # Compare against the *good* aliases only. A backticked string containing "L.
+    # Choshen" normalises to the same thing the real alias would, so counting it as
+    # present reported "0 missing" for a name the item does not usefully carry -- and
+    # anything acting on this diff would then remove the bad alias and add nothing.
+    good = [a for a in aliases if a not in bad_aliases]
     want_aliases = [v for v in cfg["identity"]["name_variants"]
                     if v != cfg["identity"]["name"]
-                    and not any(norm_name(v) == norm_name(a) for a in aliases)]
+                    and not any(norm_name(v) == norm_name(a) for a in good)]
     return {"qid": qid, "missing": missing, "wrong": wrong, "dupes": dupes,
             "aliases": aliases, "bad_aliases": bad_aliases,
             "want_aliases": want_aliases,
@@ -351,7 +372,7 @@ def wikidata_papers_qs(cov: dict, cfg) -> tuple[str | None, int]:
 HF_CLAIM_DONE = {"claimed_verified", "admin_assigned"}
 
 
-def hf_state(papers, me: str, variants) -> dict[str, list]:
+def hf_state(papers, me: str, variants, requested=()) -> dict[str, list]:
     """Live per-paper Hugging Face state, by what you can actually do about it.
 
     Five buckets, because "not claimed" was hiding three different situations and
@@ -363,6 +384,14 @@ def hf_state(papers, me: str, variants) -> dict[str, list]:
         blocked    no author string resembles your name, so there is no claim control
                    to press: the upstream metadata is wrong and that is the real task
         claimed    done
+
+    `requested` (data/overrides.yaml -> hf_claim_requested) is the one thing here
+    that cannot be read from outside. Hugging Face only exposes the `user` link once
+    moderation has granted the claim, so a request you submitted an hour ago is
+    indistinguishable over the API from one you never made -- and the worklist then
+    tells you to go and do it again. Which action you took is a durable fact about
+    you, not observed state, so it is declared in overrides.yaml and the audit moves
+    those pages to `pending`.
 
     Splitting out `pending` stops the worklist from re-listing claims already in
     moderation, which reads as "your click did not work". Splitting out `blocked`
@@ -386,7 +415,8 @@ def hf_state(papers, me: str, variants) -> dict[str, list]:
             done = any((a.get("status") or "") in HF_CLAIM_DONE for a in mine)
             out["claimed" if done else "pending"].append(p)
         elif any(name_match(a.get("name") or "", variants) for a in authors):
-            out["unclaimed"].append(p)
+            out["pending" if str(p["arxiv"]) in requested
+                else "unclaimed"].append(p)
         else:
             p = dict(p)
             p["hf_authors"] = [a.get("name") or "" for a in authors]
@@ -462,6 +492,12 @@ def wikidata_followup_file(g: dict, cfg, cov: dict, qs_path: str | None) -> str:
     """
     ident = cfg["identity"]
     q = g["qid"]
+    # P735/P734 want the parts, not the label. Split on the last space: `Leshem Choshen`
+    # -> given `Leshem`, family `Choshen`. Naive for compound surnames (`de Oc{\'a}riz
+    # Borde`) and for the order some cultures write, which is exactly why the value goes
+    # into a table a human reads and confirms rather than into an automated write.
+    given, _, family = ident["name"].rpartition(" ")
+    given, family = given or ident["name"], family or ""
     L = [f"# Wikidata follow-up — [{q}](https://www.wikidata.org/wiki/{q})", "",
          f"Label **{g['label']}** · description *{g['description']}*", "",
          "Live diff against `config.yaml`. Re-run `python scripts/audit_identity.py`",
@@ -473,8 +509,12 @@ def wikidata_followup_file(g: dict, cfg, cov: dict, qs_path: str | None) -> str:
         # Shown in a fenced block, not backticks: the value *contains* backticks, so
         # inline code would break exactly in the paragraph explaining the breakage.
         L += ["```"] + list(g["bad_aliases"]) + ["```"]
+        # The example is the stored variant that actually looks like a citation, not a
+        # literal: a forked config has different names in it.
+        cited = next((v for v in ident["name_variants"] if "," in v),
+                     f"{family}, {given}")
         L += ["", "That is one alias whose text happens to contain backticks and a comma,",
-              "not two aliases — so a citation reading *Choshen, Leshem* matches nothing.",
+              f"not two aliases — so a citation reading *{cited}* matches nothing.",
               "The aliases box takes one name per entry.", "",
               f"On <https://www.wikidata.org/wiki/{q}>: click the *also known as* area,",
               "delete that entry, then add each of these as its own alias:", ""]
@@ -540,9 +580,9 @@ def wikidata_followup_file(g: dict, cfg, cov: dict, qs_path: str | None) -> str:
           "namesake, which is the whole job of this item.", "",
           "| property | | value | why |",
           "|---|---|---|---|",
-          "| given name | `P735` | Leshem | lets a query match the name parts "
+          f"| given name | `P735` | {given} | lets a query match the name parts "
           "separately from the label string |",
-          "| family name | `P734` | Choshen | same |",
+          f"| family name | `P734` | {family} | same |",
           f"| educated at | `P69` | {'; '.join(edu)} | the single strongest "
           "disambiguating fact about a researcher |",
           "| employer | `P108` | with *start time* qualifiers | turns flat "
@@ -642,23 +682,123 @@ def orcid_strays(orc: dict, papers) -> list[tuple]:
     Each stray is tagged `confirmed` when the collector also rejected it on author
     name, and `unknown` otherwise -- a title we simply do not have, which is as likely
     to be a real paper missing from the bibliography as an error.
+
+    Matching is by identifier first and title only as a fallback, because titles drift
+    and identifiers do not. Every "unknown" this check ever reported turned out to be
+    a title-drift artefact: a paper retitled between preprint and proceedings, or a
+    subtitle dropped by whoever typed the entry. Three works, all the author's own, all
+    already in the corpus -- and the file said *check before deleting* about papers
+    there was never any reason to doubt.
+
+    Returns `(strays, duplicate_groups, matched_slugs)`.
+
+    `duplicate_groups` is what identifier matching exposes on the way: two ORCID work
+    groups resolving to one corpus paper, which is the same paper listed twice. ORCID
+    groups works that share an identifier, so a record holding both the publisher DOI
+    and arXiv's `10.48550/arXiv.<id>` DOI for one paper gets two groups, not one.
+    `orcid_import.bib` fills missing DOIs from arXiv, so importing it over a record
+    that already had publisher DOIs is exactly how this happens.
+
+    `matched_slugs` is the direction nothing else measures: which of your papers the
+    record does *not* hold. A works count cannot answer that -- 105 works against a
+    117-paper corpus can be twelve papers missing, or sixteen missing and four listed
+    twice, and those are different fixes.
     """
-    mine = {norm_title(p["title"]) for p in papers}
+    ARXIV_DOI = re.compile(r"10\.48550/arxiv\.(.+)$", re.I)
+    by_doi = {p["doi"].lower(): p for p in papers if p.get("doi")}
+    by_arxiv = {str(p["arxiv"]).lower(): p for p in papers if p.get("arxiv")}
+    by_title = {norm_title(p["title"]): p for p in papers}
     rejected = {}
     try:
         with open(os.path.join(BUILD, "not_mine.json")) as f:
             rejected = {norm_title(x["title"]): x for x in json.load(f)}
     except (OSError, ValueError):
         pass
-    out = []
-    for title, put in orc.get("work_titles") or []:
+
+    def resolve(title, ids):
+        for typ, val in ids:
+            v = val.lower()
+            if typ == "doi":
+                m = ARXIV_DOI.match(v)
+                if m and m.group(1) in by_arxiv:
+                    return by_arxiv[m.group(1)]
+                if v in by_doi:
+                    return by_doi[v]
+            elif typ == "arxiv" and v.lstrip("arxiv:") in by_arxiv:
+                return by_arxiv[v.lstrip("arxiv:")]
         n = norm_title(title)
-        if n not in mine:
+        if n in by_title:
+            return by_title[n]
+        # Last resort, and only in the containment direction: an ORCID title that is a
+        # prefix or suffix of a corpus title is a dropped subtitle, not a new paper.
+        # Guarded by length so a short title cannot swallow a long unrelated one.
+        if len(n) >= 25:
+            for cn, p in by_title.items():
+                if n in cn or cn in n:
+                    return p
+        return None
+
+    out, seen = [], {}
+    for title, put, ids in orc.get("work_titles") or []:
+        hit = resolve(title, ids)
+        if hit is None:
+            n = norm_title(title)
             out.append((title, put, "confirmed" if n in rejected else "unknown"))
+        else:
+            seen.setdefault(hit["slug"], []).append((title, put))
+    dups = {slug: v for slug, v in seen.items() if len(v) > 1}
+    return out, dups, set(seen)
+
+
+def orcid_missing_files(missing: list[dict], orcid: str) -> list[str]:
+    """tasks/orcid_missing.md + .bib — papers of yours the ORCID record does not hold.
+
+    Two files because there are two ways to fix it and they suit different sizes: a
+    BibTeX upload is one action for the whole set, and a DOI at a time is what you want
+    when three are left. The .bib is the same shape as `orcid_import.bib` but narrowed
+    to what is actually absent, which matters — re-uploading the full import is what
+    created the duplicate groups this audit now reports.
+    """
+    md = [f"# ORCID is missing {len(missing)} of your papers", "",
+          "Regenerated live by `python scripts/audit_identity.py`. Matched by DOI and",
+          "arXiv id against the work groups on the record, so this is absence and not a",
+          "title-matching guess.", "",
+          "**Fix it with the narrowed BibTeX, not the full import.** "
+          "`tasks/orcid_missing.bib`",
+          "holds exactly these entries. Uploading `orcid_import.bib` again would re-add",
+          "the works already there under arXiv DOIs, and ORCID cannot group a work",
+          "carrying only the arXiv DOI with the same work carrying only the publisher",
+          "DOI — that is where the *listed twice* entries in `orcid_remove.md` came from.",
+          "",
+          f"On <https://orcid.org/my-orcid#works>: *Works* → **+ Add** → *Add BibTeX* →",
+          "choose `tasks/orcid_missing.bib` → review the list → *Add all*.", "",
+          "| # | cites | title | identifier |", "|---|---|---|---|"]
+    for i, p in enumerate(missing, 1):
+        # paper_doi, not p["doi"]: it fills a missing DOI from the arXiv id, and it is
+        # what the .bib next to this table emits. Two columns disagreeing about a
+        # paper's identifier is how you end up checking the wrong one on ORCID.
+        ident = paper_doi(p) or "— none —"
+        md.append(f"| {i} | {p.get('citations') or 0} | {p['title'][:64]} | `{ident}` |")
+    noid = [p for p in missing if not paper_doi(p)]
+    if noid:
+        md += ["",
+               f"**{len(noid)} of these carry no identifier at all.** Those are the entries",
+               "where a BibTeX import genuinely can duplicate later, because ORCID has",
+               "nothing to group them on. Add them last, or leave them out — a work with no",
+               "DOI and no arXiv id is also a work nothing downstream can resolve.", ""]
+    md += ["", "Then re-run the audit: the *ORCID holds your papers* row is the check.", ""]
+    bib = [(p.get("bibtex") or synth_bibtex(p)).strip() for p in missing]
+    out = []
+    for name, body in (("orcid_missing.md", "\n".join(md) + "\n"),
+                       ("orcid_missing.bib", "\n\n".join(bib) + "\n" if bib else "")):
+        path = os.path.join(TASKS, name)
+        with open(path, "w") as f:
+            f.write(body)
+        out.append(path)
     return out
 
 
-def orcid_remove_file(strays: list[tuple], cfg) -> str:
+def orcid_remove_file(strays: list[tuple], dups: dict, papers, cfg) -> str:
     """tasks/orcid_remove.md — works to delete from the ORCID record, with put-codes."""
     conf = [s for s in strays if s[2] == "confirmed"]
     unk = [s for s in strays if s[2] == "unknown"]
@@ -693,11 +833,44 @@ def orcid_remove_file(strays: list[tuple], cfg) -> str:
         L += [f"## On ORCID, unknown to us ({len(unk)})", "",
               "Not necessarily wrong — a paper missing from the bibliography looks exactly",
               "like this. **Check before deleting.** If it is yours, the fix is upstream in",
-              "the bibliography, not here.", ""]
+              "the bibliography, not here.",
+              "",
+              "These are matched by identifier first (the group's DOI or arXiv id) and only",
+              "then by title, so a paper retitled between preprint and proceedings no longer",
+              "lands here. A work reaching this section carries *no* identifier ORCID could",
+              "group on — which is also why nothing else can place it.", ""]
         L += [f"- {t}  (`{p}`)" for t, p, _ in unk]
         L += [""]
-    if not strays:
-        L += ["Nothing to remove: every public work on the record is in the corpus.", ""]
+    if dups:
+        by_slug = {p["slug"]: p for p in papers}
+        L += [f"## Listed twice ({len(dups)} papers, {sum(len(v) for v in dups.values())} entries)",
+              "",
+              "One paper, two ORCID works. ORCID groups works that share an external",
+              "identifier; these pairs share none, because one entry carries the publisher",
+              "DOI and the other carries arXiv's `10.48550/arXiv.<id>` DOI. The titles",
+              "differ too — usually a preprint title that changed on acceptance, or a",
+              "subtitle typed into one entry and not the other — so they do not even look",
+              "like the same paper on the page.",
+              "",
+              "**Delete the preprint entry, keep the published one.** The published entry",
+              "carries the venue, and the venue is what a disambiguator matches on. Nothing",
+              "is lost: the arXiv version stays reachable from the paper page, and if",
+              "DataCite auto-update later re-adds it, it will arrive with your iD attached",
+              "and can be left alone.",
+              "",
+              "**Or, if you would rather keep both visible:** open the published entry,",
+              "*Add identifier* → type `doi`, value = the arXiv DOI below. Two identifiers",
+              "on one work is what makes ORCID fold the group. More clicks, same result.",
+              "", "| paper | keep | delete |", "|---|---|---|"]
+        for slug, entries in dups.items():
+            t = (by_slug.get(slug) or {}).get("title", slug)[:44]
+            L.append(f"| {t} | " + " | ".join(f"`{p}` — {ti[:34]}" for ti, p in entries) + " |")
+        L += ["", "The order in the table is the order the record returns them, *not* which to",
+              "delete — open both put-codes and delete the one whose *Source* line shows no",
+              "venue. Deleting is *Works* → the entry → **⋮ / Actions** → *Delete*.", ""]
+    if not strays and not dups:
+        L += ["Nothing to remove: every public work on the record is in the corpus, and",
+              "none is listed twice.", ""]
     return "\n".join(L)
 
 
@@ -729,7 +902,7 @@ def arxiv_author_strings(ids: list[str], batch: int = 50) -> dict[str, list[str]
     return out
 
 
-def arxiv_name_file(papers, variants) -> tuple[str, int, int]:
+def arxiv_name_file(papers, variants) -> tuple[str, list, list]:
     """Papers whose arXiv author list misspells or omits your name.
 
     Worth a dedicated check because arXiv metadata is *upstream* of nearly every
@@ -801,7 +974,7 @@ def arxiv_name_file(papers, variants) -> tuple[str, int, int]:
         L += ["Nothing to fix — every retrieved record names you exactly.", ""]
     with open(path, "w") as f:
         f.write("\n".join(L) + "\n")
-    return path, len(typo), len(absent)
+    return path, typo, absent
 
 
 def _rows(group, extra=lambda p: "") -> list[str]:
@@ -915,7 +1088,10 @@ def main() -> None:
     hf_path = None
     if not args.no_hf:
         print(f"checking {len(ax)} Hugging Face paper pages ...", flush=True)
-        hf = hf_state(ax, ids["huggingface"], variants)
+        requested = {str(a) for a in
+                     ((read_yaml(os.path.join(DATA, "overrides.yaml")) or {})
+                      .get("hf_claim_requested") or [])}
+        hf = hf_state(ax, ids["huggingface"], variants, requested)
         hf_path = hf_worklist_file(hf)
 
     name_path = n_typo = n_absent = None
@@ -944,9 +1120,13 @@ def main() -> None:
     want_kw = [k for k in (ident.get("keywords") or [])
                if k.lower() not in {k2.lower() for k2 in orc["keywords"]}]
 
-    o_stray = orcid_strays(orc, papers)
+    o_stray, o_dups, o_have = orcid_strays(orc, papers)
     o_conf = [s for s in o_stray if s[2] == "confirmed"]
     o_unk = [s for s in o_stray if s[2] == "unknown"]
+    # Papers of yours the record does not hold. Sorted by citations, because the cost of
+    # a missing work is proportional to how often something looks the paper up.
+    o_missing = sorted((p for p in papers if p["slug"] not in o_have),
+                       key=lambda p: -(p.get("citations") or 0))
 
     # Auto-update evidence, and affiliations the record does not yet state.
     auto_src = {k: v for k, v in (orc["work_sources"] or {}).items()
@@ -960,7 +1140,23 @@ def main() -> None:
     # An education row with no role-title states an institution but not a degree, and
     # one with no end year still reads as *enrolled* -- which, next to a postdoc
     # employment, is a record contradicting itself about what you are.
-    edu_open = [r for r in orc["education_rows"] if not r["role"] or not r["end"]]
+    #
+    # Split by who asserted it, because the fix is different and only one of the two is
+    # a fix at all. A self-asserted row is editable in place. An institution-asserted
+    # row is not: ORCID shows no *Edit* control on it, only *Delete*, so "add the degree
+    # to the Role field" is an instruction that cannot be followed. Those are reported
+    # separately, as a decision (leave it, or delete and re-add your own) rather than as
+    # an open task -- and an institution-asserted row is *better* evidence than anything
+    # you could type, which is the argument for leaving it alone.
+    def _incomplete(r):
+        return not r["role"] or not r["end"]
+
+    def _theirs(r):
+        s = (r.get("source") or "").lower()
+        return bool(s) and s != (ident["name"] or "").lower()
+
+    edu_open = [r for r in orc["education_rows"] if _incomplete(r) and not _theirs(r)]
+    edu_theirs = [r for r in orc["education_rows"] if _incomplete(r) and _theirs(r)]
 
     def status(ok: bool) -> str:
         return "ok" if ok else "**fix**"
@@ -970,7 +1166,12 @@ def main() -> None:
          "`python scripts/audit_identity.py`. Every row is checkable without a login,",
          "which is why it can be re-run — the fixes all need one.", "",
          "| surface | state | |", "|---|---|---|",
-         f"| ORCID works (public) | {orc['works']} of {len(papers)} | {status(orc['works'] > 0)} |",
+         f"| ORCID works (public) | {orc['works']} | {status(orc['works'] > 0)} |",
+         # Two rows, not one: the count says the record is not empty, the coverage says
+         # whether it holds your work. `105 of 117` graded "ok" for months because the
+         # check behind it only ever asked whether the count was above zero.
+         f"| ORCID holds your papers | {len(papers) - len(o_missing)} of {len(papers)} | "
+         f"{status(not o_missing)} |",
          f"| ORCID canonical URL | {'present' if has_canon else 'absent'} | {status(has_canon)} |",
          f"| ORCID name variants | {len(orc['other_names'])} listed | {status(not missing_variants)} |",
          f"| ORCID keywords | {len(orc['keywords'])} of "
@@ -981,7 +1182,8 @@ def main() -> None:
          f"| ORCID employment | {orc['employments']} listed, "
          f"{len(missing_empl)} missing | {status(not missing_empl)} |",
          f"| ORCID education | {orc['educations']} listed, "
-         f"{len(missing_edu)} missing, {len(edu_open)} incomplete | "
+         f"{len(missing_edu)} missing, {len(edu_open)} incomplete"
+         + (f", {len(edu_theirs)} institution-asserted" if edu_theirs else "") + " | "
          f"{status(not missing_edu and not edu_open)} |",
          f"| ORCID works added by Crossref/DataCite | {sum(auto_src.values())} | "
          f"{'ok' if auto_src else 'nothing yet'} |",
@@ -1015,8 +1217,10 @@ def main() -> None:
             L.append(f"| HF pages not claimable (name wrong upstream) | "
                      f"{len(hf['blocked'])} | see arXiv row |")
     if n_typo is not None:
-        L.append(f"| arXiv records misspelling your name | {n_typo} | {status(not n_typo)} |")
-        L.append(f"| arXiv records omitting you | {n_absent} | {status(not n_absent)} |")
+        L.append(f"| arXiv records misspelling your name | {len(n_typo)} | "
+                 f"{status(not n_typo)} |")
+        L.append(f"| arXiv records omitting you | {len(n_absent)} | "
+                 f"{status(not n_absent)} |")
     if stray:
         L.append(f"| arXiv papers missing from your bibliography | {len(stray)} | "
                  f"**check** |")
@@ -1025,6 +1229,8 @@ def main() -> None:
             L.append(f"| ORCID works that are not yours | {len(o_conf)} | **fix** |")
         if o_unk:
             L.append(f"| ORCID works we cannot place | {len(o_unk)} | **check** |")
+    if o_dups:
+        L.append(f"| ORCID works listed twice | {len(o_dups)} | **fix** |")
     L += [f"| Semantic Scholar records | {len(ids['semantic_scholar'])} | "
           f"{status(len(ids['semantic_scholar']) == 1)} |", ""]
 
@@ -1089,7 +1295,7 @@ def main() -> None:
               "   auto-update work without you.", "",
               "Re-run this audit after the next publication lands. A non-zero count here is",
               "the proof; until then, Trusted parties is the evidence.", ""]
-    if missing_empl or missing_edu or edu_open:
+    if missing_empl or missing_edu or edu_open or edu_theirs:
         L += ["## ORCID employment and education are thinner than your record", "",
               "These two sections are what institutional disambiguation matches on — the",
               "signal that separates you from a namesake when the name alone cannot. They",
@@ -1101,7 +1307,8 @@ def main() -> None:
                          f" · {r['start'] or '?'}–{r['end'] or 'present'}")
             for r in orc["education_rows"]:
                 L.append(f"- *education* — {r['org']} · {r['role'] or 'no degree stated'}"
-                         f" · {r['start'] or '?'}–{r['end'] or 'present'}")
+                         f" · {r['start'] or '?'}–{r['end'] or 'present'}"
+                         + (f" · asserted by {r['source']}" if _theirs(r) else ""))
             L.append("")
         if missing_empl:
             L += ["**Affiliations in `config.yaml` with no employment entry.** Each is one",
@@ -1124,6 +1331,35 @@ def main() -> None:
                     "no end year" if not r["end"] else ""] if x)
                 L.append(f"- [ ] {r['org']} — {gaps}")
             L.append("")
+        if edu_theirs:
+            L += ["**One education entry your institution asserted, not you.** This one is",
+                  "not a task, it is a decision — and the default is to leave it.", ""]
+            for r in edu_theirs:
+                gaps = ", ".join(x for x in [
+                    "no degree in the Role field" if not r["role"] else "",
+                    "no end year" if not r["end"] else ""] if x)
+                L.append(f"- {r['org']} — {gaps} — asserted by **{r['source']}** "
+                         f"(put-code `{r['put']}`)")
+            L += ["",
+                  "ORCID shows no *Edit* control on an entry someone else asserted, only",
+                  "*Delete*, so it cannot be corrected in place. The three routes, in the",
+                  "order worth trying them:",
+                  "",
+                  "1. **Leave it.** An institution-asserted affiliation is the strongest form",
+                  "   this section takes: the university's own ORCID integration vouched for",
+                  "   it, and consumers can see that in the source line. A thinner entry from",
+                  "   a better source beats a complete one you typed yourself.",
+                  "2. **Add your own alongside it.** *Education → + Add* with the degree in",
+                  "   *Role* and the real end year. ORCID groups affiliations by organization,",
+                  "   so yours joins theirs as a second source on the same block rather than",
+                  "   displacing it. This is the fix that costs nothing and loses nothing.",
+                  "3. **Ask them to correct it** — whoever runs the ORCID integration, usually",
+                  "   the library or the research office. Slow, and the only route that",
+                  "   changes what the institution asserts.",
+                  "",
+                  "Do not delete it and re-add your own: that trades a vouched-for entry for a",
+                  "self-asserted one, which is a downgrade in exactly the signal this section",
+                  "exists to provide.", ""]
     if other_pages:
         L += ["## Other personal pages not declared on ORCID", "",
               "Not a demand to delete them. A second page is only a problem while nothing",
@@ -1188,8 +1424,37 @@ def main() -> None:
               "publisher systems, so this is worth clearing before anything else on this",
               "page. One deletion each, put-codes included:",
               "[orcid_remove.md](orcid_remove.md).", ""]
+    if o_missing:
+        L += [f"## {len(o_missing)} of your papers are missing from ORCID", "",
+              "Measured by identifier, not by counting: each of these has no work group on",
+              "the record carrying its DOI or arXiv id.",
+              "",
+              "This is the row that matters most on the page and the one a works *count*",
+              "hides. ORCID is the key Semantic Scholar disambiguates on and the key OpenAlex",
+              "is running profile merges from, so a paper absent here is a paper those two",
+              "have no authoritative reason to attach to you — which is the same failure the",
+              "split S2 record is made of.",
+              "",
+              "Highest citations first; the full list with DOIs is",
+              "[orcid_missing.md](orcid_missing.md).", ""]
+        for p in o_missing[:10]:
+            L.append(f"- [ ] {(p.get('citations') or 0):>4} cites — {p['title'][:66]}")
+        if len(o_missing) > 10:
+            L.append(f"- … and {len(o_missing) - 10} more")
+        L.append("")
+    if o_dups:
+        L += [f"## {len(o_dups)} papers are listed twice on your ORCID", "",
+              "ORCID groups works that share an identifier. A paper whose record holds",
+              "the publisher DOI in one entry and arXiv's `10.48550/arXiv.<id>` DOI in",
+              "another shares no identifier between them, so it does not group: it shows",
+              "as two works with two different titles, and every service counting your",
+              "output counts it twice.",
+              "",
+              "This is a side effect of `orcid_import.bib` filling missing DOIs from arXiv.",
+              "It is worth fixing and it is not urgent. Which entry to delete, and why the",
+              "preprint entry is the one to drop: [orcid_remove.md](orcid_remove.md).", ""]
     if n_typo:
-        L += [f"## arXiv metadata misspells your name on {n_typo} papers", "",
+        L += [f"## arXiv metadata misspells your name on {len(n_typo)} papers", "",
               "Upstream of every other surface here — Hugging Face, Semantic Scholar,",
               "OpenAlex and Scholar all read arXiv's author list, so one wrong character",
               "creates one wrong author in all of them, holding citations that cannot be",
@@ -1205,24 +1470,37 @@ def main() -> None:
     # else's data and letting it go stale. Absent file = the section is skipped.
     os.makedirs(BUILD, exist_ok=True)
     state_path = os.path.join(BUILD, "identity_state.json")
-    state = {}
-    if args.no_hf:
-        # Carry the previous HF lists through untouched rather than dropping them:
-        # this run made no claim about Hugging Face either way, and dropping them
-        # would silently demote WORKLIST.md back to the collector's cached flags.
-        try:
-            with open(state_path) as f:
-                prev = json.load(f)
-            state = {k: prev[k] for k in
-                     ("hf_missing", "hf_unclaimed", "hf_pending", "hf_blocked")
-                     if k in prev}
-        except (OSError, ValueError):
-            pass
-    else:
-        state = {"hf_missing": [p["arxiv"] for p in hf["missing"]],
-                 "hf_unclaimed": [p["arxiv"] for p in hf["unclaimed"]],
-                 "hf_pending": [p["arxiv"] for p in hf["pending"]],
-                 "hf_blocked": [p["arxiv"] for p in hf["blocked"]]}
+    prev = {}
+    try:
+        with open(state_path) as f:
+            prev = json.load(f)
+    except (OSError, ValueError):
+        pass
+
+    def carried(*keys) -> dict:
+        """The previous reading for a check this run skipped.
+
+        A skipped check made no claim either way, so writing empty lists for it would
+        report "nothing to do" -- the one output indistinguishable from success, and
+        the one that quietly removes a section from WORKLIST.md. Carrying the last
+        real reading through keeps the section, with numbers that were true once,
+        which is the honest degradation.
+        """
+        return {k: prev[k] for k in keys if k in prev}
+
+    state = carried("hf_missing", "hf_unclaimed", "hf_pending", "hf_blocked") \
+        if args.no_hf else \
+        {"hf_missing": [p["arxiv"] for p in hf["missing"]],
+         "hf_unclaimed": [p["arxiv"] for p in hf["unclaimed"]],
+         "hf_pending": [p["arxiv"] for p in hf["pending"]],
+         "hf_blocked": [p["arxiv"] for p in hf["blocked"]]}
+    state.update(carried("arxiv_name_typos", "arxiv_name_absent")
+                 if args.no_names else
+                 # Highest-leverage arXiv item and the only one upstream of every
+                 # other surface, so the worklist needs the ids, not just a count.
+                 {"arxiv_name_typos": [{"arxiv": p["arxiv"], "reads": p["near_miss"],
+                                        "slug": p["slug"]} for p in n_typo],
+                  "arxiv_name_absent": [p["arxiv"] for p in n_absent]})
     state.update({"orcid_public_works": orc["works"],
                   "orcid_has_canonical_url": has_canon,
                   "orcid_missing_variants": missing_variants,
@@ -1236,6 +1514,8 @@ def main() -> None:
                   "arxiv_stray": stray,
                   "orcid_strays_confirmed": [t for t, _p, _k in o_conf],
                   "orcid_strays_unknown": [t for t, _p, _k in o_unk],
+                  "orcid_duplicate_groups": sorted(o_dups),
+                  "orcid_missing_papers": [p["slug"] for p in o_missing],
                   "orcid_autoupdate_works": sum(auto_src.values()),
                   "orcid_missing_employment": missing_empl,
                   "orcid_missing_education": missing_edu,
@@ -1256,9 +1536,11 @@ def main() -> None:
 
     rm_path = os.path.join(TASKS, "orcid_remove.md")
     with open(rm_path, "w") as f:
-        f.write(orcid_remove_file(o_stray, cfg))
+        f.write(orcid_remove_file(o_stray, o_dups, papers, cfg))
+    miss_paths = orcid_missing_files(o_missing, ident["orcid"]) if o_missing else []
 
-    wrote = [path, ax_path, rm_path] + [q for q in (hf_path, name_path, wd_path) if q]
+    wrote = [path, ax_path, rm_path] + miss_paths \
+        + [q for q in (hf_path, name_path, wd_path) if q]
     print("\nwrote " + "\n      ".join(wrote))
     for line in L:
         if line.startswith("| ") and "---" not in line:

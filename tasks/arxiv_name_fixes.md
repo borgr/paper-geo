@@ -21,6 +21,6 @@ thing that is wrong — so the request can bounce. If it does, ask the
 submitting co-author for the paper password instead
 (<https://arxiv.org/auth/need-paper-password>), which does not name-match.
 
-- [ ] [`2410.10783`](https://arxiv.org/abs/2410.10783) — reads **Leshem Chosen** — LiveXiv - A Multi-Modal live benchmark based on Arxiv papers
+- [ ] [`2410.10783`](https://arxiv.org/abs/2410.10783) — reads **Leshem Chosen** — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Paper
 - [ ] [`2409.02228`](https://arxiv.org/abs/2409.02228) — reads **Leshem Chosen** — Unforgettable Generalization in Language Models
 

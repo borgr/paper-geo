@@ -6,29 +6,31 @@ which is why it can be re-run — the fixes all need one.
 
 | surface | state | |
 |---|---|---|
-| ORCID works (public) | 117 of 117 | ok |
+| ORCID works (public) | 105 | ok |
+| ORCID holds your papers | 101 of 117 | **fix** |
 | ORCID canonical URL | present | ok |
 | ORCID name variants | 2 listed | ok |
 | ORCID keywords | 13 of 13 | ok |
 | ORCID lists other personal pages | 1 of 1 | ok |
-| ORCID employment | 1 listed, 3 missing | **fix** |
-| ORCID education | 1 listed, 0 missing, 1 incomplete | **fix** |
+| ORCID employment | 3 listed, 0 missing | ok |
+| ORCID education | 2 listed, 0 missing, 0 incomplete, 1 institution-asserted | ok |
 | ORCID works added by Crossref/DataCite | 0 | nothing yet |
 | arXiv registered author | 105 of 105 | ok |
 | Wikidata author item | Q140867203 | ok |
-| Wikidata item complete | 4 gaps | **fix** |
+| Wikidata item complete | 6 gaps | **fix** |
 | Wikidata paper items | 3 of 117 | optional |
 | HF pages indexed | 105 of 105 | ok |
-| HF pages claimed | 103 of 105 claimable | **fix** |
+| HF pages claimed | 103 of 105 claimable | ok |
+| HF claims in moderation | 2 | waiting |
 | arXiv records misspelling your name | 2 | **fix** |
 | arXiv records omitting you | 0 | ok |
-| ORCID works that are not yours | 13 | **fix** |
-| ORCID works we cannot place | 3 | **check** |
+| ORCID works that are not yours | 1 | **fix** |
+| ORCID works listed twice | 3 | **fix** |
 | Semantic Scholar records | 2 | **fix** |
 
 ## Crossref / DataCite auto-update: no evidence it is live
 
-All 117 public works are **self-asserted** — the `source` on every
+All 105 public works are **self-asserted** — the `source` on every
 one of them is your own name. A work that Crossref or DataCite adds carries
 *their* name instead, so this row is the only public read on whether those
 connections exist. It is currently reading zero.
@@ -66,25 +68,36 @@ are also the sections nothing ever fills for you.
 
 Currently on the record:
 
+- *employment* — Weizmann Institute of Science · no role title · 2026–present
 - *employment* — Massachusetts Institute of Technology · Postdoctoral Researcher · 2023–present
-- *education* — The Hebrew University of Jerusalem · no degree stated · 2016–present
+- *employment* — IBM Research · no role title · 2016–present
+- *education* — The Hebrew University of Jerusalem · no degree stated · 2016–present · asserted by The Hebrew University of Jerusalem
+- *education* — Hebrew University of Jerusalem · PhD · ?–2023
 
-**Affiliations in `config.yaml` with no employment entry.** Each is one
-form under *Employment → + Add*. Worth the two minutes each: a paper
-carrying an affiliation your ORCID never mentions is a paper a
-disambiguator has one less reason to attach to you.
+**One education entry your institution asserted, not you.** This one is
+not a task, it is a decision — and the default is to leave it.
 
-- [ ] MIT-IBM Watson AI Lab
-- [ ] IBM Research
-- [ ] Weizmann Institute of Science
+- The Hebrew University of Jerusalem — no degree in the Role field, no end year — asserted by **The Hebrew University of Jerusalem** (put-code `16591121`)
 
-**Education entries that state less than they should.** ORCID's education
-*Role* field is where the degree goes (`PhD`), and an entry with no end
-year reads as *still enrolled*. Left as-is next to a postdoc employment,
-the record contradicts itself about what you currently are — and it is a
-human-obvious inconsistency that a machine reads literally.
+ORCID shows no *Edit* control on an entry someone else asserted, only
+*Delete*, so it cannot be corrected in place. The three routes, in the
+order worth trying them:
 
-- [ ] The Hebrew University of Jerusalem — no degree in the Role field, no end year
+1. **Leave it.** An institution-asserted affiliation is the strongest form
+   this section takes: the university's own ORCID integration vouched for
+   it, and consumers can see that in the source line. A thinner entry from
+   a better source beats a complete one you typed yourself.
+2. **Add your own alongside it.** *Education → + Add* with the degree in
+   *Role* and the real end year. ORCID groups affiliations by organization,
+   so yours joins theirs as a second source on the same block rather than
+   displacing it. This is the fix that costs nothing and loses nothing.
+3. **Ask them to correct it** — whoever runs the ORCID integration, usually
+   the library or the research office. Slow, and the only route that
+   changes what the institution asserts.
+
+Do not delete it and re-add your own: that trades a vouched-for entry for a
+self-asserted one, which is a downgrade in exactly the signal this section
+exists to provide.
 
 ## Wikidata item Q140867203 exists — a correction and 1 identifier to add
 
@@ -105,12 +118,7 @@ answer. This uses `query-scholarly.wikidata.org`.
 
 An opt-in batch for the 114 missing items is in `tasks/wikidata_papers.qs`; read the cautions in [wikidata_followup.md](wikidata_followup.md) before running it.
 
-## Hugging Face: 0 to index, 2 to claim, 0 blocked
-
-Live counts, not the ones cached in `papers.yaml`. Lists:
-[hf_worklist.md](hf_worklist.md).
-
-## 13 works on your ORCID are not yours
+## 1 works on your ORCID are not yours
 
 Imported from the bibliography before the collector checked author names —
 a CV bibliography holds the works it *cites* as well as the works it lists.
@@ -118,6 +126,44 @@ ORCID is read as your authorship claim by Semantic Scholar, OpenAlex and
 publisher systems, so this is worth clearing before anything else on this
 page. One deletion each, put-codes included:
 [orcid_remove.md](orcid_remove.md).
+
+## 16 of your papers are missing from ORCID
+
+Measured by identifier, not by counting: each of these has no work group on
+the record carrying its DOI or arXiv id.
+
+This is the row that matters most on the page and the one a works *count*
+hides. ORCID is the key Semantic Scholar disambiguates on and the key OpenAlex
+is running profile merges from, so a paper absent here is a paper those two
+have no authoritative reason to attach to you — which is the same failure the
+split S2 record is made of.
+
+Highest citations first; the full list with DOIs is
+[orcid_missing.md](orcid_missing.md).
+
+- [ ]  112 cites — Model merging with SVD to tie the Knots
+- [ ]   33 cites — BabyLM Turns 3: Call for papers for the 2025 BabyLM workshop
+- [ ]    5 cites — Do LLMs Benefit From Their Own Words?
+- [ ]    3 cites — CUBE: A Standard for Unifying Agent Benchmarks
+- [ ]    3 cites — Mediocrity is the key for LLM as a Judge Anchor Selection
+- [ ]    3 cites — MINDGAMES: A Live Arena for Evaluating Social and Strategic Reason
+- [ ]    2 cites — SemEval 2019 Shared Task: Cross-lingual Semantic Parsing with UCCA
+- [ ]    1 cites — BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026
+- [ ]    1 cites — Every Eval Ever: A Unifying Schema and Community Repository for AI
+- [ ]    1 cites — Automated Discovery Has No Universally Superior Harness
+- … and 6 more
+
+## 3 papers are listed twice on your ORCID
+
+ORCID groups works that share an identifier. A paper whose record holds
+the publisher DOI in one entry and arXiv's `10.48550/arXiv.<id>` DOI in
+another shares no identifier between them, so it does not group: it shows
+as two works with two different titles, and every service counting your
+output counts it twice.
+
+This is a side effect of `orcid_import.bib` filling missing DOIs from arXiv.
+It is worth fixing and it is not urgent. Which entry to delete, and why the
+preprint entry is the one to drop: [orcid_remove.md](orcid_remove.md).
 
 ## arXiv metadata misspells your name on 2 papers
 

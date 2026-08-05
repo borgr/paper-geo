@@ -28,7 +28,7 @@ import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (DATA, ROOT, WD_IDENTIFIERS, load_config, paper_doi,  # noqa: E402
-                    read_yaml)
+                    read_yaml, synth_bibtex)
 
 TASKS = os.path.join(ROOT, "tasks")
 
@@ -93,10 +93,13 @@ def orcid_files(cfg, papers) -> tuple[str, str, int]:
     Auto-update still comes first in time, but it only covers works whose *deposited
     metadata already contains your iD* -- it fixes the future, not the backlog.
     """
-    have = [p for p in papers if p.get("bibtex")]
-    # Emit the DOI-bearing entries first and count them from the *emitted text*, so
-    # the header cannot claim a grouping guarantee the file does not deliver.
-    prepared = [(p, _with_doi_field(p["bibtex"].strip(), paper_doi(p) or "")) for p in have]
+    # Every paper, not only the ones with entry text. A paper discovered on arXiv or
+    # Semantic Scholar has no `bibtex` field, and filtering on that field is how 16 of
+    # them -- including one with 112 citations -- were quietly left out of this file and
+    # therefore out of the ORCID record. `synth_bibtex` builds the entry from the fields
+    # we do have; the audit's "ORCID holds your papers" row is what caught the gap.
+    prepared = [(p, _with_doi_field((p.get("bibtex") or synth_bibtex(p)).strip(),
+                                    paper_doi(p) or "")) for p in papers]
     prepared.sort(key=lambda t: -(t[0].get("citations") or 0))
     with_doi = [t for t in prepared if _HAS_DOI.search(t[1])]
     without = [t for t in prepared if not _HAS_DOI.search(t[1])]
