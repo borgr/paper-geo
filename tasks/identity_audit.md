@@ -86,7 +86,7 @@ human-obvious inconsistency that a machine reads literally.
 
 - [ ] The Hebrew University of Jerusalem — no degree in the Role field, no end year
 
-## Wikidata item Q140867203 exists — a correction and 1 identifiers to add
+## Wikidata item Q140867203 exists — a correction and 1 identifier to add
 
 An alias was stored as one string with its markdown intact (``L. Choshen``), so it matches nothing. Fix that first.
 

@@ -1138,8 +1138,9 @@ def main() -> None:
     if wd_gaps and (wd_gaps["missing"] or wd_gaps["wrong"] or wd_gaps["dupes"]
                     or wd_gaps["bad_aliases"] or wd_gaps["want_aliases"]):
         bad = wd_gaps["bad_aliases"]
+        n_add = len(wd_gaps["missing"])
         L += [f"## Wikidata item {wd} exists — {'a correction and ' if bad else ''}"
-              f"{len(wd_gaps['missing'])} identifiers to add", ""]
+              f"{n_add} identifier{'' if n_add == 1 else 's'} to add", ""]
         if bad:
             L += ["An alias was stored as one string with its markdown intact "
                   f"(`{bad[0][:60]}`), so it matches nothing. Fix that first.", ""]
