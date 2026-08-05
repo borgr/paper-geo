@@ -18,20 +18,49 @@ things only a human can do (`WORKLIST.md`).
 | | |
 |---|---|
 | [docs/SHARED.md](docs/SHARED.md) | rules that apply to both — identity, chunking, coined names, what not to do |
-| [docs/PAPERS.md](docs/PAPERS.md) | 135 papers. Claims, metadata correctness, sidecars, the `links` map |
-| [docs/REPOS.md](docs/REPOS.md) | 30 repos. Topics, descriptions, the three `kind`s, `CITATION.cff` |
+| [docs/PAPERS.md](docs/PAPERS.md) | 115 papers. Claims, metadata correctness, sidecars, the `links` map |
+| [docs/REPOS.md](docs/REPOS.md) | 31 repos. Topics, descriptions, the three `kind`s, `CITATION.cff` |
 | [docs/COLLAB.md](docs/COLLAB.md) | co-author ownership protocol: who owns a page, who links to it |
 | [docs/MEASURE.md](docs/MEASURE.md) | how to tell whether any of it worked |
 | [docs/SETUP.md](docs/SETUP.md) | the one-time account checklist — ORCID, arXiv ownership, Scholar, Wikidata, HF, Zenodo |
 | [USAGE.md](USAGE.md) | how a human runs it: refresh, new paper, sidecars, co-authors |
 | [STUDY.md](STUDY.md) | the evidence and mechanism behind all of it |
 
-Only 1 of 30 repos maps to a paper — paper code mostly lives in collaborators'
+Only 1 of 31 repos maps to a paper — paper code mostly lives in collaborators'
 accounts. Do not treat the repo track as "the code for the papers".
 
 The generated artifacts are the visibility assets; this repo is where the facts
 live so they stay consistent and regenerable. Nothing is published without an
 explicit `--apply`.
+
+## The steady state, which is the point
+
+Setting this up was the one-time cost and it is nearly paid. From here the work is
+an update loop, and **the loop is where this skill spends its effort**: find what
+changed about the papers, produce the GEO for it, hand a human one link. Ranked by
+what should own each part — code, then a model, then a person:
+
+| Who | Does | Why not the tier below |
+|---|---|---|
+| **Code** | `collect`, `repos`, `ownership`, `audit`, `validate`, `render` | All of it is re-derived from public sources. A human here is a human retyping a fetch. |
+| **A model** | `propose` (repo labels), `draft` (sidecars from each paper's own full text) | Needs reading and judgement, so no rule does it — but it is a *reading*, so it lands as a draft nothing publishes. |
+| **The author** | `--accept` a sidecar draft; any write that leaves the machine (`--apply`, `--deploy`) | An accepted sidecar is an assertion under the author's name, and only the author knows which misreading actually keeps happening. |
+
+So the honest description of a monthly run is: one command, then one link. Everything
+between them is code and a model, and the two human touches are both *decisions*
+rather than transcription.
+
+**Drafting from the paper, not from its title.** `scripts/fulltext.py` resolves each
+paper's actual text through a chain of open sources — arXiv HTML, ACL Anthology,
+Unpaywall, Semantic Scholar, Europe PMC, arXiv PDF — and `data/fulltext/` is the
+escape hatch for the handful with no public copy. It exists because the first version
+read one field and 12 papers therefore got sidecars written from their titles. Check
+coverage with `python scripts/fulltext.py --report`; anything it lists as thin will
+produce a thin draft, so fix that before drafting rather than after.
+
+**Unattended, if you want it that way.** Every step is read-only and idempotent, so
+the loop is safe on a schedule (`llm.mode: api` in `config.yaml` for the model steps).
+What must not be scheduled is the accept and the publish — see the table.
 
 ## Routine refresh
 
@@ -41,7 +70,7 @@ python scripts/sweep_github.py diff # exactly what would change on GitHub
 python update.py --apply            # write it
 ```
 
-`update.py` runs eight steps, each independently re-runnable:
+`update.py` runs nine steps, each independently re-runnable:
 
 | Step | Does | Writes |
 |---|---|---|
@@ -52,6 +81,7 @@ python update.py --apply            # write it
 | `ownership` | reconcile paper ownership with collaborators' manifests | `paper-geo.json` |
 | `audit` | live-read the surfaces we don't control — ORCID, arXiv authority records, Wikidata, HF, S2 — and regenerate their payloads | `tasks/*` |
 | `validate` | schema-check every data file, plus regression checks for bugs already shipped once | — |
+| `render` | rebuild the site locally, so the run ends in a page rather than a report | `build/site/` |
 | `worklist` | rank what only a human can do, by citations | `WORKLIST.md` |
 
 Then, separately: `scripts/build_site.py --deploy` publishes the site,
@@ -113,6 +143,12 @@ unverified draft cannot reach a published page. Only the author runs `--accept`.
 Never invent a magnitude. If the evidence gives no number for a finding, say so in the
 claim text — a wrong number is the one failure here that is worse than silence, because
 it is quotable.
+
+Each task's evidence names the source it came from (`full text (from acl-anthology
+https://... , truncated)`). Read that line first: if it says the text is NOT AVAILABLE,
+the honest move is to draft nothing and put the paper in `--report`'s thin list instead,
+because a sidecar written from a title is a page of confident guesses under someone's
+name. The chain and the `data/fulltext/` escape hatch are in `scripts/fulltext.py`.
 
 The rule that is easy to get backwards:
 

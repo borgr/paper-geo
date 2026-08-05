@@ -226,7 +226,7 @@ lever on that, and it's a lever no index or publisher can pull for you.
 
 Measured, not assumed. Corpus assembled from both Semantic Scholar author
 records; 122 unique papers at the time of this snapshot. Reproduce with
-`python scripts/collect.py`, which supersedes it (135 papers after duplicate
+`python scripts/collect.py`, which supersedes it (115 papers after duplicate
 merging); `scripts/audit_snapshot.py` is the original standalone version.
 
 ```

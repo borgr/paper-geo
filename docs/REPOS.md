@@ -10,10 +10,10 @@ owns its surface completely, and GitHub is a top-5 AI-cited domain — so the
 ceiling is higher and the work is cheaper. The catch is that almost none of it
 is about papers.
 
-**The paper↔repo link barely exists here: 1 of 30 repos maps to a paper.** Paper
+**The paper↔repo link barely exists here: 1 of 31 repos maps to a paper.** Paper
 code lives in collaborators' and organisations' accounts (`prateeky2806/ties-merging`,
-`ibm-research/*`). Planning this track around "paper code" would mis-target 29 of
-30 repos.
+`ibm-research/*`). Planning this track around "paper code" would mis-target 30 of
+31 repos.
 
 ## The three kinds, and why they need different treatment
 

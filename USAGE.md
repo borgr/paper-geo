@@ -28,23 +28,35 @@ anything about you appears.
 
 ## The routine refresh
 
+Setup was the one-time cost. This is the part that repeats, and it is meant to cost
+you one command and one link:
+
 ```bash
 python update.py
 ```
 
-Eight steps, each safe to re-run, in order: rebuild `data/papers.yaml` from your
+Nine steps, each safe to re-run, in order: rebuild `data/papers.yaml` from your
 bibliography + Semantic Scholar + arXiv + Hugging Face → refresh repo state →
-label anything unlabelled → draft the next batch of sidecars → reconcile paper
-ownership with collaborators → live-read the identity surfaces → validate against
-the schemas → regenerate `WORKLIST.md`.
+label anything unlabelled → draft the next batch of sidecars from each paper's own
+full text → reconcile paper ownership with collaborators → live-read the identity
+surfaces → validate against the schemas → rebuild the site locally → regenerate
+`WORKLIST.md`.
 
-Then look at two files and act:
+It ends by printing where to look: `build/site/index.html` is the corpus as a reader
+meets it, and the two things waiting on you are counted underneath it.
+
+**What is yours and what is not.** Six of the nine steps are code re-deriving public
+facts, and a human in them is a human retyping a fetch. Two are a model's reading,
+which is why they land as drafts that nothing publishes. That leaves exactly two
+things for you, and both are decisions rather than typing: accepting a sidecar draft,
+because it becomes an assertion under your name, and anything that writes outward.
 
 ```bash
-cat WORKLIST.md                        # what only you can do, ranked by citations
-python scripts/sweep_github.py diff    # exactly what would change on GitHub
-python update.py --apply               # write the repo changes
-python scripts/build_site.py --deploy  # rebuild and publish the site
+cat WORKLIST.md                            # what only you can do, ranked by citations
+python scripts/draft_sidecars.py --review  # drafts waiting, then --accept <slug>
+python scripts/sweep_github.py diff        # exactly what would change on GitHub
+python update.py --apply                   # write the repo changes
+python scripts/build_site.py --deploy      # rebuild and publish the site
 ```
 
 Monthly is plenty. Run `--refresh-bib` first if your bibliography lives in a local
@@ -141,6 +153,24 @@ order it pays.
 `update.py` drafts a batch (default 10, `--draft-batch N`) on every run, so a new
 paper's draft arrives on its own.
 
+**A draft is only as good as the text behind it.** Each one is written from the
+paper's own full text, resolved through whichever open source has it — arXiv's HTML
+rendering first, then the ACL Anthology, Unpaywall, Semantic Scholar, Europe PMC, the
+arXiv PDF. That chain reaches all but a handful. For the rest there is no public copy
+at all — a Nature paywall, a journal paywall, OpenReview blocking scripted readers —
+and a draft written from a title and an abstract is exactly the kind of page that
+quotes a number you never published:
+
+```bash
+python scripts/fulltext.py --report          # per-paper: which source answered, how long
+```
+
+Anything it lists as thin, you can fix in one step — drop the PDF you already have
+into `data/fulltext/<slug>.pdf` and re-run. That directory is checked *first* and is
+gitignored on purpose: a publisher's PDF is not yours to redistribute and a public
+repo is redistribution, so only the sidecar distilled from it gets published. See
+[`data/fulltext/README.md`](data/fulltext/README.md).
+
 To write one from scratch instead: copy `data/sidecars/ties-merging-*.md` as the
 worked example. Slugs come from `data/papers.yaml`; schema:
 [`schema/sidecar.schema.json`](schema/sidecar.schema.json); rules:
@@ -157,7 +187,7 @@ The three that are easy to get backwards:
   matches the query and then loses the citation, because the answer isn't in the
   chunk.
 
-Do them in citation order. Twenty verified sidecars beat 117 rushed ones.
+Do them in citation order. Twenty verified sidecars beat a hundred rushed ones.
 
 ---
 
@@ -273,7 +303,7 @@ surfaces).
 are the point. Hand-check 20% of the grades before trusting the report.
 
 Neither answers "did this cause more citations". [`docs/MEASURE.md`](docs/MEASURE.md)
-explains why that question is close to unanswerable at 135 papers, and what the one
+explains why that question is close to unanswerable at 115 papers, and what the one
 defensible design would be if you want it.
 
 ---
@@ -303,7 +333,7 @@ Semantic Scholar, and OpenAlex instead of only to you.
 
 | Command | Does | Writes anything? |
 |---|---|---|
-| `update.py` | all eight steps | no |
+| `update.py` | all nine steps | no |
 | `update.py --step <name>` | one step | no |
 | `update.py --refresh-bib` | refresh the bibliography first | no |
 | `update.py --apply` | + push approved repo changes | **yes, GitHub** |
@@ -312,6 +342,7 @@ Semantic Scholar, and OpenAlex instead of only to you.
 | `scripts/sweep_github.py propose\|diff\|apply` | repo topics, descriptions, `CITATION.cff` | apply: **yes** |
 | `scripts/propose_topics.py [--ingest]` | label repos with a model | local only |
 | `scripts/draft_sidecars.py [--ingest\|--review\|--accept]` | draft sidecars for you to verify | local only |
+| `scripts/fulltext.py [--report\|--slug\|--refetch]` | resolve each paper's full text; report thin ones | cache only |
 | `scripts/ownership.py [--manifest] [--claim-all]` | reconcile with co-authors | local only |
 | `scripts/links_block.py propose\|diff\|apply` | links block in paper-code READMEs | apply: **yes** |
 | `scripts/build_site.py [--deploy]` | generate the site | deploy: **yes** |

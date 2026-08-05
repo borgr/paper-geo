@@ -420,6 +420,49 @@ def check_sidecars() -> list[str]:
     return errs
 
 
+# Every place the docs state the size of the corpus itself, as a format string over
+# the live counts. Subset counts ("50 papers with no Hugging Face page", "60 of the 90
+# repos are forks") are deliberately absent: those describe one finding at one moment,
+# while these describe the corpus and so go stale on any run that merges a duplicate or
+# picks up a new paper. Three of them were still claiming 135 papers at 115.
+#
+# A reword breaks this check rather than silently disabling it, which is the intended
+# trade: the fix is to update the sentence or update this list, and either way somebody
+# has looked. Lines carrying arithmetic derived from the count are marked -- swapping
+# the number there without redoing the sum produces a confidently wrong page.
+DOC_COUNTS = (
+    ("README.md", "corpus ({papers} papers, {repos} repos)", ""),
+    ("SKILL.md", "| {papers} papers. Claims", ""),
+    ("SKILL.md", "| {repos} repos. Topics", ""),
+    ("SKILL.md", "Only 1 of {repos} repos maps", ""),
+    ("USAGE.md", "unanswerable at {papers} papers", ""),
+    ("docs/PAPERS.md", "{papers} papers. Read", ""),
+    ("docs/REPOS.md", "1 of {repos} repos maps to a paper", ""),
+    ("docs/MEASURE.md", "~{papers} papers × 6 questions", "recompute the question total"),
+    ("docs/MEASURE.md", "~{papers} papers × ~4 months", "recompute the paper-months"),
+    ("docs/MEASURE.md", "sidecars for {papers} papers", "recompute the hours"),
+)
+
+
+def check_doc_counts(papers: list[dict], repos: list[dict]) -> list[str]:
+    """Catch a doc that still states an old corpus size. See DOC_COUNTS."""
+    counts = {"papers": len(papers), "repos": len(repos)}
+    if not counts["papers"] or not counts["repos"]:
+        return []            # a failed read is already reported by the schema pass
+    errs = []
+    for fname, template, note in DOC_COUNTS:
+        path = os.path.join(ROOT, fname)
+        if not os.path.exists(path):
+            continue
+        want = template.format(**counts)
+        if want in open(path).read():
+            continue
+        tail = f"; {note}" if note else ""
+        errs.append(f"{fname}: stale corpus size -- expected {want!r}. Update the "
+                    f"sentence (or DOC_COUNTS in scripts/validate.py){tail}")
+    return errs
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--strict", action="store_true",
@@ -449,6 +492,8 @@ def main() -> None:
     errs += check_sidecars()
     errs += check_overrides()
     errs += check_name_lists()
+    errs += check_doc_counts((docs.get("papers") or {}).get("papers", []),
+                             (docs.get("repos") or {}).get("repos", []))
 
     if not have_js:
         print("note: jsonschema not installed -- using the built-in subset of checks")

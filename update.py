@@ -6,6 +6,19 @@
     python update.py --apply         # additionally write the approved repo changes
     python update.py --step collect  # run a single step
 
+Setting this up was the one-time cost. The steady state is this command: code
+refreshes everything derivable, a model drafts what needs judgement, and the run
+ends by handing one link to a human. Who does what, and why:
+
+  * Code, no human in it: collect, repos, ownership, audit, validate, render.
+    All of it is re-derived from public sources, so a human in the loop would be a
+    human retyping what a fetch already knows.
+  * A model's judgement, handed back rather than published: propose (repo labels)
+    and draft (sidecars). Both write to places nothing reads until promoted.
+  * Reserved for the author, and only these two: accepting a sidecar draft, which
+    publishes an assertion under the author's name, and any write that leaves
+    this machine.
+
 Design rules, because this is meant to be re-run for years:
 
   * Read-only by default. Nothing leaves this machine unless you pass --apply.
@@ -21,6 +34,7 @@ runs the steps in order and then tells you what a human still has to do.
 from __future__ import annotations
 
 import argparse
+import glob
 import json
 import os
 import subprocess
@@ -32,7 +46,7 @@ from common import DATA, is_preprint_venue, load_config, read_yaml  # noqa: E402
 from sweep_github import ZENODO_KINDS  # noqa: E402
 
 STEPS = ("collect", "repos", "propose", "draft", "ownership", "audit", "validate",
-         "worklist")
+         "render", "worklist")
 
 
 def run(argv: list[str], cwd: str | None = None) -> int:
@@ -102,6 +116,19 @@ def step_audit(cfg, args) -> None:
 def step_validate(cfg, args) -> None:
     """Fail loudly on a malformed hand edit or a bad model proposal."""
     run([sys.executable, "scripts/validate.py"])
+
+
+def step_render(cfg, args) -> None:
+    """Rebuild the local site, so the run ends in something a human can look at.
+
+    A local write only: `build/site/` is regenerated from `data/` every time, and
+    publishing stays a separate explicit `build_site.py --deploy`. It belongs in the
+    loop because every other step ends in a file *about* the corpus, and this one ends
+    in the corpus as a reader meets it -- which is the artifact worth handing back.
+    Rendering after `validate` is deliberate: a schema failure should stop the run
+    before it produces a page that looks reviewable.
+    """
+    run([sys.executable, "scripts/build_site.py"])
 
 
 def due_followups() -> list[str]:
@@ -440,9 +467,8 @@ def step_worklist(cfg, args) -> None:
     # Two different asks, and conflating them is what made this section unusable:
     # verifying a draft is minutes, writing one from a blank file is not. Drafts are
     # in data/sidecars/drafts/ and nothing reads them until you promote one.
-    import glob as _glob
     drafted = sorted(os.path.basename(f)[:-3] for f in
-                     _glob.glob(os.path.join(DATA, "sidecars", "drafts", "*.md")))
+                     glob.glob(os.path.join(DATA, "sidecars", "drafts", "*.md")))
     no_side = [p for p in papers if not p.get("has_sidecar")]
     if drafted:
         lines += [f"## Sidecar drafts awaiting your verification ({len(drafted)})", "",
@@ -501,6 +527,45 @@ def step_worklist(cfg, args) -> None:
     print("\n".join(l for l in lines if l.startswith("## ")))
 
 
+def closing(args) -> None:
+    """The end of a run: what is left for a human, and the one link to look at.
+
+    Written as a short list of places rather than a list of tasks, because the tasks
+    are already ranked in WORKLIST.md and repeating them here would give a reader two
+    lists to reconcile. The site link goes first: a page is the only form in which you
+    can see whether the run produced something you would want your name on.
+    """
+    print(f"\n{'=' * 62}\n== what is left for you\n{'=' * 62}")
+
+    index = os.path.join(ROOT, "build", "site", "index.html")
+    if os.path.exists(index):
+        print("\nThe run's output, as a reader meets it:")
+        print(f"  file://{index}")
+
+    lines = []
+    worklist = os.path.join(ROOT, "WORKLIST.md")
+    if os.path.exists(worklist):
+        with open(worklist) as f:
+            n = sum(1 for l in f if l.startswith("## "))
+        lines.append(f"  WORKLIST.md              {n} thing{'s' * (n != 1)} only you can do, "
+                     f"ranked by citations")
+    drafts = glob.glob(os.path.join(DATA, "sidecars", "drafts", "*.md"))
+    if drafts:
+        lines.append(f"  data/sidecars/drafts/    {len(drafts)} sidecar draft"
+                     f"{'s' * (len(drafts) != 1)} to verify -- nothing reads these until "
+                     f"you run `--accept <slug>`")
+    if lines:
+        print("\nWaiting on your judgement:")
+        print("\n".join(lines))
+
+    if args.apply:
+        return
+    print("\nNothing above has left this machine. When it looks right:")
+    print("  python scripts/sweep_github.py diff      # see exactly what would change")
+    print("  python update.py --apply                 # write the repo changes")
+    print("  python scripts/build_site.py --deploy    # publish the site")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--step", choices=STEPS, help="run one step instead of all")
@@ -515,7 +580,7 @@ def main() -> None:
 
     fns = {"collect": step_collect, "repos": step_repos, "propose": step_propose,
            "draft": step_draft, "ownership": step_ownership, "audit": step_audit,
-           "validate": step_validate, "worklist": step_worklist}
+           "validate": step_validate, "render": step_render, "worklist": step_worklist}
     for name in ([args.step] if args.step else STEPS):
         print(f"\n{'=' * 62}\n== {name}\n{'=' * 62}")
         fns[name](cfg, args)
@@ -523,10 +588,7 @@ def main() -> None:
     if args.apply:
         print(f"\n{'=' * 62}\n== apply (writes to GitHub)\n{'=' * 62}")
         run([sys.executable, "scripts/sweep_github.py", "apply", "--yes"])
-    else:
-        print("\nRead-only run. Review data/repos.yaml and WORKLIST.md, then:")
-        print("  python scripts/sweep_github.py diff      # see exactly what would change")
-        print("  python update.py --apply                 # write it")
+    closing(args)
 
 
 if __name__ == "__main__":
