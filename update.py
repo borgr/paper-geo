@@ -28,7 +28,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
-from common import DATA, load_config, read_yaml  # noqa: E402
+from common import DATA, is_preprint_venue, load_config, read_yaml  # noqa: E402
 from sweep_github import ZENODO_KINDS  # noqa: E402
 
 STEPS = ("collect", "repos", "propose", "draft", "ownership", "audit", "validate",
@@ -326,11 +326,17 @@ def step_worklist(cfg, args) -> None:
                   "Full list, citation-ordered: `tasks/arxiv_ownership.md`.",
                   ""]
 
-    missing_jr = top(lambda p: p.get("arxiv") and not p.get("arxiv_journal_ref"), 12)
+    # A paper with no published venue has no journal-ref to declare, and listing it here
+    # invited exactly the wrong edit: two entries read `-> ArXiv` and `-> CoRR`, which are
+    # the *absence* of a venue written out as if it were one.
+    def needs_jr(p) -> bool:
+        return bool(p.get("arxiv") and not p.get("arxiv_journal_ref")
+                    and p.get("venue") and not is_preprint_venue(p["venue"]))
+
+    missing_jr = top(needs_jr, 12)
     if missing_jr:
-        blocked = sum(1 for p in papers if p.get("arxiv") in unowned
-                      and not p.get("arxiv_journal_ref"))
-        lines += [f"## arXiv journal-ref missing ({sum(1 for p in papers if p.get('arxiv') and not p.get('arxiv_journal_ref'))} papers)",
+        blocked = sum(1 for p in papers if p.get("arxiv") in unowned and needs_jr(p))
+        lines += [f"## arXiv journal-ref missing ({sum(1 for p in papers if needs_jr(p))} papers)",
                   "",
                   "**What it buys.** A preprint with no journal-ref is, to every indexer, a",
                   "paper with no venue. Three concrete consequences:",
@@ -356,7 +362,9 @@ def step_worklist(cfg, args) -> None:
                       "author on them, so the form will refuse. Claim ownership first (above).",
                       ""]
         for p in missing_jr:
-            venue = (p.get("venue") or "?")[:52]
+            # The citation form, which is what to type into the form: the full proceedings
+            # name truncated to fit this line is not a bibliographic reference.
+            venue = p.get("venue_display") or p.get("venue") or "?"
             flag = "  **(blocked)**" if p["arxiv"] in unowned else ""
             lines.append(f"- [ ] `{p['arxiv']}` ({p.get('citations') or 0} cites) -> {venue}  "
                          f"<https://arxiv.org/abs/{p['arxiv']}>{flag}")

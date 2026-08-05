@@ -105,7 +105,7 @@ name-match.
 
 Full detail: `tasks/arxiv_name_fixes.md`.
 
-## arXiv journal-ref missing (99 papers)
+## arXiv journal-ref missing (64 papers)
 
 **What it buys.** A preprint with no journal-ref is, to every indexer, a
 paper with no venue. Three concrete consequences:
@@ -126,18 +126,18 @@ and stop — that is where the citation-splitting actually costs something.
 There is no write API, so it is one *Journal ref* form per paper on your
 submission page (a metadata edit, not a new version).
 
-- [ ] `2306.01708` (859 cites) -> Advances in Neural Information Processing Systems 36  <https://arxiv.org/abs/2306.01708>
-- [ ] `2402.14992` (282 cites) -> Forty-first International Conference on Machine Lear  <https://arxiv.org/abs/2402.14992>
-- [ ] `2412.03304` (180 cites) -> Proceedings of the 63rd Annual Meeting of the Associ  <https://arxiv.org/abs/2412.03304>
-- [ ] `2104.08202` (167 cites) -> Proceedings of the 2021 Conference on Empirical Meth  <https://arxiv.org/abs/2104.08202>
-- [ ] `1907.01752` (127 cites) -> 8th International Conference on Learning Representat  <https://arxiv.org/abs/1907.01752>
-- [ ] `2204.03044` (120 cites) -> ArXiv  <https://arxiv.org/abs/2204.03044>
-- [ ] `2211.05655` (119 cites) -> Proceedings of the 61st Annual Meeting of the Associ  <https://arxiv.org/abs/2211.05655>
-- [ ] `2410.19735` (112 cites) -> International Conference on Learning Representations  <https://arxiv.org/abs/2410.19735>
-- [ ] `2507.16806` (98 cites) -> The Fourteenth International Conference on Learning   <https://arxiv.org/abs/2507.16806>
-- [ ] `2402.16842` (90 cites) -> Forty-first International Conference on Machine Lear  <https://arxiv.org/abs/2402.16842>
-- [ ] `2405.17202` (83 cites) -> Advances in Neural Information Processing Systems 37  <https://arxiv.org/abs/2405.17202>
-- [ ] `2301.11796` (82 cites) -> CoRR  <https://arxiv.org/abs/2301.11796>
+- [ ] `2306.01708` (859 cites) -> NeurIPS 2023  <https://arxiv.org/abs/2306.01708>
+- [ ] `2402.14992` (282 cites) -> ICML 2024  <https://arxiv.org/abs/2402.14992>
+- [ ] `2412.03304` (180 cites) -> ACL 2025  <https://arxiv.org/abs/2412.03304>
+- [ ] `2104.08202` (167 cites) -> EMNLP 2021  <https://arxiv.org/abs/2104.08202>
+- [ ] `1907.01752` (127 cites) -> ICLR 2020  <https://arxiv.org/abs/1907.01752>
+- [ ] `2211.05655` (119 cites) -> ACL 2023  <https://arxiv.org/abs/2211.05655>
+- [ ] `2410.19735` (112 cites) -> ICLR 2024  <https://arxiv.org/abs/2410.19735>
+- [ ] `2507.16806` (98 cites) -> ICLR 2026  <https://arxiv.org/abs/2507.16806>
+- [ ] `2402.16842` (90 cites) -> ICML 2024  <https://arxiv.org/abs/2402.16842>
+- [ ] `2405.17202` (83 cites) -> NeurIPS 2024  <https://arxiv.org/abs/2405.17202>
+- [ ] `1907.08971` (77 cites) -> ACL 2019  <https://arxiv.org/abs/1907.08971>
+- [ ] `2302.04863` (71 cites) -> Findings of EMNLP 2023  <https://arxiv.org/abs/2302.04863>
 
 ## Sidecar drafts awaiting your verification (1)
 
