@@ -36,8 +36,9 @@ import sys
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, load_config, norm_title, paper_doi,  # noqa: E402
-                    read_yaml, slugify, social_url)
+from common import (BUILD, DATA, is_preprint_venue, load_config,  # noqa: E402
+                    norm_title, paper_doi, read_yaml, slugify, social_url,
+                    venue_is_conference)
 from ownership import write_manifest  # noqa: E402
 
 OUT = os.path.join(BUILD, "site")
@@ -263,9 +264,9 @@ def highwire(p: dict, cfg) -> str:
         out.append(f'  <meta name="citation_author" content="{E(a)}">')
     out.append(f'  <meta name="citation_publication_date" content="{p["year"]}">')
     venue = p.get("venue_display") or p.get("venue") or ""
-    if venue and venue.lower() not in ("corr", "arxiv", "arxiv.org"):
-        tag = ("citation_conference_title" if p.get("type") == "inproceedings"
-               else "citation_journal_title")
+    if venue and not is_preprint_venue(venue):
+        tag = ("citation_conference_title"
+               if venue_is_conference(venue, p.get("type")) else "citation_journal_title")
         out.append(f'  <meta name="{tag}" content="{E(venue)}">')
     if paper_doi(p):
         out.append(f'  <meta name="citation_doi" content="{E(paper_doi(p))}">')
@@ -430,9 +431,16 @@ def retired_slugs(papers: list[dict]) -> dict[str, str]:
     Derived from the merge record each paper already carries (`merged_from` titles
     resolved through the same slugify the live pages use), never from what happens to
     be deployed: the same inputs have to produce the same site on every rerun.
+
+    A merge is not the only way a URL retires, though, and the others cannot be
+    re-derived from anything: correcting a title upstream or improving `slugify` moves
+    a page whose old address exists nowhere in the current inputs. `collect.py` records
+    those as it makes them, so they are read from disk here and unioned in.
     """
     live = {p["slug"] for p in papers}
-    out: dict[str, str] = {}
+    hist = read_yaml(os.path.join(DATA, "slug_history.yaml")) or {}
+    out: dict[str, str] = {k: v for k, v in (hist.get("retired") or {}).items()
+                           if v in live and k not in live}
     ov = read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
     for group in ov.get("force_merge") or []:
         norms = {norm_title(t) for t in group}
@@ -654,7 +662,8 @@ def submit_indexnow(cfg) -> None:
     key = (site_cfg.get("indexnow_key") or "").strip()
     if not key:
         print("indexnow: no site.indexnow_key set; skipping "
-              "(generate one at https://www.bing.com/indexnow)")
+              "(any 8-128 chars of [A-Za-z0-9-] works -- `python -c \"import uuid; "
+              "print(uuid.uuid4().hex)\"`)")
         return
     base = site_cfg["base_url"].rstrip("/")
     sitemap = os.path.join(OUT, "sitemap.xml")
@@ -715,7 +724,7 @@ def main() -> None:
     print(f"  of those, with sidecar {s['with_sidecar']}")
     print(f"  linked to a peer's canonical page {s['peer_owned']}")
     if s["redirects"]:
-        print(f"  redirects from URLs a merge retired {s['redirects']}")
+        print(f"  redirects from retired URLs   {s['redirects']}")
     if args.deploy:
         deploy(cfg)
 

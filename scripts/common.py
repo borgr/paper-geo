@@ -135,6 +135,12 @@ def parse_bibtex(text: str) -> list[dict]:
 # ---------------------------------------------------------------- matching
 
 _LATEX = re.compile(r"\\[a-zA-Z]+\s*|[{}$\\]")
+# The same two halves separately, because they want different replacements: a removed
+# *command* leaves a word boundary behind (`a\,b` is two words), a removed *brace* does
+# not (`{B}aby{LM}` is one). `_LATEX` collapses both to a space, which is only safe for
+# callers that go on to delete every separator. See `slugify`.
+_LATEX_CMD = re.compile(r"\\[a-zA-Z]+\s*")
+_LATEX_PUNCT = re.compile(r"[{}$\\]")
 _NONWORD = re.compile(r"[^a-z0-9]+")
 
 # Upstream damage, not LaTeX: one entry's title holds `{ extdollar}` where
@@ -371,6 +377,53 @@ def paper_doi(p: dict) -> str | None:
 _MATH = {r"\({}^{\mbox{2}}\)": "\u00b2", r"\({}^{\mbox{3}}\)": "\u00b3",
          r"$^2$": "\u00b2", r"$^3$": "\u00b3"}
 
+# LaTeX accents -> Unicode. Two separate ways a name was getting mangled:
+#
+#   `Garc{\'{\i}}a{-}Ferrero` -> `Garc\'a-Ferrero`   the *letter* disappeared
+#   `Aky{\"{u}}rek`           -> `Aky\"urek`         the backslash survived
+#
+# The first is the worse one. `\i` is dotless i, which exists only so an accent can
+# sit on top of it, and it is a letter command -- so the stray-`\command` rule in
+# clean_latex deleted it and took the vowel with it. The second is just that `\'`
+# and `\"` are punctuation commands that no rule there matched.
+#
+# These are co-author names, and they are published in JSON-LD `author.name`, in
+# `citation_author` highwire tags, and in the page body -- so this misspelt real
+# people on every surface at once, which is the one error this repo should not be
+# making. Accents are resolved here, before any command-stripping runs, so the
+# letter is already safe by the time deletion happens.
+_LATEX_LETTERS = {"i": "i", "j": "j", "l": "\u0142", "L": "\u0141", "o": "\u00f8",
+                  "O": "\u00d8", "ss": "\u00df", "aa": "\u00e5", "AA": "\u00c5",
+                  "ae": "\u00e6", "AE": "\u00c6", "oe": "\u0153", "OE": "\u0152",
+                  "dh": "\u00f0", "DH": "\u00d0", "th": "\u00fe", "TH": "\u00de"}
+_LETTER_RE = re.compile(r"\\(ss|aa|AA|ae|AE|oe|OE|dh|DH|th|TH|i|j|l|L|o|O)(?![a-zA-Z])")
+
+_ACCENT_MARKS = {"'": "\u0301", "`": "\u0300", '"': "\u0308", "^": "\u0302",
+                 "~": "\u0303", "=": "\u0304", ".": "\u0307", "u": "\u0306",
+                 "v": "\u030c", "H": "\u030b", "r": "\u030a", "c": "\u0327",
+                 "k": "\u0328", "d": "\u0323", "b": "\u0331"}
+# Punctuation accents take an optional brace (`\'e`, `\'{e}`); letter-named ones
+# require it (`\v{s}`), so that `\c` cannot swallow the `c` of a real command.
+_ACCENT_RE = re.compile(r"""\\(['`"^~=.])\s*\{?([a-zA-Z])\}?"""
+                        r"|\\([uvHrckdb])\s*\{([a-zA-Z])\}")
+# Same lost backslash as `{ extdollar}` below, in an accent: `Aky{"{u}}rek`. Both
+# spellings of that name are in the bibliography, so without this one person is
+# published as two. The full brace-quote-brace-letter shape never occurs as real
+# quotation, which is what makes it safe to read as damage.
+_LOST_ACCENT_RE = re.compile(r"""\{(['`"^~])\{([a-zA-Z])\}\}""")
+
+
+def _accent(m: re.Match) -> str:
+    sym, ch = (m.group(1), m.group(2)) if m.group(1) else (m.group(3), m.group(4))
+    return unicodedata.normalize("NFC", ch + _ACCENT_MARKS[sym])
+
+
+def latex_accents(s: str) -> str:
+    r"""`Garc{\'{\i}}a` -> `Garc\u00eda`, `Aky{\"{u}}rek` -> `Aky\u00fcrek`."""
+    s = _LOST_ACCENT_RE.sub(lambda m: "{\\" + m.group(1) + "{" + m.group(2) + "}}", s)
+    s = _LETTER_RE.sub(lambda m: _LATEX_LETTERS[m.group(1)], s)
+    return _ACCENT_RE.sub(_accent, s)
+
 
 def clean_latex(s: str | None) -> str:
     """Human-readable text from a BibTeX field.
@@ -386,6 +439,7 @@ def clean_latex(s: str | None) -> str:
     s = strip_mangled(s)
     for k, v in _MATH.items():
         s = s.replace(k, v)
+    s = latex_accents(s)                                # before anything deletes \i
     s = re.sub(r"\\[a-zA-Z]+\{([^{}]*)\}", r"\1", s)   # \emph{x} -> x
     s = re.sub(r"\\[a-zA-Z]+\s?", "", s)                # stray \command
     s = s.replace("{", "").replace("}", "")
@@ -393,9 +447,159 @@ def clean_latex(s: str | None) -> str:
     return " ".join(s.split())
 
 
-def short_venue(v: str | None, limit: int = 110) -> str:
-    """Trim a venue at a word boundary, never mid-word."""
+# The acronym a venue is actually known by, keyed on a phrase that identifies it.
+# Longest phrase wins, so "Findings of the Association for Computational Linguistics"
+# is not read as plain ACL. DBLP writes the acronym into the string itself (`{ACL}
+# 2026`), which needs no table; these are the sources that spell it out instead --
+# ACL Anthology, Semantic Scholar, OpenReview.
+_VENUE_ACRONYM = {
+    "conference on empirical methods in natural language processing": "EMNLP",
+    "north american chapter of the association for computational linguistics": "NAACL",
+    "conference on computational natural language learning": "CoNLL",
+    "annual meeting of the association for computational linguistics": "ACL",
+    "conference of the association for computational linguistics": "ACL",
+    "international conference on learning representations": "ICLR",
+    "conference on neural information processing systems": "NeurIPS",
+    "advances in neural information processing systems": "NeurIPS",
+    "international conference on machine learning": "ICML",
+    "international conference on computational linguistics": "COLING",
+    "language resources and evaluation conference": "LREC",
+    "conference on artificial intelligence": "AAAI",
+    "joint conference on lexical and computational semantics": "*SEM",
+    "international workshop on semantic evaluation": "SemEval",
+    "annual meeting of the cognitive science society": "CogSci",
+    "transactions of the association for computational linguistics": "TACL",
+    "trans. assoc. comput. linguistics": "TACL",
+    "transactions on machine learning research": "TMLR",
+    "trans. mach. learn. res.": "TMLR",
+    "journal of machine learning research": "JMLR",
+    "conference on language modeling": "COLM",
+    "european chapter of the association for computational linguistics": "EACL",
+}
+# A journal is not named by the year of its issue the way a conference is.
+_NO_YEAR = ("TACL", "TMLR", "JMLR", "Nature", "arXiv")
+# Which means the rest of the table is conferences and workshops, by construction.
+_CONFERENCE_ACRONYMS = frozenset(a for a in _VENUE_ACRONYM.values() if a not in _NO_YEAR)
+# Whole-string names, where a substring match would be wrong or ambiguous.
+_VENUE_EXACT = {"nat.": "Nature", "science": "Science"}
+# Every way the sources spell "this is a preprint": DBLP's `CoRR`, Semantic Scholar's
+# `ArXiv`, and the `arXiv preprint arXiv:2408.12259` that bibliographies write by hand.
+# Worth collapsing, because build_site suppresses the highwire citation tag for a venue
+# it recognizes as a preprint, and it recognizes "arXiv" but not "arXiv preprint arXiv:...".
+_PREPRINT_VENUE = re.compile(
+    r"(corr|arxiv(\.org)?( preprint)?)([\s:]*(arxiv:)?(abs/)?[\d.v/]+)?$", re.I)
+# Tracks worth keeping: a Findings paper and a main-conference paper are not the same
+# line on a CV, and a demo is not a long paper.
+_VENUE_TRACK = ((r"\bfindings\b", "Findings of {}"),
+                (r"system demonstrations?\b|\bdemo track\b", "{} (Demo)"),
+                (r"\btutorial", "{} (Tutorials)"))
+# `{ACL} 2026`, `LREC-COLING 2024`, `*SEM@NAACL-HLT 2022`. The lookbehind, rather than
+# \b, is what lets a leading `*` into the acronym and keeps the match from starting
+# halfway through a hyphenated one.
+_ACRONYM_YEAR = re.compile(
+    r"(?<![\w*@/-])(\*?[A-Z][A-Za-z]{1,9}(?:[-/@][A-Za-z*-]{2,12})?)[\s,]+"
+    r"((?:19|20)\d{2})\b")
+_PAREN_ACRONYM = re.compile(r"\((\*?[A-Z][A-Za-z]{1,9}(?:[-/@][A-Za-z*-]{2,12})?)\)")
+_YEAR = re.compile(r"\b(?:19|20)\d{2}\b")
+# Long enough that the string cannot already be in citation form -- an acronym, a year
+# and a couple of words fit in 40 characters. Below it, extra words are load-bearing
+# ("NeurIPS 2024 Competition Track") and compressing to the acronym would lose them.
+_LONG_VENUE = 40
+
+
+def venue_is_conference(v: str | None, entry_type: str | None = None) -> bool:
+    """Whether to cite this venue as a conference rather than as a journal.
+
+    The entry type is the stated intent, and where it says conference it is believed.
+    Where it says @article it is not enough on its own: bibliographies routinely type a
+    conference paper as `@article` with `journal={ICLR}`, and six entries here did.
+    Google Scholar has separate citation_conference_title and citation_journal_title
+    tags and matches citations on them, so guessing wrong misfiles the paper.
+
+    Two things override the type: a venue named by its year -- which is what a year in a
+    venue name means, and short_venue only appends one to venues it did not classify as
+    a journal -- and a venue containing an acronym we know to be a conference.
+    """
     v = clean_latex(v)
+    # Before the type, because `@inproceedings` with an arXiv venue is an entry written
+    # in advance of the acceptance it is hoping for. The venue is the reliable half.
+    if not v or is_preprint_venue(v):
+        return False
+    if str(entry_type or "").lower() in ("inproceedings", "incollection", "conference",
+                                        "proceedings"):
+        return True
+    return bool(_YEAR.search(v[-4:])) or any(
+        t in _CONFERENCE_ACRONYMS for t in re.split(r"[\s@/,-]+", v))
+
+
+def is_preprint_venue(v: str | None) -> bool:
+    """True for every way the sources spell "not published anywhere yet".
+
+    One definition, because three places act on it: the deduper (which venue wins when
+    a preprint and a published record merge), the highwire tags (Scholar should not be
+    told a paper appeared in a journal called `arXiv preprint arXiv:2408.12259`), and
+    the display string.
+    """
+    return bool(_PREPRINT_VENUE.fullmatch(clean_latex(v).lower()))
+
+
+def canonical_venue(v: str | None, year: int | str | None = None) -> str:
+    """"ACL 2026", not "Proceedings of the 64th Annual Meeting of the ..., San Diego".
+
+    The full proceedings name is what DBLP, the ACL Anthology and Semantic Scholar
+    give, and it is the wrong string to publish: it is the venue field on every paper
+    page, in JSON-LD `isPartOf`, and in the `citation_conference_title` tag Scholar
+    matches on -- where nobody searches for "Proceedings of the 64th Annual Meeting"
+    and a 110-character truncation reads as broken metadata.
+
+    Returns "" when nothing is confidently recognized, so the caller keeps the
+    original rather than publishing a guess.
+    """
+    s = clean_latex(v)
+    if not s:
+        return ""
+    low = s.lower()
+    if _PREPRINT_VENUE.fullmatch(low):
+        return "arXiv"
+    if low in _VENUE_EXACT:
+        return _VENUE_EXACT[low]
+    # The spelled-out name first. It is unambiguous, so it wins over the acronym-shaped
+    # text in the string -- which is how "Advances in Neural Information Processing
+    # Systems 36: ... Systems 2023" used to come out as "Systems 2023".
+    phrase = max((p for p in _VENUE_ACRONYM if p in low), key=len, default="")
+    acro = _VENUE_ACRONYM.get(phrase, "")
+    tok = ""
+    if len(s) > _LONG_VENUE:
+        # DBLP writes the acronym into the string itself. Two uppercase letters is what
+        # separates an acronym from a word the pattern happens to fit ("Systems 2023").
+        m = _ACRONYM_YEAR.search(s) or _PAREN_ACRONYM.search(s)
+        if m and sum(c.isupper() for c in m.group(1)) >= 2:
+            tok = m.group(1)
+    if acro and tok and len(tok) > len(acro) and tok.lower().endswith(acro.lower()):
+        # The name we know sits at the *end* of a longer token, so what precedes it is a
+        # co-equal conference and belongs in the venue: LREC-COLING, not COLING. When it
+        # sits at the start the tail is a subtitle or a host ("NAACL-HLT" -> NAACL,
+        # "SemEval@NAACL-HLT" -> SemEval), and only the head is the venue.
+        acro = tok.replace("/", "-")
+    elif not acro:
+        acro = tok
+    if not acro:
+        return ""
+    if acro not in _NO_YEAR:
+        ym = _YEAR.search(s)
+        acro = f"{acro} {ym.group(0) if ym else year or ''}".strip()
+    for pat, tmpl in _VENUE_TRACK:
+        if re.search(pat, low):
+            return tmpl.format(acro)
+    return acro
+
+
+def short_venue(v: str | None, limit: int = 110, year: int | str | None = None) -> str:
+    """The venue as it is cited: an acronym if we recognize one, else trimmed."""
+    v = clean_latex(v)
+    canon = canonical_venue(v, year)
+    if canon:
+        return canon
     if len(v) <= limit:
         return v
     cut = v[:limit].rsplit(" ", 1)[0].rstrip(" ,;:-")
@@ -418,10 +622,68 @@ def clean_bibtex(raw: str | None) -> str:
     return re.sub(r"\n\s*\n+", "\n", out).strip()
 
 
+def synth_bibtex(p: dict) -> str:
+    """Build a BibTeX entry for a paper that has none.
+
+    A paper only carries a `bibtex` field if it came from the bibliography. Papers
+    discovered on arXiv or Semantic Scholar have every field a citation needs and no
+    entry text, and anything that filtered on `p.get("bibtex")` therefore dropped them
+    without saying so. That is how 16 papers -- one of them with 112 citations -- were
+    absent from `orcid_import.bib` and so from the ORCID record: not rejected, just
+    never emitted.
+
+    Synthesised rather than skipped, because for the consumers that read these files
+    (ORCID's importer, a reference manager) an entry built from title/authors/year/DOI
+    is worth the same as one typed by hand. The citation key is derived, so it is not
+    the key anyone already cites -- which is why `clean_bibtex` still passes the
+    bibliography's own text through untouched when there is some.
+    """
+    kind = {"inproceedings": "inproceedings", "article": "article",
+            "incollection": "incollection"}.get(p.get("type") or "", "article")
+    first = ((p.get("authors") or ["anon"])[0].split()[-1] or "anon").lower()
+    key = re.sub(r"[^a-z0-9]", "", first) + str(p.get("year") or "") + \
+        re.sub(r"[^a-z0-9]", "", (p.get("title") or "").split(" ")[0].lower())[:8]
+    rows = [("author", " and ".join(p.get("authors") or [])),
+            ("title", p.get("title") or ""),
+            ("year", str(p.get("year") or "")),
+            ("booktitle" if kind == "inproceedings" else "journal", p.get("venue") or ""),
+            ("doi", paper_doi(p) or ""),
+            ("url", p.get("url") or "")]
+    if p.get("arxiv"):
+        rows += [("eprint", str(p["arxiv"])), ("archivePrefix", "arXiv")]
+    body = ",\n".join(f"  {k:<12} = {{{v}}}" for k, v in rows if v)
+    return f"@{kind}{{{key},\n{body}\n}}"
+
+
 def slugify(s: str, maxlen: int = 60) -> str:
-    s = unicodedata.normalize("NFKD", strip_mangled(s or ""))
+    """A slug is a published URL, so this has to be stable across a *fix* upstream.
+
+    Callers pass the raw BibTeX title, not the display one, so LaTeX has to be
+    resolved here too rather than relying on the display path. Both lines below earn
+    their place by having changed a live URL:
+
+      `{ extdollar}Q2{ extdollar}`  -> the damaged form slugged to `q2-...`
+      `Q\\({}^{\\mbox{2}}\\)`         -> repairing it upstream slugged to `q-2-...`
+
+    A superscript two is the digit two as far as a URL is concerned, so resolving the
+    math first gives `q2-...` from both -- the correct title now produces the slug the
+    damaged one did, and nothing that is already linked moves. Accents likewise:
+    without this, `M{\\'{\\i}}rian` slugs to `m-rian` rather than `mirian`.
+
+    Braces are dropped, not spaced. BibTeX braces protect capitals *inside* a word --
+    `{B}aby{LM}`, `Lo{RA}`, `Com{PEFT}` -- so substituting a separator splits the word
+    that was being protected: `findings-of-the-b-aby-lm-challenge`. Nine live URLs read
+    that way, none of them containing the token anyone would search for. `norm_title`
+    is spared because it drops every non-word character afterwards; a slug keeps
+    hyphens, so here the difference survives into the URL.
+    """
+    s = strip_mangled(s or "")
+    for k, v in _MATH.items():
+        s = s.replace(k, v)
+    s = unicodedata.normalize("NFKD", latex_accents(s))
     s = "".join(c for c in s if not unicodedata.combining(c))
-    s = _LATEX.sub(" ", s).lower()
+    s = _LATEX_CMD.sub(" ", s)
+    s = _LATEX_PUNCT.sub("", s).lower()
     s = re.sub(r"[^a-z0-9]+", "-", s).strip("-")
     return s[:maxlen].rstrip("-")
 

@@ -26,6 +26,15 @@ force_merge:
     - "Achieving Human Parity in Content-Grounded Datasets Generation"
   - - "The Mighty ToRR: A Benchmark for Table Reasoning and Robustness"
     - "The Mighty ToRR: A Benchmark for Table Reasoning and Robustness in LLMs"
+  # Another v1 retitle: arXiv v2 dropped the word "Physical", and the arXiv API, the
+  # abs page's citation_title, DataCite and OpenAlex all now give the shorter form --
+  # only Semantic Scholar still carries v1, and it carries most of the citations. The
+  # identifier pass merges the pair on its own (the S2 record spells its arXiv id as a
+  # DataCite DOI; see `unfold_arxiv_dois`), so this group is here for the *title*: the
+  # survivor is otherwise chosen by venue length, which would publish the retracted
+  # wording under a slug naming a word the paper no longer contains.
+  - - "Global PIQA: Evaluating Commonsense Reasoning Across 100+ Languages and Cultures"
+    - "Global PIQA: Evaluating Physical Commonsense Reasoning Across 100+ Languages and Cultures"
 
 # Title pairs that look near-identical but are genuinely different papers.
 # Listing them here suppresses the `similar_but_distinct` flag so the review
@@ -72,6 +81,24 @@ extra_arxiv:
 # Fix it upstream too (Semantic Scholar correction), then it stops reappearing.
 drop:
   - "Journal of Memory and Language"
+
+# Hugging Face paper pages where you have already submitted an authorship claim.
+#
+# The one fact about HF that cannot be read from outside. The API exposes a `user`
+# link on an author only once moderation has granted the claim, so a request you
+# submitted an hour ago looks identical to one you never made -- and the worklist then
+# lists it again, which reads as "your click did not work". Listing the arXiv id here
+# moves the page to *pending* in `tasks/hf_worklist.md` and out of the click list.
+#
+# This is a record of an action you took, not observed state, which is why it belongs
+# in a committed file. Remove an id once the claim shows as granted (the audit will
+# then report it as claimed on its own) or if it was refused.
+#
+# Quote the ids -- unquoted, `2409.02228` is a YAML float.
+hf_claim_requested:
+  - "2410.10783"   # LiveXiv. Author list misspells you as "Leshem Chosen" -- see
+  - "2409.02228"   # Unforgettable Generalization. Same misspelling. Both claims may
+                   # bounce until arXiv is fixed: tasks/arxiv_name_fixes.md.
 
 # Per-paper field corrections, keyed by slug. Applied last, over everything the
 # collector derived. Use sparingly -- prefer fixing the upstream source so the

@@ -107,7 +107,12 @@ ids:
 
 sources:
   # The bibliography stays authoritative in its own repo; we only read it.
-  bibtex_url: https://raw.githubusercontent.com/borgr/publications/master/enhanced.bib
+  # orig.bib, not enhanced.bib: enhanced.bib is a snapshot of that repo's
+  # build_bib.py output from when it wrote there instead of overleaf/Wzmn.bib.
+  # Nothing regenerates it, so it silently drifts -- it was 8 papers and one
+  # damaged title behind when we noticed. orig.bib is the curated file that
+  # repo's own resolve_arxiv.py keeps current.
+  bibtex_url: https://raw.githubusercontent.com/borgr/publications/master/orig.bib
   acl_anthology_person: https://aclanthology.org/people/leshem-choshen/
   # Optional: local checkout of borgr/publications. When set, `update.py --refresh-bib`
   # runs that repo's own update.py first (refreshing Scholar counts and re-resolving
@@ -167,9 +172,16 @@ site:
   # protocol requires -- generated, not uploaded, for the same reason as the tokens
   # above. Worth having because a rebuild that adds many pages at once is the case
   # organic discovery handles worst, and because Bing's index is what ChatGPT's
-  # search grounding reads. Get a key (any 8-128 char hex string it gives you) at
-  # <https://www.bing.com/indexnow>; leave null to skip both steps entirely.
-  indexnow_key: null
+  # search grounding reads. Leave null to skip both steps entirely.
+  #
+  # The key is self-chosen, not issued: any 8-128 characters of [A-Za-z0-9-]. What
+  # proves control is hosting it at `<base_url>/<key>.txt`, which build_site.py does,
+  # so there is no account to create and nothing to keep secret -- publishing the key
+  # is how the protocol works. The worst a stranger holding it can do is ask Bing to
+  # recrawl pages that are already yours. Regenerate with `uuid.uuid4().hex` if you
+  # ever want to; the only cost is that the first submission after the change 403s
+  # until the new key file is live.
+  indexnow_key: c6773a10d38042a78a215ca799c8aad3
 
 github_sweep:
   # Forks are excluded: they are not yours to describe, and topics on a fork are

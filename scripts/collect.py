@@ -2,7 +2,7 @@
 """Build data/papers.yaml: one record per paper, merged from every source.
 
 Sources, in precedence order for any conflicting field:
-  1. enhanced.bib   (the author's own curated bibliography — venue truth)
+  1. orig.bib       (the author's own curated bibliography — venue truth)
   2. Semantic Scholar (abstracts, citation counts, cross-ids)
   3. arXiv API      (journal-ref / DOI presence — i.e. what needs fixing)
   4. Hugging Face   (paper-page existence and authorship claims)
@@ -19,23 +19,213 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 import xml.etree.ElementTree as ET
 
+import yaml
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, arxiv_id, authors_truncated, clean_bibtex,  # noqa: E402
-                    clean_latex, get, get_json, load_config, name_match, norm_title,
+from common import (BUILD, DATA, ROOT, arxiv_id, authors_truncated, clean_bibtex,  # noqa: E402
+                    clean_latex, get, get_json, is_preprint_venue, load_config,
+                    name_match, norm_title,
                     parse_bibtex, read_yaml, short_venue, slugify, split_authors,
                     write_yaml)
 
 ARXIV_NS = {"a": "http://www.w3.org/2005/Atom", "ar": "http://arxiv.org/schemas/atom"}
 
 
+_ARXIV_DOI = re.compile(r"^10\.48550/arxiv\.(\d{4}\.\d{4,5})", re.I)
+
+
+def unfold_arxiv_dois(papers: list[dict]) -> int:
+    """`10.48550/arXiv.2510.24081` in a `doi` field *is* an arXiv id. Store it as one.
+
+    arXiv mints a DataCite DOI for every preprint, and some sources report only that
+    form. Left folded up, the record looks like it has no arXiv id at all, so dedupe
+    cannot merge it with the copy that does and falls back to comparing titles -- which
+    works right up until the titles legitimately differ. Correcting one word of a title
+    upstream split `Global PIQA` into two pages, each with a share of the citations,
+    because the only thing the two records provably had in common was unreadable.
+
+    Not the same as the note in `merge_arxiv` about *not* writing this DOI: that is the
+    derived direction (id -> DOI, computed at the point of use by `paper_doi`). This is
+    the asserted direction. The source did claim this id; it just spelled it as a DOI.
+    The `doi` field is left alone -- it is what the source said -- and a publisher DOI
+    is never overwritten, since only the 10.48550 prefix matches at all.
+    """
+    n = 0
+    for p in papers:
+        if p.get("arxiv"):
+            continue
+        m = _ARXIV_DOI.match(str(p.get("doi") or ""))
+        if m:
+            p["arxiv"] = m.group(1)
+            n += 1
+    return n
+
+
+SLUG_HISTORY = os.path.join(DATA, "slug_history.yaml")
+
+
+def _slug_identity(p: dict) -> str | None:
+    """A key for "the same paper" that survives the title changing.
+
+    Which is the whole point: the common reason a slug moves is that the title it was
+    built from got corrected, so pairing runs by title would pair nothing exactly when
+    it matters. Papers with no stable identifier are skipped rather than guessed at --
+    a wrong pairing would publish a redirect from one paper's URL to another's.
+
+    The DataCite form has to fold into the id form or the same paper gets two different
+    identities in two runs -- which is how `Global PIQA`'s move went unrecorded the
+    first time, leaving a live URL with no successor.
+    """
+    if p.get("arxiv"):
+        return f"arxiv:{p['arxiv']}"
+    m = _ARXIV_DOI.match(str(p.get("doi") or ""))
+    if m:
+        return f"arxiv:{m.group(1)}"
+    for f in ("doi", "key"):
+        if p.get(f):
+            return f"{f}:{p[f]}"
+    return None
+
+
+COVERAGE = {
+    "papers": lambda p: True,
+    "with an arXiv id": lambda p: p.get("arxiv"),
+    "with an abstract": lambda p: p.get("abstract"),
+    "with verbatim bibtex": lambda p: p.get("bibtex"),
+    "with authors": lambda p: p.get("authors"),
+    "with a venue": lambda p: p.get("venue"),
+}
+# How far each may fall before the run is treated as damage rather than a change. Not
+# zero: merging two records into one is a *good* shrink, and it takes a paper off every
+# count at once. Ten is above any plausible run of real merges and far below what a
+# failed source costs -- Semantic Scholar alone supplies most of the abstracts.
+SHRINK_TOLERANCE = 10
+
+
+def coverage_alarms(prev: list[dict], papers: list[dict]) -> tuple[list[str], list[str]]:
+    """Compare this run's coverage to the last committed one. (report, alarms)
+
+    Every field here comes from a live source over the network, and `get` returns b'' on
+    a final failure rather than raising -- deliberately, so one dead source degrades one
+    field instead of killing the run. The cost of that choice is that a bad afternoon at
+    Semantic Scholar looks exactly like success: papers.yaml is rewritten wholesale, the
+    abstracts are simply absent, and the next commit makes the loss permanent. Nothing
+    downstream can tell, because nothing downstream ever sees the previous values.
+
+    So the run is compared against what is committed, and a large drop stops it before
+    it writes. `--allow-shrink` is the override for when the shrink is real.
+    """
+    report, alarms = [], []
+    for label, pred in COVERAGE.items():
+        was, now = sum(1 for p in prev if pred(p)), sum(1 for p in papers if pred(p))
+        if was != now:
+            report.append(f"    {label}: {was} -> {now} ({now - was:+d})")
+        if was - now > SHRINK_TOLERANCE:
+            alarms.append(f"{label} fell {was - now} ({was} -> {now})")
+    return report, alarms
+
+
+def _committed_papers(papers_path: str) -> list[dict]:
+    """The last committed papers.yaml, which is the best available "what is published".
+
+    Not the working copy. A rerun you never commit or deploy publishes nothing, so
+    pairing against it invents redirects from URLs that never existed -- and, worse,
+    loses real ones: two local runs in a row make the second one's baseline the first
+    one's output, so the URL that is actually live has already been forgotten. That is
+    not hypothetical; it is how `Global PIQA`'s move was missed.
+
+    Deploying is a git push, so git is already required for the workflow that makes a
+    slug public. When it is unavailable, or the file is not committed yet, fall back to
+    the working copy rather than losing the record entirely.
+    """
+    try:
+        out = subprocess.run(["git", "show", f"HEAD:{os.path.relpath(papers_path, ROOT)}"],
+                             cwd=ROOT, capture_output=True, text=True, timeout=30)
+        if out.returncode == 0 and out.stdout.strip():
+            return (yaml.safe_load(out.stdout) or {}).get("papers") or []
+    except (OSError, subprocess.SubprocessError, yaml.YAMLError):
+        pass
+    return (read_yaml(papers_path) or {}).get("papers") or []
+
+
+def record_slug_moves(papers: list[dict], papers_path: str) -> int:
+    """Remember every URL this run retires, so build_site.py can redirect it.
+
+    `slugify` is a published-URL function: change it, correct a title upstream, or
+    merge two records, and a page that is linked and indexed silently becomes a 404 on
+    the next deploy. Nothing else in the pipeline notices, because papers.yaml is
+    regenerated wholesale and the old value is simply gone -- the one fact that cannot
+    be recomputed from the sources. So it is committed, here, keyed by identifier
+    rather than by title.
+
+    This is a record of our own past output, not observed state: it makes slug changes
+    *expressible* instead of forbidden, which is the difference between "never improve
+    slugify" and "improve it and leave a redirect behind". Append-only, and existing
+    entries are re-pointed when their target itself moves, so a chain of two renames
+    still lands on a live page instead of on the intermediate 404.
+    """
+    prev = _committed_papers(papers_path)
+    if not prev:                      # first run, or no committed copy to compare to
+        return 0
+    now = {i: p["slug"] for p in papers if (i := _slug_identity(p))}
+    hist = read_yaml(SLUG_HISTORY) or {}
+    retired = dict(hist.get("retired") or {})
+    live = set(now.values())
+    moves = 0
+    for p in prev:
+        i = _slug_identity(p)
+        old, new = p.get("slug"), now.get(i) if i else None
+        if not (i and old and new) or old == new or old in live:
+            continue
+        retired[old] = new
+        moves += 1
+    # Re-point chains: anything that used to land on `old` now lands where `old` went.
+    for src, dst in list(retired.items()):
+        seen = {src}
+        while dst in retired and dst not in seen:
+            seen.add(dst)
+            dst = retired[dst]
+        retired[src] = dst
+    retired = {k: v for k, v in retired.items() if k not in live and k != v}
+    if retired != (hist.get("retired") or {}):
+        write_yaml(SLUG_HISTORY, {
+            "_comment": "Retired paper URLs -> the slug that replaced them. Written by "
+                        "scripts/collect.py, read by scripts/build_site.py, which turns "
+                        "each into a redirect stub. Append-only: deleting a line 404s a "
+                        "URL that is already published and indexed.",
+            "retired": dict(sorted(retired.items())),
+        })
+    return moves
+
+
+def bibtex_source(cfg) -> tuple[str, str]:
+    """The bibliography text, from the local checkout if there is one.
+
+    `--refresh-bib` runs the publications pipeline, which rewrites its bib *on
+    disk*. Reading over HTTP afterwards returned the last pushed copy instead --
+    so a refresh appeared to do nothing, and the one case the flag exists for was
+    the one case it did not serve. Prefer the working tree, fall back to HTTP.
+    """
+    url = cfg["sources"]["bibtex_url"]
+    path = cfg["sources"].get("publications_path")
+    if path:
+        local = os.path.join(os.path.expanduser(path), os.path.basename(url))
+        if os.path.isfile(local):
+            with open(local, encoding="utf-8", errors="replace") as f:
+                return f.read(), local
+    return get(url).decode("utf-8", "replace"), url
+
+
 def from_bibtex(cfg) -> list[dict]:
-    raw = get(cfg["sources"]["bibtex_url"]).decode("utf-8", "replace")
+    raw, origin = bibtex_source(cfg)
     if not raw:
-        sys.exit("could not fetch bibtex_url")
+        sys.exit(f"could not read bibliography from {origin}")
+    print(f"  bibliography: {origin}")
     papers = []
     for e in parse_bibtex(raw):
         title = e.get("title")
@@ -220,10 +410,13 @@ def merge_arxiv(papers: list[dict]) -> None:
             jr = e.find("ar:journal_ref", ARXIV_NS)
             doi = e.find("ar:doi", ARXIV_NS)
             com = e.find("ar:comment", ARXIV_NS)
+            ti = e.find("a:title", ARXIV_NS)
             meta[base] = {
                 "arxiv_journal_ref": jr.text.strip() if jr is not None else None,
                 "arxiv_doi": doi.text.strip() if doi is not None else None,
                 "arxiv_comment": " ".join((com.text or "").split()) if com is not None else None,
+                # Compared against ours, then discarded -- see `title_diffs`.
+                "_arxiv_title": " ".join((ti.text or "").split()) if ti is not None else None,
             }
         time.sleep(3)
     for p in papers:
@@ -308,8 +501,8 @@ def _discriminators(title: str) -> tuple:
 
 
 def _is_preprint(p: dict) -> bool:
-    v = (p.get("venue") or "").strip().lower()
-    return v in ("", "corr", "arxiv", "arxiv.org") or v.startswith("arxiv")
+    v = (p.get("venue") or "").strip()
+    return not v or is_preprint_venue(v)
 
 
 def dedupe(papers: list[dict], prefer: list[str] | None = None) -> tuple[list[dict], int, int]:
@@ -564,6 +757,39 @@ def authorship_gate(papers: list[dict], cfg: dict, ov: dict) -> list[dict]:
     return kept, rejected
 
 
+def title_diffs(papers: list[dict]) -> list[dict]:
+    """Papers whose stored title is not the one arXiv is serving today.
+
+    A difference is not automatically an error, which is why this is a review list and
+    not a `metadata_problems` flag: sometimes ours is the published retitle and arXiv is
+    the stale side. But *someone* is wrong in every row, and the two cases we have both
+    reached published pages -- one bibliography entry had a word the paper never
+    contained, and one carried an arXiv v1 title the authors had already replaced,
+    which additionally split the paper into two pages with the citations divided.
+
+    Both were found by hand, comparing 105 titles one at a time. This is that pass, run
+    on every update for the price of a field we already fetch. Written to `build/` and
+    not to `papers.yaml`: it is a statement about a source at a moment, so committing it
+    would be storing observed state, and it is free to recompute.
+    """
+    out = []
+    for p in papers:
+        ax = p.get("_arxiv_title")
+        if not ax or not p.get("title") or norm_title(ax) == norm_title(p["title"]):
+            continue
+        # `norm_title` drops the spaces too, so it cannot be split into words. `slugify`
+        # normalizes the same way (LaTeX, accents, math) but keeps token boundaries; the
+        # length cap has to go, since it exists for URLs and would truncate the diff.
+        def words(s): return set(slugify(s, maxlen=10 ** 6).split("-"))
+        a, b = words(ax), words(p["title"])
+        out.append({"arxiv": p.get("arxiv"), "slug": p.get("slug"), "key": p.get("key"),
+                    "ours": p["title"], "arxiv_says": ax,
+                    # Word-level, so a reader can see at a glance whether this is a
+                    # retitle or a typo without diffing two long strings by eye.
+                    "only_in_ours": sorted(b - a), "only_on_arxiv": sorted(a - b)})
+    return out
+
+
 def flag_problems(papers: list[dict]) -> None:
     """Flag records that look like metadata damage rather than real papers."""
     # The documented Scholar/S2 failure mode: a venue name extracted as a title.
@@ -588,7 +814,12 @@ def main() -> None:
                     help="only re-derive from the existing papers.yaml")
     ap.add_argument("--no-arxiv", action="store_true")
     ap.add_argument("--no-hf", action="store_true")
+    ap.add_argument("--allow-shrink", action="store_true",
+                    help="write even if coverage dropped sharply vs the last commit")
     args = ap.parse_args()
+    # `--no-arxiv` / `--no-hf` skip a source on purpose, so the drop they cause is not
+    # news; the guard exists for the outage you did not ask for.
+    args.allow_shrink = args.allow_shrink or args.no_arxiv or args.no_hf
     cfg = load_config()
     out = os.path.join(DATA, "papers.yaml")
 
@@ -612,6 +843,10 @@ def main() -> None:
             merge_arxiv(papers)
             print("abstract backfill ...", file=sys.stderr)
             backfill_abstracts(papers)
+        n_ax = unfold_arxiv_dois(papers)
+        if n_ax:
+            print(f"  recovered {n_ax} arXiv id(s) encoded as a DataCite DOI",
+                  file=sys.stderr)
         print("dedupe ...", file=sys.stderr)
         # overrides.yaml documents that the first title in a force_merge group wins for
         # display, and that has to reach dedupe rather than only apply_overrides: once
@@ -658,7 +893,7 @@ def main() -> None:
         # Display copies. The raw title stays in `title` for matching against
         # sources; everything user- or crawler-facing uses these.
         p["title_display"] = clean_latex(p.get("title")) or p.get("title")
-        p["venue_display"] = short_venue(p.get("venue"))
+        p["venue_display"] = short_venue(p.get("venue"), year=p.get("year"))
         if p.get("bibtex"):
             p["bibtex"] = clean_bibtex(p["bibtex"])
         p.pop("_norm", None)
@@ -671,6 +906,33 @@ def main() -> None:
     sidecar_dir = os.path.join(DATA, "sidecars")
     for p in papers:
         p["has_sidecar"] = os.path.exists(os.path.join(sidecar_dir, f"{p['slug']}.md"))
+
+    baseline = _committed_papers(out)
+    report, alarms = coverage_alarms(baseline, papers)
+    if report:
+        print("  coverage vs the last commit:", file=sys.stderr)
+        print("\n".join(report), file=sys.stderr)
+    if alarms and not args.allow_shrink:
+        sys.exit("\n".join([
+            "", "REFUSING TO WRITE -- this run has much less data than the last commit:",
+            *(f"  {a}" for a in alarms), "",
+            "That is what a source outage looks like, and writing would make the loss",
+            "permanent on the next commit. Check the '!' lines above for a failed fetch",
+            "and rerun. If the shrink is real (a big merge, papers dropped on purpose):",
+            "  python scripts/collect.py --allow-shrink", ""]))
+
+    tdiffs = title_diffs(papers)
+    for p in papers:
+        p.pop("_arxiv_title", None)
+    if tdiffs:
+        os.makedirs(BUILD, exist_ok=True)
+        with open(os.path.join(BUILD, "title_diffs.json"), "w") as f:
+            json.dump(tdiffs, f, indent=2, ensure_ascii=False)
+
+    n_retired = record_slug_moves(papers, out)
+    if n_retired:
+        print(f"  slugs moved: {n_retired} (old URLs recorded in data/slug_history.yaml)",
+              file=sys.stderr)
 
     write_yaml(out, {"generated_by": "scripts/collect.py", "papers": papers})
 
@@ -690,6 +952,9 @@ def main() -> None:
     print(f"  flagged metadata problems     {c(lambda p: p.get('metadata_problems'), papers)}/{n}")
     print(f"  merged duplicate records      {c(lambda p: p.get('merged_from'), papers)} groups")
     print(f"  similar-but-distinct flags    {c(lambda p: p.get('similar_but_distinct'), papers)}/{n}  (review these)")
+    if tdiffs:
+        print(f"  title differs from arXiv      {len(tdiffs)}/{len(ax)}  "
+              f"(review build/title_diffs.json -- either side can be the stale one)")
     print(f"  verbatim bibtex captured      {c(lambda p: p.get('bibtex'), papers)}/{n}")
     print(f"  crawlable HTML surface        {c(lambda p: (p.get('links') or {}).get('html'), papers)}/{n}"
           f"  (ar5iv fallback: {c(lambda p: (p.get('links') or {}).get('html_source') == 'ar5iv', papers)})")

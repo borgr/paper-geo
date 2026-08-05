@@ -14,6 +14,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import difflib
 import glob
 import json
 import os
@@ -112,6 +113,24 @@ def selftest() -> list[str]:
     from common import clean_latex, clean_bibtex, norm_title, slugify
     if clean_latex("{DORA} The $x$ Explorer") != "DORA The x Explorer":
         errs.append("common.clean_latex regressed on braces or math")
+    # Co-author names are published in JSON-LD, highwire tags and the page body, so a
+    # LaTeX accent that survives into the output misspells a real person everywhere at
+    # once. `\i` is the dangerous one: dotless i exists only to carry an accent, and
+    # deleting it as a stray command silently removes the vowel rather than the mark --
+    # `Garc{\'{\i}}a` came out `Garc\'a`, which is not a smaller error than `Garca`.
+    for src, want in ((r"Iker Garc{\'{\i}}a{-}Ferrero", "Iker García-Ferrero"),
+                      (r"Afra Feyza Aky{\"{u}}rek", "Afra Feyza Akyürek"),
+                      (r'Ekin Aky{"{u}}rek', "Ekin Akyürek"),
+                      (r"Erd{\H{o}}s and Stan{\v{c}}{\'{\i}}k",
+                       "Erdős and Stančík"),
+                      (r"Fran{\c{c}}ois", "François")):
+        if clean_latex(src) != want:
+            errs.append(f"common.clean_latex mangles an accented name: "
+                        f"{clean_latex(src)!r} (want {want!r})")
+    # `\emph` and friends must still lose the command and keep the text -- the accent
+    # pass runs first and must not have made a letter command look like an accent.
+    if clean_latex(r"a \emph{real} \& proper 50\% case") != "a real & proper 50% case":
+        errs.append("common.clean_latex regressed on ordinary commands or escapes")
     # A bibliography entry whose `{\textdollar}` lost its backslash to a tab leaves the
     # word `extdollar` behind, and that word reached a published URL. It has to vanish
     # from all three derived strings or they disagree about which paper this is -- the
@@ -124,6 +143,20 @@ def selftest() -> list[str]:
                         f"{fn(mangled)!r} (want {want!r})")
     if slugify("extra credit") != "extra-credit":
         errs.append("common.strip_mangled is eating ordinary words starting with 'ext'")
+    # A slug is a published URL. Braces protect capitals inside a word, so replacing
+    # them with a separator splits the exact token someone would search for: nine live
+    # URLs read `findings-of-the-b-aby-lm-challenge`, none containing `babylm`.
+    for src, want in ((r"Findings of the {B}aby{LM} Challenge", "findings-of-the-babylm-challenge"),
+                      (r"Compress then Serve: Lo{RA} Adapters", "compress-then-serve-lora-adapters"),
+                      (r"M{\'{\i}}rian Silva", "mirian-silva"),
+                      (r"a \emph{spaced} command", "a-spaced-command")):
+        if slugify(src) != want:
+            errs.append(f"common.slugify regressed: {slugify(src)!r} (want {want!r})")
+    # The two spellings of one title -- damaged in the .bib, and repaired upstream --
+    # have to slug identically, or fixing the bibliography moves a live URL as a side
+    # effect. A superscript two is the digit two as far as an address is concerned.
+    if slugify(r"Q\({}^{\mbox{2}}\): Evaluating") != slugify(mangled):
+        errs.append("common.slugify: repairing the Q2 title upstream moves its URL")
     # Published BibTeX is the exception: repair the command rather than delete it, or
     # the entry someone copies has a literal tab in it and renders `extdollarQ2`.
     fixed = clean_bibtex("@a{k,\n  title={{ extdollar}Q2{ extdollar}: T}\n}")
@@ -157,6 +190,71 @@ def selftest() -> list[str]:
     if len(kept) != 1:
         errs.append(f"collect.apply_overrides dropped a paper on a self-merging "
                     f"force_merge group: {len(kept)} records out (want 1)")
+    # The venue is published in the page body, in JSON-LD `isPartOf` and in the highwire
+    # tag Scholar matches citations on, so a 110-character truncation of a proceedings
+    # name is a metadata defect on three surfaces at once. These are the real strings the
+    # sources return, and each one broke a different way while this was being written.
+    from common import short_venue
+    for src, year, want in (
+            # The acronym is in the string, and the pattern also fits a word that is not
+            # one: "... Systems 36: Annual Conference on ... Systems 2023" -> Systems 2023.
+            ("Advances in Neural Information Processing Systems 36: Annual Conference "
+             "on Neural Information Processing Systems 2023, NeurIPS 2023, December 10 "
+             "- 16, 2023, New Orleans, LA, USA", 2023, "NeurIPS 2023"),
+            # Spelled out, with no year anywhere in it: the year has to come from the paper.
+            ("The Thirty-ninth Annual Conference on Neural Information Processing "
+             "Systems", 2025, "NeurIPS 2025"),
+            # A journal is not named by the year of its issue.
+            ("Trans. Assoc. Comput. Linguistics", 2025, "TACL"),
+            # Joint conference: the name we recognize is the tail, so the head is a second
+            # conference and stays. Both spellings of the join give one output.
+            ("Proceedings of the 2024 Joint International Conference on Computational "
+             "Linguistics, Language Resources and Evaluation, LREC/COLING 2024, 20-25 "
+             "May, 2024, Torino, Italy", 2024, "LREC-COLING 2024"),
+            # ... whereas a leading acronym owns the venue and the tail is a subtitle
+            # (NAACL-HLT) or the host conference a workshop ran at (*SEM@NAACL-HLT).
+            ("Proceedings of the 2021 Conference of the North American Chapter of the "
+             "Association for Computational Linguistics: Human Language Technologies, "
+             "NAACL-HLT 2021, Online, June 6-11, 2021", 2021, "NAACL 2021"),
+            ("Proceedings of the 11th Joint Conference on Lexical and Computational "
+             "Semantics, *SEM@NAACL-HLT 2022, Seattle, WA, July 14-15, 2022",
+             2022, "*SEM 2022"),
+            # Tracks are not the main conference and must survive the compression.
+            ("Findings of the Association for Computational Linguistics: EMNLP 2020, "
+             "Online Event, 16-20 November 2020", 2020, "Findings of EMNLP 2020"),
+            ("Proceedings of the 63rd Annual Meeting of the Association for "
+             "Computational Linguistics (Volume 3: System Demonstrations)",
+             2025, "ACL 2025 (Demo)"),
+            # Acronym in trailing parentheses, year in front.
+            ("2025 IEEE 18th International Conference on Cloud Computing (CLOUD)",
+             2025, "CLOUD 2025"),
+            # Every spelling of "preprint" collapses, because build_site drops the
+            # highwire tag for a venue it recognizes as one -- and it recognizes "arXiv"
+            # but not "arXiv preprint arXiv:2408.12259".
+            ("arXiv preprint arXiv:2408.12259", 2024, "arXiv"),
+            ("CoRR", 2024, "arXiv"),
+            # Nothing recognized: keep what the source said rather than publish a guess.
+            ("Journal of Memory and Language", 2024, "Journal of Memory and Language"),
+            ("NeurIPS 2024 Competition Track", 2024, "NeurIPS 2024 Competition Track")):
+        got = short_venue(src, year=year)
+        if got != want:
+            errs.append(f"common.short_venue regressed: {got!r} (want {want!r}) "
+                        f"for {src[:60]!r}")
+    # Which highwire tag the venue gets. The entry type is unreliable in exactly the
+    # direction that matters: `@article` + `journal={ICLR}` is common, `@inproceedings`
+    # on a journal paper is not.
+    from common import venue_is_conference
+    for venue, typ, want in (("ICML 2025", "article", True),
+                             ("SurgLLM@ICML", "misc", True),
+                             ("EACL", None, True),
+                             ("LREC-COLING 2024", "article", True),
+                             ("TACL", "article", False),
+                             ("Nature", "article", False),
+                             ("Journal of Memory and Language", "article", False),
+                             ("arXiv", "inproceedings", False)):
+        if venue_is_conference(venue, typ) != want:
+            errs.append(f"common.venue_is_conference({venue!r}, {typ!r}) is "
+                        f"{not want} -- Scholar would file this under the wrong tag")
     return errs
 
 
@@ -215,6 +313,47 @@ def fallback_papers(doc) -> list[str]:
         ax = p.get("arxiv")
         if ax and not re.match(r"^\d{4}\.\d{4,5}$", str(ax)):
             errs.append(f"papers.yaml: {slug}: malformed arxiv id {ax!r}")
+    return errs
+
+
+OVERRIDE_KEYS = {"force_merge", "force_distinct", "also_mine", "extra_arxiv", "drop",
+                 "hf_claim_requested", "fields", "absent"}
+
+
+def check_overrides() -> list[str]:
+    """A misspelled override key does nothing, silently, and looks done.
+
+    `overrides.yaml` is the one file that is pure human intent -- every entry is a
+    judgement no source could supply. It is read with `.get(name)`, so a key the code
+    does not know is not an error but a no-op: the correction sits in the file, in git,
+    looking authoritative, and changes nothing. The failure has no symptom to notice,
+    which is what makes it worth a check rather than care.
+    """
+    ov = read_yaml(os.path.join(DATA, "overrides.yaml"))
+    if not isinstance(ov, dict):
+        return []
+    errs = []
+    for k in sorted(set(ov) - OVERRIDE_KEYS):
+        if k.startswith("_"):          # `_comment` and friends are deliberate
+            continue
+        near = [c for c in OVERRIDE_KEYS
+                if difflib.SequenceMatcher(None, k, c).ratio() > 0.7]
+        errs.append(f"overrides.yaml: nothing reads `{k}`, so it has no effect"
+                    + (f" -- did you mean `{near[0]}`?" if near else
+                       f" (known keys: {', '.join(sorted(OVERRIDE_KEYS))})"))
+    # A slug in `fields` that matches no paper is the same class of silent no-op: the
+    # hand correction is applied by slug, and a slug moves when a title is corrected.
+    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers") or []
+    if papers:
+        live = {p.get("slug") for p in papers}
+        hist = (read_yaml(os.path.join(DATA, "slug_history.yaml")) or {}).get("retired") or {}
+        for slug in (ov.get("fields") or {}):
+            if slug in live:
+                continue
+            moved = hist.get(slug)
+            errs.append(f"overrides.yaml: `fields` has no paper with slug `{slug}`"
+                        + (f" -- it moved to `{moved}`, update the key" if moved else
+                           " -- the correction is not being applied"))
     return errs
 
 
@@ -282,6 +421,7 @@ def main() -> None:
                         (docs.get("repos") or {}).get("repos", []))
     errs += selftest()
     errs += check_sidecars()
+    errs += check_overrides()
 
     if not have_js:
         print("note: jsonschema not installed -- using the built-in subset of checks")
