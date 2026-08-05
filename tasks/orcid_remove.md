@@ -14,24 +14,6 @@ Scholar, OpenAlex, Crossref and publisher submission systems read it as your
 assertion of authorship, and a claim on a famous paper is the kind of error
 someone eventually notices and reads uncharitably.
 
-## Confirmed not yours (1)
-
-The collector rejected each of these because no form of your name appears
-in the author list from any source. Delete them.
-
-On <https://orcid.org/my-orcid#works>: *Works* → find the title → the
-**⋮ / Actions** menu on that entry → *Delete*. There is no multi-select, so
-it is one at a time. Sorting by *Date added* groups the whole import
-together, which makes them faster to find than searching by title.
-
-| # | title | ORCID put-code |
-|---|---|---|
-| 1 | DenseFormer: Enhancing Information Flow in Transformers via Depth Weighted Ave | `222732440` |
-
-The put-code is the record's internal id, shown in the URL when you open a
-work. It is here so you can confirm you are deleting the right entry when two
-titles are similar.
-
 ## Listed twice (3 papers, 6 entries)
 
 One paper, two ORCID works. ORCID groups works that share an external

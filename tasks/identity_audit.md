@@ -6,8 +6,8 @@ which is why it can be re-run — the fixes all need one.
 
 | surface | state | |
 |---|---|---|
-| ORCID works (public) | 105 | ok |
-| ORCID holds your papers | 101 of 117 | **fix** |
+| ORCID works (public) | 120 | ok |
+| ORCID holds your papers | 117 of 117 | ok |
 | ORCID canonical URL | present | ok |
 | ORCID name variants | 2 listed | ok |
 | ORCID keywords | 13 of 13 | ok |
@@ -19,18 +19,14 @@ which is why it can be re-run — the fixes all need one.
 | Wikidata author item | Q140867203 | ok |
 | Wikidata item complete | 6 gaps | **fix** |
 | Wikidata paper items | 3 of 117 | optional |
-| HF pages indexed | 105 of 105 | ok |
-| HF pages claimed | 103 of 105 claimable | ok |
-| HF claims in moderation | 2 | waiting |
 | arXiv records misspelling your name | 2 | **fix** |
 | arXiv records omitting you | 0 | ok |
-| ORCID works that are not yours | 1 | **fix** |
 | ORCID works listed twice | 3 | **fix** |
 | Semantic Scholar records | 2 | **fix** |
 
 ## Crossref / DataCite auto-update: no evidence it is live
 
-All 105 public works are **self-asserted** — the `source` on every
+All 120 public works are **self-asserted** — the `source` on every
 one of them is your own name. A work that Crossref or DataCite adds carries
 *their* name instead, so this row is the only public read on whether those
 connections exist. It is currently reading zero.
@@ -117,41 +113,6 @@ Wikidata's main query graph, so a publication query against
 answer. This uses `query-scholarly.wikidata.org`.
 
 An opt-in batch for the 114 missing items is in `tasks/wikidata_papers.qs`; read the cautions in [wikidata_followup.md](wikidata_followup.md) before running it.
-
-## 1 works on your ORCID are not yours
-
-Imported from the bibliography before the collector checked author names —
-a CV bibliography holds the works it *cites* as well as the works it lists.
-ORCID is read as your authorship claim by Semantic Scholar, OpenAlex and
-publisher systems, so this is worth clearing before anything else on this
-page. One deletion each, put-codes included:
-[orcid_remove.md](orcid_remove.md).
-
-## 16 of your papers are missing from ORCID
-
-Measured by identifier, not by counting: each of these has no work group on
-the record carrying its DOI or arXiv id.
-
-This is the row that matters most on the page and the one a works *count*
-hides. ORCID is the key Semantic Scholar disambiguates on and the key OpenAlex
-is running profile merges from, so a paper absent here is a paper those two
-have no authoritative reason to attach to you — which is the same failure the
-split S2 record is made of.
-
-Highest citations first; the full list with DOIs is
-[orcid_missing.md](orcid_missing.md).
-
-- [ ]  112 cites — Model merging with SVD to tie the Knots
-- [ ]   33 cites — BabyLM Turns 3: Call for papers for the 2025 BabyLM workshop
-- [ ]    5 cites — Do LLMs Benefit From Their Own Words?
-- [ ]    3 cites — CUBE: A Standard for Unifying Agent Benchmarks
-- [ ]    3 cites — Mediocrity is the key for LLM as a Judge Anchor Selection
-- [ ]    3 cites — MINDGAMES: A Live Arena for Evaluating Social and Strategic Reason
-- [ ]    2 cites — SemEval 2019 Shared Task: Cross-lingual Semantic Parsing with UCCA
-- [ ]    1 cites — BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026
-- [ ]    1 cites — Every Eval Ever: A Unifying Schema and Community Repository for AI
-- [ ]    1 cites — Automated Discovery Has No Universally Superior Harness
-- … and 6 more
 
 ## 3 papers are listed twice on your ORCID
 

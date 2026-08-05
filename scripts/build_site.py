@@ -36,12 +36,14 @@ import sys
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, is_preprint_venue, load_config,  # noqa: E402
-                    norm_title, paper_doi, read_yaml, slugify, social_url,
-                    venue_is_conference)
+from common import (BUILD, DATA, ROOT, is_preprint_venue,  # noqa: E402
+                    load_config, norm_title, paper_doi, read_yaml, slugify,
+                    social_url, venue_is_conference)
 from ownership import write_manifest  # noqa: E402
 
 OUT = os.path.join(BUILD, "site")
+# Files the site must serve that nothing here generates -- ownership proofs, mostly.
+STATIC = os.path.join(ROOT, "static")
 E = html.escape
 
 
@@ -179,6 +181,12 @@ def person_jsonld(cfg) -> dict:
         "identifier": f"https://orcid.org/{ident['orcid']}",
         "url": ident["canonical_url"],
         "email": f"mailto:{ident['email']}",
+        # Resolved against the site root so config can hold a repo-relative path: the
+        # file lives in static/ precisely so it is not a third-party URL that can rot,
+        # and schema.org wants an absolute one.
+        **({"image": ident["image"] if "//" in ident["image"] else
+            ident["canonical_url"].rstrip("/") + "/" + ident["image"].lstrip("/")}
+           if ident.get("image") else {}),
         "jobTitle": ident["job_title"],
         "affiliation": [{"@type": "Organization", "name": a}
                         for a in ident["affiliations"]],
@@ -624,8 +632,40 @@ claim holds under, and common misreadings -- written by the author, not extracte
     # ---- IndexNow key file
     write_indexnow_key(cfg)
 
+    stats["static"] = copy_static()
     write_manifest(cfg, papers)
     return stats
+
+
+def copy_static() -> int:
+    """Copy `static/` into the built site verbatim, last, so it wins any collision.
+
+    This exists because a deploy already destroyed something. `--deploy` empties the
+    Pages repo before copying `build/site` into it, so anything that got there by hand
+    is deleted by the next run: `googlea3fc3aa9969d1cda.html`, the Search Console
+    ownership file, was added by hand on 2026-05-08 and removed by the first deploy
+    after it. Nothing announces that -- verification lapses silently weeks later, and
+    the cause is a commit that looks like every other rebuild.
+
+    A generated HTML tag is still the better verification method where a service offers
+    one (`site.verification`), because it needs no file at all. But some services only
+    offer a file, and an author will always eventually be asked to host one. So the
+    rule is: a file the site must serve that this repo does not generate goes in
+    `static/`, and then it is as durable as the generator itself.
+    """
+    if not os.path.isdir(STATIC):
+        return 0
+    n = 0
+    for root, _, files in os.walk(STATIC):
+        rel = os.path.relpath(root, STATIC)
+        dst_dir = OUT if rel == "." else os.path.join(OUT, rel)
+        os.makedirs(dst_dir, exist_ok=True)
+        for name in files:
+            if name == ".DS_Store":
+                continue
+            shutil.copy2(os.path.join(root, name), os.path.join(dst_dir, name))
+            n += 1
+    return n
 
 
 def write_indexnow_key(cfg) -> None:
@@ -725,6 +765,8 @@ def main() -> None:
     print(f"  linked to a peer's canonical page {s['peer_owned']}")
     if s["redirects"]:
         print(f"  redirects from retired URLs   {s['redirects']}")
+    if s.get("static"):
+        print(f"  files copied from static/     {s['static']}")
     if args.deploy:
         deploy(cfg)
 

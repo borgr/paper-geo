@@ -87,7 +87,9 @@ themselves — and keeps them fixed after future re-clustering.
       already covers the same works.
 - [ ] **Fill the profile fields that are actually facets**, not decoration:
       - *Also known as* — every form your name appears in. This is what a
-        disambiguation model matches when a citation uses a variant.
+        disambiguation model matches when a citation uses a variant. Real variants
+        only here; misspellings go somewhere else, see
+        [Misspellings of your name](#misspellings-of-your-name-are-a-separate-list).
       - *Websites & social links* — the **canonical URL must be present**. A second
         personal page (a site builder, a lab page) is not a problem *because it
         exists* — it's a problem when the canonical one is missing and the two are
@@ -268,6 +270,38 @@ requirement is accuracy, not distance.
       first ~50 items go in through the web form (no gate), and the batch does the
       rest. Preview the first ten rows before releasing the whole thing; items are
       permanent and far harder to clean up than anything in this repo.
+
+## Misspellings of your name are a separate list
+
+If you have co-authors, some published record of yours misspells your name. A
+one-character slip does not degrade gracefully: it creates a second author who owns
+that paper's citations and cannot be merged with you. Two different jobs follow, and
+the mistake is doing only the first.
+
+- [ ] **Fix it upstream wherever it is still writable.** arXiv metadata first — it is
+      what Hugging Face, Semantic Scholar, OpenAlex and Google Scholar all build author
+      identity from, so one edit there corrects every index at once. `tasks/
+      arxiv_name_fixes.md` lists which of your records are wrong and what each one
+      reads. Then the publisher's record via Crossref, if the venue will do it.
+- [ ] **Then accept that some of them are permanent, and route around those.** A typo
+      in someone *else's* reference list is not yours to fix and never will be. Those
+      strings will be resolved by tools for as long as the citing paper exists.
+- [ ] **Publish the misspellings as Wikidata aliases — and nowhere else.** An alias
+      there is a lookup key, not an assertion about spelling, and their guidelines name
+      common misspellings as a reason to add one. So a reconciler holding `Leshem
+      Chosen` from a 2024 citation lands on your item instead of inventing an author.
+      Put them in `identity.name_typos` in `config.yaml` and the audit adds them.
+- [ ] **Do not put them in ORCID's *also known as*, in your site's schema.org
+      `alternateName`, or in your `name_variants`.** Those three are *assertions* — they
+      say this is a form of your name that you use, which is false and reads as sloppy
+      on a public profile. And a typo listed as a known variant stops being reported as
+      a typo, so the upstream record it came from never gets fixed. That is why this
+      tool keeps two lists that look interchangeable and are not: `name_variants` are
+      asserted, `name_typos` are only matched and aliased. `validate.py` fails if a
+      string ends up in both.
+- [ ] **One test before adding a string: does it collide with a real person?** A
+      mangled given name or a one-letter surname slip is usually nobody. Initials-only
+      or surname-only forms are usually somebody, and belong on neither list.
 
 ## 5. One canonical URL — and what to do with the page humans actually visit
 

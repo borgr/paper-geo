@@ -22,7 +22,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import DATA, ROOT, read_yaml  # noqa: E402
+from common import DATA, ROOT, load_config, norm_name, read_yaml  # noqa: E402
 
 SCHEMA_DIR = os.path.join(ROOT, "schema")
 
@@ -357,6 +357,32 @@ def check_overrides() -> list[str]:
     return errs
 
 
+def check_name_lists() -> list[str]:
+    """`name_typos` must stay disjoint from `name_variants`, and both from `name`.
+
+    The lists look interchangeable and are not. `name_variants` are asserted outward --
+    ORCID also-known-as, schema.org alternateName, the Wikidata label -- while
+    `name_typos` are matched and published only as Wikidata aliases. Copying a typo into
+    the variants list would assert a misspelling as a name he goes by, and would also
+    switch off the check that finds it: `name_match` reports a near-miss as a typo to
+    fix upstream, and a listed variant scores `exact` instead. Both failures are silent,
+    and the second one is worse -- the arXiv record stays wrong and stops being
+    reported, which is the whole identity split this repo exists to close.
+    """
+    cfg = load_config()
+    ident = (cfg or {}).get("identity") or {}
+    variants = {norm_name(v) for v in ident.get("name_variants") or []}
+    variants.add(norm_name(ident.get("name") or ""))
+    errs = []
+    for t in ident.get("name_typos") or []:
+        if norm_name(t) in variants:
+            errs.append(
+                f"config.yaml: `{t}` is in both name_typos and name_variants/name. "
+                "As a variant it is asserted as a name you use, and it stops being "
+                "reported as a typo to fix upstream. Keep it in one list only.")
+    return errs
+
+
 def check_sidecars() -> list[str]:
     """Cross-check sidecars: valid front matter, and claim ids that resolve."""
     try:
@@ -422,6 +448,7 @@ def main() -> None:
     errs += selftest()
     errs += check_sidecars()
     errs += check_overrides()
+    errs += check_name_lists()
 
     if not have_js:
         print("note: jsonschema not installed -- using the built-in subset of checks")

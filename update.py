@@ -130,11 +130,22 @@ def due_followups() -> list[str]:
     due = sorted((i for i in items if as_date(i["due"]) <= today), key=lambda i: i["due"])
     later = sorted((i for i in items if as_date(i["due"]) > today), key=lambda i: i["due"])
     out = []
-    if due:
-        out += [f"## Due now ({len(due)})", "",
-                "From `data/followups.yaml`. Each of these was waiting on something",
-                "outside this repo that should have landed by now.", ""]
-        for i in due:
+    # `owner: agent` items are separated out rather than listed with the rest. They are
+    # not tasks for the reader -- they need a date to have passed and then a pipeline
+    # run, no decision -- and mixing the two kinds is how a checklist teaches its reader
+    # that most lines on it are not for them.
+    for owner, head, blurb in (
+            ("human", "Due now", "Each of these was waiting on something outside this "
+                                 "repo that should have landed by now."),
+            ("agent", "Due now — for the pipeline, not for you",
+             "Unblocked by the calendar, not by a decision. Say the word, or they run "
+             "on the next pass; nothing here needs you except a look at the result.")):
+        group = [i for i in due if (i.get("owner") or "human") == owner]
+        if not group:
+            continue
+        out += [f"## {head} ({len(group)})", "",
+                f"From `data/followups.yaml`. {blurb}", ""]
+        for i in group:
             d = as_date(i["due"])
             out += [f"- [ ] **{d.isoformat()}** ({(today - d).days} days ago) — "
                     f"{' '.join(str(i['what']).split())}",
@@ -145,7 +156,10 @@ def due_followups() -> list[str]:
     if later:
         out += ["## Waiting on the outside world", "",
                 *[f"- **{as_date(i['due']).isoformat()}** — "
-                  f"{' '.join(str(i['what']).split())}" for i in later], ""]
+                  f"{' '.join(str(i['what']).split())}"
+                  + ("  *(then mine to run, not yours)*"
+                     if (i.get("owner") or "human") == "agent" else "")
+                  for i in later], ""]
     return out
 
 

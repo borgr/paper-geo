@@ -16,18 +16,26 @@
 #   what    what you are waiting for
 #   then    what becomes possible, or what to do if it did not land
 #   check   optional shell command that answers it
+#   owner   `human` (default) or `agent`. An `agent` item is a job for whoever runs the
+#           pipeline next, not a task for the researcher: it needs no decision, only a
+#           date that has passed. WORKLIST.md lists the two separately, because a list
+#           that mixes "go and click this" with "this runs itself once the calendar
+#           allows" trains its reader to skim both.
 #
 # Delete an entry when it is done. Re-run `python update.py --step worklist` after.
 
 followups:
   - due: 2026-08-08
+    owner: agent
     what: >-
       Wikidata account Ktilana reaches 4 days old (registered 2026-08-04 13:15 UTC).
       Autoconfirmed needs 4 days AND 50 edits; the edit half is already met (56 as of
       2026-08-05), so the age is what is left.
     then: >-
-      QuickStatements unlocks for tasks/wikidata.qs and tasks/wikidata_papers.qs.
-      Nothing else waits on this: statements on the author item go through
+      Run the two QuickStatements batches -- tasks/wikidata.qs (author-item statements
+      the API writer does not cover) and tasks/wikidata_papers.qs (the paper items) --
+      at https://quickstatements.toolforge.org/#/batch, then report the diff. Nothing
+      else waits on this: statements on the author item go through
       scripts/wikidata_apply.py, which uses a bot password and needs no autoconfirmed
       account.
     check: python scripts/wikidata_apply.py --check-account

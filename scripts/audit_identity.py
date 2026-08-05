@@ -234,9 +234,15 @@ def wikidata_gaps(qid: str, cfg) -> dict:
     # present reported "0 missing" for a name the item does not usefully carry -- and
     # anything acting on this diff would then remove the bad alias and add nothing.
     good = [a for a in aliases if a not in bad_aliases]
-    want_aliases = [v for v in cfg["identity"]["name_variants"]
-                    if v != cfg["identity"]["name"]
-                    and not any(norm_name(v) == norm_name(a) for a in good)]
+    # Typos belong in this list and in no other published surface: a Wikidata alias is
+    # a search key, not an assertion about how the name is spelled, and their guidelines
+    # name common misspellings as a reason to add one. The payoff is the citation
+    # already printed in someone else's paper, which cannot be fixed upstream ever.
+    want = [v for v in (list(cfg["identity"]["name_variants"])
+                        + list(cfg["identity"].get("name_typos") or []))
+            if v != cfg["identity"]["name"]]
+    want_aliases = [v for v in want
+                    if not any(norm_name(v) == norm_name(a) for a in good)]
     return {"qid": qid, "missing": missing, "wrong": wrong, "dupes": dupes,
             "aliases": aliases, "bad_aliases": bad_aliases,
             "want_aliases": want_aliases,
@@ -518,12 +524,20 @@ def wikidata_followup_file(g: dict, cfg, cov: dict, qs_path: str | None) -> str:
               "The aliases box takes one name per entry.", "",
               f"On <https://www.wikidata.org/wiki/{q}>: click the *also known as* area,",
               "delete that entry, then add each of these as its own alias:", ""]
-        L += [f"- [ ] `{v}`" for v in ident["name_variants"] if v != ident["name"]]
+        L += [f"- [ ] `{v}`" for v in (list(ident["name_variants"])
+                                      + list(ident.get("name_typos") or []))
+              if v != ident["name"]]
         L += [""]
     elif g["want_aliases"]:
+        typos = set(ident.get("name_typos") or [])
         L += ["## Aliases to add", "",
-              "*Also known as* is what matches a citation that uses a different form.", ""]
-        L += [f"- [ ] `{v}`" for v in g["want_aliases"]] + [""]
+              "*Also known as* is what matches a citation that uses a different form.",
+              "Misspellings included, and marked as such below: an alias is a search key",
+              "rather than a claim about spelling, so the one form that can never be",
+              "fixed at its source — a typo already printed in someone else's reference",
+              "list — is exactly the one worth carrying here.", ""]
+        L += [f"- [ ] `{v}`" + ("  *(misspelling; deliberate)*" if v in typos else "")
+              for v in g["want_aliases"]] + [""]
 
     if g["dupes"]:
         L += ["## Duplicate statements to remove", "",

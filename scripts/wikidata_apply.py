@@ -194,7 +194,13 @@ def plan(gaps: dict, cfg: dict) -> list[dict]:
         # backticked alias holding "L. Choshen" normalises to the same string a real
         # alias would, so "missing" reads 0 while the useful alias is absent. Building
         # the final list from config makes the outcome independent of that.
-        want = [v for v in cfg["identity"]["name_variants"] if v != cfg["identity"]["name"]]
+        # Plus the known misspellings. This is the only surface they are published to,
+        # and the reason is that a Wikidata alias is a lookup key rather than a claim
+        # about spelling -- so it can absorb the one form nothing upstream will ever
+        # fix, a typo already set in another author's reference list.
+        want = [v for v in (list(cfg["identity"]["name_variants"])
+                            + list(cfg["identity"].get("name_typos") or []))
+                if v != cfg["identity"]["name"]]
         # Set the whole alias list in one call rather than remove-then-add: two calls
         # means two revisions and a window where the item has no alias at all.
         final = keep + [w for w in want

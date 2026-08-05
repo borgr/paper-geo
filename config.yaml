@@ -11,6 +11,31 @@ identity:
     - Leshem Choshen
     - Choshen, Leshem
     - L. Choshen
+  # Misspellings that already exist in published citations and resolve to you and to
+  # nobody else. Deliberately a separate list from `name_variants`, because the two are
+  # consumed in opposite directions and merging them would break both:
+  #
+  #   name_variants are *asserted* -- they go into ORCID's also-known-as, the site's
+  #   schema.org alternateName, and the Wikidata label. A misspelling asserted there
+  #   states that you spell your name that way.
+  #
+  #   name_typos are only *matched*, and published to exactly one surface: Wikidata
+  #   aliases, where an alias is a search key rather than a claim, and where common
+  #   misspellings are explicitly in scope. That is what lets a reconciler holding the
+  #   string "Leshem Chosen" from a 2024 citation land on Q140867203 instead of
+  #   inventing a second author -- and unlike the arXiv metadata, a citation already
+  #   printed in someone else's paper can never be corrected at the source.
+  #
+  # They are also kept out of the *matcher* that finds typos to fix (`name_match`
+  # scores a near-miss on its own), because a typo listed as a known name form stops
+  # being reported and the upstream record then never gets fixed.
+  #
+  # One test before adding a string: does it collide with a real person? `Lesham
+  # Choshen` and `Leshem Chosen` are nobody. A surname-only or initials-only variant
+  # usually is somebody, and belongs here never.
+  name_typos:
+    - Leshem Chosen      # arXiv 2410.10783, 2409.02228
+    - Lesham Choshen
   orcid: 0000-0002-0085-6496
   # The one URL that goes in ORCID, Semantic Scholar, arXiv, LinkedIn and every
   # JSON-LD sameAs. Pick one and never change it.
@@ -39,7 +64,16 @@ identity:
     - machine translation evaluation
     - efficient evaluation
   email: leshem.choshen@weizmann.ac.il
-  job_title: Postdoctoral Researcher
+  # schema.org Person.image. A path is resolved against `site.base_url`; a full URL is
+  # used as given. Self-hosted from `static/` on purpose -- the hand-written page this
+  # replaced pointed at a static.wixstatic.com URL, which is a third party's CDN path
+  # for a photo on a site builder and rots when the site is re-themed. The value here
+  # is that same photo, downscaled to 800px.
+  #
+  # A weak signal on its own -- it is one of the things a knowledge panel can show, not
+  # something that makes one appear. Listed because the cost is a 58 KB file.
+  image: portrait.jpg
+  job_title: PI
   affiliations:
     - MIT-IBM Watson AI Lab
     - IBM Research
@@ -94,7 +128,11 @@ ids:
   # Formats: bluesky = full handle (`name.bsky.social`); mastodon = `@user@server`;
   # twitter = username without the @.
   bluesky: null
-  mastodon: null
+  # Verified against the instance API before being written here, per the rule above:
+  # display name "Leshem Choshen", 1073 posts, created 2022-11-05. Recovered from the
+  # hand-written index.html that the first --deploy replaced, which listed it in its
+  # sameAs; the generated page had dropped it.
+  mastodon: "@LChoshen@sigmoid.social"
   # Read off your own ORCID researcher-urls ("Twitter: twitter.com/LChoshen"), not
   # guessed from your name -- a guessed handle is a link to a stranger.
   twitter: LChoshen
@@ -155,10 +193,15 @@ site:
   # have no LaTeXML HTML rendering.
   ar5iv_fallback: true
   # Search Console and Bing Webmaster Tools ownership tokens. Both are the `content`
-  # value of the HTML-tag verification option, which is the one to choose: --deploy
-  # empties the Pages repo before copying build/site into it, so a verification *file*
-  # you upload by hand survives exactly until the next deploy and then vanishes,
-  # un-verifying the property with nothing to link cause to effect.
+  # value of the HTML-tag verification option, which is the one to prefer: it is
+  # generated into every page, so there is nothing to keep alive by hand.
+  #
+  # If a service only offers file verification, put the file in `static/` -- copied
+  # into the site on every build. Do not upload it to the Pages repo directly:
+  # --deploy empties that repo before copying build/site into it, which is how
+  # `googlea3fc3aa9969d1cda.html` was deleted by the first deploy after it was added
+  # (now restored, from static/). A lapse like that surfaces weeks later as an
+  # un-verified property, with nothing pointing back at the cause.
   #
   # These two consoles are the only free way to see crawled-vs-indexed counts and the
   # queries people actually used. Bing matters more than its market share suggests:
