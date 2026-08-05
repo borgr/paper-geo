@@ -394,8 +394,9 @@ humans*, and conflating the two is what makes this question feel unanswerable.
       no lexical path from the question anyone actually types.
 - [ ] One canonical sentence per finding, reused **verbatim** in the paper, README,
       model card, and talk abstract. Rewording each time fragments the signal.
-- [ ] A sidecar: claims, scope conditions, terminology, common misreadings. The only
-      part no tool can write, and the only lever on being described *correctly*.
+- [ ] A sidecar: claims, scope conditions, terminology, common misreadings — the only
+      lever on being described *correctly*. `python scripts/draft_sidecars.py` drafts
+      it from the paper; you check the numbers and the scope, then `--accept`.
 
 ---
 
@@ -555,6 +556,30 @@ Fifteen minutes, once.
       Worth more than Bing's search share suggests: **ChatGPT's search grounding leans
       on Bing's index**, so a page missing here is missing from an answer engine you
       actually care about — and this is the only place that will tell you.
+- [x] **IndexNow — nothing to do, it is already wired.** Listed here only so it is
+      not mistaken for an open task. IndexNow is a push in the other direction: rather
+      than waiting to be crawled, the deploy *tells* Bing, Yandex, Seznam and Naver
+      (not Google — it does not participate) which URLs changed, and they fetch within
+      minutes to days.
+
+      There is no account and no application. The key is any 8–128 characters of
+      `[A-Za-z0-9-]` that you pick yourself; what proves control is serving it at
+      `<base_url>/<key>.txt`, which `build_site.py` writes on every build. So
+      `site.indexnow_key` is set in `config.yaml` and committed on purpose — the key
+      is *meant* to be public, and the worst a stranger who copies it can do is ask
+      Bing to recrawl pages that are already yours.
+
+      `--deploy` submits the whole sitemap after pushing, never before: the endpoint
+      checks the key file is live and rejects the batch otherwise. So the first
+      submission of a brand-new key can fail with a 403 while Pages is still
+      publishing. That is harmless and self-correcting — the next deploy resubmits, and
+      the failure prints rather than breaking the build. If you want to confirm it is
+      working, Bing Webmaster Tools → *IndexNow* lists what was submitted and when.
+
+      What it buys: a rebuild that adds thirty paper pages at once is precisely the
+      case organic discovery handles worst, because a new sitemap entry on a
+      low-traffic site can sit for weeks. It changes *when* a page becomes eligible,
+      and nothing about how it ranks.
 - [ ] **Analytics won't answer this.** Google Analytics, Plausible, Cloudflare Web
       Analytics are all JavaScript beacons, and the crawlers you care about don't run
       JavaScript — so they are invisible in exactly the tool you'd reach for. Same

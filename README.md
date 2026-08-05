@@ -86,5 +86,8 @@ robots), the README links block, the Hugging Face worklist, schema validation, a
 the two measurement instruments.
 
 Deliberately not automated: arXiv journal-refs (no write API), Hugging Face paper
-indexing and authorship claims (needs an authenticated browser session), and the
-claims inside a sidecar (only an author can rank which limitation binds).
+indexing and authorship claims (needs an authenticated browser session), and
+*accepting* a sidecar — the claims in one are drafted from the paper by
+`scripts/draft_sidecars.py`, but only an author can confirm a magnitude and rank
+which limitation actually binds, so drafts stay in `data/sidecars/drafts/` until
+promoted.

@@ -41,13 +41,14 @@ python scripts/sweep_github.py diff # exactly what would change on GitHub
 python update.py --apply            # write it
 ```
 
-`update.py` runs seven steps, each independently re-runnable:
+`update.py` runs eight steps, each independently re-runnable:
 
 | Step | Does | Writes |
 |---|---|---|
 | `collect` | bibliography + Semantic Scholar + arXiv + Hugging Face → one record per paper | `data/papers.yaml` |
 | `repos` | refresh GitHub repo state, preserving prior edits | `data/repos.yaml` |
 | `propose` | label repos that still lack topics or a description | `build/llm_tasks.json` |
+| `draft` | draft sidecars for the next batch of papers that have none | `data/sidecars/drafts/` |
 | `ownership` | reconcile paper ownership with collaborators' manifests | `paper-geo.json` |
 | `audit` | live-read the surfaces we don't control — ORCID, arXiv authority records, Wikidata, HF, S2 — and regenerate their payloads | `tasks/*` |
 | `validate` | schema-check every data file, plus regression checks for bugs already shipped once | — |
@@ -86,11 +87,32 @@ never re-propose or overwrite it.
 For unattended runs (cron), set `llm.mode: api` in `config.yaml`; it needs
 `ANTHROPIC_API_KEY` or an `ant auth login` profile.
 
-## Writing a sidecar (the part no tool can do)
+## Sidecars (the `draft` step)
 
-One file per paper at `data/sidecars/<slug>.md` — the only hand-written per-paper
-input, and the highest-value ~10 minutes per paper. Full schema and drafting rules:
-[docs/PAPERS.md](docs/PAPERS.md#rule-5-the-sidecar-is-the-only-thing-no-tool-can-write).
+One file per paper at `data/sidecars/<slug>.md`: the claims in quotable form, the
+scope each holds under, coined terminology, and the misreadings worth pre-empting.
+Full schema and rules:
+[docs/PAPERS.md](docs/PAPERS.md#rule-5-the-sidecar-is-drafted-by-a-tool-and-verified-by-the-author).
+
+**You draft; the author verifies.** A claim with its magnitude, a scope condition and
+the gloss of a coined term are all in the paper — what the author uniquely holds is
+whether a draft got them right and which misreading actually keeps happening. So:
+
+```bash
+python scripts/draft_sidecars.py --limit 20   # queue (or --slug <slug> ...)
+python scripts/draft_sidecars.py --ingest     # fold your answers into drafts/
+```
+
+In `skill` mode the step writes `build/sidecar_tasks.json` and stops. Fill each task's
+`sidecar` object against the embedded schema — the evidence field carries the paper's
+full text, so use the paper's own numbers and cite where each came from (`Table 2`).
+Drafts land in `data/sidecars/drafts/`, which **nothing reads**: the site, validator,
+fidelity check and coverage count all glob `data/sidecars/*.md` one level up, so an
+unverified draft cannot reach a published page. Only the author runs `--accept`.
+
+Never invent a magnitude. If the evidence gives no number for a finding, say so in the
+claim text — a wrong number is the one failure here that is worse than silence, because
+it is quotable.
 
 The rule that is easy to get backwards:
 
@@ -104,9 +126,9 @@ The rule that is easy to get backwards:
   the query and then loses the citation, because the concrete answer isn't in the
   chunk. That is the worst of both outcomes.
 
-Draft `claims` and `misreadings`, then hand back — a model can report what a paper
-*says* about its limits but cannot rank which limitation actually binds. Don't strip
-legitimate caveats to sound confident; precise claim plus explicit scope.
+A model can report what a paper *says* about its limits but cannot rank which
+limitation actually binds — so draft it and hand back. Don't strip legitimate caveats
+to sound confident; precise claim plus explicit scope.
 
 ## New paper just posted
 

@@ -1,7 +1,7 @@
 # How to use this
 
 Three things you'll actually do: the routine refresh, adding a new paper, and
-writing a sidecar. Everything else is a variation.
+verifying a drafted sidecar. Everything else is a variation.
 
 Read-only by default. Nothing leaves your machine without `--apply`, `--deploy`,
 or `--yes`.
@@ -32,10 +32,11 @@ anything about you appears.
 python update.py
 ```
 
-Six steps, each safe to re-run, in order: rebuild `data/papers.yaml` from your
+Eight steps, each safe to re-run, in order: rebuild `data/papers.yaml` from your
 bibliography + Semantic Scholar + arXiv + Hugging Face → refresh repo state →
-label anything unlabelled → reconcile paper ownership with collaborators →
-validate against the schemas → regenerate `WORKLIST.md`.
+label anything unlabelled → draft the next batch of sidecars → reconcile paper
+ownership with collaborators → live-read the identity surfaces → validate against
+the schemas → regenerate `WORKLIST.md`.
 
 Then look at two files and act:
 
@@ -52,6 +53,36 @@ checkout of the `publications` repo and has new entries:
 ```bash
 python update.py --refresh-bib         # needs sources.publications_path in config
 ```
+
+### Two ways a refresh talks back
+
+**It may refuse to write.** Every source can fail, and a failed fetch returns an
+empty field rather than an error — one dead API costs you one field instead of the
+whole run. The cost of that choice is that a bad afternoon at Semantic Scholar looks
+exactly like a good one, and the next commit makes the loss permanent. So the
+collector compares each run against **the last commit** and stops if coverage fell
+sharply:
+
+```
+REFUSING TO WRITE -- this run has much less data than the last commit:
+  abstract: 116 -> 61 (-55)
+```
+
+Look at the `!` lines above it for the source that failed and rerun. If the drop is
+real — a big merge, papers dropped on purpose — say so:
+
+```bash
+python scripts/collect.py --allow-shrink
+```
+
+`--no-arxiv` and `--no-hf` imply it, since a skip you asked for is not news.
+
+**It may report `title differs from arXiv`.** The details are in
+`build/title_diffs.json`. This is a review item, not an error, and **either side can
+be the stale one**: arXiv v2 sometimes retitles a paper your bibliography still has
+under its v1 name, and your bibliography sometimes has the correct title while arXiv
+never got updated. Read the pair and fix whichever is wrong — upstream in the `.bib`
+if it is yours, or by posting a new arXiv version if it is theirs.
 
 ---
 
@@ -76,27 +107,43 @@ Then, in this order — highest value first:
    the link and the venue string. One web form per paper; no API exists. This is
    what Scholar matches citations on, so it's worth more than it looks — and it
    needs step 1.
-4. **Write the sidecar** (below).
+4. **Verify its drafted sidecar** (below) — `update.py` will have drafted it.
 5. **If it has a repo:** `python update.py --step repos`, label it, then
    `sweep_github.py diff` → `apply`.
 6. **Rebuild and deploy** the site.
 
 ---
 
-## Writing a sidecar
+## Sidecars: verify a draft, don't write one
 
-The only hand-written per-paper input, ~10 minutes, and the part that decides
-whether models describe your work *correctly*.
+The sidecar decides whether models describe your work *correctly*, and it used to be
+described here as the one thing only you could write — which, at ten minutes each,
+meant nobody wrote any. Most of it is in the paper: a claim with its magnitude, the
+condition it holds under, the definition of a term you coined. So it is drafted for
+you, and your job is the part that genuinely needs you — checking the numbers,
+sharpening the scope, and saying which misreading actually keeps happening.
 
 ```bash
-cp data/sidecars/ties-merging-*.md data/sidecars/<slug>.md   # worked example
-$EDITOR data/sidecars/<slug>.md
-python scripts/validate.py                                    # checks the schema
+python scripts/draft_sidecars.py                      # queue the 20 most-cited
+python scripts/draft_sidecars.py --ingest             # fold the answers into drafts/
+python scripts/draft_sidecars.py --review             # what is drafted vs live
+$EDITOR data/sidecars/drafts/<slug>.md                # correct it
+python scripts/draft_sidecars.py --accept <slug>      # promote it, schema-checked
 python scripts/build_site.py --deploy
 ```
 
-Slugs come from `data/papers.yaml`. Schema:
-[`schema/sidecar.schema.json`](schema/sidecar.schema.json). Rules:
+Drafts live in `data/sidecars/drafts/` and **nothing reads them** — the site, the
+validator, the fidelity check and the coverage count all glob `data/sidecars/*.md` one
+level up. So a draft cannot reach a published page by accident, and `--accept` refuses
+to promote one that fails the schema. Every draft opens with what to check, in the
+order it pays.
+
+`update.py` drafts a batch (default 10, `--draft-batch N`) on every run, so a new
+paper's draft arrives on its own.
+
+To write one from scratch instead: copy `data/sidecars/ties-merging-*.md` as the
+worked example. Slugs come from `data/papers.yaml`; schema:
+[`schema/sidecar.schema.json`](schema/sidecar.schema.json); rules:
 [`docs/PAPERS.md`](docs/PAPERS.md).
 
 The three that are easy to get backwards:
@@ -110,7 +157,7 @@ The three that are easy to get backwards:
   matches the query and then loses the citation, because the answer isn't in the
   chunk.
 
-Do them in citation order. Twenty good sidecars beat 135 rushed ones.
+Do them in citation order. Twenty verified sidecars beat 117 rushed ones.
 
 ---
 
@@ -237,9 +284,13 @@ If the same item reappears in `WORKLIST.md` every month, it needs a recorded
 decision, not another look:
 
 - **Papers** → [`data/overrides.yaml`](data/overrides.yaml): `force_merge`,
-  `force_distinct`, `drop`, or a per-slug field fix. A `force_merge` that retires a
-  URL leaves a redirect behind it automatically (refresh + canonical → the surviving
-  page), so consolidating two pages never 404s a URL someone already linked to.
+  `force_distinct`, `drop`, or a per-slug field fix. Any URL a run retires leaves a
+  redirect behind it automatically (refresh + canonical → the surviving page), so
+  neither consolidating two pages nor correcting a title 404s a URL someone already
+  linked to. The record is [`data/slug_history.yaml`](data/slug_history.yaml), written
+  by `collect.py` and read by `build_site.py`; it is append-only, because deleting a
+  line breaks a published address. `validate.py` will tell you if a `fields:` key
+  points at a slug that has since moved.
 - **Repos** → set `reviewed: true` on the entry in `data/repos.yaml`. That freezes
   it against all future proposals.
 
@@ -252,19 +303,22 @@ Semantic Scholar, and OpenAlex instead of only to you.
 
 | Command | Does | Writes anything? |
 |---|---|---|
-| `update.py` | all seven steps | no |
+| `update.py` | all eight steps | no |
 | `update.py --step <name>` | one step | no |
 | `update.py --refresh-bib` | refresh the bibliography first | no |
 | `update.py --apply` | + push approved repo changes | **yes, GitHub** |
 | `scripts/collect.py` | rebuild `papers.yaml` | local only |
+| `scripts/collect.py --allow-shrink` | + write even if coverage dropped sharply | local only |
 | `scripts/sweep_github.py propose\|diff\|apply` | repo topics, descriptions, `CITATION.cff` | apply: **yes** |
 | `scripts/propose_topics.py [--ingest]` | label repos with a model | local only |
+| `scripts/draft_sidecars.py [--ingest\|--review\|--accept]` | draft sidecars for you to verify | local only |
 | `scripts/ownership.py [--manifest] [--claim-all]` | reconcile with co-authors | local only |
 | `scripts/links_block.py propose\|diff\|apply` | links block in paper-code READMEs | apply: **yes** |
 | `scripts/build_site.py [--deploy]` | generate the site | deploy: **yes** |
 | `scripts/hf_papers.py [--live] [--verify]` | HF worklist / re-check | local only |
 | `scripts/audit_identity.py [--no-hf]` | live-read ORCID, arXiv, Wikidata, HF, S2 | local only |
 | `scripts/identity_tasks.py` | payloads for the one-time identity fixes | local only |
+| `scripts/wikidata_apply.py [--apply] [--check-account]` | apply the Wikidata diff | apply: **yes, Wikidata** |
 | `scripts/validate.py` | schema check + shipped-bug regressions + selftest | no |
 | `measure/check_structure.py [--links]` | the "A" checks | no |
 | `measure/fidelity.py [--ingest]` | the "C" diagnostic | no |

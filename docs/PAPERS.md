@@ -67,9 +67,9 @@ people have already cited, and §5 of SHARED.md applies to citation strings too:
 one canonical form everywhere beats a tidier one. 118/135 captured; the rest are
 S2-only records with no bib entry yet.
 
-## Rule 5: the sidecar is the only thing no tool can write
+## Rule 5: the sidecar is drafted by a tool and verified by the author
 
-One file per paper, `data/sidecars/<slug>.md`. ~10 minutes. This is the part that
+One file per paper, `data/sidecars/<slug>.md`. This is the part that
 targets **fidelity** rather than visibility — and fidelity is the real problem for
 work that is already well known. LLM summaries overstate scientific conclusions
 about 5× more often than human ones; a paper that ships its own claims and scope
@@ -142,13 +142,29 @@ of text, two different claims about it — one weak, one strong.
 
 ### Drafting a sidecar
 
+`python scripts/draft_sidecars.py` does the first pass from the paper's own full
+text, into `data/sidecars/drafts/<slug>.md`; the author corrects it and runs
+`--accept`. This used to be described as work only the author could do, which at ten
+minutes each meant 116 of 117 papers had none. The split that works: the paper
+supplies the claims, magnitudes, scope conditions and coined terms; the author
+supplies the judgement about whether the draft got them right, and which misreading
+is the one that actually keeps happening.
+
+Whichever writes it, the rules are the same:
+
 - Claims must survive isolation. Name the object, the finding, and the magnitude
   in one sentence. No pronouns pointing outside the sentence.
 - Scope is the content, not a disclaimer. Name the populations, models, and
   conditions the claim does and doesn't reach. Boilerplate ("further research is
   needed") is worthless.
-- A model can draft; only the author can rank which limitation actually binds.
-  Draft `claims` and `misreadings`, then hand back for correction.
+- A model can draft; only the author can rank which limitation actually binds, and
+  only the author knows which misreading recurs in practice. Draft both, hand back.
+- Never invent a magnitude. If the paper states no number for a finding, say that in
+  the claim text. A number attributed to the wrong baseline is the one error here
+  that is worse than silence, because it is quotable.
+- Drafts are invisible to the rest of the pipeline by construction: `validate.py`,
+  `measure/check_structure.py`, `measure/fidelity.py` and `build_site.py` all glob
+  `data/sidecars/*.md` non-recursively, so `drafts/` cannot leak into a page.
 - Do **not** strip legitimate caveats to sound confident. The measured preference
   for confident language over hedged is the one place the incentive gradient
   points away from good science. The honest version is precise claims plus
