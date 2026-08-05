@@ -40,8 +40,8 @@ from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, WD_IDENTIFIERS, get, get_json,  # noqa: E402
-                    load_config, name_match, norm_name, norm_title, paper_doi,
-                    read_yaml, synth_bibtex)
+                    load_config, name_match, norm_name, norm_title, org_name,
+                    paper_doi, read_yaml, synth_bibtex)
 
 TASKS = os.path.join(ROOT, "tasks")
 ATOM = {"a": "http://www.w3.org/2005/Atom"}
@@ -1146,8 +1146,8 @@ def main() -> None:
     auto_src = {k: v for k, v in (orc["work_sources"] or {}).items()
                 if any(w in k.lower() for w in ("crossref", "datacite"))}
     orc_orgs = [(r["org"] or "") for r in orc["employment_rows"]]
-    missing_empl = [a for a in ident["affiliations"]
-                    if not any(_org_match(a, o) for o in orc_orgs)]
+    missing_empl = [org_name(a) for a in ident["affiliations"]
+                    if not any(_org_match(org_name(a), o) for o in orc_orgs)]
     missing_edu = [e["institution"] for e in (ident.get("education") or [])
                    if not any(_org_match(e["institution"], r["org"] or "")
                               for r in orc["education_rows"])]

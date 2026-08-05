@@ -5,3 +5,9 @@ __pycache__/
 
 # Wikidata bot password, read by scripts/wikidata_apply.py. Never commit.
 .wikidata_bot
+
+# Author-supplied copies of papers the open-access chain cannot reach, read by
+# scripts/fulltext.py. A publisher PDF is not ours to redistribute and a public repo is
+# redistribution; only the sidecar distilled from it gets published. See the README.
+data/fulltext/*
+!data/fulltext/README.md

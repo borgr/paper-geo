@@ -485,6 +485,29 @@ def backfill_abstracts(papers: list[dict]) -> None:
             p["abstract_source"] = "arxiv"
 
 
+def backfill_abstracts_offarxiv(papers: list[dict]) -> None:
+    """The papers arXiv cannot help with: never preprinted, or preprinted elsewhere.
+
+    Runs after the arXiv pass and only on what it left empty, because arXiv is one batch
+    request for forty papers and these are four APIs for one. Sources in
+    scripts/fulltext.py: Semantic Scholar, Europe PMC, Crossref JATS, OpenAlex.
+
+    Worth the extra calls for a specific pair of papers rather than on principle. The
+    Nature debating-system paper (172 citations) had no abstract at all -- its page was a
+    title, a venue and a citation count, which is thin enough that Scholar may decline to
+    index it and close to unretrievable in embedding search. Europe PMC publishes that
+    abstract. The JML paper is the same story via OpenAlex.
+    """
+    from fulltext import resolve_abstract
+    for p in papers:
+        if (p.get("abstract") or "").strip():
+            continue
+        got = resolve_abstract(p)
+        if got:
+            p["abstract"], p["abstract_source"] = got
+            print(f"  abstract from {got[1]}: {p['slug']}", file=sys.stderr)
+
+
 _ORDINALS = ("second", "third", "fourth", "fifth", "2nd", "3rd", "4th", "5th")
 
 
@@ -873,6 +896,11 @@ def main() -> None:
         if not_mine:
             print(f"  authorship: {len(not_mine)} records have no form of your name "
                   f"and were excluded -- review build/not_mine.json", file=sys.stderr)
+        # After the merges and the gate, deliberately: this is four API calls per paper,
+        # and a record that is about to be folded into its arXiv twin or excluded as
+        # someone else's should not cost any of them.
+        print("abstracts for the non-arXiv papers ...", file=sys.stderr)
+        backfill_abstracts_offarxiv(papers)
 
     # Slugs are truncated, so two long titles can collide -- which silently made
     # one paper overwrite the other's page. Disambiguate deterministically (year,

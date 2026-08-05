@@ -27,8 +27,8 @@ import sys
 import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (DATA, ROOT, WD_IDENTIFIERS, load_config, paper_doi,  # noqa: E402
-                    read_yaml, synth_bibtex)
+from common import (DATA, ROOT, WD_IDENTIFIERS, load_config, org_name,  # noqa: E402
+                    paper_doi, read_yaml, synth_bibtex)
 
 TASKS = os.path.join(ROOT, "tasks")
 
@@ -160,7 +160,7 @@ def wikidata_qs(cfg, papers) -> str:
     add(P["field_of_work"], Q["machine learning"])
     add(P["orcid"], f'"{ident["orcid"]}"')
     add(P["website"], f'"{ident["canonical_url"]}"')
-    for a in ident["affiliations"]:
+    for a in (org_name(x) for x in ident["affiliations"]):
         if a in EMPLOYER_Q:
             add(P["employer"], EMPLOYER_Q[a])
     # educated at, for degree-granting study only -- a postdoc is P108 above, since no
@@ -207,7 +207,7 @@ def wikidata_manual(cfg) -> str:
             ("field of work", "P101", "machine learning", "Q2539"),
             ("ORCID iD", "P496", ident["orcid"], ""),
             ("official website", "P856", ident["canonical_url"], "")]
-    for a in ident["affiliations"]:
+    for a in (org_name(x) for x in ident["affiliations"]):
         if a in EMPLOYER_Q:
             rows.append(("employer", "P108", a, EMPLOYER_Q[a]))
     for e in ident.get("education") or []:

@@ -39,7 +39,6 @@ from __future__ import annotations
 
 import argparse
 import glob
-import html
 import json
 import os
 import re
@@ -51,6 +50,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import yaml  # noqa: E402
 
 from common import BUILD, DATA, ROOT, get, load_config, read_yaml  # noqa: E402
+from fulltext import resolve as resolve_fulltext  # noqa: E402
 
 SIDECARS = os.path.join(DATA, "sidecars")
 DRAFTS = os.path.join(SIDECARS, "drafts")
@@ -114,55 +114,15 @@ quotable and specific, under 320 characters.
 
 # --------------------------------------------------------------- evidence
 
-_TAG = re.compile(r"<(script|style)\b.*?</\1>|<[^>]+>", re.S | re.I)
-_WS = re.compile(r"[ \t\r\f\v]+")
+def fulltext(p: dict, cfg: dict, limit: int = 60000) -> tuple[str, str]:
+    """The paper's text and where it came from. See scripts/fulltext.py for the chain.
 
-
-def html_to_text(raw: bytes) -> str:
-    """Crude HTML -> text. Enough for a model, and it adds no dependency.
-
-    Block tags become newlines before tags are stripped, because the alternative runs a
-    table caption into the sentence after it and the model then attributes a number to
-    the wrong result.
+    The abstract alone produces claims with no magnitudes and no scope -- the two fields
+    that carry the whole value. So this is worth a fetch per paper, and worth trying
+    more than one source: this used to read arXiv's HTML rendering only, which meant the
+    12 papers that were never on arXiv got a draft written from their titles.
     """
-    s = raw.decode("utf-8", "replace")
-    s = re.sub(r"(?i)</(p|div|li|tr|h[1-6]|figcaption|caption|section)>", "\n", s)
-    s = re.sub(r"(?i)<br\s*/?>", "\n", s)
-    s = _TAG.sub(" ", s)
-    s = html.unescape(s)
-    s = _WS.sub(" ", s)
-    return re.sub(r"\n\s*\n+", "\n\n", s).strip()
-
-
-def fulltext(p: dict, limit: int = 60000) -> str:
-    """The paper's rendered HTML as text, cached under build/fulltext/.
-
-    The abstract alone produces claims with no magnitudes and no scope -- the two
-    fields that carry the whole value. The full text has the numbers, the table
-    captions and the limitations section, so it is worth one fetch per paper.
-
-    Cached because a re-draft after a prompt change should not re-download 117 papers,
-    and because arXiv asks for exactly that restraint. Truncated at the *end*: the
-    front matter and results sections are what matter, and references are not.
-    """
-    os.makedirs(CACHE, exist_ok=True)
-    path = os.path.join(CACHE, f"{p['slug']}.txt")
-    if os.path.exists(path):
-        with open(path) as f:
-            return f.read()[:limit]
-    url = (p.get("links") or {}).get("html")
-    text = ""
-    if url:
-        raw = get(url, timeout=60)
-        if raw:
-            text = html_to_text(raw)
-            # An arXiv id with no LaTeXML rendering answers with a stub page rather
-            # than a 404, so length is the only usable signal that a fetch failed.
-            if len(text) < 4000:
-                text = ""
-    with open(path, "w") as f:
-        f.write(text)
-    return text[:limit]
+    return resolve_fulltext(p, cfg, limit=limit)
 
 
 def readme(p: dict, limit: int = 6000) -> str:
@@ -199,7 +159,7 @@ def readme(p: dict, limit: int = 6000) -> str:
 
 
 def evidence(p: dict, cfg: dict, no_fulltext: bool = False) -> str:
-    ft = "" if no_fulltext else fulltext(p)
+    ft, ft_source = ("", "") if no_fulltext else fulltext(p, cfg)
     rm = "" if no_fulltext else readme(p)
     parts = [f"title: {p.get('title_display') or p['title']}",
              f"authors: {', '.join(p.get('authors') or []) or '(unknown)'}",
@@ -212,12 +172,12 @@ def evidence(p: dict, cfg: dict, no_fulltext: bool = False) -> str:
              "abstract:",
              (p.get("abstract") or "(none)").strip(), ""]
     if ft:
-        parts += [f"full text (from {(p.get('links') or {}).get('html')}, truncated):",
-                  ft, ""]
+        parts += [f"full text (from {ft_source}, truncated):", ft, ""]
     else:
-        parts += ["full text: NOT AVAILABLE. Draft from the abstract only, and keep",
-                  "claims to what it states -- do not supply magnitudes it does not "
-                  "give.", ""]
+        parts += ["full text: NOT AVAILABLE from any open source. Draft from the "
+                  "abstract only,",
+                  "and keep claims to what it states -- do not supply magnitudes it "
+                  "does not give.", ""]
     if rm:
         parts += ["code README (for the authors' own naming and framing, truncated):",
                   rm]
@@ -243,18 +203,50 @@ def pending(papers: list[dict], do_all: bool, limit: int | None) -> list[dict]:
     return out[:limit] if limit else out
 
 
-def emit_tasks(todo: list[dict], cfg, no_fulltext: bool) -> str:
+NO_TEXT = "full text: NOT AVAILABLE"   # what evidence() writes when the chain came up dry
+
+
+def with_evidence(cands: list[dict], cfg, no_fulltext: bool,
+                  limit: int | None) -> tuple[list[tuple[dict, str]], list[dict]]:
+    """Resolve evidence in citation order; take the first `limit` papers that have text.
+
+    The skip is the point. A paper no open source will give us has nothing to draft from
+    but its title, and a sidecar written from a title is a page of confident guesses
+    published under the author's name -- the one output here that is worse than no page.
+
+    Applying the limit *after* the text check rather than before is what keeps the batch
+    moving: filter-then-limit would let the same handful of unreachable papers fill every
+    batch forever, so the reachable ones behind them would never get drafted.
+
+    Nothing is remembered as hopeless. Each is retried on the next run, because a source
+    added to fulltext.py today should rescue a paper that came up empty yesterday, and
+    `data/fulltext/<slug>.pdf` should take effect the moment it appears.
+    """
+    ok: list[tuple[dict, str]] = []
+    skipped: list[dict] = []
+    for p in cands:
+        ev = evidence(p, cfg, no_fulltext)
+        if not no_fulltext and NO_TEXT in ev:
+            skipped.append(p)
+            continue
+        ok.append((p, ev))
+        if limit and len(ok) >= limit:
+            break
+    return ok, skipped
+
+
+def emit_tasks(pairs: list[tuple[dict, str]], cfg) -> str:
     os.makedirs(BUILD, exist_ok=True)
     tasks = [{"slug": p["slug"], "title": p.get("title_display") or p["title"],
-              "evidence": evidence(p, cfg, no_fulltext), "sidecar": None}
-             for p in todo]
+              "evidence": ev, "sidecar": None}
+             for p, ev in pairs]
     with open(TASKS, "w") as f:
         json.dump({"system": SYSTEM, "user_template": USER,
                    "schema": schema(), "tasks": tasks}, f, indent=1)
     return TASKS
 
 
-def call_api(todo: list[dict], cfg, no_fulltext: bool) -> dict:
+def call_api(pairs: list[tuple[dict, str]], cfg) -> dict:
     """One Messages API call per paper, validated against the sidecar schema."""
     try:
         import anthropic
@@ -262,8 +254,7 @@ def call_api(todo: list[dict], cfg, no_fulltext: bool) -> dict:
         sys.exit("pip install anthropic, or set llm.mode: skill in config.yaml")
     client = anthropic.Anthropic()
     sch, out = schema(), {}
-    for p in todo:
-        ev = evidence(p, cfg, no_fulltext)
+    for p, ev in pairs:
         req = dict(model=cfg["llm"]["model"], max_tokens=8192, system=SYSTEM,
                    messages=[{"role": "user", "content": USER.format(evidence=ev)}])
         oc = {"effort": cfg["llm"].get("effort", "medium"),
@@ -451,34 +442,52 @@ def main() -> None:
         print("Next: python scripts/draft_sidecars.py --review")
         return
 
+    # An explicit --slug is an instruction, not a candidate list: no limit and no
+    # text-availability skip, because "draft this one anyway" is a legitimate thing to
+    # ask for a paper whose text you know is unreachable.
     if args.slug:
         by_slug = {p["slug"]: p for p in papers}
-        todo = [by_slug[s] for s in args.slug if s in by_slug]
+        cands, limit = [by_slug[s] for s in args.slug if s in by_slug], None
         missing = [s for s in args.slug if s not in by_slug]
         if missing:
             print(f"unknown slug(s): {', '.join(missing)}", file=sys.stderr)
     else:
-        todo = pending(papers, args.all, args.limit or None)
-    if not todo:
+        cands, limit = pending(papers, args.all, None), args.limit or None
+    if not cands:
         print("Nothing to draft: every paper has a sidecar or a draft.")
         print("  python scripts/draft_sidecars.py --review")
         return
 
-    print(f"{len(todo)} paper(s) to draft, most cited first:")
-    for p in todo[:8]:
+    print(f"resolving each paper's full text, most cited first "
+          f"(up to {limit or len(cands)})...")
+    pairs, skipped = with_evidence(cands, cfg, args.no_fulltext,
+                                   None if args.slug else limit)
+    if skipped:
+        print(f"\nskipped {len(skipped)} with no text from any open source -- drop a PDF "
+              f"in data/fulltext/<slug>.pdf and rerun, or force one with --slug:")
+        for p in skipped[:8]:
+            print(f"  {(p.get('citations') or 0):>5} cites  {p['slug']}")
+        if len(skipped) > 8:
+            print(f"  ... and {len(skipped) - 8} more (python scripts/fulltext.py --report)")
+    if not pairs:
+        print("\nNothing draftable in this batch.")
+        return
+
+    print(f"\n{len(pairs)} paper(s) to draft:")
+    for p, _ in pairs[:8]:
         print(f"  {(p.get('citations') or 0):>5} cites  {p['slug']}")
-    if len(todo) > 8:
-        print(f"  ... and {len(todo) - 8} more")
+    if len(pairs) > 8:
+        print(f"  ... and {len(pairs) - 8} more")
     print()
 
     if cfg["llm"]["mode"] == "api":
-        answers = call_api(todo, cfg, args.no_fulltext)
+        answers = call_api(pairs, cfg)
         for slug, sc in answers.items():
             write_draft(slug, sc, f"the Anthropic API ({cfg['llm']['model']})")
         print(f"\nwrote {len(answers)} draft(s) to data/sidecars/drafts/")
         print("Next: python scripts/draft_sidecars.py --review")
     else:
-        path = emit_tasks(todo, cfg, args.no_fulltext)
+        path = emit_tasks(pairs, cfg)
         print(f"wrote {path}")
         print("Fill each task's `sidecar` field (the paper-geo skill does this), then:")
         print("  python scripts/draft_sidecars.py --ingest")

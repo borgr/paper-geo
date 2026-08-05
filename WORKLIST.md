@@ -7,43 +7,15 @@ reading of each external surface is [tasks/identity_audit.md](tasks/identity_aud
 
 ## Waiting on the outside world
 
-- **2026-08-08** — Wikidata account Ktilana reaches 4 days old (registered 2026-08-04 13:15 UTC). Autoconfirmed needs 4 days AND 50 edits; the edit half is already met (56 as of 2026-08-05), so the age is what is left.
+- **2026-08-08** — Wikidata account Ktilana reaches 4 days old (registered 2026-08-04 13:15 UTC). Autoconfirmed needs 4 days AND 50 edits; the edit half is already met (56 as of 2026-08-05), so the age is what is left.  *(then mine to run, not yours)*
 - **2026-10-04** — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.
 - **2026-11-04** — Crossref and DataCite auto-update only fire on newly deposited metadata that already carries your iD, so the proof is a work whose ORCID source is Crossref or DataCite rather than your own name -- which cannot appear until something you publish is deposited.
 
-## Identity surfaces (6 open)
+## Identity surfaces (4 open)
 
 Each is blocked on an account you are logged into, not on knowing what to
 do. `python scripts/identity_tasks.py` regenerates every payload under
 `tasks/` — committed, so browsable on GitHub.
-
-### ORCID is missing 16 of your 117 papers
-
-Highest leverage on this page. Semantic Scholar's disambiguation and
-OpenAlex's profile merges are both ORCID-driven, so this is the one fix that
-makes the others more likely to fix themselves.
-
-One upload, not one form per paper: *Works → + Add → Add BibTeX* →
-**`tasks/orcid_missing.bib`** (only the missing ones) or
-`tasks/orcid_import.bib` (all of them; ORCID groups on shared identifiers, so
-re-importing what is already there merges rather than duplicates).
-Full list with citations: `tasks/orcid_missing.md`. How and why:
-[docs/SETUP.md §1](docs/SETUP.md#1-orcid--populate-it-then-wire-it-everywhere).
-
-- [ ] 112 cites — Model merging with SVD to tie the Knots
-- [ ] 33 cites — BabyLM Turns 3: Call for papers for the 2025 BabyLM workshop
-- [ ] 5 cites — Do LLMs Benefit From Their Own Words?
-- [ ] 3 cites — CUBE: A Standard for Unifying Agent Benchmarks
-- [ ] 3 cites — Mediocrity is the key for LLM as a Judge Anchor Selection
-- [ ] 3 cites — MINDGAMES: A Live Arena for Evaluating Social and Strategic Reason
-- [ ] 2 cites — SemEval 2019 Shared Task: Cross-lingual Semantic Parsing with UCCA
-- [ ] 1 cites — BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026
-- … and 8 more in `tasks/orcid_missing.md`
-### ORCID lists 1 work that is not yours
-
-A wrong work on your record is worse than a missing one: it is the thing that
-makes an automated merge distrust the record. *Works → the entry → Delete.*
-Put-codes and titles: `tasks/orcid_remove.md`.
 
 ### ORCID lists 3 of your papers twice
 
@@ -139,7 +111,7 @@ submission page (a metadata edit, not a new version).
 - [ ] `1907.08971` (77 cites) -> ACL 2019  <https://arxiv.org/abs/1907.08971>
 - [ ] `2302.04863` (71 cites) -> Findings of EMNLP 2023  <https://arxiv.org/abs/2302.04863>
 
-## Sidecar drafts awaiting your verification (1)
+## Sidecar drafts awaiting your verification (2)
 
 Drafted from each paper's own full text: claims with their magnitudes,
 scope conditions, terminology and likely misreadings. Every number is a
@@ -152,8 +124,9 @@ python scripts/draft_sidecars.py --accept <slug>   # promote, after editing
 ```
 
 - [ ] `data/sidecars/drafts/tinybenchmarks-evaluating-llms-with-fewer-examples.md`  (282 cites) tinyBenchmarks: evaluating LLMs with fewer examples
+- [ ] `data/sidecars/drafts/active-learning-for-bert-an-empirical-study.md`  (244 cites) Active Learning for {BERT:} An Empirical Study
 
-## Sidecars not yet drafted (115/117)
+## Sidecars not yet drafted (112/115)
 
 Nothing to do by hand here — this is a run, not a task:
 
@@ -165,12 +138,12 @@ python scripts/draft_sidecars.py --ingest     # fold the answers in
 `update.py` also drafts a batch on every run, so this number falls on
 its own. The top of the list, by citations, is where it pays:
 
-- 244 cites — Active Learning for {BERT:} An Empirical Study
 - 232 cites — Findings of the {B}aby{LM} Challenge: Sample-Efficient Pretraining
 - 180 cites — Global {MMLU}: Understanding and Addressing Cultural and Linguisti
 - 172 cites — An autonomous debating system
 - 167 cites — Q\({}^{\mbox{2}}\): Evaluating Factual Consistency in Knowledge-Gr
 - 127 cites — On the Weaknesses of Reinforcement Learning for Neural Machine Tra
+- 120 cites — Fusing finetuned models for better pretraining
 
 ## Artifacts with no citation route (14)
 

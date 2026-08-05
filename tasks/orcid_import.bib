@@ -293,14 +293,12 @@ author       = {Ella Neeman and
   bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
 
-@article{stoica2024model,
-  author       = {George Stoica and Pratik Ramesh and B. Ecsedi and Leshem Choshen and J. Hoffman},
-  title        = {Model merging with SVD to tie the Knots},
-  year         = {2024},
-  journal      = {International Conference on Learning Representations},
+@inproceedings{knots,
   doi          = {10.48550/arXiv.2410.19735},
-  eprint       = {2410.19735},
-  archivePrefix = {arXiv}
+title={Tie the KnOTS: Model Merging with SVD},
+  author={Pratik, Ramesh and George, Stoica and Boglarka, Ecsedi and Choshen, Leshem and Judy, Hoffman},
+  booktitle={ICLR},
+  year={2025}
 }
 
 @inproceedings{damani2026beyond,
@@ -1314,6 +1312,15 @@ url={https://openreview.net/forum?id=SulRfnEVK4}
     ISBN = "979-8-89176-195-7"
 }
 
+@inproceedings{DonYehiya2024TheFO,
+  doi          = {10.1038/s42256-025-01038-2},
+title={The Future of Open Human Feedback},
+  author={Shachar Don-Yehiya and Ben Burtenshaw and Ramon Fernandez Astudillo and Cailean Osborne and Mimansa Jaiswal and Tzu-Sheng Kuo and Wenting Zhao and Idan Shenfeld and Andi Peng and Mikhail Yurochkin and Atoosa Kasirzadeh and Yangsibo Huang and Tatsunori Hashimoto and Yacine Jernite and Daniel Vila-Suero and Omri Abend and Jennifer Ding and Sara Hooker and Hannah Rose Kirk and Leshem Choshen},
+  year={2025},
+booktitle={Nature Machine Intelligence},
+  url={https://api.semanticscholar.org/CorpusID:272310324}
+}
+
 @inproceedings{DBLP:conf/acl/Ashury-TahanGSC24,
   doi          = {10.18653/V1/2024.ACL-LONG.456},
 author       = {Shir Ashury{-}Tahan and
@@ -1408,15 +1415,6 @@ author       = {Aviv Slobodkin and
   timestamp    = {Fri, 06 Aug 2021 01:00:00 +0200},
   biburl       = {https://dblp.org/rec/conf/naacl/SlobodkinCA21.bib},
   bibsource    = {dblp computer science bibliography, https://dblp.org}
-}
-
-@inproceedings{DonYehiya2024TheFO,
-  doi          = {10.1038/s42256-025-01038-2},
-title={The Future of Open Human Feedback},
-  author={Shachar Don-Yehiya and Ben Burtenshaw and Ramon Fernandez Astudillo and Cailean Osborne and Mimansa Jaiswal and Tzu-Sheng Kuo and Wenting Zhao and Idan Shenfeld and Andi Peng and Mikhail Yurochkin and Atoosa Kasirzadeh and Yangsibo Huang and Tatsunori Hashimoto and Yacine Jernite and Daniel Vila-Suero and Omri Abend and Jennifer Ding and Sara Hooker and Hannah Rose Kirk and Leshem Choshen},
-  year={2025},
-booktitle={Nature Machine Intelligence},
-  url={https://api.semanticscholar.org/CorpusID:272310324}
 }
 
 @article{DBLP:journals/corr/abs-2404-15198,
@@ -1985,17 +1983,6 @@ author       = {Gal Patel and
   archivePrefix = {arXiv}
 }
 
-@misc{fandina2025safesafetymetricautomatic,
-  doi          = {10.48550/arXiv.2408.12259},
-      title={How Safe is Your Safety Metric? Automatic Concatenation Tests for Metric Reliability}, 
-      author={Ora Nova Fandina and Leshem Choshen and Eitan Farchi and George Kour and Yotam Perlitz and Orna Raz},
-      year={2025},
-      eprint={2408.12259},
-      archivePrefix={arXiv},
-      primaryClass={cs.AI},
-      url={https://arxiv.org/abs/2408.12259}, 
-}
-
 @misc{cai2025latentvariableframeworkscaling,
   doi          = {10.48550/arXiv.2512.06553},
       title={A Latent Variable Framework for Scaling Laws in Large Language Models}, 
@@ -2005,6 +1992,14 @@ author       = {Gal Patel and
       archivePrefix={arXiv},
       primaryClass={stat.AP},
       url={https://arxiv.org/abs/2512.06553}, 
+}
+
+@article{fandina2024can,
+  doi          = {10.48550/arXiv.2408.12259},
+title={Can You Trust Your Metric? Automatic Concatenation-Based Tests for Metric Validity},
+  author={Fandina, Ora Nova and Choshen, Leshem and Farchi, Eitan and Kour, George and Perlitz, Yotam and Raz, Orna},
+  journal={arXiv preprint arXiv:2408.12259},
+  year={2024}
 }
 
 @article{DBLP:journals/corr/abs-2106-00745,
@@ -2134,7 +2129,7 @@ author       = {Leshem Choshen and
   bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
 
-% ---- 6 entries WITHOUT any DOI: no identifier to group on, so these are the only ones that can show as standalone duplicates later. Import them last, or not at all. ----
+% ---- 4 entries WITHOUT any DOI: no identifier to group on, so these are the only ones that can show as standalone duplicates later. Import them last, or not at all. ----
 
 @inproceedings{warstadt2024insights,
 title={Insights from the first BabyLM Challenge: Training sample-efficient language models on a developmentally plausible corpus},
@@ -2154,13 +2149,6 @@ title={Insights from the first BabyLM Challenge: Training sample-efficient langu
   abstract     = {We call for the development of agentic systems that thrive in new environments. Agentic systems, comprising foundation models, tools, and an execution strategy, have demonstrated strong capabilities, yet their development is often constrained by narrow benchmarks and their operation is siloed to limited environments. This paper advocates for developing general, adaptive agents that excel across diverse environments, from terminals and web interfaces to biological and embodied settings. We examine current limitations, explain the potential of increased generality, and identify immediate development priorities. Finally, we argue that protocols and evaluation must prioritize adaptiveness to foster a shared ecosystem for general-purpose agentic systems.},
 }
 
-@inproceedings{knots,
-title={Tie the KnOTS: Model Merging with SVD},
-  author={Pratik, Ramesh and George, Stoica and Boglarka, Ecsedi and Choshen, Leshem and Judy, Hoffman},
-  booktitle={ICLR},
-  year={2025}
-}
-
 @inproceedings{
 tam2024llm,
 title={{LLM} Merging: Building {LLM}s Efficiently through Merging},
@@ -2175,11 +2163,4 @@ title={High-dimensional Learning Dynamics 2024: The Emergence of Structure and R
 author={Choshen, Leshem and Atish, Agarwala and Naomi, Saphra and Boaz, Barak and Courtney, Paquette and Gowthami, Sompalli and Rosie, Zhao and Depen, Morwani and Mengzhou, Xia and Shikhar, Murty and Swabha, Swayamdipta and Tom, Goldstein},
 year={2024},
 booktitle={ICML}
-}
-
-@article{fandina2024can,
-title={Can You Trust Your Metric? Automatic Concatenation-Based Tests for Metric Validity},
-  author={Fandina, Ora Nova and Choshen, Leshem and Farchi, Eitan and Kour, George and Perlitz, Yotam and Raz, Orna},
-  journal={arXiv preprint arXiv:2408.12259},
-  year={2024}
 }

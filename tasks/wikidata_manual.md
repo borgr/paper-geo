@@ -57,6 +57,7 @@ autocomplete resolved to the right thing.
 | Hugging Face user ID | `P12201` | borgr |  |
 | LinkedIn personal profile ID | `P6634` | leshemchoshen |  |
 | OpenReview.net profile ID | `P8964` | ~Leshem_Choshen1 |  |
+| Mastodon address | `P4033` | LChoshen@sigmoid.social |  |
 | X username | `P2002` | LChoshen |  |
 
 Identifier values (ORCID, the author IDs) are plain strings — Wikidata

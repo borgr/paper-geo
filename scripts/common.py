@@ -294,6 +294,18 @@ def social_url(kind: str, value: str | None) -> str | None:
         return None
 
 
+def org_name(a) -> str:
+    """The name of an affiliation entry, which may be a bare string or a mapping.
+
+    `identity.affiliations` accepts both: a plain name, or `{name, url, ror, wikidata}`
+    for an organisation whose identity is worth stating. Everything that only needs the
+    name -- the page byline, the ORCID employment diff, the Wikidata P108 lookup -- goes
+    through here so that adding a URL to one entry cannot turn its name into a dict
+    rendered as `{'name': ...}` in published text.
+    """
+    return a if isinstance(a, str) else str((a or {}).get("name") or "")
+
+
 def norm_name(s: str) -> str:
     """Fold a personal name for comparison: accents, punctuation, case, spacing."""
     s = unicodedata.normalize("NFKD", s or "")
@@ -340,11 +352,19 @@ def name_match(candidate: str, variants) -> str:
 
 
 def arxiv_id(entry: dict) -> str | None:
-    """Extract a bare arXiv id from eprint / url / doi fields."""
+    """Extract a bare arXiv id from eprint / url / doi / venue fields.
+
+    `journal` and `booktitle` are in the list because `journal = {arXiv preprint
+    arXiv:2408.12259}` is what Google Scholar's BibTeX export writes for a preprint, and
+    it is the only place that id appears in the entry. Missing it costs the whole paper:
+    no arXiv id means no abstract, no full text, no HTML rendering and no links -- which
+    is exactly what happened to "Can You Trust Your Metric?", whose id was sitting in
+    its venue string while its record carried none.
+    """
     if entry.get("eprint") and (entry.get("eprinttype", "arxiv").lower() == "arxiv"
                                 or entry.get("archiveprefix", "").lower() == "arxiv"):
         return entry["eprint"].split("v")[0]
-    for field in ("url", "doi", "note"):
+    for field in ("url", "doi", "note", "journal", "booktitle"):
         v = entry.get(field) or ""
         m = re.search(r"(?:arxiv\.org/(?:abs|pdf)/|arXiv[.:]|arXiv\.)(\d{4}\.\d{4,5})", v, re.I)
         if m:

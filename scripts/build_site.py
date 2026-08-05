@@ -37,8 +37,8 @@ import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, is_preprint_venue,  # noqa: E402
-                    load_config, norm_title, paper_doi, read_yaml, slugify,
-                    social_url, venue_is_conference)
+                    load_config, norm_title, org_name, paper_doi, read_yaml,
+                    slugify, social_url, venue_is_conference)
 from ownership import write_manifest  # noqa: E402
 
 OUT = os.path.join(BUILD, "site")
@@ -142,6 +142,32 @@ def jsonld(obj: dict) -> str:
     return f'  <script type="application/ld+json">\n{body}\n  </script>\n'
 
 
+def org_ld(a) -> dict:
+    """An affiliation as a schema.org Organization, with identifiers when it has them.
+
+    A bare name is a string a disambiguator has to guess at -- "IBM Research" is
+    thousands of people and several legal entities. A name plus a `url`, and better a
+    plus a ROR id, is an entity: ROR is the identifier Crossref, DataCite and OpenAlex
+    use for institutions, so it is the affiliation key that other databases can join on
+    rather than string-match. `sameAs` carries them because that is the property whose
+    meaning is "this URL denotes this thing".
+
+    Kept optional per entry. A guessed lab URL is worse than a bare name, on the same
+    logic as the social handles: a wrong identifier asserts a relationship to the wrong
+    organisation, while a missing one only fails to assert a real one.
+    """
+    if isinstance(a, str):
+        return {"@type": "Organization", "name": a}
+    out = {"@type": "Organization", "name": str(a.get("name") or "")}
+    if a.get("url"):
+        out["url"] = a["url"]
+    same = ([f"https://ror.org/{a['ror'].split('/')[-1]}"] if a.get("ror") else []) \
+        + ([f"https://www.wikidata.org/wiki/{a['wikidata']}"] if a.get("wikidata") else [])
+    if same:
+        out["sameAs"] = same
+    return out
+
+
 def person_jsonld(cfg) -> dict:
     ident, ids = cfg["identity"], cfg["ids"]
     same = [f"https://orcid.org/{ident['orcid']}",
@@ -188,8 +214,7 @@ def person_jsonld(cfg) -> dict:
             ident["canonical_url"].rstrip("/") + "/" + ident["image"].lstrip("/")}
            if ident.get("image") else {}),
         "jobTitle": ident["job_title"],
-        "affiliation": [{"@type": "Organization", "name": a}
-                        for a in ident["affiliations"]],
+        "affiliation": [org_ld(a) for a in ident["affiliations"]],
         # Distinct from affiliation for the same reason Wikidata separates P69 from
         # P108: a postdoc is employment, and alumniOf claims a degree. Only entries
         # under identity.education land here.
@@ -552,7 +577,7 @@ def build(cfg) -> dict:
     # ---- entity home
     home = [f"<h1>{E(ident['name'])}</h1>",
             f'<p class="sub">{E(ident["job_title"])} · '
-            f'{E(", ".join(ident["affiliations"]))}</p>']
+            f'{E(", ".join(org_name(a) for a in ident["affiliations"]))}</p>']
     # The canonical URL is the machine anchor, so it is the URL in every registry --
     # including the ones a human clicks, like Scholar's Homepage field. That decision
     # is only defensible if the first thing on this page sends a person onward, since
@@ -599,7 +624,7 @@ def build(cfg) -> dict:
     with open(os.path.join(OUT, "llms.txt"), "w") as f:
         f.write(f"""# {ident['name']}
 
-{ident['job_title']} at {', '.join(ident['affiliations'])}.
+{ident['job_title']} at {', '.join(org_name(a) for a in ident['affiliations'])}.
 ORCID {ident['orcid']} · {ident['email']}
 
 Each paper below has a plain-text page stating what it shows, the conditions the

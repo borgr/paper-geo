@@ -35,6 +35,16 @@ force_merge:
   # wording under a slug naming a word the paper no longer contains.
   - - "Global PIQA: Evaluating Commonsense Reasoning Across 100+ Languages and Cultures"
     - "Global PIQA: Evaluating Physical Commonsense Reasoning Across 100+ Languages and Cultures"
+  # One paper, two records with the halves of the title swapped around the colon, which
+  # is the arrangement the word-overlap guard is least able to see: "Tie the KnOTS:
+  # Model Merging with SVD" (ICLR 2025, from the bibliography, no arXiv id, no DOI, 0
+  # citations) and "Model merging with SVD to tie the Knots" (arXiv 2410.19735, 112
+  # citations). Same five authors in both, with given and family names in opposite
+  # order, so the author check cannot break the tie either. The surviving title is the
+  # arXiv one because that is what arXiv still serves today -- worth rechecking when the
+  # ICLR camera-ready lands, since `KnOTS` is the name the method is cited by.
+  - - "Model merging with SVD to tie the Knots"
+    - "Tie the KnOTS: Model Merging with SVD"
 
 # Title pairs that look near-identical but are genuinely different papers.
 # Listing them here suppresses the `similar_but_distinct` flag so the review

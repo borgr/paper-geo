@@ -57,11 +57,11 @@
 10.18653/V1/K19-1028	Automatically Extracting Challenge Sets for Non-Local Phenomena in Neural Machine Translation
 10.48550/arXiv.2410.10783	LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content
 10.48550/arXiv.2408.10646	Beneath the Surface of Consistency: Exploring Cross-lingual Knowledge Representation Sharing in LLMs
+10.1038/s42256-025-01038-2	The Future of Open Human Feedback
 10.18653/V1/2024.ACL-LONG.456	Label-Efficient Model Selection for Text Generation
 10.18653/V1/2024.EMNLP-MAIN.1045	Fuse to Forget: Bias Reduction and Selective Memorization through Model Fusion
 10.18653/V1/2023.EMNLP-MAIN.253	Human Learning by Model Feedback: The Dynamics of Iterative Prompting with Midjourney
 10.18653/V1/2021.NAACL-MAIN.8	Mediators in Determining what Processing BERT Performs First
-10.1038/s42256-025-01038-2	The Future of Open Human Feedback
 10.48550/ARXIV.2404.15198	Lossless and Near-Lossless Compression for Foundation Models
 10.18653/V1/2020.FINDINGS-EMNLP.243	Unsupervised Expressive Rules Provide Explainability and Assist Human Experts Grasping New Domains
 10.48550/arXiv.2407.10944	Naturally Occurring Feedback is Common, Extractable and Useful
@@ -98,8 +98,8 @@
 10.48550/arXiv.2602.20092	BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026 BabyLM Workshop
 10.48550/arXiv.2606.14516	Every Eval Ever: A Unifying Schema and Community Repository for AI Evaluation Results
 10.48550/arXiv.2607.18235	Automated Discovery Has No Universally Superior Harness
-10.48550/arXiv.2408.12259	How Safe is Your Safety Metric? Automatic Concatenation Tests for Metric Reliability
 10.48550/arXiv.2512.06553	A Latent Variable Framework for Scaling Laws in Large Language Models
+10.48550/arXiv.2408.12259	Can You Trust Your Metric? Automatic Concatenation-Based Tests for Metric Validity
 10.48550/arXiv.2106.00745	Part of Speech and Universal Dependency effects on English Arabic Machine Translation
 10.48550/arXiv.2603.13467	Resolving Interference (RI): Disentangling Models for Improved Model Merging
 10.48550/arXiv.2605.11206	Instructions Shape Production of Language, not Processing
