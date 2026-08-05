@@ -6,7 +6,7 @@
 10.18653/v1/2023.conll-babylm.1	Findings of the BabyLM Challenge: Sample-Efficient Pretraining on Developmentally Plausible Corpora
 10.18653/v1/2025.acl-long.919	Global MMLU: Understanding and Addressing Cultural and Linguistic Biases in Multilingual Evaluation
 10.1038/S41586-021-03215-W	An autonomous debating system
-10.18653/v1/2021.emnlp-main.619	Q²: Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question Generation and Question Answering
+10.18653/V1/2021.EMNLP-MAIN.619	Q2: Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question Generation and Question Answering
 10.48550/arXiv.1907.01752	On the Weaknesses of Reinforcement Learning for Neural Machine Translation
 10.48550/arXiv.2204.03044	Fusing finetuned models for better pretraining
 10.18653/V1/2023.ACL-LONG.559	DisentQA: Disentangling Parametric and Contextual Knowledge with Counterfactual Question Answering
@@ -39,21 +39,21 @@
 10.18653/V1/W19-4414	Learning to combine Grammatical Error Corrections
 10.1016/j.jml.2025.104650	Bigger is not always better: The importance of human-scale language modeling for psycholinguistics
 10.18653/V1/2023.EMNLP-MAIN.90	Where to start? Analyzing the potential value of intermediate models
+10.48550/ARXIV.2401.08574	Deductive Closure Training of Language Models for Coherence, Accuracy, and Updatability
 10.18653/V1/2022.ACL-LONG.526	Cluster & Tune: Boost Cold Start Performance in Text Classification
 10.48550/ARXIV.2407.00066	Compress then Serve: Serving Thousands of LoRA Adapters with Little Overhead
-10.48550/ARXIV.2401.08574	Deductive Closure Training of Language Models for Coherence, Accuracy, and Updatability
 10.48550/arXiv.2412.06540	Sloth: scaling laws for LLM skills to predict multi-benchmark performance across families
 10.18653/V1/P19-1419	The Language of Legal and Illegal Activity on the Darknet
 10.48550/ARXIV.2407.21530	Data Contamination Report from the 2024 CONDA Shared Task
 10.18653/V1/2020.CONLL-1.7	Classifying Syntactic Errors in Learner Language
 10.48550/arXiv.2410.11840	A Hitchhiker's Guide to Scaling Law Estimation
 10.18653/v1/2024.naacl-demo.21	Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluation for Generative AI
+10.1109/CLOUD67622.2025.00028	ZipNN: Lossless Compression for AI Models
 10.18653/v1/2025.findings-acl.611	DOVE: A Large-Scale Multi-Dimensional Predictions Dataset Towards Meaningful LLM Evaluation
 10.48550/ARXIV.2311.13171	ComPEFT: Compression for Communicating Parameter Efficient Updates via Sparsification and Quantization
-10.48550/arXiv.2407.13696	Do These LLM Benchmarks Agree? Fixing Benchmark Evaluation with BenchBench
+10.48550/ARXIV.2407.13696	Benchmark Agreement Testing Done Right: A Guide for LLM Benchmark Evaluation
 10.18653/V1/2022.EMNLP-DEMOS.16	Label Sleuth: From Unlabeled Text to a Classifier in a Few Hours
 10.48550/arXiv.2602.16763	When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation
-10.1109/CLOUD67622.2025.00028	ZipNN: Lossless Compression for AI Models
 10.18653/V1/K19-1028	Automatically Extracting Challenge Sets for Non-Local Phenomena in Neural Machine Translation
 10.48550/arXiv.2410.10783	LiveXiv - A Multi-Modal live benchmark based on Arxiv papers content
 10.48550/arXiv.2408.10646	Beneath the Surface of Consistency: Exploring Cross-lingual Knowledge Representation Sharing in LLMs
@@ -72,12 +72,12 @@
 10.48550/arXiv.2104.02310	SERRANT: a syntactic classifier for English Grammatical Error Types
 10.18653/v1/2025.acl-demo.17	The ShareLM Collection and Plugin: Contributing Human-Model Chats for the Benefit of the Community
 10.48550/arXiv.2510.24081	Global PIQA: Evaluating Physical Commonsense Reasoning Across 100+ Languages and Cultures
+10.48550/arXiv.2602.22953	General Agent Evaluation
 10.48550/arXiv.2503.13507	Neurips 2023 llm efficiency fine-tuning competition
 10.63317/2bh2m233ea9r	Navigating the Modern Evaluation Landscape: Considerations in Benchmarks and Frameworks for Large Language Models (LLMs)
 10.48550/ARXIV.2210.03053	Reinforcement Learning with Large Action Spaces for Neural Machine Translation
+10.18653/V1/2022.CONLL-1.27	Enhancing the Transformer Decoder with Transition-based Syntax
 10.63317/3n2tjf9emh64	GrASP: A Library for Extracting and Exploring Human-Interpretable Textual Patterns
-10.48550/arXiv.2101.12640	Transition based Graph Decoder for Neural Machine Translation
-10.48550/arXiv.2602.22953	General Agent Evaluation
 10.48550/arXiv.2601.18026	CommonLID: Re-evaluating State-of-the-Art Language Identification Performance on Web Data
 10.48550/arXiv.2504.11442	TextArena
 10.48550/ARXIV.2404.18923	Holmes: Benchmark the Linguistic Competence of Language Models
@@ -89,7 +89,6 @@
 10.48550/arXiv.2409.02228	Unforgettable Generalization in Language Models
 10.48550/arXiv.2605.29512	MINDGAMES: A Live Arena for Evaluating Social and Strategic Reasoning in Multi-Agent LLMs
 10.48550/arXiv.2603.15798	CUBE: A Standard for Unifying Agent Benchmarks
-10.18653/v1/2025.findings-emnlp.1038	From KMMLU-Redux to Pro: A Professional Korean Benchmark Suite for LLM Evaluation
 10.48550/arXiv.2602.03344	Robustness as an Emergent Property of Task Performance
 10.48550/arXiv.2601.06672	Will it Merge? On The Causes of Model Mergeability
 10.48550/arXiv.2603.16848	Mediocrity is the key for LLM as a Judge Anchor Selection
@@ -101,8 +100,8 @@
 10.48550/arXiv.2607.18235	Automated Discovery Has No Universally Superior Harness
 10.48550/arXiv.2408.12259	How Safe is Your Safety Metric? Automatic Concatenation Tests for Metric Reliability
 10.48550/arXiv.2512.06553	A Latent Variable Framework for Scaling Laws in Large Language Models
-10.18653/V1/2022.CONLL-1.27	Enhancing the Transformer Decoder with Transition-based Syntax
 10.48550/arXiv.2106.00745	Part of Speech and Universal Dependency effects on English Arabic Machine Translation
+10.48550/arXiv.2604.12843	Growing Pains: Extensible and Efficient LLM Benchmarking Via Fixed Parameter Calibration
 10.48550/arXiv.2606.24579	Cross-Lingual Exploration for Parametric Knowledge
 10.48550/arXiv.2605.11206	Instructions Shape Production of Language, not Processing
 10.48550/arXiv.2606.09809	Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting
@@ -110,9 +109,5 @@
 10.48550/arXiv.2603.13467	Resolving Interference (RI): Disentangling Models for Improved Model Merging
 10.48550/arXiv.2507.08037	CRISP: Complex Reasoning with Interpretable Step-based Plans
 10.48550/arXiv.2506.20989	Can Gradient Descent Simulate Prompting?
-10.5281/zenodo.12608602	A framework for few-shot language model evaluation
-10.18653/v1/2024.acl-long.774	The Heuristic Core: Understanding Subnetwork Generalization in Pretrained Language Models
 10.18653/V1/2023.CONLL-1.29	MuLER: Detailed and Scalable Reference-based Evaluation
-10.48550/ARXIV.2306.01708	Resolving Interference When Merging Models
 10.48550/ARXIV.2205.05730	Some Grammatical Errors are Frequent, Others are Important
-10.48550/arXiv.1804.11254	Inherent Biases in Reference-based Evaluation for Grammatical Error Correction and Text Simplification

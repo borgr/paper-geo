@@ -195,7 +195,12 @@ purpose, since these are lists a human works through over days:
 | `s2_merge.md` | papers to pull onto the claimed Semantic Scholar page |
 | `openalex_merge.md` | what to paste into the OpenAlex correction form |
 | `arxiv_ownership.md` | arXiv papers you are not a registered author on |
+| `arxiv_name_fixes.md` | arXiv records that misspell or omit your name |
 | `hf_worklist.md` | HF pages to index, then to claim |
+| `orcid_remove.md` | works on your ORCID that are not yours, with put-codes |
+| `wikidata_followup.md` | corrections and additions to an item that exists |
+| `wikidata_papers.qs` | items for papers Wikidata lacks — opt-in, read it first |
+| `zenodo.md` | tools and guides with no paper, so no citable form |
 
 Order: **ORCID first**, then arXiv ownership. ORCID is the lever for two of the
 others — Semantic Scholar disambiguates on it, and OpenAlex is running ORCID-driven
@@ -232,7 +237,9 @@ If the same item reappears in `WORKLIST.md` every month, it needs a recorded
 decision, not another look:
 
 - **Papers** → [`data/overrides.yaml`](data/overrides.yaml): `force_merge`,
-  `force_distinct`, `drop`, or a per-slug field fix.
+  `force_distinct`, `drop`, or a per-slug field fix. A `force_merge` that retires a
+  URL leaves a redirect behind it automatically (refresh + canonical → the surviving
+  page), so consolidating two pages never 404s a URL someone already linked to.
 - **Repos** → set `reviewed: true` on the entry in `data/repos.yaml`. That freezes
   it against all future proposals.
 

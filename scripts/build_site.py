@@ -33,13 +33,25 @@ import re
 import shutil
 import subprocess
 import sys
+import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import BUILD, DATA, load_config, paper_doi, read_yaml  # noqa: E402
+from common import (BUILD, DATA, load_config, norm_title, paper_doi,  # noqa: E402
+                    read_yaml, slugify, social_url)
 from ownership import write_manifest  # noqa: E402
 
 OUT = os.path.join(BUILD, "site")
 E = html.escape
+
+
+def _host(url: str) -> str:
+    """`https://bsky.app/profile/x` -> `bsky.app/profile/x`, for link text.
+
+    Link text matters more than usual on an identity page: a row of bare domains
+    reads as a list of profiles, while a row of full URLs reads as noise, and the
+    scheme carries no information a reader wants.
+    """
+    return re.sub(r"^https?://(www\.)?", "", url).rstrip("/")
 
 
 def read_sidecar(slug: str) -> dict:
@@ -95,6 +107,7 @@ def page(title: str, body: str, *, head: str = "", canonical: str = "") -> str:
     h1 {{ font-size: 1.6rem; margin-bottom: .25rem; }}
     .sub {{ color: #555; font-size: 1.05rem; margin-top: 0; }}
     .meta {{ color: #555; font-size: .92rem; }}
+    .lead {{ font-size: 1.05rem; margin: .6rem 0; }}
     a {{ color: #06c; }}
     dl.qa dt {{ font-weight: 600; margin-top: 1rem; font-family: -apple-system, sans-serif; }}
     dl.qa dd {{ margin: .3rem 0 0 0; }}
@@ -133,13 +146,24 @@ def person_jsonld(cfg) -> dict:
             f"https://huggingface.co/{ids['huggingface']}",
             f"https://scholar.google.com/citations?user={ids['google_scholar']}",
             f"https://www.semanticscholar.org/author/{ids['semantic_scholar_primary']}",
-            f"https://dblp.org/search?q={ids['dblp'].replace(' ', '+')}",
+            # The pid page, not a search URL: `sameAs` asserts "this URL is this
+            # person", and a search results page is not a person -- it is a query that
+            # can return two people tomorrow.
+            (f"https://dblp.org/pid/{ids['dblp_pid']}.html" if ids.get("dblp_pid")
+             else f"https://dblp.org/search?q={ids['dblp'].replace(' ', '+')}"),
             f"https://openalex.org/{ids['openalex'][0].rsplit('/', 1)[-1]}",
             f"https://aclanthology.org/people/{ident['name'].lower().replace(' ', '-')}/"]
     if ids.get("linkedin"):
         same.append(f"https://www.linkedin.com/in/{ids['linkedin']}/")
     if ids.get("wikidata"):
         same.append(f"https://www.wikidata.org/wiki/{ids['wikidata']}")
+    if ids.get("openreview"):
+        same.append(f"https://openreview.net/profile?id={ids['openreview']}")
+    # Social profiles, for the same reason as the scholarly ones but a weaker claim:
+    # they say the account posting about a paper is its author. Null-skipped, so an
+    # unfilled handle costs nothing and a wrong one is never invented.
+    same += [u for k in ("bluesky", "mastodon", "twitter")
+             if (u := social_url(k, ids.get(k)))]
     # Other personal pages belong here rather than being quietly retired. sameAs is
     # the assertion "these URLs are the same person", which is what stops a second
     # homepage being read as a second candidate identity. Omitting it does not make
@@ -157,6 +181,11 @@ def person_jsonld(cfg) -> dict:
         "jobTitle": ident["job_title"],
         "affiliation": [{"@type": "Organization", "name": a}
                         for a in ident["affiliations"]],
+        # Distinct from affiliation for the same reason Wikidata separates P69 from
+        # P108: a postdoc is employment, and alumniOf claims a degree. Only entries
+        # under identity.education land here.
+        "alumniOf": [{"@type": "CollegeOrUniversity", "name": e["institution"]}
+                     for e in (ident.get("education") or []) if e.get("institution")],
         # The same list that goes into ORCID's Keywords and Scholar's five interests.
         # knowsAbout is the schema.org field for it, and this is the one surface where
         # we control the markup completely -- so if the phrases are worth choosing at
@@ -387,6 +416,47 @@ def paper_llms_txt(p: dict, sc: dict, cfg) -> str:
     return "\n".join(L) + "\n"
 
 
+def retired_slugs(papers: list[dict]) -> dict[str, str]:
+    """Paper URLs a merge retired -> the slug that replaced them.
+
+    A merge is the moment two pages become one, which is the point of the exercise.
+    But the alias's URL may already be published, linked and indexed, and GitHub
+    Pages has no server-side redirect -- so simply not writing the directory turns a
+    consolidation into a 404 and discards whatever standing the old URL had. That is
+    the opposite of what a merge is for. A zero-delay meta refresh plus a canonical
+    naming the survivor is the redirect a static host can express, and the pair is
+    what crawlers read as one; a bare 404 tells them nothing about the successor.
+
+    Derived from the merge record each paper already carries (`merged_from` titles
+    resolved through the same slugify the live pages use), never from what happens to
+    be deployed: the same inputs have to produce the same site on every rerun.
+    """
+    live = {p["slug"] for p in papers}
+    out: dict[str, str] = {}
+    ov = read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
+    for group in ov.get("force_merge") or []:
+        norms = {norm_title(t) for t in group}
+        survivor = next((p for p in papers if norm_title(p.get("title")) in norms), None)
+        if not survivor:
+            continue
+        for t in group:
+            s = slugify(t)
+            if s and s not in live and s != survivor["slug"]:
+                out[s] = survivor["slug"]
+    return out
+
+
+def redirect_stub(site: str, new_slug: str, title: str) -> str:
+    """A static-host redirect: refresh + canonical, and a link for anyone without JS."""
+    href = f"/papers/{new_slug}/"
+    return (f'<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
+            f'<meta http-equiv="refresh" content="0; url={href}">\n'
+            f'<link rel="canonical" href="{site}/papers/{new_slug}/">\n'
+            f'<title>Moved — {E(title)}</title>\n</head>\n<body>\n'
+            f'<p>This paper is now at <a href="{href}">{E(title)}</a>.</p>\n'
+            f'</body>\n</html>\n')
+
+
 def build(cfg) -> dict:
     papers = [p for p in (read_yaml(os.path.join(DATA, "papers.yaml")) or {})["papers"]]
     repos = (read_yaml(os.path.join(DATA, "repos.yaml")) or {}).get("repos", [])
@@ -397,7 +467,7 @@ def build(cfg) -> dict:
     os.makedirs(OUT, exist_ok=True)
     open(os.path.join(OUT, ".nojekyll"), "w").close()
 
-    stats = {"pages": 0, "with_sidecar": 0, "peer_owned": 0}
+    stats = {"pages": 0, "with_sidecar": 0, "peer_owned": 0, "redirects": 0}
     urls = [site + "/", f"{site}/papers/", f"{site}/guides/"]
     index_rows, llms = [], []
 
@@ -429,6 +499,19 @@ def build(cfg) -> dict:
         llms.append(f"- [{title}]({site}/papers/{slug}/llms.txt)"
                     + (f" — {' '.join(sc['one_liner'].split())}" if sc.get("one_liner") else ""))
 
+    # ---- redirects for URLs a merge retired. Deliberately absent from the sitemap
+    # and from the index: a sitemap should list only canonical URLs, and a redirect
+    # listed as content invites an engine to index the stub instead of the paper.
+    by_slug = {p["slug"]: p for p in papers}
+    for old, new in retired_slugs(papers).items():
+        d = os.path.join(OUT, "papers", old)
+        os.makedirs(d, exist_ok=True)
+        surv = by_slug.get(new) or {}
+        with open(os.path.join(d, "index.html"), "w") as f:
+            f.write(redirect_stub(site, new, surv.get("title_display")
+                                  or surv.get("title") or "this paper"))
+        stats["redirects"] += 1
+
     # ---- paper index
     with open(os.path.join(OUT, "papers", "index.html"), "w") as f:
         f.write(page(f"Papers — {ident['name']}",
@@ -453,15 +536,38 @@ def build(cfg) -> dict:
     # ---- entity home
     home = [f"<h1>{E(ident['name'])}</h1>",
             f'<p class="sub">{E(ident["job_title"])} · '
-            f'{E(", ".join(ident["affiliations"]))}</p>',
-            f'<p class="meta">ORCID <a href="https://orcid.org/{ident["orcid"]}">'
-            f'{ident["orcid"]}</a> · <a href="mailto:{E(ident["email"])}">'
-            f'{E(ident["email"])}</a></p>',
-            f'<p><a href="/papers/">{stats["pages"]} papers</a> · '
-            f'<a href="/guides/">{len(guides)} guides</a> · '
-            f'<a href="https://github.com/{cfg["ids"]["github"]}">code</a> · '
-            f'<a href="/llms.txt">llms.txt</a></p>',
-            "<h2>Most cited</h2><ul>"]
+            f'{E(", ".join(ident["affiliations"]))}</p>']
+    # The canonical URL is the machine anchor, so it is the URL in every registry --
+    # including the ones a human clicks, like Scholar's Homepage field. That decision
+    # is only defensible if the first thing on this page sends a person onward, since
+    # otherwise the field that a human follows lands them on a list of citations.
+    # One link, above the fold, costs the machine anchor nothing and costs the visitor
+    # one hop; rel="me" makes it an identity statement too, not just navigation.
+    if ident.get("other_pages"):
+        home.append(
+            f'<p class="lead">Personal site: '
+            + " · ".join(f'<a rel="me" href="{E(u)}">{E(_host(u))}</a>'
+                         for u in ident["other_pages"])
+            + "</p>")
+    home += [f'<p class="meta">ORCID <a rel="me" href="https://orcid.org/{ident["orcid"]}">'
+             f'{ident["orcid"]}</a> · <a href="mailto:{E(ident["email"])}">'
+             f'{E(ident["email"])}</a></p>',
+             f'<p><a href="/papers/">{stats["pages"]} papers</a> · '
+             f'<a href="/guides/">{len(guides)} guides</a> · '
+             f'<a href="https://github.com/{cfg["ids"]["github"]}">code</a> · '
+             f'<a href="/llms.txt">llms.txt</a></p>']
+    # rel="me" on every profile we hold. Mastodon reads it to show a verified badge
+    # on the profile itself -- a rare case where markup here changes what appears on
+    # a surface we do not control -- and IndieAuth consumers read it as the same
+    # bidirectional claim that sameAs makes in JSON-LD, for consumers that do not
+    # parse JSON-LD.
+    rel_me = [u for k in ("bluesky", "mastodon", "twitter", "linkedin", "github")
+              if (u := social_url(k, cfg["ids"].get(k)))]
+    if rel_me:
+        home.append('<p class="meta">'
+                    + " · ".join(f'<a rel="me" href="{E(u)}">{E(_host(u))}</a>'
+                                 for u in rel_me) + "</p>")
+    home.append("<h2>Most cited</h2><ul>")
     for p in sorted(papers, key=lambda p: -(p.get("citations") or 0))[:10]:
         ptitle = p.get("title_display") or p["title"]
         href = p.get("canonical_page") or f"/papers/{p['slug']}/"
@@ -507,8 +613,68 @@ claim holds under, and common misreadings -- written by the author, not extracte
                            "Claude-SearchBot", "PerplexityBot", "Google-Extended"))
                 + f"Sitemap: {site}/sitemap.xml\n")
 
+    # ---- IndexNow key file
+    write_indexnow_key(cfg)
+
     write_manifest(cfg, papers)
     return stats
+
+
+def write_indexnow_key(cfg) -> None:
+    """The `<key>.txt` file IndexNow requires, generated for the same reason the
+    verification tags are: `--deploy` empties the Pages repo, so a file uploaded by
+    hand disappears on the next run and every submission afterwards fails with a
+    403 that names no cause.
+
+    IndexNow is a push: instead of waiting for a crawler, you tell Bing (and Yandex,
+    Seznam, Naver -- Google does not participate) that a URL changed, and it fetches
+    within minutes to days. Two reasons it is worth the twenty lines here. Bing's
+    index is what ChatGPT's search grounding leans on, so it is the one crawler where
+    faster inclusion reaches an answer engine rather than only a search results page.
+    And a rebuild that adds thirty paper pages at once is exactly the case organic
+    discovery handles worst -- a new sitemap entry on a low-traffic site can wait
+    weeks. Nothing about it affects ranking; it affects *when* the page is eligible.
+    """
+    key = ((cfg.get("site") or {}).get("indexnow_key") or "").strip()
+    if not key:
+        return
+    with open(os.path.join(OUT, f"{key}.txt"), "w") as f:
+        f.write(key + "\n")
+
+
+def submit_indexnow(cfg) -> None:
+    """POST the whole sitemap URL list to IndexNow. Called from --deploy only.
+
+    Submitting after the deploy, never before: the endpoint verifies the key file is
+    live on the site and rejects the batch otherwise, and a URL submitted before it
+    exists is a fetch of a 404. Failures print and return -- this is an optimisation
+    on crawl latency, and it must never be able to fail a build.
+    """
+    site_cfg = cfg.get("site") or {}
+    key = (site_cfg.get("indexnow_key") or "").strip()
+    if not key:
+        print("indexnow: no site.indexnow_key set; skipping "
+              "(generate one at https://www.bing.com/indexnow)")
+        return
+    base = site_cfg["base_url"].rstrip("/")
+    sitemap = os.path.join(OUT, "sitemap.xml")
+    urls = re.findall(r"<loc>([^<]+)</loc>", open(sitemap).read()) if \
+        os.path.exists(sitemap) else []
+    if not urls:
+        return
+    host = re.sub(r"^https?://", "", base).split("/")[0]
+    payload = json.dumps({"host": host, "key": key,
+                          "keyLocation": f"{base}/{key}.txt",
+                          "urlList": urls[:10000]}).encode()
+    req = urllib.request.Request("https://api.indexnow.org/IndexNow", data=payload,
+                                 headers={"Content-Type": "application/json; charset=utf-8"})
+    try:
+        code = urllib.request.urlopen(req, timeout=30).status
+        print(f"indexnow: submitted {len(urls)} URLs (HTTP {code})")
+    except Exception as e:
+        # 403 means the key file is not reachable yet -- usually Pages has not
+        # finished publishing. Harmless: the next deploy resubmits.
+        print(f"indexnow: not submitted ({e}). Retry after the deploy is live.")
 
 
 def deploy(cfg) -> None:
@@ -535,6 +701,7 @@ def deploy(cfg) -> None:
     if subprocess.call(["git", "push", "-q"], cwd=work):
         sys.exit("push failed")
     print(f"deployed to {cfg['site']['base_url']}")
+    submit_indexnow(cfg)
 
 
 def main() -> None:
@@ -547,6 +714,8 @@ def main() -> None:
     print(f"  paper pages          {s['pages']}")
     print(f"  of those, with sidecar {s['with_sidecar']}")
     print(f"  linked to a peer's canonical page {s['peer_owned']}")
+    if s["redirects"]:
+        print(f"  redirects from URLs a merge retired {s['redirects']}")
     if args.deploy:
         deploy(cfg)
 

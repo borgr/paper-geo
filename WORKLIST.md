@@ -3,6 +3,12 @@
 Regenerate with `python update.py`. Ordered by leverage.
 Live state of the external surfaces: `tasks/identity_audit.md`.
 
+## Waiting on the outside world
+
+- **2026-08-11** — Wikidata account reaches 4 days old. The other half of autoconfirmed is 50 edits, which is the binding constraint, not the age.
+- **2026-10-04** — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.
+- **2026-11-04** — Crossref and DataCite auto-update only fire on newly deposited metadata that already carries your iD, so the proof is a work whose ORCID source is Crossref or DataCite rather than your own name -- which cannot appear until something you publish is deposited.
+
 ## Once-only identity fixes
 
 Run `python scripts/identity_tasks.py` first -- it writes the payload for each
@@ -65,7 +71,7 @@ I cannot do this for you: writing to an ORCID record needs an OAuth token with
 `/activities/update` scope, which only you can grant. The public API is
 read-only.
 
-### 2. Semantic Scholar — 46 papers on the wrong record
+### 2. Semantic Scholar — 43 papers on the wrong record
 
 Claimed: <https://www.semanticscholar.org/author/41019330>  
 Secondary: <https://www.semanticscholar.org/author/2283849613>
@@ -136,40 +142,18 @@ can merge profiles, set the display name, and remove wrong works.
 `tasks/openalex_merge.md` has the exact profile IDs to paste.
 `support@openalex.org` is the fallback.
 
-## arXiv: claim ownership of 1 papers  — before the journal-refs
-
-Registered as author on **105** of **105** arXiv papers. arXiv tracks this separately from
-authorship: it defaults to whoever pressed submit, so a co-authored corpus
-is mostly not yours as far as arXiv is concerned. Two consequences:
-
-1. **You cannot edit a paper you do not own**, so the journal-ref section
-   below is blocked on this for those papers.
-2. <https://arxiv.org/a/0000-0002-0085-6496> — the public author page you get
-   from linking ORCID, with an Atom feed and an embeddable widget — lists
-   only the papers you own.
-
-Instant with the paper password (ask the submitting co-author; it is in
-their acceptance email): <https://arxiv.org/auth/need-paper-password>.
-Without it, <https://arxiv.org/auth/request-ownership> — staff verify in a
-couple of days, no co-author needed, so batch the long tail there.
-
-Full list, citation-ordered: `tasks/arxiv_ownership.md`.
-
-## arXiv journal-ref missing (103 papers)
+## arXiv journal-ref missing (99 papers)
 
 Scholar matches citations and merges preprint/published versions on exactly these fields. No write API -- one web form each, so do them by citation count.
 
-**1 of these are marked (blocked)**: you are not a registered
-author on them, so the form will refuse. Claim ownership first (above).
-
-- [ ] `2306.01708` (855 cites) -> Advances in Neural Information Processing Systems 36  <https://arxiv.org/abs/2306.01708>
-- [ ] `2402.14992` (279 cites) -> Forty-first International Conference on Machine Lear  <https://arxiv.org/abs/2402.14992>
-- [ ] `2412.03304` (181 cites) -> Proceedings of the 63rd Annual Meeting of the Associ  <https://arxiv.org/abs/2412.03304>
-- [ ] `2104.08202` (167 cites) -> CoRR  <https://arxiv.org/abs/2104.08202>
+- [ ] `2306.01708` (858 cites) -> Advances in Neural Information Processing Systems 36  <https://arxiv.org/abs/2306.01708>
+- [ ] `2402.14992` (280 cites) -> Forty-first International Conference on Machine Lear  <https://arxiv.org/abs/2402.14992>
+- [ ] `2412.03304` (180 cites) -> Proceedings of the 63rd Annual Meeting of the Associ  <https://arxiv.org/abs/2412.03304>
+- [ ] `2104.08202` (167 cites) -> Proceedings of the 2021 Conference on Empirical Meth  <https://arxiv.org/abs/2104.08202>
 - [ ] `1907.01752` (127 cites) -> 8th International Conference on Learning Representat  <https://arxiv.org/abs/1907.01752>
 - [ ] `2204.03044` (120 cites) -> ArXiv  <https://arxiv.org/abs/2204.03044>
 - [ ] `2211.05655` (119 cites) -> Proceedings of the 61st Annual Meeting of the Associ  <https://arxiv.org/abs/2211.05655>
-- [ ] `2410.19735` (111 cites) -> International Conference on Learning Representations  <https://arxiv.org/abs/2410.19735>
+- [ ] `2410.19735` (112 cites) -> International Conference on Learning Representations  <https://arxiv.org/abs/2410.19735>
 - [ ] `2507.16806` (98 cites) -> The Fourteenth International Conference on Learning   <https://arxiv.org/abs/2507.16806>
 - [ ] `2402.16842` (90 cites) -> Forty-first International Conference on Machine Lear  <https://arxiv.org/abs/2402.16842>
 - [ ] `2405.17202` (83 cites) -> The Thirty-eighth Annual Conference on Neural Inform  <https://arxiv.org/abs/2405.17202>
@@ -186,20 +170,27 @@ Full list: `tasks/hf_worklist.md`.
 - [ ] <https://hf.co/papers/2410.10783>  (18 cites)
 - [ ] <https://hf.co/papers/2409.02228>  (4 cites)
 
-## Sidecars not written (134/135)
+## Sidecars not written (116/117)
 
 The one input no tool can supply: claims, scope conditions, terminology, common misreadings. ~10 min each; do them by citation count.
 
-- [ ] `data/sidecars/tinybenchmarks-evaluating-llms-with-fewer-examples.md`  (279 cites) tinyBenchmarks: evaluating LLMs with fewer examples
+- [ ] `data/sidecars/tinybenchmarks-evaluating-llms-with-fewer-examples.md`  (280 cites) tinyBenchmarks: evaluating LLMs with fewer examples
 - [ ] `data/sidecars/active-learning-for-bert-an-empirical-study.md`  (244 cites) Active Learning for {BERT:} An Empirical Study
 - [ ] `data/sidecars/findings-of-the-b-aby-lm-challenge-sample-efficient-pretrain.md`  (232 cites) Findings of the {B}aby{LM} Challenge: Sample-Efficient P
-- [ ] `data/sidecars/global-mmlu-understanding-and-addressing-cultural-and-lingui.md`  (181 cites) Global {MMLU}: Understanding and Addressing Cultural and
+- [ ] `data/sidecars/global-mmlu-understanding-and-addressing-cultural-and-lingui.md`  (180 cites) Global {MMLU}: Understanding and Addressing Cultural and
 - [ ] `data/sidecars/an-autonomous-debating-system.md`  (172 cites) An autonomous debating system
-- [ ] `data/sidecars/q-2-evaluating-factual-consistency-in-knowledge-grounded-dia.md`  (167 cites) Q\({}^{\mbox{2}}\): Evaluating Factual Consistency in Kn
+- [ ] `data/sidecars/q2-evaluating-factual-consistency-in-knowledge-grounded-dial.md`  (167 cites) { extdollar}Q2{ extdollar}: Evaluating Factual Consisten
 - [ ] `data/sidecars/on-the-weaknesses-of-reinforcement-learning-for-neural-machi.md`  (127 cites) On the Weaknesses of Reinforcement Learning for Neural M
 - [ ] `data/sidecars/fusing-finetuned-models-for-better-pretraining.md`  (120 cites) Fusing finetuned models for better pretraining
 - [ ] `data/sidecars/disentqa-disentangling-parametric-and-contextual-knowledge-w.md`  (119 cites) DisentQA: Disentangling Parametric and Contextual Knowle
-- [ ] `data/sidecars/model-merging-with-svd-to-tie-the-knots.md`  (111 cites) Model merging with SVD to tie the Knots
+- [ ] `data/sidecars/model-merging-with-svd-to-tie-the-knots.md`  (112 cites) Model merging with SVD to tie the Knots
+
+## Artifacts with no citation route (14)
+
+Tools and guides with no linked paper. A Zenodo release DOI gives each a
+citable, archived identity and a DataCite record that reaches OpenAlex
+and your ORCID works list — so they stop being GitHub-only objects.
+Steps, and the honest case for skipping some: `tasks/zenodo.md`.
 
 ## Repo labels awaiting your review (30/31)
 

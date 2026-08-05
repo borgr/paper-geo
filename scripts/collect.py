@@ -16,6 +16,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import sys
@@ -23,9 +24,10 @@ import time
 import xml.etree.ElementTree as ET
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (DATA, arxiv_id, clean_bibtex, clean_latex, get, get_json,  # noqa: E402
-                    load_config, norm_title, parse_bibtex, read_yaml, short_venue,
-                    slugify, split_authors, write_yaml)
+from common import (BUILD, DATA, arxiv_id, authors_truncated, clean_bibtex,  # noqa: E402
+                    clean_latex, get, get_json, load_config, name_match, norm_title,
+                    parse_bibtex, read_yaml, short_venue, slugify, split_authors,
+                    write_yaml)
 
 ARXIV_NS = {"a": "http://www.w3.org/2005/Atom", "ar": "http://arxiv.org/schemas/atom"}
 
@@ -45,6 +47,7 @@ def from_bibtex(cfg) -> list[dict]:
             "slug": slugify(title),
             "title": title,
             "authors": split_authors(e.get("author")),
+            "authors_truncated": authors_truncated(e.get("author")) or None,
             "year": int(e["year"]) if (e.get("year") or "").isdigit() else None,
             "venue": venue,
             "type": e["type"],
@@ -58,6 +61,71 @@ def from_bibtex(cfg) -> list[dict]:
             "_norm": norm_title(title),
         })
     return papers
+
+
+def from_arxiv_ids(papers: list[dict], ids: list[str]) -> int:
+    """Add papers by bare arXiv id, for ids the bibliography has not caught up with.
+
+    A stopgap with a deliberately narrow job. The bibliography stays the source of
+    truth -- one source per fact -- and the right fix for a missing paper is upstream,
+    in the .bib. But upstream is a separate repo on a separate schedule, and until it
+    lands the paper has no page at all: no canonical URL to cite, nothing in the
+    sitemap, nothing on the entity home. Waiting weeks for that is a worse trade than
+    holding one id in a file, so this exists for the interval and is meant to be
+    emptied, not accumulated.
+
+    The audit surfaces the candidates by itself: `arxiv_stray` in
+    `build/identity_state.json` is every paper arXiv's authority records say you own
+    that the bibliography does not mention -- which is exactly this list.
+    """
+    have = {p["arxiv"] for p in papers if p.get("arxiv")}
+    # str(): an unquoted `2604.12843` in YAML is a float, and a float here would both
+    # fail to join and, worse, silently drop a trailing zero from the id.
+    want = [s for i in ids if (s := str(i).strip()) and s not in have]
+    if not want:
+        return 0
+    raw = get(f"http://export.arxiv.org/api/query?id_list={','.join(want)}"
+              f"&max_results={len(want)}")
+    if not raw:
+        print("  ! arXiv unavailable; extra_arxiv ids skipped this run", file=sys.stderr)
+        return 0
+    n = 0
+    for e in ET.fromstring(raw).findall("a:entry", ARXIV_NS):
+        tail = e.find("a:id", ARXIV_NS).text.split("/abs/")[-1]
+        ax = tail.rsplit("v", 1)[0] if "v" in tail.split("/")[-1] else tail
+        title = " ".join((e.find("a:title", ARXIV_NS).text or "").split())
+        if not title:
+            continue
+        summ = e.find("a:summary", ARXIV_NS)
+        pub = e.find("a:published", ARXIV_NS)
+        jr = e.find("ar:journal_ref", ARXIV_NS)
+        papers.append({
+            "key": f"arxiv{ax.replace('.', '')}",
+            "slug": slugify(title),
+            "title": title,
+            "authors": [a.find("a:name", ARXIV_NS).text
+                        for a in e.findall("a:author", ARXIV_NS)],
+            "year": int(pub.text[:4]) if pub is not None else None,
+            "venue": jr.text.strip() if jr is not None else None,
+            "type": "misc",
+            "doi": None,
+            "arxiv": ax,
+            "url": f"https://arxiv.org/abs/{ax}",
+            "abstract": " ".join((summ.text or "").split()) if summ is not None else None,
+            # No `bibtex` key: a BibTeX entry we generate would compete with the one
+            # the bibliography will publish later, and two citation keys for one paper
+            # is the split this whole project exists to avoid. The page renders its
+            # cite block from the fields instead.
+            "bibtex": None,
+            "_from_arxiv_override": True,
+            "_norm": norm_title(title),
+        })
+        n += 1
+    missing = set(want) - {p.get("arxiv") for p in papers}
+    if missing:
+        print(f"  ! extra_arxiv ids arXiv did not return: {', '.join(sorted(missing))}",
+              file=sys.stderr)
+    return n
 
 
 def build_links(papers: list[dict]) -> None:
@@ -244,7 +312,7 @@ def _is_preprint(p: dict) -> bool:
     return v in ("", "corr", "arxiv", "arxiv.org") or v.startswith("arxiv")
 
 
-def dedupe(papers: list[dict]) -> tuple[list[dict], int, int]:
+def dedupe(papers: list[dict], prefer: list[str] | None = None) -> tuple[list[dict], int, int]:
     """Merge exact/near-exact duplicates; flag the uncertain band for review.
 
     Bibliographies routinely hold both the DBLP CoRR preprint entry and the
@@ -255,6 +323,7 @@ def dedupe(papers: list[dict]) -> tuple[list[dict], int, int]:
     """
     import difflib
 
+    want_title = {norm_title(t) for t in (prefer or [])}
     norms = [norm_title(p.get("title")) for p in papers]
     parent = list(range(len(papers)))
 
@@ -264,9 +333,30 @@ def dedupe(papers: list[dict]) -> tuple[list[dict], int, int]:
             x = parent[x]
         return x
 
+    # Identifiers first, and without consulting the titles at all. One arXiv id is one
+    # paper and one DOI is one paper, however differently two sources spell them: a
+    # retitled preprint ("All Neural Networks are Created Equal" -> "Let's Agree to
+    # Agree") shares 1905.10854 but scores nowhere near the title threshold below, so
+    # the similarity pass cannot see the pair and the corpus carried both -- two pages
+    # for one paper, with its citations split across them. This is not a judgment call,
+    # which is why it runs before the band that needs one.
+    for field in ("arxiv", "doi"):
+        seen: dict[str, int] = {}
+        for i, p in enumerate(papers):
+            v = p.get(field)
+            if not v:
+                continue
+            k = str(v).strip().lower()
+            if k in seen:
+                parent[find(i)] = find(seen[k])
+            else:
+                seen[k] = i
+
     flagged = 0
     for i in range(len(papers)):
         for j in range(i + 1, len(papers)):
+            if find(i) == find(j):
+                continue
             a, b = norms[i], norms[j]
             if not a or not b or abs(len(a) - len(b)) > 20:
                 continue
@@ -295,7 +385,12 @@ def dedupe(papers: list[dict]) -> tuple[list[dict], int, int]:
         n_merged += len(members) - 1
         # Published entry wins for identity; preprint contributes arXiv + abstract.
         published = [m for m in members if not _is_preprint(m)]
-        base = dict(max(published or members, key=lambda m: len(m.get("venue") or "")))
+        pool = published or members
+        # A title named first in a force_merge group outranks venue length: that list
+        # exists because the automatic choice was wrong, and the title decides both the
+        # slug and every page heading.
+        pick = [m for m in pool if norm_title(m.get("title")) in want_title]
+        base = dict(max(pick or pool, key=lambda m: len(m.get("venue") or "")))
         for m in members:
             for k, v in m.items():
                 if v in (None, "", [], {}):
@@ -324,7 +419,17 @@ def apply_overrides(papers: list[dict], ov: dict) -> list[dict]:
     dropped: set[int] = set()
     for group in ov.get("force_merge") or []:
         members = [by_norm.get(norm_title(t)) for t in group]
-        members = [m for m in members if m is not None]
+        # Two aliases can resolve to the SAME record -- either dedupe already merged
+        # them, or a normalization fix made their titles fold together. Without this
+        # de-duplication by identity, the record ends up in `members[1:]` as well as
+        # being the base, so it is merged into itself and then dropped: the entire
+        # paper vanishes from the corpus, silently, because a human wrote down a
+        # correct merge. Seen for real once, on the `{ extdollar}` pair.
+        uniq: list[dict] = []
+        for m in members:
+            if m is not None and not any(m is u for u in uniq):
+                uniq.append(m)
+        members = uniq
         if len(members) < 2:
             continue
         base = members[0]
@@ -383,6 +488,82 @@ def apply_overrides(papers: list[dict], ov: dict) -> list[dict]:
     return out
 
 
+def arxiv_authors(ax: str) -> list[str]:
+    """The complete author list for one arXiv id, or [] if arXiv does not answer."""
+    raw = get(f"http://export.arxiv.org/api/query?id_list={ax}&max_results=1")
+    if not raw:
+        return []
+    try:
+        e = ET.fromstring(raw).find("a:entry", ARXIV_NS)
+    except ET.ParseError:
+        return []
+    if e is None:
+        return []
+    return [" ".join((a.findtext("a:name", default="", namespaces=ARXIV_NS)).split())
+            for a in e.findall("a:author", ARXIV_NS)]
+
+
+def authorship_gate(papers: list[dict], cfg: dict, ov: dict) -> list[dict]:
+    """Keep only papers whose author list contains some form of your name.
+
+    The pipeline began by assuming `bibtex_url` holds your publications. It does not:
+    a CV bibliography is one file, and this one also carries the works the CV *cites*
+    -- "Attention is all you need", "Sapiens", a euthanasia survey. Without this gate
+    every consumer inherits the mistake, and they inherit it in the worst direction:
+    a canonical page published on your domain for someone else's paper, an
+    `orcid_import.bib` that asserts you wrote it, and an arXiv ownership request that
+    a human at arXiv then has to reject.
+
+    Excluding is the safe default because the two errors are not symmetric. A missed
+    paper of yours costs you one page. A claimed paper of someone else's is a false
+    authorship assertion in a public registry, which is expensive to retract and
+    embarrassing in a way a missing page is not.
+
+    So: no name match -> dropped, and listed in build/not_mine.json for review. Where
+    the bibliography's author list is merely *incomplete* -- a truncated list, a
+    consortium paper, "et al." in the source -- record the title under `also_mine` in
+    overrides.yaml and it is kept regardless. That is a decision, so it lives in the
+    one hand-edited file rather than being re-guessed every run.
+    """
+    variants = cfg["identity"]["name_variants"]
+    keep_norm = {norm_title(t) for t in (ov.get("also_mine") or [])}
+    kept, rejected = [], []
+    for p in papers:
+        authors = p.get("authors") or []
+        marks = {name_match(a, variants) for a in authors}
+        # `and others` in the source is not evidence of absence. A 97-author shared
+        # task truncated to ten is exactly the shape that would be silently rejected
+        # here -- and mass-authored papers are the ones where an author is most
+        # dependent on the index knowing they were on it. So spend one request and
+        # ask arXiv, which lists everybody.
+        if not marks & {"exact", "near"} and p.get("authors_truncated") and p.get("arxiv"):
+            full = arxiv_authors(p["arxiv"])
+            if full:
+                p["authors"] = authors = full
+                p.pop("authors_truncated", None)
+                marks = {name_match(a, variants) for a in authors}
+        if "exact" in marks or "near" in marks:
+            # A near match means the *source* misspells you. Keep the paper -- it is
+            # yours -- and carry the flag so the audit can chase the upstream fix.
+            if "exact" not in marks:
+                p["name_misspelled_upstream"] = [a for a in authors
+                                                 if name_match(a, variants) == "near"]
+            kept.append(p)
+        elif norm_title(p.get("title")) in keep_norm:
+            p["authorship_override"] = True
+            kept.append(p)
+        else:
+            rejected.append(p)
+    if rejected:
+        os.makedirs(BUILD, exist_ok=True)
+        with open(os.path.join(BUILD, "not_mine.json"), "w") as f:
+            json.dump([{"title": p.get("title"), "key": p.get("key"),
+                        "arxiv": p.get("arxiv"), "doi": p.get("doi"),
+                        "authors": (p.get("authors") or [])[:4]}
+                       for p in rejected], f, indent=1)
+    return kept, rejected
+
+
 def flag_problems(papers: list[dict]) -> None:
     """Flag records that look like metadata damage rather than real papers."""
     # The documented Scholar/S2 failure mode: a venue name extracted as a title.
@@ -417,6 +598,13 @@ def main() -> None:
         print("bibtex ...", file=sys.stderr)
         papers = from_bibtex(cfg)
         print(f"  {len(papers)} entries", file=sys.stderr)
+        # Before the merges, so an id added here gets the same S2 counts, dedupe and
+        # authorship check as a bibliography entry -- including being rejected if it
+        # turns out not to be yours.
+        ov_early = read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
+        n_extra = from_arxiv_ids(papers, ov_early.get("extra_arxiv") or [])
+        if n_extra:
+            print(f"  + {n_extra} from overrides.extra_arxiv", file=sys.stderr)
         print("semantic scholar ...", file=sys.stderr)
         merge_s2(papers, cfg)
         if not args.no_arxiv:
@@ -425,7 +613,13 @@ def main() -> None:
             print("abstract backfill ...", file=sys.stderr)
             backfill_abstracts(papers)
         print("dedupe ...", file=sys.stderr)
-        papers, n_merged, n_flagged = dedupe(papers)
+        # overrides.yaml documents that the first title in a force_merge group wins for
+        # display, and that has to reach dedupe rather than only apply_overrides: once
+        # identifiers merge a group here, apply_overrides never sees two records to
+        # choose between, and the LaTeX-mangled variant can win the title by accident.
+        _ov = read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
+        papers, n_merged, n_flagged = dedupe(
+            papers, prefer=[g[0] for g in (_ov.get("force_merge") or []) if g])
         print(f"  merged {n_merged} duplicate records; flagged {n_flagged} similar-but-distinct pairs",
               file=sys.stderr)
         if not args.no_hf:
@@ -437,6 +631,13 @@ def main() -> None:
         before = len(papers)
         papers = apply_overrides(papers, ov)
         print(f"  overrides: {before - len(papers)} records folded or dropped", file=sys.stderr)
+        # After the merges, not before: Semantic Scholar routinely supplies a fuller
+        # author list than the bibliography, and gating on the short list would drop
+        # papers that are yours for want of metadata we were about to fetch anyway.
+        papers, not_mine = authorship_gate(papers, cfg, ov)
+        if not_mine:
+            print(f"  authorship: {len(not_mine)} records have no form of your name "
+                  f"and were excluded -- review build/not_mine.json", file=sys.stderr)
 
     # Slugs are truncated, so two long titles can collide -- which silently made
     # one paper overwrite the other's page. Disambiguate deterministically (year,

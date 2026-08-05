@@ -49,6 +49,13 @@
             "type": "string"
           }
         },
+        "authors_truncated": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "The bibliography's author field ended in 'and others' (BibTeX et al.), so the list here is incomplete. Set by scripts/common.py:authors_truncated. Load-bearing for the authorship gate: a truncated list cannot be used to conclude a paper is not yours, so the gate falls back to arXiv's full author list instead of excluding. Cleared once a full list is obtained."
+        },
         "year": {
           "type": [
             "integer",
@@ -268,6 +275,13 @@
         "venue_display": {
           "type": "string",
           "description": "Venue trimmed at a word boundary for display."
+        },
+        "_from_arxiv_override": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Record came from data/overrides.yaml `extra_arxiv` rather than the bibliography -- arXiv says you own the paper but the .bib has not caught up. Underscore-prefixed because it is provenance for a temporary state: the fix is one entry upstream, after which the id leaves overrides.yaml and this flag disappears."
         }
       }
     }

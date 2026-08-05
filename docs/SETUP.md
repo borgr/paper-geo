@@ -17,31 +17,17 @@ The audit is the one to re-run. Every box below is checkable from public APIs
 without a login, even though every *fix* needs one — so you can always tell what is
 actually done rather than what you remember doing.
 
----
+Several steps below finish somewhere else, days or months later: arXiv staff verify
+an ownership claim by hand, a Wikidata account autoconfirms after four days, ORCID's
+auto-update and the ORCID-driven author merges at Semantic Scholar and OpenAlex run
+on nobody's published schedule. The next action only becomes possible once the wait
+is over, which makes those the easiest items here to lose.
 
-## Dated follow-ups
-
-Several steps here finish somewhere else, days later, and the thing to do next only
-becomes possible once they land. That makes them the easiest work in the whole
-document to lose. They live in this file rather than in a reminder because a
-conversational reminder dies with the session, and because the *reason* to come back
-needs to be written down next to what to do about it.
-
-Move a line to done by deleting it. Check the state with `audit_identity.py` first —
-it reads the same things live, so it can tell you whether the wait is over.
-
-| revisit | what landed | what it unlocks |
-|---|---|---|
-| **2026-08-06** | arXiv ownership requests (submitted 2026-08-04; staff verify in 1–3 days) | the journal-ref backfill below, and the `arxiv.org/a/<orcid>` author page becoming complete |
-| **2026-08-06** | same batch — check `2507.08924` specifically | it will **not** clear on its own: `request-ownership` name-matches against the author list, and that paper's list has no form of your name. Switch to <https://arxiv.org/auth/need-paper-password> with the password from the submitter, which does not name-match. See `tasks/arxiv_name_fixes.md`. |
-| **2026-08-11** | Wikidata account 4 days old + 50 edits via Author Disambiguator | autoconfirmed, so `tasks/wikidata.qs` can run through QuickStatements for any future batch |
-| **2026-10-04** | ORCID auto-update and the S2/OpenAlex ORCID-driven re-clustering run on their own schedule | re-check whether the duplicate Semantic Scholar and OpenAlex author records merged themselves. Filing a support ticket before this date is work you may not need to do. |
-
-After the arXiv batch clears, the next action is the largest remaining manual queue
-in the project: **journal-ref and DOI on every published paper you now own**
-(<https://arxiv.org/jref>, one form each). That is what merges a paper's preprint and
-published Scholar records into one entry, so it is also the fix for most of the
-duplicate pairs in §3. `python scripts/identity_tasks.py` writes the list.
+Put each one in `data/followups.yaml` with an absolute `due` date, what you are
+waiting for, and what becomes possible when it lands. `update.py` prints anything due
+at the top of `WORKLIST.md`, so the next run is the reminder — no calendar entry, no
+session that has to stay alive, and the reason sits next to the date instead of in
+your memory.
 
 ---
 
@@ -82,8 +68,18 @@ themselves — and keeps them fixed after future re-clustering.
       and reports it. Two things are worth doing in the same session, because they are
       the difference between a full record and a *findable* one, and neither is filled
       by the import: the **canonical URL** in *Websites & social links*, and the
-      **keywords**. A record with 117 works and no URL and no keywords is a list of
+      **keywords**. A record with a hundred works, no URL and no keywords is a list of
       papers that resolves to nobody.
+- [ ] **Check the record for works that are not yours** after any bulk import, and
+      after every auto-update window. This is the one place on the list where a
+      mistake is worse than an omission: ORCID is read as *your assertion* by
+      Semantic Scholar, OpenAlex, Crossref and publishers' submission systems, so a
+      stray work is a false authorship claim that propagates. It is also easy to
+      acquire — a CV bibliography contains the works you *cite*, and any import built
+      from one carries them in. `audit_identity.py` diffs the live record against
+      `data/papers.yaml` and writes `tasks/orcid_remove.md` with the put-code for each
+      stray, because *Works → ⋮ → Delete* is one click per work and similar titles are
+      otherwise impossible to tell apart in the UI.
 - [ ] `tasks/orcid_dois.txt` is the same works one at a time. Keep it for spot-fixing
       a single record; it is not the bulk route.
 - [ ] *Search & link → Crossref Metadata Search* — the wizard everyone recommends. It
@@ -174,7 +170,7 @@ corpus, because it defaults to whoever pressed submit.
       1. **The five *interests*.** These are links, not tags: each one is a browsable
          Scholar page and they drive "related authors". Empty is the common state and
          a pure loss. Use the top five of `identity.keywords` — and *ranked*, because
-         five slots against eleven candidates makes this a choice rather than a list.
+         five slots against a longer list makes this a choice rather than a list.
          See [Keywords](#keywords-choosing-them-and-where-they-go).
       2. **Profile public** (it defaults to private) and email verified against the
          institutional domain — that's what makes the profile authoritative for the
@@ -229,19 +225,49 @@ requirement is accuracy, not distance.
 - [ ] *Not* QuickStatements, at least not at first: it requires an **autoconfirmed**
       account (4 days old, 50 edits) and fails with an authorisation error rather
       than telling you why. `tasks/wikidata.qs` is there for when you qualify.
-- [ ] **Getting to 50 edits is not a chore you do separately.** The follow-up below
-      *is* the 50 edits: reassigning your papers from author-name-string to author
-      link is one edit per paper, and you have well over 50 papers. So the order is
-      create the item by hand → work Author Disambiguator → you are autoconfirmed as
-      a side effect, with QuickStatements available for any future batch. Nothing
-      needs to be padded, and no make-work edits — those are frowned on anyway.
 - [ ] Record the new Q-number in `config.yaml` → `ids.wikidata` and rebuild, so it
       lands in the site's `sameAs` array.
-- [ ] **Follow-up worth doing:** some of your papers probably already exist as
-      Wikidata items imported from Crossref, with your name as a plain *author name
-      string* (`P2093`) rather than a link. Upgrading those to *author* (`P50`)
-      pointing at your Q-number is what turns an isolated item into a hub that
-      resolves. <https://author-disambiguator.toolforge.org> does it in bulk.
+- [ ] **Measure how many of your papers are already there before planning any work on
+      them.** `audit_identity.py` checks every paper's DOI against Wikidata and reports
+      the count. Do this first, because the standard advice for this step assumes an
+      answer that is often wrong.
+
+      The advice says: your papers already exist as items auto-imported from Crossref,
+      carrying your name as a plain *author name string* (`P2093`) rather than a link,
+      and <https://author-disambiguator.toolforge.org> upgrades those to *author*
+      (`P50`) → your Q-number in bulk. When that is true it is the best thing on this
+      page: one edit per paper, it turns isolated items into a hub that resolves, and
+      it earns autoconfirmed status as a side effect rather than as a chore.
+
+      When it is not true, none of it applies, and the shape of the miss is worth
+      knowing. Wikidata's coverage of CS literature is **sporadic, not a pipeline**:
+      the systematic Crossref imports ran years ago, publisher DOIs fare far better
+      than arXiv-DataCite-only ones, and a recent item is as likely to have been
+      created by one interested human as by a bot. So a corpus that is mostly preprints
+      and ACL-Anthology papers can have single-digit coverage — in which case
+      Author Disambiguator has nothing to operate on, there are no `P2093` strings to
+      upgrade, and 50 edits is a real cost with no by-product.
+      One trap in doing that measurement yourself: Wikidata **split its query
+      service**, moving scholarly articles out of the main graph. A publication query
+      against `query.wikidata.org` now returns zero rows with an HTTP 200 — it looks
+      like an answer, and it reads as "none of my papers are there". Publication
+      SPARQL belongs at `query-scholarly.wikidata.org`. The audit uses that endpoint;
+      any query you write by hand needs to as well.
+- [ ] **Decide about autoconfirmed only after that count.** With low coverage,
+      creating items for your own papers is the only route to 50 edits. Worth it if
+      you want a queryable graph of your corpus; not worth it as a means to unlock
+      QuickStatements, since the item's own statements are ~15 minutes by hand and
+      that is the whole of the identity gain. Never pad with make-work edits — they
+      are frowned on and they are also pointless here, because nothing downstream
+      reads edit count.
+- [ ] **If you decide yes, the audit writes the batch.** `tasks/wikidata_papers.qs`
+      holds one `CREATE` per missing paper with a DOI or arXiv id — title, date,
+      identifier, and the author list with you linked and co-authors as strings.
+      Note the ordering, which is circular and easy to miss: the batch runs in
+      QuickStatements, which needs autoconfirmed, which needs the 50 edits. So the
+      first ~50 items go in through the web form (no gate), and the batch does the
+      rest. Preview the first ten rows before releasing the whole thing; items are
+      permanent and far harder to clean up than anything in this repo.
 
 ## 5. One canonical URL — and what to do with the page humans actually visit
 
@@ -330,6 +356,12 @@ humans*, and conflating the two is what makes this question feel unanswerable.
       - **Scratch, coursework, forks, one-off scripts** — no. Zenodo records are
         permanent and cannot be withdrawn on a whim; a DOI on abandoned code is a
         maintenance obligation you took on for no retrieval gain.
+
+      You do not have to sort your own repos into those three cases. The sweep does
+      it from `kind` and whether a paper is linked, and writes the first case to
+      `tasks/zenodo.md` on every run; recording the concept DOI as `zenodo_doi:` in
+      `data/repos.yaml` is what takes a repo off that list and puts the DOI into its
+      `CITATION.cff`.
 
       Exact steps, because the ordering trips people:
       1. Sign in to <https://zenodo.org> **with GitHub** (that's what creates the
@@ -435,12 +467,12 @@ descending order of how often they change an answer:
    it. The bulk should sit in between.
 
 **Is more better? No — and for different reasons in each place.** Google Scholar takes
-five and they are links, so the eleven in `identity.keywords` have to be *ranked*, and
-an eleventh keyword can only get in by displacing one that would have ranked. ORCID
-has no cap, but keywords there feed disambiguation rather than ranking: a profile
-claiming thirty things matches all of them weakly, which is the opposite of the goal.
-Ten to fifteen is where each still carries weight. On the site itself, padding is
-keyword stuffing, which is measured-negative — see [../STUDY.md](../STUDY.md).
+five and they are links, so `identity.keywords` has to be *ranked*: a new keyword can
+only get in by displacing one that would have ranked. ORCID has no cap, but keywords
+there feed disambiguation rather than ranking: a profile claiming thirty things matches
+all of them weakly, which is the opposite of the goal. Ten to fifteen is where each
+still carries weight. On the site itself, padding is keyword stuffing, which is
+measured-negative — see [../STUDY.md](../STUDY.md).
 
 **What you are most likely missing.** Not a phrase — a *cluster*. The gap that
 matters is a group of five or more of your papers that no current keyword covers,
@@ -449,11 +481,10 @@ passes over your own bibliography: for each keyword, count the papers it plausib
 covers and cut anything at one; then look for a subject with several papers and no
 keyword pointing at it. Two things to weigh while you are there:
 
-- **Overlap eats the Scholar five.** Four of the current eleven are evaluation
-  variants (`evaluation of language models`, `benchmark reliability`, `machine
-  translation evaluation`, `efficient evaluation`). That is fine in ORCID, where they
-  are separate facets. In the five Scholar slots it means most of your profile says
-  one thing — so consolidate deliberately there rather than by accident.
+- **Overlap eats the Scholar five.** Near-synonyms are separate facets in ORCID and
+  near-duplicates in the Scholar five: if three or four of your list are variations on
+  one subject, most of your profile ends up saying one thing. Consolidate deliberately
+  for the five, keep the variants everywhere with no cap.
 - **Dropping a topic you have stopped working on is a real trade, not a tidy-up.** A
   cluster of older papers is exactly where you rank highest, because the field moved
   on and you are still on the page. Currency is a fine reason to drop one; just make
@@ -491,7 +522,10 @@ Fifteen minutes, once.
 
 - [ ] **Google Search Console.** <https://search.google.com/search-console>
       1. *Add property* → **URL prefix** (not Domain — Domain verification needs DNS,
-         which you do not control on `*.github.io`) → `https://borgr.github.io`.
+         which you do not control on `*.github.io`) → your `identity.canonical_url`,
+         exactly as it appears in `config.yaml`, trailing slash included. A prefix
+         property only reports on URLs that start with the string you typed, so
+         `http` vs `https` or a missing slash silently reports on nothing.
       2. Choose the **HTML tag** method and copy just the `content="..."` value — the
          token, not the whole tag.
       3. Paste it into `config.yaml` → `site.verification.google`, then
@@ -507,12 +541,13 @@ Fifteen minutes, once.
       *before* pressing Verify for the same reason: the tag has to be live first.
 
       What you get: *Pages* gives crawled-vs-indexed per URL — the one report that
-      would tell you if all 135 paper pages are being crawled and dropped, which no
-      other tool here can see. *Performance* gives the real queries that surfaced them.
+      would tell you whether every paper page is being crawled and then dropped, which
+      no other tool here can see. *Performance* gives the real queries that surfaced
+      them.
 - [ ] **Bing Webmaster Tools.** <https://www.bing.com/webmasters>
       1. *Add site* → try **Import from Google Search Console** first; if it works,
          you are done and can skip the rest.
-      2. Otherwise add `https://borgr.github.io` manually, take the **HTML Meta Tag**
+      2. Otherwise add the same canonical URL manually, take the **HTML Meta Tag**
          token, and put it in `site.verification.bing` — same generate-and-deploy
          sequence as above. Both tokens can be set in one pass.
       3. Submit the same `sitemap.xml`.

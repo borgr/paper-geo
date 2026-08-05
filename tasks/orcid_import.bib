@@ -1,4 +1,4 @@
-% ---- 101 entries WITH a DOI: safe to import in one go. ORCID groups works by identifier, so each merges with the Crossref/DataCite copy rather than duplicating it. ----
+% ---- 95 entries WITH a DOI: safe to import in one go. ORCID groups works by identifier, so each merges with the Crossref/DataCite copy rather than duplicating it. ----
 
 % Missing DOIs were filled from arXiv (10.48550/arXiv.<id>), which arXiv registers for every paper.
 
@@ -215,24 +215,29 @@ author       = {Noam Slonim and
   bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
 
-@article{DBLP:journals/corr/abs-2104-08202,
-  doi          = {10.18653/v1/2021.emnlp-main.619},
-  author       = {Or Honovich and
+@inproceedings{DBLP:conf/emnlp/HonovichCANSA21,
+author       = {Or Honovich and
                   Leshem Choshen and
                   Roee Aharoni and
                   Ella Neeman and
                   Idan Szpektor and
                   Omri Abend},
-  title        = {Q\({}^{\mbox{2}}\): Evaluating Factual Consistency in Knowledge-Grounded
+  editor       = {Marie{-}Francine Moens and
+                  Xuanjing Huang and
+                  Lucia Specia and
+                  Scott Wen{-}tau Yih},
+  title        = {{\textdollar}Q2{\textdollar}: Evaluating Factual Consistency in Knowledge-Grounded
                   Dialogues via Question Generation and Question Answering},
-  journal      = {CoRR},
-  volume       = {abs/2104.08202},
+  booktitle    = {Proceedings of the 2021 Conference on Empirical Methods in Natural
+                  Language Processing, {EMNLP} 2021, Virtual Event / Punta Cana, Dominican
+                  Republic, 7-11 November, 2021},
+  pages        = {7856--7870},
+  publisher    = {Association for Computational Linguistics},
   year         = {2021},
-  url          = {https://arxiv.org/abs/2104.08202},
-  eprinttype    = {arXiv},
-  eprint       = {2104.08202},
-  timestamp    = {Mon, 19 Apr 2021 01:00:00 +0200},
-  biburl       = {https://dblp.org/rec/journals/corr/abs-2104-08202.bib},
+  url          = {https://doi.org/10.18653/v1/2021.emnlp-main.619},
+  doi          = {10.18653/V1/2021.EMNLP-MAIN.619},
+  timestamp    = {Fri, 16 Feb 2024 08:27:36 +0100},
+  biburl       = {https://dblp.org/rec/conf/emnlp/HonovichCANSA21.bib},
   bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
 
@@ -884,6 +889,29 @@ author       = {Leshem Choshen and
   bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
 
+@inproceedings{DBLP:conf/acl/AkyurekACWA24,
+  doi          = {10.48550/ARXIV.2401.08574},
+author       = {Afra Feyza Aky{\"{u}}rek and
+                  Ekin Aky{\"{u}}rek and
+                  Leshem Choshen and
+                  Derry Wijaya and
+                  Jacob Andreas},
+  editor       = {Lun{-}Wei Ku and
+                  Andre Martins and
+                  Vivek Srikumar},
+  title        = {Deductive Closure Training of Language Models for Coherence, Accuracy,
+                  and Updatability},
+  booktitle    = {Findings of the Association for Computational Linguistics, {ACL} 2024,
+                  Bangkok, Thailand and virtual meeting, August 11-16, 2024},
+  pages        = {9802--9818},
+  publisher    = {Association for Computational Linguistics},
+  year         = {2024},
+  url          = {https://aclanthology.org/2024.findings-acl.584},
+  timestamp    = {Tue, 27 Aug 2024 17:38:11 +0200},
+  biburl       = {https://dblp.org/rec/conf/acl/AkyurekACWA24.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
 @inproceedings{DBLP:conf/acl/ShnarchGHDCAS22,
 author       = {Eyal Shnarch and
                   Ariel Gera and
@@ -917,29 +945,6 @@ author={Rickard Br{\"u}el Gabrielsson and Jiacheng Zhu and Onkar Bhardwaj and Le
 booktitle={Forty-second International Conference on Machine Learning},
 year={2025},
 url={https://openreview.net/forum?id=3XMA8RDJu2}
-}
-
-@inproceedings{DBLP:conf/acl/AkyurekACWA24,
-  doi          = {10.48550/ARXIV.2401.08574},
-author       = {Afra Feyza Aky{\"{u}}rek and
-                  Ekin Aky{\"{u}}rek and
-                  Leshem Choshen and
-                  Derry Wijaya and
-                  Jacob Andreas},
-  editor       = {Lun{-}Wei Ku and
-                  Andre Martins and
-                  Vivek Srikumar},
-  title        = {Deductive Closure Training of Language Models for Coherence, Accuracy,
-                  and Updatability},
-  booktitle    = {Findings of the Association for Computational Linguistics, {ACL} 2024,
-                  Bangkok, Thailand and virtual meeting, August 11-16, 2024},
-  pages        = {9802--9818},
-  publisher    = {Association for Computational Linguistics},
-  year         = {2024},
-  url          = {https://aclanthology.org/2024.findings-acl.584},
-  timestamp    = {Tue, 27 Aug 2024 17:38:11 +0200},
-  biburl       = {https://dblp.org/rec/conf/acl/AkyurekACWA24.bib},
-  bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
 
 @inproceedings{polo2024sloth,
@@ -1074,6 +1079,17 @@ title = "Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluatio
     abstract = "In the dynamic landscape of generative NLP, traditional text processing pipelines limit research flexibility and reproducibility, as they are tailored to specific dataset, task, and model combinations. The escalating complexity, involving system prompts, model-specific formats, instructions, and more, calls for a shift to a structured, modular, and customizable solution.Addressing this need, we present Unitxt, an innovative library for customizable textual data preparation and evaluation tailored to generative language models. Unitxt natively integrates with common libraries like HuggingFace and LM-eval-harness and deconstructs processing flows into modular components, enabling easy customization and sharing between practitioners. These components encompass model-specific formats, task prompts, and many other comprehensive dataset processing definitions. The Unitxt Catalog centralizes these components, fostering collaboration and exploration in modern textual data workflows. Beyond being a tool, Unitxt is a community-driven platform, empowering users to build, share, and advance their pipelines collaboratively. Join the Unitxt community at https://github.com/IBM/unitxt",
 }
 
+@INPROCEEDINGS{zipnn,
+author={Hershcovitch, Moshik and Wood, Andrew and Choshen, Leshem and Girmonsky, Guy and Leibovitz, Roy and Ozeri, Or and Ennmouri, Ilias and Malka, Michal and Chin, Peter and Sundararaman, Swaminathan and Harnik, Danny},
+  booktitle={2025 IEEE 18th International Conference on Cloud Computing (CLOUD)}, 
+  title={ZipNN: Lossless Compression for AI Models}, 
+  year={2025},
+  volume={},
+  number={},
+  pages={186-198},
+  keywords={Training;Cloud computing;Computational modeling;Redundancy;Neural networks;Telecommunication traffic;Logic gates;Artificial intelligence;Model compression;Faces;compression;lossless compression;models;AI;language models},
+  doi={10.1109/CLOUD67622.2025.00028}}
+
 @inproceedings{habba-etal-2025-dove,
 title = "{DOVE}: A Large-Scale Multi-Dimensional Predictions Dataset Towards Meaningful {LLM} Evaluation",
     author = "Habba, Eliya  and
@@ -1112,14 +1128,27 @@ url={https://openreview.net/forum?id=CovLQwu611},
 note={}
 }
 
-@misc{perlitz2024llm,
-  doi          = {10.48550/arXiv.2407.13696},
-title={Do These LLM Benchmarks Agree? Fixing Benchmark Evaluation with BenchBench},
-    author={Yotam Perlitz and Ariel Gera and Ofir Arviv and Asaf Yehudai and Elron Bandel and Eyal Shnarch and Michal Shmueli-Scheuer and Leshem Choshen},
-    year={2024},
-    eprint={2407.13696},
-    archivePrefix={arXiv},
-    primaryClass={cs.CL}
+@article{DBLP:journals/corr/abs-2407-13696,
+author       = {Yotam Perlitz and
+                  Ariel Gera and
+                  Ofir Arviv and
+                  Asaf Yehudai and
+                  Elron Bandel and
+                  Eyal Shnarch and
+                  Michal Shmueli{-}Scheuer and
+                  Leshem Choshen},
+  title        = {Benchmark Agreement Testing Done Right: {A} Guide for {LLM} Benchmark
+                  Evaluation},
+  journal      = {CoRR},
+  volume       = {abs/2407.13696},
+  year         = {2024},
+  url          = {https://doi.org/10.48550/arXiv.2407.13696},
+  doi          = {10.48550/ARXIV.2407.13696},
+  eprinttype    = {arXiv},
+  eprint       = {2407.13696},
+  timestamp    = {Thu, 22 Aug 2024 01:00:00 +0200},
+  biburl       = {https://dblp.org/rec/journals/corr/abs-2407-13696.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
 
 @inproceedings{DBLP:conf/emnlp/ShnarchHGDKCCEZW22,
@@ -1159,17 +1188,6 @@ title={When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation},
       primaryClass={cs.AI},
       url={https://arxiv.org/abs/2602.16763}, 
 }
-
-@INPROCEEDINGS{zipnn,
-author={Hershcovitch, Moshik and Wood, Andrew and Choshen, Leshem and Girmonsky, Guy and Leibovitz, Roy and Ozeri, Or and Ennmouri, Ilias and Malka, Michal and Chin, Peter and Sundararaman, Swaminathan and Harnik, Danny},
-  booktitle={2025 IEEE 18th International Conference on Cloud Computing (CLOUD)}, 
-  title={ZipNN: Lossless Compression for AI Models}, 
-  year={2025},
-  volume={},
-  number={},
-  pages={186-198},
-  keywords={Training;Cloud computing;Computational modeling;Redundancy;Neural networks;Telecommunication traffic;Logic gates;Artificial intelligence;Model compression;Faces;compression;lossless compression;models;AI;language models},
-  doi={10.1109/CLOUD67622.2025.00028}}
 
 @inproceedings{DBLP:conf/conll/ChoshenA19,
 author       = {Leshem Choshen and
@@ -1498,29 +1516,6 @@ title = "The {S}hare{LM} Collection and Plugin: Contributing Human-Model Chats f
     abstract = "Human-model conversations provide a window into users' real-world scenarios, behavior, and needs, and thus are a valuable resource for model development and research. While for-profit companies collect user data through the APIs of their models, using it internally to improve their own models, the open source and research community lags behind. We introduce the ShareLM collection, a unified set of human conversations with large language models, and its accompanying plugin, a Web extension for voluntarily contributing user-model conversations. Where few platforms share their chats, the ShareLM plugin adds this functionality, thus, allowing users to share conversations from most platforms. The plugin allows the user to rate their conversations, both at the conversation and the response levels, and delete conversations they prefer to keep private before they ever leave the user{\'}s local storage."
 }
 
-@article{DBLP:journals/corr/abs-2407-13696,
-author       = {Yotam Perlitz and
-                  Ariel Gera and
-                  Ofir Arviv and
-                  Asaf Yehudai and
-                  Elron Bandel and
-                  Eyal Shnarch and
-                  Michal Shmueli{-}Scheuer and
-                  Leshem Choshen},
-  title        = {Benchmark Agreement Testing Done Right: {A} Guide for {LLM} Benchmark
-                  Evaluation},
-  journal      = {CoRR},
-  volume       = {abs/2407.13696},
-  year         = {2024},
-  url          = {https://doi.org/10.48550/arXiv.2407.13696},
-  doi          = {10.48550/ARXIV.2407.13696},
-  eprinttype    = {arXiv},
-  eprint       = {2407.13696},
-  timestamp    = {Thu, 22 Aug 2024 01:00:00 +0200},
-  biburl       = {https://dblp.org/rec/journals/corr/abs-2407-13696.bib},
-  bibsource    = {dblp computer science bibliography, https://dblp.org}
-}
-
 @misc{chang2025globalpiqaevaluatingphysical,
   doi          = {10.48550/arXiv.2510.24081},
 title={Global PIQA: Evaluating Physical Commonsense Reasoning Across 100+ Languages and Cultures}, 
@@ -1530,6 +1525,17 @@ title={Global PIQA: Evaluating Physical Commonsense Reasoning Across 100+ Langua
       archivePrefix={arXiv},
       primaryClass={cs.CL},
       url={https://arxiv.org/abs/2510.24081}, 
+}
+
+@misc{bandel2026generalagentevaluation,
+  doi          = {10.48550/arXiv.2602.22953},
+title={General Agent Evaluation}, 
+      author={Elron Bandel and Asaf Yehudai and Lilach Eden and Yehoshua Sagron and Yotam Perlitz and Elad Venezian and Natalia Razinkov and Natan Ergas and Shlomit Shachor Ifergan and Segev Shlomov and Michal Jacovi and Leshem Choshen and Liat Ein-Dor and Yoav Katz and Michal Shmueli-Scheuer},
+      year={2026},
+      eprint={2602.22953},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI},
+      url={https://arxiv.org/abs/2602.22953}, 
 }
 
 @article{saroufim2025neurips,
@@ -1589,6 +1595,25 @@ author       = {Asaf Yehudai and
   bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
 
+@inproceedings{DBLP:conf/conll/ChoshenA22,
+author       = {Leshem Choshen and
+                  Omri Abend},
+  editor       = {Antske Fokkens and
+                  Vivek Srikumar},
+  title        = {Enhancing the Transformer Decoder with Transition-based Syntax},
+  booktitle    = {Proceedings of the 26th Conference on Computational Natural Language
+                  Learning, CoNLL 2022, Abu Dhabi, United Arab Emirates (Hybrid Event),
+                  December 7-8, 2022},
+  pages        = {384--404},
+  publisher    = {Association for Computational Linguistics},
+  year         = {2022},
+  url          = {https://doi.org/10.18653/v1/2022.conll-1.27},
+  doi          = {10.18653/V1/2022.CONLL-1.27},
+  timestamp    = {Fri, 12 Apr 2024 01:00:00 +0200},
+  biburl       = {https://dblp.org/rec/conf/conll/ChoshenA22.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
 @inproceedings{DBLP:conf/lrec/Lertvittayakumjorn22,
   doi          = {10.63317/3n2tjf9emh64},
 author       = {Piyawat Lertvittayakumjorn and
@@ -1619,33 +1644,6 @@ author       = {Piyawat Lertvittayakumjorn and
   timestamp    = {Mon, 10 Oct 2022 16:57:52 +0200},
   biburl       = {https://dblp.org/rec/conf/lrec/Lertvittayakumjorn22.bib},
   bibsource    = {dblp computer science bibliography, https://dblp.org}
-}
-
-@article{DBLP:journals/corr/abs-2101-12640,
-  doi          = {10.48550/arXiv.2101.12640},
-  author       = {Leshem Choshen and
-                  Omri Abend},
-  title        = {Transition based Graph Decoder for Neural Machine Translation},
-  journal      = {CoRR},
-  volume       = {abs/2101.12640},
-  year         = {2021},
-  url          = {https://arxiv.org/abs/2101.12640},
-  eprinttype    = {arXiv},
-  eprint       = {2101.12640},
-  timestamp    = {Tue, 02 Feb 2021 00:00:00 +0100},
-  biburl       = {https://dblp.org/rec/journals/corr/abs-2101-12640.bib},
-  bibsource    = {dblp computer science bibliography, https://dblp.org}
-}
-
-@misc{bandel2026generalagentevaluation,
-  doi          = {10.48550/arXiv.2602.22953},
-title={General Agent Evaluation}, 
-      author={Elron Bandel and Asaf Yehudai and Lilach Eden and Yehoshua Sagron and Yotam Perlitz and Elad Venezian and Natalia Razinkov and Natan Ergas and Shlomit Shachor Ifergan and Segev Shlomov and Michal Jacovi and Leshem Choshen and Liat Ein-Dor and Yoav Katz and Michal Shmueli-Scheuer},
-      year={2026},
-      eprint={2602.22953},
-      archivePrefix={arXiv},
-      primaryClass={cs.AI},
-      url={https://arxiv.org/abs/2602.22953}, 
 }
 
 @article{suarez2026commonlid,
@@ -1800,25 +1798,6 @@ title={How Safe is Your Safety Metric? Automatic Concatenation Tests for Metric 
       url={https://arxiv.org/abs/2512.06553}, 
 }
 
-@inproceedings{DBLP:conf/conll/ChoshenA22,
-author       = {Leshem Choshen and
-                  Omri Abend},
-  editor       = {Antske Fokkens and
-                  Vivek Srikumar},
-  title        = {Enhancing the Transformer Decoder with Transition-based Syntax},
-  booktitle    = {Proceedings of the 26th Conference on Computational Natural Language
-                  Learning, CoNLL 2022, Abu Dhabi, United Arab Emirates (Hybrid Event),
-                  December 7-8, 2022},
-  pages        = {384--404},
-  publisher    = {Association for Computational Linguistics},
-  year         = {2022},
-  url          = {https://doi.org/10.18653/v1/2022.conll-1.27},
-  doi          = {10.18653/V1/2022.CONLL-1.27},
-  timestamp    = {Fri, 12 Apr 2024 01:00:00 +0200},
-  biburl       = {https://dblp.org/rec/conf/conll/ChoshenA22.bib},
-  bibsource    = {dblp computer science bibliography, https://dblp.org}
-}
-
 @article{DBLP:journals/corr/abs-2106-00745,
   doi          = {10.48550/arXiv.2106.00745},
 author       = {Ofek Rafaeli and
@@ -1854,36 +1833,6 @@ title={Can Gradient Descent Simulate Prompting?},
   year={2025}
 }
 
-@misc{lmeval,
-  author       = {Gao, Leo and Tow, Jonathan and Abbasi, Baber and Biderman, Stella and Black, Sid and DiPofi, Anthony and Foster, Charles and Golding, Laurence and Hsu, Jeffrey and Le Noac'h, Alain and Li, Haonan and McDonell, Kyle and Muennighoff, Niklas and Ociepa, Chris and Phang, Jason and Reynolds, Laria and Schoelkopf, Hailey and Skowron, Aviya and Sutawika, Lintang and Tang, Eric and Thite, Anish and Wang, Ben and Wang, Kevin and Zou, Andy},
-  title        = {A framework for few-shot language model evaluation},
-  month        = 07,
-  year         = 2024,
-  publisher    = {Zenodo},
-  version      = {v0.4.3},
-  doi          = {10.5281/zenodo.12608602},
-  url          = {https://zenodo.org/records/12608602}
-}
-
-@inproceedings{bhaskar-etal-2024-heuristic,
-    title = "The Heuristic Core: Understanding Subnetwork Generalization in Pretrained Language Models",
-    author = "Bhaskar, Adithya  and
-      Friedman, Dan  and
-      Chen, Danqi",
-    editor = "Ku, Lun-Wei  and
-      Martins, Andre  and
-      Srikumar, Vivek",
-    booktitle = "Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)",
-    month = aug,
-    year = "2024",
-    address = "Bangkok, Thailand",
-    publisher = "Association for Computational Linguistics",
-    url = "https://aclanthology.org/2024.acl-long.774",
-    doi = "10.18653/v1/2024.acl-long.774",
-    pages = "14351--14368",
-    abstract = "Prior work has found that pretrained language models (LMs) fine-tuned with different random seeds can achieve similar in-domain performance but generalize differently on tests of syntactic generalization. In this work, we show that, even within a single model, we can find multiple subnetworks that perform similarly in-domain, but generalize vastly differently. To better understand these phenomena, we investigate if they can be understood in terms of {``}competing subnetworks{\''}: the model initially represents a variety of distinct algorithms, corresponding to different subnetworks, and generalization occurs when it ultimately converges to one. This explanation has been used to account for generalization in simple algorithmic tasks ({``}grokking{\''}). Instead of finding competing subnetworks, we find that all subnetworks{---}whether they generalize or not{---}share a set of attention heads, which we refer to as the {\_}heuristic core{\_}. Further analysis suggests that these attention heads emerge early in training and compute shallow, non-generalizing features. The model learns to generalize by incorporating additional attention heads, which depend on the outputs of the {``}heuristic{\''} heads to compute higher-level features. Overall, our results offer a more detailed picture of the mechanisms for syntactic generalization in pre-trained LMs.",
-}
-
 @inproceedings{DBLP:conf/conll/KaridiCPA23,
 author       = {Taelin Karidi and
                   Leshem Choshen and
@@ -1905,25 +1854,6 @@ author       = {Taelin Karidi and
   bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
 
-@article{DBLP:journals/corr/abs-2306-01708,
-  author       = {Prateek Yadav and
-                  Derek Tam and
-                  Leshem Choshen and
-                  Colin Raffel and
-                  Mohit Bansal},
-  title        = {Resolving Interference When Merging Models},
-  journal      = {CoRR},
-  volume       = {abs/2306.01708},
-  year         = {2023},
-  url          = {https://doi.org/10.48550/arXiv.2306.01708},
-  doi          = {10.48550/ARXIV.2306.01708},
-  eprinttype    = {arXiv},
-  eprint       = {2306.01708},
-  timestamp    = {Mon, 12 Jun 2023 01:00:00 +0200},
-  biburl       = {https://dblp.org/rec/journals/corr/abs-2306-01708.bib},
-  bibsource    = {dblp computer science bibliography, https://dblp.org}
-}
-
 @article{DBLP:journals/corr/abs-2205-05730,
 author       = {Leshem Choshen and
                   Ofir Shifman and
@@ -1941,24 +1871,7 @@ author       = {Leshem Choshen and
   bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
 
-@article{DBLP:journals/corr/abs-1804-11254,
-  doi          = {10.48550/arXiv.1804.11254},
-  author       = {Leshem Choshen and
-                  Omri Abend},
-  title        = {Inherent Biases in Reference-based Evaluation for Grammatical Error
-                  Correction and Text Simplification},
-  journal      = {CoRR},
-  volume       = {abs/1804.11254},
-  year         = {2018},
-  url          = {http://arxiv.org/abs/1804.11254},
-  eprinttype    = {arXiv},
-  eprint       = {1804.11254},
-  timestamp    = {Mon, 13 Aug 2018 01:00:00 +0200},
-  biburl       = {https://dblp.org/rec/journals/corr/abs-1804-11254.bib},
-  bibsource    = {dblp computer science bibliography, https://dblp.org}
-}
-
-% ---- 17 entries WITHOUT any DOI: no identifier to group on, so these are the only ones that can show as standalone duplicates later. Import them last, or not at all. ----
+% ---- 6 entries WITHOUT any DOI: no identifier to group on, so these are the only ones that can show as standalone duplicates later. Import them last, or not at all. ----
 
 @inproceedings{warstadt2024insights,
 title={Insights from the first BabyLM Challenge: Training sample-efficient language models on a developmentally plausible corpus},
@@ -1996,24 +1909,10 @@ year={2024},
 url={https://openreview.net/forum?id=TiRQ4Gl4Ir}
 }
 
-@article{pagliardini2024denseformer,
-  title={DenseFormer: Enhancing Information Flow in Transformers via Depth Weighted Averaging},
-  author={Pagliardini, Matteo and Mohtashami, Amirkeivan and Fleuret, Francois and Jaggi, Martin},
-  journal={arXiv preprint arXiv:2402.02622},
-  year={2024}
-}
-
 @misc{hild,title={High-dimensional Learning Dynamics 2024: The Emergence of Structure and Reasoning Workshop at ICML24},
 author={Choshen, Leshem and Atish, Agarwala and Naomi, Saphra and Boaz, Barak and Courtney, Paquette and Gowthami, Sompalli and Rosie, Zhao and Depen, Morwani and Mengzhou, Xia and Shikhar, Murty and Swabha, Swayamdipta and Tom, Goldstein},
 year={2024},
 booktitle={ICML}
-}
-
-@article{stlm,
-  title={Super Tiny Language Models},
-  author={Hillier, Dylan and Guertler, Leon and Tan, Cheston and Agrawal, Palaash and Ruirui, Chen and Cheng, Bobby},
-  journal={arXiv preprint arXiv:2405.14159},
-  year={2024}
 }
 
 @article{fandina2024can,
@@ -2021,75 +1920,4 @@ title={Can You Trust Your Metric? Automatic Concatenation-Based Tests for Metric
   author={Fandina, Ora Nova and Choshen, Leshem and Farchi, Eitan and Kour, George and Perlitz, Yotam and Raz, Orna},
   journal={arXiv preprint arXiv:2408.12259},
   year={2024}
-}
-
-@article{dubey2024llama,
-  title={The llama 3 herd of models},
-  author={Dubey, Abhimanyu and Jauhri, Abhinav and Pandey, Abhinav and Kadian, Abhishek and Al-Dahle, Ahmad and Letman, Aiesha and Mathur, Akhil and Schelten, Alan and Yang, Amy and Fan, Angela and others},
-  journal={arXiv preprint arXiv:2407.21783},
-  year={2024}
-}
-
-@article{charpentier2023not,
-  title={Not all layers are equally as important: Every Layer Counts BERT},
-  author={Charpentier, Lucas Georges Gabriel and Samuel, David},
-  journal={arXiv preprint arXiv:2311.02265},
-  year={2023}
-}
-
-@inproceedings{wortsman2022model,
-  title={Model soups: averaging weights of multiple fine-tuned models improves accuracy without increasing inference time},
-  author={Wortsman, Mitchell and Ilharco, Gabriel and Gadre, Samir Ya and Roelofs, Rebecca and Gontijo-Lopes, Raphael and Morcos, Ari S and Namkoong, Hongseok and Farhadi, Ali and Carmon, Yair and Kornblith, Simon and others},
-  booktitle={ICML},
-  year={2022}
-}
-
-@article{helm,
-  title={Holistic evaluation of language models},
-  author={Liang, Percy and Bommasani, Rishi and Lee, Tony and Tsipras, Dimitris and Soylu, Dilara and Yasunaga, Michihiro and Zhang, Yian and Narayanan, Deepak and Wu, Yuhuai and Kumar, Ananya and others},
-  journal={arXiv preprint arXiv:2211.09110},
-  year={2022}
-}
-
-@article{matena2021merging,
-  title={Merging models with fisher-weighted averaging},
-  author={Matena, Michael and Raffel, Colin},
-  journal={arXiv:2111.09832},
-  year={2021}
-}
-
-@article{vaswani2017attention,
-  title={Attention is all you need},
-  author={Vaswani, A},
-  journal={Advances in Neural Information Processing Systems},
-  year={2017}
-}
-
-@article{gilkerson2017mapping,
-  title={Mapping the early language environment using all-day recordings and automated analysis},
-  author={Gilkerson, Jill and Richards, Jeffrey A and Warren, Steven F and Montgomery, Judith K and Greenwood, Charles R and Kimbrough Oller, D and Hansen, John HL and Paul, Terrance D},
-  journal={American journal of speech-language pathology},
-  volume={26},
-  number={2},
-  pages={248--265},
-  year={2017},
-  publisher={ASHA}
-}
-
-@book{harari2014sapiens,
-  title={Sapiens: A brief history of humankind},
-  author={Harari, Yuval Noah},
-  year={2014},
-  publisher={Random House}
-}
-
-@article{cohen2006european,
-  title={European public acceptance of euthanasia: socio-demographic and cultural factors associated with the acceptance of euthanasia in 33 European countries},
-  author={Cohen, Joachim and Marcoux, Isabelle and Bilsen, Johan and Deboosere, Patrick and Van der Wal, Gerrit and Deliens, Luc},
-  journal={Social science \& medicine},
-  volume={63},
-  number={3},
-  pages={743--756},
-  year={2006},
-  publisher={Elsevier}
 }

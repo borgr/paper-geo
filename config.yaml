@@ -26,7 +26,9 @@ identity:
   # `merging` is not. No coined names -- those are in the papers' own `aliases`.
   keywords:
     - natural language processing
-    - artificial intelligence
+    - self-improving AI
+    - AI interaction
+    - AI and humanity
     - evaluation of language models
     - model merging
     - benchmark reliability
@@ -42,6 +44,22 @@ identity:
     - MIT-IBM Watson AI Lab
     - IBM Research
     - Weizmann Institute of Science   # incoming PI
+  # Degree-granting study only. This is the line Wikidata's `educated at` (P69) draws
+  # and it is not where most people draw it: a *postdoc is employment*, not education.
+  # You were not enrolled, no degree was awarded, and the institution was paying you --
+  # so it belongs in `affiliations` above (P108 employer, qualified with P39 position
+  # held = postdoctoral researcher), and putting it in P69 states something false about
+  # a degree you did not receive. The rule is simply: was a degree awarded?
+  #
+  # `degree` is optional and goes in as a P512 qualifier on the P69 statement. Worth
+  # filling: the institution alone says where, and the qualifier is what makes the
+  # statement answer "who has a PhD in this field from there".
+  education:
+    - institution: Hebrew University of Jerusalem
+      degree: PhD
+    # Add earlier degrees if you want the full record; they cost one statement each
+    # and they help disambiguation against a namesake more than a later one does,
+    # because early-career papers carry that affiliation.
 
 ids:
   # Two records today: the split that halves author-level retrieval. Keep both
@@ -52,15 +70,40 @@ ids:
   openalex_duplicates: ["A5139793343", "A5126704705", "A5123980057", "A5134416019"]
   google_scholar: 8b8IhUYAAAAJ
   dblp: Leshem Choshen
+  # dblp's *author id* is the numeric pid path, not the name. `Leshem_Choshen` is what
+  # a Wikidata P2456 statement flags as a constraint violation: the property's format
+  # is `NNN/NNNN` and its formatter URL is dblp.org/pid/$1, so a name-shaped value
+  # builds a URL that 404s. Find yours by opening your dblp author page and reading
+  # the number out of the URL, or `curl 'https://dblp.org/search/author/api?q=<name>&format=json'`.
+  dblp_pid: 218/5237
   github: borgr
   huggingface: borgr          # note: the `leshem` HF account is a stub, not this one
   wikidata: Q140867203             # created by hand 2026-08-04; see tasks/wikidata_manual.md
   linkedin: leshemchoshen
-  # Left null on purpose rather than guessed. `~Leshem_Choshen1` is the usual form,
-  # but if a duplicate profile exists yours may be `~Leshem_Choshen2`, and the wrong
-  # value published as a Wikidata identifier is worse than a missing one. Open
-  # openreview.net, check the id in your profile URL, paste it here.
-  openreview: null
+  # Worth one look: OpenReview's API is bot-challenged, so this cannot be verified
+  # from here, and the trailing digit is the duplicate counter -- a second profile
+  # would make you ~Leshem_Choshen2 and this a link to a stranger's record.
+  # Open <https://openreview.net/profile?id=~Leshem_Choshen1> once and confirm.
+  openreview: ~Leshem_Choshen1
+  # Social handles. These are published as typed Wikidata properties and as rel="me"
+  # links on the site, so they do one job: make "the account that posts about this
+  # work" and "the author of this work" the same entity to a machine, instead of a
+  # guess from a display name. Fill in only accounts you control and post research
+  # from -- a handle published as a Wikidata statement is an assertion that this
+  # person speaks for your papers, so a guess is worse than a blank.
+  # Formats: bluesky = full handle (`name.bsky.social`); mastodon = `@user@server`;
+  # twitter = username without the @.
+  bluesky: null
+  mastodon: null
+  # Read off your own ORCID researcher-urls ("Twitter: twitter.com/LChoshen"), not
+  # guessed from your name -- a guessed handle is a link to a stranger.
+  twitter: LChoshen
+  # Only fill these if the id exists -- neither is worth creating an account for.
+  # Scopus indexes little arXiv/ACL work, and WoS ResearcherID is now Publons/
+  # Web of Science. They are here because if you *do* have one, the typed property
+  # is free and it is another edge into your ORCID.
+  scopus: null
+  researcherid: null
 
 sources:
   # The bibliography stays authoritative in its own repo; we only read it.
@@ -118,6 +161,15 @@ site:
   verification:
     google: null    # Search Console > Add property > URL prefix > HTML tag
     bing: null      # Bing Webmaster Tools > Add site > HTML Meta Tag
+  # IndexNow: a push notification that a URL changed, honoured by Bing, Yandex,
+  # Seznam and Naver (not Google). `--deploy` submits the whole sitemap after
+  # pushing, and `build_site.py` writes the `<key>.txt` proof-of-ownership file the
+  # protocol requires -- generated, not uploaded, for the same reason as the tokens
+  # above. Worth having because a rebuild that adds many pages at once is the case
+  # organic discovery handles worst, and because Bing's index is what ChatGPT's
+  # search grounding reads. Get a key (any 8-128 char hex string it gives you) at
+  # <https://www.bing.com/indexnow>; leave null to skip both steps entirely.
+  indexnow_key: null
 
 github_sweep:
   # Forks are excluded: they are not yours to describe, and topics on a fork are

@@ -137,30 +137,82 @@ def parse_bibtex(text: str) -> list[dict]:
 _LATEX = re.compile(r"\\[a-zA-Z]+\s*|[{}$\\]")
 _NONWORD = re.compile(r"[^a-z0-9]+")
 
+# Upstream damage, not LaTeX: one entry's title holds `{ extdollar}` where
+# `{\textdollar}` was meant. Whatever wrote the .bib interpreted the `\t` as a tab, so
+# two characters were lost at once -- the backslash AND the command's leading `t` --
+# and `_parse_fields` then collapsed the tab to a space. What survives is the word
+# `extdollar`, not `textdollar`; a pattern written for the latter matches nothing,
+# which is how this got missed on the first attempt. `_LATEX` cannot help either,
+# since with no backslash there is no command left to recognise. It reached a URL:
+# the slug for that paper was `extdollar-q2-extdollar-evaluating-...`. Stripped here
+# rather than special-cased at each call site, because the same string has to vanish
+# from the slug, from the display title and from the matching key or the three
+# disagree about the paper. The `\\?t?` accepts the intact `{\textdollar}` too, so a
+# repaired bibliography keeps working. The real fix is upstream; this makes it
+# harmless meanwhile.
+_MANGLED = re.compile(
+    r"\{\s*\\?t?ext(dollar|backslash|asciitilde|asciicircum|underscore)\s*\}")
+
+
+def strip_mangled(s: str) -> str:
+    return _MANGLED.sub("", s)
+
+
+def repair_mangled(s: str) -> str:
+    r"""Put the backslash back: `{ extdollar}` -> `{\textdollar}`.
+
+    For the one place the token must not simply disappear -- the published BibTeX,
+    which is verbatim so that the citation key people already cite stays intact.
+    Verbatim is right for the key and wrong for a corrupted command: shipped as-is,
+    anyone who copies the entry gets a title reading `extdollarQ2extdollar` and a
+    literal tab inside a field. Restoring the command keeps the author's intent (a
+    `$` glyph in the title) and changes nothing else about the entry.
+    """
+    return _MANGLED.sub(lambda m: "{\\text" + m.group(1) + "}", s)
+
 
 def norm_title(s: str | None) -> str:
     """Aggressive normalization for cross-source title matching."""
     if not s:
         return ""
-    s = unicodedata.normalize("NFKD", s)
+    s = unicodedata.normalize("NFKD", strip_mangled(s))
     s = "".join(c for c in s if not unicodedata.combining(c))
     s = _LATEX.sub(" ", s).lower()
     return _NONWORD.sub("", s)
 
 
 def split_authors(bibtex_author: str | None) -> list[str]:
-    """`Last, First and Other, Name` -> ['First Last', 'Name Other']."""
+    """`Last, First and Other, Name` -> ['First Last', 'Name Other'].
+
+    LaTeX is stripped rather than having its braces removed. A CV bibliography
+    highlights its owner's own name -- `\\textbf{\\emph{Leshem Choshen*}}` -- and
+    brace-removal alone leaves `\\textbf\\emphLeshem Choshen*`, which matches no name
+    anywhere. That turns the one author every downstream check looks for into the one
+    author it cannot find, on exactly the papers the highlighting marks as yours.
+    Corresponding-author daggers and asterisks go too; they are notation, not name.
+    """
     if not bibtex_author:
         return []
     out = []
     for a in re.split(r"\s+and\s+", bibtex_author):
-        a = " ".join(a.replace("{", "").replace("}", "").split())
+        a = clean_latex(a).strip(" *†‡§^")
+        # BibTeX's `and others` is "et al.", not a person. It was being published as
+        # an author named "others", and on a 97-author paper truncated to ten it also
+        # hid the one author this repo exists to find. Callers detect the truncation
+        # with authors_truncated() and go to a source that lists everyone.
+        if a.lower() in ("others", "et al", "et al."):
+            continue
         if "," in a:
             last, _, first = a.partition(",")
             a = f"{first.strip()} {last.strip()}".strip()
         if a:
-            out.append(a)
+            out.append(" ".join(a.split()))
     return out
+
+
+def authors_truncated(bibtex_author: str | None) -> bool:
+    """True when a BibTeX author field ends in `and others` — i.e. et al."""
+    return bool(re.search(r"\band\s+others\s*$", (bibtex_author or "").strip(), re.I))
 
 
 # Every external id we hold, mapped to the Wikidata property that is *typed* for it.
@@ -177,18 +229,63 @@ def split_authors(bibtex_author: str | None) -> list[str]:
 # author id (`choshen_l_1`); neither plausible legacy id resolves for this account,
 # because arXiv's current author identity is the ORCID link. P496 already carries it,
 # and arxiv.org/a/<orcid> is derived from that -- so there is nothing to add.
+#
+# Social handles are in the table for a different reason than the scholarly ids, and
+# the difference decides whether to bother. The scholarly ids are what a
+# disambiguation model consumes. A handle is a *join key*: it is what lets a machine
+# connect the account that announced a paper to the author of the paper, which is
+# otherwise a guess from a display name. That is worth stating once, in the one place
+# built to be queried -- and it is the whole of the value, so only accounts you
+# actually control and post research from belong here. A handle you are unsure of is
+# strictly worse than a missing one: Wikidata statements are read as assertions of
+# fact, and this one would assert that a stranger speaks for your work.
 WD_IDENTIFIERS = [
     ("P496", "ORCID iD", lambda c: c["identity"]["orcid"]),
     ("P1960", "Google Scholar author ID", lambda c: c["ids"]["google_scholar"]),
     ("P4012", "Semantic Scholar author ID", lambda c: c["ids"]["semantic_scholar_primary"]),
     ("P10283", "OpenAlex ID", lambda c: (c["ids"]["openalex"] or [None])[0]),
-    ("P2456", "DBLP author ID", lambda c: (c["ids"]["dblp"] or "").replace(" ", "_")),
+    # The pid path (`218/5237`), never the name. P2456's format constraint is numeric
+    # and its formatter URL is dblp.org/pid/$1, so a name-shaped value is both a
+    # constraint warning on the item and a link that 404s.
+    ("P2456", "DBLP author ID", lambda c: c["ids"].get("dblp_pid")),
     ("P2037", "GitHub username", lambda c: c["ids"]["github"]),
     ("P12201", "Hugging Face user ID", lambda c: c["ids"].get("huggingface")),
     ("P6634", "LinkedIn personal profile ID", lambda c: c["ids"].get("linkedin")),
     ("P8964", "OpenReview.net profile ID", lambda c: c["ids"].get("openreview")),
+    ("P12361", "Bluesky handle", lambda c: c["ids"].get("bluesky")),
+    # `user@server`, no leading @ -- P4033's format constraint rejects the `@user@server`
+    # form people paste from their own profile.
+    ("P4033", "Mastodon address", lambda c: (c["ids"].get("mastodon") or "").lstrip("@")
+     or None),
+    ("P2002", "X username", lambda c: c["ids"].get("twitter")),
+    ("P1153", "Scopus author ID", lambda c: c["ids"].get("scopus")),
+    ("P1053", "ResearcherID", lambda c: c["ids"].get("researcherid")),
     ("P856", "official website", lambda c: c["identity"]["canonical_url"]),
 ]
+
+# Where the social handles live as URLs, for the site's `sameAs` and its rel="me"
+# links. Mastodon is the reason the rel="me" pass exists at all: it verifies a link
+# back from the profile only if the page links to the profile with rel="me", so this
+# is one of the few places where a markup attribute produces a visible badge on a
+# surface you do not control. The same convention is what IndieAuth consumers read.
+SOCIAL_URLS = {
+    "bluesky": lambda v: f"https://bsky.app/profile/{v}",
+    "twitter": lambda v: f"https://x.com/{v}",
+    "linkedin": lambda v: f"https://www.linkedin.com/in/{v}",
+    "github": lambda v: f"https://github.com/{v}",
+    # `@user@server` -> https://server/@user
+    "mastodon": lambda v: "https://{}/@{}".format(*reversed(v.lstrip("@").split("@", 1))),
+}
+
+
+def social_url(kind: str, value: str | None) -> str | None:
+    """Profile URL for a handle, or None. Unknown kinds and empty values yield None."""
+    if not value or kind not in SOCIAL_URLS:
+        return None
+    try:
+        return SOCIAL_URLS[kind](value.strip())
+    except (IndexError, TypeError):
+        return None
 
 
 def norm_name(s: str) -> str:
@@ -268,8 +365,11 @@ def paper_doi(p: dict) -> str | None:
     return f"10.48550/arXiv.{p['arxiv']}" if p.get("arxiv") else None
 
 
+# `{ extdollar}` used to be mapped here to `$` (and then dropped with the other `$`).
+# That fixed the display title only, which is why the mangled word was still in the
+# slug and in the matching key. `strip_mangled` now handles it for all three.
 _MATH = {r"\({}^{\mbox{2}}\)": "\u00b2", r"\({}^{\mbox{3}}\)": "\u00b3",
-         r"$^2$": "\u00b2", r"$^3$": "\u00b3", "{ extdollar}": "$"}
+         r"$^2$": "\u00b2", r"$^3$": "\u00b3"}
 
 
 def clean_latex(s: str | None) -> str:
@@ -283,6 +383,7 @@ def clean_latex(s: str | None) -> str:
     """
     if not s:
         return ""
+    s = strip_mangled(s)
     for k, v in _MATH.items():
         s = s.replace(k, v)
     s = re.sub(r"\\[a-zA-Z]+\{([^{}]*)\}", r"\1", s)   # \emph{x} -> x
@@ -313,11 +414,12 @@ def clean_bibtex(raw: str | None) -> str:
         return ""
     out = re.sub(r"^\s*pretitle\s*=\s*\{[^{}]*\}\s*,?\s*\n?", "", raw,
                  flags=re.M)
+    out = repair_mangled(out)
     return re.sub(r"\n\s*\n+", "\n", out).strip()
 
 
 def slugify(s: str, maxlen: int = 60) -> str:
-    s = unicodedata.normalize("NFKD", s or "")
+    s = unicodedata.normalize("NFKD", strip_mangled(s or ""))
     s = "".join(c for c in s if not unicodedata.combining(c))
     s = _LATEX.sub(" ", s).lower()
     s = re.sub(r"[^a-z0-9]+", "-", s).strip("-")

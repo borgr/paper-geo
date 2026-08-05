@@ -40,11 +40,29 @@ from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, WD_IDENTIFIERS, get, get_json,  # noqa: E402
-                    load_config, name_match, norm_name, read_yaml)
+                    load_config, name_match, norm_name, norm_title, read_yaml)
 
 TASKS = os.path.join(ROOT, "tasks")
 ATOM = {"a": "http://www.w3.org/2005/Atom"}
 _ABS = re.compile(r"abs/([0-9]{4}\.[0-9]{4,5}|[a-z\-]+/[0-9]{7})")
+
+
+def _org_match(a: str, b: str) -> bool:
+    """Loose organisation-name match.
+
+    Registries and CVs disagree on the same institution in ways that are never
+    meaningful: `The Hebrew University of Jerusalem` vs `Hebrew University of
+    Jerusalem`, `MIT-IBM Watson AI Lab` vs `Massachusetts Institute of Technology`.
+    Exact comparison would report every one of those as a missing affiliation, so the
+    check is on significant words and either direction containing the other.
+    """
+    stop = {"the", "of", "and", "institute", "university", "research", "lab",
+            "laboratory", "school", "center", "centre", "for"}
+    wa = {w for w in re.findall(r"[a-z]+", a.lower()) if w not in stop}
+    wb = {w for w in re.findall(r"[a-z]+", b.lower()) if w not in stop}
+    if not wa or not wb:
+        return False
+    return wa <= wb or wb <= wa
 
 
 def orcid_public(orcid: str) -> dict:
@@ -58,10 +76,49 @@ def orcid_public(orcid: str) -> dict:
     act, person = d.get("activities-summary") or {}, d.get("person") or {}
     urls = [(u.get("url-name"), (u.get("url") or {}).get("value"))
             for u in ((person.get("researcher-urls") or {}).get("researcher-url") or [])]
+    # Titles, not just the count. A bulk BibTeX import is one click and cannot be
+    # undone in one click, so the record can silently end up asserting authorship of
+    # works that were in the source file by mistake -- and nothing on ORCID will ever
+    # tell you, because the record has no idea what you meant to claim.
+    titles = []
+    # Who asserted each work, tallied. This is the only public evidence that the
+    # Crossref and DataCite auto-update permissions are live: a work those add carries
+    # their name in `source`, while everything you imported yourself carries yours. The
+    # distinction is invisible in the works list unless you open a work and read the
+    # *Source* line, and it is the difference between "the pipeline is running" and "I
+    # clicked through a wizard and nothing was granted".
+    sources = {}
+    for g in ((act.get("works") or {}).get("group") or []):
+        for i, s in enumerate(g.get("work-summary") or []):
+            src = ((s.get("source") or {}).get("source-name") or {}).get("value") or "(self)"
+            sources[src] = sources.get(src, 0) + 1
+            if i == 0:
+                t = ((s.get("title") or {}).get("title") or {}).get("value")
+                if t:
+                    titles.append((t, s.get("put-code")))
+    affs = {}
+    for sect in ("employments", "educations"):
+        rows = []
+        for g in ((act.get(sect) or {}).get("affiliation-group") or []):
+            for summary in (g.get("summaries") or []):
+                v = next(iter(summary.values()), {}) or {}
+                sd, ed = v.get("start-date") or {}, v.get("end-date") or {}
+                rows.append({
+                    "org": ((v.get("organization") or {}).get("name")),
+                    "role": v.get("role-title"),
+                    "dept": v.get("department-name"),
+                    "start": (sd.get("year") or {}).get("value"),
+                    "end": (ed.get("year") or {}).get("value") if ed else None,
+                })
+        affs[sect] = rows
     return {
         "works": len((act.get("works") or {}).get("group") or []),
-        "employments": len((act.get("employments") or {}).get("affiliation-group") or []),
-        "educations": len((act.get("educations") or {}).get("affiliation-group") or []),
+        "work_titles": titles,
+        "work_sources": sources,
+        "employments": len(affs["employments"]),
+        "educations": len(affs["educations"]),
+        "employment_rows": affs["employments"],
+        "education_rows": affs["educations"],
         "urls": urls,
         "other_names": [n.get("content") for n in
                         ((person.get("other-names") or {}).get("other-name") or [])],
@@ -165,6 +222,128 @@ def wikidata_gaps(qid: str, cfg) -> dict:
             "n_p856": len(vals.get("P856") or []),
             "label": (ent.get("labels") or {}).get("en", {}).get("value", ""),
             "description": (ent.get("descriptions") or {}).get("en", {}).get("value", "")}
+
+
+def wikidata_paper_coverage(papers, chunk: int = 50) -> dict:
+    """How many of your papers exist as Wikidata items -- measured, not assumed.
+
+    This function exists because the assumption was wrong. The standard advice for a
+    new author item is "your papers are already on Wikidata as Crossref imports, so
+    linking them is nearly free", and Author Disambiguator reinforces it: the tool
+    only ever shows you items that already exist, so a short list looks like a short
+    job rather than like thin coverage. Measured here, coverage was 3 of 122. Which
+    inverts the advice -- the work is creating items, not relinking strings.
+
+    Matching is on DOI (P356) and arXiv id (P818), never on name. Those are exact
+    keys, so a hit is the paper and not a paper that cites it. DOIs go in twice, as
+    given and uppercased, because Wikidata's convention is uppercase and SPARQL
+    string match is case-sensitive.
+
+    The endpoint is the one detail here that will silently produce a wrong answer.
+    Wikidata split its query service: scholarly articles were moved out of the main
+    graph into their own, and `query.wikidata.org` serves the main one. So a paper
+    query against the usual endpoint returns zero rows with HTTP 200 -- verified
+    against "Attention is all you need" (Q30249683), which the scholarly endpoint
+    finds by arXiv id and the main endpoint does not. Any SPARQL over publications,
+    here or by hand, needs query-scholarly.
+
+    Returns {} when the endpoint does not answer. An empty result and a failed query
+    must not be indistinguishable, or a timeout silently becomes evidence of absence.
+    """
+    keys: dict[str, dict] = {}
+    for p in papers:
+        if p.get("arxiv"):
+            keys.setdefault(str(p["arxiv"]).strip(), p)
+        if p.get("doi"):
+            d = str(p["doi"]).strip()
+            keys.setdefault(d, p)
+            keys.setdefault(d.upper(), p)
+    if not keys:
+        return {}
+
+    ordered = list(keys)
+    found: dict[str, str] = {}
+    answered = False
+    for i in range(0, len(ordered), chunk):
+        vals = " ".join('"%s"' % k.replace('"', "") for k in ordered[i:i + chunk])
+        # One query, two properties: the identifier forms are disjoint, so a UNION
+        # over both costs the same as testing each list separately.
+        sparql = ("SELECT ?item ?v WHERE { VALUES ?v {" + vals + "} "
+                  "{ ?item wdt:P818 ?v } UNION { ?item wdt:P356 ?v } }")
+        j = get_json("https://query-scholarly.wikidata.org/sparql?format=json&query="
+                     + quote(sparql))
+        if j is None:
+            continue
+        answered = True
+        for b in ((j.get("results") or {}).get("bindings") or []):
+            v = (b.get("v") or {}).get("value", "")
+            qid = ((b.get("item") or {}).get("value", "")).rsplit("/", 1)[-1]
+            if v in keys and qid:
+                found[keys[v]["slug"]] = qid
+    if not answered:
+        return {}
+
+    present = [(p, found[p["slug"]]) for p in papers if p["slug"] in found]
+    absent = [p for p in papers if p["slug"] not in found]
+    return {"present": present, "absent": absent,
+            "checked": len({p["slug"] for p in keys.values()}), "total": len(papers)}
+
+
+def wikidata_papers_qs(cov: dict, cfg) -> tuple[str | None, int]:
+    """QuickStatements batch that creates items for the papers Wikidata lacks.
+
+    Only generated because the measurement came back low. If coverage had been the
+    "dozens already imported" the usual advice assumes, the job would be relinking
+    author name strings and this file would be the wrong tool.
+
+    Restricted to papers carrying a DOI or an arXiv id. That is not a formatting
+    convenience: an external identifier anyone can resolve is what makes a
+    publication item uncontroversially in scope, and it is also the key this batch
+    was deduplicated on, so a row without one could be creating a duplicate.
+
+    Co-authors go in as `author name string` (P2093) with a series-ordinal
+    qualifier, not as `author` (P50). Pointing P50 at a guessed person item is the
+    error that takes someone else's item and welds it to your paper -- the same
+    asymmetry that governs the authorship gate in the collector. Strings are what
+    the Crossref importers themselves deposit, and a later disambiguator upgrades
+    them safely.
+    """
+    absent = [p for p in (cov.get("absent") or []) if p.get("doi") or p.get("arxiv")]
+    if not absent:
+        return None, 0
+    me = cfg["ids"].get("wikidata")
+    L: list[str] = []
+    for p in absent:
+        title = (p.get("title_display") or p["title"]).replace('"', "'").strip()
+        # Wikidata rejects a label over 250 characters outright, and the batch stops
+        # on the offending row rather than skipping it.
+        label = title[:245]
+        # A 10.48550 DOI is arXiv minting one for its own preprint, so it is not
+        # evidence of publication -- classing those as scholarly articles would assert
+        # a venue that does not exist.
+        published = bool(p.get("doi")) and not str(p["doi"]).lower().startswith("10.48550/")
+        L += ["CREATE",
+              f'LAST\tLen\t"{label}"',
+              f"LAST\tP31\t{'Q13442814' if published else 'Q580922'}",
+              f'LAST\tP1476\ten:"{title}"']
+        if p.get("year"):
+            L.append(f'LAST\tP577\t+{int(p["year"])}-00-00T00:00:00Z/9')
+        if p.get("doi"):
+            L.append('LAST\tP356\t"%s"' % str(p["doi"]).upper())
+        if p.get("arxiv"):
+            L.append('LAST\tP818\t"%s"' % p["arxiv"])
+        for i, a in enumerate(p.get("authors") or [], 1):
+            a = a.replace('"', "'").strip()
+            if not a:
+                continue
+            if me and norm_name(a) == norm_name(cfg["identity"]["name"]):
+                L.append(f'LAST\tP50\t{me}\tP1545\t"{i}"')
+            else:
+                L.append(f'LAST\tP2093\t"{a}"\tP1545\t"{i}"')
+    path = os.path.join(TASKS, "wikidata_papers.qs")
+    with open(path, "w") as f:
+        f.write("\n".join(L) + "\n")
+    return path, len(absent)
 
 
 # Hugging Face records a per-author `status` beside the linked user. These two mean
@@ -273,7 +452,7 @@ def hf_worklist_file(st: dict) -> str:
     return path
 
 
-def wikidata_followup_file(g: dict, cfg) -> str:
+def wikidata_followup_file(g: dict, cfg, cov: dict, qs_path: str | None) -> str:
     """What is left to do on an item that already exists.
 
     Separate from wikidata_manual.md, which is about creating one. Once the item is
@@ -337,6 +516,16 @@ def wikidata_followup_file(g: dict, cfg) -> str:
             L.append(f"- [ ] **{label}** (`{pid}`) reads `{', '.join(have)}` — "
                      f"expected `{want}`")
         L.append("")
+        if any(pid == "P2456" for pid, *_ in g["wrong"]):
+            L += ["`P2456` is the reason for the warning triangle on the item. It takes",
+                  "DBLP's *pid* — the numeric path in `dblp.org/pid/218/5237` — not the",
+                  "name-shaped URL DBLP also answers on. Wikidata builds the link by",
+                  "substituting the value into `dblp.org/pid/$1`, so a name value both",
+                  "trips the format constraint and produces a 404. Constraint violations",
+                  "do not block saving, which is why it saved and then complained.", "",
+                  "*0 references* on that statement is not the warning and is not a",
+                  "problem: external identifiers are normally unsourced, since the",
+                  "identifier resolving is the source. Ignore it.", ""]
     if not cfg["ids"].get("openreview"):
         L += ["- [ ] **OpenReview.net profile ID** (`P8964`) — fill "
               "`ids.openreview` in `config.yaml` first. Open your OpenReview profile "
@@ -344,6 +533,8 @@ def wikidata_followup_file(g: dict, cfg) -> str:
               "because a duplicate profile would make the guess wrong, and a wrong "
               "identifier is worse than a missing one.", ""]
 
+    edu = [f"{e.get('institution')}" + (f" ({e['degree']})" if e.get("degree") else "")
+           for e in (ident.get("education") or [])] or ["your PhD institution"]
     L += ["## Worth adding while you are in the editor", "",
           "Not identifiers — statements that help a disambiguator separate you from a",
           "namesake, which is the whole job of this item.", "",
@@ -352,45 +543,162 @@ def wikidata_followup_file(g: dict, cfg) -> str:
           "| given name | `P735` | Leshem | lets a query match the name parts "
           "separately from the label string |",
           "| family name | `P734` | Choshen | same |",
-          "| educated at | `P69` | your PhD institution | the single strongest "
+          f"| educated at | `P69` | {'; '.join(edu)} | the single strongest "
           "disambiguating fact about a researcher |",
-          "| employer | `P108` | with *start time* qualifiers | turns three flat "
+          "| employer | `P108` | with *start time* qualifiers | turns flat "
           "affiliations into a career an engine can order |",
-          "", "Skip date of birth, sex or gender, and image. None of them help retrieval",
-          "and all of them are personal data you would then be maintaining.", "",
-          "## Then: link your papers to the item", "",
-          "This is the step that turns the item from an isolated record into something",
-          "that resolves — and it is also how the account reaches the 50 edits that",
-          "unlock QuickStatements, so it is not a separate chore.", "",
-          "**Why it matters.** Dozens of your papers already exist as Wikidata items,",
-          "imported from Crossref. They carry your name as `author name string` (P2093)",
-          "— a bare text field. Nothing connects those items to you. Replacing the",
-          "string with `author` (P50) pointing at " + q + " is what makes the item a hub:",
-          "afterwards a single query returns your corpus, Scholia renders a profile page",
-          "from it, and the papers inherit your identifiers.", "",
-          "**The tool.** <https://author-disambiguator.toolforge.org>", "",
-          "1. *Log in* (top right) — it edits on your behalf, so this is required, and",
-          "   it is why the edits count toward your 50.",
-          f"2. Paste `{q}` into **Author details / Q-number** and submit. You land on a",
-          "   page listing every paper item whose `P2093` string matches your name.",
-          "3. Each row has a checkbox and shows the paper title plus its other authors.",
-          "   Tick the ones that are yours. **Read the co-author list rather than the",
-          "   title** — a namesake shows up as a paper you do not recognise, and the",
-          "   co-authors are the fastest tell.",
-          "4. Press the button at the bottom to move the ticked ones from `P2093` to",
-          "   `P50`. One edit per paper.",
-          "5. Repeat for each name variant — the tool searches one string at a time, so",
-          "   `Leshem Choshen` and `L. Choshen` are two separate passes.", "",
-          "Twenty minutes gets you past 50 edits with real work rather than filler.",
-          "After four days the account is autoconfirmed and `wikidata.qs` will run.", "",
-          "**One caution.** Do not use the tool's *create missing author item* button",
-          "while your own item exists — that is how duplicate author items appear.",
-          f"Always point rows at {q}.", ""]
+          "",
+          "`educated at` is for degree-granting study only. A postdoc goes in `employer`",
+          "(`P108`), optionally qualified with *position held* (`P39`) = `Q1125292`",
+          "(postdoctoral researcher) — no degree was awarded, and the institution was",
+          "paying you. The test is just: was a degree awarded?", "",
+          "Skip date of birth, sex or gender, and image. None of them help retrieval",
+          "and all of them are personal data you would then be maintaining.", ""]
+
+    L += paper_link_section(q, cov, qs_path)
+    return _write_followup(L)
+
+
+def paper_link_section(q: str, cov: dict, qs_path: str | None) -> list[str]:
+    """The papers half of the follow-up, written from the measurement.
+
+    Kept separate because it is the section that was wrong. It used to open with
+    "dozens of your papers already exist as Wikidata items, imported from Crossref"
+    -- received wisdom, never checked, and false here. Whether the job is relinking
+    strings or creating items depends entirely on a number, so the section now reads
+    that number rather than asserting one.
+    """
+    if not cov:
+        return ["## Then: link your papers to the item", "",
+                "Coverage not measured — the scholarly query endpoint did not answer on",
+                "this run. Re-run the audit; the number below decides what the work is.",
+                ""]
+    n_have, n_tot = len(cov["present"]), cov["total"]
+    L = ["## Then: your papers", "",
+         f"**Measured this run: {n_have} of {n_tot} have a Wikidata item.**",
+         f"(Matched on DOI and arXiv id across {cov['checked']} papers that carry one",
+         "— exact keys, so this is coverage and not a name-search guess.)", ""]
+    for p, qid in cov["present"]:
+        L.append(f"- [{qid}](https://www.wikidata.org/wiki/{qid}) — "
+                 f"{(p.get('title_display') or p['title'])[:70]}")
+    L += ["",
+          "Two facts follow from that number, and both cut against the usual advice.",
+          "",
+          "**Author Disambiguator is nearly empty for you.** Its job is to convert an",
+          f"`author name string` (P2093) into `author` (P50) pointing at {q}. That only",
+          "works on items that already exist, so it can reach at most those listed",
+          "above. It is worth one pass — <https://author-disambiguator.toolforge.org>,",
+          f"log in, paste `{q}` into *Author details*, tick rows whose **co-author list**",
+          "matches (the title is the weaker tell against a namesake), submit. Repeat per",
+          "name variant; it searches one string at a time. Do not press *create missing",
+          "author item* while your item exists — that is how duplicate author items",
+          "appear.", "",
+          "**It will not get you to 50 edits.** The autoconfirmed threshold was going to",
+          "be paid for by this step. With a handful of linkable items it cannot be, so",
+          "either make the 50 elsewhere or skip QuickStatements and edit by hand —",
+          "the item's own statements are a 15-minute job either way.", ""]
+    if qs_path:
+        n_new = sum(1 for x in open(qs_path) if x.strip() == "CREATE")
+        L += ["**Creating the missing items — optional, and read this first.**", "",
+              f"`{os.path.relpath(qs_path, ROOT)}` holds a QuickStatements batch for",
+              f"{n_new} papers: title, publication date, DOI or arXiv id, and the author",
+              f"list with you as `author` → {q} and co-authors as `author name string`",
+              "with position qualifiers. Only papers carrying a DOI or arXiv id are",
+              "included — a resolvable identifier is what puts a publication item",
+              "clearly in scope, and it is the key the batch was deduplicated on.", "",
+              "Honest accounting before you run it: this buys a Scholia profile, a",
+              "SPARQL-answerable corpus, and an authorship graph — real, but a weaker",
+              "surface than arXiv, ORCID or your own pages. It costs an autoconfirmed",
+              "account, a batch review, and permanent public items. Items created here",
+              "are much harder to clean up than a page in this repo. Run it in",
+              "QuickStatements with the batch preview open, on the first ten rows,",
+              "before releasing the rest.", "",
+              "One gap the dedup cannot cover: a paper item that exists with neither a",
+              "DOI nor an arXiv id would not have matched, so it could be recreated.",
+              "Searching the exact title in Wikidata's own search box is the check.", ""]
+    return L
+
+
+def _write_followup(L: list[str]) -> str:
+    """Kept as its own function only so the two halves above can each end in a return."""
 
     path = os.path.join(TASKS, "wikidata_followup.md")
     with open(path, "w") as f:
         f.write("\n".join(L) + "\n")
     return path
+
+
+def orcid_strays(orc: dict, papers) -> list[tuple]:
+    """Works on the ORCID record that are not in your corpus.
+
+    A bulk BibTeX import is one click; removing 13 works is 13. That asymmetry is why
+    this check exists rather than being left to care at import time. The specific
+    failure it caught: the bibliography we import from is a CV bibliography, so it
+    also holds the works the CV *cites*, and the record ended up asserting authorship
+    of "Attention is all you need". Nothing on ORCID will ever flag that -- the record
+    cannot know what you meant to claim -- and every service that trusts ORCID
+    (Semantic Scholar, OpenAlex, publisher lookups) reads it as your claim.
+
+    Each stray is tagged `confirmed` when the collector also rejected it on author
+    name, and `unknown` otherwise -- a title we simply do not have, which is as likely
+    to be a real paper missing from the bibliography as an error.
+    """
+    mine = {norm_title(p["title"]) for p in papers}
+    rejected = {}
+    try:
+        with open(os.path.join(BUILD, "not_mine.json")) as f:
+            rejected = {norm_title(x["title"]): x for x in json.load(f)}
+    except (OSError, ValueError):
+        pass
+    out = []
+    for title, put in orc.get("work_titles") or []:
+        n = norm_title(title)
+        if n not in mine:
+            out.append((title, put, "confirmed" if n in rejected else "unknown"))
+    return out
+
+
+def orcid_remove_file(strays: list[tuple], cfg) -> str:
+    """tasks/orcid_remove.md — works to delete from the ORCID record, with put-codes."""
+    conf = [s for s in strays if s[2] == "confirmed"]
+    unk = [s for s in strays if s[2] == "unknown"]
+    L = ["# ORCID: works to remove", "",
+         "Works on the record that are not in `data/papers.yaml`. Regenerated live by",
+         "`python scripts/audit_identity.py`; the file is empty when the record is clean.",
+         "",
+         "**How this happens.** The bibliography this tool reads is a CV bibliography, so",
+         "it contains the works the CV *cites* as well as the works it lists. Those were",
+         "included in the bulk import before the collector learned to check author names.",
+         "The import is one click and the removal is one click *per work*, which is the",
+         "whole reason this page exists rather than the check being left to import time.",
+         "",
+         "**Why it matters more than it looks.** ORCID is not a private list. Semantic",
+         "Scholar, OpenAlex, Crossref and publisher submission systems read it as your",
+         "assertion of authorship, and a claim on a famous paper is the kind of error",
+         "someone eventually notices and reads uncharitably.", ""]
+    if conf:
+        L += [f"## Confirmed not yours ({len(conf)})", "",
+              "The collector rejected each of these because no form of your name appears",
+              "in the author list from any source. Delete them.", "",
+              "On <https://orcid.org/my-orcid#works>: *Works* → find the title → the",
+              "**⋮ / Actions** menu on that entry → *Delete*. There is no multi-select, so",
+              "it is one at a time. Sorting by *Date added* groups the whole import",
+              "together, which makes them faster to find than searching by title.", "",
+              "| # | title | ORCID put-code |", "|---|---|---|"]
+        L += [f"| {i} | {t[:78]} | `{p}` |" for i, (t, p, _) in enumerate(conf, 1)]
+        L += ["", "The put-code is the record's internal id, shown in the URL when you open a",
+              "work. It is here so you can confirm you are deleting the right entry when two",
+              "titles are similar.", ""]
+    if unk:
+        L += [f"## On ORCID, unknown to us ({len(unk)})", "",
+              "Not necessarily wrong — a paper missing from the bibliography looks exactly",
+              "like this. **Check before deleting.** If it is yours, the fix is upstream in",
+              "the bibliography, not here.", ""]
+        L += [f"- {t}  (`{p}`)" for t, p, _ in unk]
+        L += [""]
+    if not strays:
+        L += ["Nothing to remove: every public work on the record is in the corpus.", ""]
+    return "\n".join(L)
 
 
 def arxiv_author_strings(ids: list[str], batch: int = 50) -> dict[str, list[str]]:
@@ -591,11 +899,14 @@ def main() -> None:
     reg = arxiv_registered(ident["orcid"])
     print("searching Wikidata by identifier ...", flush=True)
     wd = wikidata_item(cfg) or ids.get("wikidata")
-    wd_path, wd_gaps = None, {}
+    wd_path, wd_gaps, wd_cov, wd_qs = None, {}, {}, None
     if wd:
         wd_gaps = wikidata_gaps(wd, cfg)
+        print("measuring Wikidata paper coverage ...", flush=True)
+        wd_cov = wikidata_paper_coverage(papers)
+        wd_qs, _ = wikidata_papers_qs(wd_cov, cfg)
         if wd_gaps:
-            wd_path = wikidata_followup_file(wd_gaps, cfg)
+            wd_path = wikidata_followup_file(wd_gaps, cfg, wd_cov, wd_qs)
     # --no-hf means "leave the HF artifacts alone", not "regenerate them from cache".
     # Writing the cached view here would silently overwrite a freshly-checked
     # worklist with older numbers, which is worse than not writing at all.
@@ -633,6 +944,24 @@ def main() -> None:
     want_kw = [k for k in (ident.get("keywords") or [])
                if k.lower() not in {k2.lower() for k2 in orc["keywords"]}]
 
+    o_stray = orcid_strays(orc, papers)
+    o_conf = [s for s in o_stray if s[2] == "confirmed"]
+    o_unk = [s for s in o_stray if s[2] == "unknown"]
+
+    # Auto-update evidence, and affiliations the record does not yet state.
+    auto_src = {k: v for k, v in (orc["work_sources"] or {}).items()
+                if any(w in k.lower() for w in ("crossref", "datacite"))}
+    orc_orgs = [(r["org"] or "") for r in orc["employment_rows"]]
+    missing_empl = [a for a in ident["affiliations"]
+                    if not any(_org_match(a, o) for o in orc_orgs)]
+    missing_edu = [e["institution"] for e in (ident.get("education") or [])
+                   if not any(_org_match(e["institution"], r["org"] or "")
+                              for r in orc["education_rows"])]
+    # An education row with no role-title states an institution but not a degree, and
+    # one with no end year still reads as *enrolled* -- which, next to a postdoc
+    # employment, is a record contradicting itself about what you are.
+    edu_open = [r for r in orc["education_rows"] if not r["role"] or not r["end"]]
+
     def status(ok: bool) -> str:
         return "ok" if ok else "**fix**"
 
@@ -649,7 +978,13 @@ def main() -> None:
          f"| ORCID lists other personal pages | "
          f"{len((ident.get('other_pages') or [])) - len(other_pages)} of "
          f"{len(ident.get('other_pages') or [])} | {status(not other_pages)} |",
-         f"| ORCID employment/education | {orc['employments']}/{orc['educations']} | {status(orc['employments'] > 0)} |",
+         f"| ORCID employment | {orc['employments']} listed, "
+         f"{len(missing_empl)} missing | {status(not missing_empl)} |",
+         f"| ORCID education | {orc['educations']} listed, "
+         f"{len(missing_edu)} missing, {len(edu_open)} incomplete | "
+         f"{status(not missing_edu and not edu_open)} |",
+         f"| ORCID works added by Crossref/DataCite | {sum(auto_src.values())} | "
+         f"{'ok' if auto_src else 'nothing yet'} |",
          # Intersection, not len(reg): the feed also lists papers that are not in the
          # bibliography at all, and counting those made the row read "105 of 105" while
          # still flagging a gap.
@@ -660,6 +995,11 @@ def main() -> None:
         n_wd = (len(wd_gaps["missing"]) + len(wd_gaps["wrong"]) + len(wd_gaps["dupes"])
                 + len(wd_gaps["bad_aliases"]) + len(wd_gaps["want_aliases"]))
         L.append(f"| Wikidata item complete | {n_wd} gaps | {status(not n_wd)} |")
+    if wd_cov:
+        # Not scored. Low coverage is a fact about Wikidata's imports, not a defect in
+        # your record, and a red mark here would read as 119 tasks you are behind on.
+        L.append(f"| Wikidata paper items | {len(wd_cov['present'])} of "
+                 f"{wd_cov['total']} | optional |")
     if hf is not None:
         # Claimable, not total: three of these pages carry no author string resembling
         # your name, so they cannot be claimed at all. Scoring them against the total
@@ -680,6 +1020,11 @@ def main() -> None:
     if stray:
         L.append(f"| arXiv papers missing from your bibliography | {len(stray)} | "
                  f"**check** |")
+    if o_conf or o_unk:
+        if o_conf:
+            L.append(f"| ORCID works that are not yours | {len(o_conf)} | **fix** |")
+        if o_unk:
+            L.append(f"| ORCID works we cannot place | {len(o_unk)} | **check** |")
     L += [f"| Semantic Scholar records | {len(ids['semantic_scholar'])} | "
           f"{status(len(ids['semantic_scholar']) == 1)} |", ""]
 
@@ -717,6 +1062,68 @@ def main() -> None:
               "question. The same list fills Google Scholar's five interest slots (pick the",
               "top five). Edit `config.yaml` → `identity.keywords` to change it.", "",
               *[f"- [ ] {k}" for k in want_kw], ""]
+    if not auto_src:
+        L += ["## Crossref / DataCite auto-update: no evidence it is live", "",
+              f"All {orc['works']} public works are **self-asserted** — the `source` on every",
+              "one of them is your own name. A work that Crossref or DataCite adds carries",
+              "*their* name instead, so this row is the only public read on whether those",
+              "connections exist. It is currently reading zero.", "",
+              "**Zero is the expected reading today, and that is the trap.** Auto-update is",
+              "not a sync and it does not backfill: it fires only when a *newly deposited*",
+              "record already contains your iD. So a granted permission and a permission",
+              "that never completed look identical until your next paper is published —",
+              "months from now, with nothing to connect the silence to the click.", "",
+              "Two checks separate them, both two minutes:", "",
+              "1. **Was the permission actually granted?** *ORCID → Account settings →",
+              "   Trusted parties*. `Crossref Metadata Search` and `DataCite` should each",
+              "   be listed there with permission to add and update your works. The wizards",
+              "   send you off to `search.crossref.org` / DataCite's own site, which is what",
+              "   makes this ambiguous: landing there proves the redirect worked, not that",
+              "   you came back and completed the OAuth grant. If they are absent from",
+              "   Trusted parties, nothing was granted — redo *Works → Search & link*.",
+              "2. **Is your iD in the deposits at all?** Permissions cannot help if",
+              "   publishers never put your iD in the metadata they deposit. Search a recent",
+              "   published DOI at <https://search.crossref.org> and look for your ORCID in",
+              "   the author list. Absent means the fix is upstream: supply your iD in the",
+              "   submission system for every future paper. That single habit is what makes",
+              "   auto-update work without you.", "",
+              "Re-run this audit after the next publication lands. A non-zero count here is",
+              "the proof; until then, Trusted parties is the evidence.", ""]
+    if missing_empl or missing_edu or edu_open:
+        L += ["## ORCID employment and education are thinner than your record", "",
+              "These two sections are what institutional disambiguation matches on — the",
+              "signal that separates you from a namesake when the name alone cannot. They",
+              "are also the sections nothing ever fills for you.", ""]
+        if orc["employment_rows"] or orc["education_rows"]:
+            L += ["Currently on the record:", ""]
+            for r in orc["employment_rows"]:
+                L.append(f"- *employment* — {r['org']} · {r['role'] or 'no role title'}"
+                         f" · {r['start'] or '?'}–{r['end'] or 'present'}")
+            for r in orc["education_rows"]:
+                L.append(f"- *education* — {r['org']} · {r['role'] or 'no degree stated'}"
+                         f" · {r['start'] or '?'}–{r['end'] or 'present'}")
+            L.append("")
+        if missing_empl:
+            L += ["**Affiliations in `config.yaml` with no employment entry.** Each is one",
+                  "form under *Employment → + Add*. Worth the two minutes each: a paper",
+                  "carrying an affiliation your ORCID never mentions is a paper a",
+                  "disambiguator has one less reason to attach to you.", "",
+                  *[f"- [ ] {a}" for a in missing_empl], ""]
+        if missing_edu:
+            L += ["**Degrees in `config.yaml` with no education entry.**", "",
+                  *[f"- [ ] {e}" for e in missing_edu], ""]
+        if edu_open:
+            L += ["**Education entries that state less than they should.** ORCID's education",
+                  "*Role* field is where the degree goes (`PhD`), and an entry with no end",
+                  "year reads as *still enrolled*. Left as-is next to a postdoc employment,",
+                  "the record contradicts itself about what you currently are — and it is a",
+                  "human-obvious inconsistency that a machine reads literally.", ""]
+            for r in edu_open:
+                gaps = ", ".join(x for x in [
+                    "no degree in the Role field" if not r["role"] else "",
+                    "no end year" if not r["end"] else ""] if x)
+                L.append(f"- [ ] {r['org']} — {gaps}")
+            L.append("")
     if other_pages:
         L += ["## Other personal pages not declared on ORCID", "",
               "Not a demand to delete them. A second page is only a problem while nothing",
@@ -736,9 +1143,24 @@ def main() -> None:
         if bad:
             L += ["An alias was stored as one string with its markdown intact "
                   f"(`{bad[0][:60]}`), so it matches nothing. Fix that first.", ""]
-        L += ["Full diff, plus the Author Disambiguator walkthrough that both links your",
-              "papers and clears the 50-edit gate: "
+        L += ["Full diff, plus what the measured paper coverage means for the "
+              "Author Disambiguator pass: "
               "[wikidata_followup.md](wikidata_followup.md).", ""]
+    if wd_cov:
+        n_have = len(wd_cov["present"])
+        L += [f"## Wikidata paper coverage: {n_have} of {wd_cov['total']}", "",
+              "Matched on DOI and arXiv id, not on name. This number matters because it",
+              "decides which Wikidata job is worth doing: relinking author strings on",
+              "items that already exist, or creating the items. At this coverage it is",
+              "the second, and the first cannot pay for the 50 edits QuickStatements",
+              "needs. One trap worth writing down — scholarly articles were moved out of",
+              "Wikidata's main query graph, so a publication query against",
+              "`query.wikidata.org` returns zero rows with a 200, and looks like an",
+              "answer. This uses `query-scholarly.wikidata.org`.", ""]
+        if wd_qs:
+            L += [f"An opt-in batch for the {len(wd_cov['absent'])} missing items is in "
+                  f"`{os.path.relpath(wd_qs, ROOT)}`; read the cautions in "
+                  "[wikidata_followup.md](wikidata_followup.md) before running it.", ""]
     if stray:
         L += [f"## {len(stray)} arXiv papers you own are not in your bibliography", "",
               "Read off `arxiv.org/a/<orcid>`, which is the only place this shows up: the",
@@ -757,6 +1179,14 @@ def main() -> None:
               f"{len(hf['unclaimed'])} to claim, {len(hf['blocked'])} blocked", "",
               "Live counts, not the ones cached in `papers.yaml`. Lists:",
               "[hf_worklist.md](hf_worklist.md).", ""]
+    if o_conf:
+        L += [f"## {len(o_conf)} works on your ORCID are not yours", "",
+              "Imported from the bibliography before the collector checked author names —",
+              "a CV bibliography holds the works it *cites* as well as the works it lists.",
+              "ORCID is read as your authorship claim by Semantic Scholar, OpenAlex and",
+              "publisher systems, so this is worth clearing before anything else on this",
+              "page. One deletion each, put-codes included:",
+              "[orcid_remove.md](orcid_remove.md).", ""]
     if n_typo:
         L += [f"## arXiv metadata misspells your name on {n_typo} papers", "",
               "Upstream of every other surface here — Hugging Face, Semantic Scholar,",
@@ -803,17 +1233,31 @@ def main() -> None:
                   "arxiv_unowned": [p["arxiv"] for p in ax
                                     if reg is not None and p["arxiv"] not in reg],
                   "arxiv_stray": stray,
+                  "orcid_strays_confirmed": [t for t, _p, _k in o_conf],
+                  "orcid_strays_unknown": [t for t, _p, _k in o_unk],
+                  "orcid_autoupdate_works": sum(auto_src.values()),
+                  "orcid_missing_employment": missing_empl,
+                  "orcid_missing_education": missing_edu,
+                  "orcid_education_incomplete": [r["org"] for r in edu_open],
                   "wikidata": wd,
                   "wikidata_gaps": (len(wd_gaps.get("missing") or [])
                                     + len(wd_gaps.get("wrong") or [])
                                     + len(wd_gaps.get("dupes") or [])
                                     + len(wd_gaps.get("bad_aliases") or [])
                                     + len(wd_gaps.get("want_aliases") or []))
-                  if wd_gaps else None})
+                  if wd_gaps else None,
+                  "wikidata_papers_present": (len(wd_cov["present"]) if wd_cov
+                                              else None),
+                  "wikidata_papers_absent": (len(wd_cov["absent"]) if wd_cov
+                                             else None)})
     with open(state_path, "w") as f:
         json.dump(state, f, indent=1)
 
-    wrote = [path, ax_path] + [q for q in (hf_path, name_path, wd_path) if q]
+    rm_path = os.path.join(TASKS, "orcid_remove.md")
+    with open(rm_path, "w") as f:
+        f.write(orcid_remove_file(o_stray, cfg))
+
+    wrote = [path, ax_path, rm_path] + [q for q in (hf_path, name_path, wd_path) if q]
     print("\nwrote " + "\n      ".join(wrote))
     for line in L:
         if line.startswith("| ") and "---" not in line:

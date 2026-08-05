@@ -1,6 +1,6 @@
 # arXiv author-name problems
 
-Checked **105** arXiv records against your name variants: **2 misspelled**, **1 missing you entirely**.
+Checked **105** arXiv records against your name variants: **2 misspelled**, **0 missing you entirely**.
 
 This is upstream of everything else. Hugging Face, Semantic Scholar, OpenAlex
 and Google Scholar all build author identity from arXiv metadata, so a name
@@ -23,15 +23,4 @@ submitting co-author for the paper password instead
 
 - [ ] [`2410.10783`](https://arxiv.org/abs/2410.10783) — reads **Leshem Chosen** — LiveXiv - A Multi-Modal live benchmark based on Arxiv papers
 - [ ] [`2409.02228`](https://arxiv.org/abs/2409.02228) — reads **Leshem Chosen** — Unforgettable Generalization in Language Models
-
-## Missing you entirely — 1
-
-arXiv's author list for these does not contain anything close to your
-name. Either the submitter left you off, or the bibliography entry points
-at the wrong arXiv id — check which before asking anyone to change
-anything. If the paper is genuinely yours, only the submitter can add you;
-an ownership request will fail the name match.
-
-- [ ] [`2507.08924`](https://arxiv.org/abs/2507.08924) — From KMMLU-Redux to Pro: A Professional Korean Benchmark Sui
-      arXiv lists: Seokhee Hong, Sunkyoung Kim, Guijin Son, Soyeon Kim, Yeonjung Hong, Jinsik Lee
 

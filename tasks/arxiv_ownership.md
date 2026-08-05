@@ -1,4 +1,4 @@
-# arXiv: claim ownership of 1 papers
+# arXiv: claim ownership of 0 papers
 
 Registered as author on **105** of **105** arXiv papers.
 Public list: <https://arxiv.org/a/0000-0002-0085-6496>
@@ -35,6 +35,5 @@ that is a different form: <https://arxiv.org/auth/change-author-status>.
 For your own future submissions: share the paper password with every co-author
 in the announcement email. It costs nothing and saves them this page.
 
-## The 1 papers, citation-ordered
+## The 0 papers, citation-ordered
 
-- [ ]    3 cites — [`2507.08924`](https://arxiv.org/abs/2507.08924) From KMMLU-Redux to Pro: A Professional Korean Benchmark Suite for LLM E

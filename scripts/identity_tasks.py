@@ -24,6 +24,7 @@ from __future__ import annotations
 import os
 import re
 import sys
+import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (DATA, ROOT, WD_IDENTIFIERS, load_config, paper_doi,  # noqa: E402
@@ -36,12 +37,26 @@ P = {"instance_of": "P31", "occupation": "P106", "employer": "P108",
      "orcid": "P496", "website": "P856", "google_scholar": "P1960",
      "semantic_scholar": "P4012", "openalex": "P10283", "github": "P2037",
      "dblp": "P2456", "field_of_work": "P101"}
+P.update({"educated_at": "P69", "academic_degree": "P512", "position_held": "P39"})
 Q = {"human": "Q5", "researcher": "Q1650915", "computer_scientist": "Q82594",
      "MIT": "Q49108", "IBM Research": "Q3146518",
+     "MIT-IBM Watson AI Lab": "Q117720866",
      "Weizmann Institute of Science": "Q4182",
+     "Hebrew University of Jerusalem": "Q174158",
+     "postdoctoral researcher": "Q1125292", "PhD": "Q752297",
      "natural language processing": "Q30642", "machine learning": "Q2539"}
-EMPLOYER_Q = {"MIT-IBM Watson AI Lab": Q["MIT"], "IBM Research": Q["IBM Research"],
+# The lab has its own item, so use it rather than its parent university. A P108 of
+# `Massachusetts Institute of Technology` is not wrong, but it is a coarser claim than
+# the one you can make, and it merges you into a 10,000-person institution on exactly
+# the query -- "who works on this at that lab" -- where the finer item is the answer.
+EMPLOYER_Q = {"MIT-IBM Watson AI Lab": Q["MIT-IBM Watson AI Lab"],
+              "IBM Research": Q["IBM Research"],
               "Weizmann Institute of Science": Q["Weizmann Institute of Science"]}
+# Institutions we can resolve for `educated at`. Unlisted ones are emitted with a
+# blank Q-number for you to autocomplete, rather than guessed -- a wrong institution
+# on P69 is a false claim about a degree.
+SCHOOL_Q = {"Hebrew University of Jerusalem": Q["Hebrew University of Jerusalem"]}
+DEGREE_Q = {"PhD": Q["PhD"]}
 
 
 _HAS_DOI = re.compile(r"(?im)^\s*doi\s*=")
@@ -145,6 +160,16 @@ def wikidata_qs(cfg, papers) -> str:
     for a in ident["affiliations"]:
         if a in EMPLOYER_Q:
             add(P["employer"], EMPLOYER_Q[a])
+    # educated at, for degree-granting study only -- a postdoc is P108 above, since no
+    # degree was awarded and the institution was the employer.
+    for e in ident.get("education") or []:
+        q = SCHOOL_Q.get(e.get("institution"))
+        if not q:
+            continue
+        line = f"LAST\t{P['educated_at']}\t{q}"
+        if DEGREE_Q.get(e.get("degree")):
+            line += f"\t{P['academic_degree']}\t{DEGREE_Q[e['degree']]}"
+        L.append(line)
     # Identifiers from the shared table rather than a second hand-kept list: this
     # file, the by-hand guide and the audit's completeness check all have to name the
     # same properties, and three copies is how one of them silently lags the others.
@@ -182,6 +207,12 @@ def wikidata_manual(cfg) -> str:
     for a in ident["affiliations"]:
         if a in EMPLOYER_Q:
             rows.append(("employer", "P108", a, EMPLOYER_Q[a]))
+    for e in ident.get("education") or []:
+        rows.append(("educated at", "P69", e.get("institution", ""),
+                     SCHOOL_Q.get(e.get("institution"), "")))
+        if e.get("degree"):
+            rows.append(("  ↳ qualifier: academic degree", "P512", e["degree"],
+                         DEGREE_Q.get(e["degree"], "")))
     for pid, label, pick in WD_IDENTIFIERS:
         v = pick(cfg)
         if v and pid not in (P["orcid"], P["website"]):
@@ -225,20 +256,61 @@ def wikidata_manual(cfg) -> str:
         L.append(f"| {label} | `{p}` | {val} | {f'`{q}`' if q else ''} |")
     L += ["",
           "Identifier values (ORCID, the author IDs) are plain strings — Wikidata",
-          "validates the format and will refuse a malformed one, which is a useful check",
-          "that the id in `config.yaml` is right.", "",
+          "validates the format and **warns** on a malformed one rather than refusing it,",
+          "so the statement saves and then sits there with a yellow triangle. Two that",
+          "catch people, because the wrong value looks entirely reasonable:", "",
+          "- **DBLP author ID** is the numeric pid (`218/5237`), *not* your name. The",
+          "  property's formatter URL is `dblp.org/pid/$1`, so a name-shaped value builds",
+          "  a link that 404s — which is what the constraint warning is telling you. Read",
+          "  the number off your own dblp page's URL.",
+          "- **Mastodon address** is `user@server`, with **no** leading `@`, even though",
+          "  that is the form your own profile shows you.", "",
+          "### Rows marked *qualifier*", "",
+          "A qualifier is a statement *on* a statement, not a new one: add the parent row",
+          "first, then click *+ add qualifier* underneath it. The academic-degree row",
+          "belongs inside the `educated at` statement, so the item says \"PhD, from there\"",
+          "rather than two disconnected facts.", "",
+          "### educated at vs employer — the one people get wrong", "",
+          "**A postdoc is employment, not education.** You were not enrolled, no degree",
+          "was awarded, and the institution was paying you. It goes in `employer` (P108),",
+          "optionally qualified with `position held` (P39) = *postdoctoral researcher*",
+          "(`Q1125292`); putting it in `educated at` asserts a degree you do not hold. The",
+          "test is just: was a degree awarded? PhD, MSc, BSc → P69. Postdoc, visiting",
+          "researcher, internship, fellowship → P108.", "",
+          "Both are worth having, for different reasons. P108 is what institutional",
+          "disambiguation matches on, so it should agree with ORCID's *Employment* exactly.",
+          "P69 is what connects you to older papers carrying a student affiliation, which",
+          "is the period where a namesake is hardest to tell apart from you.", "",
           "## 4. Record the result", "",
           "Copy the new Q-number from the URL into `config.yaml` → `ids.wikidata`, then",
           "`python scripts/build_site.py --deploy`. It lands in the site's `sameAs` array,",
           "which is what lets an engine fuse the Wikidata item with your pages.", "",
-          "## 5. Worth ten more minutes: link your existing paper items", "",
-          "Some of your papers already exist as Wikidata items, imported from Crossref,",
-          "carrying your name as *author name string* (`P2093`) — a bare string, not a",
-          "link. Replacing those with *author* (`P50`) pointing at your new item is what",
-          "turns the item from an isolated record into a hub that resolves.", "",
-          "The tool for this is Author Disambiguator:",
-          "<https://author-disambiguator.toolforge.org> — search your name, it lists every",
-          "paper item with a matching name string and reassigns them in bulk.", "",
+          "## 5. Your paper items: measure first, because the standard advice may not apply",
+          "",
+          "The advice you will find everywhere is: your papers already exist as items",
+          "auto-imported from Crossref, carrying your name as *author name string*",
+          "(`P2093`) rather than a link, and <https://author-disambiguator.toolforge.org>",
+          "reassigns them to *author* (`P50`) → your item in bulk. Where that holds it is",
+          "the best ten minutes on this page — it turns an isolated item into a hub, and",
+          "the edits carry you to autoconfirmed as a by-product.", "",
+          "**Check whether it holds before planning around it.** `audit_identity.py` looks",
+          "up every paper's DOI and reports how many are in Wikidata; the search below is",
+          "the by-hand version of the other half — items with your name as a *string*.", "",
+          f"<https://www.wikidata.org/wiki/Special:Search?search={urllib.parse.quote('haswbstatement:P2093=' + ident['name'])}>",
+          "",
+          "Wikidata's coverage of CS literature is **sporadic rather than a pipeline**: the",
+          "systematic Crossref imports ran years ago, publisher DOIs fare far better than",
+          "arXiv DataCite ones, and a recent item is as likely to be one interested human's",
+          "work as a bot's. A corpus that is mostly preprints and ACL Anthology papers can",
+          "sit in the single digits — and then there is nothing for Author Disambiguator to",
+          "reassign, no `P2093` strings to upgrade, and no free route to 50 edits.", "",
+          "**If the count is low, that is a decision point, not a failure.** Creating items",
+          "for your own papers is ~2 minutes each and it is the only remaining path to",
+          "autoconfirmed. Worth it if you want a queryable graph of the corpus; not worth it",
+          "merely to unlock QuickStatements, since everything on *this* page is 15 minutes",
+          "by hand and that is where the identity gain is. Either way, link the items that",
+          "*do* exist: open each, and on its `author name string` statement for you, replace",
+          "it with `author` → your Q-number.", "",
           "## Is this legitimate?", "",
           "Yes, and it is worth knowing why so you are not uneasy about it. Wikidata's",
           "notability policy is not Wikipedia's: criterion 2 admits any *clearly",

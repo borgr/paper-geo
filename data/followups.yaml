@@ -1,0 +1,52 @@
+# Dated follow-ups: work that finishes somewhere else, days or months later.
+#
+# Some steps here end with "wait" -- arXiv staff verify an ownership request in a few
+# days, Wikidata autoconfirms an account after four, ORCID-driven author merges at
+# Semantic Scholar and OpenAlex happen on nobody's published schedule. The thing to do
+# next only becomes possible once the wait is over, which makes these the easiest
+# items in the project to lose.
+#
+# This file is the durable record. A conversational reminder does not survive the
+# session it was set in, and a calendar entry loses the reason. Here the date and the
+# reason sit together, in the repo, and `python update.py` surfaces anything due at
+# the top of WORKLIST.md on every run -- so the next run is the reminder.
+#
+# Fields:
+#   due     ISO date. Absolute, never relative -- "in three days" is unreadable later.
+#   what    what you are waiting for
+#   then    what becomes possible, or what to do if it did not land
+#   check   optional shell command that answers it
+#
+# Delete an entry when it is done. Re-run `python update.py --step worklist` after.
+
+followups:
+  - due: 2026-08-11
+    what: >-
+      Wikidata account reaches 4 days old. The other half of autoconfirmed is 50
+      edits, which is the binding constraint, not the age.
+    then: >-
+      QuickStatements becomes available for tasks/wikidata.qs. Only worth chasing if
+      you decide to batch-create paper items; the item's own statements are 15
+      minutes by hand.
+
+  - due: 2026-10-04
+    what: >-
+      ORCID auto-update, and the ORCID-driven author re-clustering at Semantic
+      Scholar and OpenAlex, run on their own schedule.
+    then: >-
+      Re-check whether the duplicate S2 and OpenAlex author records merged
+      themselves. Filing a support ticket before this date may be work you do not
+      need to do.
+    check: python scripts/audit_identity.py
+
+  - due: 2026-11-04
+    what: >-
+      Crossref and DataCite auto-update only fire on newly deposited metadata that
+      already carries your iD, so the proof is a work whose ORCID source is Crossref
+      or DataCite rather than your own name -- which cannot appear until something
+      you publish is deposited.
+    then: >-
+      If the audit's "works added by Crossref/DataCite" row is still 0 and a paper
+      has been published since, the permission never completed or the publisher
+      omitted your iD. Check ORCID > Account settings > Trusted parties first.
+    check: python scripts/audit_identity.py --no-hf --no-names

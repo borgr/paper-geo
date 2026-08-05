@@ -29,6 +29,7 @@ import sys
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 from common import DATA, load_config, read_yaml  # noqa: E402
+from sweep_github import ZENODO_KINDS  # noqa: E402
 
 STEPS = ("collect", "repos", "propose", "ownership", "audit", "validate", "worklist")
 
@@ -85,6 +86,51 @@ def step_validate(cfg, args) -> None:
     run([sys.executable, "scripts/validate.py"])
 
 
+def due_followups() -> list[str]:
+    """Surface anything in data/followups.yaml that has come due.
+
+    The reminder problem, solved the only way that survives: the next run is the
+    reminder. A cron entry or a chat reminder lives in one process and dies with it,
+    and a calendar entry keeps the date but loses the reason -- which for these items
+    is the whole content, since each one is "the wait is over, so now X is possible".
+    Here the date and the reason are in the repo together, and every `update.py`
+    checks them.
+
+    Items not yet due are listed too, compactly. Knowing that nothing is due *and*
+    what is coming is the difference between a clear page and a page that is merely
+    silent.
+    """
+    import datetime
+    items = (read_yaml(os.path.join(DATA, "followups.yaml")) or {}).get("followups") or []
+    if not items:
+        return []
+    today = datetime.date.today()
+
+    def as_date(v):
+        return v if isinstance(v, datetime.date) else datetime.date.fromisoformat(str(v))
+
+    due = sorted((i for i in items if as_date(i["due"]) <= today), key=lambda i: i["due"])
+    later = sorted((i for i in items if as_date(i["due"]) > today), key=lambda i: i["due"])
+    out = []
+    if due:
+        out += [f"## Due now ({len(due)})", "",
+                "From `data/followups.yaml`. Each of these was waiting on something",
+                "outside this repo that should have landed by now.", ""]
+        for i in due:
+            d = as_date(i["due"])
+            out += [f"- [ ] **{d.isoformat()}** ({(today - d).days} days ago) — "
+                    f"{' '.join(str(i['what']).split())}",
+                    f"      → {' '.join(str(i.get('then') or '').split())}"]
+            if i.get("check"):
+                out += [f"      `{i['check']}`"]
+        out += [""]
+    if later:
+        out += ["## Waiting on the outside world", "",
+                *[f"- **{as_date(i['due']).isoformat()}** — "
+                  f"{' '.join(str(i['what']).split())}" for i in later], ""]
+    return out
+
+
 def step_worklist(cfg, args) -> None:
     """Report what only a human can do, ranked by citations."""
     papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers", [])
@@ -107,6 +153,7 @@ def step_worklist(cfg, args) -> None:
     lines = ["# What still needs a human", "",
              "Regenerate with `python update.py`. Ordered by leverage.",
              "Live state of the external surfaces: `tasks/identity_audit.md`.", ""]
+    lines += due_followups()
 
     n_strays = sum(1 for p in papers
                     if p.get("s2_author_record") in
@@ -350,6 +397,18 @@ def step_worklist(cfg, args) -> None:
             lines.append(f"- [ ] `data/sidecars/{p['slug']}.md`  ({p.get('citations') or 0} cites) "
                          f"{p['title'][:56]}")
         lines.append("")
+
+    # Artifacts that are not papers and have no paper: a tool or a guide nobody can
+    # cite because there is nothing to cite. Listed low, because a Zenodo DOI is the
+    # cheapest item here and also the least likely to change what an engine returns.
+    zcand = [r for r in repos if not r.get("skip") and not r.get("paper_slug")
+             and r.get("kind") in ZENODO_KINDS and not r.get("zenodo_doi")]
+    if zcand:
+        lines += [f"## Artifacts with no citation route ({len(zcand)})", "",
+                  "Tools and guides with no linked paper. A Zenodo release DOI gives each a",
+                  "citable, archived identity and a DataCite record that reaches OpenAlex",
+                  "and your ORCID works list — so they stop being GitHub-only objects.",
+                  "Steps, and the honest case for skipping some: `tasks/zenodo.md`.", ""]
 
     pend = [r for r in repos if not r.get("reviewed") and not r.get("skip")]
     if pend:

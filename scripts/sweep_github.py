@@ -25,8 +25,8 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, load_config, norm_title, paper_doi, read_yaml,  # noqa: E402
-                    write_yaml)
+from common import (BUILD, DATA, ROOT, load_config, norm_title, paper_doi,  # noqa: E402
+                    read_yaml, write_yaml)
 
 # Controlled vocabulary: GitHub topics must be lowercase, dashed, <=50 chars.
 # Matched case-insensitively against repo name + description + README.
@@ -134,9 +134,15 @@ def link_papers(repos: list[dict], papers: list[dict]) -> dict[str, dict]:
     return out
 
 
-def citation_cff(paper: dict, repo: dict, cfg) -> str:
+def citation_cff(paper: dict, repo: dict, cfg, entry: dict | None = None) -> str:
     """CITATION.cff renders GitHub's 'Cite this repository' widget and is
-    machine-readable, giving a bidirectional repo<->paper link."""
+    machine-readable, giving a bidirectional repo<->paper link.
+
+    `repo` is live GitHub state; `entry` is the repos.yaml intent, which is where a
+    hand-recorded Zenodo DOI lives. Two arguments rather than one because only the
+    second survives a rerun.
+    """
+    entry = entry or {}
     ident = cfg["identity"]
     lines = ["cff-version: 1.2.0",
              'message: "If you use this software or its results, please cite the paper below."',
@@ -148,7 +154,13 @@ def citation_cff(paper: dict, repo: dict, cfg) -> str:
         lines.append(f'    family-names: "{family}"')
         if a == ident["name"] and ident.get("orcid"):
             lines.append(f'    orcid: "https://orcid.org/{ident["orcid"]}"')
-    lines += [f'title: "{repo["name"]}"', "preferred-citation:",
+    lines.append(f'title: "{repo["name"]}"')
+    # The repo's own DOI at top level, the paper's under preferred-citation. Both,
+    # not one: the widget hands out the paper citation, which is what you want cited,
+    # while the concept DOI still makes the software itself resolvable and archived.
+    if entry.get("zenodo_doi"):
+        lines.append(f'doi: "{entry["zenodo_doi"]}"')
+    lines += ["preferred-citation:",
               "  type: " + ("conference-paper" if paper.get("type") == "inproceedings"
                             else "article"),
               f'  title: "{(paper.get("title") or "").replace(chr(34), chr(39))}"',
@@ -174,7 +186,72 @@ def citation_cff(paper: dict, repo: dict, cfg) -> str:
 # from the existing repos.yaml rather than regenerated, so a rerun never clobbers
 # a decision someone already made. Everything else is refreshed from GitHub.
 _OWNED = ("description", "topics", "homepage", "kind", "generic_gloss",
-          "write_citation_cff", "skip", "reviewed", "llm_proposal", "notes")
+          "write_citation_cff", "skip", "reviewed", "llm_proposal", "notes",
+          "zenodo_doi")
+
+
+# Repo kinds where a Zenodo DOI is the only citation route that will ever exist.
+# A `paper-code` repo already has one -- the paper -- and a second citable object
+# splits the citations it would have received, which is the argument against
+# archiving code that a paper already covers. These have no paper to split from.
+ZENODO_KINDS = {"tool", "guide"}
+
+
+def zenodo_candidates(cfg) -> tuple[str, int]:
+    """Repos worth a Zenodo DOI, which is a narrower set than "repos".
+
+    The useful question is not "is this good work" but "if someone wanted to cite
+    this, what would they cite". For a repo attached to a paper the answer already
+    exists. For a tool or a guide with no paper there is no answer at all, and a
+    Zenodo DOI is what creates one: a fixed version, an archived snapshot that
+    survives the repo being renamed or deleted, and a DataCite record that
+    propagates into OpenAlex and ORCID -- which is the part that matters here,
+    because it puts the artifact in the same graph as your papers instead of in a
+    separate one that only GitHub can see.
+
+    Deliberately not automated further. Zenodo's GitHub integration only archives a
+    *release*, so the human step is tagging one, and a repo you would not tag is a
+    repo you should not archive.
+    """
+    repos = (read_yaml(os.path.join(DATA, "repos.yaml")) or {}).get("repos", [])
+    cand = [r for r in repos
+            if not r.get("skip") and not r.get("paper_slug")
+            and r.get("kind") in ZENODO_KINDS
+            and not r.get("zenodo_doi")]
+    tasks = os.path.join(ROOT, "tasks")
+    os.makedirs(tasks, exist_ok=True)
+    path = os.path.join(tasks, "zenodo.md")
+    L = ["# Zenodo: give the artifacts with no paper a citable identity", "",
+         f"{len(cand)} repos qualify. The filter is `kind` in "
+         f"{sorted(ZENODO_KINDS)} **and** no linked paper: a repo whose paper exists",
+         "already has a citation route, and minting a second one splits the citations",
+         "between two identifiers.", "",
+         "Whether anyone cites a tool or a guide is a fair objection, and the honest",
+         "answer is that some will not. The DOI still does two things that do not",
+         "depend on being cited: it makes the artifact resolvable after the repo moves",
+         "or disappears, and it puts a record into DataCite, which flows to OpenAlex",
+         "and to your ORCID works list — so the artifact joins the same graph as your",
+         "papers rather than living only on GitHub.", "",
+         "Do this once per repo, at a moment when it is in a state you would not mind",
+         "being permanent — the archive is a snapshot of the release, not of `main`:",
+         "", "1. <https://zenodo.org/account/settings/github/> — sign in **with GitHub**",
+         "   (a separate Zenodo account cannot see your repos), flip the repo on.",
+         "2. Tag a release on GitHub. Nothing is archived until you do; the switch only",
+         "   arms the webhook.",
+         "3. Zenodo mints two DOIs. Use the **concept DOI** everywhere — it always",
+         "   resolves to the newest version, so it does not go stale on the next release.",
+         "4. Fix the record's metadata once: authors with ORCIDs, a license, and the",
+         "   repo URL under *Related identifiers*.",
+         "5. Put the concept DOI in `data/repos.yaml` as `zenodo_doi:` — that both",
+         "   removes it from this list and lets `CITATION.cff` carry it.", ""]
+    for r in cand:
+        L.append(f"- [ ] **{r['repo']}** ({r.get('kind')}) — "
+                 f"{(r.get('description') or '')[:80]}")
+    if not cand:
+        L.append("Nothing outstanding.")
+    with open(path, "w") as f:
+        f.write("\n".join(L) + "\n")
+    return path, len(cand)
 
 
 def phase_propose(cfg) -> None:
@@ -233,6 +310,8 @@ def phase_propose(cfg) -> None:
     if gone:
         print(f"  no longer present (kept in file): {', '.join(gone)}")
     print(f"  reviewed (frozen):  {sum(1 for r in proposal if r.get('reviewed'))}")
+    zpath, nz = zenodo_candidates(cfg)
+    print(f"  artifacts with no citation route: {nz} -> {os.path.relpath(zpath, ROOT)}")
     need = [r["repo"] for r in proposal if not r.get("topics") or not r.get("description")]
     print(f"  need topics or a description: {len(need)}")
     if need:
@@ -304,7 +383,7 @@ def phase_apply(cfg, yes: bool) -> None:
             if "CITATION.cff" in ch:
                 p, repo = papers.get(r["paper_slug"]), repos.get(name)
                 if p and repo:
-                    body = citation_cff(p, repo, cfg)
+                    body = citation_cff(p, repo, cfg, r)
                     path = os.path.join(BUILDCFF := os.path.join(DATA, "..", "build",
                                                                  "citation_cff"), f"{r['paper_slug']}.cff")
                     os.makedirs(BUILDCFF, exist_ok=True)

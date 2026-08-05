@@ -74,7 +74,14 @@ def pages(results) -> None:
         rec(results, "site built", False, "run scripts/build_site.py")
         return
     files = glob.glob(os.path.join(SITE, "papers", "*", "index.html"))
-    rec(results, "site built", bool(files), f"{len(files)} paper pages")
+    # A redirect stub left behind by a merge is not a content page: it has no
+    # abstract, no highwire tags and almost no words on purpose. Counted separately
+    # rather than skipped silently, so a build that starts emitting hundreds of them
+    # is visible instead of just quietly shrinking the checked set.
+    stubs = [f for f in files if 'http-equiv="refresh"' in open(f).read()]
+    files = [f for f in files if f not in set(stubs)]
+    rec(results, "site built", bool(files), f"{len(files)} paper pages"
+        + (f" (+{len(stubs)} redirects from retired URLs)" if stubs else ""))
 
     bad_json, no_hw, no_abs, needs_js, no_canon = [], [], [], [], []
     for f in files:

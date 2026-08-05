@@ -109,11 +109,54 @@ def selftest() -> list[str]:
     if args != ["-f", "names[]=a-b", "-f", "names[]=c"]:
         errs.append(f"sweep_github.gh_topics_args regressed: {args!r} -- a "
                     "comma-joined value is rejected 422 by the topics endpoint")
-    from common import clean_latex, clean_bibtex
+    from common import clean_latex, clean_bibtex, norm_title, slugify
     if clean_latex("{DORA} The $x$ Explorer") != "DORA The x Explorer":
         errs.append("common.clean_latex regressed on braces or math")
+    # A bibliography entry whose `{\textdollar}` lost its backslash to a tab leaves the
+    # word `extdollar` behind, and that word reached a published URL. It has to vanish
+    # from all three derived strings or they disagree about which paper this is -- the
+    # first fix cleaned only the display title, so the slug kept it.
+    mangled = "{ extdollar}Q2{ extdollar}: Evaluating"
+    for fn, want in ((clean_latex, "Q2: Evaluating"), (slugify, "q2-evaluating"),
+                     (norm_title, "q2evaluating")):
+        if fn(mangled) != want:
+            errs.append(f"common.{fn.__name__} leaves mangled LaTeX in: "
+                        f"{fn(mangled)!r} (want {want!r})")
+    if slugify("extra credit") != "extra-credit":
+        errs.append("common.strip_mangled is eating ordinary words starting with 'ext'")
+    # Published BibTeX is the exception: repair the command rather than delete it, or
+    # the entry someone copies has a literal tab in it and renders `extdollarQ2`.
+    fixed = clean_bibtex("@a{k,\n  title={{ extdollar}Q2{ extdollar}: T}\n}")
+    if "extdollar" not in fixed or "\\textdollar" not in fixed:
+        errs.append(f"common.clean_bibtex no longer repairs mangled LaTeX: {fixed!r}")
     if "pretitle" in clean_bibtex("@a{k,\n  pretitle={\\COL},\n  title={T}\n}"):
         errs.append("common.clean_bibtex no longer strips pretitle")
+    # A retitled preprint shares its arXiv id with the published version and nothing
+    # else. The title-similarity pass scores that pair near zero, so identifier
+    # equality has to merge it on its own -- it did not, once, and the corpus carried
+    # two pages for one paper with the citations split between them.
+    from collect import dedupe
+    out, n_merged, _flagged = dedupe([
+        {"title": "All Neural Networks are Created Equal", "arxiv": "1905.10854",
+         "citations": 1},
+        {"title": "Let's Agree to Agree: Neural Networks Share Classification Order",
+         "arxiv": "1905.10854", "citations": 64, "venue": "ICML"},
+        {"title": "Something Else Entirely", "arxiv": "2104.08202"},
+    ])
+    if len(out) != 2 or n_merged != 1:
+        errs.append(f"collect.dedupe stopped merging on a shared arXiv id: "
+                    f"{len(out)} records out, {n_merged} merged (want 2, 1)")
+    elif max(p.get("citations") or 0 for p in out) != 64:
+        errs.append("collect.dedupe merged the arXiv pair but lost the citation count")
+    # A force_merge group whose aliases now normalize to one record used to fold that
+    # record into itself and then drop it -- one correct human decision deleted one
+    # paper from the corpus, with no warning anywhere.
+    from collect import apply_overrides
+    kept = apply_overrides([{"title": "{ extdollar}Q2{ extdollar}: T", "key": "k1"}],
+                           {"force_merge": [["Q2: T", "{ extdollar}Q2{ extdollar}: T"]]})
+    if len(kept) != 1:
+        errs.append(f"collect.apply_overrides dropped a paper on a self-merging "
+                    f"force_merge group: {len(kept)} records out (want 1)")
     return errs
 
 

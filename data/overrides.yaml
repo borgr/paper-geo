@@ -14,6 +14,14 @@
 force_merge:
   - - "Q\\({}^{\\mbox{2}}\\): Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question Generation and Question Answering"
     - "{ extdollar}Q2{ extdollar}: Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question Generation and Question Answering"
+  # A retitle between arXiv v1 and the ICML camera-ready. arxiv.org/abs/1905.10854v1
+  # gives "All Neural Networks are Created Equal" as its citation_title, so the two
+  # are one paper -- but the v1-titled record reaches us from Semantic Scholar with no
+  # arXiv id and no DOI, so the identifier pass has nothing to match on and the titles
+  # share almost no words. Left alone it was a 32-word page with 1 citation next to the
+  # real page's 64, which is the split-authority failure this file exists to stop.
+  - - "Let's Agree to Agree: Neural Networks Share Classification Order on Real Datasets"
+    - "All Neural Networks are Created Equal"
   - - "Genie: Achieving Human Parity in Content-Grounded Datasets Generation"
     - "Achieving Human Parity in Content-Grounded Datasets Generation"
   - - "The Mighty ToRR: A Benchmark for Table Reasoning and Robustness"
@@ -27,6 +35,36 @@ force_distinct:
     - "Findings of the Second {B}aby{LM} Challenge: Sample-Efficient Pretraining on Developmentally Plausible Corpora"
   - - "Call for Papers - The BabyLM Challenge: Sample-efficient pretraining on a developmentally plausible corpus"
     - "[Call for Papers] The 2nd BabyLM Challenge: Sample-efficient pretraining on a developmentally plausible corpus"
+
+# Papers that ARE yours even though no form of your name appears in the author list
+# the sources give us. The collector excludes those by default, because the
+# bibliography it reads is a CV bibliography and also contains the works the CV
+# *cites* -- and publishing a canonical page, or an ORCID authorship claim, for
+# someone else's paper is far more expensive to undo than a missing page is to add.
+#
+# List a title here only when the exclusion is a metadata failure rather than the
+# truth: a truncated author list, a consortium or shared-task report credited to a
+# group, a source that lost your name. Everything listed is kept verbatim, so this
+# is also the record of *why* -- keep the comment next to the entry.
+#
+# `build/not_mine.json` is the current exclusion list, rewritten every run.
+also_mine: []
+
+# Papers to add by bare arXiv id, because the bibliography has not caught up yet.
+#
+# The bibliography stays the source of truth, and the real fix for each of these is
+# one entry added upstream in `borgr/publications/enhanced.bib` -- then delete the id
+# from here. This list only covers the interval, because until it lands the paper has
+# no page at all: nothing to cite, nothing in the sitemap, nothing on the home page.
+#
+# You do not have to hunt for candidates. `audit_identity.py` diffs arXiv's authority
+# records (papers arXiv agrees you *own*) against this corpus and reports the
+# difference as `arxiv_stray` -- a paper appearing there is either a bibliography gap
+# to fix upstream, or an ownership claim on a paper that is not yours to withdraw.
+# Quote the ids. Unquoted, `2604.12843` is a YAML float, and the digits after the
+# decimal point are silently reformatted.
+extra_arxiv:
+  - "2604.12843"   # arXiv says you own it; absent from enhanced.bib. Add it upstream.
 
 # Records to drop entirely: metadata damage rather than real papers.
 # "Journal of Memory and Language" is a venue name that a source extracted as a
