@@ -125,8 +125,14 @@ def step_audit(cfg, args) -> None:
 
 
 def step_validate(cfg, args) -> None:
-    """Fail loudly on a malformed hand edit or a bad model proposal."""
-    run([sys.executable, "scripts/validate.py"])
+    """Fail loudly on a malformed hand edit or a bad model proposal.
+
+    Fixes the corpus sizes stated in the docs rather than reporting them: one new
+    paper made seven prose sentences wrong at once, which is a chore, not a
+    judgement. The three sentences whose count feeds a sum are still reported,
+    because there the arithmetic has to be redone by someone who can read it.
+    """
+    run([sys.executable, "scripts/validate.py", "--fix-counts"])
 
 
 def step_render(cfg, args) -> None:

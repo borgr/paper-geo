@@ -534,8 +534,27 @@ DOC_COUNTS = (
 )
 
 
-def check_doc_counts(papers: list[dict], repos: list[dict]) -> list[str]:
-    """Catch a doc that still states an old corpus size. See DOC_COUNTS."""
+def count_pattern(template: str) -> re.Pattern:
+    """The same sentence with any number in the count's place.
+
+    Built from the template rather than written twice, so the pattern cannot drift
+    from the string the check looks for.
+    """
+    parts = re.split(r"(\{papers\}|\{repos\})", template)
+    return re.compile("".join(r"\d+" if p in ("{papers}", "{repos}") else re.escape(p)
+                              for p in parts))
+
+
+def check_doc_counts(papers: list[dict], repos: list[dict], fix: bool = False) -> list[str]:
+    """Catch a doc that still states an old corpus size. See DOC_COUNTS.
+
+    With `fix`, rewrites the number in place for the lines that carry nothing but the
+    count -- a new paper is a fact about the corpus, and retyping it in seven files is
+    the kind of chore that gets skipped until the docs are wrong. The lines marked with
+    a note are left as errors on purpose: their number feeds an arithmetic result on the
+    same line, so substituting it without redoing the sum is how a page becomes
+    confidently wrong.
+    """
     counts = {"papers": len(papers), "repos": len(repos)}
     if not counts["papers"] or not counts["repos"]:
         return []            # a failed read is already reported by the schema pass
@@ -545,8 +564,17 @@ def check_doc_counts(papers: list[dict], repos: list[dict]) -> list[str]:
         if not os.path.exists(path):
             continue
         want = template.format(**counts)
-        if want in open(path).read():
+        text = open(path).read()
+        if want in text:
             continue
+        if fix and not note:
+            fixed, n = count_pattern(template).subn(want, text)
+            if n:
+                with open(path, "w") as f:
+                    f.write(fixed)
+                print(f"  {fname}: updated {n} sentence"
+                      f"{'s' * (n != 1)} to {want!r}")
+                continue
         tail = f"; {note}" if note else ""
         errs.append(f"{fname}: stale corpus size -- expected {want!r}. Update the "
                     f"sentence (or DOC_COUNTS in scripts/validate.py){tail}")
@@ -557,6 +585,9 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--strict", action="store_true",
                     help="exit non-zero on any problem (use in CI)")
+    ap.add_argument("--fix-counts", action="store_true",
+                    help="rewrite the corpus sizes stated in the docs (not the "
+                         "lines whose number feeds a sum -- those stay errors)")
     args = ap.parse_args()
 
     have_js = True
@@ -585,7 +616,8 @@ def main() -> None:
     errs += check_name_lists()
     errs += check_affiliations()
     errs += check_doc_counts((docs.get("papers") or {}).get("papers", []),
-                             (docs.get("repos") or {}).get("repos", []))
+                             (docs.get("repos") or {}).get("repos", []),
+                             fix=args.fix_counts)
 
     if not have_js:
         print("note: jsonschema not installed -- using the built-in subset of checks")
