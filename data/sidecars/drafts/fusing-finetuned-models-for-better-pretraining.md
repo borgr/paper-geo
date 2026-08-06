@@ -48,6 +48,20 @@ claims:
     identification is exact for the averaging function used here, since the mean of one vector
     is that vector.
   evidence: Section 1, Figure 1
+- id: assumes-only-the-weights
+  text: 'What defines the setting is the access assumption: fusing needs only the published
+    weights -- not the source tasks'' training data, not the target data, and no training
+    compute beyond the target-task finetuning itself. The paper is explicit that this is why
+    it does not compete with massively multitask learning, which is known to improve consistently
+    as tasks are added but requires all the source data and the compute to train on it.'
+  scope: So 'fusing is better than intertraining' is a claim within that budget, and no experiment
+    here compares fusing against multitask or massively multitask training. The paper builds
+    its intuition on those results rather than testing against them. It also positions methods
+    that further pretrain on the target domain or task (Gururangan et al. 2020) and task-clustering
+    approaches (Shnarch et al. 2020) as complementary rather than competing, since they apply
+    to whatever base model you start from -- fusing composes with them, but that composition
+    is not measured either.
+  evidence: Section 5, Section 1, Section 3.2
 - id: beats-the-pretrained-baseline-except-on-twitter
   text: Fusing all available finetuned models beat starting from the pretrained model on the
     General and NLI target families -- 68.12, 68.96 and 64.17 accuracy against 63.81 on General,
@@ -74,7 +88,9 @@ claims:
     General family selects MNLI, previously reported as the best intermediate task for that
     set. So the comparison is fusing-without-selection against intertraining-with-a-good-selection.
     Which intermediate task serves a given target is a separate open research question, and
-    the paper does not measure how often the heuristic picks well.
+    the paper does not measure how often the heuristic picks well. The same heuristic selects
+    ESNLI and MNLI for the NLI family and Sentiment Analysis and Emoji for Twitter, with SST2
+    substituting for MNLI when MNLI is itself the target.
   evidence: Table 1, Section 3.3, Section 4
 - id: fusing-pairs-beats-intertraining
   text: 'Choosing which models to fuse changes the result dramatically, and fusing two models
@@ -176,18 +192,27 @@ claims:
     treats them as reusable initializations.'
   evidence: Appendix A, Section 1
 - id: experimental-design
-  text: 'The experiments span 30 English text-classification datasets in three families chosen
-    to separate different kinds of relatedness: a diverse benchmark family (GLUE and SuperGLUE
-    classification tasks), a same-task family (natural language inference), and a same-domain
-    family (the 11 TweetEval datasets), with every combination of source family and target
-    family tested and the target task always excluded from the source models.'
-  scope: Text classification only, chosen for ease of evaluation, with the assumption -- stated
-    as an assumption -- that the tasks are diverse enough for the conclusions to extend elsewhere.
-    One pretrained model (T5v1.1-small), picked partly because it was not trained on any task
-    beyond its pretraining objective, which would otherwise contaminate the comparison. Because
-    GLUE and SuperGLUE test sets are held out, test sets were carved from the training data
-    (1K examples or 10%, whichever is smaller), so absolute accuracies are not comparable
-    to published GLUE numbers.
+  text: 'The experiments span three families of English text-classification datasets, chosen
+    to separate different kinds of relatedness: a diverse benchmark family (the GLUE and SuperGLUE
+    classification tasks, excluding the regression and test-only ones), a same-task family
+    (natural language inference), and a same-domain family (TweetEval), with every combination
+    of source family and target family tested and the target task always excluded from the
+    set of source models.'
+  scope: 'Text classification only, chosen for ease of evaluation, with the assumption --
+    stated as an assumption -- that the tasks are diverse enough for the conclusions to extend
+    elsewhere. One pretrained model (T5v1.1-small), picked partly because it was not trained
+    on any task beyond its pretraining objective, which would otherwise contaminate the comparison;
+    the finetuning hyperparameters are cited to ''the original paper (Abnar et al., 2021)'',
+    a reference to check before reproducing. Early stopping evaluated every 50 batches with
+    patience 50 and minimum improvement 0.001, AdamW without weight decay except in Section
+    4.1. Counts: the paper says 30 datasets and 11 Twitter datasets, while Appendix B names
+    14 General (8 GLUE, 6 SuperGLUE), 6 NLI and 7 TweetEval tasks -- the 11 reconciles if
+    TweetEval''s stance task is counted as its separate targets, and the 30 depends on how
+    the four datasets that appear in both the General and NLI lists are counted, so treat
+    both figures as approximate. Because GLUE and SuperGLUE test sets are held out, test sets
+    were carved from the training data (1K examples or 10%, whichever is smaller), and for
+    MNLI the mismatched validation set is the test set and the matched one the validation
+    set -- so absolute accuracies are not comparable to published GLUE numbers.'
   evidence: Section 3.1, Section 3.2, Section 3.4, Appendix B
 - id: concurrent-merging-work
   text: Two concurrent papers proposed recycling finetuned models by combining weights --
@@ -296,6 +321,14 @@ qa:
   answers:
   - finetuned-models-are-abundant
   - fusing-by-weight-averaging
+- q:
+  - Is merging finetuned models better than multitask training?
+  - Do I need the original training data to merge models?
+  - Can I combine model merging with domain-adaptive pretraining?
+  answers:
+  - assumes-only-the-weights
+  - fusing-by-weight-averaging
+  - concurrent-merging-work
 misreadings:
 - '''Fusing always beats pretraining'' is stronger than the results. The paper''s own Table
   1 has an exception: on the Twitter target family every fused base model scored below the
@@ -331,6 +364,15 @@ misreadings:
   deviations of 1.21-2.27 for fusing against 3.64 for the pretrained baseline are across 5
   random seeds of finetuning on the target task; they say the base model makes training more
   reproducible, not that the fused weights are themselves better behaved.
+- Fusing was not shown to beat multitask learning. The paper says explicitly that it does
+  not compete with massively multitask training, because that needs the source data and the
+  compute to train on it while fusing needs only the published weights -- and it reports no
+  experiment against either multitask or massively multitask baselines. The comparison being
+  made is against other choices of base model at zero extra training cost.
+- The dataset counts are approximate. The text says 30 datasets and 11 Twitter datasets; Appendix
+  B names 14 General, 6 NLI and 7 TweetEval tasks, four of which appear in two families. The
+  11 reconciles if TweetEval's stance task is counted as its separate targets. Nothing in
+  the results depends on the totals, but do not quote '30 datasets' as 30 distinct ones.
 terminology:
   fusing: 'This paper''s term: combining several models finetuned from a common pretrained
     checkpoint into a single new base model, here by averaging their weights. A base model
