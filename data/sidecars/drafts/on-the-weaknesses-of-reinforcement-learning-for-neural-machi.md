@@ -37,8 +37,9 @@ claims:
     but the paper reports it as very stable across metrics, trials and pretrained models,
     with several other reward functions landing at 30.73-30.84. The conclusion drawn is that
     there is 'room to suspect' the gain 'may partially result from' reward-independent factors,
-    not that the reward never matters.
-  evidence: Section 5.2, footnote 4, Section 7
+    not that the reward never matters. Appendix D shows the constant-reward run's rank-shift
+    pattern directly, and reports it as similar in trend to the informative-reward one.
+  evidence: Section 5.2, footnote 4, Section 7, Appendix D (Figures 7 and 8)
 - id: peakiness-effect
   text: 'The paper names and demonstrates the peakiness effect (PkE): early in RL fine-tuning,
     probability mass concentrates on the tokens the pretrained model already ranked highest,
@@ -56,6 +57,34 @@ claims:
     figures come from the simulation and the NMT run respectively -- not the same quantity
     measured twice.'
   evidence: Section 3, Section 4.1, Figure 1, Section 4.2, Figure 3
+- id: policy-collapses-to-determinism
+  text: 'With an informative reward the simulated policy does not merely get peakier, it collapses:
+    average entropy falls from 3 to about 0.001 over 100K steps, effectively a deterministic
+    policy, and the peakiness appears within a few hundred steps -- before any effect attributable
+    to the reward''s content becomes prominent.'
+  scope: A simulation figure, not an NMT one, and the gap between the two is the point the
+    paper draws on. The single-softmax simulation has a noise-free deterministic reward and
+    a learning rate of 0.1; the real NMT run's entropy fell only from 3.45 to 2.82, which
+    the paper reads as evidence that the procedure did not converge -- had it converged, entropy
+    should have dropped either to 0 (overfitting) or to the entropy of the genuinely valid
+    next tokens. The collapse is also stronger under the informative reward than under the
+    constant one, so the reward does contribute to peakiness; what the constant-reward condition
+    shows is that it is not required for it.
+  evidence: Section 4.1 (Results), Section 4.2 (Results), Figure 2
+- id: one-target-token-assumption
+  text: The analysis assumes exactly one valid target token per context, which the paper justifies
+    on the grounds that MT systems are in practice trained against a single reference translation,
+    and it treats a sparse sentence-level reward as equivalent to a uniform token-level one
+    -- which is what licenses studying a single softmax layer in place of a sequence model.
+  scope: Both assumptions are stated up front (citing Schulz et al. 2018 for the single reference)
+    rather than tested, and they cut in two directions. They make the setting harder than
+    reality -- where several high-ranked tokens may all be acceptable continuations, so a
+    target token at rank 4 is not necessarily a translation error -- and they also make the
+    paper's predictions optimistic in other respects, since the simulated reward is deterministic
+    where a real one is approximated by Monte Carlo (20 sentence rolls per word here). The
+    token-level reward in the NMT run is an expected-BLEU approximation, not a true token
+    reward.
+  evidence: Section 2.1, Section 4.1, Section 4.2, Appendix C
 - id: improvement-only-near-the-top
   text: 'RL is likely to help only where the pretrained model is already nearly right: in
     controlled simulations Reinforce made the target token the mode within 100K steps only
@@ -293,6 +322,22 @@ qa:
   - explains-the-temperature-result
   - peakiness-effect
   - mt-is-a-hard-rl-setting
+- q:
+  - Does RL fine-tuning reduce a model's output diversity?
+  - Why does entropy collapse when you fine-tune a language model with RL?
+  - Did the RL run in this paper actually converge?
+  answers:
+  - policy-collapses-to-determinism
+  - peakiness-effect
+  - sample-inefficiency
+- q:
+  - Does this critique of RL apply when a sentence has many valid translations?
+  - What does the paper assume about the reference translation?
+  - Does the analysis hold for sentence-level BLEU rewards rather than token-level ones?
+  answers:
+  - one-target-token-assumption
+  - mt-is-a-hard-rl-setting
+  - improvement-only-near-the-top
 misreadings:
 - 'This is not a finding that RL does not work for MT. The paper''s own RL run improved BLEU
   from 30.31 to 30.73, and reports that improvement as very stable across metrics, trials
@@ -333,6 +378,17 @@ misreadings:
   off-policy methods, be wary of adding the reference to the sample -- are reasoned from the
   theory and from other people's results, not ablated here. The paper reports no experiment
   isolating any of them.
+- The 'rank 2 or 3 or nothing' result is about the rank of a single reference token, under
+  the paper's stated assumption that exactly one target token is valid per context. Where
+  several continuations are acceptable, a reference token at rank 4 need not mean the model
+  is wrong there -- so the assumption makes the setting harder than translation really is,
+  at the same time as the noise-free simulated reward makes the paper's convergence predictions
+  optimistic. The paper states both, and neither is tested here.
+- That the constant-reward NMT run matched the BLEU gain does not mean nothing differed between
+  the two runs. What the paper reports as matching is BLEU (30.72 against 30.73) and the trend
+  of the target tokens' rank shifts (Appendix D). The informative reward does produce a stronger
+  peakiness effect than the constant one in simulation -- the argument is that the reward
+  is not necessary for the gain, not that it does nothing.
 terminology:
   peakiness effect (PkE): 'This paper''s coined term: the increase in probability mass on
     the most probable tokens during early RL fine-tuning, which occurs even when the reward
@@ -357,4 +413,19 @@ terminology:
     supplies. The paper''s central quantity is where the pretrained model ranks it, because
     that rank predicts whether RL can promote it: rank 2 or 3 yes, rank 4 or below effectively
     no.'
+  exposure bias: 'One of the two standard motivations for RL in MT, alongside optimizing non-differentiable
+    metrics: a model trained on gold prefixes never sees its own mistakes during training,
+    so it cannot recover from them at test time. Worth keeping in view because this paper
+    argues against how well current RL practice delivers on that motivation, not against the
+    motivation.'
+  expected BLEU reward: 'The reward in the NMT experiments, following Yang et al. (2018):
+    sample suffixes for the sentence and average their BLEU against the reference, giving
+    a Monte-Carlo token-level approximation (20 sentence rolls per word here). So the ''token-level
+    reward'' being optimized is itself an estimate, which is why the paper calls its deterministic
+    simulated reward the optimistic case.'
+  contrastive effect: 'The extra term in CMRT''s gradient, proportional to the gradient of
+    log Z(S): because Q is supported only on the k sampled tokens, raising one token''s weight
+    costs another sampled token rather than the whole vocabulary, so unsampled tokens do not
+    lose mass. It is why CMRT shows only a small peakiness effect, and it may improve the
+    convergence rate.'
 ---
