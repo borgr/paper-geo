@@ -37,6 +37,7 @@ import argparse
 import glob
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -205,6 +206,65 @@ def due_followups() -> list[str]:
                      if (i.get("owner") or "human") == "agent" else "")
                   for i in later], ""]
     return out
+
+
+def apply_declines(lines: list[str]) -> list[str]:
+    """Drop what data/declines.yaml says has been decided against.
+
+    The worklist is generated from live state, which means it cannot tell "not done
+    yet" from "looked at and declined" -- so a decision to skip something reappears
+    every run as though it were still open. Two of the sections are like this by
+    design: the 64 missing journal-refs are worth doing for the top dozen and not the
+    tail, and the OpenAlex duplicates are best left to resolve themselves. A list that
+    keeps asking for what you have already ruled out is a list you stop reading.
+
+    A post-filter over the rendered markdown rather than a check inside each of the
+    fifteen emitters: one place to read, and a decline is matched on the text the
+    reader saw, so what it removes is exactly what was there.
+
+      sections: ["OpenAlex"]        # any heading containing this, and its body
+      items:    ["2306.01708"]      # any `- [ ]` line containing this
+
+    What was hidden is reported at the bottom of the file rather than silently
+    dropped: a decline is a decision, and a decision that leaves no trace is
+    indistinguishable from a bug that ate a task.
+    """
+    d = read_yaml(os.path.join(DATA, "declines.yaml")) or {}
+    secs = [s for s in (d.get("sections") or []) if s]
+    items = [i for i in (d.get("items") or []) if i]
+    if not (secs or items):
+        return lines
+    out, dropped_secs, dropped_items = [], [], 0
+    skip_at = 0                       # heading depth currently being skipped, 0 = none
+    for ln in lines:
+        # Both levels: the four identity surfaces are `###` under one `##`, so declining
+        # OpenAlex must remove a subsection without taking ORCID with it -- and
+        # declining the `##` above it must take every `###` inside, which is why the
+        # depth is tracked rather than a flag.
+        depth = (len(ln) - len(ln.lstrip("#"))) if re.match(r"##+ \S", ln) else 0
+        if depth:
+            if skip_at and depth > skip_at:
+                continue
+            hit = next((s for s in secs if s.lower() in ln.lower()), None)
+            skip_at = depth if hit else 0
+            if hit:
+                dropped_secs.append(ln.lstrip("# ").strip())
+                continue
+        if skip_at:
+            continue
+        if ln.lstrip().startswith("- [ ]") and any(i in ln for i in items):
+            dropped_items += 1
+            continue
+        out.append(ln)
+    note = []
+    if dropped_secs:
+        note.append(f"{len(dropped_secs)} section"
+                    f"{'s' * (len(dropped_secs) != 1)} ({'; '.join(dropped_secs)})")
+    if dropped_items:
+        note.append(f"{dropped_items} individual item"
+                    f"{'s' * (dropped_items != 1)}")
+    return out + ["---", "", f"*Hidden by `data/declines.yaml`: {' and '.join(note)}. "
+                             f"Delete a line there to have it asked again.*", ""]
 
 
 def step_worklist(cfg, args) -> None:
@@ -581,6 +641,8 @@ def step_worklist(cfg, args) -> None:
         lines += [f"## Repo labels awaiting your review ({len(pend)}/{len(repos)})", "",
                   "Check `data/repos.yaml`, fix anything wrong, set `reviewed: true` to freeze "
                   "it, then `python scripts/sweep_github.py diff`.", ""]
+
+    lines = apply_declines(lines)
 
     out = os.path.join(ROOT, "WORKLIST.md")
     with open(out, "w") as f:

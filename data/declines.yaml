@@ -1,0 +1,30 @@
+# What you have decided not to do, so WORKLIST.md stops asking.
+#
+# The worklist is generated from live state on every run, which is what keeps it
+# honest -- and also what makes it unable to tell "not done yet" from "read it,
+# decided against it". Without this file the second case reappears forever, and a
+# list that keeps asking for what you have ruled out is a list you stop reading.
+#
+# This is the only place in the repo where a decision is recorded as an absence.
+# Everything else records decisions positively (`reviewed: true`, an accepted
+# sidecar, a line in overrides.yaml), so declining needed a home of its own.
+#
+#   sections:  any worklist heading containing this string, and its whole body.
+#              Matched case-insensitively at `##` and `###` level, so a subsection
+#              can go without its siblings.
+#   items:     any `- [ ]` line containing this string -- an arXiv id, a slug, a
+#              repo name. Use this to decline the tail of a long list while
+#              keeping the top of it open.
+#
+# Read by update.py's worklist step, which reports at the bottom of WORKLIST.md
+# how much it hid. Delete a line here and the item is asked again on the next run.
+#
+# Examples, both deliberately commented out -- nothing is declined until you say so:
+#
+# sections:
+#   - "OpenAlex"          # their own disambiguation is ORCID-driven; leave it
+# items:
+#   - "2104.08202"        # journal-ref: co-author submitted, no paper password
+
+sections: []
+items: []
