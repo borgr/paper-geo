@@ -101,6 +101,18 @@ identity:
     - name: IBM Research
       url: https://research.ibm.com/
       wikidata: Q3146518
+    # Your own lab goes here too, if it has a page. The reason it is safe -- where a
+    # second *personal* page is not -- is that a lab is a different entity: two pages
+    # about you compete to be the answer to "who is Leshem Choshen" and split the
+    # signal between them, while a lab page answers "what is this group" and links to
+    # you. The pair only works if the link is reciprocal, so add `site.base_url` to the
+    # lab's people page at the same time; a one-way link from your site to the lab
+    # states nothing about the lab's view of you.
+    #
+    # A lab almost never has a ROR id or a Wikidata item, and inventing either is the
+    # failure this whole block is about, so `name` and `url` is the whole entry:
+    # - name: <lab name>
+    #   url: <lab url>
   # Degree-granting study only. This is the line Wikidata's `educated at` (P69) draws
   # and it is not where most people draw it: a *postdoc is employment*, not education.
   # You were not enrolled, no degree was awarded, and the institution was paying you --
