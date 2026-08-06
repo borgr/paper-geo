@@ -52,6 +52,23 @@ Q = {"human": "Q5", "researcher": "Q1650915", "computer_scientist": "Q82594",
 EMPLOYER_Q = {"MIT-IBM Watson AI Lab": Q["MIT-IBM Watson AI Lab"],
               "IBM Research": Q["IBM Research"],
               "Weizmann Institute of Science": Q["Weizmann Institute of Science"]}
+
+
+def employer_q(a) -> str:
+    """The Q-number for one `identity.affiliations` entry, or "" to leave blank.
+
+    An affiliation carrying its own `wikidata` wins over this file's table, for the
+    reason stated below about the identifier list: two places holding the same QID is
+    how one of them silently lags. The table stays as the fallback for a bare-name
+    entry, and because a config that has not been upgraded should keep working.
+
+    Returning "" rather than guessing is the same rule as `SCHOOL_Q`: an unresolved
+    employer is a row you autocomplete by hand, while a wrong one asserts that he works
+    somewhere he does not.
+    """
+    if isinstance(a, dict) and a.get("wikidata"):
+        return str(a["wikidata"])
+    return EMPLOYER_Q.get(org_name(a), "")
 # Institutions we can resolve for `educated at`. Unlisted ones are emitted with a
 # blank Q-number for you to autocomplete, rather than guessed -- a wrong institution
 # on P69 is a false claim about a degree.
@@ -160,9 +177,10 @@ def wikidata_qs(cfg, papers) -> str:
     add(P["field_of_work"], Q["machine learning"])
     add(P["orcid"], f'"{ident["orcid"]}"')
     add(P["website"], f'"{ident["canonical_url"]}"')
-    for a in (org_name(x) for x in ident["affiliations"]):
-        if a in EMPLOYER_Q:
-            add(P["employer"], EMPLOYER_Q[a])
+    for a in ident["affiliations"]:
+        # No blank rows here: QuickStatements would reject the line, not prompt for it.
+        if employer_q(a):
+            add(P["employer"], employer_q(a))
     # educated at, for degree-granting study only -- a postdoc is P108 above, since no
     # degree was awarded and the institution was the employer.
     for e in ident.get("education") or []:
@@ -207,9 +225,10 @@ def wikidata_manual(cfg) -> str:
             ("field of work", "P101", "machine learning", "Q2539"),
             ("ORCID iD", "P496", ident["orcid"], ""),
             ("official website", "P856", ident["canonical_url"], "")]
-    for a in (org_name(x) for x in ident["affiliations"]):
-        if a in EMPLOYER_Q:
-            rows.append(("employer", "P108", a, EMPLOYER_Q[a]))
+    for a in ident["affiliations"]:
+        # Unlike the batch file, a blank Q-number is useful here: the row still tells you
+        # to add the employer and to autocomplete the item yourself.
+        rows.append(("employer", "P108", org_name(a), employer_q(a)))
     for e in ident.get("education") or []:
         rows.append(("educated at", "P69", e.get("institution", ""),
                      SCHOOL_Q.get(e.get("institution"), "")))

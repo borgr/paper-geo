@@ -74,10 +74,33 @@ identity:
   # something that makes one appear. Listed because the cost is a 58 KB file.
   image: portrait.jpg
   job_title: PI
+  # Each entry is either a bare name or `{name, url, ror, wikidata}`. The bare form is a
+  # string a disambiguator has to guess at -- "IBM Research" is thousands of people --
+  # while the identifiers make it an entity other databases can join on instead of
+  # string-matching. `ror` is the id Crossref, DataCite and OpenAlex use for
+  # institutions; `wikidata` is what lets the affiliation resolve to the same node your
+  # own P108 statement points at.
+  #
+  # Every value below is read off the organisation's own Wikidata record (P856 for the
+  # site, P6782 for the ROR id), not guessed -- a wrong identifier asserts a
+  # relationship to the wrong organisation, which is worse than a bare name. Two of the
+  # three have no ROR id to state: ROR registers legal entities and campuses, so it has
+  # `IBM (United States)` and `IBM Research - Thomas J. Watson Research Center` but no
+  # record for the research division or for the joint lab. Leaving `ror` out says
+  # nothing; pointing it at either of those would say something false.
+  #
+  # Ordered with the current employer first, which is also the order the byline reads in.
   affiliations:
-    - MIT-IBM Watson AI Lab
-    - IBM Research
-    - Weizmann Institute of Science   # incoming PI
+    - name: Weizmann Institute of Science
+      url: https://www.weizmann.ac.il/
+      ror: 0316ej306
+      wikidata: Q4182
+    - name: MIT-IBM Watson AI Lab
+      url: https://mitibmwatsonailab.mit.edu/
+      wikidata: Q117720866
+    - name: IBM Research
+      url: https://research.ibm.com/
+      wikidata: Q3146518
   # Degree-granting study only. This is the line Wikidata's `educated at` (P69) draws
   # and it is not where most people draw it: a *postdoc is employment*, not education.
   # You were not enrolled, no degree was awarded, and the institution was paying you --

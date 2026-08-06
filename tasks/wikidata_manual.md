@@ -44,9 +44,9 @@ autocomplete resolved to the right thing.
 | field of work | `P101` | machine learning | `Q2539` |
 | ORCID iD | `P496` | 0000-0002-0085-6496 |  |
 | official website | `P856` | https://borgr.github.io |  |
+| employer | `P108` | Weizmann Institute of Science | `Q4182` |
 | employer | `P108` | MIT-IBM Watson AI Lab | `Q117720866` |
 | employer | `P108` | IBM Research | `Q3146518` |
-| employer | `P108` | Weizmann Institute of Science | `Q4182` |
 | educated at | `P69` | Hebrew University of Jerusalem | `Q174158` |
 |   ↳ qualifier: academic degree | `P512` | PhD | `Q752297` |
 | Google Scholar author ID | `P1960` | 8b8IhUYAAAAJ |  |

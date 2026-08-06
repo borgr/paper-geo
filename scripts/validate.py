@@ -255,6 +255,29 @@ def selftest() -> list[str]:
         if venue_is_conference(venue, typ) != want:
             errs.append(f"common.venue_is_conference({venue!r}, {typ!r}) is "
                         f"{not want} -- Scholar would file this under the wrong tag")
+    # An affiliation may be a name or a mapping, and the two readers of it must not
+    # disagree. `org_name` feeds the byline, the ORCID employment diff and the Wikidata
+    # P108 lookup, so a mapping leaking through it publishes `{'name': 'IBM Research'}`
+    # as visible text and breaks the ORCID comparison at the same time; `org_ld` feeds
+    # JSON-LD, where a dropped identifier is invisible on the page and the whole reason
+    # the mapping form exists. Neither failure is visible in the config file.
+    from common import org_name
+    from build_site import org_ld
+    aff = {"name": "Weizmann Institute of Science", "url": "https://www.weizmann.ac.il/",
+           "ror": "0316ej306", "wikidata": "Q4182"}
+    if org_name(aff) != aff["name"] or org_name(aff["name"]) != aff["name"]:
+        errs.append(f"common.org_name regressed on a mapping affiliation: "
+                    f"{org_name(aff)!r} -- this string is published as page text")
+    ld = org_ld(aff)
+    want_same = ["https://ror.org/0316ej306", "https://www.wikidata.org/wiki/Q4182"]
+    if ld.get("sameAs") != want_same or ld.get("url") != aff["url"]:
+        errs.append(f"build_site.org_ld dropped an affiliation identifier: {ld!r}")
+    if org_ld("IBM Research") != {"@type": "Organization", "name": "IBM Research"}:
+        errs.append("build_site.org_ld no longer accepts a bare affiliation name")
+    # A ROR id given as a full URL used to build https://ror.org/https://ror.org/... .
+    # check_affiliations rejects that in config, but org_ld is what publishes it.
+    if org_ld({"name": "x", "ror": "https://ror.org/0316ej306"})["sameAs"] != want_same[:1]:
+        errs.append("build_site.org_ld doubles the ROR prefix on a URL-shaped id")
     return errs
 
 
@@ -383,6 +406,50 @@ def check_name_lists() -> list[str]:
     return errs
 
 
+def check_affiliations() -> list[str]:
+    """Affiliation entries must be a bare name or `{name, url, ror, wikidata}`.
+
+    The two failure modes are both silent in a way the site only shows after a deploy.
+    A misspelled key -- `wikdata`, `ROR`, `link` -- is dropped by `org_ld` and the
+    identifier simply never appears, so the entry looks upgraded in the config and is
+    still a bare name in the published JSON-LD. And a malformed identifier is worse than
+    a missing one: these values are pasted into `https://ror.org/$1` and
+    `https://www.wikidata.org/wiki/$1`, so a QID with a stray character or a ROR id
+    copied as a full URL builds a `sameAs` that either 404s or, if it resolves, asserts
+    that he belongs to some other organisation. Checked by shape only -- whether Q4182 is
+    the right institution is a question about the world, not about the file.
+    """
+    allowed = {"name", "url", "ror", "wikidata"}
+    errs = []
+    for a in (load_config() or {}).get("identity", {}).get("affiliations") or []:
+        if isinstance(a, str):
+            continue
+        if not isinstance(a, dict) or not (a.get("name") or "").strip():
+            errs.append(f"config.yaml: affiliation {a!r} has no name")
+            continue
+        who = a.get("name")
+        for k in set(a) - allowed:
+            errs.append(
+                f"config.yaml: affiliation {who!r} has unknown key `{k}`. Accepted keys "
+                f"are {', '.join(sorted(allowed))}; an unknown one is dropped silently "
+                "and the entry publishes as a bare name.")
+        if a.get("ror") and not re.fullmatch(r"0[0-9a-hj-km-np-tv-z]{6}[0-9]{2}", str(a["ror"])):
+            errs.append(
+                f"config.yaml: affiliation {who!r} has ror `{a['ror']}`, which is not a "
+                "ROR id. The id is the 9-character path from the URL -- 0316ej306, not "
+                "https://ror.org/0316ej306 -- because the URL is built from it.")
+        if a.get("wikidata") and not re.fullmatch(r"Q[1-9][0-9]*", str(a["wikidata"])):
+            errs.append(
+                f"config.yaml: affiliation {who!r} has wikidata `{a['wikidata']}`, which "
+                "is not a QID. Expected the form Q4182.")
+        if a.get("url") and not str(a["url"]).startswith(("http://", "https://")):
+            errs.append(
+                f"config.yaml: affiliation {who!r} has url `{a['url']}`, which is not "
+                "absolute. Organisation URLs are published as given, not resolved "
+                "against your own site.")
+    return errs
+
+
 def check_sidecars() -> list[str]:
     """Cross-check sidecars: valid front matter, and claim ids that resolve."""
     try:
@@ -492,6 +559,7 @@ def main() -> None:
     errs += check_sidecars()
     errs += check_overrides()
     errs += check_name_lists()
+    errs += check_affiliations()
     errs += check_doc_counts((docs.get("papers") or {}).get("papers", []),
                              (docs.get("repos") or {}).get("repos", []))
 
