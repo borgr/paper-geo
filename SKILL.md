@@ -20,7 +20,8 @@ things only a human can do (`WORKLIST.md`).
 | [docs/SHARED.md](docs/SHARED.md) | rules that apply to both — identity, chunking, coined names, what not to do |
 | [docs/PAPERS.md](docs/PAPERS.md) | 112 papers. Claims, metadata correctness, sidecars, the `links` map |
 | [docs/REPOS.md](docs/REPOS.md) | 31 repos. Topics, descriptions, the three `kind`s, `CITATION.cff` |
-| [docs/SIDECAR_DESIGN.md](docs/SIDECAR_DESIGN.md) | open questions on the sidecar format. Read before changing the drafting prompt or the schema |
+| [docs/RUNBOOK.md](docs/RUNBOOK.md) | **the procedure** — what runs on which clock, what an agent does step by step and when to stop |
+| [docs/SIDECAR_DESIGN.md](docs/SIDECAR_DESIGN.md) | how to write a sidecar, step by step, plus the format decisions still open |
 | [docs/COLLAB.md](docs/COLLAB.md) | co-author ownership protocol: who owns a page, who links to it |
 | [docs/MEASURE.md](docs/MEASURE.md) | how to tell whether any of it worked |
 | [docs/SETUP.md](docs/SETUP.md) | the one-time account checklist — ORCID, arXiv ownership, Scholar, Wikidata, HF, Zenodo |

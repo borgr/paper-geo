@@ -730,6 +730,16 @@ def closing(args) -> None:
         lines.append(f"  data/sidecars/drafts/    {len(drafts)} sidecar draft"
                      f"{'s' * (len(drafts) != 1)} to verify -- nothing reads these until "
                      f"you run `--accept <slug>`")
+    backlog = os.path.join(ROOT, "BACKLOG.md")
+    if os.path.exists(backlog):
+        with open(backlog) as f:
+            n = sum(1 for l in f if l.lstrip().startswith("- [ ]"))
+        # The one list here that nothing can re-derive, so the one that can be
+        # forgotten. Counted rather than quoted: the tasks are in the file, and a
+        # second copy of them in the run's output is a second copy to keep true.
+        lines.append(f"  BACKLOG.md               {n} parked task{'s' * (n != 1)} -- "
+                     f"decisions and code, not account work")
+
     if lines:
         print("\nWaiting on your judgement:")
         print("\n".join(lines))
