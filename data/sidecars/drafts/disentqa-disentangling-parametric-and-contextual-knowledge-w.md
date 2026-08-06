@@ -105,7 +105,12 @@ claims:
     model''s parametric answers were never seen as an answer during fine-tuning (against 23%
     for closed-book and 25% and 26% for the ablations), and 85% of that 18% differed from
     the contextual answer. The paper''s own conclusion is that the models do surface parametric
-    answers from pretraining but have a strong tendency to repeat fine-tuning answers.'
+    answers from pretraining but have a strong tendency to repeat fine-tuning answers. Two
+    qualifiers on those unseen-answer percentages: for the counterfactual-only model most
+    of its 26% are identical to its own contextual answer, so the figure does not indicate
+    a separate channel at all; and manual inspection of the fully augmented model''s unseen
+    answers found some that are correct about the world while contradicting the supplied context,
+    which is the clearest evidence in the paper that anything is being recalled from pretraining.'
   evidence: Section 5.1, Table 8, Section 5.4
 - id: contextual-quality-is-preserved
   text: 'Adding a second answer costs almost nothing on the standard task: contextual answer
@@ -157,6 +162,25 @@ claims:
     so the four conditions stay comparable. Always supplying the gold passage assumes an oracle
     retriever.
   evidence: Section 3.1, Section 3.2, Table 2, Appendix A
+- id: what-is-new-and-what-is-borrowed
+  text: 'The paper''s novelty claim is the combination, not any one part: it says it is the
+    first to put multiple answers, counterfactual augmentation and answerability augmentation
+    together to encourage and evaluate disentanglement, and to show those approaches are complementary.
+    Counterfactual substitution is Longpre et al. (2021)''s, who defined knowledge conflicts
+    and proposed substitution augmentation as the mitigation; the closed-book baseline is
+    Roberts et al. (2020)''s setup and the answer-overlap split is Lewis et al. (2021)''s.'
+  scope: Two pieces of the related work bear directly on the results rather than just crediting
+    them. Yatskar (2019) found SQuAD 2.0's unanswerable questions to be mostly cases of extreme
+    confusion and therefore easy to detect, and Sulem et al. (2021) built harder ones -- which
+    is the same weakness the authors concede in their own topically unrelated random contexts,
+    and they do not use the harder resource. Kim et al. (2021)'s unanswerable NQ subset, questions
+    with failed presuppositions, is stated not to overlap with this data. Li et al. (2022)
+    is named as concurrent work exploring similar ideas and is not compared against. The knowledge-editing
+    line (Zhu et al. 2020, De Cao et al. 2021, Verga et al. 2021) and the fact-localisation
+    line (Dai et al. 2022, Meng et al. 2022) attack the same problem from the other side,
+    by changing or locating what the weights store rather than making both sources visible
+    in the output; neither is a baseline here.
+  evidence: Section 6, Appendix A
 - id: named-entity-answers-only
   text: 'The method''s reach is bounded by its augmentation: counterfactual examples can only
     be generated for questions whose answer is a named entity, so knowledge conflicts in Boolean
@@ -325,6 +349,15 @@ qa:
   - two-answers-in-one-output
   - answer-separation-on-counterfactual
   - augmentations-are-complementary
+- q:
+  - Has anyone else made a model output both a grounded and a memorized answer?
+  - How is this different from knowledge editing or model editing?
+  - Is counterfactual augmentation for knowledge conflict this paper's idea?
+  - What prior work does DisentQA build on?
+  answers:
+  - what-is-new-and-what-is-borrowed
+  - dataset-and-augmentation-construction
+  - two-answers-in-one-output
 misreadings:
 - The 18.46% is a similarity, not a separation. Section 3.3 defines Answer Separation as the
   share of cases where the two answers differ, but Table 6 reports the share where they are
@@ -367,6 +400,16 @@ misreadings:
   supplied (an oracle retriever), the test set is cut to the 1,365 examples that admitted
   a counterfactual, and Exact Match miscounts: of 73 analysed regressions, 14 were correct
   answers scored zero and 6 had a second valid answer.'
+- Counterfactual augmentation is not this paper's invention -- it is Longpre et al. (2021)'s
+  entity substitution, adopted unchanged, and they had already shown it mitigates over-reliance
+  on memorized answers. What is new here is the two-answer output format, the answerability
+  augmentation, and the finding that the two augmentations only work together. Attribute the
+  substitution procedure accordingly.
+- This is not knowledge editing. Methods that modify or locate the facts stored in the weights
+  (Zhu et al., De Cao et al., Verga et al., Dai et al., Meng et al.) are cited as related
+  work, not as baselines, and nothing here changes what the model has memorized. DisentQA
+  leaves the parametric answer intact and makes it visible alongside the grounded one, so
+  a reader can see the conflict rather than have it resolved for them.
 terminology:
   DisentQA: 'The paradigm introduced here, and the name of the resulting model family: one
     generative QA model fine-tuned to emit a contextual answer and a parametric answer as
