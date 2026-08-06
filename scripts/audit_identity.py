@@ -759,7 +759,7 @@ def orcid_strays(orc: dict, papers) -> list[tuple]:
             n = norm_title(title)
             out.append((title, put, "confirmed" if n in rejected else "unknown"))
         else:
-            seen.setdefault(hit["slug"], []).append((title, put))
+            seen.setdefault(hit["slug"], []).append((title, put, ids))
     dups = {slug: v for slug, v in seen.items() if len(v) > 1}
     return out, dups, set(seen)
 
@@ -866,22 +866,50 @@ def orcid_remove_file(strays: list[tuple], dups: dict, papers, cfg) -> str:
               "subtitle typed into one entry and not the other — so they do not even look",
               "like the same paper on the page.",
               "",
-              "**Delete the preprint entry, keep the published one.** The published entry",
-              "carries the venue, and the venue is what a disambiguator matches on. Nothing",
-              "is lost: the arXiv version stays reachable from the paper page, and if",
-              "DataCite auto-update later re-adds it, it will arrive with your iD attached",
-              "and can be left alone.",
+              "**Merge them; do not delete either.** The two entries carry different",
+              "titles, and both titles are real: one is what the paper was called as a",
+              "preprint and the other is what it was called on acceptance. Deleting the",
+              "preprint entry throws away a title that is cited in the wild and an",
+              "identifier that resolves — so the merge keeps more than it costs, and the",
+              "extra work is one field.",
               "",
-              "**Or, if you would rather keep both visible:** open the published entry,",
-              "*Add identifier* → type `doi`, value = the arXiv DOI below. Two identifiers",
-              "on one work is what makes ORCID fold the group. More clicks, same result.",
-              "", "| paper | keep | delete |", "|---|---|---|"]
+              "ORCID has no merge button, and does not need one: it groups works that share",
+              "an external identifier. Put the *other* entry's DOI on the entry you keep",
+              "and the pair folds into a single work with a version selector, both titles",
+              "and both DOIs intact. Nothing is deleted, so nothing can be lost by getting",
+              "it wrong.",
+              "",
+              "For each row: open the **keep** entry (its put-code is the last path segment",
+              "at <https://orcid.org/my-orcid#works>), then *Edit* → **+ Add identifier** →",
+              "type `doi` → paste the value in the last column → *Save*. The two entries",
+              "collapse on the next page load.", "",
+              "| paper | keep (published, has the venue) | folds in | DOI to add to the keep entry |",
+              "|---|---|---|---|"]
+        arx = re.compile(r"^10\.48550/arxiv\.", re.I)
+
+        def doi_of(ids):
+            return next((v for t, v in ids if t == "doi"), None)
+
         for slug, entries in dups.items():
             t = (by_slug.get(slug) or {}).get("title", slug)[:44]
-            L.append(f"| {t} | " + " | ".join(f"`{p}` — {ti[:34]}" for ti, p in entries) + " |")
-        L += ["", "The order in the table is the order the record returns them, *not* which to",
-              "delete — open both put-codes and delete the one whose *Source* line shows no",
-              "venue. Deleting is *Works* → the entry → **⋮ / Actions** → *Delete*.", ""]
+            # The preprint entry is the one whose DOI is arXiv's DataCite prefix, which
+            # is what makes this generatable rather than a judgement: the published
+            # entry is simply the other one, and its DOI is the venue's.
+            pre = [e for e in entries if arx.match(doi_of(e[2]) or "")]
+            pub = [e for e in entries if e not in pre]
+            if len(pre) == 1 and len(pub) == 1:
+                L.append(f"| {t} | `{pub[0][1]}` — {pub[0][0][:30]} | "
+                         f"`{pre[0][1]}` — {pre[0][0][:30]} | `{doi_of(pre[0][2])}` |")
+            else:
+                # No arXiv DOI, or more than two entries: say so rather than guess which
+                # to keep. Either way the fix is the same shape, one identifier.
+                L.append(f"| {t} | " + " | ".join(f"`{p}` — {ti[:28]} ({doi_of(i) or 'no DOI'})"
+                                                  for ti, p, i in entries)
+                         + " | *pick the entry with the venue; add the other's DOI* |")
+        L += ["", "If you would rather have one entry than a grouped pair, delete the",
+              "**folds in** one instead — *Works* → the entry → **⋮ / Actions** →",
+              "*Delete*. Same number of clicks, and the preprint title stops being",
+              "findable on your record.", ""]
     if not strays and not dups:
         L += ["Nothing to remove: every public work on the record is in the corpus, and",
               "none is listed twice.", ""]
@@ -1465,8 +1493,10 @@ def main() -> None:
               "output counts it twice.",
               "",
               "This is a side effect of `orcid_import.bib` filling missing DOIs from arXiv.",
-              "It is worth fixing and it is not urgent. Which entry to delete, and why the",
-              "preprint entry is the one to drop: [orcid_remove.md](orcid_remove.md).", ""]
+              "It is worth fixing and it is not urgent. The fix is a merge, not a deletion:",
+              "both titles are real, and adding one entry's DOI to the other folds them into",
+              "one work with both. Which entry to open and what to paste into it:",
+              "[orcid_remove.md](orcid_remove.md).", ""]
     if n_typo:
         L += [f"## arXiv metadata misspells your name on {len(n_typo)} papers", "",
               "Upstream of every other surface here — Hugging Face, Semantic Scholar,",

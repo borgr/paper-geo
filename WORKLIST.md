@@ -11,13 +11,13 @@ reading of each external surface is [tasks/identity_audit.md](tasks/identity_aud
 - **2026-10-04** — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.
 - **2026-11-04** — Crossref and DataCite auto-update only fire on newly deposited metadata that already carries your iD, so the proof is a work whose ORCID source is Crossref or DataCite rather than your own name -- which cannot appear until something you publish is deposited.
 
-## Identity surfaces (4 open)
+## Identity surfaces (3 open)
 
 Each is blocked on an account you are logged into, not on knowing what to
 do. `python scripts/identity_tasks.py` regenerates every payload under
 `tasks/` — committed, so browsable on GitHub.
 
-### ORCID lists 3 of your papers twice
+### ORCID lists 4 of your papers twice
 
 ORCID groups works that share an identifier. Two groups for one paper means
 one copy carries the arXiv DataCite DOI (`10.48550/arXiv.<id>`) and the other
@@ -34,7 +34,7 @@ There is no self-service merge, but a claimed page can pull papers across:
 `tasks/s2_merge.md`, so stopping early still captures most of the loss.
 Do not claim the second page as well.
 
-### Wikidata — 6 statement gaps on Q140867203
+### Wikidata — 9 statement gaps on Q140867203
 
 Now automatic, and it does **not** need an autoconfirmed account — that is a
 QuickStatements rule, not a MediaWiki one. Create a bot password once at
@@ -46,36 +46,6 @@ pages, create/edit pages), export `WIKIDATA_BOT_USER` and
 python scripts/wikidata_apply.py            # dry run: exactly what changes
 python scripts/wikidata_apply.py --apply    # write it
 ```
-
-### OpenAlex — 4 duplicate profiles
-
-Lowest priority, and the preferred route is to do nothing here: OpenAlex
-disambiguation is ORCID-driven and they are running ORCID-based merges, so
-fixing ORCID above may resolve it. If you want it now, the profile IDs to
-paste into their *Fix errors* form are in `tasks/openalex_merge.md`.
-
-## arXiv spells your name wrong on 2 papers  — do this before anything downstream
-
-The only item here that is upstream of every other surface. Hugging
-Face, Semantic Scholar, OpenAlex and Google Scholar all build author
-identity from arXiv's author list, so one wrong character does not
-degrade gracefully — it creates a second author who holds that paper's
-citations and cannot be merged into you. Work on the downstream pages
-does not repair it.
-
-A name correction is a **metadata edit**, not a new version: *Update this
-article* on your submission page. You must own the paper first — and note
-the trap: <https://arxiv.org/auth/request-ownership> matches your name
-against the author list, which on these papers is the thing that is
-wrong, so the request can bounce. If it does, ask the submitting
-co-author for the paper password
-(<https://arxiv.org/auth/need-paper-password>), which does not
-name-match.
-
-- [ ] [`2410.10783`](https://arxiv.org/abs/2410.10783) — reads **Leshem Chosen** — LiveXiv -- A Multi-Modal Live Benchmark Based on Arx
-- [ ] [`2409.02228`](https://arxiv.org/abs/2409.02228) — reads **Leshem Chosen** — Unforgettable Generalization in Language Models
-
-Full detail: `tasks/arxiv_name_fixes.md`.
 
 ## arXiv journal-ref missing (64 papers)
 
@@ -163,4 +133,8 @@ Steps, and the honest case for skipping some: `tasks/zenodo.md`.
 ## Repo labels awaiting your review (30/31)
 
 Check `data/repos.yaml`, fix anything wrong, set `reviewed: true` to freeze it, then `python scripts/sweep_github.py diff`.
+
+---
+
+*Hidden by `data/declines.yaml`: 1 section (OpenAlex — 4 duplicate profiles). Delete a line there to have it asked again.*
 

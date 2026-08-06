@@ -72,7 +72,7 @@ and all of them are personal data you would then be maintaining.
 
 ## Then: your papers
 
-**Measured this run: 3 of 115 have a Wikidata item.**
+**Measured this run: 3 of 112 have a Wikidata item.**
 (Matched on DOI and arXiv id across 111 papers that carry one
 — exact keys, so this is coverage and not a name-search guess.)
 

@@ -26,5 +26,10 @@
 # items:
 #   - "2104.08202"        # journal-ref: co-author submitted, no paper password
 
-sections: []
+sections:
+  # Their disambiguation is ORCID-driven and they are running ORCID-based merges, so
+  # the ORCID work above is the fix for this too. Their "Fix errors" form is the only
+  # other route and it is a request, not an edit. Nothing to do here that is not
+  # already being done one surface up.
+  - "OpenAlex"
 items: []

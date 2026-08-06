@@ -256,6 +256,22 @@ def apply_declines(lines: list[str]) -> list[str]:
             dropped_items += 1
             continue
         out.append(ln)
+
+    # A heading that counts its own subsections ("Identity surfaces (4 open)") now
+    # counts one that is no longer there, and a header disagreeing with the list under
+    # it is exactly the kind of small wrongness that makes a reader stop trusting the
+    # rest of the page. Recount from what survived.
+    for i, ln in enumerate(out):
+        m = re.match(r"(## .*\()(\d+)( open\))", ln)
+        if not m:
+            continue
+        n = 0
+        for l in out[i + 1:]:
+            if l.startswith("## "):
+                break
+            n += bool(re.match(r"###+ \S", l))
+        out[i] = f"{m.group(1)}{n}{m.group(3)}{ln[m.end():]}"
+
     note = []
     if dropped_secs:
         note.append(f"{len(dropped_secs)} section"

@@ -7,7 +7,7 @@ which is why it can be re-run — the fixes all need one.
 | surface | state | |
 |---|---|---|
 | ORCID works (public) | 120 | ok |
-| ORCID holds your papers | 117 of 117 | ok |
+| ORCID holds your papers | 112 of 112 | ok |
 | ORCID canonical URL | present | ok |
 | ORCID name variants | 2 listed | ok |
 | ORCID keywords | 13 of 13 | ok |
@@ -17,11 +17,15 @@ which is why it can be re-run — the fixes all need one.
 | ORCID works added by Crossref/DataCite | 0 | nothing yet |
 | arXiv registered author | 105 of 105 | ok |
 | Wikidata author item | Q140867203 | ok |
-| Wikidata item complete | 6 gaps | **fix** |
-| Wikidata paper items | 3 of 117 | optional |
-| arXiv records misspelling your name | 2 | **fix** |
+| Wikidata item complete | 9 gaps | **fix** |
+| Wikidata paper items | 3 of 112 | optional |
+| HF pages indexed | 105 of 105 | ok |
+| HF pages claimed | 103 of 105 claimable | ok |
+| HF claims in moderation | 2 | waiting |
+| arXiv records misspelling your name | 0 | ok |
 | arXiv records omitting you | 0 | ok |
-| ORCID works listed twice | 3 | **fix** |
+| ORCID works we cannot place | 4 | **check** |
+| ORCID works listed twice | 4 | **fix** |
 | Semantic Scholar records | 2 | **fix** |
 
 ## Crossref / DataCite auto-update: no evidence it is live
@@ -95,13 +99,13 @@ Do not delete it and re-add your own: that trades a vouched-for entry for a
 self-asserted one, which is a downgrade in exactly the signal this section
 exists to provide.
 
-## Wikidata item Q140867203 exists — a correction and 1 identifier to add
+## Wikidata item Q140867203 exists — a correction and 2 identifiers to add
 
 An alias was stored as one string with its markdown intact (``L. Choshen``), so it matches nothing. Fix that first.
 
 Full diff, plus what the measured paper coverage means for the Author Disambiguator pass: [wikidata_followup.md](wikidata_followup.md).
 
-## Wikidata paper coverage: 3 of 117
+## Wikidata paper coverage: 3 of 112
 
 Matched on DOI and arXiv id, not on name. This number matters because it
 decides which Wikidata job is worth doing: relinking author strings on
@@ -112,9 +116,9 @@ Wikidata's main query graph, so a publication query against
 `query.wikidata.org` returns zero rows with a 200, and looks like an
 answer. This uses `query-scholarly.wikidata.org`.
 
-An opt-in batch for the 114 missing items is in `tasks/wikidata_papers.qs`; read the cautions in [wikidata_followup.md](wikidata_followup.md) before running it.
+An opt-in batch for the 109 missing items is in `tasks/wikidata_papers.qs`; read the cautions in [wikidata_followup.md](wikidata_followup.md) before running it.
 
-## 3 papers are listed twice on your ORCID
+## 4 papers are listed twice on your ORCID
 
 ORCID groups works that share an identifier. A paper whose record holds
 the publisher DOI in one entry and arXiv's `10.48550/arXiv.<id>` DOI in
@@ -123,14 +127,8 @@ as two works with two different titles, and every service counting your
 output counts it twice.
 
 This is a side effect of `orcid_import.bib` filling missing DOIs from arXiv.
-It is worth fixing and it is not urgent. Which entry to delete, and why the
-preprint entry is the one to drop: [orcid_remove.md](orcid_remove.md).
-
-## arXiv metadata misspells your name on 2 papers
-
-Upstream of every other surface here — Hugging Face, Semantic Scholar,
-OpenAlex and Scholar all read arXiv's author list, so one wrong character
-creates one wrong author in all of them, holding citations that cannot be
-merged back. Details and the fix order:
-[arxiv_name_fixes.md](arxiv_name_fixes.md).
+It is worth fixing and it is not urgent. The fix is a merge, not a deletion:
+both titles are real, and adding one entry's DOI to the other folds them into
+one work with both. Which entry to open and what to paste into it:
+[orcid_remove.md](orcid_remove.md).
 
