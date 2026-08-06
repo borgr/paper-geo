@@ -125,8 +125,11 @@ claims:
     in normalized terms -- every method is above 90 -- so there is less headroom, and QNLI,
     RTE and SciTail use only two of the three NLI labels, with the missing label masked during
     finetuning and evaluation. The paper's setup section names the large vision model ViT-L/16
-    while the results heading and table say ViT-L/14.
-  evidence: Section 5.2.0.2, Section 5.2.0.3, Table 2, Table 3, Section 5.1.0.1
+    while the results heading and table say ViT-L/14. Only the Llama backbone and its LoRA
+    layers are merged -- the classification head stays per-dataset even for the merged model,
+    so 92.9 is the score of a shared backbone read out by six task-specific heads.
+  evidence: Section 5.2.0.2, Section 5.2.0.3, Table 2, Table 3, Section 5.1.0.1, Appendix
+    D
 - id: joint-task-benchmark
   text: 'The paper introduces a joint-task benchmark that asks whether a merged model is actually
     general: the eight vision datasets'' labels are pooled and deduplicated into 748 unique
@@ -191,14 +194,57 @@ claims:
     but the pipeline around it is not: the merging methods it wraps tune a scaling coefficient,
     TIES''s top-k pruning threshold and DARE''s drop probability on held-out validation data,
     and DARE''s random pruning is run over five seeds with the best-scoring merge kept.'
-  scope: So "training-free" is about gradients and finetuning, not about needing no labelled
+  scope: 'So "training-free" is about gradients and finetuning, not about needing no labelled
     data at all -- and the normalized-accuracy metric additionally requires knowing each finetuned
-    model's accuracy. The paper is explicit that it restricts itself to gradient-free merging
+    model''s accuracy. The paper is explicit that it restricts itself to gradient-free merging
     and names only four such methods for this setting (RegMean, TA, TIES, DARE); it compares
-    against gradient-based Fisher weight averaging in an appendix, reporting considerable
-    gains but treating that comparison as out of scope. A single scaling coefficient is tuned
-    for all models rather than one per task, following the baselines' own recommendation.
-  evidence: Section 3.0.0.1, Section 5.1.0.2, Section 5.2.0.1, Appendix C
+    against gradient-based Fisher weight averaging in Appendix E, reporting considerable gains
+    but treating that comparison as out of scope. The grids are given: the scaling coefficient
+    over [0.1 ... 1.0], TIES''s top-k over [10 ... 100] percent of retained elements, DARE''s
+    p over [0.99, 0.9 ... 0.1], and for the two-hyperparameter methods a linear search that
+    fixes the scaling coefficient first and the pruning threshold second, from defaults of
+    top-k 30 and p 0.9. A single scaling coefficient is tuned for all models rather than one
+    per task, following the baselines'' own recommendation.'
+  evidence: Section 3.0.0.1, Section 5.1.0.2, Section 5.2.0.1, Appendix C, Appendix E
+- id: gradient-based-fisher-comparison
+  text: The one gradient-based method the paper measures, Fisher weight averaging, averages
+    63.9 normalized accuracy over the eight ViT-B/32 LoRA models -- level with TIES at 63.7
+    and 4.1 points behind gradient-free KnOTS-TIES at 68.0.
+  scope: 'The authors count Fisher as a finetuning method rather than a merging baseline because
+    it adds learnable parameters optimized by gradient descent, which is why it sits in an
+    appendix instead of the main table. The average conceals a split: Fisher is the single
+    strongest entry in that table on Cars (84.5) and on GTSRB (55.8, where KnOTS-TIES manages
+    48.9), and the 4.1-point average gap comes almost entirely from MNIST (47.8 against 68.9)
+    and SVHN (39.2 against 53.8) -- a derivation from the appendix table''s own columns, not
+    a figure the paper states. One gradient-based method is not a survey of gradient-based
+    merging. The printed search grid for Fisher''s scaling term runs [0.1 ... 0.9], yet the
+    configuration reported as best is stated to use a scaling coefficient of 1.0; since the
+    paper''s main grid does include 1.0, the appendix range is most likely printed short,
+    but anyone reproducing the baseline should search to 1.0.'
+  evidence: Appendix E, Table A1, Section 5.2.0.1
+- id: what-actually-gets-merged
+  text: 'Merging only ever touches LoRA-adapted attention weights -- query, key, value and
+    output projections are the only learnable layers in every experiment -- and in the Llama3-8B
+    setting only the backbone is merged: each dataset keeps its own task-specific classification
+    head, including when the merged model is evaluated.'
+  scope: 'So the six-task language result is one shared backbone plus six retained heads,
+    not a single end-to-end network, and a reader comparing it to true single-model multitask
+    learning is comparing different objects. The vision setting has no equivalent gap for
+    the opposite reason: CLIP''s text encoder is frozen throughout and class scores come from
+    passing the label strings through it, so there is no per-task head to keep -- which is
+    also what makes the pooled 748-label evaluation possible at all. The Llama heads share
+    a shape (three classes) but not weights.'
+  evidence: Appendix D, Section 5.1.0.1
+- id: cheap-to-run
+  text: KnOTS needs one SVD of the concatenated update and no gradients, runs entirely on
+    CPU, and the paper's whole experimental program fits on a single Nvidia A40 with 48GB
+    of VRAM and eight CPU workers.
+  scope: 'The cost argument is architectural -- no gradient pass, no training data -- rather
+    than benchmarked: no runtimes appear anywhere in the paper. The SVD uses torch.linalg.svd,
+    and the authors note cheaper low-rank solvers such as Fast SVD could be substituted without
+    reporting what that saves. The LoRA finetuning of the eight vision and six language models
+    is the expensive part and is not counted, because KnOTS assumes those models already exist.'
+  evidence: Appendix D, Section 4.0.0.1
 qa:
 - q:
   - Why does merging LoRA adapters work worse than merging fully finetuned models?
@@ -308,6 +354,21 @@ qa:
   - concatenation-direction-matters
   - knots-aligns-lora-updates-with-a-joint-svd
   - merge-the-product-not-the-factors
+- q:
+  - How does KnOTS compare to gradient-based merging methods?
+  - Is Fisher weight averaging better than KnOTS?
+  - Did they compare against methods that use gradients?
+  answers:
+  - gradient-based-fisher-comparison
+  - data-free-alignment-tuned-merging
+- q:
+  - Which parameters does KnOTS actually merge?
+  - Is the merged model a single network, or does it keep task-specific parts?
+  - What does it cost to run KnOTS?
+  answers:
+  - what-actually-gets-merged
+  - cheap-to-run
+  - holds-at-larger-scale-and-in-language
 misreadings:
 - None of the headline numbers are accuracies. They are normalized accuracies -- merged accuracy
   divided by the accuracy of the model finetuned on that task. The best eight-task vision
@@ -346,6 +407,11 @@ misreadings:
   to 768, and 768 is full rank for these ViTs -- which sits awkwardly with the paper's own
   low-rank explanation for why LoRA models misalign. These are still LoRA-parameterized models,
   so it is not a result about merging fully finetuned models.
+- '"KnOTS beats gradient-based merging" holds on average and fails per-task: Fisher weight
+  averaging leads the appendix table on Cars and GTSRB, and only loses overall, mostly on
+  MNIST and SVHN.'
+- '"One merged model does six NLI tasks" -- the backbone is merged, the classification heads
+  are not. Each dataset keeps its own head at evaluation time, including for the merged model.'
 terminology:
   KnOTS: 'Knowledge Orientation Through SVD. Not a merging method in itself but a transform
     applied before one: concatenate the task-updates of n LoRA models at a layer, take the
@@ -378,6 +444,11 @@ terminology:
     at maximum rank, the setting where existing merging methods already work well. Used throughout
     as the contrast case that motivates the LoRA problem, not as a baseline being competed
     against.
+  Fisher weight averaging: Matena & Raffel's merging method, which weights each model's parameters
+    by its Fisher information. This paper classifies it as finetuning rather than merging,
+    because obtaining those weights requires gradient descent.
+  task-specific head: the final classification layer kept separately per dataset in the Llama
+    experiments. Only the backbone and its LoRA layers are merged; the heads are not.
 links_extra:
   code: https://github.com/gstoica27/KnOTS
 ---
