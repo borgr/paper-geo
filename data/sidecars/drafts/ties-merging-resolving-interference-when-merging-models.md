@@ -3,6 +3,13 @@
 Drafted by `python scripts/draft_sidecars.py` from build/sidecar_tasks.json. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
+THIS PAPER ALREADY HAS A LIVE SIDECAR, and this draft would replace it. Start here:
+
+  diff data/sidecars/ties-merging-resolving-interference-when-merging-models.md data/sidecars/drafts/ties-merging-resolving-interference-when-merging-models.md
+
+Anything the live file says in your own words is worth keeping over a rewrite of the
+same point, so read that diff before the checklist below.
+
 What to check, in the order it pays:
 
 1. Each claim's NUMBER and BASELINE. A magnitude attributed to the wrong baseline is
@@ -15,7 +22,9 @@ What to check, in the order it pays:
 4. `one_liner`: the sentence you will reuse verbatim in the README, the model card and
    the talk abstract. Make it yours.
 
-Then promote it:  python scripts/draft_sidecars.py --accept ties-merging-resolving-interference-when-merging-models
+Then, if the replacement is the one you want:
+
+  python scripts/draft_sidecars.py --accept ties-merging-resolving-interference-when-merging-models --replace
 -->
 ---
 key: DBLP:conf/nips/YadavTCRB23

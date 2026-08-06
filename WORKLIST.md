@@ -111,7 +111,7 @@ submission page (a metadata edit, not a new version).
 - [ ] `1907.08971` (77 cites) -> ACL 2019  <https://arxiv.org/abs/1907.08971>
 - [ ] `2302.04863` (71 cites) -> Findings of EMNLP 2023  <https://arxiv.org/abs/2302.04863>
 
-## Sidecar drafts awaiting your verification (2)
+## Sidecar drafts awaiting your verification (14)
 
 Drafted from each paper's own full text: claims with their magnitudes,
 scope conditions, terminology and likely misreadings. Every number is a
@@ -123,10 +123,18 @@ python scripts/draft_sidecars.py --review          # what is drafted
 python scripts/draft_sidecars.py --accept <slug>   # promote, after editing
 ```
 
+- [ ] `data/sidecars/drafts/ties-merging-resolving-interference-when-merging-models.md`  (859 cites) TIES-Merging: Resolving Interference When Merging Models  **replaces the live sidecar**
 - [ ] `data/sidecars/drafts/tinybenchmarks-evaluating-llms-with-fewer-examples.md`  (282 cites) tinyBenchmarks: evaluating LLMs with fewer examples
 - [ ] `data/sidecars/drafts/active-learning-for-bert-an-empirical-study.md`  (244 cites) Active Learning for {BERT:} An Empirical Study
+- [ ] `data/sidecars/drafts/findings-of-the-babylm-challenge-sample-efficient-pretrainin.md`  (232 cites) Findings of the {B}aby{LM} Challenge: Sample-Efficient P
+- [ ] `data/sidecars/drafts/global-mmlu-understanding-and-addressing-cultural-and-lingui.md`  (180 cites) Global {MMLU}: Understanding and Addressing Cultural and
+- [ ] `data/sidecars/drafts/q2-evaluating-factual-consistency-in-knowledge-grounded-dial.md`  (167 cites) Q\({}^{\mbox{2}}\): Evaluating Factual Consistency in Kn
+- [ ] `data/sidecars/drafts/on-the-weaknesses-of-reinforcement-learning-for-neural-machi.md`  (127 cites) On the Weaknesses of Reinforcement Learning for Neural M
+- [ ] `data/sidecars/drafts/fusing-finetuned-models-for-better-pretraining.md`  (120 cites) Fusing finetuned models for better pretraining
+- [ ] `data/sidecars/drafts/disentqa-disentangling-parametric-and-contextual-knowledge-w.md`  (119 cites) DisentQA: Disentangling Parametric and Contextual Knowle
+- [ ] `data/sidecars/drafts/model-merging-with-svd-to-tie-the-knots.md`  (112 cites) Model merging with SVD to tie the Knots
 
-## Sidecars not yet drafted (112/115)
+## Sidecars not yet drafted (101/115)
 
 Nothing to do by hand here — this is a run, not a task:
 
@@ -138,12 +146,12 @@ python scripts/draft_sidecars.py --ingest     # fold the answers in
 `update.py` also drafts a batch on every run, so this number falls on
 its own. The top of the list, by citations, is where it pays:
 
-- 232 cites — Findings of the {B}aby{LM} Challenge: Sample-Efficient Pretraining
-- 180 cites — Global {MMLU}: Understanding and Addressing Cultural and Linguisti
 - 172 cites — An autonomous debating system
-- 167 cites — Q\({}^{\mbox{2}}\): Evaluating Factual Consistency in Knowledge-Gr
-- 127 cites — On the Weaknesses of Reinforcement Learning for Neural Machine Tra
-- 120 cites — Fusing finetuned models for better pretraining
+- 82 cites — Call for Papers - The BabyLM Challenge: Sample-efficient pretraini
+- 77 cites — Are You Convinced? Choosing the More Convincing Evidence with a Si
+- 72 cites — Will it Blend? Blending Weak and Strong Labeled Data in a Neural N
+- 71 cites — Knowledge is a Region in Weight Space for Fine-tuned Language Mode
+- 70 cites — Corpus Wide Argument Mining - {A} Working Solution
 
 ## Artifacts with no citation route (14)
 

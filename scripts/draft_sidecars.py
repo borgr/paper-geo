@@ -288,7 +288,7 @@ HEADER = """<!-- DRAFT — not published, not read by anything that builds the s
 
 Drafted by `python scripts/draft_sidecars.py` from {source}. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
-
+{banner}
 What to check, in the order it pays:
 
 1. Each claim's NUMBER and BASELINE. A magnitude attributed to the wrong baseline is
@@ -301,9 +301,25 @@ What to check, in the order it pays:
 4. `one_liner`: the sentence you will reuse verbatim in the README, the model card and
    the talk abstract. Make it yours.
 
-Then promote it:  python scripts/draft_sidecars.py --accept {slug}
--->
+{promote}-->
 """
+_PROMOTE_NEW = "Then promote it:  python scripts/draft_sidecars.py --accept {slug}\n"
+# Accepting over a reviewed sidecar is the one destructive path in this script, so the
+# banner is at the top of the file rather than something the reader discovers from an
+# error at accept time -- and the diff is named before the checklist, because here the
+# comparison *is* the review. A live sidecar may be worded by the author, and a model's
+# version being more complete does not make it better where the author was already
+# right.
+_BANNER_REPLACE = """
+THIS PAPER ALREADY HAS A LIVE SIDECAR, and this draft would replace it. Start here:
+
+  diff data/sidecars/{slug}.md data/sidecars/drafts/{slug}.md
+
+Anything the live file says in your own words is worth keeping over a rewrite of the
+same point, so read that diff before the checklist below.
+"""
+_PROMOTE_REPLACE = ("Then, if the replacement is the one you want:\n\n"
+                    "  python scripts/draft_sidecars.py --accept {slug} --replace\n")
 
 
 def write_draft(slug: str, sidecar: dict, source: str) -> str:
@@ -311,8 +327,12 @@ def write_draft(slug: str, sidecar: dict, source: str) -> str:
     path = os.path.join(DRAFTS, f"{slug}.md")
     body = yaml.safe_dump(sidecar, sort_keys=False, allow_unicode=True,
                           default_flow_style=False, width=88)
+    live = os.path.exists(os.path.join(SIDECARS, f"{slug}.md"))
+    banner = _BANNER_REPLACE.format(slug=slug) if live else ""
+    promote = (_PROMOTE_REPLACE if live else _PROMOTE_NEW).format(slug=slug)
     with open(path, "w") as f:
-        f.write(HEADER.format(slug=slug, source=source) + "---\n" + body + "---\n")
+        f.write(HEADER.format(source=source, banner=banner, promote=promote)
+                + "---\n" + body + "---\n")
     return path
 
 
@@ -364,8 +384,15 @@ def validate_draft(path: str) -> list[str]:
     return errs
 
 
-def accept(slugs: list[str]) -> int:
-    """Promote drafts into data/sidecars/, refusing anything that fails the schema."""
+def accept(slugs: list[str], replace: bool = False) -> int:
+    """Promote drafts into data/sidecars/, refusing anything that fails the schema.
+
+    An existing live sidecar is never overwritten without `--replace`, because a
+    redraft of a paper that already has one is the one case where accepting blind
+    destroys reviewed work: the live file is what the site, the validator and the
+    fidelity check read, and its wording may be the author's rather than a model's.
+    `--replace` is the opt-in, and it prints the git command that shows what changed.
+    """
     n = 0
     for slug in slugs:
         src = os.path.join(DRAFTS, f"{slug}.md")
@@ -379,9 +406,16 @@ def accept(slugs: list[str]) -> int:
                 print(f"      {e}")
             continue
         dst = os.path.join(SIDECARS, f"{slug}.md")
-        if os.path.exists(dst):
-            print(f"  {slug}: a live sidecar already exists; not overwriting")
+        if os.path.exists(dst) and not replace:
+            print(f"  {slug}: a live sidecar already exists; not overwriting.\n"
+                  f"      This draft is a *replacement*. Compare them first:\n"
+                  f"        diff data/sidecars/{slug}.md {os.path.relpath(src, ROOT)}\n"
+                  f"      then, if the replacement is the one you want:\n"
+                  f"        python scripts/draft_sidecars.py --accept {slug} --replace")
             continue
+        if os.path.exists(dst):
+            print(f"  {slug}: replacing the live sidecar "
+                  f"(recover the old one with `git diff data/sidecars/{slug}.md`)")
         # Strip the DRAFT banner on the way out. It is addressed to the reviewer, and a
         # promoted sidecar has been reviewed -- leaving it in would make every published
         # sidecar claim to be unverified.
@@ -412,6 +446,11 @@ def review(papers: list[dict]) -> None:
             p = by_slug.get(slug) or {}
             errs = validate_draft(f)
             flag = "  [schema errors]" if errs else ""
+            # Say so here rather than at --accept time: a redraft of a paper that
+            # already has a reviewed sidecar is read differently from a first draft,
+            # and the difference should be visible while deciding what to read.
+            if slug in live:
+                flag += "  [REPLACES the live sidecar -- needs --replace]"
             print(f"  {(p.get('citations') or 0):>5} cites  {slug}{flag}")
 
 
@@ -422,6 +461,11 @@ def main() -> None:
     ap.add_argument("--review", action="store_true", help="what is drafted vs live")
     ap.add_argument("--accept", nargs="+", metavar="SLUG", help="promote these drafts")
     ap.add_argument("--accept-all", action="store_true", help="promote every draft")
+    # Deliberately not honoured by --accept-all: replacing a reviewed sidecar is a
+    # per-paper decision, and a flag that quietly applies it to every draft in the
+    # directory is how one keystroke overwrites work nobody asked to revisit.
+    ap.add_argument("--replace", action="store_true",
+                    help="with --accept: overwrite a live sidecar with the redraft")
     ap.add_argument("--limit", type=int, default=20,
                     help="how many papers to queue (default 20, 0 = all)")
     ap.add_argument("--all", action="store_true",
@@ -443,7 +487,7 @@ def main() -> None:
         print(f"\n{accept(slugs)} promoted.")
         return
     if args.accept:
-        print(f"\n{accept(args.accept)} promoted.")
+        print(f"\n{accept(args.accept, replace=args.replace)} promoted.")
         return
     if args.ingest:
         n = ingest(papers)

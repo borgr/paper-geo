@@ -484,8 +484,14 @@ def step_worklist(cfg, args) -> None:
         for slug in sorted(drafted, key=lambda s: -((by_slug.get(s) or {})
                                                     .get("citations") or 0))[:10]:
             p = by_slug.get(slug) or {}
+            # A draft for a paper that already has a live sidecar is a replacement, and
+            # that changes what reviewing it means: you are comparing two readings, one
+            # of which is already published, rather than checking a new page. `--accept`
+            # refuses it without `--replace` for the same reason.
+            mark = "  **replaces the live sidecar**" if p.get("has_sidecar") else ""
             lines.append(f"- [ ] `data/sidecars/drafts/{slug}.md`  "
-                         f"({p.get('citations') or 0} cites) {(p.get('title') or '')[:56]}")
+                         f"({p.get('citations') or 0} cites) "
+                         f"{(p.get('title') or '')[:56]}{mark}")
         lines.append("")
     todraft = [p for p in no_side if p["slug"] not in set(drafted)]
     if todraft:
