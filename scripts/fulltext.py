@@ -88,11 +88,13 @@ INDEX = os.path.join(CACHE, "sources.json")
 # claim's evidence.
 MIN_CHARS = 4000
 
-# Bumped whenever html_to_text starts producing materially different text, so caches
-# written by the older extractor are refetched instead of trusted forever. v2 collapses
-# arXiv's tripled math to its LaTeX; the v1 caches spend up to 44% of their length on
-# the two renderings that were thrown away, which is why they have to go.
-EXTRACTOR = 2
+# Bumped whenever extraction starts producing materially different text, so caches
+# written by an older one are refetched instead of trusted forever.
+#   v2  collapse arXiv's tripled math to its LaTeX (v1 spent up to 44% of a paper's
+#       length on the two renderings that were then thrown away)
+#   v3  keep the appendices, which the reference-cutting had been discarding along with
+#       the bibliography -- 36% of tinyBenchmarks, tables included
+EXTRACTOR = 3
 
 # A PDF is held to a much lower bar, because the stub problem is specific to HTML: a
 # response whose first bytes are %PDF- *is* the document, so a short one is a short
@@ -125,6 +127,30 @@ def _collapse_math(m: re.Match) -> str:
     return f" {_html.unescape(a.group(1))} " if a else " "
 
 
+_BIB_OPEN = re.compile(r'<section[^>]*class="[^"]*ltx_bibliography[^"]*"[^>]*>', re.I)
+_SECTION = re.compile(r"<section\b", re.I)
+
+
+def _drop_bibliography(s: str) -> str:
+    """The bibliography element, removed. Structural, so the appendices survive it.
+
+    In LaTeXML's output the bibliography sits *between* the body and the appendices, so
+    cutting the text at the word "References" -- which is what drop_references does, and
+    all this file used to do -- threw away every appendix as well. That is 26,502 of
+    72,892 characters for tinyBenchmarks, and appendices are where the per-scenario
+    tables are, so a claim's magnitude had nothing to be checked against.
+
+    Cut from the section's opening tag to the next `<section`, because LaTeXML puts no
+    nested section inside a bibliography (checked) but does close it with a `</section>`
+    that a naive non-greedy match would find several thousand entries too early.
+    """
+    m = _BIB_OPEN.search(s)
+    if not m:
+        return s
+    nxt = _SECTION.search(s, m.end())
+    return s[:m.start()] + s[nxt.start():] if nxt else s[:m.start()]
+
+
 def html_to_text(raw: bytes) -> str:
     """Crude HTML -> text. Enough for a model, and it adds no dependency.
 
@@ -133,6 +159,7 @@ def html_to_text(raw: bytes) -> str:
     the wrong result.
     """
     s = raw.decode("utf-8", "replace")
+    s = _drop_bibliography(s)
     s = _MATH.sub(_collapse_math, s)
     s = re.sub(r"(?i)</(p|div|li|tr|h[1-6]|figcaption|caption|section)>", "\n", s)
     s = re.sub(r"(?i)<br\s*/?>", "\n", s)
@@ -203,6 +230,13 @@ def clean_pdf_text(s: str) -> str:
 
 _REFS = re.compile(r"^\s*(references|bibliography)\s*$", re.I | re.M)
 
+# Where a paper starts up again after its bibliography. Anchored to a line of its own and
+# to the forms a heading actually takes -- "Appendix A", "A Extra results", "A.1 ..." --
+# so that the word "appendix" inside a reference title cannot end the cut early.
+_APPENDIX = re.compile(
+    r"^[ \t]*(?:appendix(?:es|ices)?\b.*|[A-J](?:\.\d+)*[ \t]+[A-Z].*|"
+    r"supplement(?:ary|al)?(?:\s+materials?)?\s*)$", re.I | re.M)
+
 
 def drop_references(s: str) -> str:
     """Cut the bibliography, which is the largest block of numbers that are not ours.
@@ -213,9 +247,20 @@ def drop_references(s: str) -> str:
 
     Only a heading in the last 40% counts, so a paper that says "References" in an
     early section title does not get beheaded.
+
+    And only as far as the appendix, if the paper has one after its bibliography -- which
+    in a two-column preprint is the normal layout. Cutting to the end of the file cost
+    tinyBenchmarks all six of its appendices, including the per-scenario result tables.
+    For the HTML route this is now belt-and-braces: _drop_bibliography has already
+    removed the element structurally. It still carries the PDFs on its own.
     """
     hits = [m.start() for m in _REFS.finditer(s) if m.start() > len(s) * 0.6]
-    return s[:hits[-1]].rstrip() if hits else s
+    if not hits:
+        return s
+    cut = hits[-1]
+    resumes = _APPENDIX.search(s, cut)
+    return (s[:cut].rstrip() + "\n\n" + s[resumes.start():] if resumes
+            else s[:cut].rstrip())
 
 
 # --------------------------------------------------------------- source chain
@@ -390,18 +435,14 @@ def source_of(slug: str) -> str:
     return (_read_json(INDEX).get(slug) or {}).get("source") or "(unrecorded)"
 
 
-HTML_SOURCES = ("arxiv-html", "europe-pmc")
-
-
 def _stale(slug: str, source: str) -> bool:
     """Was this cache written by an extractor since replaced?
 
-    Only HTML caches can be: the PDF route never went through html_to_text, so a PDF
-    cache from v1 is byte-identical to what v2 would write and refetching it would cost
-    a download to learn nothing. Papers supplied by hand under data/fulltext/ are never
-    stale either -- nothing here produced them.
+    Coarse on purpose. Deciding per source which extractor change could have touched it
+    is the kind of bookkeeping that is right until the day it is quietly wrong, and the
+    cost of being coarse is one download of a paper we already have.
     """
-    if not found(source) or not source.split()[0].startswith(HTML_SOURCES):
+    if not found(source):
         return False
     return int((_read_json(INDEX).get(slug) or {}).get("extractor") or 0) < EXTRACTOR
 
