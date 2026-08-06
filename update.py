@@ -224,6 +224,14 @@ def apply_declines(lines: list[str]) -> list[str]:
 
       sections: ["OpenAlex"]        # any heading containing this, and its body
       items:    ["2306.01708"]      # any `- [ ]` line containing this
+      deferred: [{match: "Repo labels", until: "the papers are settled"}]
+
+    `deferred` is the third state, and it needs to exist because "not now" is neither
+    "open" nor "declined": the section is real work that will be done, just not
+    before something else. Dropping it loses the reminder, leaving it at the top
+    competes with the work that comes first. So it moves to the bottom, intact, under
+    the condition that releases it -- still generated from live state, so it stays
+    accurate while it waits, and no session has to stay alive to remember it.
 
     What was hidden is reported at the bottom of the file rather than silently
     dropped: a decline is a decision, and a decision that leaves no trace is
@@ -232,9 +240,13 @@ def apply_declines(lines: list[str]) -> list[str]:
     d = read_yaml(os.path.join(DATA, "declines.yaml")) or {}
     secs = [s for s in (d.get("sections") or []) if s]
     items = [i for i in (d.get("items") or []) if i]
-    if not (secs or items):
+    defs = [x for x in (d.get("deferred") or []) if (x or {}).get("match")]
+    if not (secs or items or defs):
         return lines
     out, dropped_secs, dropped_items = [], [], 0
+    held: list[str] = []              # deferred sections, in the order they appeared
+    held_secs: list[str] = []
+    hold_at = 0                       # heading depth currently being held, 0 = none
     skip_at = 0                       # heading depth currently being skipped, 0 = none
     for ln in lines:
         # Both levels: the four identity surfaces are `###` under one `##`, so declining
@@ -245,12 +257,26 @@ def apply_declines(lines: list[str]) -> list[str]:
         if depth:
             if skip_at and depth > skip_at:
                 continue
+            if hold_at and depth > hold_at:
+                held.append(ln)
+                continue
             hit = next((s for s in secs if s.lower() in ln.lower()), None)
-            skip_at = depth if hit else 0
+            dfr = next((x for x in defs if x["match"].lower() in ln.lower()), None)
+            skip_at, hold_at = (depth if hit else 0), (depth if dfr else 0)
             if hit:
                 dropped_secs.append(ln.lstrip("# ").strip())
                 continue
+            if dfr:
+                # Demoted one level: it sits under the "Deferred" heading now, and a
+                # `##` inside a `##` would read as a sibling of the work that is open.
+                held_secs.append(ln.lstrip("# ").strip())
+                held += ["", f"#{ln}", "",
+                         f"*Deferred until {dfr.get('until', 'you say otherwise')}.*"]
+                continue
         if skip_at:
+            continue
+        if hold_at:
+            held.append(ln)
             continue
         if ln.lstrip().startswith("- [ ]") and any(i in ln for i in items):
             dropped_items += 1
@@ -272,15 +298,25 @@ def apply_declines(lines: list[str]) -> list[str]:
             n += bool(re.match(r"###+ \S", l))
         out[i] = f"{m.group(1)}{n}{m.group(3)}{ln[m.end():]}"
 
-    note = []
+    if held:
+        out += ["", "## Deferred", "",
+                "Real work, parked on purpose. Regenerated from live state like",
+                "everything else, so it stays accurate while it waits.", *held, ""]
+
+    hid = []
     if dropped_secs:
-        note.append(f"{len(dropped_secs)} section"
-                    f"{'s' * (len(dropped_secs) != 1)} ({'; '.join(dropped_secs)})")
+        hid.append(f"{len(dropped_secs)} section"
+                   f"{'s' * (len(dropped_secs) != 1)} ({'; '.join(dropped_secs)})")
     if dropped_items:
-        note.append(f"{dropped_items} individual item"
-                    f"{'s' * (dropped_items != 1)}")
-    return out + ["---", "", f"*Hidden by `data/declines.yaml`: {' and '.join(note)}. "
-                             f"Delete a line there to have it asked again.*", ""]
+        hid.append(f"{dropped_items} individual item"
+                   f"{'s' * (dropped_items != 1)}")
+    note = []
+    if hid:
+        note.append(f"hidden: {' and '.join(hid)}")
+    if held_secs:
+        note.append(f"deferred to the bottom: {'; '.join(held_secs)}")
+    return out + ["---", "", f"*Per `data/declines.yaml` — {'. '.join(note)}. "
+                             f"Delete a line there to have it asked normally again.*", ""]
 
 
 def step_worklist(cfg, args) -> None:

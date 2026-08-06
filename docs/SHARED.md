@@ -108,7 +108,10 @@ override — and usually an upstream fix too, so the correction propagates to
 Scholar, S2, and OpenAlex instead of only to us. If it reappears because you
 decided against it rather than because it is undone, that is what
 `declines.yaml` is for: deciding not to do something is a decision, and it has
-to be recorded somewhere or it is made again every run.
+to be recorded somewhere or it is made again every run. Deciding *not yet* is
+also a decision — its `deferred:` key moves a section to the bottom of the
+worklist with the condition that brings it back, so "later" survives without
+anyone having to remember it.
 
 ## 8. Nothing outward-facing without a diff
 

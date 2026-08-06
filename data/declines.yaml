@@ -15,6 +15,11 @@
 #   items:     any `- [ ]` line containing this string -- an arXiv id, a slug, a
 #              repo name. Use this to decline the tail of a long list while
 #              keeping the top of it open.
+#   deferred:  not declined, just not now. `{match: "...", until: "..."}` moves the
+#              matching section to a "Deferred" heading at the bottom of the
+#              worklist, still regenerated from live state, with `until` printed as
+#              the condition that brings it back up. Use this instead of `sections`
+#              when you do intend to do the work.
 #
 # Read by update.py's worklist step, which reports at the bottom of WORKLIST.md
 # how much it hid. Delete a line here and the item is asked again on the next run.
@@ -33,3 +38,10 @@ sections:
   # already being done one surface up.
   - "OpenAlex"
 items: []
+deferred:
+  # The papers are the higher-leverage half and the repo sweep is a bounded
+  # afternoon, so it waits -- but it is real work, not declined. Keeping it in the
+  # file rather than in someone's head is the point: it stays counted and stays
+  # accurate while it waits.
+  - match: "Repo labels"
+    until: "the sidecar format is settled and the papers are done"

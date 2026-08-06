@@ -49,6 +49,7 @@ topics across every repo, and a venue name sitting in an index as a paper title.
 | [docs/SHARED.md](docs/SHARED.md) | rules for both tracks: identity, chunking, coined names, what not to do |
 | [docs/PAPERS.md](docs/PAPERS.md) | the papers track — metadata correctness, the `links` map, sidecars |
 | [docs/REPOS.md](docs/REPOS.md) | the repos track — topics, descriptions, `CITATION.cff` |
+| [docs/SIDECAR_DESIGN.md](docs/SIDECAR_DESIGN.md) | the open questions on the per-paper sidecar — the one artifact that is judgment, not derivation |
 | [docs/COLLAB.md](docs/COLLAB.md) | co-author ownership protocol: who owns a page, who links to it |
 | [docs/MEASURE.md](docs/MEASURE.md) | how to tell whether it worked, including a controlled design |
 | [USAGE.md](USAGE.md) | **how to run it** — routine refresh, new paper, sidecars, co-authors |

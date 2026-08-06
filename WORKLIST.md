@@ -136,11 +136,20 @@ citable, archived identity and a DataCite record that reaches OpenAlex
 and your ORCID works list — so they stop being GitHub-only objects.
 Steps, and the honest case for skipping some: `tasks/zenodo.md`.
 
-## Repo labels awaiting your review (30/31)
+
+## Deferred
+
+Real work, parked on purpose. Regenerated from live state like
+everything else, so it stays accurate while it waits.
+
+### Repo labels awaiting your review (30/31)
+
+*Deferred until the sidecar format is settled and the papers are done.*
 
 Check `data/repos.yaml`, fix anything wrong, set `reviewed: true` to freeze it, then `python scripts/sweep_github.py diff`.
 
+
 ---
 
-*Hidden by `data/declines.yaml`: 1 section (OpenAlex — 4 duplicate profiles). Delete a line there to have it asked again.*
+*Per `data/declines.yaml` — hidden: 1 section (OpenAlex — 4 duplicate profiles). deferred to the bottom: Repo labels awaiting your review (30/31). Delete a line there to have it asked normally again.*
 
