@@ -62,10 +62,17 @@ claims:
     0.81% of the full template-by-example grid for an MMLU subject, 1.15% for a BIG-bench
     Hard task and 0.88% for an LMentry task -- already estimate the central quantiles accurately,
     which is more than a hundredfold saving over running every template on every example;
-    the paper's headline settings use budgets equivalent to two to four single-template evaluations.
+    the abstract's headline is a budget equivalent to two single-prompt evaluations on MMLU.
   scope: 'Budgets are per task and per model: the reported errors come from separate experiments
     for each task, each LLM and five sampling seeds, with the total budget ranging over 200,
-    400, 800 and 1,600 evaluations. The hundredfold figure is exact for MMLU and LMentry (about
+    400, 800 and 1,600 evaluations. Those convert into single-prompt evaluations differently
+    per benchmark, and the conversion is worth doing because it is what the abstract quotes.
+    MMLU has exactly 100 templates, so one percent of the grid is one single-prompt evaluation
+    and the four budgets are 0.81, 1.6, 3.2 and 6.5 of them -- the abstract''s "two" is the
+    400 setting, and the smallest budget is less than one. BIG-bench Hard and LMentry have
+    136-188 and 226-259 templates, so their 200-evaluation budgets are about 1.6-2.2 and 2.0-2.3
+    single-prompt evaluations. That arithmetic is a derivation from the reported percentages,
+    not printed in the paper. The hundredfold figure is exact for MMLU and LMentry (about
     123x and 114x) and short of it for BIG-bench Hard (about 87x), which is why the paper
     says "in most cases". Accuracy is not uniform across tasks: MMLU subjects with many more
     examples than the rest carry visibly higher error at a fixed budget, and there the paper
@@ -100,12 +107,11 @@ claims:
   scope: 'The fine-tuned option is the most expensive and the paper does not recommend it:
     it needs full correctness data from a held-out set of other LLMs -- training inputs numbering
     209,280 for BIG-bench Hard, 175,776 for LMentry and 1,121,568 for MMLU -- and about 70
-    hours of training on multiple NVIDIA A30 GPUs plus roughly 350 more searching
-    hyperparameters, against 3-6 hours on a 32-core machine
-    for a whole benchmark otherwise. The paper''s own recommendation is the pretrained embedder
-    at a moderate budget. Example-side covariates were tried and dropped: sentence-transformer
-    embeddings of examples gave no improvement in preliminary tests, so examples stay one-hot
-    throughout.'
+    hours of training on multiple NVIDIA A30 GPUs plus roughly 350 more searching hyperparameters,
+    against 3-6 hours on a 32-core machine for a whole benchmark otherwise. The paper''s own
+    recommendation is the pretrained embedder at a moderate budget. Example-side covariates
+    were tried and dropped: sentence-transformer embeddings of examples gave no improvement
+    in preliminary tests, so examples stay one-hot throughout.'
   evidence: Section 5, Figure 2, Figure 3, Appendix L, Appendix D, Appendix M
 - id: consistency-guarantee
   text: 'The estimator is proved consistent: as both the number of templates and the number
@@ -163,14 +169,22 @@ claims:
     and measuring how much those rankings agree gives a highest agreement of about 0.25 across
     subjects, and across models most agreement scores fall between 0.06 and 0.35 -- so a template
     that suits one model or one subject carries little information about another.
-  scope: The one clear exception is Gemma-7B-it at 0.45, which the paper flags as notably
-    higher; note that its appendix text attributes that value to Gemma-7B, while its table
-    gives Gemma-7B 0.18 and Gemma-7B-it 0.45, so it is the instruction-tuned model. The paper
-    also observes that the top-ranked templates for the highest-agreement models are heavy
-    with commas, offered as a suggestion about token parsing rather than a tested claim. Agreement
-    is Kendall's W, which measures concordance among rankings and ranges from 0 to 1; there
-    is no significance test attached. A separate check finds no clear relation between how
-    many format features two templates differ by and how far apart their accuracies fall.
+  scope: 'Two models sit above the rest: Gemma-7B-it at 0.45 and Mistral-7B-v0.1 at 0.35,
+    against a floor of 0.056 for Flan-T5-XXL. The appendix text attributes the 0.45 to Gemma-7B,
+    while its table gives Gemma-7B 0.18 and Gemma-7B-it 0.45, so it is the instruction-tuned
+    model. Reading the table against the accuracy results adds something the paper does not
+    draw out: Llama-3-70B-Instruct, the model that wins under every template, has one of the
+    lowest agreements at 0.10, so being the strongest model is not the same as having stable
+    template preferences -- a derived observation from two of the paper''s own tables. The
+    paper also observes that the top-ranked templates for both of those models are heavy with
+    commas -- the best-ranked one is literally "The, following, are, multiple, choice, questions,
+    (with, answers), about, [topic]" and so on with every phrase comma-separated -- and suggests
+    the separation may help the model parse the prompt''s parts. That is offered as a suggestion
+    about tokenization, not a tested claim, and it rests on the two models out of fifteen
+    whose rankings agree at all. Agreement is Kendall''s W, which measures concordance among
+    rankings and ranges from 0 to 1; there is no significance test attached. A separate check
+    finds no clear relation between how many format features two templates differ by and how
+    far apart their accuracies fall.'
   evidence: Section 7, Table 1, Figure 17, Figure 18, Appendix K
 - id: the-judges-prompt-changes-the-ranking
   text: The same sensitivity applies to LLM-as-a-judge. Varying only the prompt given to a
@@ -224,12 +238,15 @@ claims:
     paper; BIG-bench Hard with 11 LLMs and 136 to 188 templates over 15 tasks of 100 examples;
     and LMentry with 16 LLMs and 226 to 259 templates over 10 tasks of 26 to 100 examples,
     the latter two reusing Mizrahi et al.''s evaluations.'
-  scope: Every reported number is an average over tasks, models and five sampling seeds, with
-    error bars taken over models; the MMLU runs use the unitxt preprocessing library and the
-    LM-Eval-Harness. Because MMLU's data is collected here and the other two are reused, the
-    format-perturbation versus paraphrase distinction between the benchmarks is also a distinction
-    between data sources. The code and the MMLU evaluation data are released, and the method
-    is integrated into PromptBench.
+  scope: 'Every reported number is an average over tasks, models and five sampling seeds,
+    with error bars taken over models; the MMLU runs use the unitxt preprocessing library
+    and the LM-Eval-Harness. Because MMLU''s data is collected here and the other two are
+    reused, the format-perturbation versus paraphrase distinction between the benchmarks is
+    also a distinction between data sources. The code and the MMLU evaluation data are released,
+    and the method is integrated into PromptBench. One bookkeeping snag for anyone matching
+    text to figures: Section 5 says five variations of the method are considered and then
+    enumerates four (Rasch, discrete covariates, pretrained embeddings, fine-tuned embeddings),
+    which are the four that appear in the figures.'
   evidence: Section 5, Appendix J, Section 1, footnote 2
 qa:
 - q:
@@ -373,8 +390,8 @@ misreadings:
   shifts every example''s difficulty by the same amount. A template that helps some examples
   while hurting others sits outside the model, however well the estimator performs in aggregate.'
 - The best-performing variant is not the recommended one. Fine-tuned template embeddings need
-  full correctness data from a held-out set of other LLMs plus roughly 70 hours of training on
-  multiple A30 GPUs and 350 more of hyperparameter search; the paper recommends the pretrained
+  full correctness data from a held-out set of other LLMs plus roughly 70 hours of training
+  on multiple A30 GPUs and 350 more of hyperparameter search; the paper recommends the pretrained
   embedder at a moderate budget instead.
 - 'Kendall''s W of 0.45 belongs to Gemma-7B-it, not Gemma-7B -- the appendix text and its
   own table disagree, and the table lists Gemma-7B at 0.18. Either way it is the outlier:
@@ -389,6 +406,15 @@ misreadings:
 - The advantage is not scale-free. Cutting the template pool fivefold narrows the gap to plain
   averaging, so the method earns its keep in proportion to how many templates you actually
   intend to compare.
+- '"A budget equivalent to two single-prompt evaluations" is specific to MMLU, where the pool
+  is exactly 100 templates so one percent of the grid is one single-prompt evaluation. The
+  four budgets tested are 0.81, 1.6, 3.2 and 6.5 single-prompt evaluations on MMLU; the abstract''s
+  number is the second of them, and the smallest budget tested is less than a single prompt''s
+  worth.'
+- The comma-heavy best template is an observation about two of fifteen models -- the only
+  two whose template rankings agree across subjects at all (Kendall's W 0.45 and 0.35). It
+  is a hypothesis about tokenization the paper offers in passing, not a prompt-design finding,
+  and it says nothing about the thirteen models whose rankings do not agree.
 terminology:
   PromptEval: 'The method: fit an item-response model to the (template, example) correctness
     scores you can afford to run, predict the rest, and read the distribution of per-template
