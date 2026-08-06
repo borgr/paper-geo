@@ -111,7 +111,7 @@ submission page (a metadata edit, not a new version).
 - [ ] `1907.08971` (77 cites) -> ACL 2019  <https://arxiv.org/abs/1907.08971>
 - [ ] `2302.04863` (71 cites) -> Findings of EMNLP 2023  <https://arxiv.org/abs/2302.04863>
 
-## Sidecar drafts awaiting your verification (14)
+## Sidecar drafts awaiting your verification (19)
 
 Drafted from each paper's own full text: claims with their magnitudes,
 scope conditions, terminology and likely misreadings. Every number is a
@@ -134,7 +134,7 @@ python scripts/draft_sidecars.py --accept <slug>   # promote, after editing
 - [ ] `data/sidecars/drafts/disentqa-disentangling-parametric-and-contextual-knowledge-w.md`  (119 cites) DisentQA: Disentangling Parametric and Contextual Knowle
 - [ ] `data/sidecars/drafts/model-merging-with-svd-to-tie-the-knots.md`  (112 cites) Model merging with SVD to tie the Knots
 
-## Sidecars not yet drafted (101/115)
+## Sidecars not yet drafted (96/115)
 
 Nothing to do by hand here — this is a run, not a task:
 
@@ -147,11 +147,11 @@ python scripts/draft_sidecars.py --ingest     # fold the answers in
 its own. The top of the list, by citations, is where it pays:
 
 - 172 cites — An autonomous debating system
-- 82 cites — Call for Papers - The BabyLM Challenge: Sample-efficient pretraini
-- 77 cites — Are You Convinced? Choosing the More Convincing Evidence with a Si
-- 72 cites — Will it Blend? Blending Weak and Strong Labeled Data in a Neural N
-- 71 cites — Knowledge is a Region in Weight Space for Fine-tuned Language Mode
-- 70 cites — Corpus Wide Argument Mining - {A} Working Solution
+- 70 cites — {DORA} The Explorer: Directed Outreaching Reinforcement Action-Sel
+- 68 cites — A Survey on Model MoErging: Recycling and Routing Among Specialize
+- 68 cites — Efficient Benchmarking (of Language Models)
+- 67 cites — Elements of World Knowledge {(EWoK):} {A} Cognition-Inspired Frame
+- 64 cites — ColD Fusion: Collaborative Descent for Distributed Multitask Finet
 
 ## Artifacts with no citation route (14)
 
