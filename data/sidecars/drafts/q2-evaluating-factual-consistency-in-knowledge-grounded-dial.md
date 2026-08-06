@@ -51,7 +51,9 @@ claims:
     'my' or 'your' are dropped, so opinions and personal statements are excluded by construction.
     SQuAD2.0 is chosen because it can answer 'no answer', which is how fully hallucinated
     content is caught. When no question survives filtering, the score comes from an end-to-end
-    NLI fallback (1 entailment, 0 contradiction, 0.5 neutral).
+    NLI fallback (1 entailment, 0 contradiction, 0.5 neutral). Questions come from beam search
+    with n=5; the paper reports the variant that keeps only the top-ranked surviving question,
+    having found sampling-based decoding worse.
   evidence: Section 2, Figure 2
 - id: separates-consistent-from-inconsistent
   text: On the paper's annotated Wizard of Wikipedia responses, Q² scores factually consistent
@@ -62,8 +64,10 @@ claims:
     responses are a mix. The consistent and inconsistent sets are curated rather than sampled
     -- inconsistent examples were deliberately chosen to be fluent and coherent, and consistent
     responses that were pure chit-chat were skipped -- so the gap is measured on the cases
-    that matter, not on average output.
-  evidence: Table 2, Section 4
+    that matter, not on average output. Every baseline also orders the two sets correctly;
+    what distinguishes Q² is that the baselines barely separate inconsistent responses from
+    the random sample.
+  evidence: Table 2, Section 4, Section 5.1 (Baselines)
 - id: hallucination-surfaces-as-unanswerable
   text: 'Hallucinated content shows up in Q² as questions the grounding text cannot answer:
     54.88% of the questions generated from inconsistent dodecaDialogue responses and 62.04%
@@ -85,7 +89,9 @@ claims:
     -- so 77.3% is a floor for this use rather than a tuned operating point. Accuracy is on
     the curated consistent/inconsistent sets, which are balanced by construction. Precision
     and recall are asymmetric at this threshold: 73% precision at 86.7% recall for detecting
-    inconsistency, 83.5% at 67.9% for detecting consistency.'
+    inconsistency, 83.5% at 67.9% for detecting consistency. The precision-recall curves show
+    Q² above every baseline across the whole threshold range, so the advantage is not an artefact
+    of this cut point.'
   evidence: Section 5.1 (Response-Level Evaluation), Table 3, Figure 3
 - id: system-level-correlation
   text: At the system level, Q² correlates with human factual-consistency judgements at an
@@ -101,13 +107,15 @@ claims:
 - id: topical-chat-correlation
   text: On Topical-Chat's 'Uses Knowledge' human ratings, Q² correlates at 0.4579 Spearman
     and 0.4698 Pearson, above the best reported USR result (0.4468 and 0.3175) and METEOR
-    (0.3909 and 0.3328), with the improvement significant at p < 0.001.
+    (0.3909 and 0.3328), with the improvement over the baselines significant at p < 0.001.
   scope: 'Zero-shot: nothing in Q² was tuned for Topical-Chat, whose grounding includes Washington
     Post articles and Reddit fun-facts rather than only Wikipedia. The comparison is against
     numbers reported by Mehri and Eskenazi rather than re-run here, on the 52 of 60 dialogue
     contexts that used any knowledge and the 5 of 6 annotated responses per context they kept
     -- 260 responses. ''Uses Knowledge'' is a proxy: a response that uses knowledge properly
-    is expected to use it consistently, but the two are not the same construct.'
+    is expected to use it consistently, but the two are not the same construct. This is the
+    dataset where the NLI comparison helps most, which the paper reads as lexical variability
+    mattering more when the grounding is not Wikipedia.'
   evidence: Table 5, Section 5.2
 - id: dnli-accuracy
   text: 'Q² transfers to persona and self-consistency without retraining: on the Dialogue
@@ -131,7 +139,21 @@ claims:
     -- so it is a curated, balanced set, not a random sample of system output. Annotators
     skipped consistent responses that were pure chit-chat and preferred inconsistent responses
     that read as fluent and coherent, which makes the set harder than a random one on purpose.
-  evidence: Section 4, Table 1
+    Both systems were decoded with beam size 10, beam block 3 and context block 3, so the
+    outputs are specific to that decoding configuration.
+  evidence: Section 4, Table 1, Appendix E
+- id: annotation-asked-for-groundedness-not-truth
+  text: The annotation guidelines told annotators to ignore their own background knowledge
+    and judge only against the Wikipedia sentence the bot was given, to skip responses that
+    were not clear and coherent, and to count as inconsistent both information the knowledge
+    never mentioned and subtle changes to what it did say.
+  scope: 'This is the operational definition behind every number in the paper, and it is narrower
+    than ''factually wrong'': a response that is true about the world but unsupported by the
+    given sentence is inconsistent by these instructions. It also explains the two ways the
+    label is asymmetric -- incoherent responses were dropped rather than labelled, and ''not
+    mentioned at all'' and ''subtly altered'' are collapsed into one class. The guidelines
+    are adapted from Durmus et al.''s faithfulness annotation for summarisation.'
+  evidence: Appendix E, Section 4
 - id: reference-free-and-zero-shot
   text: 'Q² needs no gold reference response, no training on human consistency labels and
     no in-domain tuning: the same pipeline is applied zero-shot to Wizard of Wikipedia, Topical-Chat
@@ -156,6 +178,41 @@ claims:
     responses), so more responses fall through to the NLI fallback. The gap between consistent
     and inconsistent scores is what survives, which is the property a metric needs.'
   evidence: Table 7, Table 8, Section 5.4 (Robustness to Underlying Model Quality)
+- id: decoding-and-filter-ablations
+  text: 'The two design choices inside question generation trade coverage against sharpness:
+    replacing beam search plus top-n selection with a single greedy question raises the raw
+    scores on three of four splits but costs 5 to 10 points of question coverage, and additionally
+    dropping the personal-pronoun filter lowers scores on every split while raising coverage
+    again.'
+  scope: 'The two ablations are cumulative -- the no-filter row is greedy decoding and no
+    filter, so it must be read against the greedy row, not against full Q². Read that way,
+    both ablations narrow the consistent/inconsistent gap: on dodecaDialogue it is 0.458 for
+    full Q² against 0.435 for greedy, and on MemNet 0.621 against 0.576 (a subtraction of
+    the paper''s own reported scores, not a figure it states). Coverage moves the other way,
+    from 92.67% and 94% under full Q² to 87.33% and 85.33% under greedy. So the filters and
+    the beam search buy separation at the cost of sending more responses to the end-to-end
+    NLI fallback.'
+  evidence: Appendix A, Table 9
+- id: random-knowledge-sanity-check
+  text: 'Given deliberately wrong grounding, Q² collapses to near zero: swapping in knowledge
+    from a different turn of the same dialogue gives an average score of 0.02 with 91.02%
+    of questions unanswerable, and knowledge from a different dialogue gives exactly 0 with
+    99.61% unanswerable.'
+  scope: An adversarial sanity check on the metric's floor, not a measurement of dialogue
+    systems. It shows the score is driven by the grounding text rather than by generic response
+    plausibility -- the same-dialogue variant is the harder one because the topic is shared,
+    and it still scores 0.02. What it does not show is sensitivity at the top of the range,
+    where the interesting errors are subtle rewrites of the correct knowledge.
+  evidence: Appendix C (Random Knowledge), Table 10
+- id: length-is-not-the-signal
+  text: 'Inconsistent responses in the released dataset are not detectable from surface length:
+    they average 70.84 characters and 15.79 tokens against 69.49 and 15.13 for consistent
+    responses and 69.44 and 15.86 for random ones.'
+  scope: Reported for the dodecaDialogue outputs with MemNet stated to be similar. It rules
+    out one trivial shortcut on this dataset rather than establishing that no shortcut exists,
+    and it is a property of the curated set -- inconsistent examples were chosen for being
+    fluent and coherent, which is exactly what removes the easy surface cues.
+  evidence: Appendix C (Response Length), Table 11
 - id: chit-chat-is-the-failure-mode
   text: 'Q²''s known failure mode is chit-chat and opinion rather than factual error: no valid
     question could be generated for around 20% of randomly sampled responses against 6-8%
@@ -166,8 +223,10 @@ claims:
     'What is purple?', answered 'my favorite color' from the response and something else from
     the knowledge. The pronoun filter removes the clearest opinion cases but not this one.
     Unresolved pronouns referring to the dialogue history are the other cause of lost questions,
-    and the authors report that a preliminary coreference step raised coverage.
-  evidence: Section 5.4 (Lack of Valid Questions), Section 5.4 (Qualitative Analysis)
+    and the authors report that a preliminary coreference step raised coverage. Separating
+    chit-chat from knowledgeable content is named as future work, not solved here.
+  evidence: Section 5.4 (Lack of Valid Questions), Section 5.4 (Qualitative Analysis), Section
+    7
 - id: interpretable-by-construction
   text: 'Q² returns more than a score: it emits each generated question, the answer span taken
     from the response and the answer the QA model found in the knowledge, so a low score can
@@ -177,6 +236,43 @@ claims:
     good as the question generation, so a response whose questions were all filtered out gets
     a score from the end-to-end NLI fallback with no explanation attached.
   evidence: Section 5.4 (Qualitative Analysis)
+- id: cost-of-running-it
+  text: 'Q² is a pipeline of three neural models per response, and the paper reports it as
+    slow: on 4 CPUs, scoring one 150-response split took roughly 1.5 to 2 hours, with a more
+    efficient version named as future work.'
+  scope: Per-response cost, not per-dataset, so it scales linearly and the figure is CPU-only
+    2021 hardware -- a GPU or a batched reimplementation changes it entirely. The practical
+    constraint on reuse is less the runtime than the pinned stack the released code was written
+    against (transformers 3.2.0, allennlp 1.0.0, spaCy 2.3.2, torch 1.6.0, Python 3.7), since
+    the NLI component depends on an AllenNLP model class.
+  evidence: Appendix B, the released repository's prerequisites
+- id: released-artifacts
+  text: The released repository contains the annotated data as four CSV files of 150 responses
+    each -- consistent and inconsistent, for MemNet and dodecaDialogue -- plus the cross-annotation
+    file used for the agreement check, with the Wizard of Wikipedia episode index, turn, response,
+    grounding knowledge and gold human response per row, alongside the pipeline scripts and
+    the meta-evaluation code.
+  scope: 'Provenance for anyone reusing the labels: rows point back into the WoW validation
+    set by episode and turn, so the dataset is a labelling of existing dialogues rather than
+    new dialogue collection. The 600 rows across the four files are the annotation targets;
+    the 1,088 figure in the paper comes from extending each context''s annotation to both
+    systems'' outputs. The scripts expect metric scores normalised to [0,1] when comparing
+    a new metric against Q².'
+  evidence: The released repository (README, third_party/data), Section 4
+- id: position-among-metrics
+  text: 'Q² is the first application of question-generation/question-answering evaluation
+    to dialogue rather than summarisation, and its specific move against the closest prior
+    metric is where lexical variability is tolerated: QuestEval handles it with the QA model''s
+    answerability confidence and can only do so on its recall-oriented side, while Q²''s NLI
+    comparison allows it on the precision-oriented side too.'
+  scope: Positioning as the paper states it, with the summarisation lineage explicit -- recall-oriented
+    QA evaluation from Eyal et al., precision-oriented consistency checking from Durmus et
+    al. and Wang et al., both combined in QuestEval. Answerability confidence is insensitive
+    to how an answer is worded but also blind to whether the QA model hallucinated it, which
+    is the gap NLI comparison fills. BEGIN, a WoW-based groundedness benchmark with five labels
+    that models the task as NLI, is concurrent work rather than a baseline here.
+  evidence: Section 6 (Evaluation via Question Answering and Question Generation, Factual
+    Consistency and Hallucinations), Section 1
 qa:
 - q:
   - How do I measure whether a chatbot's answer is faithful to its retrieved source?
@@ -217,7 +313,8 @@ qa:
   - How was the Q² evaluation dataset built?
   answers:
   - annotated-dataset
-  - separates-consistent-from-inconsistent
+  - released-artifacts
+  - annotation-asked-for-groundedness-not-truth
 - q:
   - How often do knowledge-grounded dialogue models contradict their knowledge?
   - What does hallucination look like in a QA-based consistency metric?
@@ -232,6 +329,7 @@ qa:
   - Is Q² sensitive to the quality of its components?
   answers:
   - robust-to-component-size
+  - decoding-and-filter-ablations
   - pipeline
 - q:
   - When does Q² fail?
@@ -248,11 +346,52 @@ qa:
   answers:
   - dnli-accuracy
   - reference-free-and-zero-shot
+- q:
+  - Does Q² notice when the grounding document is completely wrong?
+  - What score does Q² give for unrelated knowledge?
+  - Can a consistency metric be fooled by plausible-sounding text?
+  answers:
+  - random-knowledge-sanity-check
+  - length-is-not-the-signal
+  - hallucination-surfaces-as-unanswerable
+- q:
+  - How expensive is it to run Q²?
+  - Can I still run the Q² code today?
+  - What does a QG/QA metric cost per response?
+  answers:
+  - cost-of-running-it
+  - released-artifacts
+  - robust-to-component-size
+- q:
+  - How is Q² different from QuestEval or FEQA?
+  - What is the difference between Q² and BEGIN?
+  - Which QA-based consistency metric should I use?
+  answers:
+  - position-among-metrics
+  - nli-instead-of-token-matching
+  - reference-free-and-zero-shot
+- q:
+  - What counts as an inconsistent dialogue response?
+  - Does factual consistency mean the response is true?
+  - How were annotators told to judge groundedness?
+  answers:
+  - annotation-asked-for-groundedness-not-truth
+  - annotated-dataset
+  - separates-consistent-from-inconsistent
+- q:
+  - Should I use beam search or greedy decoding for question generation in an evaluation metric?
+  - Does filtering out opinion questions help a consistency metric?
+  - What do the Q² ablations show?
+  answers:
+  - decoding-and-filter-ablations
+  - chit-chat-is-the-failure-mode
+  - pipeline
 misreadings:
-- Q² does not measure truth. It measures whether a response is consistent with the grounding
+- 'Q² does not measure truth. It measures whether a response is consistent with the grounding
   text it was given, so a response can be factually correct about the world and still score
   0 because the knowledge does not support it -- and consistent with a false grounding passage
-  and score 1. It is a groundedness metric, not a fact-checker.
+  and score 1. It is a groundedness metric, not a fact-checker, and the annotation guidelines
+  say so explicitly: annotators were told to ignore their background knowledge.'
 - The inconsistency rates in the released dataset -- 34.2% of contexts for dodecaDialogue
   and 50.36% for MemNet -- are not estimates of how often those systems hallucinate. The dataset
   was built by annotating until 150 consistent and 150 inconsistent responses had been collected
@@ -281,6 +420,13 @@ misreadings:
   a threshold tuned on the development split, with the pronoun filter switched off, and with
   neutral pairs deliberately counted as inconsistent because an ungrounded persona utterance
   is a dialogue failure even when it is not a logical contradiction.
+- The near-zero scores on randomly swapped knowledge (0.02 and 0) are a floor check, not evidence
+  of fine-grained sensitivity. They show the score comes from the grounding text rather than
+  from generic fluency; the errors the metric is actually for are subtle alterations of correct
+  knowledge, which sit far above that floor.
+- The ablation table is cumulative, not one-factor-at-a-time. The row without the personal-pronoun
+  filter also uses greedy decoding, so comparing it with full Q² attributes both changes to
+  the filter. Read against the greedy row, dropping the filter lowers the score on every split.
 terminology:
   Q²: 'The metric introduced here: question generation plus question answering plus NLI-based
     answer comparison, scoring how consistent a dialogue response is with its grounding text.
@@ -293,11 +439,29 @@ terminology:
     parts of a response get checked -- and what makes opinion clauses a failure mode.
   question coverage: The percentage of responses for which at least one generated question
     survived filtering, so the score came from the QG/QA pipeline rather than from the end-to-end
-    NLI fallback. Reported because it is what degrades when components get smaller.
+    NLI fallback. Reported because it is what degrades when components get smaller or when
+    questions are generated greedily.
   Q² w/o NLI: 'The ablation, not a separate metric: answer spans are compared by token-level
     F1 instead of NLI, which is what earlier question-based summarisation metrics did. Used
     throughout as the baseline that isolates the paper''s contribution.'
   E2E NLI: The strongest non-question baseline -- the same RoBERTa-SNLI model run once over
     the whole response against the whole knowledge passage, with the response as hypothesis.
     Also Q²'s own fallback when no question survives filtering.
+  MemNet / dodecaDialogue: 'The two Wizard of Wikipedia systems whose outputs were annotated:
+    the memory-network model released with the dataset, and the multi-task model from the
+    dodecaDialogue benchmark, both decoded with beam size 10 in ParlAI. They are the source
+    of the annotated responses, not systems the paper proposes.'
+  QuestEval: The closest prior QG/QA metric, for summarisation, which combines recall- and
+    precision-oriented question checking and handles wording differences using the QA model's
+    answerability confidence. Q²'s contrast with it is that NLI-based span comparison extends
+    that tolerance to the precision side.
+  BEGIN: A concurrent WoW-based benchmark for groundedness that frames the task as NLI with
+    five labels (entailment, contradiction, hallucination, off-topic, generic). Concurrent
+    work in this paper's related-work section, not a baseline it is compared against.
+links_extra:
+  code and the annotated dataset: https://github.com/orhonovich/q-squared
+  the four annotated CSV files: https://github.com/orhonovich/q-squared/tree/main/third_party/data
+  the published version (cite this): https://aclanthology.org/2021.emnlp-main.619/
+  preprint: https://arxiv.org/abs/2104.08202
+  Wizard of Wikipedia, the dialogues the labels point into: https://parl.ai/projects/wizard_of_wikipedia/
 ---
