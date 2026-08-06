@@ -6,8 +6,8 @@ which is why it can be re-run — the fixes all need one.
 
 | surface | state | |
 |---|---|---|
-| ORCID works (public) | 120 | ok |
-| ORCID holds your papers | 112 of 112 | ok |
+| ORCID works (public) | 115 | ok |
+| ORCID holds your papers | 111 of 112 | **fix** |
 | ORCID canonical URL | present | ok |
 | ORCID name variants | 2 listed | ok |
 | ORCID keywords | 13 of 13 | ok |
@@ -25,12 +25,11 @@ which is why it can be re-run — the fixes all need one.
 | arXiv records misspelling your name | 0 | ok |
 | arXiv records omitting you | 0 | ok |
 | ORCID works we cannot place | 4 | **check** |
-| ORCID works listed twice | 4 | **fix** |
 | Semantic Scholar records | 2 | **fix** |
 
 ## Crossref / DataCite auto-update: no evidence it is live
 
-All 120 public works are **self-asserted** — the `source` on every
+All 115 public works are **self-asserted** — the `source` on every
 one of them is your own name. A work that Crossref or DataCite adds carries
 *their* name instead, so this row is the only public read on whether those
 connections exist. It is currently reading zero.
@@ -118,17 +117,19 @@ answer. This uses `query-scholarly.wikidata.org`.
 
 An opt-in batch for the 109 missing items is in `tasks/wikidata_papers.qs`; read the cautions in [wikidata_followup.md](wikidata_followup.md) before running it.
 
-## 4 papers are listed twice on your ORCID
+## 1 of your papers are missing from ORCID
 
-ORCID groups works that share an identifier. A paper whose record holds
-the publisher DOI in one entry and arXiv's `10.48550/arXiv.<id>` DOI in
-another shares no identifier between them, so it does not group: it shows
-as two works with two different titles, and every service counting your
-output counts it twice.
+Measured by identifier, not by counting: each of these has no work group on
+the record carrying its DOI or arXiv id.
 
-This is a side effect of `orcid_import.bib` filling missing DOIs from arXiv.
-It is worth fixing and it is not urgent. The fix is a merge, not a deletion:
-both titles are real, and adding one entry's DOI to the other folds them into
-one work with both. Which entry to open and what to paste into it:
-[orcid_remove.md](orcid_remove.md).
+This is the row that matters most on the page and the one a works *count*
+hides. ORCID is the key Semantic Scholar disambiguates on and the key OpenAlex
+is running profile merges from, so a paper absent here is a paper those two
+have no authoritative reason to attach to you — which is the same failure the
+split S2 record is made of.
+
+Highest citations first; the full list with DOIs is
+[orcid_missing.md](orcid_missing.md).
+
+- [ ]    0 cites — Resolving Interference (RI): Disentangling Models for Improved Mod
 

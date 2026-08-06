@@ -70,7 +70,7 @@ python scripts/sweep_github.py diff # exactly what would change on GitHub
 python update.py --apply            # write it
 ```
 
-`update.py` runs nine steps, each independently re-runnable:
+`update.py` runs ten steps, each independently re-runnable:
 
 | Step | Does | Writes |
 |---|---|---|
@@ -78,9 +78,10 @@ python update.py --apply            # write it
 | `repos` | refresh GitHub repo state, preserving prior edits | `data/repos.yaml` |
 | `propose` | label repos that still lack topics or a description | `build/llm_tasks.json` |
 | `draft` | draft sidecars for the next batch of papers that have none | `data/sidecars/drafts/` |
+| `links` | deduce each paper's code repo and project page from its own full text | `data/paper_code.yaml` |
 | `ownership` | reconcile paper ownership with collaborators' manifests | `paper-geo.json` |
 | `audit` | live-read the surfaces we don't control — ORCID, arXiv authority records, Wikidata, HF, S2 — and regenerate their payloads | `tasks/*` |
-| `validate` | schema-check every data file, plus regression checks for bugs already shipped once | — |
+| `validate` | schema-check every data file, plus regression checks for bugs already shipped once; refresh the corpus sizes stated in the docs | the doc sentences |
 | `render` | rebuild the site locally, so the run ends in a page rather than a report | `build/site/` |
 | `worklist` | rank what only a human can do, by citations | `WORKLIST.md` |
 
@@ -174,7 +175,12 @@ to sound confident; precise claim plus explicit scope.
 3. Index and claim its Hugging Face paper page: `hf.co/papers/<arxiv-id>`.
 4. Once it has a venue, add the journal-ref to the arXiv record (see `WORKLIST.md`).
 5. Write its sidecar.
-6. If it has a repo: `python update.py --step repos` then label and apply.
+6. Its code repo and project page are already deduced from its own full text by the
+   `links` step — read the row in `data/paper_code.yaml`, correct it if wrong, set
+   `reviewed: true` to freeze it. `--apply` pushes the accepted ones to the Hugging
+   Face paper page; the site shows them without waiting for that.
+7. For the repo's own topics and description: `python update.py --step repos`, then
+   label and apply.
 
 ## Recording a decision so it survives reruns
 
@@ -183,10 +189,15 @@ hand must be written down or it gets undone:
 
 - **Papers** → `data/overrides.yaml` (`force_merge`, `force_distinct`, `drop`, `fields`)
 - **Repos** → the `reviewed: true` flag in `data/repos.yaml`
+- **Code and project links** → the `reviewed: true` flag in `data/paper_code.yaml`,
+  which also makes that row's own URLs the ones `--apply` pushes
+- **A task ruled out** → `data/declines.yaml`, which stops `WORKLIST.md` asking
 
 If the same item keeps reappearing in `WORKLIST.md`, it needs an override — and
 usually an upstream fix too, so the correction propagates to Scholar, Semantic
-Scholar, and OpenAlex rather than only to us.
+Scholar, and OpenAlex rather than only to us. If it reappears because it was
+*decided against* rather than left undone, that is `declines.yaml`: deciding not to
+do something is a decision, and an unrecorded decision is made again every run.
 
 ## Don't
 

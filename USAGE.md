@@ -38,14 +38,15 @@ python update.py
 Nine steps, each safe to re-run, in order: rebuild `data/papers.yaml` from your
 bibliography + Semantic Scholar + arXiv + Hugging Face → refresh repo state →
 label anything unlabelled → draft the next batch of sidecars from each paper's own
-full text → reconcile paper ownership with collaborators → live-read the identity
+full text → deduce each paper's code repo and project page from its own full text →
+reconcile paper ownership with collaborators → live-read the identity
 surfaces → validate against the schemas → rebuild the site locally → regenerate
 `WORKLIST.md`.
 
 It ends by printing where to look: `build/site/index.html` is the corpus as a reader
 meets it, and the two things waiting on you are counted underneath it.
 
-**What is yours and what is not.** Six of the nine steps are code re-deriving public
+**What is yours and what is not.** Eight of the ten steps are code re-deriving public
 facts, and a human in them is a human retyping a fetch. Two are a model's reading,
 which is why they land as drafts that nothing publishes. That leaves exactly two
 things for you, and both are decisions rather than typing: accepting a sidecar draft,
@@ -55,7 +56,7 @@ because it becomes an assertion under your name, and anything that writes outwar
 cat WORKLIST.md                            # what only you can do, ranked by citations
 python scripts/draft_sidecars.py --review  # drafts waiting, then --accept <slug>
 python scripts/sweep_github.py diff        # exactly what would change on GitHub
-python update.py --apply                   # write the repo changes
+python update.py --apply                   # write the repo labels and the paper links
 python scripts/build_site.py --deploy      # rebuild and publish the site
 ```
 
@@ -120,8 +121,12 @@ Then, in this order — highest value first:
    what Scholar matches citations on, so it's worth more than it looks — and it
    needs step 1.
 4. **Verify its drafted sidecar** (below) — `update.py` will have drafted it.
-5. **If it has a repo:** `python update.py --step repos`, label it, then
-   `sweep_github.py diff` → `apply`.
+5. **If it has a repo or a project page:** both are deduced from the paper's own
+   full text by the `links` step, which has already run — `data/paper_code.yaml`
+   says what it found and how sure it is. Check the row, then
+   `python update.py --apply` pushes the accepted ones to the Hugging Face paper
+   page. For the repo's own topics and description: `python update.py --step repos`,
+   label it, then `sweep_github.py diff` → `apply`.
 6. **Rebuild and deploy** the site.
 
 ---
@@ -333,16 +338,17 @@ Semantic Scholar, and OpenAlex instead of only to you.
 
 | Command | Does | Writes anything? |
 |---|---|---|
-| `update.py` | all nine steps | no |
+| `update.py` | all ten steps | no |
 | `update.py --step <name>` | one step | no |
 | `update.py --refresh-bib` | refresh the bibliography first | no |
-| `update.py --apply` | + push approved repo changes | **yes, GitHub** |
+| `update.py --apply` | + push approved repo changes and paper links | **yes, GitHub + Hugging Face** |
 | `scripts/collect.py` | rebuild `papers.yaml` | local only |
 | `scripts/collect.py --allow-shrink` | + write even if coverage dropped sharply | local only |
 | `scripts/sweep_github.py propose\|diff\|apply` | repo topics, descriptions, `CITATION.cff` | apply: **yes** |
 | `scripts/propose_topics.py [--ingest]` | label repos with a model | local only |
 | `scripts/draft_sidecars.py [--ingest\|--review\|--accept]` | draft sidecars for you to verify | local only |
 | `scripts/fulltext.py [--report\|--slug\|--refetch]` | resolve each paper's full text; report thin ones | cache only |
+| `scripts/paper_code.py [--apply] [--slug]` | deduce the code repo and project page from the paper's own text | apply: **yes, Hugging Face** |
 | `scripts/ownership.py [--manifest] [--claim-all]` | reconcile with co-authors | local only |
 | `scripts/links_block.py propose\|diff\|apply` | links block in paper-code READMEs | apply: **yes** |
 | `scripts/build_site.py [--deploy]` | generate the site | deploy: **yes** |
@@ -350,6 +356,6 @@ Semantic Scholar, and OpenAlex instead of only to you.
 | `scripts/audit_identity.py [--no-hf]` | live-read ORCID, arXiv, Wikidata, HF, S2 | local only |
 | `scripts/identity_tasks.py` | payloads for the one-time identity fixes | local only |
 | `scripts/wikidata_apply.py [--apply] [--check-account]` | apply the Wikidata diff | apply: **yes, Wikidata** |
-| `scripts/validate.py` | schema check + shipped-bug regressions + selftest | no |
+| `scripts/validate.py [--fix-counts] [--strict]` | schema check + shipped-bug regressions + selftest; `--fix-counts` refreshes the corpus sizes stated in the docs | `--fix-counts`: the doc sentences |
 | `measure/check_structure.py [--links]` | the "A" checks | no |
 | `measure/fidelity.py [--ingest]` | the "C" diagnostic | no |

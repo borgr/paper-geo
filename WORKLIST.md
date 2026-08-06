@@ -17,14 +17,20 @@ Each is blocked on an account you are logged into, not on knowing what to
 do. `python scripts/identity_tasks.py` regenerates every payload under
 `tasks/` — committed, so browsable on GitHub.
 
-### ORCID lists 4 of your papers twice
+### ORCID is missing 1 of your 112 papers
 
-ORCID groups works that share an identifier. Two groups for one paper means
-one copy carries the arXiv DataCite DOI (`10.48550/arXiv.<id>`) and the other
-the publisher DOI, so they share no key. Fix by adding the *missing* DOI to
-either copy — the groups then fuse — or by deleting the sparser copy.
-Both put-codes per pair: `tasks/orcid_remove.md`.
+Highest leverage on this page. Semantic Scholar's disambiguation and
+OpenAlex's profile merges are both ORCID-driven, so this is the one fix that
+makes the others more likely to fix themselves.
 
+One upload, not one form per paper: *Works → + Add → Add BibTeX* →
+**`tasks/orcid_missing.bib`** (only the missing ones) or
+`tasks/orcid_import.bib` (all of them; ORCID groups on shared identifiers, so
+re-importing what is already there merges rather than duplicates).
+Full list with citations: `tasks/orcid_missing.md`. How and why:
+[docs/SETUP.md §1](docs/SETUP.md#1-orcid--populate-it-then-wire-it-everywhere).
+
+- [ ] 0 cites — Resolving Interference (RI): Disentangling Models for Improved Mod
 ### Semantic Scholar — 43 papers on a second author record
 
 Every S2-backed tool (Elicit, Consensus, SciSpace, most literature agents)

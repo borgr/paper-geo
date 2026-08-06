@@ -58,8 +58,9 @@ topics across every repo, and a venue name sitting in an index as a paper title.
 
 - **Identifiers are truth; URLs are derived.** A stored URL drifts.
 - **Human decisions are recorded, not remembered.** Everything is re-derived each
-  run, so a judgment call goes in `data/overrides.yaml` or a `reviewed: true` flag
-  or it silently reverts.
+  run, so a judgment call goes in `data/overrides.yaml`, a `reviewed: true` flag, or
+  `data/declines.yaml` — or it silently reverts. Deciding *not* to do something is a
+  decision too, which is what the last of those is for.
 - **Flag, don't auto-merge.** A wrong merge costs more to undo than a flag costs to
   read — the guard that keeps "BabyLM Turns 3" and "Turns 4" apart also blocks some
   real duplicates, and that's the right trade.
