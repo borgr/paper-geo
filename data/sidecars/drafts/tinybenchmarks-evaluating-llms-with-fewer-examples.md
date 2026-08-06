@@ -365,7 +365,7 @@ terminology:
     Carlo: 0.50 means the weighted average behaves as if influenced by only half the examples.
     Used to compare tinyMMLU''s weights against the correctness-based ones.'
 links_extra:
-- https://github.com/felipemaiapolo/tinyBenchmarks
-- https://huggingface.co/tinyBenchmarks
-- https://crfm.stanford.edu/helm/lite
+  code: https://github.com/felipemaiapolo/tinyBenchmarks
+  the tiny datasets: https://huggingface.co/tinyBenchmarks
+  HELM Lite, the benchmark version used: https://crfm.stanford.edu/helm/lite
 ---
