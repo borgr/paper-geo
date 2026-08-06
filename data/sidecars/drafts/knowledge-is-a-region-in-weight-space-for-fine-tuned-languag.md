@@ -29,10 +29,14 @@ claims:
     on: clustering models by cosine distance between their task vectors recovers which of
     the 12 General datasets each was finetuned on with 98% accuracy over 20 seeds per dataset,
     and which of three task families with 90% accuracy over 5 seeds per dataset.'
-  scope: Clustering accuracy is measured by labelling each cluster with its most common member,
+  scope: 'Clustering accuracy is measured by labelling each cluster with its most common member,
     with the number of clusters fixed to the number of datasets or families -- so it says
     the groups are separable, not that the clusters were found without knowing how many to
-    look for. All models start from RoBERTa-base.
+    look for. All models start from RoBERTa-base. The set clustered at the dataset level is
+    not quite the twelve datasets the rest of the paper evaluates: it is described as 20 seeds
+    for each General dataset giving 280 models, which is 14 datasets and not 12, and Figure
+    2(a)''s legend lists CoPA -- which Section 2.1 says was excluded for being too small --
+    while omitting WiC, which Tables 2 and 3 both score.'
   evidence: Sections 2.3 and 4; Figure 2
 - id: the-direction-is-set-by-data-type-not-data-size
   text: Finetuning on subsamples of 200, 400, 800, 1.6K and 3K examples from 9 datasets still
@@ -94,20 +98,28 @@ claims:
   text: Efficiently finetuning with BitFit from the average of a region's models instead of
     from the pretrained model improves accuracy by 4.03 points on average across 12 target
     datasets, winning on 9, tying on 2 and losing on 1.
-  scope: 'Two numbers for this result circulate: the abstract reports an average improvement
-    of 3.06 and ''as effective, if not more, in 11 out of 12 datasets'', while Section 7 and
-    Table 2 report 4.04 and 4.03 with the 9/2/1 breakdown -- the 11-of-12 counts the two ties
-    as non-losses. For each target dataset the centroid is computed over models excluding
-    any finetuned on that dataset, so the comparison is not leaking the target.'
-  evidence: Section 7; Table 2; abstract
+  scope: 'Read from v3, the Findings of EMNLP 2023 camera-ready; v1 carries the same figures,
+    so none of what follows is a version artefact. Two magnitudes circulate and only one of
+    them is supported: 4.04 is Section 7''s wording, 4.03 is the printed mean of Table 2''s
+    gain row and recomputing that row''s twelve entries gives 4.026, while the abstract''s
+    3.06 appears nowhere else in the paper. The counts do reconcile -- the abstract''s ''as
+    effective, if not more, in 11 out of 12 datasets'' is Section 7''s 9 wins plus 2 ties.
+    For each target dataset the centroid is computed over models excluding any finetuned on
+    that dataset, so the comparison is not leaking the target, and only BitFit''s small subset
+    of weights is trained.'
+  evidence: Section 7; Table 2; Figure 6; abstract
 - id: the-gain-is-larger-when-target-data-is-scarce
   text: Restricting the subsequent finetuning to 1K examples raises the centroid's average
     gain over the pretrained model to 10.66 points, with the largest single-dataset gain reaching
     about 34 points.
-  scope: In Tables 2 and 3 as printed the centroid row is identical across the full and few-shot
-    settings while the pretrained row drops, so the larger few-shot gap is the pretrained
-    baseline getting worse rather than the centroid getting better. The two datasets where
-    the centroid loses or ties are the same ones in both settings.
+  scope: 'All of the extra gain is the baseline falling rather than the centroid rising. Between
+    Tables 2 and 3 as printed the centroid row is identical on all twelve datasets to two decimals,
+    mean 65.54 in both, while the pretrained row is identical on six of them and lower on the
+    other six -- MNLI 53.17 to 34.04, QNLI 64.88 to 50.72, QQP 74.49 to 63.18, RTE 50.40 to
+    48.52, SST2 78.78 to 50.92, WiC 55.14 to 49.91 -- which moves its mean from 61.51 to 54.88.
+    Why a run limited to 1K examples reproduces the full-data centroid numbers exactly is not
+    addressed in the paper. The two datasets the centroid loses on, MultiRC at -0.06 and WNLI
+    at -1.41, are the same in both settings and by the same margins.'
   evidence: Section 7; Table 3; Appendix H, Figure 14
 - id: regions-are-relative-to-the-pretrained-model-you-started-from
   text: Finetuned models cluster by which pretrained checkpoint they started from rather than
@@ -149,11 +161,15 @@ claims:
 - id: task-separates-cleanly-but-domain-does-not
   text: 'Adding a domain-defined group (Twitter datasets) to the task-defined ones breaks
     the clustering: Twitter reaches an F1 of 30 against 100 for NLI, and the presence of the
-    domain group also drags Topic from 87 to 61 and Sentiment from 83 to 71.'
+    domain group also drags Topic from 87 to 61 and Sentiment from 83 to 71, taking the average
+    from 90 to 65.'
   scope: 'The paper offers two competing explanations and settles neither: domain regions
     may overlap task regions -- some datasets belong to both, such as TweetEval Sentiment
     -- or domains may not form regions at all. Listed in the limitations as the aspect where
-    the results are mixed, with only one domain group available to test.'
+    the results are mixed, with only one domain group available to test. The same appendix
+    reports an alternative scoring -- a 1-to-1 cluster-to-group assignment chosen to maximise
+    accuracy -- under which NLI scores 1 rather than 100, so the headline F1s depend on majority
+    labelling, which permits several clusters to carry the same label.'
   evidence: Appendix D, Table 1 and Figure 9; Section 10
 - id: wnli-does-not-behave-like-the-rest-of-nli
   text: Among the six NLI datasets, WNLI behaves differently under extrapolation and may not
@@ -305,13 +321,17 @@ misreadings:
 - Every loss in the paper is a linear-probe loss on a frozen encoder with a fresh head. That
   is what makes models trained on different datasets comparable at all; it is not the accuracy
   those models would reach if fully finetuned.
-- Two different numbers exist for the headline practical result. The abstract says 3.06 average
-  improvement over 11 of 12 datasets; Section 7 and Table 2 say 4.04 and 4.03, with 9 wins,
-  2 ties and 1 loss.
+- Two different numbers exist for the headline practical result, and the abstract holds the
+  unsupported one. Section 7, Table 2 and Figure 6 all give the centroid a 4.03-4.04 point
+  average gain with 9 wins, 2 ties and 1 loss; the abstract's 3.06 occurs once and is not
+  derivable from any table in the paper. Quote 4.03 with Table 2 behind it. The abstract's
+  '11 out of 12' is fine -- it is the 9 wins plus the 2 ties.
 - The clustering accuracies are computed with the number of clusters set to the number of
   datasets or families and each cluster labelled by majority. They show the groups are separable
   in weight space, not that the structure was discovered without being told how many groups
-  to expect.
+  to expect. Majority labelling also lets two clusters carry one label, and the paper's own
+  1-to-1 alternative in Appendix D shows how much that matters -- NLI's F1 goes from 100 to
+  1 under it.
 - The t-SNE pictures are illustrations. The measurements are cosine distances between 120M-dimensional
   task vectors and the PB probabilities; nothing rests on the 2-D layout.
 - The result is not uniform across ways of grouping datasets. Task groups separate cleanly,
