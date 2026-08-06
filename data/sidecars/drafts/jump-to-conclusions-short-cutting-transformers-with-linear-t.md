@@ -64,8 +64,11 @@ claims:
     k, and surprisal is the full model's negative log likelihood of that argmax -- so both
     measure fidelity to the unmodified model, not correctness against a gold label. The reported
     early-layer levels are 28-45% for k=1, 52-74% for k=5 and 62-82% for k=10, read from a
-    figure with 95% intervals shown for surprisal only. One random token position per validation
-    sentence is scored, so these are per-position averages over 3,000 sentences, not full-sequence
+    figure with 95% intervals shown for surprisal only. The model here is the 48-layer, 1600-wide
+    GPT-2, as in the r-squared analysis, while the alternation, corpus-transfer, early-exit
+    and sub-module sections all move to the 24-layer one, so the headline fit and the headline
+    savings are measured at different scales. One random token position per validation sentence
+    is scored, so these are per-position averages over 3,000 sentences, not full-sequence
     generation quality.
   evidence: Section 4, Section 4.1, Figure 4
 - id: bert-masked-token-gains
@@ -112,9 +115,13 @@ claims:
   text: 'Jumping straight to the last layer is not the best use of the mappings: alternating
     real transformer blocks with linear jumps -- run a few blocks, skip a few, repeat -- beats
     mapping directly to the final layer for some schedules, at equal numbers of executed blocks.'
-  scope: 'Measured on 24-layer GPT-2 with top-1 agreement only. The practical catch is that
-    the paper has no reliable way to pick the schedule: choosing the schedule with the best
-    product of per-jump r-squared scores works for the first half of the layers and underperforms
+  scope: 'Measured on 24-layer GPT-2 with top-1 agreement only, over two families of schedule.
+    One scores a candidate by the product of the r-squared values of the jumps it makes, using
+    the fits already computed, and takes the best-scoring candidate at each number of executed
+    blocks. The other is a weighted round-robin -- run a blocks, jump b layers, repeat, for
+    any a and b whose sum divides the depth -- tried in both orders, blocks first and jump
+    first. The practical catch is that the paper has no reliable way to pick the schedule:
+    the r-squared-product choice works for the first half of the layers and underperforms
     other schedules in the second half, and the authors suggest depth-weighting as future
     work. So the finding is that better schedules exist, not that they can be selected in
     advance.'
@@ -147,12 +154,16 @@ claims:
     representations directly, the fitted map raises how much computation can be skipped at
     a fixed quality target: holding 95% average top-1 agreement, it exits after saving 13.8%
     of layers in GPT-2 where the baseline saves 5.9%, and 20% against 14.6% in BERT.'
-  scope: The abstract's "saves additional 7.9% layers for GPT-2 and 5.4% for BERT" is the
+  scope: 'The abstract''s "saves additional 7.9% layers for GPT-2 and 5.4% for BERT" is the
     difference between those pairs, not the total saving -- the totals are 13.8% and 20%,
     roughly 3.3 and 4.8 layers of 24. The savings count transformer blocks skipped, not wall-clock
     time, and do not charge for the matrix multiplication the mapping adds or for storing
-    the matrices. The exit rule and its threshold schedule are taken from prior work, and
-    dynamic exit beats fixed-depth exit under both mappings, as expected.
+    the matrices. The exit rule is taken from prior work unchanged: exit at a position once
+    the gap between the top two probabilities of the shortcut''s distribution exceeds 0.9
+    times a hyperparameter plus 0.1 times exp(-4i/N), with i the position and N the average
+    input length up to the scored position -- a threshold that relaxes as the sequence advances
+    -- and sweeping that hyperparameter is what traces the curve. Dynamic exit beats fixed-depth
+    exit under both mappings, as expected.'
   evidence: Section 6, Figure 9, Section 1
 - id: attention-is-the-most-linearizable-submodule
   text: 'Replacing individual sub-modules with linear approximations rather than skipping
@@ -168,6 +179,24 @@ claims:
     prediction, read from a figure. The paper also flags a sharp unexplained rise in the normalization
     curve at layers 5-8.'
   evidence: Section 7, Figure 10, Appendix A
+- id: the-submodule-substitution-saves-no-depth
+  text: 'The sub-module experiments are not a second, cheaper shortcut: every transformer
+    block between the two layers is still executed, and one component inside each of them
+    is swapped for a matrix. The attention substitution replaces the multi-head function alone,
+    mapping the first layer normalization''s output to the attention output while both that
+    normalization and the residual connection around it keep running; the feed-forward substitution
+    has the same shape one normalization later; the normalization substitution turns only
+    the two layer normalizations into matrices and leaves real attention and a real feed-forward
+    network in place.'
+  scope: 'So this section is a decomposition of where linear structure lives, not a compute
+    saving -- the layer count is unchanged, and the comparison against the whole-block shortcut
+    is on prediction quality, never on cost. What makes it point at speed is that the attention
+    stand-in acts on each position independently and is therefore parallelizable, which is
+    an argument about the substitution''s form rather than a measurement. It also explains
+    why the mapping composes badly with depth: a shortcut across a range is the composition
+    of the substituted blocks over that whole range, so each block''s approximation error
+    feeds the next.'
+  evidence: Section 7, Appendix A
 - id: contextualization-may-exhaust-itself-early
   text: Because attention can be replaced by a per-position linear map in the later layers
     at little cost, the paper suggests contextualization largely finishes early and late-layer
@@ -196,14 +225,22 @@ claims:
   text: Each mapping is fitted on 9,000 Wikipedia sentences with one randomly chosen token
     position taken from each, validated on 3,000 more, for every ordered pair of layers in
     the model; the news-corpus replication uses 9,000 training and 1,000 validation sentences.
-    The fitted matrices and code are released.
-  scope: One vector per sentence, so a square matrix of width up to 1,600 is fitted from 9,000
-    examples -- comfortable per output coordinate but not lavish, and no regularization is
-    mentioned. Sentences rather than documents, explicitly to simplify the analysis, which
+    The fitted matrices and code are released, and the released code draws both splits from
+    one pool of 20,000 Wikipedia sentences -- the first 9,000 to train, the next 3,000 to
+    validate.
+  scope: 'One vector per sentence, so a square matrix of width up to 1,600 is fitted from
+    9,000 examples -- comfortable per output coordinate but not lavish, and no regularization
+    is mentioned. Sentences rather than documents, explicitly to simplify the analysis, which
     also means short contexts throughout. For BERT the chosen position is replaced by a mask
     token before recording, so its training and evaluation representations are mask representations
-    by construction.
-  evidence: Section 3.3, Section 5.2, Section 4.2
+    by construction. The repository wires up the 12-layer GPT-2 and BERT-base end to end and
+    states that the larger models need variables edited at the head of each script, so the
+    four-scale sweep is reproducible but not scripted. It also fits six sub-module regressions
+    per block -- both layer normalizations, attention, the feed-forward network, and both
+    residual connections -- which is more than the three sub-module substitutions the paper
+    reports on. The stack is pinned: Python 3.10.4, torch 1.13.1, transformers 4.20.1, scikit-learn
+    1.2.0.'
+  evidence: Section 3.3, Section 5.2, Section 4.2, code repository README
 - id: what-this-does-not-explain
   text: 'The paper is explicit about what it leaves open: it finds more linear structure in
     transformer computation -- in whole layers and in individual sub-modules -- than residual
@@ -332,6 +369,15 @@ qa:
   - how-the-mappings-were-fit
   - linear-regression-between-layers
   - cheaper-than-training-a-lens
+- q:
+  - Does replacing attention with a linear map skip layers?
+  - What exactly gets replaced in the sub-module experiments?
+  - Are the residual connections and layer norms kept when a sub-module is linearized?
+  - Is the sub-module result a faster shortcut than jumping between layers?
+  answers:
+  - the-submodule-substitution-saves-no-depth
+  - attention-is-the-most-linearizable-submodule
+  - contextualization-may-exhaust-itself-early
 misreadings:
 - '"Saves additional 7.9% layers for GPT-2 and 5.4% for BERT" is a difference between two
   methods, not a saving. The fitted mapping saves 13.8% of layers in GPT-2 and 20% in BERT
@@ -374,6 +420,15 @@ misreadings:
   of a thousand square matrices of width 1,600. Fitting each is cheap and closed-form, and
   the released collection is a subset -- but "one matrix" describes a single jump, not the
   artifact as a whole.
+- The sub-module results do not skip anything. Substituting a linear map for attention inside
+  a block still runs that block, and a shortcut across a range still runs every block in the
+  range with the substitution applied to each -- so nothing here saves a layer. The claim
+  is that attention tolerates a non-contextual stand-in, which matters because such a stand-in
+  is parallelizable; no throughput is measured.
+- '"Linearizing attention" means replacing the multi-head function only. The layer normalization
+  before it and the residual connection around it are both kept, in every sub-module variant.
+  A single matrix standing in for a whole block would be a far stronger claim than the paper
+  makes.'
 terminology:
   linear shortcut: Replacing the transformer computation between two layers with a single
     fitted matrix multiplication, so a representation from the earlier layer is cast into
@@ -397,9 +452,12 @@ terminology:
     is met, and reading the prediction from there. It needs a way to turn an intermediate
     representation into an output distribution, which is the slot this paper's mapping drops
     into.
-  alternation scheme: A schedule that interleaves real transformer blocks with linear jumps
-    -- run a blocks, skip b layers, repeat -- rather than running a prefix of the network
-    and then jumping once to the end. Some schedules beat the single jump at equal cost.
+  alternation scheme: 'A schedule that interleaves real transformer blocks with linear jumps
+    -- run a blocks, jump b layers, repeat -- rather than running a prefix of the network
+    and then jumping once to the end. The paper searches two families: one ranks candidates
+    by the product of their jumps'' r-squared values, the other is a weighted round-robin
+    over any a and b whose sum divides the depth. Some schedules beat the single jump at equal
+    cost.'
   sub-module approximation: Fitting a linear map for one component inside a block -- attention,
     the feed-forward network, or a layer normalization -- and substituting it while leaving
     the rest of the block intact. It localizes which parts of the computation the linear structure
