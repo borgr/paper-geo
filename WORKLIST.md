@@ -5,14 +5,6 @@ not here is done, and nothing on this page is a general instruction. The
 how-to for every item below is [docs/SETUP.md](docs/SETUP.md); the live
 reading of each external surface is [tasks/identity_audit.md](tasks/identity_audit.md).
 
-## Due now (1)
-
-From `data/followups.yaml`. Each of these was waiting on something outside this repo that should have landed by now.
-
-- [ ] **2026-08-05** (0 days ago) — The Project Debater datasets page is gone. http://ibm.biz/debater-datasets and the page it redirects to (research.ibm.com/haifa/dept/vst/debating_data.shtml) both 404, as does the parent directory; the Wayback CDX index has 200s up to 2025-12-20, so it went dark in the first half of 2026. This is the download route named in three of your papers -- "Will it Blend?" (P18-2095), "Are You Convinced?" and "Corpus Wide Argument Mining" -- so every dataset they released currently has no reachable copy. research.ibm.com/interactive/project-debater/ is still up but does not carry the data.
-      → Re-host the ones you are an author of, under your own Hugging Face account, and then add each as a links_extra entry in the sidecar of the paper that released it -- that is the only version of this that a reader or a crawler can follow. The archived catalogue (25 sections, all of Project Debater, not just yours) is at web.archive.org/web/20251220030633/https://research.ibm.com/haifa/dept/vst/debating_data.shtml and gives the dataset names and release notes, but not the files: downloads sat behind request forms, so Wayback never captured them. The page states CC-BY-SA for everything unless a release note says otherwise, so re-hosting with attribution is within licence. On Hugging Face today only ibm-research/argument_quality_ranking_30k survives; a search for "debater" returns third-party re-uploads of ArgKP and nothing for the evidence-detection sets. Sidecars deliberately carry no link to the dead page in the meantime.
-      `curl -sSL -o /dev/null -w '%{http_code}\n' http://ibm.biz/debater-datasets`
-
 ## Waiting on the outside world
 
 - **2026-08-08** — Wikidata account Ktilana reaches 4 days old (registered 2026-08-04 13:15 UTC). Autoconfirmed needs 4 days AND 50 edits; the edit half is already met (56 as of 2026-08-05), so the age is what is left.  *(then mine to run, not yours)*
