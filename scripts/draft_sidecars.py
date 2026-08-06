@@ -50,6 +50,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import yaml  # noqa: E402
 
 from common import BUILD, DATA, ROOT, get, load_config, read_yaml  # noqa: E402
+from fulltext import LIMIT as FULLTEXT_LIMIT  # noqa: E402
+from fulltext import cut_chars  # noqa: E402
 from fulltext import resolve as resolve_fulltext  # noqa: E402
 
 SIDECARS = os.path.join(DATA, "sidecars")
@@ -114,7 +116,7 @@ quotable and specific, under 320 characters.
 
 # --------------------------------------------------------------- evidence
 
-def fulltext(p: dict, cfg: dict, limit: int = 60000) -> tuple[str, str]:
+def fulltext(p: dict, cfg: dict, limit: int = FULLTEXT_LIMIT) -> tuple[str, str]:
     """The paper's text and where it came from. See scripts/fulltext.py for the chain.
 
     The abstract alone produces claims with no magnitudes and no scope -- the two fields
@@ -172,7 +174,14 @@ def evidence(p: dict, cfg: dict, no_fulltext: bool = False) -> str:
              "abstract:",
              (p.get("abstract") or "(none)").strip(), ""]
     if ft:
-        parts += [f"full text (from {ft_source}, truncated):", ft, ""]
+        # Say which it is. The label used to read "truncated" unconditionally, so a dump
+        # cut before the results section looked the same as a complete paper and there
+        # was nothing to notice.
+        cut = cut_chars(ft)
+        how = (f"shortened to {len(ft):,} of {len(ft) + cut:,} characters, "
+               "beginning and end kept, the gap marked in place"
+               if cut else f"complete, {len(ft):,} characters")
+        parts += [f"full text (from {ft_source}; {how}):", ft, ""]
     else:
         parts += ["full text: NOT AVAILABLE from any open source. Draft from the "
                   "abstract only,",

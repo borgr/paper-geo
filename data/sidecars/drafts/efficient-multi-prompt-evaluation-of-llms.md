@@ -100,7 +100,8 @@ claims:
   scope: 'The fine-tuned option is the most expensive and the paper does not recommend it:
     it needs full correctness data from a held-out set of other LLMs -- training inputs numbering
     209,280 for BIG-bench Hard, 175,776 for LMentry and 1,121,568 for MMLU -- and about 70
-    GPU-hours of training plus roughly 350 more searching hyperparameters, against 3-6 CPU-hours
+    hours of training on multiple NVIDIA A30 GPUs plus roughly 350 more searching
+    hyperparameters, against 3-6 hours on a 32-core machine
     for a whole benchmark otherwise. The paper''s own recommendation is the pretrained embedder
     at a moderate budget. Example-side covariates were tried and dropped: sentence-transformer
     embeddings of examples gave no improvement in preliminary tests, so examples stay one-hot
@@ -372,9 +373,9 @@ misreadings:
   shifts every example''s difficulty by the same amount. A template that helps some examples
   while hurting others sits outside the model, however well the estimator performs in aggregate.'
 - The best-performing variant is not the recommended one. Fine-tuned template embeddings need
-  full correctness data from a held-out set of other LLMs plus roughly 70 GPU-hours of training
-  and 350 more of hyperparameter search; the paper recommends the pretrained embedder at a
-  moderate budget instead.
+  full correctness data from a held-out set of other LLMs plus roughly 70 hours of training on
+  multiple A30 GPUs and 350 more of hyperparameter search; the paper recommends the pretrained
+  embedder at a moderate budget instead.
 - 'Kendall''s W of 0.45 belongs to Gemma-7B-it, not Gemma-7B -- the appendix text and its
   own table disagree, and the table lists Gemma-7B at 0.18. Either way it is the outlier:
   most models fall between 0.06 and 0.35, which is the point.'

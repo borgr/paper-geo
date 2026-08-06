@@ -38,6 +38,20 @@ odd places. Semantic Scholar's crawler finds PDFs Unpaywall has no record of. Eu
 PMC has the Nature paper's abstract that nobody else exposes. Any single one of them
 leaves a hole, and a hole here means a sidecar drafted from a title.
 
+What comes back is the whole paper minus its bibliography, up to LIMIT characters. Two
+things about that are worth knowing before trusting a draft built on it:
+
+  * arXiv's HTML renders every formula three times over -- MathML glyphs, a spelled-out
+    screen-reader gloss, and the TeX source. html_to_text keeps the TeX and drops the
+    other two, which cut the corpus's 90th percentile from 150,471 characters to 127,891
+    and one paper from 397,744 to 225,958. Caches written before that carry an
+    `extractor` version and are refetched once, one paper at a time as each is read.
+  * A paper over the limit keeps its beginning and its end with the gap marked in place,
+    because the tables a claim's magnitude has to be checked against are at the back. It
+    used to keep only the beginning, at 60,000 characters, which cut more than half the
+    corpus before its results section and produced ten sidecars drafted from papers whose
+    experiments the model never saw.
+
 Two entry points:
 
     resolve(p)           -> (text, source_label)   cached under build/fulltext/
@@ -74,6 +88,12 @@ INDEX = os.path.join(CACHE, "sources.json")
 # claim's evidence.
 MIN_CHARS = 4000
 
+# Bumped whenever html_to_text starts producing materially different text, so caches
+# written by the older extractor are refetched instead of trusted forever. v2 collapses
+# arXiv's tripled math to its LaTeX; the v1 caches spend up to 44% of their length on
+# the two renderings that were thrown away, which is why they have to go.
+EXTRACTOR = 2
+
 # A PDF is held to a much lower bar, because the stub problem is specific to HTML: a
 # response whose first bytes are %PDF- *is* the document, so a short one is a short
 # paper, not a failure. Two-page shared-task calls and workshop reports are exactly the
@@ -87,6 +107,23 @@ MIN_PDF_CHARS = 1200
 _TAG = re.compile(r"<(script|style)\b.*?</\1>|<[^>]+>", re.S | re.I)
 _WS = re.compile(r"[ \t\r\f\v]+")
 
+_MATH = re.compile(r"<math\b.*?</math>", re.S | re.I)
+_ALTTEXT = re.compile(r'\balttext="([^"]*)"')
+
+
+def _collapse_math(m: re.Match) -> str:
+    """One <math> subtree -> its LaTeX, or nothing.
+
+    arXiv's LaTeXML rendering spells every formula out three times: the MathML glyphs
+    ("subscript Y E"), a screen-reader gloss ("italic_Y start_POSTSUBSCRIPT"), and the
+    TeX source in an annotation. Stripping tags concatenates all three, so a paper's
+    notation arrives tripled and unreadable -- 44% of one measured paper's extracted
+    text was this. The `alttext` attribute holds the TeX on its own, which is both
+    shorter and the version a reader can actually follow.
+    """
+    a = _ALTTEXT.search(m.group(0)[:400])
+    return f" {_html.unescape(a.group(1))} " if a else " "
+
 
 def html_to_text(raw: bytes) -> str:
     """Crude HTML -> text. Enough for a model, and it adds no dependency.
@@ -96,6 +133,7 @@ def html_to_text(raw: bytes) -> str:
     the wrong result.
     """
     s = raw.decode("utf-8", "replace")
+    s = _MATH.sub(_collapse_math, s)
     s = re.sub(r"(?i)</(p|div|li|tr|h[1-6]|figcaption|caption|section)>", "\n", s)
     s = re.sub(r"(?i)<br\s*/?>", "\n", s)
     s = _TAG.sub(" ", s)
@@ -340,16 +378,32 @@ def _read_json(path: str) -> dict:
         return {}
 
 
-def _remember(slug: str, source: str, chars: int) -> None:
+def _remember(slug: str, source: str, chars: int, version: int = EXTRACTOR) -> None:
     os.makedirs(CACHE, exist_ok=True)
     idx = _read_json(INDEX)
-    idx[slug] = {"source": source, "chars": chars}
+    idx[slug] = {"source": source, "chars": chars, "extractor": version}
     with open(INDEX, "w") as f:
         json.dump(idx, f, indent=1, sort_keys=True)
 
 
 def source_of(slug: str) -> str:
     return (_read_json(INDEX).get(slug) or {}).get("source") or "(unrecorded)"
+
+
+HTML_SOURCES = ("arxiv-html", "europe-pmc")
+
+
+def _stale(slug: str, source: str) -> bool:
+    """Was this cache written by an extractor since replaced?
+
+    Only HTML caches can be: the PDF route never went through html_to_text, so a PDF
+    cache from v1 is byte-identical to what v2 would write and refetching it would cost
+    a download to learn nothing. Papers supplied by hand under data/fulltext/ are never
+    stale either -- nothing here produced them.
+    """
+    if not found(source) or not source.split()[0].startswith(HTML_SOURCES):
+        return False
+    return int((_read_json(INDEX).get(slug) or {}).get("extractor") or 0) < EXTRACTOR
 
 
 NONE = "(none found)"
@@ -365,7 +419,51 @@ def found(source: str) -> bool:
     return bool(source) and source not in (NONE, "(unrecorded)")
 
 
-def resolve(p: dict, cfg: dict | None = None, limit: int = 60000,
+_CUT = "\n\n[... {n:,} characters cut from the middle of the paper ...]\n\n"
+
+# What one paper is allowed to contribute to an evidence dump. The old 60,000 threw away
+# the results of half the corpus: 52 of 114 cached papers are longer than that, and a
+# paper's numbers live in section 6 and the appendix tables, which is exactly what a cut
+# at 60k removes. 140,000 clears the 90th percentile once the math is collapsed.
+LIMIT = 140000
+
+
+def fit(text: str, limit: int = LIMIT) -> tuple[str, int]:
+    """(text shortened to `limit` keeping both ends, characters cut).
+
+    Head-only truncation was the earlier behaviour and it cut precisely the wrong part.
+    A claim needs a magnitude, the magnitude lives in a results table, and the tables --
+    with the per-task breakdowns a printed average has to be checked against, and the
+    limitations section a claim's scope comes from -- are all at the back. Ten of the
+    first fourteen sidecars were drafted from text cut before the experiments.
+
+    So: three quarters from the front, the rest from the back, and the seam states how
+    much is gone, because a shortened paper that does not say it is shortened reads
+    exactly like a whole one.
+    """
+    if limit <= 0 or len(text) <= limit:
+        return text, 0
+    # Sized with the widest number the marker can hold, so the result never exceeds
+    # `limit` however many digits the count turns out to need.
+    room = max(limit - len(_CUT.format(n=len(text))), 0)
+    head = int(room * 0.75)
+    tail = room - head
+    return text[:head] + _CUT.format(n=len(text) - room) + text[len(text) - tail:], \
+        len(text) - room
+
+
+def cut_chars(text: str) -> int:
+    """How much `fit` removed from this text, read back off the marker it left. 0 if whole.
+
+    The count travels inside the text rather than beside it so that a consumer cannot
+    forget to carry it. The previous evidence builder labelled every dump "truncated"
+    whether it was or not, which made a cut paper indistinguishable from a complete one.
+    """
+    m = re.search(r"\[\.\.\. ([\d,]+) characters cut from the middle", text)
+    return int(m.group(1).replace(",", "")) if m else 0
+
+
+def resolve(p: dict, cfg: dict | None = None, limit: int = LIMIT,
             refetch: bool = False, quiet: bool = True) -> tuple[str, str]:
     """(text, where it came from) for one paper. Cached under build/fulltext/<slug>.txt.
 
@@ -375,8 +473,12 @@ def resolve(p: dict, cfg: dict | None = None, limit: int = 60000,
     every later run skipped the paper it had learned nothing about. A miss is retried,
     which is what lets a source added today fix a paper that came up empty yesterday.
 
-    Truncated at the end: front matter and results are what matter, and the references
-    are already gone.
+    A cache written by a superseded extractor is not honoured either -- see _stale. That
+    refetch happens one paper at a time, as each is read, so it never becomes a hundred
+    downloads at once.
+
+    Shortened only if it exceeds `limit`, keeping both ends and saying so. The cache on
+    disk always holds the whole text; the shortening is per-call.
     """
     cfg = cfg or load_config()
     os.makedirs(CACHE, exist_ok=True)
@@ -395,9 +497,12 @@ def resolve(p: dict, cfg: dict | None = None, limit: int = 60000,
         if cached and len(cached) >= MIN_CHARS and not found(src):
             url = (p.get("links") or {}).get("html")
             src = f"arxiv-html {url} (inferred)" if url else "(unrecorded)"
-            _remember(p["slug"], src, len(cached))
-        if cached and (found(src) or len(cached) >= MIN_CHARS):
-            return cached[:limit], src
+            # Version 1 on purpose: an inferred source came from the implementation that
+            # only ever read links.html, so it is html-extracted and due a refetch.
+            _remember(p["slug"], src, len(cached), version=1)
+        if cached and (found(src) or len(cached) >= MIN_CHARS) \
+                and not _stale(p["slug"], src):
+            return fit(cached, limit)[0], src
 
     got = _local(p["slug"])
     if got:
@@ -413,10 +518,19 @@ def resolve(p: dict, cfg: dict | None = None, limit: int = 60000,
                 text, source = cand, f"{name} {url}"
                 break
 
+    if not text and os.path.exists(path):
+        # Keep what we have. A refetch this file initiated (a bumped extractor, not a
+        # user asking) must not turn a paper we can read into one we cannot because
+        # arXiv answered 503 this minute.
+        with open(path) as f:
+            cached = f.read()
+        if cached and (found(source_of(p["slug"])) or len(cached) >= MIN_CHARS):
+            return fit(cached, limit)[0], f"{source_of(p['slug'])} (refetch failed)"
+
     with open(path, "w") as f:
         f.write(text)
     _remember(p["slug"], source or NONE, len(text))
-    return text[:limit], source or NONE
+    return fit(text, limit)[0], source or NONE
 
 
 # --------------------------------------------------------------- abstracts
@@ -497,16 +611,29 @@ def main() -> None:
     if args.report and not args.slug:
         print(f"{'chars':>7}  {'source':<18} slug")
     missing = []
+    shortened = []
     for p in todo:
         text, source = resolve(p, cfg, refetch=args.refetch,
                                quiet=not (args.slug or args.show))
         if not found(source):
             missing.append(p["slug"])
-        print(f"{len(text):>7}  {source.split()[0][:18]:<18} {p['slug']}")
+        # The whole length, not the length of what one call returned: the column used to
+        # print the latter, so a paper longer than the limit reported the limit and read
+        # as if that were all there was of it.
+        cut = cut_chars(text)
+        if cut:
+            shortened.append((p["slug"], len(text) + cut))
+        print(f"{len(text) + cut:>7}{'+' if cut else ' '} "
+              f"{source.split()[0][:18]:<18} {p['slug']}")
         if args.show:
             print("  | " + "\n  | ".join(text[:args.show].splitlines()[:40]))
     print(f"\n{len(todo) - len(missing)}/{len(todo)} papers resolved to a text",
           file=sys.stderr)
+    if shortened:
+        print(f"{len(shortened)} longer than the {LIMIT:,}-char limit, so a draft sees "
+              "both ends and a marked gap:", file=sys.stderr)
+        for slug, n in sorted(shortened, key=lambda x: -x[1]):
+            print(f"  {n:>7}  {slug}", file=sys.stderr)
     if missing:
         print("No open copy found for:", file=sys.stderr)
         for slug in missing:
