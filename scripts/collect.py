@@ -700,7 +700,9 @@ def apply_overrides(papers: list[dict], ov: dict) -> list[dict]:
     for p in out:
         for k, v in (fields.get(p.get("slug")) or {}).items():
             p[k] = v
-            p.setdefault("overridden_fields", []).append(k)
+            # Sorted set, not append: on the `--offline` path the record already carries
+            # the list from the previous run, and appending would grow it every rerun.
+            p["overridden_fields"] = sorted(set(p.get("overridden_fields") or []) | {k})
     return out
 
 
@@ -848,6 +850,14 @@ def main() -> None:
 
     if args.offline:
         papers = (read_yaml(out) or {}).get("papers", [])
+        # Hand decisions have to be re-applied here too. overrides.yaml promises that a
+        # judgment call recorded in it survives every rerun, and `--offline` is a rerun:
+        # without this, editing `fields` and re-deriving looks like it worked -- the
+        # collector prints its usual summary -- while papers.yaml comes out byte for byte
+        # unchanged. The merge and drop passes are no-ops on already-merged records
+        # (a force_merge group resolves to a single record, which the identity check in
+        # pass 1 skips), so only the field corrections actually bite.
+        papers = apply_overrides(papers, read_yaml(os.path.join(DATA, "overrides.yaml")) or {})
     else:
         print("bibtex ...", file=sys.stderr)
         papers = from_bibtex(cfg)
