@@ -85,12 +85,43 @@ also_mine: []
 extra_arxiv:
   - "2604.12843"   # arXiv says you own it; absent from enhanced.bib. Add it upstream.
 
-# Records to drop entirely: metadata damage rather than real papers.
-# "Journal of Memory and Language" is a venue name that a source extracted as a
-# paper title -- the exact failure mode Google Scholar's own docs warn about.
-# Fix it upstream too (Semantic Scholar correction), then it stops reappearing.
+# Records to drop entirely: things in the bibliography that are not papers.
+#
+# Two kinds. First, metadata damage -- "Journal of Memory and Language" is a venue
+# name that a source extracted as a paper title, the exact failure mode Google
+# Scholar's own docs warn about. Fix those upstream too (Semantic Scholar
+# correction), then they stop reappearing.
+#
+# Second, real CV lines that are not papers: a competition you ran, a workshop you
+# organised, a poster whose paper is already in the corpus. Each of these was found
+# the same way -- it had no full text, because there is no paper to have full text
+# of. Publishing a page per item would put three thin pages next to 112 real ones
+# and, in the poster's case, split one result's authority across two URLs. They stay
+# on the CV; they do not get a page here.
 drop:
   - "Journal of Memory and Language"
+
+  # A competition proposal, not a report of findings. OpenReview TiRQ4Gl4Ir under the
+  # NeurIPS 2024 *Competition Track*: the document proposes the competition, and its
+  # sections are the website, the tutorial, the FAQ, the rules and the prizes. Everyone
+  # who cites it cites "In NeurIPS 2024 Competition Track". The competition's actual
+  # results were published separately as a technical report.
+  - "{LLM} Merging: Building {LLM}s Efficiently through Merging"
+
+  # A workshop, not a paper: HiLD at ICML 2024 (icml.cc/virtual/2024/workshop/29974),
+  # whose own name is "High-dimensional Learning Dynamics 2024: The Emergence of
+  # Structure and Reasoning". The bibliography records organising it, which is a real
+  # line on a CV and not a thing with claims to cite.
+  - "High-dimensional Learning Dynamics 2024: The Emergence of Structure and Reasoning Workshop at ICML24"
+
+  # A poster, and the paper it presents is already here. P1-E-16 in the CogSci 2024
+  # program, no DOI, no entry in the eScholarship proceedings, 1 citation -- while the
+  # work itself is "Findings of the BabyLM Challenge", which is in this corpus with 232.
+  # Keeping both would be the split-authority failure `force_merge` exists to prevent,
+  # except that these two really are different documents, so merging them would be
+  # wrong as well. Dropping the poster is the honest option. If you would rather have
+  # the page, deleting this line is the whole change.
+  - "Insights from the first BabyLM Challenge: Training sample-efficient language models on a developmentally plausible corpus"
 
 # Hugging Face paper pages where you have already submitted an authorship claim.
 #
@@ -122,5 +153,16 @@ fields:
   # `venue_display` is derived from it.
   model-merging-with-svd-to-tie-the-knots:
     year: 2025
+  # This one reached us with an empty venue and so rendered as a paper with no venue at
+  # all, which is the state indexers treat as "preprint" and rank accordingly. It is a
+  # position paper accepted to ICML 2026 -- IBM Research lists it under that venue, and
+  # OpenReview CbJpizP0vJ is the review record. The reason it looks venue-less is that
+  # its text is on SSRN (abstract 6176178) rather than arXiv, so none of the arXiv-shaped
+  # paths that fill this in for every other paper apply. `venue` is given in long form
+  # because `short_venue` derives "ICML 2026" from it and the year together; writing
+  # "ICML 2026" here directly would hard-code the year in two places.
+  position-agentic-systems-should-be-general:
+    venue: "International Conference on Machine Learning"
+    url: "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6176178"
   # ties-merging-resolving-interference-when-merging-models:
   #   venue: "NeurIPS 2023"

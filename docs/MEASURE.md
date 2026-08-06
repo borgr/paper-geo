@@ -64,8 +64,8 @@ Why this fixes the objections:
 - Paper prominence, citation count, venue, topic, year, and the whole "me factor"
   are **identical across arms** — they are the same paper. They difference out
   instead of needing to be balanced.
-- The unit is a question, not a paper: ~115 papers × 6 questions ≈ 700 questions,
-  ~350 per arm, with the contrast taken *within* cluster. This is a paired design,
+- The unit is a question, not a paper: ~112 papers × 6 questions ≈ 670 questions,
+  ~335 per arm, with the contrast taken *within* cluster. This is a paired design,
   so the dominant variance component is removed rather than inflating the estimate.
 - Nothing is withheld permanently. You add the uncovered questions afterwards.
 - **Spillover biases toward null.** An uncovered question may still be helped by
@@ -101,7 +101,7 @@ reasons:
    during that window whether or not you call it an experiment. Randomising which
    questions come first costs approximately nothing extra.
 
-Put a number on it: ~115 papers × ~4 months × half coverage ≈ 230 paper-months of
+Put a number on it: ~112 papers × ~4 months × half coverage ≈ 220 paper-months of
 half-coverage, against a corpus lifetime on the order of 14,000 paper-months.
 **Under 2% of lifetime coverage, and recoverable.**
 
@@ -109,11 +109,11 @@ half-coverage, against a corpus lifetime on the order of 14,000 paper-months.
 
 | Cost | Size |
 |---|---|
-| Measurement labour | The dominant one. 2 rounds × ~700 questions × 4 engines, and two engines have no API for this — manual runs or a browser harness. Tens of hours, or a build |
+| Measurement labour | The dominant one. 2 rounds × ~670 questions × 4 engines, and two engines have no API for this — manual runs or a browser harness. Tens of hours, or a build |
 | Discipline | Recording the assignment and not back-filling early. Cheap but easy to fumble |
 | **Mis-reading a null** | The real hazard. At ~50% power a null is weak evidence, and it would be easy to conclude "Tier 2 doesn't work" when the honest statement is "no *large* effect detected" |
 
-**And the payoff if it doesn't work:** you stop writing sidecars for 115 papers
+**And the payoff if it doesn't work:** you stop writing sidecars for 112 papers
 (~19 hours) and stop maintaining them indefinitely, and you redirect that effort to
 Tier 3 where the observational evidence is better. That asymmetry is what makes a
 cheap version worth it.

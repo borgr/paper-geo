@@ -303,7 +303,7 @@ surfaces).
 are the point. Hand-check 20% of the grades before trusting the report.
 
 Neither answers "did this cause more citations". [`docs/MEASURE.md`](docs/MEASURE.md)
-explains why that question is close to unanswerable at 115 papers, and what the one
+explains why that question is close to unanswerable at 112 papers, and what the one
 defensible design would be if you want it.
 
 ---

@@ -1,6 +1,8 @@
 _comment: 'Retired paper URLs -> the slug that replaced them. Written by scripts/collect.py, read by scripts/build_site.py,
   which turns each into a redirect stub. Append-only: deleting a line 404s a URL that is already published
-  and indexed.'
+  and indexed. A null target means the opposite on purpose -- the page was dropped and no successor is
+  honest, so the URL is meant to 404; write it as null rather than removing the line, so a deliberate
+  removal cannot be mistaken for a redirect that broke.'
 retired:
   beyond-binary-rewards-training-lm-s-to-reason-about-their-un: beyond-binary-rewards-training-lms-to-reason-about-their-unc
   com-peft-compression-for-communicating-parameter-efficient-u: compeft-compression-for-communicating-parameter-efficient-up
@@ -9,8 +11,11 @@ retired:
   findings-of-the-second-b-aby-lm-challenge-sample-efficient-p: findings-of-the-second-babylm-challenge-sample-efficient-pre
   findings-of-the-third-b-aby-lm-challenge-accelerating-langua: findings-of-the-third-babylm-challenge-accelerating-language
   global-piqa-evaluating-physical-commonsense-reasoning-across: global-piqa-evaluating-commonsense-reasoning-across-100-lang
+  high-dimensional-learning-dynamics-2024-the-emergence-of-str:
   holmes-benchmark-the-linguistic-competence-of-language-model: holmes-a-benchmark-to-assess-the-linguistic-competence-of-la
   how-safe-is-your-safety-metric-automatic-concatenation-tests: can-you-trust-your-metric-automatic-concatenation-based-test
-  llm-merging-building-llm-s-efficiently-through-merging: llm-merging-building-llms-efficiently-through-merging
+  insights-from-the-first-babylm-challenge-training-sample-eff: findings-of-the-babylm-challenge-sample-efficient-pretrainin
+  llm-merging-building-llm-s-efficiently-through-merging:
+  llm-merging-building-llms-efficiently-through-merging:
   n-umero-l-ogic-number-encoding-for-enhanced-llm-s-numerical: numerologic-number-encoding-for-enhanced-llms-numerical-reas
   the-s-hare-lm-collection-and-plugin-contributing-human-model: the-sharelm-collection-and-plugin-contributing-human-model-c

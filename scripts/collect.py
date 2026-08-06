@@ -197,7 +197,11 @@ def record_slug_moves(papers: list[dict], papers_path: str) -> int:
             "_comment": "Retired paper URLs -> the slug that replaced them. Written by "
                         "scripts/collect.py, read by scripts/build_site.py, which turns "
                         "each into a redirect stub. Append-only: deleting a line 404s a "
-                        "URL that is already published and indexed.",
+                        "URL that is already published and indexed. A null target means "
+                        "the opposite on purpose -- the page was dropped and no successor "
+                        "is honest, so the URL is meant to 404; write it as null rather "
+                        "than removing the line, so a deliberate removal cannot be "
+                        "mistaken for a redirect that broke.",
             "retired": dict(sorted(retired.items())),
         })
     return moves
@@ -703,6 +707,16 @@ def apply_overrides(papers: list[dict], ov: dict) -> list[dict]:
             # Sorted set, not append: on the `--offline` path the record already carries
             # the list from the previous run, and appending would grow it every rerun.
             p["overridden_fields"] = sorted(set(p.get("overridden_fields") or []) | {k})
+        # Overriding a field only reaches the things derived from it if they are derived
+        # after this point. `venue_display` and `title_display` are, so they pick the
+        # correction up on their own; `links` is not -- it is built while the record is,
+        # long before any of this runs. So an overridden `url` silently did nothing,
+        # which is the worst way for a hand correction to fail. Re-derive that one link
+        # here, on the same condition the original build uses.
+        if "url" in (p.get("overridden_fields") or []) and p.get("url"):
+            L = p.setdefault("links", {})
+            if p["url"] not in L.values():
+                L["publisher"] = p["url"]
     return out
 
 

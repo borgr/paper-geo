@@ -508,6 +508,45 @@ def step_worklist(cfg, args) -> None:
             lines.append(f"- {p.get('citations') or 0} cites — {p['title'][:66]}")
         lines.append("")
 
+    # Papers whose text no fetcher can reach. Upstream of the two sidecar sections
+    # above: a sidecar is drafted from a paper's own full text, so a paper with none
+    # can never be drafted and would otherwise sit in "not yet drafted" for ever,
+    # looking like a queue that had not got to it yet. The distinction worth drawing
+    # is between a paper the pipeline has not read and one it cannot -- the second is
+    # a task, and the whole task is putting a file somewhere.
+    starved = []
+    for p in papers:
+        if os.path.exists(os.path.join(ROOT, "data", "sidecars", f"{p['slug']}.md")):
+            continue
+        if any(os.path.exists(os.path.join(ROOT, "data", "fulltext", p["slug"] + e))
+               for e in (".pdf", ".txt")):
+            continue
+        f = os.path.join(ROOT, "build", "fulltext", f"{p['slug']}.txt")
+        try:
+            if os.path.getsize(f) >= 2000:
+                continue
+        except OSError:
+            pass
+        starved.append(p)
+    if starved:
+        lines += [f"## Papers whose full text nothing can fetch ({len(starved)})", "",
+                  "Every one of these is a real paper that is not on arXiv, so there is no",
+                  "HTML rendering and no open PDF to extract — a Nature paywall, an Elsevier",
+                  "page that serves an open-access licence to browsers and 403s to everything",
+                  "else, an SSRN download behind a click. They are not slow, they are blocked,",
+                  "and no rerun will change that.",
+                  "",
+                  "You already have all three PDFs. Drop each one in as",
+                  "`data/fulltext/<slug>.pdf` — the directory is gitignored, so the PDF stays",
+                  "on your machine and only the sidecar it produces is committed. That path is",
+                  "read before any network source, so the next run picks it up and the paper",
+                  "joins the drafting queue.", ""]
+        for p in sorted(starved, key=lambda p: -(p.get("citations") or 0)):
+            lines.append(f"- [ ] `data/fulltext/{p['slug']}.pdf` — "
+                         f"{p.get('citations') or 0} cites, {p.get('venue_display') or 'no venue'}"
+                         f" — {(p.get('title_display') or p.get('title') or '')[:52]}")
+        lines.append("")
+
     # Artifacts that are not papers and have no paper: a tool or a guide nobody can
     # cite because there is nothing to cite. Listed low, because a Zenodo DOI is the
     # cheapest item here and also the least likely to change what an engine returns.

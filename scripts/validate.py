@@ -380,6 +380,29 @@ def check_overrides() -> list[str]:
     return errs
 
 
+def check_slug_history() -> list[str]:
+    """A retired URL must point at a live page or at nothing, never at a dead end.
+
+    `build_site.py` writes a redirect only when the target is live, so a target that
+    left the corpus -- because the paper was dropped, or renamed by hand without
+    re-pointing -- makes the entry inert: no redirect, no error, and a URL that is
+    published and indexed starts 404ing with nothing in the build saying so. The
+    chain re-pointing in `collect.py` repairs this automatically for renames, but only
+    for papers it can still see; a dropped target it cannot.
+
+    `null` is the way to say a 404 is intended, so it passes. Everything else that
+    resolves nowhere is reported, with the two honest fixes named.
+    """
+    hist = (read_yaml(os.path.join(DATA, "slug_history.yaml")) or {}).get("retired")
+    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers") or []
+    if not (hist and papers):
+        return []
+    live = {p.get("slug") for p in papers}
+    return [f"slug_history.yaml: `{old}` redirects to `{new}`, which is not a paper"
+            " -- point it at a live slug, or set it to null if the URL is meant to 404"
+            for old, new in sorted(hist.items()) if new is not None and new not in live]
+
+
 def check_name_lists() -> list[str]:
     """`name_typos` must stay disjoint from `name_variants`, and both from `name`.
 
@@ -558,6 +581,7 @@ def main() -> None:
     errs += selftest()
     errs += check_sidecars()
     errs += check_overrides()
+    errs += check_slug_history()
     errs += check_name_lists()
     errs += check_affiliations()
     errs += check_doc_counts((docs.get("papers") or {}).get("papers", []),

@@ -1,6 +1,6 @@
 # The papers track
 
-115 papers. Read [SHARED.md](SHARED.md) first — this file only covers what is
+112 papers. Read [SHARED.md](SHARED.md) first — this file only covers what is
 specific to papers.
 
 ## What makes this track different
