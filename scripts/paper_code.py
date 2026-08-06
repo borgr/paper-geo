@@ -864,11 +864,18 @@ def main() -> None:
         # link that is already there and gets a 409 back.
         return bool(a) and (b or "").rstrip("/").lower() == a.rstrip("/").lower()
 
+    no_arxiv = []
     for slug, r in sorted(results.items(),
                           key=lambda x: -(x[1]["paper"].get("citations") or 0)):
         p = r["paper"]
         repo, page = wanted(slug, r)
-        if not p.get("arxiv") or not (repo or page):
+        if not (repo or page):
+            continue
+        if not p.get("arxiv"):
+            # HF's endpoint is keyed on the arXiv id, so there is no page to write to.
+            # Say so rather than skipping quietly: the link is real and does reach the
+            # site, which reads this file directly, and a silent skip reads as "no link".
+            no_arxiv.append(slug)
             continue
         live = hf_get(p["arxiv"]) or {}
         new_repo = repo if repo and not same(repo, live.get("githubRepo")) else None
@@ -892,6 +899,9 @@ def main() -> None:
               f"{(new_repo or new_page):<52} {res}")
         time.sleep(0.5)
     print(f"\npushed {pushed}, already correct {skipped}, failed {failed}")
+    if no_arxiv:
+        print(f"not on arXiv, so HF has no page to link ({len(no_arxiv)}); the link is "
+              f"on the site: " + ", ".join(sorted(no_arxiv)))
 
 
 if __name__ == "__main__":
