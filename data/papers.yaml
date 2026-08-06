@@ -783,7 +783,7 @@ papers:
   - B. Ecsedi
   - Leshem Choshen
   - J. Hoffman
-  year: 2024
+  year: 2025
   venue: International Conference on Learning Representations
   type: inproceedings
   doi: 10.48550/arXiv.2410.19735
@@ -832,8 +832,10 @@ papers:
   - knots
   merged_by_override: true
   title_display: Model merging with SVD to tie the Knots
-  venue_display: ICLR 2024
+  venue_display: ICLR 2025
   has_sidecar: false
+  overridden_fields:
+  - year
 - key: damani2026beyond
   slug: beyond-binary-rewards-training-lms-to-reason-about-their-unc
   title: 'Beyond Binary Rewards: Training {LM}s to Reason About Their Uncertainty'

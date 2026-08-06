@@ -113,6 +113,14 @@ hf_claim_requested:
 # Per-paper field corrections, keyed by slug. Applied last, over everything the
 # collector derived. Use sparingly -- prefer fixing the upstream source so the
 # correction propagates to Scholar, S2, and OpenAlex rather than just to us.
-fields: {}
+fields:
+  # The merge above kept the arXiv side's year, so the record read "ICLR 2024" for a
+  # paper submitted to arXiv in October 2024 -- a year that cannot be right, and the
+  # kind of wrong fact a crawler quotes back at you. OpenReview settles it: submission
+  # 13539 to ICLR.cc/2025/Conference, accepted as a poster, camera-ready revision
+  # filed. The bibliography entry in the CV also says 2025. Only the year is corrected;
+  # `venue_display` is derived from it.
+  model-merging-with-svd-to-tie-the-knots:
+    year: 2025
   # ties-merging-resolving-interference-when-merging-models:
   #   venue: "NeurIPS 2023"
