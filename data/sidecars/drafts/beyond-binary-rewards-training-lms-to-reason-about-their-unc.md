@@ -52,22 +52,65 @@ claims:
     proper scoring rule whose score gap S(p,1) - S(p,0) is below some threshold. The practical
     reading is that a naive log-likelihood calibration reward lets a model buy a perfect calibration
     score by answering wrongly with zero confidence -- the failure mode the paper attributes
-    to prior RL-for-calibration work that optimizes calibration alone.'
-  evidence: Theorem 1, Section 3, Appendix A, Section 5
+    to prior RL-for-calibration work that optimizes calibration alone, and then reproduces
+    at 0.00 accuracy in an appendix.'
+  evidence: Theorem 1, Section 3, Appendix A, Appendix E, Appendix I, Section 5
+- id: log-score-hacks-a-toy-task-and-not-qa
+  text: 'The paper builds the log score''s failure mode and measures it. On a five-arm next-draw
+    prediction task, an RLCR variant rewarded with the log score converges to answering with
+    the invalid arm at confidence 0 -- 0% accuracy with a perfect 0.00 Brier and 0.00 calibration
+    error -- while the Brier variant keeps predicting, at 34.4% accuracy and 0.02 calibration
+    error. Trained on HotpotQA instead, the log-score variant does not collapse: 59.5% accuracy,
+    0.22 Brier and 0.07 calibration error against Brier''s 62.1%, 0.21 and 0.03.'
+  scope: 'So boundedness is a guarantee against a failure that does not always occur. The
+    authors say so directly -- for many datasets hacking may not happen in practice, and they
+    expect its emergence to depend on the data distribution and the model size. The toy task
+    is engineered for the regime where the log score''s expected reward is non-monotonic in
+    the true correctness probability: short observation sequences (zero to five draws), an
+    arbitrary arm distribution, and an explicit abstain option, so aleatoric uncertainty is
+    high by construction. The toy runs use no uncertainty analysis. Read the toy result as
+    a demonstration that the theorem''s gap is reachable, and the HotpotQA result as evidence
+    that Brier''s practical margin over log score is about a point, not a category.'
+  evidence: Appendix E.1, Appendix E.2, Appendix E.3, Figure 5, Figure 6, Table 3
+- id: calibration-only-rl-collapses
+  text: 'Rewarding calibration alone collapses, and the paper measures the collapse rather
+    than only predicting it: a Brier-only reward applied over the whole generation reaches
+    0.00 accuracy with a perfect 0.00 Brier and 0.00 calibration error. Masking the loss off
+    the thinking and answer spans prevents that -- 62.0% accuracy -- but calibration stays
+    behind RLCR, 0.08 against 0.03 in domain and 0.25 against 0.21 out of it. Abstention-RL,
+    which pays an intermediate reward for saying "I don''t know", lands at 62.1% accuracy
+    with calibration error 0.31 in domain and 0.35 out of it.'
+  scope: 'Every RL-for-calibration baseline beats plain RLVR on calibration (0.37 and 0.46)
+    and loses to RLCR, so the comparison establishes ordering within a family rather than
+    RLCR against nothing. It is not head-to-head on initialization: the two calibration-only
+    variants start from the paper''s own RLVR model, which the authors say may be a poor starting
+    point for further RL because of reduced entropy, while Abstention-RL starts from the base
+    model since it optimizes accuracy too. Abstention-RL produces no confidence, so its calibration
+    is measured by prompting it at test time never to abstain -- and its reward only ever
+    teaches whether internal confidence clears the 0.5 threshold, not a graded confidence.
+    The authors'' own two hypotheses for the masked variant''s remaining gap -- bad initialization,
+    or a genuine complementarity between the accuracy and calibration gradients -- are labelled
+    as hypotheses.'
+  evidence: Appendix I, Table 6
 - id: rlvr-confidence-is-uninformative
   text: 'The confidence a standard reasoning-trained model states is close to worthless: its
     AUROC is 0.50 on in-domain HotpotQA and 0.47 on math -- chance -- against 0.54 and 0.56
     for the base model it was trained from. Ordinary RL does not merely make confidence badly
     scaled, it removes the signal that would let confidence separate correct from incorrect
     answers.'
-  scope: Its expected calibration error is 0.37 in-domain on HotpotQA and 0.26 on math, and
-    in all four of the paper's RLVR cells that error is within a point or two of 1 minus its
-    accuracy (0.37 against 63.0% accurate, 0.26 against 72.9%, 0.46 against 53.9%, 0.49 against
-    52.5%) -- the arithmetic signature of a model that answers with near-certainty whatever
-    it is asked. That last step is a derivation from the paper's own table, not a claim the
-    paper makes. The confidence has to be elicited from RLVR at test time by appending a fixed
-    continuation to the reasoning chain, since it was never trained to produce one.
-  evidence: Table 1a, Table 1b, Appendix B.4
+  scope: 'Its expected calibration error is 0.37 in-domain on HotpotQA and 0.26 on math, and
+    in all four of the paper''s RLVR cells that error is within a point or two of 1 minus
+    its accuracy (0.37 against 63.0% accurate, 0.26 against 72.9%, 0.46 against 53.9%, 0.49
+    against 52.5%) -- the arithmetic signature of a model that answers with near-certainty
+    whatever it is asked. That arithmetic is a derivation from the paper''s own table, but
+    the underlying behaviour is stated outright in the appendices: RLVR consistently predicts
+    85-100% confidence across all questions and all datasets, its confidence histogram puts
+    almost all mass in the 0.9-1.0 bin, and out of domain its answers stated at 0.8-0.9 confidence
+    are right about 30% of the time. RLCR''s histogram instead spreads across the range with
+    substantial mass at 0.4-0.8. The confidence has to be elicited from RLVR at test time
+    by appending a fixed continuation to the reasoning chain, since it was never trained to
+    produce one.'
+  evidence: Table 1a, Table 1b, Appendix B.4, Appendix H.1, Appendix L, Figure 8, Figure 9
 - id: rl-degrades-calibration-out-of-domain
   text: 'Reasoning training makes calibration worse than the model it started from, once you
     leave the training task: averaged over six out-of-distribution datasets, RLVR trained
@@ -87,13 +130,17 @@ claims:
     HotpotQA and 72.7% against 72.9% on math, while in-domain calibration error falls from
     0.37 to 0.03 and from 0.26 to 0.10 -- so the worry that a model would deliberately answer
     badly to make its confidence easy to get right does not materialize.'
-  scope: Both accuracy differences are slightly in RLVR's favour and neither is accompanied
-    by error bars or repeated seeds, so read them as parity rather than as RLCR being marginally
-    behind. The 0.37 to 0.03 figure is in-domain HotpotQA and is the paper's largest calibration
+  scope: 'Both accuracy differences are slightly in RLVR''s favour, and the appendix''s per-dataset
+    tables give the interval that settles it: 63.0% +/- 3.05 for RLVR against 62.1% +/- 3.05
+    for RLCR on HotpotQA, as half-widths of 95% bootstrap confidence intervals over the evaluation
+    set. The gap is an order of magnitude inside the interval, so this is parity, not RLCR
+    being marginally behind. Those intervals are over evaluation examples rather than training
+    seeds -- every cell is a single run -- and the calibration-error columns carry no interval
+    at all. The 0.37 to 0.03 figure is in-domain HotpotQA and is the paper''s largest calibration
     improvement; the equivalent out-of-domain numbers are far larger in absolute terms. Accuracy
     on HotpotQA is exact string match against the gold answer, which will score some acceptable
-    answers as wrong for every method equally.
-  evidence: Table 1a, Table 1b, Section 4.2, Section 4.3
+    answers as wrong for every method equally.'
+  evidence: Table 1a, Table 1b, Section 4.2, Section 4.3, Appendix L, Table 11
 - id: calibration-gains-generalize
   text: 'The result that distinguishes RLCR is out of domain: trained on HotpotQA and evaluated
     on six unrelated datasets it reaches AUROC 0.68, Brier 0.21 and calibration error 0.21,
@@ -108,6 +155,37 @@ claims:
     the non-stationarity of a target that moves as the policy improves, and one model sharing
     representations between answering and self-assessment -- and all three are labelled hypotheses.
   evidence: Table 1a, Table 1b, Section 4.2
+- id: the-out-of-domain-average-hides-a-reversal
+  text: The out-of-domain average is an average over datasets that disagree. Against RLVR's
+    calibration error, the HotpotQA-trained RLCR model wins on SimpleQA (0.34 against 0.88),
+    TriviaQA (0.06 against 0.38), GPQA (0.16 against 0.60) and MATH-500 (0.19 against 0.61),
+    ties on GSM8K (0.20 against 0.20), and loses on CommonsenseQA (0.30 against 0.09) -- where
+    it is also worse than the untrained base model's 0.00.
+  scope: 'The win-tie-loss tally is a derivation from the appendix''s per-dataset tables,
+    not a count the paper reports; the paper does acknowledge considerable per-dataset variance
+    and singles out CommonsenseQA. Its explanation is sound and worth keeping: RLVR states
+    85-100% confidence on essentially every question of every dataset, and CommonsenseQA is
+    a dataset where all methods score about 90%, so uniform overconfidence is accidentally
+    well calibrated there. But the other half is that RLCR is genuinely off by 0.30 on that
+    dataset while still ranking answers best on it (AUROC 0.73 against RLVR''s 0.50) -- the
+    discrimination survives where the absolute numbers do not. Anyone deploying this should
+    expect the calibration gain to be dataset-dependent even though its sign is usually right.'
+  evidence: Appendix L, Table 8, Table 9, Table 10, Table 11
+- id: replicates-on-two-other-model-families
+  text: The calibration result replicates on two other backbones. From OlMo-2-7B-Instruct,
+    RLCR reaches 61.3% accuracy against RLVR's 61.7% with in-domain calibration error 0.09
+    against 0.38, and 0.20 against 0.48 out of domain. From Qwen3-8B it reaches 61.8% against
+    62.7% with 0.23 against 0.36 in domain and 0.17 against 0.29 out of it.
+  scope: 'What replicates is the calibration gain at matched accuracy. The out-of-domain accuracy
+    edge from the main table does not: on OlMo-2 RLCR is behind RLVR out of domain (49.3%
+    against 50.8%) and on Qwen3 it is a tie (65.6% against 65.5%), so the 56.2%-against-53.9%
+    edge on Qwen2.5-7B should be read as one backbone''s result rather than a property of
+    the method. Qwen3 also weakens the paper''s premise rather than the method: its base model
+    is already reasonably calibrated out of domain (0.28) and RLVR barely degrades that (0.29),
+    so the "RL wrecks calibration" starting point is much milder on a newer instruction-tuned
+    model -- while RLCR still improves on it. Both replications are HotpotQA-trained only,
+    one run each, and reported in an appendix.'
+  evidence: Appendix F.1, Appendix F.2, Table 4, Table 5
 - id: compared-with-post-hoc-classifiers
   text: The natural alternative -- keep the reasoning model and train a second model to predict
     when it is right -- is competitive in domain and clearly behind out of domain. On in-domain
@@ -150,19 +228,23 @@ claims:
     helps, which is what you would expect if the confidences are informative but noisy.'
   evidence: Section 4.4, Figure 3a
 - id: confidences-are-self-consistent
-  text: 'Resampling the uncertainty analysis for a fixed answer yields confidences with low
-    standard deviation, so the model has little "uncertainty about uncertainty", and averaging
-    over analyses improves the Brier score only modestly for that reason. Across distinct
-    answers the confidences behave more like probabilities under RLCR than under RLVR: on
-    in-domain HotpotQA they sum to about 1, as they should when only one answer can be right.'
-  scope: Out of domain both models still sum to more than 1, so overconfidence in the form
-    of assigning high confidence to contradictory answers survives training -- RLCR is closer
-    to the ideal, not at it. Both findings are read from distribution plots (a standard-deviation
-    histogram over seven datasets and a swarm plot over three) with no summary statistics
-    in the text, so treat the direction as the result. The sum-to-one criterion only applies
-    where answers are mutually exclusive and is an equality only when the sampled answers
-    are exhaustive.
-  evidence: Section 4.4, Section 4.5, Figure 3b, Figure 4a, Figure 4b
+  text: 'Fixing the answer and resampling only the uncertainty analysis gives a narrower spread
+    of confidences than resampling whole reasoning chains, so most of the variance in a stated
+    confidence comes from which solution the model found rather than from indecision about
+    a solution it has. Across distinct answers the confidences behave more like probabilities
+    under RLCR than under RLVR: on in-domain HotpotQA they sum to about 1, as they should
+    when only one answer can be right.'
+  scope: The narrower distribution is explicitly not a collapse -- the appendix says the answer-conditioned
+    spread still shows non-trivial variance rather than concentrating near zero -- so "the
+    model is confident about its confidence" overstates it; averaging over 16 analyses improves
+    the Brier score only modestly, which is the practical consequence. Out of domain both
+    models still sum to more than 1, so assigning high confidence to contradictory answers
+    survives training; RLCR is closer to the ideal, not at it. Both findings are read from
+    distribution plots with no summary statistics in the text, so treat the direction as the
+    result. The sum-to-one criterion applies only where answers are mutually exclusive, and
+    is an equality only when the sampled answers are exhaustive.
+  evidence: Section 4.4, Section 4.5, Appendix H.2, Figure 3b, Figure 4a, Figure 4b, Figure
+    10
 - id: reward-beats-prompting
   text: 'Prompting a reasoning model to reason about its uncertainty does help, and helps
     far less than training it to: adding the identical analysis prompt to RLVR at test time
@@ -176,6 +258,20 @@ claims:
     accounts for most of the effect. This does not test a model trained with the analysis
     prompt but without the calibration reward.'
   evidence: Table 2, Section 4.6
+- id: analysis-text-helps-small-readers-only
+  text: 'The uncertainty analysis does carry calibration-relevant information, but only for
+    a reader that needs it: classifiers trained to predict correctness from RLCR''s reasoning
+    chains (with the confidence tags stripped out) beat classifiers trained on RLVR''s chains
+    at 0.5B and 1.5B, and the two perform similarly at 7B.'
+  scope: 'The authors'' reading is that a sufficiently expressive classifier can infer confidence-relevant
+    features from the solution alone, so the analysis text matters most when capacity is limited
+    -- a bound on how much the explicit uncertainty reasoning is doing, from the paper itself.
+    The test is a probe of what the chains contain, not of the RLCR policy: nothing here says
+    a 7B RLCR model would do as well without writing the analysis, which is what the separate
+    test-time ablation measures. The confidence tags are removed specifically so the classifier
+    cannot copy the answer. Read from a figure with no numbers in the text, and the authors
+    flag the capacity relationship as future work.'
+  evidence: Appendix G, Figure 7
 - id: analysis-free-variant-is-nearly-free
   text: 'The cheap version is most of the win: RLCR evaluated without its uncertainty analysis
     spends 113 completion tokens against RLVR''s 92 -- rather than full RLCR''s 249 -- scores
@@ -189,17 +285,24 @@ claims:
     domain (0.21 with analysis, 0.26 without) means the trade is real rather than free.
   evidence: Table 2, Section 4.6
 - id: sft-warmup-trades-accuracy-for-calibration
-  text: Warm-starting the math run with supervised finetuning on uncertainty analyses written
+  text: 'Warm-starting the math run with supervised finetuning on uncertainty analyses written
     by a stronger model gives the best calibration in the paper -- AUROC 0.78, Brier 0.14,
-    error 0.08 in domain and 0.66, 0.24, 0.18 out of it -- but its out-of-domain accuracy
-    falls to 43.8%, below the untrained base model's 47.8% and seven points below plain RLCR.
-  scope: 'The warmup is small and deliberately partial: 500 base-model solutions with uncertainty
-    analyses generated by DeepSeek-R1, which was not asked to produce confidence scores, so
-    only the analysis style is distilled. The authors attribute the accuracy collapse to catastrophic
-    forgetting induced by the SFT phase and say so in the caption, presenting RLCR as the
-    better trade-off out of domain. The variant exists only for the math models, so there
-    is no HotpotQA counterpart to check the pattern against.'
-  evidence: Table 1b, Section 4.3, Appendix B.2
+    error 0.08 in domain and 0.66, 0.24, 0.18 out of it -- while its out-of-domain accuracy
+    falls to 43.8%, below the untrained base model''s 47.8%. An appendix then shows most of
+    that drop is not forgetting: the model names the right answer in its reasoning and writes
+    an unrelated number in the answer tag, and one added prompt line telling it not to put
+    arbitrary numbers there recovers 43.8% to 49.8%, against plain RLCR''s 50.9%.'
+  scope: 'So the main table''s caption attributing the collapse to catastrophic forgetting
+    is corrected by the paper''s own appendix, which says the degradation is not solely forgetting
+    and that residual forgetting is much smaller than the authors first suspected -- a case
+    where the sentence a reader is most likely to quote is the one the paper later walks back.
+    The warmup is small and deliberately partial: 500 base-model solutions with analyses generated
+    by DeepSeek-R1, which was never asked for confidence scores, so only the analysis style
+    is distilled. The fix is a test-time prompt change with nothing retrained. The appendix''s
+    table caption says the recovery is to 48% while its own text and table say 49.8%. The
+    variant exists only for the math models, so there is no HotpotQA counterpart to check
+    the pattern against.'
+  evidence: Table 1b, Section 4.3, Appendix B.2, Appendix J, Table 7
 - id: calibration-is-still-poor-in-absolute-terms
   text: 'The paper''s own conclusion is that the problem is not solved: out-of-domain calibration
     error remains 0.21 for the HotpotQA-trained model and 0.25 for the math-trained one --
@@ -212,20 +315,41 @@ claims:
   evidence: Section 6, Table 1a, Table 1b, Section 4.5
 - id: how-the-tasks-and-numbers-were-built
   text: 'The training task is engineered so that uncertainty is warranted: HotpotQA-Modified
-    splits 20,000 multi-hop questions into equal thirds where two, one or none of the supporting
-    paragraphs are present, always padding to eight paragraphs, so a third of questions are
-    unanswerable from the context and the model cannot tell which third it is in. The math
-    set is 15,000 Big-Math problems filtered to numerical answers and to a 0-70% solve rate
-    for a reference 8B model.'
-  scope: Numerical answers only, because verifier noise on free-form answers caused training
+    takes the distractor set''s ten paragraphs (two supporting, eight distractors) and removes
+    both, one, or neither supporting paragraph for equal thirds of 20,000 questions, leaving
+    exactly eight paragraphs in every case -- 2/6, 1/7 or 0/8 -- so a third are unanswerable
+    from the context and the model cannot tell which third it is in. The math set is 15,000
+    Big-Math problems filtered to numerical answers and to a 0-70% solve rate for a reference
+    Llama-8B.'
+  scope: 'Numerical answers only, because verifier noise on free-form answers caused training
     instability -- so the reward is clean at the cost of question variety. Every model is
     evaluated at temperature 0; correctness is exact match on HotpotQA, math-verify on the
     three math sets, and a Llama-3.1-8B-Instruct judge on TriviaQA, SimpleQA, CommonsenseQA
     and GPQA, with the reasoning trace withheld from the judge. Malformed outputs are re-queried
     with a fixed continuation appended before being scored, which the base model needs far
     more often than the RL-trained models -- a deliberate leniency that makes the base baseline
-    stronger than a strict parse would.
-  evidence: Section 4.2, Section 4.3, Appendix B.1, Appendix B.3, Appendix B.4
+    stronger than a strict parse would. The RL recipe is GRPO with two modifications: the
+    standard-deviation division is dropped from the advantage, following Turtel et al., which
+    the authors suggest helps on extremely miscalibrated examples, and token losses are aggregated
+    with BNPO over the active tokens in the local batch. 32 samples per prompt at temperature
+    0.7, effective batch 2048, one epoch, constant learning rate 1e-6 for HotpotQA and 5e-6
+    for math with a 0.1 warmup ratio, completion cap 1536 for HotpotQA and 4096 for math,
+    on a mix of A100 and H100 hardware.'
+  evidence: Section 4.2, Section 4.3, Appendix B.1, Appendix B.2, Appendix B.3, Appendix B.4
+- id: the-in-domain-cell-is-the-answerable-split
+  text: The 0.03 calibration error everyone quotes is not measured on the training distribution.
+    In-domain HotpotQA is 1,000 validation questions from the original distractor set trimmed
+    to eight paragraphs with both supporting paragraphs present -- every question answerable.
+    On the held-out HotpotQA-Modified split, where a third of questions have no supporting
+    paragraph at all, RLCR scores 44.4% accuracy, AUROC 0.80 and calibration error 0.08, against
+    RLVR's 46.0%, 0.50 and 0.54.
+  scope: 'This mostly favours the paper rather than undercutting it: the gap over RLVR is
+    far larger on the harder split (0.08 against 0.54) and RLCR''s ranking ability is its
+    best anywhere (0.80). But it means the headline in-domain pair of numbers describes the
+    easy condition, and the modified-split column appears only in the appendix. Both HotpotQA
+    variants are scored by exact string match against the gold answer, which penalizes acceptable
+    paraphrases equally for every method.'
+  evidence: Appendix B.3, Appendix L, Table 11
 qa:
 - q:
   - Does RL training make language models overconfident?
@@ -337,6 +461,44 @@ qa:
   - how-the-tasks-and-numbers-were-built
   - compared-with-post-hoc-classifiers
   - calibration-comes-free-in-accuracy
+- q:
+  - Does RLCR work on models other than Qwen?
+  - Has this been replicated on another model family?
+  - Is the calibration gain specific to one backbone?
+  answers:
+  - replicates-on-two-other-model-families
+  - calibration-gains-generalize
+- q:
+  - Why not just reward calibration and skip the correctness term?
+  - What happens if you train only on a Brier reward?
+  - How does RLCR compare to abstention training or teaching a model to say I don't know?
+  answers:
+  - calibration-only-rl-collapses
+  - bounded-scoring-rules-only
+  - log-score-hacks-a-toy-task-and-not-qa
+- q:
+  - Are there datasets where RLCR is worse calibrated than plain RL?
+  - Does the calibration gain hold on every benchmark?
+  - Why does RLVR look well calibrated on CommonsenseQA?
+  answers:
+  - the-out-of-domain-average-hides-a-reversal
+  - calibration-is-still-poor-in-absolute-terms
+- q:
+  - Does the uncertainty analysis text actually contain useful information?
+  - Is the uncertainty reasoning faithful, or just decoration?
+  - Does model size change how much the uncertainty analysis helps?
+  answers:
+  - analysis-text-helps-small-readers-only
+  - reward-beats-prompting
+  - analysis-free-variant-is-nearly-free
+- q:
+  - Which HotpotQA split are the in-domain numbers measured on?
+  - Is the reported in-domain calibration measured on the training distribution?
+  - What are the error bars on these results?
+  answers:
+  - the-in-domain-cell-is-the-answerable-split
+  - calibration-comes-free-in-accuracy
+  - how-the-tasks-and-numbers-were-built
 misreadings:
 - 'The headline 0.37 to 0.03 calibration improvement is in-domain HotpotQA and is the paper''s
   best cell. Out of domain the same model sits at 0.21, and the math-trained model at 0.25.
@@ -363,13 +525,16 @@ misreadings:
   each answer's correctness is Bernoulli with a fixed probability. It also does not hold for
   every proper scoring rule -- boundedness is the operative condition, and log loss, though
   proper, fails it.
-- Every result in the main paper is one backbone, Qwen2.5-7B base, at one scale. Appendices
-  claim generalization to other model families, but those numbers are not present in the retrievable
-  text, so nothing here establishes how the method behaves at 70B or on an instruction-tuned
-  start.
-- SFT+RLCR is not a strict improvement over RLCR. It has the best calibration in the paper
-  and the worst out-of-domain accuracy of any trained model -- 43.8%, below the untrained
-  base model's 47.8% -- which the authors attribute to catastrophic forgetting from the warmup.
+- Every result in the main paper is one backbone, Qwen2.5-7B base, at one scale, and every
+  cell is a single run. Appendix F does replicate the calibration gain on OlMo-2-7B-Instruct
+  and Qwen3-8B at matched accuracy -- but the out-of-domain accuracy edge does not replicate
+  (RLCR is behind RLVR on OlMo-2 and level on Qwen3), and nothing here says how the method
+  behaves at 70B.
+- SFT+RLCR is not a strict improvement over RLCR, and the reason given in the main table's
+  caption is not the reason. It has the best calibration in the paper and the worst out-of-domain
+  accuracy of any trained model, 43.8%; the caption calls that catastrophic forgetting, and
+  Appendix J shows most of it is a formatting bias -- the model wrote arbitrary numbers into
+  the answer tag on non-math questions -- which one added prompt line lifts to 49.8%.
 - 'The extra uncertainty-reasoning text is what buys calibration, not accuracy: in the ablation
   the highest out-of-domain accuracy, 56.5%, belongs to the variant evaluated with that reasoning
   stripped out, at 113 completion tokens against full RLCR''s 249. If tokens matter more than
@@ -378,6 +543,22 @@ misreadings:
   selection rules -- plain majority vote, most-confident-sample, and two sequence-likelihood
   variants. It is not a comparison against a trained reward model or verifier, and the gaps
   are shown as curves rather than numbers.'
+- 'On CommonsenseQA, RLCR is the worst-calibrated method in the table (error 0.30) and RLVR
+  looks excellent (0.09), because RLVR states 85-100% confidence on everything and the dataset
+  happens to sit at about 90% accuracy. RLCR still has the best AUROC there. The out-of-domain
+  average is an average: it hides one reversal and one tie.'
+- The 0.03 in-domain calibration error is measured on the answerable variant of HotpotQA --
+  both supporting paragraphs present -- not on the HotpotQA-Modified distribution the model
+  trained on. On that held-out split RLCR reads 0.08, against RLVR's 0.54.
+- '"Log score would be hacked" is proven and then only half observed. A log-score reward does
+  collapse to zero accuracy on a toy bandit task built for the regime where its expected reward
+  is non-monotonic, but trained on HotpotQA it stays within about a point of the Brier version
+  and never degenerates. The authors say hacking''s emergence probably depends on the data
+  and the model size.'
+- '"Just reward calibration" is not an untested alternative -- Appendix I runs it. Over the
+  whole generation it converges to empty answers at confidence 0: perfect Brier, zero accuracy.
+  Masking the loss off the answer and thinking spans fixes the accuracy and still leaves calibration
+  behind RLCR.'
 terminology:
   RLCR: 'Reinforcement Learning with Calibration Rewards. Reasoning training whose reward
     is binary correctness plus a Brier score on a confidence the model itself writes out,
@@ -422,6 +603,19 @@ terminology:
     is removed, for a third both are, always padded back to eight paragraphs. It makes a third
     of questions unanswerable from the context without telling the model which third it is
     looking at.'
+  Abstention-RL: 'The ternary-reward family this paper adapts as a baseline: +1 for correct,
+    0 for incorrect, and an intermediate reward (0.5 here) for explicitly saying "I don''t
+    know". It teaches only whether internal confidence clears that threshold, never a graded
+    confidence, and can suppress exploration on hard questions once abstention is learned.'
+  Calibration RL: A baseline that optimizes the Brier score alone with no correctness term.
+    Applied over the whole generation it converges to empty answers at confidence 0 -- the
+    degenerate optimum Theorem 1 warns about. Restricting the loss to the analysis and confidence
+    spans preserves accuracy and still calibrates worse than RLCR.
+  answer-conditioned vs answer-independent confidence: 'Two ways of resampling to measure
+    how stable a stated confidence is: hold the reasoning and answer fixed and resample only
+    the uncertainty analysis, or resample the whole chain so the answer may change. The second
+    varies more, so most confidence variance tracks which solution was found rather than indecision
+    about a fixed one.'
 links_extra:
   project page: https://rl-calibration.github.io/
 ---
