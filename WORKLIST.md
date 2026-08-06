@@ -153,24 +153,6 @@ its own. The top of the list, by citations, is where it pays:
 - 67 cites — Elements of World Knowledge {(EWoK):} {A} Cognition-Inspired Frame
 - 64 cites — ColD Fusion: Collaborative Descent for Distributed Multitask Finet
 
-## Papers whose full text nothing can fetch (3)
-
-Every one of these is a real paper that is not on arXiv, so there is no
-HTML rendering and no open PDF to extract — a Nature paywall, an Elsevier
-page that serves an open-access licence to browsers and 403s to everything
-else, an SSRN download behind a click. They are not slow, they are blocked,
-and no rerun will change that.
-
-You already have all three PDFs. Drop each one in as
-`data/fulltext/<slug>.pdf` — the directory is gitignored, so the PDF stays
-on your machine and only the sidecar it produces is committed. That path is
-read before any network source, so the next run picks it up and the paper
-joins the drafting queue.
-
-- [ ] `data/fulltext/an-autonomous-debating-system.pdf` — 172 cites, Nature — An autonomous debating system
-- [ ] `data/fulltext/bigger-is-not-always-better-the-importance-of-human-scale-la.pdf` — 30 cites, Journal of Memory and Language — Bigger is not always better: The importance of human
-- [ ] `data/fulltext/position-agentic-systems-should-be-general.pdf` — 0 cites, ICML 2026 — Position: Agentic Systems Should be General
-
 ## Artifacts with no citation route (14)
 
 Tools and guides with no linked paper. A Zenodo release DOI gives each a

@@ -3,14 +3,14 @@
 
     python update.py                 # refresh everything read-only, report what needs you
     python update.py --refresh-bib   # also re-run the publications pipeline first
-    python update.py --apply         # additionally write the approved repo changes
+    python update.py --apply         # additionally write the approved repo and link changes
     python update.py --step collect  # run a single step
 
 Setting this up was the one-time cost. The steady state is this command: code
 refreshes everything derivable, a model drafts what needs judgement, and the run
 ends by handing one link to a human. Who does what, and why:
 
-  * Code, no human in it: collect, repos, ownership, audit, validate, render.
+  * Code, no human in it: collect, repos, links, ownership, audit, validate, render.
     All of it is re-derived from public sources, so a human in the loop would be a
     human retyping what a fetch already knows.
   * A model's judgement, handed back rather than published: propose (repo labels)
@@ -45,8 +45,8 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 from common import DATA, is_preprint_venue, load_config, read_yaml  # noqa: E402
 from sweep_github import ZENODO_KINDS  # noqa: E402
 
-STEPS = ("collect", "repos", "propose", "draft", "ownership", "audit", "validate",
-         "render", "worklist")
+STEPS = ("collect", "repos", "propose", "draft", "links", "ownership", "audit",
+         "validate", "render", "worklist")
 
 
 def run(argv: list[str], cwd: str | None = None) -> int:
@@ -92,6 +92,17 @@ def step_draft(cfg, args) -> None:
         return
     run([sys.executable, "scripts/draft_sidecars.py",
          "--limit", str(args.draft_batch)])
+
+
+def step_links(cfg, args) -> None:
+    """Deduce each paper's code repo and project page from its own full text.
+
+    Read-only here: it refreshes `data/paper_code.yaml` and reports what it would
+    publish to Hugging Face, but nothing leaves the machine without --apply. Placed
+    after `draft` so it reuses the full text that step just cached, though it will
+    fetch its own for a paper the batch has not reached yet.
+    """
+    run([sys.executable, "scripts/paper_code.py"])
 
 
 def step_ownership(cfg, args) -> None:
@@ -624,15 +635,17 @@ def main() -> None:
     cfg = load_config()
 
     fns = {"collect": step_collect, "repos": step_repos, "propose": step_propose,
-           "draft": step_draft, "ownership": step_ownership, "audit": step_audit,
+           "draft": step_draft, "links": step_links,
+           "ownership": step_ownership, "audit": step_audit,
            "validate": step_validate, "render": step_render, "worklist": step_worklist}
     for name in ([args.step] if args.step else STEPS):
         print(f"\n{'=' * 62}\n== {name}\n{'=' * 62}")
         fns[name](cfg, args)
 
     if args.apply:
-        print(f"\n{'=' * 62}\n== apply (writes to GitHub)\n{'=' * 62}")
+        print(f"\n{'=' * 62}\n== apply (writes to GitHub and Hugging Face)\n{'=' * 62}")
         run([sys.executable, "scripts/sweep_github.py", "apply", "--yes"])
+        run([sys.executable, "scripts/paper_code.py", "--apply"])
     closing(args)
 
 

@@ -65,7 +65,8 @@ import urllib.error
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import DATA, ROOT, read_yaml, write_yaml  # noqa: E402
+from common import DATA, ROOT, load_config, read_yaml, write_yaml  # noqa: E402
+from fulltext import resolve as resolve_fulltext  # noqa: E402
 
 BUILD = os.path.join(ROOT, "build")
 FULLTEXT = os.path.join(BUILD, "fulltext")
@@ -553,6 +554,7 @@ ACCEPT = 6   # release phrase (4) plus any one corroboration, or two corroborati
 
 def deduce(papers: list[dict], only: str | None, facts: RepoFacts,
            pages: PageFacts) -> dict:
+    cfg = load_config()
     out = {}
     for p in papers:
         if only and p["slug"] != only:
@@ -561,6 +563,16 @@ def deduce(papers: list[dict], only: str | None, facts: RepoFacts,
         text = ""
         if os.path.exists(path) and os.path.getsize(path) > 0:
             text = open(path, errors="replace").read()
+        else:
+            # Fetch it rather than fall back to the abstract. The cache is filled by the
+            # drafting step, which is batched by citations, so a paper published last
+            # week is the last one it reaches -- and a new paper is exactly the case
+            # where nobody has linked the repo yet. Cached after the first fetch, so
+            # this costs one request per paper, once, ever.
+            try:
+                text, _ = resolve_fulltext(p, cfg)
+            except Exception as e:                      # noqa: BLE001
+                print(f"  ({p['slug']}: no full text -- {e})", file=sys.stderr)
         # The abstract is worth appending even when the full text is present: the
         # extractor sometimes drops the abstract block, and that is where the release
         # sentence usually lives.
