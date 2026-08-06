@@ -360,6 +360,28 @@ def build_links(papers: list[dict]) -> None:
         p["links"] = L
 
 
+def add_deduced_links(papers: list[dict]) -> None:
+    """Fill `code` and `project` from data/paper_code.yaml where they are still empty.
+
+    Hugging Face is the canonical home for these two links, but reading them back
+    from it takes an online collect, so a repo pushed today would otherwise not
+    reach the site until the next full run. paper_code.yaml holds the same
+    decision locally, so the site can show it immediately -- and offline.
+
+    Only accepted rows, and only where nothing is set already: HF's value wins
+    when it exists, because that is the one a reader can also see on the paper
+    page, and a row still in `review` is by definition undecided.
+    """
+    by_slug = (read_yaml(os.path.join(DATA, "paper_code.yaml")) or {}).get("papers") or {}
+    for p in papers:
+        r = by_slug.get(p.get("slug")) or {}
+        L = p.setdefault("links", {})
+        if r.get("verdict") == "accept" and r.get("repo") and not L.get("code"):
+            L["code"] = r["repo"]
+        if r.get("page_verdict") == "accept" and r.get("project_page"):
+            L.setdefault("project", r["project_page"])
+
+
 def merge_s2(papers: list[dict], cfg) -> None:
     by_norm = {p["_norm"]: p for p in papers}
     for aid in cfg["ids"]["semantic_scholar"]:
@@ -954,6 +976,11 @@ def main() -> None:
             if p.get(f):
                 p[f] = p[f].replace("\\_", "_").replace("\\&", "&").replace("\\%", "%")
     papers.sort(key=lambda p: (-(p.get("citations") or 0), -(p.get("year") or 0)))
+
+    # After the slug disambiguation above, which is what this looks up by, and in both
+    # branches: --offline is the rerun that picks up a link deduced since the last
+    # online collect.
+    add_deduced_links(papers)
 
     sidecar_dir = os.path.join(DATA, "sidecars")
     for p in papers:

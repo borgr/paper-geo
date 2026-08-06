@@ -141,6 +141,7 @@ papers:
     doi: https://doi.org/10.48550/ARXIV.2402.14992
     semantic_scholar: https://www.semanticscholar.org/paper/267897919
     publisher: https://openreview.net/forum?id=qAml3FpfhG
+    code: https://github.com/felipemaiapolo/tinyBenchmarks
   title_display: 'tinyBenchmarks: evaluating LLMs with fewer examples'
   venue_display: ICML 2024
   has_sidecar: false
@@ -281,6 +282,7 @@ papers:
     doi: https://doi.org/10.18653/v1/2023.conll-babylm.1
     semantic_scholar: https://www.semanticscholar.org/paper/266182457
     publisher: https://aclanthology.org/2023.conll-babylm.1
+    project: https://dynabench.org/babylm
   title_display: 'Findings of the BabyLM Challenge: Sample-Efficient Pretraining on Developmentally Plausible
     Corpora'
   venue_display: CoNLL 2023
@@ -386,6 +388,7 @@ papers:
     doi: https://doi.org/10.18653/v1/2025.acl-long.919
     semantic_scholar: https://www.semanticscholar.org/paper/274464561
     publisher: https://aclanthology.org/2025.acl-long.919/
+    project: https://hf.co/datasets/CohereForAI/Global-MMLU
   title_display: 'Global MMLU: Understanding and Addressing Cultural and Linguistic Biases in Multilingual
     Evaluation'
   venue_display: ACL 2025
@@ -770,6 +773,7 @@ papers:
     acl_anthology: https://aclanthology.org/2023.acl-long.559/
     semantic_scholar: https://www.semanticscholar.org/paper/253447228
     publisher: https://doi.org/10.18653/v1/2023.acl-long.559
+    code: https://github.com/ellaneeman/disent_qa
   title_display: 'DisentQA: Disentangling Parametric and Contextual Knowledge with Counterfactual Question
     Answering'
   venue_display: ACL 2023
@@ -825,6 +829,7 @@ papers:
     alphaxiv: https://www.alphaxiv.org/abs/2410.19735
     doi: https://doi.org/10.48550/arXiv.2410.19735
     semantic_scholar: https://www.semanticscholar.org/paper/273638541
+    code: https://github.com/gstoica27/KnOTS
   bibtex: "@inproceedings{knots,\ntitle={Tie the KnOTS: Model Merging with SVD},\n  author={Pratik, Ramesh\
     \ and George, Stoica and Boglarka, Ecsedi and Choshen, Leshem and Judy, Hoffman},\n  booktitle={ICLR},\n\
     \  year={2025}\n}"
@@ -913,6 +918,7 @@ papers:
     doi: https://doi.org/10.48550/arXiv.2507.16806
     semantic_scholar: https://www.semanticscholar.org/paper/280675947
     publisher: https://openreview.net/forum?id=ASQ649zdHm
+    project: https://rl-calibration.github.io/
   title_display: 'Beyond Binary Rewards: Training LMs to Reason About Their Uncertainty'
   venue_display: ICLR 2026
   has_sidecar: false
@@ -1138,6 +1144,7 @@ papers:
     doi: https://doi.org/10.48550/ARXIV.2405.17202
     semantic_scholar: https://www.semanticscholar.org/paper/270062938
     publisher: http://papers.nips.cc/paper\_files/paper/2024/hash/28236482f64a72eec43706b6f3a6c511-Abstract-Conference.html
+    code: https://github.com/felipemaiapolo/prompteval
   title_display: Efficient multi-prompt evaluation of LLMs
   venue_display: NeurIPS 2024
   has_sidecar: false
@@ -1205,6 +1212,7 @@ papers:
     doi: https://doi.org/10.48550/ARXIV.2301.11796
     semantic_scholar: https://www.semanticscholar.org/paper/256358845
     publisher: https://doi.org/10.48550/arXiv.2301.11796
+    project: https://babylm.github.io/
   title_display: 'Call for Papers - The BabyLM Challenge: Sample-efficient pretraining on a developmentally
     plausible corpus'
   venue_display: arXiv
@@ -1545,6 +1553,7 @@ papers:
     alphaxiv: https://www.alphaxiv.org/abs/1804.04012
     semantic_scholar: https://www.semanticscholar.org/paper/3461154
     publisher: https://openreview.net/forum?id=ry1arUgCW
+    code: https://github.com/borgr/DORA
   title_display: 'DORA The Explorer: Directed Outreaching Reinforcement Action-Selection'
   venue_display: ICLR 2018
   has_sidecar: false
@@ -1628,6 +1637,7 @@ papers:
     doi: https://doi.org/10.48550/arXiv.2408.07057
     semantic_scholar: https://www.semanticscholar.org/paper/271859936
     publisher: https://openreview.net/forum?id=u0azVc9Y0y
+    code: https://github.com/pclucas14/awesome-moerging
   title_display: 'A Survey on Model MoErging: Recycling and Routing Among Specialized Experts for Collaborative
     Learning'
   venue_display: TMLR
@@ -1803,6 +1813,8 @@ papers:
     doi: https://doi.org/10.1162/TACL.A.38
     semantic_scholar: https://www.semanticscholar.org/paper/269790884
     publisher: https://doi.org/10.1162/tacl.a.38
+    code: https://github.com/ewok-core/ewok-paper
+    project: https://ewok-core.github.io
   title_display: 'Elements of World Knowledge (EWoK): A Cognition-Inspired Framework for Evaluating Basic
     World Knowledge in Language Models'
   venue_display: TACL
@@ -2254,6 +2266,7 @@ papers:
     semantic_scholar: https://www.semanticscholar.org/paper/269009968
     publisher: https://doi.org/10.48550/arXiv.2404.06214
     code: https://github.com/babylm/evaluation-pipeline-2024
+    project: https://babylm.github.io/
   title_display: '[Call for Papers] The 2nd BabyLM Challenge: Sample-efficient pretraining on a developmentally
     plausible corpus'
   venue_display: arXiv
@@ -2526,6 +2539,7 @@ papers:
     acl_anthology: https://aclanthology.org/N18-2020/
     semantic_scholar: https://www.semanticscholar.org/paper/4888341
     publisher: https://doi.org/10.18653/v1/n18-2020
+    code: https://github.com/borgr/USim
   title_display: Reference-less Measure of Faithfulness for Grammatical Error Correction
   venue_display: NAACL 2018
   has_sidecar: false
@@ -2647,6 +2661,7 @@ papers:
     alphaxiv: https://www.alphaxiv.org/abs/2502.10645
     doi: https://doi.org/10.48550/arXiv.2502.10645
     semantic_scholar: https://www.semanticscholar.org/paper/276408398
+    project: https://babylm.github.io/
   title_display: 'BabyLM Turns 3: Call for papers for the 2025 BabyLM workshop'
   venue_display: arXiv
   has_sidecar: false
@@ -2849,6 +2864,7 @@ papers:
     doi: https://doi.org/10.18653/V1/2023.EMNLP-MAIN.90
     semantic_scholar: https://www.semanticscholar.org/paper/253244554
     publisher: https://doi.org/10.18653/v1/2023.emnlp-main.90
+    project: https://ibm.github.io/model-recycling/
   title_display: Where to start? Analyzing the potential value of intermediate models
   venue_display: EMNLP 2023
   has_sidecar: false
@@ -2997,6 +3013,7 @@ papers:
     doi: https://doi.org/10.18653/V1/2024.FINDINGS-ACL.584
     semantic_scholar: https://www.semanticscholar.org/paper/267028613
     publisher: https://aclanthology.org/2024.findings-acl.584
+    project: https://lingo-mit.github.io/deductive-closure
   title_display: Deductive Closure Training of Language Models for Coherence, Accuracy, and Updatability
   venue_display: Findings of ACL 2024
   has_sidecar: false
@@ -3210,6 +3227,7 @@ papers:
     acl_anthology: https://aclanthology.org/P19-1419/
     semantic_scholar: https://www.semanticscholar.org/paper/153313422
     publisher: https://doi.org/10.18653/v1/p19-1419
+    code: https://github.com/huji-nlp/cyber
   title_display: The Language of Legal and Illegal Activity on the Darknet
   venue_display: ACL 2019
   has_sidecar: false
@@ -3314,6 +3332,7 @@ papers:
     acl_anthology: https://aclanthology.org/2024.conda-1.4/
     semantic_scholar: https://www.semanticscholar.org/paper/271571641
     publisher: https://doi.org/10.18653/v1/2024.conda-1.4
+    project: https://conda-workshop.github.io/
   title_display: Data Contamination Report from the 2024 CONDA Shared Task
   venue_display: CONDA 2024
   has_sidecar: false
@@ -3683,6 +3702,7 @@ papers:
     semantic_scholar: https://www.semanticscholar.org/paper/276774995
     publisher: https://aclanthology.org/2025.findings-acl.611/
     code: https://github.com/SLAB-NLP/DOVE
+    project: https://slab-nlp.github.io/DOVE
   title_display: 'DOVE: A Large-Scale Multi-Dimensional Predictions Dataset Towards Meaningful LLM Evaluation'
   venue_display: Findings of ACL 2025
   has_sidecar: false
@@ -3917,6 +3937,8 @@ papers:
     doi: https://doi.org/10.18653/V1/2022.EMNLP-DEMOS.16
     semantic_scholar: https://www.semanticscholar.org/paper/251253248
     publisher: https://doi.org/10.18653/v1/2022.emnlp-demos.16
+    code: https://github.com/label-sleuth/label-sleuth
+    project: https://www.label-sleuth.org
   title_display: 'Label Sleuth: From Unlabeled Text to a Classifier in a Few Hours'
   venue_display: EMNLP 2022 (Demo)
   has_sidecar: false
@@ -4073,6 +4095,7 @@ papers:
     acl_anthology: https://aclanthology.org/K19-1028/
     semantic_scholar: https://www.semanticscholar.org/paper/202577206
     publisher: https://doi.org/10.18653/v1/K19-1028
+    code: https://github.com/borgr/auto_challenge_sets
   title_display: Automatically Extracting Challenge Sets for Non-Local Phenomena in Neural Machine Translation
   venue_display: CoNLL 2019
   has_sidecar: false
@@ -4576,6 +4599,7 @@ papers:
     acl_anthology: https://aclanthology.org/2021.naacl-main.8/
     semantic_scholar: https://www.semanticscholar.org/paper/233219700
     publisher: https://doi.org/10.18653/v1/2021.naacl-main.8
+    code: https://github.com/lovodkin93/BERT-context-distance
   title_display: Mediators in Determining what Processing BERT Performs First
   venue_display: NAACL 2021
   has_sidecar: false
@@ -5067,6 +5091,7 @@ papers:
     acl_anthology: https://aclanthology.org/2022.emnlp-main.767/
     semantic_scholar: https://www.semanticscholar.org/paper/248887741
     publisher: https://doi.org/10.18653/v1/2022.emnlp-main.767
+    code: https://github.com/shachardon/PreQuEL
   title_display: 'PreQuEL: Quality Estimation of Machine Translation Outputs in Advance'
   venue_display: EMNLP 2022
   has_sidecar: false
@@ -5119,6 +5144,7 @@ papers:
     huggingface: https://huggingface.co/papers/2104.02310
     alphaxiv: https://www.alphaxiv.org/abs/2104.02310
     semantic_scholar: https://www.semanticscholar.org/paper/233033934
+    code: https://github.com/matanel-oren/serrant
   title_display: 'SERRANT: a syntactic classifier for English Grammatical Error Types'
   venue_display: arXiv
   has_sidecar: false
@@ -5187,6 +5213,8 @@ papers:
     doi: https://doi.org/10.18653/V1/2025.ACL-DEMO.17
     semantic_scholar: https://www.semanticscholar.org/paper/271874373
     publisher: https://doi.org/10.18653/v1/2025.acl-demo.17
+    code: https://github.com/shachardon/share-lm
+    project: https://huggingface.co/datasets/shachardon/ShareLM
   title_display: 'The ShareLM Collection and Plugin: Contributing Human-Model Chats for the Benefit of
     the Community'
   venue_display: ACL 2025 (Demo)
@@ -5800,6 +5828,8 @@ papers:
     alphaxiv: https://www.alphaxiv.org/abs/2503.13507
     doi: https://doi.org/10.48550/arXiv.2503.13507
     semantic_scholar: https://www.semanticscholar.org/paper/277104779
+    code: https://github.com/llm-efficiency-challenge/neurips_llm_efficiency_challenge
+    project: https://llm-efficiency-challenge.github.io/
   title_display: NeurIPS 2023 LLM Efficiency Fine-tuning Competition
   venue_display: arXiv
   has_sidecar: false
@@ -5922,6 +5952,7 @@ papers:
     acl_anthology: https://aclanthology.org/2022.coling-1.401/
     semantic_scholar: https://www.semanticscholar.org/paper/252578532
     publisher: https://aclanthology.org/2022.coling-1.401
+    code: https://github.com/AsafYehudai/Reinforcement-Learning-with-Large-Action-Spaces-for-Neural-Machine-Translation
   title_display: Reinforcement Learning with Large Action Spaces for Neural Machine Translation
   venue_display: COLING 2022
   has_sidecar: false
@@ -5989,6 +6020,7 @@ papers:
     acl_anthology: https://aclanthology.org/2022.conll-1.27/
     semantic_scholar: https://www.semanticscholar.org/paper/248810900
     publisher: https://doi.org/10.18653/v1/2022.conll-1.27
+    code: https://github.com/borgr/nematus
   title_display: Enhancing the Transformer Decoder with Transition-based Syntax
   venue_display: CoNLL 2022
   has_sidecar: false
@@ -6064,6 +6096,7 @@ papers:
     acl_anthology: https://aclanthology.org/2022.lrec-1.655/
     semantic_scholar: https://www.semanticscholar.org/paper/233181806
     publisher: https://aclanthology.org/2022.lrec-1.655
+    project: https://plkumjorn.github.io/GrASP
   title_display: 'GrASP: A Library for Extracting and Exploring Human-Interpretable Textual Patterns'
   venue_display: LREC 2022
   has_sidecar: false
@@ -6244,6 +6277,8 @@ papers:
     doi: https://doi.org/10.18653/V1/2026.ACL-LONG.1527
     semantic_scholar: https://www.semanticscholar.org/paper/285049960
     publisher: https://doi.org/10.18653/v1/2026.acl-long.1527
+    code: https://github.com/commoncrawl/commonlid-eval
+    project: https://huggingface.co/datasets/commoncrawl/CommonLID
   title_display: 'CommonLID: Re-evaluating State-of-the-Art Language Identification Performance on Web
     Data'
   venue_display: ACL 2026
@@ -6303,6 +6338,7 @@ papers:
     doi: https://doi.org/10.48550/arXiv.2504.11442
     semantic_scholar: https://www.semanticscholar.org/paper/277786786
     code: https://github.com/LeonGuertler/TextArena
+    project: https://www.textarena.ai/
   title_display: TextArena
   venue_display: arXiv
   has_sidecar: false
@@ -6420,6 +6456,7 @@ papers:
     huggingface: https://huggingface.co/papers/2108.10763
     alphaxiv: https://www.alphaxiv.org/abs/2108.10763
     semantic_scholar: https://www.semanticscholar.org/paper/237263579
+    code: https://github.com/evidencebp/comsum
   title_display: 'ComSum: Commit Messages Summarization and Meaning Preservation'
   venue_display: arXiv
   has_sidecar: false
@@ -6546,6 +6583,7 @@ papers:
     alphaxiv: https://www.alphaxiv.org/abs/2601.15812
     doi: https://doi.org/10.48550/arXiv.2601.15812
     semantic_scholar: https://www.semanticscholar.org/paper/284935616
+    code: https://github.com/IBM/ErrorMap
   title_display: 'ErrorMap and ErrorAtlas: Charting the Failure Landscape of Large Language Models'
   venue_display: arXiv
   has_sidecar: false
@@ -6837,6 +6875,7 @@ papers:
     alphaxiv: https://www.alphaxiv.org/abs/2603.15798
     doi: https://doi.org/10.48550/arXiv.2603.15798
     semantic_scholar: https://www.semanticscholar.org/paper/286579599
+    code: https://github.com/The-AI-Alliance/cube-standard
   title_display: 'CUBE: A Standard for Unifying Agent Benchmarks'
   venue_display: arXiv
   has_sidecar: false
@@ -6907,6 +6946,8 @@ papers:
     doi: https://doi.org/10.18653/V1/2026.ACL-LONG.706
     semantic_scholar: https://www.semanticscholar.org/paper/286583837
     publisher: https://doi.org/10.18653/v1/2026.acl-long.706
+    code: https://github.com/IBM/Anchor-Selection
+    project: https://huggingface.co/datasets/ibm-research/900K-Judgements
   title_display: Mediocrity is the key for LLM as a Judge Anchor Selection
   venue_display: ACL 2026
   has_sidecar: false
@@ -7282,6 +7323,7 @@ papers:
     acl_anthology: https://aclanthology.org/2022.conll-1.14/
     semantic_scholar: https://www.semanticscholar.org/paper/238419587
     publisher: https://doi.org/10.18653/v1/2022.conll-1.14
+    code: https://github.com/galpatel/minimal-paraphrases
   title_display: On Neurons Invariant to Sentence Structural Changes in Neural Machine Translation
   venue_display: CoNLL 2022
   has_sidecar: false
@@ -7393,6 +7435,7 @@ papers:
     doi: https://doi.org/10.48550/arXiv.2602.20092
     semantic_scholar: https://www.semanticscholar.org/paper/285973452
     code: https://github.com/babylm-org/babylm-eval
+    project: https://babylm.github.io/
   title_display: 'BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026 BabyLM Workshop'
   venue_display: arXiv
   has_sidecar: false
@@ -7553,6 +7596,7 @@ papers:
     huggingface: https://huggingface.co/papers/2607.18235
     alphaxiv: https://www.alphaxiv.org/abs/2607.18235
     semantic_scholar: https://www.semanticscholar.org/paper/290376866
+    code: https://github.com/akshat57/harness-generalization
   title_display: Automated Discovery Has No Universally Superior Harness
   venue_display: ''
   has_sidecar: false
@@ -7618,6 +7662,7 @@ papers:
     alphaxiv: https://www.alphaxiv.org/abs/2512.06553
     doi: https://doi.org/10.48550/arXiv.2512.06553
     semantic_scholar: https://www.semanticscholar.org/paper/283693989
+    code: https://github.com/felipemaiapolo/statistical-scaling-law
   title_display: A Latent Variable Framework for Scaling Laws in Large Language Models
   venue_display: ''
   has_sidecar: false
@@ -7796,6 +7841,7 @@ papers:
     alphaxiv: https://www.alphaxiv.org/abs/2603.13467
     doi: https://doi.org/10.48550/arXiv.2603.13467
     semantic_scholar: https://www.semanticscholar.org/paper/286568386
+    code: https://github.com/pramesh39/resolving_interference
   title_display: 'Resolving Interference (RI): Disentangling Models for Improved Model Merging'
   venue_display: arXiv
   has_sidecar: false
@@ -7914,6 +7960,7 @@ papers:
     html_source: arxiv
     huggingface: https://huggingface.co/papers/2604.12843
     alphaxiv: https://www.alphaxiv.org/abs/2604.12843
+    code: https://github.com/eliyahabba/growing-pains
   title_display: 'Growing Pains: Extensible and Efficient LLM Benchmarking Via Fixed Parameter Calibration'
   venue_display: arXiv
   has_sidecar: false
@@ -8026,6 +8073,7 @@ papers:
     huggingface: https://huggingface.co/papers/2606.09809
     alphaxiv: https://www.alphaxiv.org/abs/2606.09809
     semantic_scholar: https://www.semanticscholar.org/paper/289098621
+    project: https://evalcards.evalevalai.com
   title_display: 'Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting'
   venue_display: ''
   has_sidecar: false
@@ -8191,6 +8239,7 @@ papers:
     alphaxiv: https://www.alphaxiv.org/abs/2607.08522
     doi: https://doi.org/10.18653/v1/2026.findings-acl.43
     semantic_scholar: https://www.semanticscholar.org/paper/289773796
+    code: https://github.com/OfirArviv/adaptive-eval
   title_display: 'Stop Guessing When to Stop Testing: Efficient Model Evaluation with Just Enough Data'
   venue_display: ACL 2026
   has_sidecar: false
@@ -8432,6 +8481,7 @@ papers:
     doi: https://doi.org/10.48550/ARXIV.2205.05730
     semantic_scholar: https://www.semanticscholar.org/paper/248722100
     publisher: https://doi.org/10.48550/arXiv.2205.05730
+    code: https://github.com/borgr/GEC_BOTHER
   title_display: Some Grammatical Errors are Frequent, Others are Important
   venue_display: arXiv
   has_sidecar: false
