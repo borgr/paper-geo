@@ -100,10 +100,15 @@ isn't written down gets silently undone next month.
 
 - Papers → [`data/overrides.yaml`](../data/overrides.yaml)
 - Repos → `reviewed: true` in [`data/repos.yaml`](../data/repos.yaml)
+- Code and project links → `reviewed: true` in [`data/paper_code.yaml`](../data/paper_code.yaml)
+- Tasks you have ruled out → [`data/declines.yaml`](../data/declines.yaml)
 
 If an item keeps reappearing in [`WORKLIST.md`](../WORKLIST.md), it needs an
 override — and usually an upstream fix too, so the correction propagates to
-Scholar, S2, and OpenAlex instead of only to us.
+Scholar, S2, and OpenAlex instead of only to us. If it reappears because you
+decided against it rather than because it is undone, that is what
+`declines.yaml` is for: deciding not to do something is a decision, and it has
+to be recorded somewhere or it is made again every run.
 
 ## 8. Nothing outward-facing without a diff
 
