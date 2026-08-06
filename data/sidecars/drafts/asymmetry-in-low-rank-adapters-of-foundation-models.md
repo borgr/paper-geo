@@ -50,6 +50,22 @@ claims:
     rather than proving a bound: freezing B multiplies the output-fit term by a random projection,
     and the paper says it therefore expects an asymmetry.'
   evidence: Section 4.1.1, Lemma 4.1, Lemma 4.2, Theorem 4.3, Section 4.1.2, Appendix B
+- id: random-a-costs-nothing-exactly-when-inputs-are-low-rank
+  text: 'There is a regime where freezing A at random is not approximately free but exactly
+    free. If the input covariance has rank at most r, then for any orthonormal matrix Q --
+    one drawn at random included -- any tuned pair (A, B) can be rewritten as an exactly equivalent
+    adaptation whose first factor is Q, so randomizing A gives up no expressive power at all.
+    The closed forms say the same thing: the optimal A is a projection of the desired weight
+    change and does not involve the input distribution, while the optimal B does.'
+  scope: The condition is that the inputs be effectively r-dimensional, and the experiments
+    use rank 8 or 16 against 1,024-dimensional attention matrices, so nothing here meets it
+    -- the paper presents this as the intuition and defers to Theorem 4.3 for the claim it
+    actually argues. That theorem is an inequality holding with high probability as the dimension-to-rank
+    ratio grows, and the only place its gap is sized is a worked example where the input covariance
+    is exactly rank r and isotropic, giving (1 - r/d) times a trace. So the honest reading
+    is a mechanism that is exact under a hypothesis about the data, plausible in proportion
+    to how redundant real inputs are, and never measured on the actual inputs used.
+  evidence: Section 4.1.1, Lemma 4.1, Lemma 4.2, Theorem 4.3
 - id: random-frozen-a-nearly-matches-full-lora
   text: 'A random untrained A costs almost nothing: on GLUE with RoBERTa-large, freezing A
     at a random orthonormal matrix and training only B averages 87.4 at rank 8 with half of
@@ -64,6 +80,22 @@ claims:
     as 0.8M and 0.3M, and LoRA at rank 8 on a 355M-parameter RoBERTa-large is about 0.8M parameters
     -- roughly 0.2% -- so those figures are counts in millions.
   evidence: Section 5.1, Table 1, Table 7, Section 4.2.1
+- id: an-informed-frozen-a-does-no-better-than-a-random-one
+  text: 'The frozen factor does not benefit from being chosen well. Freezing A at the right
+    singular vectors of the pretrained weight matrix it adapts -- the best-motivated non-random
+    basis available, and the one an SVD-based adapter would use -- averages 87.0 on GLUE at
+    rank 8 and 87.5 at rank 16, against 87.4 and 87.5 for a random orthonormal A. The mirror
+    holds on the side the paper argues against: freezing B at the matching left singular vectors
+    gives 84.9 and 86.0 against a random B''s 85.1 and 85.9.'
+  scope: 'This is the sharpest empirical version of the paper''s mechanism and it is only
+    in the appendix -- the main GLUE table has no such rows. All four comparisons are inside
+    the per-task standard errors, so the finding is an absence of difference on a benchmark
+    where differences of this size are not resolvable, not a demonstration that the two are
+    identical. The option is implemented in the released code, where the singular-vector choices
+    are the V and U settings for A and B. One number needs care: the appendix prints 94.9
+    as the average of the rank-8 frozen-singular-vector-B row, while its own seven task scores
+    average 84.9.'
+  evidence: Table 7, Appendix E, code repository README
 - id: glue-gap-between-b-only-and-a-only
   text: 'Reversing the roles costs real accuracy: training only A with B frozen averages 85.1
     at rank 8 and 85.9 at rank 16 on GLUE, against 87.4 and 87.5 for training only B at the
@@ -174,15 +206,33 @@ claims:
     initialization while training A can stop the model learning at all -- 34.5 on MNLI and
     0.0 Matthews correlation on CoLA, an average of 64.4 against 85.1 for the same configuration
     with an orthonormal B.'
-  scope: 'This is the appendix table, and it cuts against the paper''s expectation that random
+  scope: This is the appendix table, and it cuts against the paper's expectation that random
     orthonormal and random uniform initializations should be essentially equivalent for a
     tall random matrix -- an argument about column orthogonality that does not control the
     scale of the frozen factor. It affects the A-only configurations, which is to say the
     side of the comparison the paper argues against, so it does not threaten the main conclusion;
     it does mean the size of the reported gap depends on a choice the summary treats as immaterial.
-    When both matrices are trained, initialization barely matters: four schemes land between
-    87.3 and 87.8.'
+    The claim that initialization barely matters once both matrices are trained holds for
+    five of the six schemes the appendix reports, which land between 87.2 and 87.8; the sixth
+    is the one recorded separately.
   evidence: Table 7, Table 2, Section 5
+- id: loras-initialization-on-the-wrong-factor-breaks-training
+  text: 'The collapse is not about freezing. Putting LoRA''s uniform initialization on B and
+    starting A at zero -- LoRA''s own scheme with the factors swapped -- breaks training whether
+    or not A is frozen: 64.4 GLUE average with A frozen at rank 8, 81.5 at rank 16, and 69.3
+    with both matrices trained, against 87.2 to 87.8 for every other initialization in the
+    same table. MNLI sits near chance in the worst rows (34.5 and 35.5) and CoLA reaches 0.0.'
+  scope: 'The paper''s theory predicts this, which is what makes it more than a bug: Section
+    4.1.1 argues that a random input basis supplies usable predictive features while a random
+    output basis does not, and notes that LoRA''s own A-random, B-zero choice already fits
+    that analysis. These rows are the mirror image, so the initialization is the asymmetry
+    showing up a second time. Two cautions on reading the averages. The CoLA cells carry standard
+    errors of 35 and 36 points, which at three seeds means some seeds train and some sit at
+    zero -- so 81.5 and 69.3 hide a coin flip rather than describing a middling model. And
+    the main text''s initialization table, whose caption says the trained result is not sensitive
+    to initialization, contains four rows; the appendix''s fuller version of the same sweep
+    contains six, and the two it adds are the ones with the uniform initialization on B.'
+  evidence: Table 7, Table 2, Appendix E, Section 4.1.1
 - id: the-recipe-was-known-the-explanation-is-new
   text: Freezing A and training B was already in use before this paper -- as LoRA-FA, and
     in the same family as methods that rescale frozen random factors or learn combinations
@@ -220,13 +270,18 @@ claims:
     every query/key/value matrix with the scaling coefficient fixed at twice the rank, and
     matrix names carry subscripts for random orthonormal, zero and LoRA''s original uniform
     initialization.'
-  scope: GLUE numbers are means with standard errors over seeds; the summarization and MMLU
-    tables report single runs. Summarization uses learning rate 5e-4 and batch size 48 with
-    beam 8 for XSum and beam 4 for CNN/DailyMail, though the section says 15 epochs while
-    the appendix table lists 25 for XSum and 15 for CNN/DailyMail. DomainBed trains on one
-    environment per dataset with an 80/20 split and tests on the rest; TerraIncognita runs
-    20,000 steps. Baselines are full fine-tuning, linear probing, IA3, LoRA, AdaLoRA and LoRA-FA,
-    all implemented on HuggingFace Transformers.
+  scope: 'GLUE numbers are means with standard errors over three seeds and the DomainBed tables
+    carry standard deviations; the summarization and MMLU tables report single runs. Summarization
+    uses learning rate 5e-4 and batch size 48 with beam 8 for XSum and beam 4 for CNN/DailyMail,
+    though the section says 15 epochs while the appendix table lists 25 for XSum and 15 for
+    CNN/DailyMail. DomainBed trains on one environment per dataset with an 80/20 split and
+    tests on the rest; TerraIncognita runs 20,000 steps. Baselines are full fine-tuning, linear
+    probing, IA3, LoRA, AdaLoRA and LoRA-FA, all implemented on HuggingFace Transformers.
+    Matching the paper to its code takes a translation step: the section text names the recommended
+    configuration with an orth subscript where every table writes rand, the repository calls
+    that setting random and calls LoRA''s uniform initialization he where the paper writes
+    km, and the singular vector initializations appear as V and U in both without being defined
+    in the paper''s notation paragraph.'
   evidence: Section 5, Section 5.2, Section 5.4, Table 6, Table 9
 qa:
 - q:
@@ -334,6 +389,7 @@ qa:
   - freezing-b-loses-output-information
   - generalization-bound-is-smaller-by-root-two
   - a-extracts-features-b-produces-output
+  - random-a-costs-nothing-exactly-when-inputs-are-low-rank
 - q:
   - Which models and benchmarks were used?
   - What hyperparameters were used for these LoRA experiments?
@@ -342,6 +398,22 @@ qa:
   - how-it-was-run
   - random-frozen-a-nearly-matches-full-lora
   - vision-out-of-domain-gains
+- q:
+  - Should I initialize the frozen LoRA matrix from the weight matrix's SVD?
+  - Is an SVD-based initialization better than a random one for a frozen LoRA factor?
+  - Does it matter which basis I freeze A at?
+  answers:
+  - an-informed-frozen-a-does-no-better-than-a-random-one
+  - random-frozen-a-nearly-matches-full-lora
+  - random-a-costs-nothing-exactly-when-inputs-are-low-rank
+- q:
+  - Can I swap LoRA's initialization so B is random and A starts at zero?
+  - Why does my LoRA run collapse when I initialize B randomly?
+  - Does LoRA's initialization order matter when both matrices are trained?
+  answers:
+  - loras-initialization-on-the-wrong-factor-breaks-training
+  - frozen-factor-initialization-can-break-training
+  - a-extracts-features-b-produces-output
 misreadings:
 - '"A random untrained A performs nearly as well as a fine-tuned one" is about A specifically,
   not about randomness in general. Reversing the roles -- freezing B at random and training
@@ -386,6 +458,23 @@ misreadings:
   the forward and backward pass; what shrinks is the optimizer state and whatever has to be
   stored or shipped -- which is the point for serving many adapters, not for making a single
   fine-tune faster.
+- '"A random untrained A should perform nearly as well as a fine-tuned one" is exactly true
+  only when the input covariance has rank at most the adapter rank, in which case any random
+  orthonormal A admits an exactly equivalent adaptation. At rank 8 or 16 against 1,024 dimensions
+  that hypothesis is not met, and what the paper proves instead is an inequality in the large-dimension
+  limit.'
+- The initialization collapse is not caused by freezing a matrix. Putting LoRA's uniform initialization
+  on B and zero on A fails with both matrices trained too -- 69.3 GLUE average, MNLI at 35.5
+  -- so it is the assignment of the random draw to the output factor that breaks it, which
+  is the paper's own asymmetry argument reappearing in the initialization.
+- '"Trained results are not sensitive to initialization" is the caption of a four-row table.
+  The appendix runs the same sweep with six rows and the two additional ones include the configuration
+  that collapses to 69.3, with CoLA at 21.3 plus or minus 36 -- a standard error that size
+  over three seeds means individual seeds failed to train, not that the model is mediocre.'
+- Choosing the frozen factor cleverly does not help. Freezing A at the pretrained matrix's
+  own right singular vectors -- the informed choice -- matches a random orthonormal A to within
+  the standard errors, at both ranks and in both directions. That is evidence for the paper's
+  mechanism, and it also means an SVD-based initialization is not the thing to reach for here.
 terminology:
   LoRA: 'Low-Rank Adaptation: fine-tune a frozen pretrained weight matrix by adding a low-rank
     product BA, training only the two small factors. A has r rows and as many columns as the
@@ -423,4 +512,13 @@ terminology:
     baseline in this paper and, effectively, the configuration the paper analyzes -- which
     is why the contribution is the explanation and the rank-doubling consequence rather than
     the recipe.
+  V and U initialization: 'Setting a frozen or initial LoRA factor to the singular vectors
+    of the pretrained matrix being adapted: V for A''s right singular vectors, U for B''s
+    left. It is the informed alternative to a random draw, and on GLUE it performs the same,
+    which is the point.'
+  exact reparameterization argument: The observation that when the input covariance has rank
+    at most r, any tuned pair (A, B) can be rewritten with A replaced by an arbitrary orthonormal
+    Q and an adjusted B, giving identical outputs. It is why a random A can cost nothing rather
+    than merely little -- under a hypothesis about the input distribution that the paper's
+    own experiments do not satisfy.
 ---
