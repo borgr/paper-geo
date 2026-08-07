@@ -11,39 +11,36 @@ reading of each external surface is [tasks/identity_audit.md](tasks/identity_aud
 - **2026-10-04** — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.
 - **2026-11-04** — Crossref and DataCite auto-update only fire on newly deposited metadata that already carries your iD, so the proof is a work whose ORCID source is Crossref or DataCite rather than your own name -- which cannot appear until something you publish is deposited.
 
-## Coverage: Google Scholar and the corpus disagree on 8 papers
+## Coverage: Google Scholar and the corpus disagree on 5 papers
 
 Scholar lists **117** works and matched **105** of the corpus's **112**. Scholar is
 the one list of your papers that is built by a different process, so it is the
 only check that can see a paper this pipeline never received. Full detail:
 `build/scholar_diff.json`.
 
-### 5 papers absent from the source bibliography
+### 3 papers absent from the source bibliography
 
 Not in the corpus and not rejected — they never arrived. The bibliography
 is this pipeline's only input, so the fix is one entry there; adding them
-to `data/` would be overwritten on the next run.
+to `data/` would be overwritten on the next run. A BibTeX entry for each,
+resolved from arXiv, Crossref or Semantic Scholar where any of them has
+it, is in [`tasks/bib_missing.md`](tasks/bib_missing.md) — check the
+author list before pasting: it is the index's, not yours.
 
 - [ ] 19 cites — 2024 — Llm merging: Building llms efficiently through merging
-- [ ] 6 cites — 2026 — AI evals are becoming the new compute bottleneck
 - [ ] 1 cite — 2025 — A Statistical Framework for Game-Based AI Evaluation
-- [ ] 0 cites — 2026 — Proceedings of the Workshop on Evaluating Evaluations (EvalE
 - [ ] 0 cites — 2022 — True or false? faithful summarization with attribution
 
-### 2 papers under two titles
+### 1 paper whose bibliography title is behind arXiv
 
-Same paper, two names — usually a preprint and its retitled published
-version. Decide which is canonical and set it in
-[`data/overrides.yaml`](data/overrides.yaml); until then the two surfaces
-answer a title query differently, which is the exact failure this repo
-exists to prevent.
+arXiv states the title Scholar shows, so the source entry is the stale
+one and there is nothing to decide: correct the title in the source
+bibliography and re-run. Until then the two surfaces answer a title query
+differently, which is the exact failure this repo exists to prevent.
 
-- [ ] `llm-hypnosis-exploiting-user-feedback-for-unauthorized-knowl`
-      - scholar: LLM Hypnosis: Characterizing the Fragility of RLHF Against Unpri
-      - corpus:  LLM Hypnosis: Exploiting User Feedback for Unauthorized Knowledg
 - [ ] `can-you-trust-your-metric-automatic-concatenation-based-test`
-      - scholar: How Safe is Your Safety Metric? Automatic Concatenation Tests fo
-      - corpus:  Can You Trust Your Metric? Automatic Concatenation-Based Tests f
+      - arXiv and Scholar: How Safe is Your Safety Metric? Automatic Concatenation 
+      - the .bib entry:    Can You Trust Your Metric? Automatic Concatenation-Based
 
 ### 1 paper listed twice on Scholar
 

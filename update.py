@@ -369,9 +369,18 @@ def scholar_gaps(sc: dict) -> list[str]:
     if not sc:
         return []
     gate, miss = sc.get("gate_dropped") or [], sc.get("not_in_corpus") or []
-    miss = [r for r in miss if r.get("kind") != "not a paper"]
-    var, dup = sc.get("title_variants") or [], sc.get("scholar_duplicates") or []
-    if not (gate or miss or var or dup):
+    miss = [r for r in miss if (r.get("kind") or "paper") == "paper"]
+    dup = sc.get("scholar_duplicates") or []
+    # A title variant is only work when nobody has already decided it. arXiv holds the
+    # current title and the run has already fetched it, so `stale` says which side is
+    # behind: `bib` is one edit upstream, `open` is a judgement, and `scholar` is
+    # neither -- Scholar kept an older title, and editing that row changes what it
+    # displays, not which citations cluster under it. Counting all three as open items
+    # is how a worklist teaches you to skim it.
+    var = sc.get("title_variants") or []
+    fix = [v for v in var if v.get("stale") == "bib"]
+    call = [v for v in var if v.get("stale") not in ("bib", "scholar")]
+    if not (gate or miss or fix or call or dup):
         return []
 
     def pl(n: int, word: str = "paper") -> str:
@@ -381,7 +390,7 @@ def scholar_gaps(sc: dict) -> list[str]:
         return f"{n or 0} cite{'s' * ((n or 0) != 1)}"
 
     L = [f"## Coverage: Google Scholar and the corpus disagree on "
-         f"{pl(len(gate) + len(miss) + len(var) + len(dup))}", "",
+         f"{pl(len(gate) + len(miss) + len(fix) + len(call) + len(dup))}", "",
          f"Scholar lists **{sc.get('scholar_rows')}** works and matched "
          f"**{sc.get('matched')}** of the corpus's **{sc.get('corpus')}**. Scholar is",
          "the one list of your papers that is built by a different process, so it is the",
@@ -401,22 +410,34 @@ def scholar_gaps(sc: dict) -> list[str]:
         L += [f"### {pl(len(miss))} absent from the source bibliography", "",
               "Not in the corpus and not rejected — they never arrived. The bibliography",
               "is this pipeline's only input, so the fix is one entry there; adding them",
-              "to `data/` would be overwritten on the next run.", ""]
+              "to `data/` would be overwritten on the next run. A BibTeX entry for each,",
+              "resolved from arXiv, Crossref or Semantic Scholar where any of them has",
+              "it, is in [`tasks/bib_missing.md`](tasks/bib_missing.md) — check the",
+              "author list before pasting: it is the index's, not yours.", ""]
         L += [f"- [ ] {cites(r.get('citations'))} — {r.get('year') or '????'} — "
               f"{(r.get('title') or '')[:60]}" for r in miss[:12]]
         if len(miss) > 12:
             L += [f"- … and {len(miss) - 12} more in `build/scholar_diff.json`"]
         L += [""]
-    if var:
-        L += [f"### {pl(len(var))} under two titles", "",
-              "Same paper, two names — usually a preprint and its retitled published",
-              "version. Decide which is canonical and set it in",
-              "[`data/overrides.yaml`](data/overrides.yaml); until then the two surfaces",
-              "answer a title query differently, which is the exact failure this repo",
-              "exists to prevent.", ""]
+    if fix:
+        L += [f"### {pl(len(fix))} whose bibliography title is behind arXiv", "",
+              "arXiv states the title Scholar shows, so the source entry is the stale",
+              "one and there is nothing to decide: correct the title in the source",
+              "bibliography and re-run. Until then the two surfaces answer a title query",
+              "differently, which is the exact failure this repo exists to prevent.", ""]
+        L += [f"- [ ] `{v.get('slug')}`\n"
+              f"      - arXiv and Scholar: {(v.get('scholar') or '')[:56]}\n"
+              f"      - the .bib entry:    {(v.get('corpus') or '')[:56]}"
+              for v in fix] + [""]
+    if call:
+        L += [f"### {pl(len(call))} under two titles, with no arXiv record to break the "
+              f"tie", "",
+              "Same paper, two names, and arXiv confirms neither — so this one is a",
+              "judgement. Decide which is canonical and set it in",
+              "[`data/overrides.yaml`](data/overrides.yaml).", ""]
         L += [f"- [ ] `{v.get('slug')}`\n"
               f"      - scholar: {(v.get('scholar') or '')[:64]}\n"
-              f"      - corpus:  {(v.get('corpus') or '')[:64]}" for v in var] + [""]
+              f"      - corpus:  {(v.get('corpus') or '')[:64]}" for v in call] + [""]
     if dup:
         L += [f"### {pl(len(dup))} listed twice on Scholar", "",
               "Two rows for one paper splits its citation count. Nothing in this repo can",

@@ -18,6 +18,12 @@ import yaml
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
 BUILD = os.path.join(ROOT, "build")
+# Committed, unlike BUILD: these are the payloads a human works through over days,
+# so they have to survive a clean checkout and be readable on the web.
+TASKS = os.path.join(ROOT, "tasks")
+# arXiv's API answers Atom, and every caller here needs both prefixes: `ar:` carries
+# journal_ref and doi, which is most of what a run wants from arXiv.
+ARXIV_NS = {"a": "http://www.w3.org/2005/Atom", "ar": "http://arxiv.org/schemas/atom"}
 UA = {"User-Agent": "paper-geo/0.1 (+https://github.com/borgr/paper-geo)"}
 
 
@@ -65,8 +71,19 @@ def rules_block(doc: str) -> str:
 
 
 def get(url: str, timeout: int = 40, retries: int = 6, accept: str | None = None) -> bytes:
-    """GET with exponential backoff on 429/503. Returns b'' on final failure."""
+    """GET with exponential backoff on 429/503. Returns b'' on final failure.
+
+    Sends the Semantic Scholar key to Semantic Scholar when `S2_API_KEY` is in the
+    environment. Unauthenticated S2 access is a rate-limit pool shared with every
+    other anonymous caller, and the visible cost is not a slow run but a wrong
+    statement: the search endpoint answers 429 to a whole audit and the report then
+    has to say "no index has this paper" about a paper an index has. Environment
+    only, never `config.yaml` -- that file is committed.
+    """
     headers = dict(UA)
+    key = os.environ.get("S2_API_KEY", "").strip()
+    if key and "api.semanticscholar.org" in url:
+        headers["x-api-key"] = key
     if accept:
         headers["Accept"] = accept
     delay = 4.0

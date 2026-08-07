@@ -27,10 +27,8 @@ import sys
 import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (DATA, ROOT, WD_IDENTIFIERS, load_config, org_name,  # noqa: E402
-                    paper_doi, read_yaml, synth_bibtex)
-
-TASKS = os.path.join(ROOT, "tasks")
+from common import (DATA, TASKS, WD_IDENTIFIERS, load_config,  # noqa: E402
+                    org_name, paper_doi, read_yaml, synth_bibtex)
 
 # Verified against wbsearchentities.
 P = {"instance_of": "P31", "occupation": "P106", "employer": "P108",

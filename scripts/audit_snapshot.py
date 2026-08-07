@@ -42,20 +42,19 @@ def s2_papers():
 
 def arxiv_meta(ids):
     """Batch-query the arXiv API for journal_ref / doi presence."""
-    ns = {"a": "http://www.w3.org/2005/Atom", "ar": "http://arxiv.org/schemas/atom"}
     out = {}
     for i in range(0, len(ids), 40):
         chunk = ids[i:i + 40]
         url = f"http://export.arxiv.org/api/query?id_list={','.join(chunk)}&max_results=40"
         root = ET.fromstring(get(url))
-        for e in root.findall("a:entry", ns):
-            raw = e.find("a:id", ns).text.split("/abs/")[-1]
+        for e in root.findall("a:entry", ARXIV_NS):
+            raw = e.find("a:id", ARXIV_NS).text.split("/abs/")[-1]
             base = raw.rsplit("v", 1)[0] if "v" in raw.split("/")[-1] else raw
             out[base] = {
-                "journal_ref": e.find("ar:journal_ref", ns) is not None,
-                "doi": e.find("ar:doi", ns) is not None,
-                "comment": (e.find("ar:comment", ns).text or "").replace("\n", " ")
-                           if e.find("ar:comment", ns) is not None else "",
+                "journal_ref": e.find("ar:journal_ref", ARXIV_NS) is not None,
+                "doi": e.find("ar:doi", ARXIV_NS) is not None,
+                "comment": (e.find("ar:comment", ARXIV_NS).text or "").replace("\n", " ")
+                           if e.find("ar:comment", ARXIV_NS) is not None else "",
                 "version": raw,
             }
         time.sleep(3)

@@ -257,10 +257,12 @@ excluded. Its findings open [WORKLIST.md](WORKLIST.md) when there are any, becau
 paper that is not there at all outranks every improvement to one that is.
 
 `identity_tasks.py` writes the payloads into [`tasks/`](tasks/), committed on purpose
-since these are lists a human works through over days:
+since these are lists a human works through over days — plus one from
+`scholar_check.py`:
 
 | file | for |
 |---|---|
+| `bib_missing.md` | papers to add to the source bibliography, BibTeX already resolved |
 | `orcid_dois.txt` | ORCID *Add DOI*, citation-ordered — the reliable route |
 | `orcid_import.bib` | ORCID *Add BibTeX*, DOI-bearing entries first |
 | `wikidata_manual.md` | creating the author item by hand — **start here** |
@@ -311,6 +313,19 @@ canonical URL, and the id for each index (Semantic Scholar, OpenAlex, Google
 Scholar, DBLP, GitHub, Hugging Face, Wikidata). That file is the only place anything
 about you appears — and it is committed, so no secret goes in it. The Wikidata bot
 password lives in an environment variable or the gitignored `.wikidata_bot`.
+
+Two optional environment variables, both secrets, so neither has a place in
+`config.yaml`:
+
+```bash
+export S2_API_KEY=…      # free, https://www.semanticscholar.org/product/api
+```
+
+Without it, Semantic Scholar is reached through a rate-limit pool shared with every
+anonymous caller, and the cost is not slowness: when its search refuses, the Scholar
+check cannot resolve a missing paper and has to report that no index has it. The other
+is `WIKIDATA_BOT_PASSWORD`, used only by `wikidata_apply.py`, which is the only script
+that logs in anywhere.
 
 ## 10. Command reference
 

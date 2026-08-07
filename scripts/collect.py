@@ -27,13 +27,12 @@ import xml.etree.ElementTree as ET
 import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, ROOT, arxiv_id, authors_truncated, clean_bibtex,  # noqa: E402
-                    clean_latex, get, get_json, is_preprint_venue, load_config,
-                    name_match, norm_title,
+from common import (ARXIV_NS, BUILD, DATA, ROOT, arxiv_id,  # noqa: E402
+                    authors_truncated, clean_bibtex, clean_latex, get, get_json,
+                    is_preprint_venue, load_config, name_match, norm_title,
                     parse_bibtex, read_yaml, short_venue, slugify, split_authors,
                     write_yaml)
 
-ARXIV_NS = {"a": "http://www.w3.org/2005/Atom", "ar": "http://arxiv.org/schemas/atom"}
 
 
 _ARXIV_DOI = re.compile(r"^10\.48550/arxiv\.(\d{4}\.\d{4,5})", re.I)
