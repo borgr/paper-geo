@@ -65,5 +65,3 @@ terminology:
 links_extra:
   code: https://github.com/prateeky2806/ties-merging
 ---
-Worked example of a sidecar. The claims and scope conditions here are drafted from
-the paper and should be checked by an author before this is treated as canonical.

@@ -507,7 +507,7 @@ only get in by displacing one that would have ranked. ORCID has no cap, but keyw
 there feed disambiguation rather than ranking: a profile claiming thirty things matches
 all of them weakly, which is the opposite of the goal. Ten to fifteen is where each
 still carries weight. On the site itself, padding is keyword stuffing, which is
-measured-negative — see [../STUDY.md](../STUDY.md).
+measured-negative — see [EVIDENCE.md](EVIDENCE.md).
 
 **What you are most likely missing.** Not a phrase — a *cluster*. The gap that
 matters is a group of five or more of your papers that no current keyword covers,
@@ -544,7 +544,7 @@ that code rather than you, and the body text of any page, which is stuffing. And
 
 ## How to tell any of it landed
 
-You can't measure citations caused (see [MEASURE.md](MEASURE.md) for why, at this
+You can't measure citations caused (see [EVIDENCE.md](EVIDENCE.md) for why, at this
 sample size). You *can* measure the two stages before that, which is where the
 failures actually are:
 
@@ -657,4 +657,4 @@ Measured null or negative, so skip regardless of who recommends it:
 - anything invisible to humans: hidden text, instructions aimed at automated
   readers. Retraction-adjacent, and it doesn't work
 
-Evidence for each: [../STUDY.md](../STUDY.md).
+Evidence for each: [EVIDENCE.md](EVIDENCE.md).

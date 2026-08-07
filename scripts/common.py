@@ -1,4 +1,8 @@
-"""Shared utilities: config loading, polite HTTP, BibTeX parsing, title matching."""
+"""Shared utilities: config loading, polite HTTP, BibTeX parsing, title matching.
+
+Also `rules_block`, which is how the model-facing prompts get their rules: the docs
+are the source, the scripts read them. See its docstring.
+"""
 from __future__ import annotations
 
 import json
@@ -20,6 +24,44 @@ UA = {"User-Agent": "paper-geo/0.1 (+https://github.com/borgr/paper-geo)"}
 def load_config(path: str | None = None) -> dict:
     with open(path or os.path.join(ROOT, "config.yaml")) as f:
         return yaml.safe_load(f)
+
+
+PROMPT_START = "<!-- prompt:start -->"
+PROMPT_END = "<!-- prompt:end -->"
+PROMPT_MIN = 400          # chars; below this the block is a stub, not a rule set
+
+
+def rules_block(doc: str) -> str:
+    """The rules a model is sent, read out of the doc that documents them.
+
+    The prompts used to carry prose copies of rules the docs also stated and the JSON
+    schema descriptions stated a third time, so three rule sets drifted apart -- which
+    is the measured cause of the sidecar variation in docs/SIDECAR.md §5. The doc is
+    now the only copy, delimited by the two markers, and editing it changes what the
+    model is told in the same commit.
+
+    Raises rather than degrades. A missing marker would otherwise mean a prompt with
+    no rules in it, and a model given no rules still returns confident-looking JSON --
+    the failure would surface as slowly worsening drafts rather than as an error.
+    `validate.py check_prompt_blocks` catches the same thing before a run gets here.
+    """
+    path = os.path.join(ROOT, doc)
+    try:
+        text = open(path).read()
+    except OSError as e:
+        raise RuntimeError(f"{doc} is the source of a model prompt and is unreadable: {e}")
+    a = text.find(PROMPT_START)
+    b = text.find(PROMPT_END, a + 1)
+    if a < 0 or b < 0:
+        raise RuntimeError(
+            f"{doc} is missing its {PROMPT_START} / {PROMPT_END} markers. They delimit "
+            f"the rules sent to the model; without them the prompt would have no rules.")
+    block = text[a + len(PROMPT_START):b].strip()
+    if len(block) < PROMPT_MIN:
+        raise RuntimeError(
+            f"{doc}: the prompt block is {len(block)} chars, under the {PROMPT_MIN} "
+            f"minimum. Either it was emptied by accident or the rules moved.")
+    return block
 
 
 def get(url: str, timeout: int = 40, retries: int = 6, accept: str | None = None) -> bytes:

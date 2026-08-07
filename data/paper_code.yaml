@@ -3,27 +3,18 @@ generated_by: 'scripts/paper_code.py -- `reviewed: true` freezes a row and makes
   link, deliberately'''
 note: 'verdict: accept = pushed to HF by --apply. review = needs your eyes. none = the paper names no
   repo of its own. `page_verdict` and `project_page` are the same decision for HF''s other link field,
-  decided independently -- a paper can have a page and no repo.'
+  decided independently -- a paper can have a page and no repo. Why a row came out this way, with its
+  score, is in build/paper_code_why.json: derived, rewritten every run, so this file stays a record of
+  decisions rather than of readings.'
 papers:
   a-hitchhiker-s-guide-to-scaling-law-estimation:
     verdict: none
   a-latent-variable-framework-for-scaling-laws-in-large-langua:
     verdict: accept
     repo: https://github.com/felipemaiapolo/statistical-scaling-law
-    score: 8
-    why:
-    - 'release phrase: ...aling model framework 2 2 2 Our code and data can be found on https://'
-    - owner felipemaiapolo matches an author name
-    - repo name shares 'scaling' with the title
   a-survey-on-model-moerging-recycling-and-routing-among-speci:
     verdict: accept
     repo: https://github.com/pclucas14/awesome-moerging
-    score: 8
-    why:
-    - owner pclucas14 matches an author name
-    - repo name shares 'moerging' with the title
-    - appears 5% into the text
-    - repo description names the paper
   active-learning-for-bert-an-empirical-study:
     verdict: none
   an-autonomous-debating-system:
@@ -33,32 +24,14 @@ papers:
   asymmetry-in-low-rank-adapters-of-foundation-models:
     verdict: accept
     repo: https://github.com/Jiacheng-Zhu-AIML/AsymmetryLoRA
-    score: 10
-    why:
-    - 'release phrase: ...T-Large, LLaMA-2, and ViTs. The code and data is available at https://'
-    - owner Jiacheng-Zhu-AIML matches an author name
-    - appears 6% into the text
-    - README cites the arXiv id
   automated-discovery-has-no-universally-superior-harness:
     verdict: accept
     repo: https://github.com/akshat57/harness-generalization
-    score: 12
-    why:
-    - 'release phrase: ...harness proposals. Code, data, and run pools are available at https://'
-    - owner akshat57 matches an author name
-    - repo name shares 'harness' with the title
-    - appears 3% into the text
   automatic-metric-validation-for-grammatical-error-correction:
     verdict: none
   automatically-extracting-challenge-sets-for-non-local-phenom:
     verdict: accept
     repo: https://github.com/borgr/auto_challenge_sets
-    score: 8
-    why:
-    - owner borgr matches an author name
-    - repo name shares 'challenge/sets' with the title
-    - appears 5% into the text
-    - README names the paper
   babybabellm-a-multilingual-benchmark-of-developmentally-plau:
     verdict: none
     reviewed: true
@@ -66,24 +39,15 @@ papers:
     verdict: none
     page_verdict: accept
     project_page: https://babylm.github.io/
-    page_why:
-    - URL shares 'babylm' with the title
-    - appears 3% into the text
     reviewed: true
   babylm-turns-4-and-goes-multilingual-call-for-papers-for-the:
     verdict: none
     page_verdict: accept
     project_page: https://babylm.github.io/
-    page_why:
-    - URL shares 'babylm' with the title
-    - appears 3% into the text
     reviewed: true
   benchmark-agreement-testing-done-right-a-guide-for-llm-bench:
     verdict: review
     repo: https://github.com/IBM/BenchBench
-    score: 1
-    why:
-    - appears 4% into the text
     other_candidates:
     - https://github.com/IBM/benchbench
   beneath-the-surface-of-consistency-exploring-cross-lingual-k:
@@ -92,26 +56,17 @@ papers:
     verdict: none
     page_verdict: accept
     project_page: https://rl-calibration.github.io/
-    page_why:
-    - 'release phrase: ...iable reasoning models. Code, models, and further info is available at'
-    - appears 2% into the text
-    - the page cites the arXiv id
   bigger-is-not-always-better-the-importance-of-human-scale-la:
     verdict: none
   call-for-papers-the-2nd-babylm-challenge-sample-efficient-pr:
     verdict: none
     page_verdict: accept
     project_page: https://babylm.github.io/
-    page_why:
-    - URL shares 'babylm' with the title
-    - appears 7% into the text
     reviewed: true
   call-for-papers-the-babylm-challenge-sample-efficient-pretra:
     verdict: none
     page_verdict: accept
     project_page: https://babylm.github.io/
-    page_why:
-    - 'release phrase: ... number of words in the training set of each corpus that we include. 1'
     reviewed: true
   can-gradient-descent-simulate-prompting:
     verdict: none
@@ -122,10 +77,6 @@ papers:
   cluster-tune-boost-cold-start-performance-in-text-classifica:
     verdict: review
     repo: https://github.com/IBM/intermediate-training-using-clustering
-    score: 5
-    why:
-    - 'release phrase: ...directions. We release code for reproducing our method. 1 1 1 https://'
-    - appears 17% into the text
     other_candidates:
     - https://github.com/IBM/sib
   cold-fusion-collaborative-descent-for-distributed-multitask:
@@ -133,28 +84,12 @@ papers:
   commonlid-re-evaluating-state-of-the-art-language-identifica:
     verdict: accept
     repo: https://github.com/commoncrawl/commonlid-eval
-    score: 9
-    why:
-    - 'release phrase: ...elease all our raw evaluation scores and analysis code. 7 7 7 https://'
-    - repo name shares 'commonlid' with the title
-    - README cites the arXiv id
     page_verdict: accept
     project_page: https://huggingface.co/datasets/commoncrawl/CommonLID
-    page_why:
-    - 'release phrase: ... LID dataset, which we release under an open permissive license. 2 2 2'
-    - URL shares 'commonlid' with the title
-    - appears 17% into the text
-    - the same owner publishes 1 more for this paper -- which is the page is yours to pick
     reviewed: true
   compeft-compression-for-communicating-parameter-efficient-up:
     verdict: review
     repo: https://github.com/prateeky2806/compeft
-    score: 12
-    why:
-    - 'release phrase: ...ing the residual of full-finetuning. Our code is available at https://'
-    - owner prateeky2806 matches an author name
-    - repo name shares 'compeft' with the title
-    - appears 2% into the text
     other_candidates:
     - https://github.com/prateeky2806/ComPEFT
   compress-then-serve-serving-thousands-of-lora-adapters-with:
@@ -162,11 +97,6 @@ papers:
   comsum-commit-messages-summarization-and-meaning-preservatio:
     verdict: accept
     repo: https://github.com/evidencebp/comsum
-    score: 8
-    why:
-    - 'release phrase: ...icles/dataset/CumSum_data_set/14711370 2 2 2 Code is found in https://'
-    - repo name shares 'comsum' with the title
-    - appears 4% into the text
   corpus-wide-argument-mining-a-working-solution:
     verdict: none
   crisp-complex-reasoning-with-interpretable-step-based-plans:
@@ -176,135 +106,65 @@ papers:
   cube-a-standard-for-unifying-agent-benchmarks:
     verdict: accept
     repo: https://github.com/The-AI-Alliance/cube-standard
-    score: 6
-    why:
-    - repo name shares 'cube/standard' with the title
-    - appears 2% into the text
-    - README cites the arXiv id
   data-contamination-report-from-the-2024-conda-shared-task:
     verdict: none
     page_verdict: accept
     project_page: https://conda-workshop.github.io/
-    page_why:
-    - URL shares 'conda/contamination/data' with the title
-    - appears 4% into the text
     reviewed: true
   deductive-closure-training-of-language-models-for-coherence:
     verdict: none
     page_verdict: accept
     project_page: https://lingo-mit.github.io/deductive-closure
-    page_why:
-    - 'release phrase: ... LMs’ coherence, accuracy and updatability. 1 1 1 Code is available at'
-    - URL shares 'closure/deductive' with the title
-    - appears 17% into the text
-    - the page names the paper
   disentqa-disentangling-parametric-and-contextual-knowledge-w:
     verdict: accept
     repo: https://github.com/ellaneeman/disent_qa
-    score: 10
-    why:
-    - 'release phrase: ...plications. 1 1 1 Our code and data are publicly available at https://'
-    - owner ellaneeman matches an author name
-    - appears 17% into the text
-    - README cites the arXiv id
   do-llms-benefit-from-their-own-words:
     verdict: none
   dora-the-explorer-directed-outreaching-reinforcement-action:
     verdict: accept
     repo: https://github.com/borgr/DORA
-    score: 8
-    why:
-    - owner borgr matches an author name
-    - repo name shares 'dora' with the title
-    - appears 10% into the text
-    - README cites the arXiv id
   dove-a-large-scale-multi-dimensional-predictions-dataset-tow:
     verdict: none
     page_verdict: accept
     project_page: https://slab-nlp.github.io/DOVE
-    page_why:
-    - 'release phrase: ...t, and efficient evaluation. Browse the data, contribute, and more at:'
-    - URL shares 'dove' with the title
-    - appears 3% into the text
   efficient-benchmarking-of-language-models:
     verdict: none
   efficient-multi-prompt-evaluation-of-llms:
     verdict: accept
     repo: https://github.com/felipemaiapolo/prompteval
-    score: 10
-    why:
-    - 'release phrase: ...t identification applications. 1 1 1 Our code can be found in https://'
-    - owner felipemaiapolo matches an author name
-    - appears 6% into the text
-    - README cites the arXiv id
   elements-of-world-knowledge-ewok-a-cognition-inspired-framew:
     verdict: accept
     repo: https://github.com/ewok-core/ewok-paper
-    score: 5
-    why:
-    - repo name shares 'ewok' with the title
-    - README cites the arXiv id
     other_candidates:
     - https://github.com/ewok-core/ewok
     page_verdict: accept
     project_page: https://ewok-core.github.io
-    page_why:
-    - URL shares 'ewok' with the title
-    - the page cites the arXiv id
     reviewed: true
   enhancing-the-transformer-decoder-with-transition-based-synt:
     verdict: accept
     repo: https://github.com/borgr/nematus
-    score: 9
-    why:
-    - 'release phrase: ...integrating syntactic information. 1 1 1 Code can be found in https://'
-    - owner borgr matches an author name
-    - appears 4% into the text
-    - README names the paper
   errormap-and-erroratlas-charting-the-failure-landscape-of-la:
     verdict: accept
     repo: https://github.com/IBM/ErrorMap
-    score: 10
-    why:
-    - 'release phrase: ...tions. We make the taxonomy and code publicly available 1 1 1 https://'
-    - repo name shares 'errormap' with the title
-    - appears 5% into the text
-    - README cites the arXiv id
   evaluation-cards-an-interpretive-layer-for-ai-evaluation-rep:
     verdict: none
     page_verdict: accept
     project_page: https://evalcards.evalevalai.com
-    page_why:
-    - 'release phrase: ...nterpretive outputs. Appendix N Code and Demo Our code is available at'
     reviewed: true
   every-eval-ever-a-unifying-schema-and-community-repository-f:
     verdict: none
   findings-of-the-babylm-challenge-sample-efficient-pretrainin:
     verdict: review
     repo: https://github.com/babylm/babylm_data_preprocessing
-    score: 6
-    why:
-    - 'release phrase: ... and preprocessing the raw data are publicly available. 3 3 3 https://'
-    - repo name shares 'babylm' with the title
-    - the paper releases more than one repo -- which is the code link is yours to pick
     other_candidates:
     - https://github.com/babylm/babylm.github.io
     - https://github.com/babylm/evaluation-pipeline
     - https://github.com/babylm/submissions2023
     page_verdict: accept
     project_page: https://dynabench.org/babylm
-    page_why:
-    - 'release phrase: ...rkey (1). The official leaderboard is available on Dynabench. 16 16 16'
-    - URL shares 'babylm' with the title
-    - page has no readable text (client-rendered?) -- unconfirmed
   findings-of-the-second-babylm-challenge-sample-efficient-pre:
     verdict: review
     repo: https://github.com/babylm/babylm_data_preprocessing
-    score: 6
-    why:
-    - 'release phrase: ... and preprocessing the raw data are publicly available. 2 2 2 https://'
-    - repo name shares 'babylm' with the title
-    - the paper releases more than one repo -- which is the code link is yours to pick
     other_candidates:
     - https://github.com/babylm/evaluation-pipeline-2024
     - https://github.com/phueb/BabyBERTa
@@ -313,64 +173,34 @@ papers:
   fuse-to-forget-bias-reduction-and-selective-memorization-thr:
     verdict: accept
     repo: https://github.com/KeremZaman/FuseToForget
-    score: 7
-    why:
-    - 'release phrase: ...ith language models. 1 1 1 Our code and data are available at https://'
-    - owner KeremZaman matches an author name
-    - appears 5% into the text
   fusing-finetuned-models-for-better-pretraining:
     verdict: none
   general-agent-evaluation:
     verdict: review
     repo: https://github.com/SWE-agent/mini-swe-agent
-    score: 2
-    why:
-    - repo name shares 'agent' with the title
   genie-achieving-human-parity-in-content-grounded-datasets-ge:
     verdict: none
   global-mmlu-understanding-and-addressing-cultural-and-lingui:
     verdict: none
     page_verdict: accept
     project_page: https://hf.co/datasets/CohereForAI/Global-MMLU
-    page_why:
-    - 'release phrase: ...Global-MMLU under a fully permissive license for use in evaluations at'
-    - URL shares 'global/mmlu' with the title
-    - appears 4% into the text
   global-piqa-evaluating-commonsense-reasoning-across-100-lang:
     verdict: review
     repo: https://github.com/mrlbenchmarks/lm-eval-global-piqa
-    score: 5
-    why:
-    - 'release phrase: ... LM Evaluation Harness, with our implementation available at: https://'
-    - repo name shares 'global/piqa' with the title
-    - is a fork
     other_candidates:
     - https://github.com/mrlbenchmarks/global-piqa
     page_verdict: review
     project_page: https://huggingface.co/datasets/mrlbenchmarks/global-piqa-nonparallel
-    page_why:
-    - 'release phrase: ...t of 100 examples. The full dataset before subsampling is available at'
-    - URL shares 'global/piqa' with the title
-    - the same owner publishes 1 more for this paper -- which is the page is yours to pick
     other_pages:
     - https://huggingface.co/datasets/mrlbenchmarks/global-piqa-parallel
   grasp-a-library-for-extracting-and-exploring-human-interpret:
     verdict: none
     page_verdict: accept
     project_page: https://plkumjorn.github.io/GrASP
-    page_why:
-    - URL shares 'grasp' with the title
-    - page has no readable text (client-rendered?) -- unconfirmed
     reviewed: true
   growing-pains-extensible-and-efficient-llm-benchmarking-via:
     verdict: accept
     repo: https://github.com/eliyahabba/growing-pains
-    score: 12
-    why:
-    - 'release phrase: ...a constant evaluation cost per new dataset. Code available at https://'
-    - owner eliyahabba matches an author name
-    - repo name shares 'growing/pains' with the title
-    - appears 3% into the text
   high-dimensional-learning-dynamics-2024-the-emergence-of-str:
     verdict: none
   holmes-a-benchmark-to-assess-the-linguistic-competence-of-la:
@@ -378,19 +208,10 @@ papers:
   human-learning-by-model-feedback-the-dynamics-of-iterative-p:
     verdict: accept
     repo: https://github.com/shachardon/Mid-Journey-to-alignment
-    score: 10
-    why:
-    - 'release phrase: ... users with Midjourney. 1 1 1 Code and data are available in: https://'
-    - owner shachardon matches an author name
-    - appears 4% into the text
-    - README names the paper
     reviewed: true
   inherent-biases-in-reference-based-evaluation-for-grammatica:
     verdict: review
     repo: https://github.com/borgr/IBGEC
-    score: 2
-    why:
-    - owner borgr matches an author name
   insights-from-the-first-babylm-challenge-training-sample-eff:
     verdict: none
   instructions-shape-production-of-language-not-processing:
@@ -398,11 +219,6 @@ papers:
   jump-to-conclusions-short-cutting-transformers-with-linear-t:
     verdict: accept
     repo: https://github.com/sashayd/mat
-    score: 8
-    why:
-    - 'release phrase: ...ange. Our code and learned mappings are publicly available at https://'
-    - appears 3% into the text
-    - README cites the arXiv id
   knowledge-is-a-region-in-weight-space-for-fine-tuned-languag:
     verdict: none
   label-efficient-model-selection-for-text-generation:
@@ -410,15 +226,8 @@ papers:
   label-sleuth-from-unlabeled-text-to-a-classifier-in-a-few-ho:
     verdict: accept
     repo: https://github.com/label-sleuth/label-sleuth
-    score: 3
-    why:
-    - repo name shares 'label/sleuth' with the title
-    - appears 10% into the text
     page_verdict: accept
     project_page: https://www.label-sleuth.org
-    page_why:
-    - URL shares 'label/sleuth' with the title
-    - appears 9% into the text
     reviewed: true
   learning-to-combine-grammatical-error-corrections:
     verdict: none
@@ -435,48 +244,19 @@ papers:
   mediators-in-determining-what-processing-bert-performs-first:
     verdict: accept
     repo: https://github.com/lovodkin93/BERT-context-distance
-    score: 10
-    why:
-    - 'release phrase: ...uch comparisons in the future. 1 1 1 The code is available at https://'
-    - repo name shares 'bert' with the title
-    - appears 10% into the text
-    - repo description names the paper
   mediocrity-is-the-key-for-llm-as-a-judge-anchor-selection:
     verdict: accept
     repo: https://github.com/IBM/Anchor-Selection
-    score: 10
-    why:
-    - 'release phrase: ...ase about 900K judgments generated for this study 1 1 1 Code: https://'
-    - repo name shares 'anchor/selection' with the title
-    - appears 16% into the text
-    - repo description names the paper
     page_verdict: accept
     project_page: https://huggingface.co/datasets/ibm-research/900K-Judgements
-    page_why:
-    - 'release phrase: ...this study 1 1 1 Code: https://github.com/IBM/Anchor-Selection , Data:'
-    - appears 16% into the text
-    - the page names the paper
   mindgames-a-live-arena-for-evaluating-social-and-strategic-r:
     verdict: review
     repo: https://github.com/mind-games-challenge/mindgames-starter-kit
-    score: 3
-    why:
-    - repo name shares 'mindgames' with the title
-    - appears 7% into the text
     page_verdict: review
     project_page: https://huggingface.co/datasets/mindgameschallenge/MGC2025
-    page_why:
-    - 'release phrase: ...gent interaction trajectories, released under the CC-BY-4.0 license at'
-    - appears 6% into the text
   model-merging-with-svd-to-tie-the-knots:
     verdict: accept
     repo: https://github.com/gstoica27/KnOTS
-    score: 12
-    why:
-    - 'release phrase: ...enchmarks, including our new setting. We release our code at: https://'
-    - owner gstoica27 matches an author name
-    - repo name shares 'knots' with the title
-    - appears 2% into the text
   muler-detailed-and-scalable-reference-based-evaluation:
     verdict: none
   naturally-occurring-feedback-is-common-extractable-and-usefu:
@@ -486,27 +266,14 @@ papers:
   neurips-2023-llm-efficiency-fine-tuning-competition:
     verdict: accept
     repo: https://github.com/llm-efficiency-challenge/neurips_llm_efficiency_challenge
-    score: 6
-    why:
-    - 'release phrase: ...y 25th to October 25th, 2023. We released a starter kit 2 2 2 https://'
-    - repo name shares 'efficiency/llm/neurips' with the title
     page_verdict: accept
     project_page: https://llm-efficiency-challenge.github.io/
-    page_why:
-    - URL shares 'efficiency/llm' with the title
-    - appears 15% into the text
     reviewed: true
   numerologic-number-encoding-for-enhanced-llms-numerical-reas:
     verdict: none
   on-neurons-invariant-to-sentence-structural-changes-in-neura:
     verdict: accept
     repo: https://github.com/galpatel/minimal-paraphrases
-    score: 10
-    why:
-    - 'release phrase: ... 1 1 The dataset is provided with paraphrase generation code: https://'
-    - owner galpatel matches an author name
-    - appears 4% into the text
-    - README names the paper
   on-the-weaknesses-of-reinforcement-learning-for-neural-machi:
     verdict: none
   part-of-speech-and-universal-dependency-effects-on-english-a:
@@ -516,51 +283,21 @@ papers:
   prequel-quality-estimation-of-machine-translation-outputs-in:
     verdict: accept
     repo: https://github.com/shachardon/PreQuEL
-    score: 12
-    why:
-    - 'release phrase: ...stimation task as well. 1 1 1 Code and data are available in: https://'
-    - owner shachardon matches an author name
-    - repo name shares 'prequel' with the title
-    - appears 5% into the text
   pretraining-language-models-for-diachronic-linguistic-change:
     verdict: none
   q2-evaluating-factual-consistency-in-knowledge-grounded-dial:
     verdict: accept
     repo: https://github.com/orhonovich/q-squared
-    score: 10
-    why:
-    - 'release phrase: ...human judgements. 1 1 1 Our code and dataset are available in: http://'
-    - owner orhonovich matches an author name
-    - appears 15% into the text
-    - README cites the arXiv id
   reference-less-measure-of-faithfulness-for-grammatical-error:
     verdict: accept
     repo: https://github.com/borgr/USim
-    score: 7
-    why:
-    - 'release phrase: ...rections obtain a lower score. 1 1 1 Our code is available in https://'
-    - owner borgr matches an author name
-    - appears 8% into the text
   reinforcement-learning-with-large-action-spaces-for-neural-m:
     verdict: accept
     repo: https://github.com/AsafYehudai/Reinforcement-Learning-with-Large-Action-Spaces-for-Neural-Machine-Translation
-    score: 8
-    why:
-    - owner AsafYehudai matches an author name
-    - repo name shares 'action/for/large/learning/machine/neural/reinforcement/spaces/translation/with'
-      with the title
-    - appears 5% into the text
-    - repo description names the paper
     reviewed: true
   resolving-interference-ri-disentangling-models-for-improved:
     verdict: accept
     repo: https://github.com/pramesh39/resolving_interference
-    score: 9
-    why:
-    - 'release phrase: ...ing of merging hyperparameters. Our codebase is available at: https://'
-    - owner pramesh39 matches an author name
-    - repo name shares 'interference/resolving' with the title
-    - appears 2% into the text
   robustness-as-an-emergent-property-of-task-performance:
     verdict: none
   semantics-aware-attention-improves-neural-machine-translatio:
@@ -568,10 +305,6 @@ papers:
   semeval-2019-shared-task-cross-lingual-semantic-parsing-with:
     verdict: review
     repo: https://github.com/omriabnd/UCCA-App
-    score: 4
-    why:
-    - owner omriabnd matches an author name
-    - repo name shares 'ucca' with the title
     other_candidates:
     - https://github.com/huji-nlp/ucca
     - https://github.com/huji-nlp/semstr
@@ -579,11 +312,6 @@ papers:
   semeval-2019-task-1-cross-lingual-semantic-parsing-with-ucca:
     verdict: review
     repo: https://github.com/omriabnd/UCCA-App
-    score: 5
-    why:
-    - owner omriabnd matches an author name
-    - repo name shares 'ucca' with the title
-    - appears 16% into the text
     other_candidates:
     - https://github.com/huji-nlp/ucca
     - https://github.com/UniversalConceptualCognitiveAnnotation/docs
@@ -591,116 +319,47 @@ papers:
   serrant-a-syntactic-classifier-for-english-grammatical-error:
     verdict: accept
     repo: https://github.com/matanel-oren/serrant
-    score: 8
-    why:
-    - 'release phrase: ...hich present outputs in a unified way. 2 2 2 Code is found in https://'
-    - owner matanel-oren matches an author name
-    - repo name shares 'serrant' with the title
-    - appears 2% into the text
   sloth-scaling-laws-for-llm-skills-to-predict-multi-benchmark:
     verdict: accept
     repo: https://github.com/felipemaiapolo/sloth
-    score: 12
-    why:
-    - 'release phrase: ...d compute-optimal scaling of skills. Our code can be found on https://'
-    - owner felipemaiapolo matches an author name
-    - repo name shares 'sloth' with the title
-    - appears 5% into the text
   some-grammatical-errors-are-frequent-others-are-important:
     verdict: accept
     repo: https://github.com/borgr/GEC_BOTHER
-    score: 7
-    why:
-    - 'release phrase: ...their evaluation. 1 1 1 All code and annotations are found in https://'
-    - owner borgr matches an author name
-    - appears 9% into the text
   stop-guessing-when-to-stop-testing-efficient-model-evaluatio:
     verdict: accept
     repo: https://github.com/OfirArviv/adaptive-eval
-    score: 10
-    why:
-    - 'release phrase: ...le maintaining statistical significance. Code is publicly available at'
-    - owner OfirArviv matches an author name
-    - appears 10% into the text
-    - README names the paper
     reviewed: true
   textarena:
     verdict: accept
     repo: https://github.com/LeonGuertler/TextArena
-    score: 12
-    why:
-    - 'release phrase: ...vironments, games, leaderboard, and examples are available on https://'
-    - owner LeonGuertler matches an author name
-    - repo name shares 'textarena' with the title
-    - appears 2% into the text
     page_verdict: accept
     project_page: https://www.textarena.ai/
-    page_why:
-    - 'release phrase: ...xamples are available on https://github.com/LeonGuertler/TextArena and'
-    - URL shares 'textarena' with the title
-    - appears 2% into the text
-    - the page names the paper
   the-future-of-open-human-feedback:
     verdict: none
   the-grammar-learning-trajectories-of-neural-language-models:
     verdict: review
     repo: https://github.com/borgr/ordert
-    score: 3
-    why:
-    - owner borgr matches an author name
-    - appears 9% into the text
   the-language-of-legal-and-illegal-activity-on-the-darknet:
     verdict: accept
     repo: https://github.com/huji-nlp/cyber
-    score: 8
-    why:
-    - 'release phrase: ...r named entities in Wikipedia. 1 1 1 Our code can be found in https://'
-    - appears 2% into the text
-    - README names the paper
   the-mighty-torr-a-benchmark-for-table-reasoning-and-robustne:
     verdict: none
   the-sharelm-collection-and-plugin-contributing-human-model-c:
     verdict: accept
     repo: https://github.com/shachardon/share-lm
-    score: 7
-    why:
-    - 'release phrase: ...data. The code , plugin , and data are available. 1 1 1 Code: https://'
-    - owner shachardon matches an author name
-    - appears 11% into the text
     page_verdict: accept
     project_page: https://huggingface.co/datasets/shachardon/ShareLM
-    page_why:
-    - 'release phrase: ...ail/sharelm-share-your-chat-c/nldoebkdaiidhceaphmipeclmlcbljmh , Data:'
-    - URL shares 'sharelm' with the title
-    - appears 12% into the text
   ties-merging-resolving-interference-when-merging-models:
     verdict: accept
     repo: https://github.com/prateeky2806/ties-merging
-    score: 12
-    why:
-    - 'release phrase: ...ance of resolving sign interference. Our code is available at https://'
-    - owner prateeky2806 matches an author name
-    - repo name shares 'merging/ties' with the title
-    - appears 3% into the text
   tinybenchmarks-evaluating-llms-with-fewer-examples:
     verdict: accept
     repo: https://github.com/felipemaiapolo/tinyBenchmarks
-    score: 8
-    why:
-    - owner felipemaiapolo matches an author name
-    - repo name shares 'tinybenchmarks' with the title
-    - appears 6% into the text
-    - README cites the arXiv id
   unforgettable-generalization-in-language-models:
     verdict: none
   unitxt-flexible-shareable-and-reusable-data-preparation-and:
     verdict: accept
     repo: https://github.com/IBM/unitxt
-    score: 8
-    why:
-    - 'release phrase: ...unity. The code and documentation are available on GitHub at: https://'
-    - repo name shares 'unitxt' with the title
-    - appears 4% into the text
   unsupervised-expressive-rules-provide-explainability-and-ass:
     verdict: none
   when-ai-benchmarks-plateau-a-systematic-study-of-benchmark-s:
@@ -709,9 +368,6 @@ papers:
     verdict: none
     page_verdict: accept
     project_page: https://ibm.github.io/model-recycling/
-    page_why:
-    - 'release phrase: ...pdating ranking of best models in the HuggingFace hub per architecture'
-    - appears 2% into the text
   will-it-blend-blending-weak-and-strong-labeled-data-in-a-neu:
     verdict: none
   will-it-merge-on-the-causes-of-model-mergeability:

@@ -132,8 +132,15 @@ def step_validate(cfg, args) -> None:
     paper made seven prose sentences wrong at once, which is a chore, not a
     judgement. The three sentences whose count feeds a sum are still reported,
     because there the arithmetic has to be redone by someone who can read it.
+
+    The only step that can stop the run, and only on a structural failure: `render`
+    and `worklist` both read `data/` and present it, so a schema violation or a
+    dangling claim id would otherwise become a page that looks reviewable. A stale
+    count in a prose sentence exits 0 and the run continues.
     """
-    run([sys.executable, "scripts/validate.py", "--fix-counts"])
+    if run([sys.executable, "scripts/validate.py", "--fix-counts"]):
+        raise SystemExit("\nvalidate failed -- fix the problems above and re-run. "
+                         "Nothing after this step is trustworthy.")
 
 
 def step_render(cfg, args) -> None:
@@ -223,8 +230,13 @@ def apply_declines(lines: list[str]) -> list[str]:
     reader saw, so what it removes is exactly what was there.
 
       sections: ["OpenAlex"]        # any heading containing this, and its body
-      items:    ["2306.01708"]      # any `- [ ]` line containing this
+      items:    ["2306.01708"]      # any list item containing this
       deferred: [{match: "Repo labels", until: "the papers are settled"}]
+
+    `items` matches any bullet, not only `- [ ]` ones. It used to require the checkbox,
+    which quietly meant the sections that list papers rather than tasks -- the drafting
+    queue, the dated waiting list -- could not be declined at all: the decision had
+    nowhere to go, so the line came back every run.
 
     `deferred` is the third state, and it needs to exist because "not now" is neither
     "open" nor "declined": the section is real work that will be done, just not
@@ -278,7 +290,7 @@ def apply_declines(lines: list[str]) -> list[str]:
         if hold_at:
             held.append(ln)
             continue
-        if ln.lstrip().startswith("- [ ]") and any(i in ln for i in items):
+        if ln.lstrip().startswith("- ") and any(i in ln for i in items):
             dropped_items += 1
             continue
         out.append(ln)
@@ -317,6 +329,24 @@ def apply_declines(lines: list[str]) -> list[str]:
         note.append(f"deferred to the bottom: {'; '.join(held_secs)}")
     return out + ["---", "", f"*Per `data/declines.yaml` — {'. '.join(note)}. "
                              f"Delete a line there to have it asked normally again.*", ""]
+
+
+def tidy(lines: list[str]) -> list[str]:
+    """Insert the blank line markdown needs before a heading.
+
+    Fifteen emitters build this file and each ends its block with whatever it ended
+    with, so one that finished on a `- [ ]` line put a `###` heading directly after it
+    -- and a heading with no blank line above it renders *inside* the list, which is
+    how the Semantic Scholar section spent a while looking like a bullet of the ORCID
+    one. Fixing it here rather than in each emitter means the sixteenth cannot
+    reintroduce it, and it is mechanical, so it is fixed rather than reported.
+    """
+    out: list[str] = []
+    for ln in lines:
+        if re.match(r"#{2,} \S", ln) and out and out[-1].strip():
+            out.append("")
+        out.append(ln)
+    return out
 
 
 def step_worklist(cfg, args) -> None:
@@ -694,7 +724,7 @@ def step_worklist(cfg, args) -> None:
                   "Check `data/repos.yaml`, fix anything wrong, set `reviewed: true` to freeze "
                   "it, then `python scripts/sweep_github.py diff`.", ""]
 
-    lines = apply_declines(lines)
+    lines = tidy(apply_declines(lines))
 
     out = os.path.join(ROOT, "WORKLIST.md")
     with open(out, "w") as f:

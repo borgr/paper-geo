@@ -15,7 +15,7 @@ choose `tasks/orcid_missing.bib` → review the list → *Add all*.
 
 | # | cites | title | identifier |
 |---|---|---|---|
-| 1 | 0 | Resolving Interference (RI): Disentangling Models for Improved M | `10.48550/arXiv.2603.13467` |
+| 1 | 0 | Resolving Interference (RI): Disentangling Models for Improved M | `10.48550/ARXIV.2603.13467` |
 
 Then re-run the audit: the *ORCID holds your papers* row is the check.
 

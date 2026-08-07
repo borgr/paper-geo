@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The "C" diagnostic from docs/MEASURE.md: is the work described correctly?
+"""The "C" diagnostic from docs/EVIDENCE.md: is the work described correctly?
 
 Not an experiment. Asked as "which of my papers are engines currently getting
 wrong?", this produces a ranked worklist, which is actionable whether or not the

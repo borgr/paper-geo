@@ -207,7 +207,7 @@ llm:
 collaboration:
   # Who owns each paper's canonical page. Exactly one owner per paper: duplicating
   # a canonical page splits authority and can trip Scholar's duplicate-title drop,
-  # while duplicating the *pointer* to it is pure gain. See docs/COLLAB.md.
+  # while duplicating the *pointer* to it is pure gain. See docs/RULES.md §12.
   #
   # `me` is the identity that claims ownership in our own published manifest.
   me: borgr

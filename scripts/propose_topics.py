@@ -34,7 +34,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import BUILD, DATA, load_config, read_yaml, write_yaml  # noqa: E402
+from common import BUILD, DATA, load_config, read_yaml, rules_block, write_yaml  # noqa: E402
 
 SCHEMA = {
     "type": "object",
@@ -75,22 +75,30 @@ SCHEMA = {
     "additionalProperties": False,
 }
 
-SYSTEM = """You label GitHub repositories belonging to an academic researcher so \
+RULES_DOC = "docs/RULES.md"
+
+FRAMING = """You label GitHub repositories belonging to an academic researcher so \
 that both GitHub search and AI answer engines can find them.
 
-Two things matter more than sounding good:
+The rules below are the repo's own labelling rules, read verbatim from {doc} §11.2.
 
-1. Accuracy over coverage. A wrong topic actively misleads retrieval. If the \
-evidence does not support a label, leave it out and set confidence lower. An \
-empty-ish but correct set beats a full but wrong one.
+"""
 
-2. Search vocabulary, not project vocabulary. Use the words someone who does not \
-already know this project would type. Coined names are for branding; generic \
-phrasing is what gets retrieved.
+CONTRACT = [
+    "Fill each task's `proposal` object against `schema`, then run --ingest.",
+    "Do not hand-edit data/repos.yaml -- the next run re-derives it from GitHub.",
+    "Do not write outward: `sweep_github.py apply` and `update.py --apply` are the",
+    "author's, and both are gated on reading `sweep_github.py diff` first.",
+]
 
-Judge only from the evidence provided. Do not infer a research area from the \
-author's other work, and do not assume a repo is paper code because the author \
-is a researcher — many are guides, teaching material, or small utilities."""
+
+def system_prompt() -> str:
+    """The framing plus the rules, which live in docs/RULES.md §11.2, not here.
+
+    Same one-source rule as draft_sidecars.py: the doc is the only copy, so editing
+    the rules changes the prompt in the same commit. Raises if the markers are gone.
+    """
+    return FRAMING.format(doc=RULES_DOC) + rules_block(RULES_DOC)
 
 
 def gh(*args: str) -> str:
@@ -143,7 +151,8 @@ def emit_tasks(todo: list[dict]) -> str:
     path = os.path.join(BUILD, "llm_tasks.json")
     tasks = [{"repo": r["repo"], "evidence": evidence(r), "proposal": None} for r in todo]
     with open(path, "w") as f:
-        json.dump({"system": SYSTEM, "schema": SCHEMA, "tasks": tasks}, f, indent=1)
+        json.dump({"_contract": CONTRACT, "system": system_prompt(),
+                   "schema": SCHEMA, "tasks": tasks}, f, indent=1)
     return path
 
 
@@ -157,13 +166,14 @@ def call_api(todo: list[dict], cfg) -> None:
     client = anthropic.Anthropic()          # resolves key or `ant auth login` profile
     model = cfg["llm"]["model"]
     effort = cfg["llm"].get("effort", "medium")
+    sys_prompt = system_prompt()
     for r in todo:
         req = dict(
             model=model,
             # Thinking is on by default on Opus 5 and counts against max_tokens,
             # so leave real headroom above the size of the JSON itself.
             max_tokens=4096,
-            system=SYSTEM,
+            system=sys_prompt,
             messages=[{"role": "user",
                        "content": f"Label this repository.\n\n{evidence(r)}"}],
         )

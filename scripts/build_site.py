@@ -18,7 +18,7 @@ Output:
     .nojekyll                   serve generated dirs verbatim
 
 Papers owned by a collaborator get an index entry linking to THEIR canonical
-page and no page of our own -- see docs/COLLAB.md.
+page and no page of our own -- see docs/RULES.md §12.
 
 Usage:
     python scripts/build_site.py [--deploy]
@@ -393,8 +393,13 @@ def paper_page(p: dict, sc: dict, cfg) -> str:
             b.append(f"<dt><em>{E(t)}</em></dt><dd>{E(' '.join(str(d).split()))}</dd>")
         b.append("</dl>")
 
+    # Optional author prose from below the sidecar's front matter. Escaped, not
+    # rendered as markdown -- blank lines split paragraphs and nothing else is
+    # interpreted, so a stray character in a hand-written note cannot break the page.
     if sc.get("_body"):
-        b.append(f"<h2>Notes</h2>\n<p>{E(sc['_body'])}</p>")
+        b.append("<h2>Notes from the author</h2>")
+        for para in re.split(r"\n\s*\n", sc["_body"].strip()):
+            b.append(f"<p>{E(' '.join(para.split()))}</p>")
 
     if p.get("bibtex"):
         b.append("<h2>How to cite</h2>")
@@ -437,6 +442,8 @@ def paper_llms_txt(p: dict, sc: dict, cfg) -> str:
         for t, d in sc["terminology"].items():
             L.append(f"- {t}: {' '.join(str(d).split())}")
         L.append("")
+    if sc.get("_body"):
+        L += ["## Notes from the author", sc["_body"].strip(), ""]
     if not sc:
         L += ["## Abstract", p.get("abstract") or "(none available)", ""]
     links = dict(p.get("links") or {})

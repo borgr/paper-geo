@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The "A" checks from docs/MEASURE.md: is the work done, and still done?
+"""The "A" checks from docs/EVIDENCE.md: is the work done, and still done?
 
 Deterministic and cheap. These verify the machinery, not the outcome -- a green
 run says nothing about whether anything got cited. What it does catch is the class

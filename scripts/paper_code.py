@@ -72,6 +72,10 @@ BUILD = os.path.join(ROOT, "build")
 FULLTEXT = os.path.join(BUILD, "fulltext")
 DECISIONS = os.path.join(DATA, "paper_code.yaml")
 GH_CACHE = os.path.join(BUILD, "github_repos.json")
+# Why each row came out the way it did: the score and the reasons behind it. Derived,
+# regenerated every run, and therefore not in the committed decision file -- see
+# save_decisions.
+WHY = os.path.join(BUILD, "paper_code_why.json")
 
 # A URL, and how much text before it we read for intent. 160 chars is about two lines
 # of a footnote: long enough to catch "our code and data are publicly available at",
@@ -659,7 +663,10 @@ def effective(slug: str, r: dict, prev: dict) -> dict:
                 "page_verdict": "accept" if keep.get("page_verdict") == "accept"
                                 and keep.get("project_page") else "none",
                 "page": keep.get("project_page") or None,
-                "score": keep.get("score"), "pscore": None}
+                # No score on a frozen row, either field: the number is this script's
+                # confidence in its own deduction, and a person has overridden it. The
+                # report prints the `*` instead, which is the fact that matters.
+                "score": None, "pscore": None}
     return {"frozen": False,
             "verdict": r["verdict"],
             "repo": ("https://github.com/" + top["repo"]) if top else None,
@@ -675,19 +682,30 @@ def load_decisions() -> dict:
 
 
 def save_decisions(papers: list[dict], results: dict, prev: dict) -> None:
-    """Write data/paper_code.yaml, preserving anything marked reviewed by hand."""
-    rows = {}
+    """Write data/paper_code.yaml, preserving anything marked reviewed by hand.
+
+    The decision and the reasoning go to different files on purpose. The row is a
+    decision -- which URL, and whether a person has settled it -- and its history
+    should read as one, so `git log` on it answers "what did we decide about this
+    paper". `score` and `why` are this run's audit trail: they churn whenever a README
+    changes upstream, and having them in the same row meant every run produced a diff
+    that was mostly a machine talking to itself. They land in build/paper_code_why.json
+    instead, regenerated with everything else in `build/`, and still there when the
+    report says "review" and you want to know why.
+    """
+    rows, why = {}, {}
     for slug, r in results.items():
         keep = prev.get(slug) or {}
         if keep.get("reviewed"):
-            rows[slug] = keep
+            rows[slug] = {k: v for k, v in keep.items() if k not in ("score", "why",
+                                                                     "page_why")}
             continue
         top = r["cands"][0] if r["cands"] else None
         row = {"verdict": r["verdict"]}
         if top and r["verdict"] in ("accept", "review"):
             row["repo"] = "https://github.com/" + top["repo"]
-            row["score"] = top["score"]
-            row["why"] = top["why"][:4]
+            why.setdefault(slug, {})["repo"] = {"score": top["score"],
+                                                "why": top["why"][:4]}
         if r["verdict"] == "review" and len(r["cands"]) > 1:
             row["other_candidates"] = ["https://github.com/" + c["repo"]
                                        for c in r["cands"][1:4] if c.get("exists")]
@@ -697,7 +715,8 @@ def save_decisions(papers: list[dict], results: dict, prev: dict) -> None:
         if ptop and r["page_verdict"] in ("accept", "review"):
             row["page_verdict"] = r["page_verdict"]
             row["project_page"] = ptop["page"]
-            row["page_why"] = ptop["why"][:4]
+            why.setdefault(slug, {})["page"] = {"score": ptop["score"],
+                                                "why": ptop["why"][:4]}
             if ptop.get("siblings"):
                 row["other_pages"] = ptop["siblings"]
             elif r["page_verdict"] == "review" and len(r["pages"]) > 1:
@@ -705,7 +724,13 @@ def save_decisions(papers: list[dict], results: dict, prev: dict) -> None:
                                       if c.get("exists")]
         rows[slug] = row
     for slug, keep in prev.items():           # never drop a hand decision
-        rows.setdefault(slug, keep)
+        rows.setdefault(slug, {k: v for k, v in keep.items()
+                              if k not in ("score", "why", "page_why")})
+    os.makedirs(BUILD, exist_ok=True)
+    with open(WHY, "w") as f:
+        json.dump({"generated_by": "scripts/paper_code.py -- the audit trail behind "
+                                   "data/paper_code.yaml. Derived, so not committed.",
+                   "papers": dict(sorted(why.items()))}, f, indent=1)
     write_yaml(DECISIONS, {
         "generated_by": "scripts/paper_code.py -- `reviewed: true` freezes a row and "
                         "makes its `repo`/`project_page` the URLs --apply pushes, so a "
@@ -714,7 +739,10 @@ def save_decisions(papers: list[dict], results: dict, prev: dict) -> None:
         "note": "verdict: accept = pushed to HF by --apply. review = needs your eyes. "
                 "none = the paper names no repo of its own. `page_verdict` and "
                 "`project_page` are the same decision for HF's other link field, "
-                "decided independently -- a paper can have a page and no repo.",
+                "decided independently -- a paper can have a page and no repo. Why a "
+                "row came out this way, with its score, is in "
+                "build/paper_code_why.json: derived, rewritten every run, so this file "
+                "stays a record of decisions rather than of readings.",
         "papers": dict(sorted(rows.items())),
     })
 
@@ -789,7 +817,8 @@ def main() -> None:
             "=" if have and e["repo"] and e["repo"].lower().endswith(
                 have.split("github.com/")[-1]) else " ")
         return (f"{mark} {p.get('citations') or 0:>4} cites  {slug[:52]:<52} "
-                f"{e['repo'] or '-':<52} score {e['score']}")
+                f"{e['repo'] or '-':<52} "
+                f"{'your decision' if e['frozen'] else 'score ' + str(e['score'])}")
 
     print(f"== will publish ({len(acc)})  -- '*' = your decision, the rest a release "
           f"phrase plus corroboration")

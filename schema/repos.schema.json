@@ -43,7 +43,7 @@
         "kind": {
           "type": "string",
           "enum": ["paper-code", "guide", "tool", "dataset", "website", "teaching", "other"],
-          "description": "Decides the treatment. See docs/REPOS.md -- guide and paper-code get different READMEs, and only paper-code gets CITATION.cff."
+          "description": "Decides the treatment. See docs/RULES.md §11 -- guide and paper-code get different READMEs, and only paper-code gets CITATION.cff."
         },
         "generic_gloss": {
           "type": "string",

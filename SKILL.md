@@ -10,202 +10,95 @@ description: >
 
 # paper-geo
 
-One source of truth (`data/`), one command (`update.py`), and a short list of
-things only a human can do (`WORKLIST.md`).
+111 papers and 31 repos, one command (`update.py`), one source of truth (`data/`),
+and a short ranked list of what only a human can do (`WORKLIST.md`).
 
-**Two tracks with different rules.** Read the one you're working in:
+## Your contract
+
+**Everything except the soft text is code.** Eight of the ten steps re-derive public
+facts from public sources; a human or a model in them is a human retyping a fetch.
+
+**Your whole job in a run is filling two JSON objects** — `sidecar` in
+`build/sidecar_tasks.json` and `proposal` in `build/llm_tasks.json`. Claims, scope,
+evidence, questions, misreadings, terminology, gloss, topics, descriptions. That is
+the part that needs reading and judgement, which is why it is yours.
+
+**You never hand-edit `data/*.yaml`, never accept your own draft, never write
+outward.** A hand edit to a derived file survives until the next run and then
+vanishes, which is worse than failing because it looked like it worked. `--accept`
+makes a claim an assertion under the author's name. `--apply` and `--deploy` write to
+public records other people's tooling reads. All three are the author's.
+
+## The loop
+
+```bash
+python update.py                              # read-only: ten steps, then a report
+python scripts/draft_sidecars.py --ingest     # fold your sidecar answers into drafts/
+python scripts/propose_topics.py --ingest     # fold your repo proposals into repos.yaml
+```
+
+1. **Run it.** `python update.py`, or one step with `--step <name>`. Read-only.
+   `--refresh-bib` first if the bibliography has new entries.
+2. **Read what it handed back.** The `propose` step writes `build/llm_tasks.json` and
+   stops; the `draft` step writes `build/sidecar_tasks.json` and stops. Each task
+   carries its own schema and its own evidence. If neither file appeared, the run
+   needed nothing from you — say so and stop.
+3. **Fill the objects, against the rules, not against your instinct for what reads
+   well.** Sidecars: [docs/SIDECAR.md §2](docs/SIDECAR.md#2-the-rules), which is the
+   literal prompt text, so it is also already in the task's `system` field. Repo
+   labels: [docs/RULES.md §11.2](docs/RULES.md#112-labelling-topics-and-descriptions).
+4. **`--ingest`.** Sidecars land in `data/sidecars/drafts/`, which **nothing reads** —
+   the site, the validator, the fidelity check and the coverage count all glob
+   `data/sidecars/*.md` one level up, so an unverified draft cannot reach a published
+   page.
+5. **Hand back.** Re-run `--step worklist` if you changed anything, then report what
+   `WORKLIST.md` says needs a person, shortest path first. Stop there.
+
+## When to stop instead of producing something
+
+| If | Then |
+|---|---|
+| the task's `evidence` says the full text is **NOT AVAILABLE** | draft nothing. A sidecar written from a title is a page of confident guesses under someone's name. Report it as thin |
+| the evidence gives no number for a finding | the claim says the paper reports no magnitude, or it is left out. **Never invent a magnitude** — a wrong number is the one failure worse than silence, because it is quotable |
+| `scripts/fulltext.py --report` lists a paper as thin | fix that first, not after. A thin source produces a thin draft, and the first version of this read one field, so 12 papers got sidecars written from their titles |
+| a repo or a `paper_code` row has `reviewed: true` | it is frozen. Do not re-propose it |
+| the schema rejects what you wrote | fix the content. Do not loosen the schema |
+| you are about to run `--accept`, `--apply`, `--deploy`, or `sweep_github.py apply` | that is the author's. Print the command instead |
+| the same item keeps reappearing in `WORKLIST.md` | it needs a recorded decision, not another pass |
+| you are tempted to read `docs/EVIDENCE.md` or `docs/SETUP.md` mid-run | don't. Neither is a procedure; one is why the rules exist, the other is one-time account work |
+
+**Only 1 of 31 repos maps to a paper** — paper code mostly lives in collaborators'
+accounts. Do not treat the repo track as "the code for the papers".
+
+## Where the rules live
 
 | | |
 |---|---|
-| [docs/SHARED.md](docs/SHARED.md) | rules that apply to both — identity, chunking, coined names, what not to do |
-| [docs/PAPERS.md](docs/PAPERS.md) | 112 papers. Claims, metadata correctness, sidecars, the `links` map |
-| [docs/REPOS.md](docs/REPOS.md) | 31 repos. Topics, descriptions, the three `kind`s, `CITATION.cff` |
-| [docs/RUNBOOK.md](docs/RUNBOOK.md) | **the procedure** — what runs on which clock, what an agent does step by step and when to stop |
-| [docs/SIDECAR_DESIGN.md](docs/SIDECAR_DESIGN.md) | how to write a sidecar, step by step, plus the format decisions still open |
-| [docs/COLLAB.md](docs/COLLAB.md) | co-author ownership protocol: who owns a page, who links to it |
-| [docs/MEASURE.md](docs/MEASURE.md) | how to tell whether any of it worked |
-| [docs/SETUP.md](docs/SETUP.md) | the one-time account checklist — ORCID, arXiv ownership, Scholar, Wikidata, HF, Zenodo |
-| [USAGE.md](USAGE.md) | how a human runs it: refresh, new paper, sidecars, co-authors |
-| [STUDY.md](STUDY.md) | the evidence and mechanism behind all of it |
+| [docs/RULES.md](docs/RULES.md) | the GEO rules, once: identity, chunking, coined names, papers, repos, co-authors, and a table of what is actually enforced |
+| [docs/SIDECAR.md](docs/SIDECAR.md) | the sidecar spec. §2 **is** the drafting prompt, and §6 is what is still undecided |
+| [RUN.md](RUN.md) | the operating design and the human's terminal guide — the four clocks, what each step will not do, the new-paper flow |
+| [docs/SETUP.md](docs/SETUP.md) | the one-time account checklist. Read once, in order, by a human |
+| [docs/EVIDENCE.md](docs/EVIDENCE.md) | what is known and how to tell whether it worked. Read rarely |
+| [BACKLOG.md](BACKLOG.md) | parked on purpose. The only list here that nothing derives |
 
-Only 1 of 31 repos maps to a paper — paper code mostly lives in collaborators'
-accounts. Do not treat the repo track as "the code for the papers".
+## Recording a decision so it survives the next run
 
-The generated artifacts are the visibility assets; this repo is where the facts
-live so they stay consistent and regenerable. Nothing is published without an
-explicit `--apply`.
+Everything is re-derived each run, so a judgment call that is not written down is
+made again every month. Where each kind goes is
+[RULES.md §7](docs/RULES.md#7-record-every-decision-or-lose-it); the short form:
+papers → `data/overrides.yaml`, repos and code links → `reviewed: true`, a task ruled
+out → `data/declines.yaml`, a maybe-later → `data/followups.yaml`, an intention →
+`BACKLOG.md`. Deciding *not* to do something is a decision.
 
-## The steady state, which is the point
-
-Setting this up was the one-time cost and it is nearly paid. From here the work is
-an update loop, and **the loop is where this skill spends its effort**: find what
-changed about the papers, produce the GEO for it, hand a human one link. Ranked by
-what should own each part — code, then a model, then a person:
-
-| Who | Does | Why not the tier below |
-|---|---|---|
-| **Code** | `collect`, `repos`, `ownership`, `audit`, `validate`, `render` | All of it is re-derived from public sources. A human here is a human retyping a fetch. |
-| **A model** | `propose` (repo labels), `draft` (sidecars from each paper's own full text) | Needs reading and judgement, so no rule does it — but it is a *reading*, so it lands as a draft nothing publishes. |
-| **The author** | `--accept` a sidecar draft; any write that leaves the machine (`--apply`, `--deploy`) | An accepted sidecar is an assertion under the author's name, and only the author knows which misreading actually keeps happening. |
-
-So the honest description of a monthly run is: one command, then one link. Everything
-between them is code and a model, and the two human touches are both *decisions*
-rather than transcription.
-
-**Drafting from the paper, not from its title.** `scripts/fulltext.py` resolves each
-paper's actual text through a chain of open sources — arXiv HTML, ACL Anthology,
-Unpaywall, Semantic Scholar, Europe PMC, arXiv PDF — and `data/fulltext/` is the
-escape hatch for the handful with no public copy. It exists because the first version
-read one field and 12 papers therefore got sidecars written from their titles. Check
-coverage with `python scripts/fulltext.py --report`; anything it lists as thin will
-produce a thin draft, so fix that before drafting rather than after.
-
-**Unattended, if you want it that way.** Every step is read-only and idempotent, so
-the loop is safe on a schedule (`llm.mode: api` in `config.yaml` for the model steps).
-What must not be scheduled is the accept and the publish — see the table.
-
-## Routine refresh
-
-```bash
-python update.py                    # read-only: refresh, then report what needs a human
-python scripts/sweep_github.py diff # exactly what would change on GitHub
-python update.py --apply            # write it
-```
-
-`update.py` runs ten steps, each independently re-runnable:
-
-| Step | Does | Writes |
-|---|---|---|
-| `collect` | bibliography + Semantic Scholar + arXiv + Hugging Face → one record per paper | `data/papers.yaml` |
-| `repos` | refresh GitHub repo state, preserving prior edits | `data/repos.yaml` |
-| `propose` | label repos that still lack topics or a description | `build/llm_tasks.json` |
-| `draft` | draft sidecars for the next batch of papers that have none | `data/sidecars/drafts/` |
-| `links` | deduce each paper's code repo and project page from its own full text | `data/paper_code.yaml` |
-| `ownership` | reconcile paper ownership with collaborators' manifests | `paper-geo.json` |
-| `audit` | live-read the surfaces we don't control — ORCID, arXiv authority records, Wikidata, HF, S2 — and regenerate their payloads | `tasks/*` |
-| `validate` | schema-check every data file, plus regression checks for bugs already shipped once; refresh the corpus sizes stated in the docs | the doc sentences |
-| `render` | rebuild the site locally, so the run ends in a page rather than a report | `build/site/` |
-| `worklist` | rank what only a human can do, by citations | `WORKLIST.md` |
-
-Then, separately: `scripts/build_site.py --deploy` publishes the site,
-`scripts/links_block.py` maintains README link blocks, `measure/check_structure.py`
-and `measure/fidelity.py` are the two measurement instruments.
-
-Run one with `--step <name>`. Add `--refresh-bib` to re-run the upstream
-`publications` pipeline first (needs `sources.publications_path` in `config.yaml`).
-
-## Labelling repos (the `propose` step)
-
-Default mode is `skill`: the step writes `build/llm_tasks.json` and stops. Fill in
-each task's `proposal` object against the embedded JSON schema, then:
-
-```bash
-python scripts/propose_topics.py --ingest
-```
-
-When labelling, two rules matter more than sounding good:
-
-- **Accuracy over coverage.** A wrong topic misleads retrieval and reads as
-  careless. If the evidence doesn't support a label, leave it out and lower
-  `confidence`. An earlier keyword-matching version tagged a
-  grammatical-error-correction repo `model-merging` and a sentence-similarity
-  metric `pretraining` — that is the failure mode to avoid.
-- **Search vocabulary, not project vocabulary.** Use the words someone who
-  doesn't know the project would type. Coined names (TextArena, ZipNN, DOVE) are
-  branding; put the plain phrasing in `generic_gloss`.
-
-Set `reviewed: true` on a repo in `data/repos.yaml` to freeze it — later runs will
-never re-propose or overwrite it.
-
-For unattended runs (cron), set `llm.mode: api` in `config.yaml`; it needs
-`ANTHROPIC_API_KEY` or an `ant auth login` profile.
-
-## Sidecars (the `draft` step)
-
-One file per paper at `data/sidecars/<slug>.md`: the claims in quotable form, the
-scope each holds under, coined terminology, and the misreadings worth pre-empting.
-Full schema and rules:
-[docs/PAPERS.md](docs/PAPERS.md#rule-5-the-sidecar-is-drafted-by-a-tool-and-verified-by-the-author).
-
-**You draft; the author verifies.** A claim with its magnitude, a scope condition and
-the gloss of a coined term are all in the paper — what the author uniquely holds is
-whether a draft got them right and which misreading actually keeps happening. So:
-
-```bash
-python scripts/draft_sidecars.py --limit 20   # queue (or --slug <slug> ...)
-python scripts/draft_sidecars.py --ingest     # fold your answers into drafts/
-```
-
-In `skill` mode the step writes `build/sidecar_tasks.json` and stops. Fill each task's
-`sidecar` object against the embedded schema — the evidence field carries the paper's
-full text, so use the paper's own numbers and cite where each came from (`Table 2`).
-Drafts land in `data/sidecars/drafts/`, which **nothing reads**: the site, validator,
-fidelity check and coverage count all glob `data/sidecars/*.md` one level up, so an
-unverified draft cannot reach a published page. Only the author runs `--accept`.
-
-Never invent a magnitude. If the evidence gives no number for a finding, say so in the
-claim text — a wrong number is the one failure here that is worse than silence, because
-it is quotable.
-
-Each task's evidence names the source it came from (`full text (from acl-anthology
-https://... , truncated)`). Read that line first: if it says the text is NOT AVAILABLE,
-the honest move is to draft nothing and put the paper in `--report`'s thin list instead,
-because a sidecar written from a title is a page of confident guesses under someone's
-name. The chain and the `data/fulltext/` escape hatch are in `scripts/fulltext.py`.
-
-The rule that is easy to get backwards:
-
-- **Questions: paraphrase deliberately.** Give 2–4 phrasings of each question.
-  Engines fan a query out into many synthetic sub-queries and you cannot guess
-  which phrasing wins.
-- **Claims: never paraphrase.** A restated claim is a second, slightly different
-  version of your own finding — it fragments corroboration and the two drift apart.
-  So `qa` entries reference claim **ids**; the renderer emits each claim verbatim.
-- **Never a question without its answer adjacent.** A question-only passage matches
-  the query and then loses the citation, because the concrete answer isn't in the
-  chunk. That is the worst of both outcomes.
-
-A model can report what a paper *says* about its limits but cannot rank which
-limitation actually binds — so draft it and hand back. Don't strip legitimate caveats
-to sound confident; precise claim plus explicit scope.
-
-## New paper just posted
-
-1. `python update.py --refresh-bib` — picks it up and reports what it needs.
-2. Claim it on arXiv unless you submitted it — arXiv ownership defaults to whoever
-   pressed submit, and step 4 is impossible without it (`tasks/arxiv_ownership.md`).
-3. Index and claim its Hugging Face paper page: `hf.co/papers/<arxiv-id>`.
-4. Once it has a venue, add the journal-ref to the arXiv record (see `WORKLIST.md`).
-5. Write its sidecar.
-6. Its code repo and project page are already deduced from its own full text by the
-   `links` step — read the row in `data/paper_code.yaml`, correct it if wrong, set
-   `reviewed: true` to freeze it. `--apply` pushes the accepted ones to the Hugging
-   Face paper page; the site shows them without waiting for that.
-7. For the repo's own topics and description: `python update.py --step repos`, then
-   label and apply.
-
-## Recording a decision so it survives reruns
-
-Everything is re-derived from live sources on each run, so a judgment call made by
-hand must be written down or it gets undone:
-
-- **Papers** → `data/overrides.yaml` (`force_merge`, `force_distinct`, `drop`, `fields`)
-- **Repos** → the `reviewed: true` flag in `data/repos.yaml`
-- **Code and project links** → the `reviewed: true` flag in `data/paper_code.yaml`,
-  which also makes that row's own URLs the ones `--apply` pushes
-- **A task ruled out** → `data/declines.yaml`, which stops `WORKLIST.md` asking
-
-If the same item keeps reappearing in `WORKLIST.md`, it needs an override — and
-usually an upstream fix too, so the correction propagates to Scholar, Semantic
-Scholar, and OpenAlex rather than only to us. If it reappears because it was
-*decided against* rather than left undone, that is `declines.yaml`: deciding not to
-do something is a decision, and an unrecorded decision is made again every run.
+If an item reappears because a public record is wrong, fix it upstream too, so the
+correction reaches Scholar, Semantic Scholar and OpenAlex rather than only us.
 
 ## Don't
 
-- Keyword stuffing, or padding topics to look complete — measured *negative* for
-  generative-engine visibility.
+- Keyword stuffing, or padding topics to look complete — **measured negative** for
+  generative-engine visibility, not merely useless.
 - Hidden text or instructions aimed at automated readers. Retraction-adjacent.
-- Publishing to extra preprint mirrors: it multiplies versions and defeats the
-  version-matching that merges a paper's preprint and published records.
+- Stripping legitimate caveats to sound confident. Precise claim, explicit scope.
+- Paraphrasing a claim. Paraphrase the *questions*, never the finding —
+  [SIDECAR.md §2](docs/SIDECAR.md#2-the-rules) rule 5.
 - Writing to GitHub without `diff` first.

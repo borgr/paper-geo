@@ -1,6 +1,6 @@
 # arXiv: claim ownership of 0 papers
 
-Registered as author on **105** of **105** arXiv papers.
+Registered as author on **105** of **104** arXiv papers.
 Public list: <https://arxiv.org/a/0000-0002-0085-6496>
 
 ## Why this is first, not last

@@ -64,7 +64,7 @@ repos:
   generic_gloss: syntactic divergences between error-correction edits and dependency parses
   write_links_block: false
 - repo: borgr/USim
-  paper_slug: null
+  paper_slug: reference-less-measure-of-faithfulness-for-grammatical-error
   description: Reference-less semantic similarity metric for grammatical error correction, built on UCCA
     semantic parsing (NAACL 2018).
   topics:
@@ -294,7 +294,7 @@ repos:
   generic_gloss: evaluating automatic correction of language-learner writing
   write_links_block: false
 - repo: borgr/GEC_BOTHER
-  paper_slug: null
+  paper_slug: some-grammatical-errors-are-frequent-others-are-important
   description: Crowdsourced human judgments of how much different grammatical errors bother readers, with
     per-error-type weights.
   topics:
@@ -501,7 +501,7 @@ repos:
   kind: other
   write_links_block: false
 - repo: borgr/auto_challenge_sets
-  paper_slug: null
+  paper_slug: automatically-extracting-challenge-sets-for-non-local-phenom
   description: Automatically extracts challenge sets for non-local phenomena to evaluate neural machine
     translation (CoNLL 2019).
   topics:

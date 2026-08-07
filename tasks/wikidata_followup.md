@@ -72,8 +72,8 @@ and all of them are personal data you would then be maintaining.
 
 ## Then: your papers
 
-**Measured this run: 3 of 112 have a Wikidata item.**
-(Matched on DOI and arXiv id across 111 papers that carry one
+**Measured this run: 3 of 111 have a Wikidata item.**
+(Matched on DOI and arXiv id across 110 papers that carry one
 — exact keys, so this is coverage and not a name-search guess.)
 
 - [Q106097217](https://www.wikidata.org/wiki/Q106097217) — An autonomous debating system
@@ -100,7 +100,7 @@ the item's own statements are a 15-minute job either way.
 **Creating the missing items — optional, and read this first.**
 
 `tasks/wikidata_papers.qs` holds a QuickStatements batch for
-108 papers: title, publication date, DOI or arXiv id, and the author
+107 papers: title, publication date, DOI or arXiv id, and the author
 list with you as `author` → Q140867203 and co-authors as `author name string`
 with position qualifiers. Only papers carrying a DOI or arXiv id are
 included — a resolvable identifier is what puts a publication item

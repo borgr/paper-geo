@@ -7,7 +7,7 @@ which is why it can be re-run — the fixes all need one.
 | surface | state | |
 |---|---|---|
 | ORCID works (public) | 115 | ok |
-| ORCID holds your papers | 111 of 112 | **fix** |
+| ORCID holds your papers | 110 of 111 | **fix** |
 | ORCID canonical URL | present | ok |
 | ORCID name variants | 2 listed | ok |
 | ORCID keywords | 13 of 13 | ok |
@@ -15,15 +15,17 @@ which is why it can be re-run — the fixes all need one.
 | ORCID employment | 3 listed, 0 missing | ok |
 | ORCID education | 2 listed, 0 missing, 0 incomplete, 1 institution-asserted | ok |
 | ORCID works added by Crossref/DataCite | 0 | nothing yet |
-| arXiv registered author | 105 of 105 | ok |
+| arXiv registered author | 104 of 104 | ok |
 | Wikidata author item | Q140867203 | ok |
 | Wikidata item complete | 9 gaps | **fix** |
-| Wikidata paper items | 3 of 112 | optional |
-| HF pages indexed | 105 of 105 | ok |
-| HF pages claimed | 103 of 105 claimable | ok |
+| Wikidata paper items | 3 of 111 | optional |
+| HF pages indexed | 104 of 104 | ok |
+| HF pages claimed | 102 of 104 claimable | ok |
 | HF claims in moderation | 2 | waiting |
 | arXiv records misspelling your name | 0 | ok |
 | arXiv records omitting you | 0 | ok |
+| arXiv papers missing from your bibliography | 1 | **check** |
+| ORCID works that are not yours | 1 | **fix** |
 | ORCID works we cannot place | 4 | **check** |
 | Semantic Scholar records | 2 | **fix** |
 
@@ -104,7 +106,7 @@ An alias was stored as one string with its markdown intact (``L. Choshen``), so 
 
 Full diff, plus what the measured paper coverage means for the Author Disambiguator pass: [wikidata_followup.md](wikidata_followup.md).
 
-## Wikidata paper coverage: 3 of 112
+## Wikidata paper coverage: 3 of 111
 
 Matched on DOI and arXiv id, not on name. This number matters because it
 decides which Wikidata job is worth doing: relinking author strings on
@@ -115,7 +117,25 @@ Wikidata's main query graph, so a publication query against
 `query.wikidata.org` returns zero rows with a 200, and looks like an
 answer. This uses `query-scholarly.wikidata.org`.
 
-An opt-in batch for the 109 missing items is in `tasks/wikidata_papers.qs`; read the cautions in [wikidata_followup.md](wikidata_followup.md) before running it.
+An opt-in batch for the 108 missing items is in `tasks/wikidata_papers.qs`; read the cautions in [wikidata_followup.md](wikidata_followup.md) before running it.
+
+## 1 arXiv papers you own are not in your bibliography
+
+Read off `arxiv.org/a/<orcid>`, which is the only place this shows up: the
+collector starts from the .bib, so a paper missing there is invisible to
+every other check here. Add it to the bibliography (or, if the claim was a
+mistake, unclaim it on arXiv).
+
+- [ ] <https://arxiv.org/abs/2605.29512>
+
+## 1 works on your ORCID are not yours
+
+Imported from the bibliography before the collector checked author names —
+a CV bibliography holds the works it *cites* as well as the works it lists.
+ORCID is read as your authorship claim by Semantic Scholar, OpenAlex and
+publisher systems, so this is worth clearing before anything else on this
+page. One deletion each, put-codes included:
+[orcid_remove.md](orcid_remove.md).
 
 ## 1 of your papers are missing from ORCID
 

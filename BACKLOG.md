@@ -24,20 +24,27 @@ rather than derivation, it has measurably drifted across 20 files, and it is wha
 gets copied to other people's installs — so drift here propagates.
 
 - [ ] **Work through the open decisions** in
-      [docs/SIDECAR_DESIGN.md](docs/SIDECAR_DESIGN.md), in file order. Each one ends
-      as a rule in that file plus an enforcement in `validate.py` or the schema.
-      Nothing else in this section starts before they are settled.
+      [docs/SIDECAR.md §6](docs/SIDECAR.md#6-the-open-decisions), in file order. Each
+      one ends as a rule in §2 (which is the prompt) plus an enforcement in
+      `validate.py` or the schema. Nothing else in this section starts before they are
+      settled.
 - [ ] **Regenerate the TIES sidecar** once the rules are settled. It is the only
       accepted sidecar, it was hand-written before the drafter existed, and it is
       the file every reader will look at first — it currently disagrees with all 19
-      drafts on casing, voice and claim count (3 claims against a median of 16).
-- [ ] **Fold the settled rules into the drafting prompt**, which lives in
-      `scripts/draft_sidecars.py`. Today the rules have three homes — that prompt,
-      the schema's `description` strings, and `docs/PAPERS.md` — so they are already
-      three slightly different rule sets.
+      drafts on casing, voice and claim count (3 claims against a median of 16). Its
+      body is now empty on purpose: the body renders publicly as "Notes from the
+      author", and what was there described the file's own review status. If you want
+      a sentence in your own voice under the claims, that is where it goes — nothing
+      else writes it.
 - [ ] **Add the shape enforcement** the schema cannot express: key order, field
-      length bands, claims with no `qa` pointing at them, `qa` pointing at ids that
-      do not exist. Formatter where mechanical, validator where not.
+      length bands, claims with no `qa` pointing at them. Formatter where mechanical,
+      validator where not. (`qa` pointing at ids that do not exist is already an error
+      in `validate.py check_sidecars`.)
+- [ ] **Reconcile the schema's `description` strings with the prompt.** The rules now
+      have two homes, not three: `docs/SIDECAR.md` §2 is read verbatim by the drafter,
+      but `schema/sidecar.schema.json` still states the reasoning per field in its own
+      words. Either the schema descriptions get generated from the doc, or they shrink
+      to the mechanical constraint and point at the doc for the why.
 
 ## Next — the papers themselves
 
@@ -45,8 +52,8 @@ gets copied to other people's installs — so drift here propagates.
 - [ ] Draft the remaining 93. The `draft` step does 10 a run; it finishes itself.
 - [ ] `FAQPage` / `mainEntity` JSON-LD on paper pages — gated on the `qa` decisions,
       because which of 2–4 paraphrases becomes the canonical `name` is one of them.
-- [ ] Generate the README/model-card claim snippet from the sidecar. [SHARED.md
-      §5](docs/SHARED.md#5-say-the-same-thing-the-same-way) requires the canonical
+- [ ] Generate the README/model-card claim snippet from the sidecar. [RULES.md
+      §5](docs/RULES.md#5-say-the-same-thing-the-same-way) requires the canonical
       sentence to appear identically in several places; nothing enforces that, so
       today it is maintained by hand, which means it is not maintained.
 
@@ -73,12 +80,28 @@ Deferred with a release condition in [`data/declines.yaml`](data/declines.yaml),
 
 Recorded rather than fixed, so the next person does not rediscover it as a bug.
 
-- [ ] `data/papers.yaml` stores observed, volatile state (`citations`,
+- [ ] **`data/papers.yaml` stores observed, volatile state** (`citations`,
       `hf_upvotes`, `hf_github_stars`) alongside stable identifiers, so an online
       run produces a diff that is mostly noise and the file's history cannot answer
-      "what changed about my papers". The time series belongs in
-      `measure/`, which already has the shape for it.
-- [ ] `WORKLIST.md` emits a `- [ ]` item immediately followed by a `###` heading
-      with no blank line between them, so that heading renders inside the list.
-- [ ] Four ORCID works we cannot place are listed with `- ` rather than `- [ ]`,
-      which means `declines.yaml`'s `items:` filter cannot match them.
+      "what changed about my papers". The time series belongs in `measure/`, which
+      already has the shape for it. **Costed and declined for now:** those three
+      fields have 59 call sites across 12 files, including the worklist's citation
+      ranking, and the benefit is cleaner diffs — the wrong trade today, but a real
+      wrongness rather than a preference.
+- [ ] **No formatter, only a validator.** `validate.py --fix-counts` set the
+      precedent that mechanical things get fixed rather than reported, and then
+      nothing else followed it. Key order, list order, id casing and line wrapping in
+      the sidecars are all mechanical and all currently hand-fixed, inconsistently.
+      This is the same item as the shape enforcement above, seen from the tooling
+      side: whichever way D4 in `docs/SIDECAR.md` goes decides both.
+- [ ] **The agent's procedure has no test.** Every data-shaped rule has a schema or a
+      `validate.py` check behind it, and `selftest()` covers the code paths with no
+      data footprint — but "did the model follow the drafting rules" is checked only
+      by a human reading the draft. The nearest mechanical proxies would be a fixture
+      paper with a known set of numbers, and an assertion that no claim contains a
+      figure absent from the evidence text. Neither exists.
+- [ ] **`WORKLIST.md` mixes two kinds of instruction.** Account actions no code can
+      take ("open this arXiv form and paste this journal-ref") sit in the same ranked
+      list as commands to run, and a reader has to notice which is which per item.
+      Splitting them would help; ranking by citations across both is what makes it
+      one list today.

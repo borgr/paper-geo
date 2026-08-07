@@ -204,7 +204,7 @@
             "string",
             "null"
           ],
-          "description": "Set when a co-author or project site owns this paper's canonical page. We then LINK to it instead of generating a competing one -- see docs/SHARED.md on duplication."
+          "description": "Set when a co-author or project site owns this paper's canonical page. We then LINK to it instead of generating a competing one -- see docs/RULES.md §9 on duplication."
         },
         "has_sidecar": {
           "type": "boolean"

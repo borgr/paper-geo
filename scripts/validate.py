@@ -8,8 +8,15 @@ Falls back to a small built-in checker when jsonschema is not installed, so the
 pipeline still catches the mistakes that actually happen (wrong type, unknown
 field, bad topic format) without adding a hard dependency.
 
+Two kinds of problem, two exit codes, because they deserve different reactions.
+A *structural* problem -- schema violation, dangling claim id, missing prompt block
+-- means something downstream is already broken, so it exits 1 and stops the caller.
+A stale corpus size in a prose sentence exits 0 and is merely reported: it is a
+chore, and halting a run over it would only teach the author to skip validation.
+`--strict` collapses the distinction, for CI.
+
 Usage:
-    python scripts/validate.py [--strict]
+    python scripts/validate.py [--fix-counts] [--strict]
 """
 from __future__ import annotations
 
@@ -22,7 +29,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import DATA, ROOT, load_config, norm_name, read_yaml  # noqa: E402
+from common import DATA, ROOT, load_config, norm_name, read_yaml, rules_block  # noqa: E402
 
 SCHEMA_DIR = os.path.join(ROOT, "schema")
 
@@ -522,16 +529,39 @@ def check_sidecars() -> list[str]:
 # the number there without redoing the sum produces a confidently wrong page.
 DOC_COUNTS = (
     ("README.md", "corpus ({papers} papers, {repos} repos)", ""),
-    ("SKILL.md", "| {papers} papers. Claims", ""),
-    ("SKILL.md", "| {repos} repos. Topics", ""),
+    ("SKILL.md", "{papers} papers and {repos} repos", ""),
     ("SKILL.md", "Only 1 of {repos} repos maps", ""),
-    ("USAGE.md", "unanswerable at {papers} papers", ""),
-    ("docs/PAPERS.md", "{papers} papers. Read", ""),
-    ("docs/REPOS.md", "1 of {repos} repos maps to a paper", ""),
-    ("docs/MEASURE.md", "~{papers} papers × 6 questions", "recompute the question total"),
-    ("docs/MEASURE.md", "~{papers} papers × ~4 months", "recompute the paper-months"),
-    ("docs/MEASURE.md", "sidecars for {papers} papers", "recompute the hours"),
+    ("docs/RULES.md", "1 of {repos} repos maps to a paper", ""),
+    ("docs/EVIDENCE.md", "unanswerable at {papers} papers", ""),
+    ("docs/EVIDENCE.md", "~{papers} papers × 6 questions", "recompute the question total"),
+    ("docs/EVIDENCE.md", "~{papers} papers × ~4 months", "recompute the paper-months"),
+    ("docs/EVIDENCE.md", "sidecars for {papers} papers", "recompute the hours"),
 )
+
+# Docs a model is actually sent, and the section of each that it is sent. See
+# common.rules_block: the doc is the only copy of those rules, so deleting a marker
+# would silently produce a prompt with no rules in it.
+PROMPT_DOCS = (
+    ("docs/SIDECAR.md", "§2, the sidecar drafting rules", "scripts/draft_sidecars.py"),
+    ("docs/RULES.md", "§11.2, the repo labelling rules", "scripts/propose_topics.py"),
+)
+
+
+def check_prompt_blocks() -> list[str]:
+    """Fail the run, not the next draft, if a prompt block went missing.
+
+    `rules_block` already raises when a marker is gone, but it raises at drafting time
+    -- which in `skill` mode is a session that has already started. This is the same
+    check one layer earlier, so a doc edit that breaks a prompt is caught by the
+    validate step of the run that made it.
+    """
+    errs = []
+    for doc, what, reader in PROMPT_DOCS:
+        try:
+            rules_block(doc)
+        except RuntimeError as e:
+            errs.append(f"{e} ({what}; read by {reader})")
+    return errs
 
 
 def count_pattern(template: str) -> re.Pattern:
@@ -562,6 +592,11 @@ def check_doc_counts(papers: list[dict], repos: list[dict], fix: bool = False) -
     for fname, template, note in DOC_COUNTS:
         path = os.path.join(ROOT, fname)
         if not os.path.exists(path):
+            # Not skipped: a missing target means this row silently stopped checking
+            # anything, which is how a renamed doc keeps a stale number forever.
+            errs.append(f"{fname}: DOC_COUNTS names a file that does not exist. "
+                        f"Point the row at the file the sentence moved to, or drop it "
+                        f"(scripts/validate.py DOC_COUNTS)")
             continue
         want = template.format(**counts)
         text = open(path).read()
@@ -615,19 +650,23 @@ def main() -> None:
     errs += check_slug_history()
     errs += check_name_lists()
     errs += check_affiliations()
-    errs += check_doc_counts((docs.get("papers") or {}).get("papers", []),
-                             (docs.get("repos") or {}).get("repos", []),
-                             fix=args.fix_counts)
+    errs += check_prompt_blocks()
+    # Kept separate from the rest: a wrong number in a sentence is the one problem
+    # class that does not mean something is broken. See the module docstring.
+    counts = check_doc_counts((docs.get("papers") or {}).get("papers", []),
+                              (docs.get("repos") or {}).get("repos", []),
+                              fix=args.fix_counts)
 
     if not have_js:
         print("note: jsonschema not installed -- using the built-in subset of checks")
-    if errs:
-        print(f"\n{len(errs)} problem(s):")
-        for e in errs[:60]:
+    problems = errs + counts
+    if problems:
+        print(f"\n{len(problems)} problem(s):")
+        for e in problems[:60]:
             print(f"  {e}")
-        if len(errs) > 60:
-            print(f"  ... and {len(errs) - 60} more")
-        sys.exit(1 if args.strict else 0)
+        if len(problems) > 60:
+            print(f"  ... and {len(problems) - 60} more")
+        sys.exit(1 if (errs or args.strict) else 0)
     print("data files valid")
 
 

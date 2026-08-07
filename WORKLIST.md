@@ -11,13 +11,13 @@ reading of each external surface is [tasks/identity_audit.md](tasks/identity_aud
 - **2026-10-04** — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.
 - **2026-11-04** — Crossref and DataCite auto-update only fire on newly deposited metadata that already carries your iD, so the proof is a work whose ORCID source is Crossref or DataCite rather than your own name -- which cannot appear until something you publish is deposited.
 
-## Identity surfaces (3 open)
+## Identity surfaces (4 open)
 
 Each is blocked on an account you are logged into, not on knowing what to
 do. `python scripts/identity_tasks.py` regenerates every payload under
 `tasks/` — committed, so browsable on GitHub.
 
-### ORCID is missing 1 of your 112 papers
+### ORCID is missing 1 of your 111 papers
 
 Highest leverage on this page. Semantic Scholar's disambiguation and
 OpenAlex's profile merges are both ORCID-driven, so this is the one fix that
@@ -31,7 +31,14 @@ Full list with citations: `tasks/orcid_missing.md`. How and why:
 [docs/SETUP.md §1](docs/SETUP.md#1-orcid--populate-it-then-wire-it-everywhere).
 
 - [ ] 0 cites — Resolving Interference (RI): Disentangling Models for Improved Mod
-### Semantic Scholar — 43 papers on a second author record
+
+### ORCID lists 1 work that is not yours
+
+A wrong work on your record is worse than a missing one: it is the thing that
+makes an automated merge distrust the record. *Works → the entry → Delete.*
+Put-codes and titles: `tasks/orcid_remove.md`.
+
+### Semantic Scholar — 33 papers on a second author record
 
 Every S2-backed tool (Elicit, Consensus, SciSpace, most literature agents)
 resolves you to one page, so each currently sees about half the corpus.
@@ -74,15 +81,15 @@ and stop — that is where the citation-splitting actually costs something.
 There is no write API, so it is one *Journal ref* form per paper on your
 submission page (a metadata edit, not a new version).
 
-- [ ] `2306.01708` (859 cites) -> NeurIPS 2023  <https://arxiv.org/abs/2306.01708>
-- [ ] `2402.14992` (282 cites) -> ICML 2024  <https://arxiv.org/abs/2402.14992>
-- [ ] `2412.03304` (180 cites) -> ACL 2025  <https://arxiv.org/abs/2412.03304>
+- [ ] `2306.01708` (865 cites) -> NeurIPS 2023  <https://arxiv.org/abs/2306.01708>
+- [ ] `2402.14992` (283 cites) -> ICML 2024  <https://arxiv.org/abs/2402.14992>
+- [ ] `2412.03304` (181 cites) -> ACL 2025  <https://arxiv.org/abs/2412.03304>
 - [ ] `2104.08202` (167 cites) -> EMNLP 2021  <https://arxiv.org/abs/2104.08202>
 - [ ] `1907.01752` (127 cites) -> ICLR 2020  <https://arxiv.org/abs/1907.01752>
 - [ ] `2211.05655` (119 cites) -> ACL 2023  <https://arxiv.org/abs/2211.05655>
 - [ ] `2410.19735` (112 cites) -> ICLR 2025  <https://arxiv.org/abs/2410.19735>
 - [ ] `2507.16806` (98 cites) -> ICLR 2026  <https://arxiv.org/abs/2507.16806>
-- [ ] `2402.16842` (90 cites) -> ICML 2024  <https://arxiv.org/abs/2402.16842>
+- [ ] `2402.16842` (91 cites) -> ICML 2024  <https://arxiv.org/abs/2402.16842>
 - [ ] `2405.17202` (83 cites) -> NeurIPS 2024  <https://arxiv.org/abs/2405.17202>
 - [ ] `1907.08971` (77 cites) -> ACL 2019  <https://arxiv.org/abs/1907.08971>
 - [ ] `2302.04863` (71 cites) -> Findings of EMNLP 2023  <https://arxiv.org/abs/2302.04863>
@@ -99,18 +106,18 @@ python scripts/draft_sidecars.py --review          # what is drafted
 python scripts/draft_sidecars.py --accept <slug>   # promote, after editing
 ```
 
-- [ ] `data/sidecars/drafts/ties-merging-resolving-interference-when-merging-models.md`  (859 cites) TIES-Merging: Resolving Interference When Merging Models  **replaces the live sidecar**
-- [ ] `data/sidecars/drafts/tinybenchmarks-evaluating-llms-with-fewer-examples.md`  (282 cites) tinyBenchmarks: evaluating LLMs with fewer examples
+- [ ] `data/sidecars/drafts/ties-merging-resolving-interference-when-merging-models.md`  (865 cites) TIES-Merging: Resolving Interference When Merging Models  **replaces the live sidecar**
+- [ ] `data/sidecars/drafts/tinybenchmarks-evaluating-llms-with-fewer-examples.md`  (283 cites) tinyBenchmarks: evaluating LLMs with fewer examples
 - [ ] `data/sidecars/drafts/active-learning-for-bert-an-empirical-study.md`  (244 cites) Active Learning for {BERT:} An Empirical Study
 - [ ] `data/sidecars/drafts/findings-of-the-babylm-challenge-sample-efficient-pretrainin.md`  (232 cites) Findings of the {B}aby{LM} Challenge: Sample-Efficient P
-- [ ] `data/sidecars/drafts/global-mmlu-understanding-and-addressing-cultural-and-lingui.md`  (180 cites) Global {MMLU}: Understanding and Addressing Cultural and
+- [ ] `data/sidecars/drafts/global-mmlu-understanding-and-addressing-cultural-and-lingui.md`  (181 cites) Global {MMLU}: Understanding and Addressing Cultural and
 - [ ] `data/sidecars/drafts/q2-evaluating-factual-consistency-in-knowledge-grounded-dial.md`  (167 cites) Q\({}^{\mbox{2}}\): Evaluating Factual Consistency in Kn
 - [ ] `data/sidecars/drafts/on-the-weaknesses-of-reinforcement-learning-for-neural-machi.md`  (127 cites) On the Weaknesses of Reinforcement Learning for Neural M
 - [ ] `data/sidecars/drafts/fusing-finetuned-models-for-better-pretraining.md`  (120 cites) Fusing finetuned models for better pretraining
 - [ ] `data/sidecars/drafts/disentqa-disentangling-parametric-and-contextual-knowledge-w.md`  (119 cites) DisentQA: Disentangling Parametric and Contextual Knowle
 - [ ] `data/sidecars/drafts/model-merging-with-svd-to-tie-the-knots.md`  (112 cites) Model merging with SVD to tie the Knots
 
-## Sidecars not yet drafted (93/112)
+## Sidecars not yet drafted (92/111)
 
 Nothing to do by hand here — this is a run, not a task:
 
@@ -124,9 +131,9 @@ its own. The top of the list, by citations, is where it pays:
 
 - 172 cites — An autonomous debating system
 - 70 cites — {DORA} The Explorer: Directed Outreaching Reinforcement Action-Sel
+- 68 cites — Elements of World Knowledge {(EWoK):} {A} Cognition-Inspired Frame
 - 68 cites — A Survey on Model MoErging: Recycling and Routing Among Specialize
 - 68 cites — Efficient Benchmarking (of Language Models)
-- 67 cites — Elements of World Knowledge {(EWoK):} {A} Cognition-Inspired Frame
 - 64 cites — ColD Fusion: Collaborative Descent for Distributed Multitask Finet
 
 ## Artifacts with no citation route (14)

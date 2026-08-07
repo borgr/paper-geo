@@ -49,7 +49,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import yaml  # noqa: E402
 
-from common import BUILD, DATA, ROOT, get, load_config, read_yaml  # noqa: E402
+from common import BUILD, DATA, ROOT, get, load_config, read_yaml, rules_block  # noqa: E402
 from fulltext import LIMIT as FULLTEXT_LIMIT  # noqa: E402
 from fulltext import cut_chars  # noqa: E402
 from fulltext import resolve as resolve_fulltext  # noqa: E402
@@ -59,59 +59,32 @@ DRAFTS = os.path.join(SIDECARS, "drafts")
 CACHE = os.path.join(BUILD, "fulltext")
 TASKS = os.path.join(BUILD, "sidecar_tasks.json")
 
-SYSTEM = """You extract, from a paper, the small set of statements that decide whether \
+RULES_DOC = "docs/SIDECAR.md"
+
+FRAMING = """You extract, from a paper, the small set of statements that decide whether \
 an answer engine describes it correctly. You are drafting for the paper's own author, \
-who will verify and correct every line, so the useful output is precise and checkable \
-rather than complete and smooth.
+who will verify and correct every line.
 
-What you produce is consumed two ways: rendered on the paper's canonical page, and \
-retrieved as isolated passages by retrieval-augmented systems. The second is what \
-drives every rule below.
+The rules below are the repo's own spec for this artifact, read verbatim from \
+{doc} §2. Follow them in the order given.
 
-CLAIMS are the core. Each one:
-- is self-contained. It will be retrieved alone, with no title and no surrounding \
-paragraph, so it must name the object, the finding, and the magnitude in one sentence. \
-No "we", no "this paper", no pronoun pointing outside the sentence.
-- carries the number the paper reports, with its unit and its baseline. "improves \
-accuracy" is worthless; "raises exact-match by 4.6 points over the fine-tuned \
-baseline on the WMT16 en-de test set" is a claim. If the paper does not state a \
-magnitude for a finding, say so in the text rather than inventing one.
-- has a SCOPE: the conditions under which it holds, and where it does not. This is \
-content, not a disclaimer. "Further research is needed" is worthless. "Holds for \
-models above 1B parameters; the 125M model shows no effect" is scope. Summarisers \
-drop scope far more often than they drop findings, which is exactly why it is \
-written separately and adjacent.
-- cites where it comes from in EVIDENCE: "Table 2", "Figure 4b", "Section 5.1".
-
-QA pairs point at claim ids. Never restate a claim in an answer -- a restated claim is \
-a second, drifting copy of the author's own finding, and the two then compete. Give \
-2-4 genuine PARAPHRASES per question, in the vocabulary someone who has not read the \
-paper would use, because engines fan one query into many synthetic sub-queries and you \
-cannot know which phrasing wins. Never a question whose answer is not adjacent.
-
-MISREADINGS are stated as corrections, not questions: what people wrongly conclude, \
-and what is actually true. Only include one if the paper gives you a reason to expect \
-it -- a result that is easy to over-generalise, a negative result, a method whose name \
-suggests more than it does.
-
-TERMINOLOGY is only for terms this paper uses in a non-obvious sense, or coins. Not a \
-glossary of the field.
-
-Accuracy over coverage, everywhere. Three claims you can point at a table for are \
-worth more than eight that read well. If the evidence you were given does not support \
-something, leave it out. Never infer results from the title, the venue, or what \
-similar papers usually find."""
+"""
 
 USER = """Draft the sidecar for this paper.
 
 {evidence}
 
-Return JSON matching the schema. Rules that are easy to get backwards:
-- `answers` holds claim IDS from your own `claims` list, never prose.
-- `one_liner` is the sentence the author will reuse verbatim everywhere; make it \
-quotable and specific, under 320 characters.
-- `coined` and `gloss` only if the paper actually coins a name.
-- Leave a field out rather than filling it with something you cannot support."""
+Return JSON matching the schema."""
+
+
+def system_prompt() -> str:
+    """The framing plus the rules, which live in the doc rather than here.
+
+    This file used to carry its own prose copy of the rules while docs/SIDECAR.md
+    carried a second and the schema descriptions a third; the three had already
+    drifted. Now there is one copy, and `common.rules_block` raises if it is gone.
+    """
+    return FRAMING.format(doc=RULES_DOC) + rules_block(RULES_DOC)
 
 
 # --------------------------------------------------------------- evidence
@@ -244,14 +217,25 @@ def with_evidence(cands: list[dict], cfg, no_fulltext: bool,
     return ok, skipped
 
 
+CONTRACT = [
+    "Fill each task's `sidecar` object against `schema`. That is the whole job:",
+    "everything else in this repo is code re-deriving public facts.",
+    "Do not hand-edit data/*.yaml -- a hand edit to a derived file is undone by the",
+    "next run. Do not run --accept: an accepted sidecar is an assertion under the",
+    "author's name. Do not write outward (--apply, --deploy): those are public records.",
+    "If a task's evidence says the full text is NOT AVAILABLE, draft nothing for it.",
+]
+
+
 def emit_tasks(pairs: list[tuple[dict, str]], cfg) -> str:
     os.makedirs(BUILD, exist_ok=True)
     tasks = [{"slug": p["slug"], "title": p.get("title_display") or p["title"],
               "evidence": ev, "sidecar": None}
              for p, ev in pairs]
     with open(TASKS, "w") as f:
-        json.dump({"system": SYSTEM, "user_template": USER,
-                   "schema": schema(), "tasks": tasks}, f, indent=1)
+        json.dump({"_contract": CONTRACT, "system": system_prompt(),
+                   "user_template": USER, "schema": schema(), "tasks": tasks},
+                  f, indent=1)
     return TASKS
 
 
@@ -262,9 +246,9 @@ def call_api(pairs: list[tuple[dict, str]], cfg) -> dict:
     except ImportError:
         sys.exit("pip install anthropic, or set llm.mode: skill in config.yaml")
     client = anthropic.Anthropic()
-    sch, out = schema(), {}
+    sch, out, sys_prompt = schema(), {}, system_prompt()
     for p, ev in pairs:
-        req = dict(model=cfg["llm"]["model"], max_tokens=8192, system=SYSTEM,
+        req = dict(model=cfg["llm"]["model"], max_tokens=8192, system=sys_prompt,
                    messages=[{"role": "user", "content": USER.format(evidence=ev)}])
         oc = {"effort": cfg["llm"].get("effort", "medium"),
               "format": {"type": "json_schema", "schema": sch}}
