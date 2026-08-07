@@ -62,9 +62,19 @@ gets copied to other people's installs — so drift here propagates.
 Deferred with a release condition in [`data/declines.yaml`](data/declines.yaml), so
 `WORKLIST.md` keeps it counted at the bottom until the papers are done.
 
-- [ ] Review the 30 proposed repo labels.
-- [ ] Delete the `nlp-free` topic from the DORA proposal before any push — it looks
-      invented, and a wrong topic is the failure mode `SKILL.md` names by example.
+- [ ] Review the 30 proposed repo labels. 29 of the 30 are already live on GitHub
+      verbatim, so this reads as "audit what shipped", not "approve a proposal" —
+      `sweep_github.py diff` is down to one CITATION.cff line.
+- [ ] **The `nlp-free` deletion is not recorded anywhere, so it will come back.**
+      It was the one invented topic in 30 proposals, it is correctly absent from
+      DORA's live topics — and it is still sitting in that row's `llm_proposal`.
+      `promote()` skips only `reviewed: true` rows, DORA is not one, so the next
+      `--ingest` copies the proposal back over `topics` including `nlp-free`. This
+      violates the repo's own rule that human decisions are recorded rather than
+      remembered, and it is the only place that rule is currently broken. Options:
+      `reviewed: true` on the row (freezes everything, including the description),
+      a per-topic decline, or `promote()` learning to treat a topic a human removed
+      as a decision. Pick one before the next `--ingest`.
 - [ ] `tai314159/MuLER` is private; it has to be made public before it can be linked.
 
 ## Blocked, not forgotten
