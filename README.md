@@ -4,7 +4,7 @@
 answer engines and scholarly indexes?** This is a pipeline that audits the gap,
 fixes the automatable part, and hands you a ranked list of what only you can do.
 
-Built for one researcher's corpus (111 papers, 31 repos) but config-driven: fork
+Built for one researcher's corpus (112 papers, 31 repos) but config-driven: fork
 it, replace `config.yaml` and `data/`, and it runs for yours.
 
 ## Why

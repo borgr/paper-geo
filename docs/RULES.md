@@ -513,6 +513,8 @@ is the truth; the prose above is the explanation.
 | no LaTeX residue in `title_display` / `venue_display` | `validate.py` regression check |
 | no private `pretitle` macro in published BibTeX | `validate.py` regression check |
 | a paper claimed by two parties blocks publication | `validate.py` regression check on `owner_conflict` |
+| a paper of yours is never dropped for a group-shaped author list | `collect.py authorship_gate` asks arXiv for the full list on every rejection with an arXiv id, and `build/not_mine.json` grades each remaining drop by whether it could be checked at all |
+| the corpus is complete, not merely well-formed | `scholar_check.py` against your Scholar profile. The only check whose reference list is built elsewhere, so the only one that can see a paper that never arrived — reported into `WORKLIST.md`, never fatal |
 | `name_typos` disjoint from `name_variants` and `name` | `validate.py check_name_lists` |
 | affiliations are a bare name or `{name, url, ror, wikidata}`, ROR and QID well-formed | `validate.py check_affiliations` |
 | every `overrides.yaml` key is one something reads, and every `fields:` slug names a live paper | `validate.py check_overrides` (both failures are silent no-ops that look done) |

@@ -742,6 +742,22 @@ def apply_overrides(papers: list[dict], ov: dict) -> list[dict]:
     return out
 
 
+# An "author" that is really an organisation. A consortium paper deposited under
+# "MINDGAMES Organizer & Participation Teams" is a complete one-entry author list as
+# far as any parser can tell, so nothing marks it truncated -- and a 53-author paper
+# then fails the name gate with no signal that the list was never a list of people.
+# That is the one shape where a paper of yours is silently dropped, so it is named.
+CORPORATE_AUTHOR = re.compile(
+    r"\b(teams?|organi[sz]ers?|organi[sz]ing|consortium|collaborations?|committee|"
+    r"participants?|participation|working group|workshop|challenge|shared task|"
+    r"community|initiative|contributors|the authors)\b", re.I)
+
+
+def corporate_authors(authors: list[str]) -> list[str]:
+    """Author strings that name a group rather than a person."""
+    return [a for a in authors if CORPORATE_AUTHOR.search(a)]
+
+
 def arxiv_authors(ax: str) -> list[str]:
     """The complete author list for one arXiv id, or [] if arXiv does not answer."""
     raw = get(f"http://export.arxiv.org/api/query?id_list={ax}&max_results=1")
@@ -778,6 +794,15 @@ def authorship_gate(papers: list[dict], cfg: dict, ov: dict) -> list[dict]:
     consortium paper, "et al." in the source -- record the title under `also_mine` in
     overrides.yaml and it is kept regardless. That is a decision, so it lives in the
     one hand-edited file rather than being re-guessed every run.
+
+    Before rejecting anything that has an arXiv id, ask arXiv. This used to be
+    conditional on `authors_truncated`, which meant it only fired when the *source*
+    admitted the list was short -- and a consortium deposit does not: "MINDGAMES
+    Organizer & Participation Teams" is one complete author entry, so the gate dropped
+    a 53-author paper of yours with no signal. The condition is now the rejection
+    itself, because the request is only spent on papers about to be dropped (5 of 179
+    entries here) and the alternative is a heuristic that guesses which lists are
+    incomplete. Guessing is what produced the bug.
     """
     variants = cfg["identity"]["name_variants"]
     keep_norm = {norm_title(t) for t in (ov.get("also_mine") or [])}
@@ -785,14 +810,17 @@ def authorship_gate(papers: list[dict], cfg: dict, ov: dict) -> list[dict]:
     for p in papers:
         authors = p.get("authors") or []
         marks = {name_match(a, variants) for a in authors}
-        # `and others` in the source is not evidence of absence. A 97-author shared
-        # task truncated to ten is exactly the shape that would be silently rejected
-        # here -- and mass-authored papers are the ones where an author is most
-        # dependent on the index knowing they were on it. So spend one request and
-        # ask arXiv, which lists everybody.
-        if not marks & {"exact", "near"} and p.get("authors_truncated") and p.get("arxiv"):
+        # `and others` in the source is not evidence of absence, and neither is a
+        # one-entry list naming a consortium. Mass-authored papers are the ones where
+        # an author is most dependent on the index knowing they were on it, so spend
+        # one request and ask arXiv, which lists everybody.
+        corp = corporate_authors(authors)
+        if not marks & {"exact", "near"} and p.get("arxiv"):
             full = arxiv_authors(p["arxiv"])
-            if full:
+            if full and len(full) > len(authors):
+                p["authors_from_arxiv"] = {"was": len(authors), "now": len(full),
+                                           "why": "consortium author" if corp else
+                                                  "list was short"}
                 p["authors"] = authors = full
                 p.pop("authors_truncated", None)
                 marks = {name_match(a, variants) for a in authors}
@@ -810,12 +838,37 @@ def authorship_gate(papers: list[dict], cfg: dict, ov: dict) -> list[dict]:
             rejected.append(p)
     if rejected:
         os.makedirs(BUILD, exist_ok=True)
+        # `n_authors` and `confidence` are the two facts a reviewer needs and the old
+        # four-name sample hid: it printed "authors: 4" for a 561-author paper, so every
+        # row looked like a small paper whose list might be truncated. `confidence` says
+        # which rows are a judgement and which are a fact, so a reviewer reads three rows
+        # instead of sixteen.
         with open(os.path.join(BUILD, "not_mine.json"), "w") as f:
             json.dump([{"title": p.get("title"), "key": p.get("key"),
+                        "confidence": reject_confidence(p),
                         "arxiv": p.get("arxiv"), "doi": p.get("doi"),
-                        "authors": (p.get("authors") or [])[:4]}
+                        "n_authors": len(p.get("authors") or []),
+                        "corporate_author": corporate_authors(p.get("authors") or []),
+                        "authors_sample": (p.get("authors") or [])[:4],
+                        "to_keep_anyway": "add the title under `also_mine` in "
+                                          "data/overrides.yaml"}
                        for p in rejected], f, indent=1)
     return kept, rejected
+
+
+def reject_confidence(p: dict) -> str:
+    """How much a rejection is worth a human's time.
+
+    Not every drop is equally safe. Where arXiv confirmed the full list and your name is
+    absent, the answer is a fact and nobody needs to read it. Where the only author
+    string names a group and there is no arXiv id to expand it, the gate dropped a paper
+    on no evidence about who wrote it -- which is the exact shape that lost MindGames.
+    """
+    if corporate_authors(p.get("authors") or []) and not p.get("arxiv"):
+        return "unverified: group name for an author, and no arXiv id to expand it"
+    if p.get("arxiv"):
+        return "checked: arXiv's full author list does not contain your name"
+    return "not checked: no arXiv id, but the author list names people"
 
 
 def title_diffs(papers: list[dict]) -> list[dict]:
@@ -939,9 +992,24 @@ def main() -> None:
         # author list than the bibliography, and gating on the short list would drop
         # papers that are yours for want of metadata we were about to fetch anyway.
         papers, not_mine = authorship_gate(papers, cfg, ov)
+        for p in papers:
+            if p.get("authors_from_arxiv"):
+                a = p["authors_from_arxiv"]
+                print(f"  authorship: kept {p.get('title', '')[:48]!r} -- arXiv lists "
+                      f"{a['now']} authors, the source listed {a['was']} "
+                      f"({a['why']})", file=sys.stderr)
         if not_mine:
+            # The unverified ones named separately. The rest are a fact arXiv confirmed;
+            # these are a guess the gate had no way to check, and burying them in a count
+            # of sixteen is what made the last one invisible.
+            blind = [p for p in not_mine
+                     if corporate_authors(p.get("authors") or []) and not p.get("arxiv")]
             print(f"  authorship: {len(not_mine)} records have no form of your name "
                   f"and were excluded -- review build/not_mine.json", file=sys.stderr)
+            for p in blind:
+                print(f"    unverified drop: {p.get('title', '')[:56]!r} -- an author is "
+                      f"a group name and there is no arXiv id to expand it",
+                      file=sys.stderr)
         # After the merges and the gate, deliberately: this is four API calls per paper,
         # and a record that is about to be folded into its arXiv twin or excluded as
         # someone else's should not cost any of them.

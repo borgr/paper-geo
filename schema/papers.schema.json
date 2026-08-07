@@ -56,6 +56,16 @@
           ],
           "description": "The bibliography's author field ended in 'and others' (BibTeX et al.), so the list here is incomplete. Set by scripts/common.py:authors_truncated. Load-bearing for the authorship gate: a truncated list cannot be used to conclude a paper is not yours, so the gate falls back to arXiv's full author list instead of excluding. Cleared once a full list is obtained."
         },
+        "authors_from_arxiv": {
+          "type": "object",
+          "description": "The stored author list came from arXiv, not from the bibliography, because the gate was about to drop this paper. `was`/`now` are the two list lengths and `why` says which shape triggered it. Kept in the committed data rather than only in a log, because it is the record of a paper that was recovered from a silent drop -- if the recovery ever regresses the paper vanishes, and this field is what makes the diff say so.",
+          "additionalProperties": false,
+          "properties": {
+            "was": {"type": "integer"},
+            "now": {"type": "integer"},
+            "why": {"type": "string"}
+          }
+        },
         "year": {
           "type": [
             "integer",

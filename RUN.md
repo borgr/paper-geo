@@ -225,6 +225,7 @@ independent of this tool and pays for everything else, so do it first.
 
 ```bash
 python scripts/audit_identity.py     # what is still open, read live, no login
+python scripts/scholar_check.py      # what Scholar has that the corpus does not
 python scripts/identity_tasks.py     # the payload for each fix
 ```
 
@@ -233,6 +234,14 @@ and Hugging Face through public APIs and writes
 [`tasks/identity_audit.md`](tasks/identity_audit.md). Every row is checkable without
 a login even though every *fix* needs one — so you can tell what is actually done
 rather than what you remember doing.
+
+`scholar_check.py` answers a different question, and it is the only thing here that
+can: **is a paper missing entirely?** Every other check reads the corpus and asks
+whether it is well-formed. This one reads a list built by a different process and
+asks whether the corpus is *complete* — which catches the two failures nothing else
+can see, a paper absent from the source bibliography and a paper the authorship gate
+excluded. Its findings open [WORKLIST.md](WORKLIST.md) when there are any, because a
+paper that is not there at all outranks every improvement to one that is.
 
 `identity_tasks.py` writes the payloads into [`tasks/`](tasks/), committed on purpose
 since these are lists a human works through over days:
@@ -310,6 +319,7 @@ password lives in an environment variable or the gitignored `.wikidata_bot`.
 | `scripts/build_site.py [--deploy]` | generate the site | deploy: **yes** |
 | `scripts/hf_papers.py [--live] [--verify]` | HF worklist / re-check | local only |
 | `scripts/audit_identity.py [--no-hf]` | live-read ORCID, arXiv, Wikidata, HF, S2 | local only |
+| `scripts/scholar_check.py [--quiet]` | diff your Google Scholar profile against the corpus — the only check that can see a paper the pipeline never received | local only |
 | `scripts/identity_tasks.py` | payloads for the one-time identity fixes | local only |
 | `scripts/wikidata_apply.py [--apply] [--check-account]` | apply the Wikidata diff | apply: **yes, Wikidata** |
 | `scripts/validate.py [--fix-counts] [--strict]` | schema check + shipped-bug regressions + selftest; `--fix-counts` refreshes the corpus sizes stated in the docs. Exits 1 on a structural failure (which stops `update.py`), 0 on a stale count; `--strict` makes both fatal | `--fix-counts`: the doc sentences |

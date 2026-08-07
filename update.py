@@ -120,8 +120,16 @@ def step_audit(cfg, args) -> None:
     that the two hand-worked lists came from one moment in time; deciding at read
     time which of two differently-aged sources is fresher is how a worklist starts
     sending you back to pages you already did.
+
+    The Scholar diff belongs here rather than in `collect`, because it audits the
+    collector's *output* against a list the collector cannot see. Its whole job is to
+    catch what no self-consistency check can: a paper that never entered, and a paper
+    the authorship gate dropped. Report-only, and it never stops the run -- Google has
+    no API for this and answers a crawler with a challenge page often enough that
+    treating a bad afternoon as a failed run would be wrong.
     """
     run([sys.executable, "scripts/audit_identity.py"])
+    run([sys.executable, "scripts/scholar_check.py"])
     run([sys.executable, "scripts/identity_tasks.py"])
 
 
@@ -349,6 +357,75 @@ def tidy(lines: list[str]) -> list[str]:
     return out
 
 
+def scholar_gaps(sc: dict) -> list[str]:
+    """The worklist section for `build/scholar_diff.json`, or nothing.
+
+    First on the page when it is there, ahead of every fix to a paper we do have.
+    Everything else on this list improves how a paper is presented; this list is
+    papers that are not presented at all, and no amount of work on the other sections
+    reaches them. It is also the only section whose items are *upstream of the
+    pipeline* -- the fix is an edit to the source bibliography, not to anything here.
+    """
+    if not sc:
+        return []
+    gate, miss = sc.get("gate_dropped") or [], sc.get("not_in_corpus") or []
+    miss = [r for r in miss if r.get("kind") != "not a paper"]
+    var, dup = sc.get("title_variants") or [], sc.get("scholar_duplicates") or []
+    if not (gate or miss or var or dup):
+        return []
+
+    def pl(n: int, word: str = "paper") -> str:
+        return f"{n} {word}{'s' * (n != 1)}"
+
+    def cites(n) -> str:
+        return f"{n or 0} cite{'s' * ((n or 0) != 1)}"
+
+    L = [f"## Coverage: Google Scholar and the corpus disagree on "
+         f"{pl(len(gate) + len(miss) + len(var) + len(dup))}", "",
+         f"Scholar lists **{sc.get('scholar_rows')}** works and matched "
+         f"**{sc.get('matched')}** of the corpus's **{sc.get('corpus')}**. Scholar is",
+         "the one list of your papers that is built by a different process, so it is the",
+         "only check that can see a paper this pipeline never received. Full detail:",
+         "`build/scholar_diff.json`.", ""]
+    if gate:
+        L += [f"### {pl(len(gate))} the authorship gate excluded  — a bug, or a "
+              f"wrong Scholar row", "",
+              "Scholar says these are yours and `build/not_mine.json` says they are not.",
+              "One of the two is wrong. If the paper is yours, add its title under",
+              "`also_mine` in [`data/overrides.yaml`](data/overrides.yaml); if Scholar has",
+              "merged a namesake's paper into your profile, delete it there, because a",
+              "wrong row misleads every human who reads it too.", ""]
+        L += [f"- [ ] {cites(r.get('citations'))} — {(r.get('title') or '')[:66]}"
+              for r in gate] + [""]
+    if miss:
+        L += [f"### {pl(len(miss))} absent from the source bibliography", "",
+              "Not in the corpus and not rejected — they never arrived. The bibliography",
+              "is this pipeline's only input, so the fix is one entry there; adding them",
+              "to `data/` would be overwritten on the next run.", ""]
+        L += [f"- [ ] {cites(r.get('citations'))} — {r.get('year') or '????'} — "
+              f"{(r.get('title') or '')[:60]}" for r in miss[:12]]
+        if len(miss) > 12:
+            L += [f"- … and {len(miss) - 12} more in `build/scholar_diff.json`"]
+        L += [""]
+    if var:
+        L += [f"### {pl(len(var))} under two titles", "",
+              "Same paper, two names — usually a preprint and its retitled published",
+              "version. Decide which is canonical and set it in",
+              "[`data/overrides.yaml`](data/overrides.yaml); until then the two surfaces",
+              "answer a title query differently, which is the exact failure this repo",
+              "exists to prevent.", ""]
+        L += [f"- [ ] `{v.get('slug')}`\n"
+              f"      - scholar: {(v.get('scholar') or '')[:64]}\n"
+              f"      - corpus:  {(v.get('corpus') or '')[:64]}" for v in var] + [""]
+    if dup:
+        L += [f"### {pl(len(dup))} listed twice on Scholar", "",
+              "Two rows for one paper splits its citation count. Nothing in this repo can",
+              "fix it: *select both on your profile → Merge*.", ""]
+        L += [f"- [ ] `{d.get('slug')}` — the second row reads "
+              f"{(d.get('scholar') or '')[:52]!r}" for d in dup] + [""]
+    return L
+
+
 def step_worklist(cfg, args) -> None:
     """Report what still needs the account owner, ranked by leverage.
 
@@ -370,10 +447,15 @@ def step_worklist(cfg, args) -> None:
     ident, ids = cfg["identity"], cfg["ids"]
     # Written by the audit step. Absent (audit skipped) = fall back to stored state
     # rather than guessing, and say so where it matters.
-    state = {}
+    state, scholar = {}, {}
     try:
         with open(os.path.join(ROOT, "build", "identity_state.json")) as f:
             state = json.load(f)
+    except (OSError, ValueError):
+        pass
+    try:
+        with open(os.path.join(ROOT, "build", "scholar_diff.json")) as f:
+            scholar = json.load(f)
     except (OSError, ValueError):
         pass
     unowned = set(state.get("arxiv_unowned") or [])
@@ -388,6 +470,7 @@ def step_worklist(cfg, args) -> None:
              "how-to for every item below is [docs/SETUP.md](docs/SETUP.md); the live",
              "reading of each external surface is [tasks/identity_audit.md](tasks/identity_audit.md).", ""]
     lines += due_followups()
+    lines += scholar_gaps(scholar)
 
     n_strays = sum(1 for p in papers
                     if p.get("s2_author_record") in

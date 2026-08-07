@@ -11,13 +11,54 @@ reading of each external surface is [tasks/identity_audit.md](tasks/identity_aud
 - **2026-10-04** — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.
 - **2026-11-04** — Crossref and DataCite auto-update only fire on newly deposited metadata that already carries your iD, so the proof is a work whose ORCID source is Crossref or DataCite rather than your own name -- which cannot appear until something you publish is deposited.
 
+## Coverage: Google Scholar and the corpus disagree on 8 papers
+
+Scholar lists **117** works and matched **105** of the corpus's **112**. Scholar is
+the one list of your papers that is built by a different process, so it is the
+only check that can see a paper this pipeline never received. Full detail:
+`build/scholar_diff.json`.
+
+### 5 papers absent from the source bibliography
+
+Not in the corpus and not rejected — they never arrived. The bibliography
+is this pipeline's only input, so the fix is one entry there; adding them
+to `data/` would be overwritten on the next run.
+
+- [ ] 19 cites — 2024 — Llm merging: Building llms efficiently through merging
+- [ ] 6 cites — 2026 — AI evals are becoming the new compute bottleneck
+- [ ] 1 cite — 2025 — A Statistical Framework for Game-Based AI Evaluation
+- [ ] 0 cites — 2026 — Proceedings of the Workshop on Evaluating Evaluations (EvalE
+- [ ] 0 cites — 2022 — True or false? faithful summarization with attribution
+
+### 2 papers under two titles
+
+Same paper, two names — usually a preprint and its retitled published
+version. Decide which is canonical and set it in
+[`data/overrides.yaml`](data/overrides.yaml); until then the two surfaces
+answer a title query differently, which is the exact failure this repo
+exists to prevent.
+
+- [ ] `llm-hypnosis-exploiting-user-feedback-for-unauthorized-knowl`
+      - scholar: LLM Hypnosis: Characterizing the Fragility of RLHF Against Unpri
+      - corpus:  LLM Hypnosis: Exploiting User Feedback for Unauthorized Knowledg
+- [ ] `can-you-trust-your-metric-automatic-concatenation-based-test`
+      - scholar: How Safe is Your Safety Metric? Automatic Concatenation Tests fo
+      - corpus:  Can You Trust Your Metric? Automatic Concatenation-Based Tests f
+
+### 1 paper listed twice on Scholar
+
+Two rows for one paper splits its citation count. Nothing in this repo can
+fix it: *select both on your profile → Merge*.
+
+- [ ] `global-piqa-evaluating-commonsense-reasoning-across-100-lang` — the second row reads 'Global piqa: Evaluating physical commonsense reasoni'
+
 ## Identity surfaces (4 open)
 
 Each is blocked on an account you are logged into, not on knowing what to
 do. `python scripts/identity_tasks.py` regenerates every payload under
 `tasks/` — committed, so browsable on GitHub.
 
-### ORCID is missing 1 of your 111 papers
+### ORCID is missing 1 of your 112 papers
 
 Highest leverage on this page. Semantic Scholar's disambiguation and
 OpenAlex's profile merges are both ORCID-driven, so this is the one fix that
@@ -38,7 +79,7 @@ A wrong work on your record is worse than a missing one: it is the thing that
 makes an automated merge distrust the record. *Works → the entry → Delete.*
 Put-codes and titles: `tasks/orcid_remove.md`.
 
-### Semantic Scholar — 33 papers on a second author record
+### Semantic Scholar — 34 papers on a second author record
 
 Every S2-backed tool (Elicit, Consensus, SciSpace, most literature agents)
 resolves you to one page, so each currently sees about half the corpus.
@@ -88,7 +129,7 @@ submission page (a metadata edit, not a new version).
 - [ ] `1907.01752` (127 cites) -> ICLR 2020  <https://arxiv.org/abs/1907.01752>
 - [ ] `2211.05655` (119 cites) -> ACL 2023  <https://arxiv.org/abs/2211.05655>
 - [ ] `2410.19735` (112 cites) -> ICLR 2025  <https://arxiv.org/abs/2410.19735>
-- [ ] `2507.16806` (98 cites) -> ICLR 2026  <https://arxiv.org/abs/2507.16806>
+- [ ] `2507.16806` (99 cites) -> ICLR 2026  <https://arxiv.org/abs/2507.16806>
 - [ ] `2402.16842` (91 cites) -> ICML 2024  <https://arxiv.org/abs/2402.16842>
 - [ ] `2405.17202` (83 cites) -> NeurIPS 2024  <https://arxiv.org/abs/2405.17202>
 - [ ] `1907.08971` (77 cites) -> ACL 2019  <https://arxiv.org/abs/1907.08971>
@@ -117,7 +158,7 @@ python scripts/draft_sidecars.py --accept <slug>   # promote, after editing
 - [ ] `data/sidecars/drafts/disentqa-disentangling-parametric-and-contextual-knowledge-w.md`  (119 cites) DisentQA: Disentangling Parametric and Contextual Knowle
 - [ ] `data/sidecars/drafts/model-merging-with-svd-to-tie-the-knots.md`  (112 cites) Model merging with SVD to tie the Knots
 
-## Sidecars not yet drafted (92/111)
+## Sidecars not yet drafted (93/112)
 
 Nothing to do by hand here — this is a run, not a task:
 
