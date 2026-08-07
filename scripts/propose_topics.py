@@ -156,8 +156,13 @@ def emit_tasks(todo: list[dict]) -> str:
     return path
 
 
-def call_api(todo: list[dict], cfg) -> None:
-    """Label each repo with one Messages API call, validated against SCHEMA."""
+def call_api(todo: list[dict], cfg) -> list[str]:
+    """Label each repo with one Messages API call, validated against SCHEMA.
+
+    Returns the repos it wrote a proposal for -- not the ones it was asked about, since
+    a refusal or unparseable answer leaves the row's previous proposal standing, and
+    promoting that again is the bug `promote()` exists to avoid.
+    """
     try:
         import anthropic
     except ImportError:
@@ -167,6 +172,7 @@ def call_api(todo: list[dict], cfg) -> None:
     model = cfg["llm"]["model"]
     effort = cfg["llm"].get("effort", "medium")
     sys_prompt = system_prompt()
+    done = []
     for r in todo:
         req = dict(
             model=model,
@@ -191,35 +197,56 @@ def call_api(todo: list[dict], cfg) -> None:
         try:
             r["llm_proposal"] = json.loads(text)
             print(f"  ok  {r['repo']}: {r['llm_proposal']['topics']}")
+            done.append(r["repo"])
         except json.JSONDecodeError:
             print(f"  unparseable: {r['repo']}", file=sys.stderr)
+    return done
 
 
-def ingest(repos: list[dict]) -> int:
-    """Fold build/llm_tasks.json answers into repos.yaml."""
+def ingest(repos: list[dict]) -> list[str]:
+    """Fold build/llm_tasks.json answers into repos.yaml.
+
+    Returns the repos whose proposal actually *changed*, which is exactly the set
+    `promote()` is allowed to touch. Changed rather than present: build/llm_tasks.json
+    outlives the run that produced it, so a second `--ingest` sees the same answers
+    again, and treating those as new is what let a promotion overwrite a hand edit made
+    in between. Re-ingesting an unchanged file is now a no-op, which is what idempotent
+    means here.
+    """
     path = os.path.join(BUILD, "llm_tasks.json")
     if not os.path.exists(path):
         sys.exit(f"no {path} -- run without --ingest first")
     with open(path) as f:
         answers = {t["repo"]: t.get("proposal") for t in json.load(f)["tasks"]}
     by_name = {r["repo"]: r for r in repos}
-    n = 0
+    done = []
     for name, proposal in answers.items():
-        if proposal and name in by_name:
-            by_name[name]["llm_proposal"] = proposal
-            n += 1
-    return n
+        r = by_name.get(name)
+        if proposal and r is not None and r.get("llm_proposal") != proposal:
+            r["llm_proposal"] = proposal
+            done.append(name)
+    return done
 
 
-def promote(repos: list[dict]) -> None:
-    """Copy llm_proposal into the fields the sweep actually applies.
+def promote(repos: list[dict], fresh: list[str]) -> int:
+    """Copy a just-arrived llm_proposal into the fields the sweep actually applies.
 
-    Never overwrites a reviewed repo, and never blanks an existing value with an
-    empty proposal -- so a bad or partial model answer degrades to "no change".
+    Only the repos named in `fresh` -- the ones whose proposal changed in the run
+    calling this. Promotion used to re-run over every row on every ingest, which
+    silently undid hand edits: deleting a wrong topic from repos.yaml left
+    `llm_proposal` untouched, so the next ingest of some unrelated repo copied it
+    straight back, and the second time it happened the file looked haunted. Editing the
+    file is the cheapest way to correct a label and it has to survive with no
+    bookkeeping; `reviewed: true` remains the way to freeze a row against future
+    proposals, which is a different thing than keeping today's edit.
+
+    Never overwrites a reviewed repo, and never blanks an existing value with an empty
+    proposal -- so a bad or partial model answer degrades to "no change".
     """
+    want, n = set(fresh), 0
     for r in repos:
         p = r.get("llm_proposal") or {}
-        if r.get("reviewed") or not p:
+        if r.get("reviewed") or not p or r.get("repo") not in want:
             continue
         if p.get("topics"):
             r["topics"] = sorted(set(p["topics"]))[:12]
@@ -229,6 +256,8 @@ def promote(repos: list[dict]) -> None:
             r["kind"] = p["kind"]
         if p.get("generic_gloss"):
             r["generic_gloss"] = p["generic_gloss"]
+        n += 1
+    return n
 
 
 def main() -> None:
@@ -248,10 +277,12 @@ def main() -> None:
     repos = doc["repos"]
 
     if args.ingest:
-        n = ingest(repos)
-        promote(repos)
+        fresh = ingest(repos)
+        n = promote(repos, fresh)
         write_yaml(path, doc)
-        print(f"ingested {n} proposals into {path}")
+        print(f"ingested {len(fresh)} proposals into {path}, {n} promoted "
+              f"(reviewed rows are frozen; a hand edit stands until that repo is "
+              f"re-proposed)")
         print("next: python scripts/sweep_github.py diff")
         return
 
@@ -262,8 +293,7 @@ def main() -> None:
     mode = args.mode or cfg["llm"]["mode"]
     if mode == "api":
         print(f"labelling {len(todo)} repos via {cfg['llm']['model']} ...")
-        call_api(todo, cfg)
-        promote(repos)
+        promote(repos, call_api(todo, cfg))
         write_yaml(path, doc)
         print(f"wrote {path}\nnext: python scripts/sweep_github.py diff")
     else:

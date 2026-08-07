@@ -391,6 +391,12 @@ that flag is the whole idempotency story for this track: re-running `propose` ad
 newly created repos and refreshes paper links while carrying forward every field
 you or the model set.
 
+You do not need the flag to correct one label, though, and requiring it would be a
+trap: a proposal is promoted into the applied fields only in the run where that
+proposal *changed*, so deleting a wrong topic from `repos.yaml` stands on its own.
+Use `reviewed: true` for the other thing — freezing a row against answers that have
+not been written yet.
+
 `repos.yaml` holds **desired state only** — no stars, no `current_*` mirrors of
 GitHub. Those duplicate data that already lives on GitHub, churn the file on every
 run, and go stale between runs. `diff` fetches live state at the moment it runs, so
@@ -509,6 +515,7 @@ is the truth; the prose above is the explanation.
 | `kind` is one of the seven | `schema/repos.schema.json` |
 | a proposal carries `confidence` | the embedded schema in `scripts/propose_topics.py` |
 | `reviewed: true` is never overwritten | `scripts/propose_topics.py` and the `repos` step skip those rows |
+| a hand edit to `repos.yaml` survives the next ingest | `propose_topics.promote()` only touches repos whose proposal changed in that run |
 | no two papers share a slug | `validate.py` regression check (one page used to overwrite another) |
 | no LaTeX residue in `title_display` / `venue_display` | `validate.py` regression check |
 | no private `pretitle` macro in published BibTeX | `validate.py` regression check |

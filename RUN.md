@@ -121,15 +121,28 @@ keeps happening.
 python scripts/draft_sidecars.py                      # queue the most-cited
 python scripts/draft_sidecars.py --ingest             # fold the answers into drafts/
 python scripts/draft_sidecars.py --review             # what is drafted vs live
+python scripts/draft_sidecars.py --show <slug>        # every claim beside its evidence
 $EDITOR data/sidecars/drafts/<slug>.md                # correct it
-python scripts/draft_sidecars.py --accept <slug>      # promote it, schema-checked
+python scripts/draft_sidecars.py --accept <slug>      # promote it, checked
 ```
+
+`--show` is the review itself, and it is the reason this takes minutes rather than an
+hour: each claim printed with its scope, whether the paper really has the table or
+section it cites, and the paper's own sentence around every number it states. What it
+prints is what you would otherwise get by keeping the PDF open in another window.
 
 `update.py` drafts a batch (default 10, `--draft-batch N`) every run, so a new
 paper's draft arrives on its own. Drafts live in `data/sidecars/drafts/` and
 **nothing reads them** — the site, the validator, the fidelity check and the coverage
 count all glob `data/sidecars/*.md` one level up, so a draft cannot reach a published
-page by accident, and `--accept` refuses to promote one that fails the schema.
+page by accident.
+
+`--accept` refuses twice over. A structural failure means the file is broken. A
+quality finding — a band in [SIDECAR §2](docs/SIDECAR.md) broken, or a figure that is
+not in the paper — means it is well-formed and says something you would not want to
+have said, and accepting is the moment those become your assertion in public. That
+tier is only reported when `validate.py` runs; here it stops the promotion. Override
+it with `--anyway`, which promotes and prints each problem it ignored.
 
 **A draft is only as good as the text behind it.** Each is written from the paper's
 own full text, resolved through whichever open source has it — arXiv's HTML
@@ -311,7 +324,7 @@ password lives in an environment variable or the gitignored `.wikidata_bot`.
 | `scripts/collect.py --allow-shrink` | + write even if coverage dropped sharply | local only |
 | `scripts/sweep_github.py propose\|diff\|apply` | repo topics, descriptions, `CITATION.cff` | apply: **yes** |
 | `scripts/propose_topics.py [--ingest]` | label repos with a model | local only |
-| `scripts/draft_sidecars.py [--ingest\|--review\|--accept]` | draft sidecars for you to verify | local only |
+| `scripts/draft_sidecars.py [--ingest\|--review\|--show\|--accept [--anyway]]` | draft sidecars for you to verify | local only |
 | `scripts/fulltext.py [--report\|--slug\|--refetch]` | resolve each paper's full text; report thin ones | cache only |
 | `scripts/paper_code.py [--apply] [--slug]` | deduce the code repo and project page from the paper's own text | apply: **yes, Hugging Face** |
 | `scripts/ownership.py [--manifest] [--claim-all]` | reconcile with co-authors | local only |

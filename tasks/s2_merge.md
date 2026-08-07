@@ -1,4 +1,4 @@
-# Semantic Scholar: pull 33 papers onto the claimed page
+# Semantic Scholar: pull 34 papers onto the claimed page
 
 Claimed (primary): https://www.semanticscholar.org/author/41019330
 Secondary:         https://www.semanticscholar.org/author/2283849613
@@ -34,6 +34,7 @@ Highest-citation first, so stopping early still helps most.
 | 5 | Pretraining Language Models for Diachronic Linguistic Change Discovery | https://www.semanticscholar.org/paper/277626991 |
 | 4 | Unforgettable Generalization in Language Models | https://www.semanticscholar.org/paper/272398205 |
 | 3 | CUBE: A Standard for Unifying Agent Benchmarks | https://www.semanticscholar.org/paper/286579599 |
+| 3 | MINDGAMES: A Live Arena for Evaluating Social and Strategic Reasoning  | https://www.semanticscholar.org/paper/288742058 |
 | 2 | Robustness as an Emergent Property of Task Performance | https://www.semanticscholar.org/paper/285275509 |
 | 2 | Will it Merge? On The Causes of Model Mergeability | https://www.semanticscholar.org/paper/284648390 |
 | 2 | LLM Hypnosis: Exploiting User Feedback for Unauthorized Knowledge Inje | https://www.semanticscholar.org/paper/280148936 |

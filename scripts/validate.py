@@ -11,9 +11,11 @@ field, bad topic format) without adding a hard dependency.
 Two kinds of problem, two exit codes, because they deserve different reactions.
 A *structural* problem -- schema violation, dangling claim id, missing prompt block
 -- means something downstream is already broken, so it exits 1 and stops the caller.
-A stale corpus size in a prose sentence exits 0 and is merely reported: it is a
-chore, and halting a run over it would only teach the author to skip validation.
-`--strict` collapses the distinction, for CI.
+A stale corpus size in a prose sentence, or a sidecar outside the shape bands, exits 0
+and is merely reported: the page still renders correctly, so halting a run over it
+would only teach the author to skip validation. `--strict` collapses the distinction,
+for CI -- and `draft_sidecars.py --accept` treats the shape tier as fatal, because
+accepting is the moment the claims become an assertion under the author's name.
 
 Usage:
     python scripts/validate.py [--fix-counts] [--strict]
@@ -480,27 +482,40 @@ def check_affiliations() -> list[str]:
     return errs
 
 
-def check_sidecars() -> list[str]:
-    """Cross-check sidecars: valid front matter, and claim ids that resolve."""
+def read_sidecars(paths: list[str] | None = None) -> tuple[list[tuple[str, dict]], list[str]]:
+    """Parse front matter once for the three checks that need it.
+
+    Returns the files that parsed and errors for the ones that did not, so a broken file
+    is reported exactly once instead of once per check.
+    """
     try:
         import yaml
     except ImportError:
-        return []
-    errs = []
-    for path in sorted(glob.glob(os.path.join(DATA, "sidecars", "*.md"))):
+        return [], []
+    out, errs = [], []
+    for path in paths or sorted(glob.glob(os.path.join(DATA, "sidecars", "*.md"))):
         name = os.path.basename(path)
-        text = open(path).read()
+        # A leading HTML comment is dropped first so this works unchanged on a draft,
+        # which carries the `<!-- DRAFT -->` banner: `--accept` has to be able to run
+        # every check on the file it is about to promote, not on the promoted copy.
+        text = re.sub(r"\A\s*<!--.*?-->\s*", "", open(path).read(), flags=re.S)
         m = re.match(r"^---\n(.*?)\n---\n?", text, re.S)
         if not m:
             errs.append(f"{name}: no YAML front matter delimited by ---")
             continue
         try:
-            fm = yaml.safe_load(m.group(1)) or {}
+            out.append((name, yaml.safe_load(m.group(1)) or {}))
         except yaml.YAMLError as e:
             errs.append(f"{name}: unparseable front matter: {e}")
-            continue
+    return out, errs
+
+
+def check_sidecars(entries: list[tuple[str, dict]]) -> list[str]:
+    """Structural checks: schema-valid front matter, and claim ids that resolve."""
+    errs = []
+    for name, fm in entries:
         try:
-            import jsonschema
+            import jsonschema  # noqa: F401
             errs += with_jsonschema(fm, load_schema("sidecar"), name)
         except ImportError:
             for req in ("one_liner", "claims"):
@@ -515,6 +530,264 @@ def check_sidecars() -> list[str]:
             if not (qa.get("q") or []):
                 errs.append(f"{name}: qa[{i}] has no question phrasings")
     return errs
+
+
+# ------------------------------------------------------------------- shape tier
+#
+# The bands in docs/SIDECAR.md §2 rule 9, which JSON Schema cannot express: they are
+# about how many of a thing there are and how they relate to each other, not about
+# types. Non-fatal on purpose -- a page with 22 claims renders correctly and is merely
+# worse, and the 19 existing drafts predate the bands. `--accept` is where it bites.
+#
+# Two kinds of number live here. `CLAIMS` and `PHRASINGS` are design decisions from §2,
+# and the current drafts are meant to violate them: a paper has a handful of findings, so
+# 17 claims is one finding split three ways and the fix is redrafting, not a wider band.
+# The length and count caps are the opposite -- each is the 90th percentile of what the
+# 317 already-drafted claims do, because a cap set through the middle of honest practice
+# is one the author learns to ignore, and then the bands stop being read at all.
+
+CLAIMS = (5, 15)
+CLAIM_TEXT = (60, 450)
+CLAIM_SCOPE = (80, 800)
+# Deliberately generous: a question group is query surface, and more real phrasings of a
+# real question is the whole point. The ceiling only catches a run of invented questions.
+QA_GROUPS = (4, 20)
+PHRASINGS = (2, 4)
+MISREADINGS_MAX = 14
+TERMINOLOGY_MAX = 13
+
+
+def tokens(s: str) -> list[str]:
+    return re.findall(r"[a-z0-9]+", str(s).lower())
+
+
+def coined_forms(coined: str) -> list[list[str]]:
+    """Token sequences that count as naming the paper's own coinage.
+
+    The whole name, plus any acronym-shaped part of it: a question phrased around
+    `TIES` alone is as unreachable as one phrased around `TIES-Merging`. `Merging` is
+    not acronym-shaped and is exactly the word a stranger would type, so it does not
+    count -- which is the distinction the check exists to make.
+    """
+    forms = [tokens(coined)]
+    for part in re.split(r"[\s/-]+", str(coined)):
+        if len(part) >= 3 and (part.isupper() or re.search(r"[a-z][A-Z]", part)):
+            forms.append(tokens(part))
+    return [f for f in forms if f]
+
+
+def says(phrase: str, form: list[list[str]]) -> bool:
+    """Whether any form appears as a contiguous run of whole tokens.
+
+    Whole tokens rather than a substring, or `properties` would count as `TIES`.
+    """
+    hay = tokens(phrase)
+    return any(hay[i:i + len(f)] == f
+               for f in form for i in range(len(hay) - len(f) + 1))
+
+
+def check_sidecar_shape(entries: list[tuple[str, dict]]) -> list[str]:
+    """The bands and the coverage rules -- docs/SIDECAR.md §4 rows 12-19."""
+    errs = []
+    for name, fm in entries:
+        def bad(msg: str) -> None:
+            errs.append(f"{name}: {msg}")
+
+        claims = [c for c in (fm.get("claims") or []) if isinstance(c, dict)]
+        qa = [g for g in (fm.get("qa") or []) if isinstance(g, dict)]
+        kinds = [c.get("kind") or "result" for c in claims]
+        n_ctx = kinds.count("context")
+
+        lo, hi = CLAIMS
+        if claims and not lo <= len(claims) <= hi:
+            bad(f"{len(claims)} claims, outside the {lo}-{hi} band -- each claim "
+                "competes with its siblings on its own page")
+        if claims and not n_ctx:
+            bad("no `kind: context` claim. Nothing here answers 'what should I read "
+                "about X', which is the question class with the query volume")
+        elif n_ctx > len(claims) - n_ctx:
+            bad(f"{n_ctx} of {len(claims)} claims are `kind: context` -- `result` has "
+                "to outnumber `context`, or the page is about its own importance")
+
+        for c in claims:
+            where = f"claim {c.get('id', '?')!r}"
+            for field, (flo, fhi) in (("text", CLAIM_TEXT), ("scope", CLAIM_SCOPE)):
+                n = len(str(c.get(field) or "").strip())
+                if n and not flo <= n <= fhi:
+                    bad(f"{where}: {field} is {n} chars, outside {flo}-{fhi}")
+
+        lo, hi = QA_GROUPS
+        if qa and not lo <= len(qa) <= hi:
+            bad(f"{len(qa)} qa groups, outside the {lo}-{hi} band")
+        lo, hi = PHRASINGS
+        for i, g in enumerate(qa):
+            n = len(g.get("q") or [])
+            if n and not lo <= n <= hi:
+                bad(f"qa[{i}]: {n} phrasings, outside {lo}-{hi}")
+
+        # Coverage. A claim nothing points at renders with no route to it, and a general
+        # question with no `context` claim to answer it cannot be asked at all.
+        ctx_ids = {c.get("id") for c, k in zip(claims, kinds) if k == "context"}
+        answered = {a for g in qa for a in (g.get("answers") or [])}
+        if qa and ctx_ids and not (answered & ctx_ids):
+            bad("no qa group is answered by a `context` claim -- the entry-point "
+                "question is the one required question class")
+        orphans = [c.get("id") for c in claims if c.get("id") not in answered]
+        if qa and orphans:
+            bad(f"{len(orphans)} claim(s) no question points at: "
+                f"{', '.join(str(o) for o in orphans[:6])}")
+
+        if fm.get("coined"):
+            if not fm.get("gloss"):
+                bad(f"coins {fm['coined']!r} with no `gloss` -- a coined name has no "
+                    "lexical route from what people actually type")
+            forms = coined_forms(fm["coined"])
+            for i, g in enumerate(qa):
+                qs = g.get("q") or []
+                if qs and all(says(q, forms) for q in qs):
+                    bad(f"qa[{i}]: every phrasing contains {fm['coined']!r} -- at "
+                        "least one has to be answerable by someone who has never "
+                        "heard the name")
+
+        for field, cap in (("misreadings", MISREADINGS_MAX),
+                           ("terminology", TERMINOLOGY_MAX)):
+            n = len(fm.get(field) or [])
+            if n > cap:
+                bad(f"{n} {field} entries (max {cap}) -- past that they are invented "
+                    "rather than observed")
+
+        # A misreading is retrieved and quoted like any other line on the page, so one
+        # phrased as a question hands an engine the wrong belief with no correction
+        # attached to it. State the correction: not "does it work on long inputs?" but
+        # "it is not evaluated above 4k tokens".
+        for i, m in enumerate(fm.get("misreadings") or []):
+            if str(m).strip().endswith("?"):
+                bad(f"misreadings[{i}] is a question -- state the correction instead, "
+                    "or the quotable sentence is the misreading itself")
+    return errs
+
+
+# --------------------------------------------------------------- accept-time tier
+
+_GROUPED = r"\d{1,3}(?:,\d{3})+"
+_PLAIN = r"\d+(?:\.\d+)?"
+# A figure as an author writes one. The grouped form comes first so `1,600` is one
+# figure rather than the pair (1, 600), and the two lookbehinds drop digits that belong
+# to a name rather than to a measurement: `T5` glues to a letter, and `ViT-L/14`,
+# `Llama3-8B` and `top-5` glue on through a hyphen or slash. Those are things the paper
+# refers to, not quantities it reports, and checking them fills the review with lines
+# whose answer is always yes.
+_FIGURE = re.compile(rf"(?<![A-Za-z0-9.])(?<![A-Za-z0-9][-/])({_GROUPED}|{_PLAIN})")
+
+
+def canon(tok: str) -> str:
+    """One figure, one spelling: 1,600 is 1600, and 4.60 is 4.6."""
+    tok = tok.replace(",", "")
+    return tok.rstrip("0").rstrip(".") or "0" if "." in tok else tok
+
+
+def figures(s: str) -> list[str]:
+    """The figures a claim states, canonicalised, in order and without repeats.
+
+    Bare single digits are dropped, and dropping them costs nothing: every paper's own
+    text contains each of them (its section headings alone guarantee it), so such a
+    figure can never fail the check. Keeping them only fills the review with lines whose
+    answer is already known -- and leaving the blindness undocumented is worse than
+    saying here that a claim's `n LoRA models` and its `by 7 points` are both unchecked.
+    """
+    return list(dict.fromkeys(canon(t) for t in _FIGURE.findall(str(s))
+                              if not (len(t) == 1 and t.isdigit())))
+
+
+def figures_in(text: str) -> set[str]:
+    r"""Every reading of every number in the paper's own text.
+
+    Both readings, because a comma between digits is ambiguous and nothing local
+    resolves it: `1,600` is one number, while the LaTeX set `\{200,400,800,1600\}` --
+    which is what the extractor actually hands us -- is four. Indexing both makes the
+    check ask whether a figure is in the paper under *any* reading, which errs toward
+    accepting. That is the right direction here: a false positive spends the author's
+    attention on a correct number, and enough of those get the whole check ignored.
+    """
+    return ({canon(t) for t in re.findall(_PLAIN, text)}
+            | {canon(t) for t in re.findall(_GROUPED, text)}
+            # Result tables conventionally drop the leading zero on a correlation, so
+            # `.435` in the paper and `0.435` in the claim are the same figure.
+            | {canon("0" + t) for t in re.findall(r"(?<![\d.])\.\d+", text)})
+
+
+def values_in(text: str) -> list[float]:
+    """The same numbers as floats, for the rounding tolerance below."""
+    out = []
+    for t in re.findall(_PLAIN, text) + re.findall(r"(?<![\d.])\.\d+", text):
+        try:
+            out.append(float(t))
+        except ValueError:
+            pass
+    return out
+
+
+def rounds_to(target: str, values: list[float]) -> bool:
+    """Whether some figure in the paper rounds to the one the claim states.
+
+    A claim says `74.5` where Table 5 says `74.46`. That is the same number written for
+    a sentence instead of a table, and refusing it would make the check fire on almost
+    every honest claim -- the drafts round routinely, and correctly. Rounding to the
+    claim's own stated precision is the whole tolerance: `74.9` does not round to
+    `74.5`, and neither does a figure the drafter computed rather than read.
+
+    A figure declares its own precision, so trailing zeros count as a claim of
+    approximation in the other direction: `14,000` matches the paper's `14,042`. Only
+    from the hundreds up, because `10` almost always means ten and not twelve.
+    """
+    try:
+        want = float(target)
+    except ValueError:
+        return False
+    if "." in target:
+        dp = len(target.split(".")[1])
+    else:
+        zeros = len(target) - len(target.rstrip("0"))
+        dp = -zeros if zeros >= 2 else 0
+    return any(abs(round(v, dp) - want) < 1e-9 for v in values)
+
+
+def check_claim_numbers(entries: list[tuple[str, dict]]) -> tuple[list[str], list[str]]:
+    """Every figure in a claim must appear in the paper's own text.
+
+    The one rule in docs/SIDECAR.md with no exceptions, and the only one that needs an
+    artifact outside the repo: `build/fulltext/<slug>.txt`, which is gitignored and may
+    simply be absent. A missing cache is returned separately rather than passed as a
+    check, because silently skipping is how a rule stops being a rule -- the caller
+    says so out loud.
+
+    Years are exempt. A date is a fact about the world that a reader can check
+    elsewhere, and a paper's body text often never states its own year.
+    """
+    errs, skipped = [], []
+    for name, fm in entries:
+        path = os.path.join(ROOT, "build", "fulltext", f"{name[:-3]}.txt")
+        if not os.path.exists(path):
+            skipped.append(name)
+            continue
+        text = open(path, errors="replace").read()
+        have, vals = figures_in(text), values_in(text)
+        for c in (fm.get("claims") or []):
+            if not isinstance(c, dict):
+                continue
+            # Both fields at once, reported once: `text` and `scope` usually carry the
+            # same figure, and saying so twice makes one mistake look like two.
+            stated = figures(f"{c.get('text') or ''} {c.get('scope') or ''}")
+            missing = [n for n in stated
+                       if n not in have
+                       and not (n.isdigit() and 1900 <= int(n) <= 2099)
+                       and not rounds_to(n, vals)]
+            if missing:
+                errs.append(
+                    f"{name}: claim {c.get('id', '?')!r} states "
+                    f"{', '.join(missing)}, which {'is' if len(missing) == 1 else 'are'}"
+                    " not in the paper's own text -- correct it or drop the figure")
+    return errs, skipped
 
 
 # Every place the docs state the size of the corpus itself, as a format string over
@@ -645,21 +918,34 @@ def main() -> None:
     errs += regressions((docs.get("papers") or {}).get("papers", []),
                         (docs.get("repos") or {}).get("repos", []))
     errs += selftest()
-    errs += check_sidecars()
+    sidecars, unparseable = read_sidecars()
+    errs += unparseable + check_sidecars(sidecars)
     errs += check_overrides()
     errs += check_slug_history()
     errs += check_name_lists()
     errs += check_affiliations()
     errs += check_prompt_blocks()
-    # Kept separate from the rest: a wrong number in a sentence is the one problem
-    # class that does not mean something is broken. See the module docstring.
-    counts = check_doc_counts((docs.get("papers") or {}).get("papers", []),
-                              (docs.get("repos") or {}).get("repos", []),
-                              fix=args.fix_counts)
+    # Kept separate from the rest: a stale number in a sentence and a sidecar outside the
+    # bands are the two problem classes that do not mean something is broken. See the
+    # module docstring.
+    soft = check_doc_counts((docs.get("papers") or {}).get("papers", []),
+                            (docs.get("repos") or {}).get("repos", []),
+                            fix=args.fix_counts)
+    soft += check_sidecar_shape(sidecars)
+    number_errs, no_text = check_claim_numbers(sidecars)
+    soft += number_errs
 
     if not have_js:
         print("note: jsonschema not installed -- using the built-in subset of checks")
-    problems = errs + counts
+    if no_text:
+        # Said out loud every run: this is the one rule with no exceptions, and it is
+        # also the only one that can quietly stop running because a build artifact is
+        # missing. `python scripts/fulltext.py` restores it.
+        print(f"note: no cached full text for {len(no_text)} of {len(sidecars)} "
+              f"sidecars, so their numbers were not checked "
+              f"({', '.join(n[:-3] for n in no_text[:3])}"
+              f"{', ...' if len(no_text) > 3 else ''})")
+    problems = errs + soft
     if problems:
         print(f"\n{len(problems)} problem(s):")
         for e in problems[:60]:

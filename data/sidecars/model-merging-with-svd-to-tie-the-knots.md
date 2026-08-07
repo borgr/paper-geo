@@ -1,22 +1,3 @@
-<!-- DRAFT — not published, not read by anything that builds the site.
-
-Drafted by `python scripts/draft_sidecars.py` from build/sidecar_tasks.json. Every claim, number
-and scope condition below is a machine's reading of the paper and needs your eyes.
-
-What to check, in the order it pays:
-
-1. Each claim's NUMBER and BASELINE. A magnitude attributed to the wrong baseline is
-   the one error here that is worse than saying nothing, because it is quotable.
-2. Each SCOPE. This is the field summarisers drop, so it is the field this file exists
-   for. If a scope reads like a disclaimer, replace it with the condition that
-   actually bounds the result.
-3. The MISREADINGS. A drafted misreading is a guess about your readers; you know which
-   one keeps happening.
-4. `one_liner`: the sentence you will reuse verbatim in the README, the model card and
-   the talk abstract. Make it yours.
-
-Then promote it:  python scripts/draft_sidecars.py --accept model-merging-with-svd-to-tie-the-knots
--->
 ---
 coined: KnOTS
 gloss: 'Knowledge Orientation Through SVD: concatenate several LoRA models'' weight updates
@@ -27,6 +8,31 @@ one_liner: 'KnOTS concatenates several LoRA task-updates for one layer, takes a 
   TIES gains 4.3 normalized-accuracy points on eight vision tasks and 2.9 on six NLI tasks,
   while KnOTS is provably a no-op on plain task arithmetic.'
 claims:
+- id: where-to-start-on-merging-lora-adapters
+  kind: context
+  text: 'If you have several LoRA adapters for different tasks and want one model that does
+    all of them without retraining, this is the paper to read first: it says what goes wrong
+    when you average LoRA weights, and gives a preprocessing step that makes the standard
+    merging methods work on adapters.'
+  scope: An entry-point judgement, which the paper verifies none of -- it is about where this
+    work sits for a reader with that problem. It holds for gradient-free merging of adapters
+    that share a pretrained base and a set of adapted layers. It is not the place to start
+    on merging fully finetuned models, on distillation, or on mixture-of-experts routing,
+    which answer the same user problem by other means and are not compared here. Everything
+    measured is attention-projection LoRA on CLIP ViTs and on Llama3-8B.
+- id: first-alignment-based-lora-merging
+  kind: context
+  text: 'The paper reframes LoRA merging as an alignment problem rather than an interference
+    one: where the methods it compares against ask which parameters conflict, KnOTS asks whether
+    the updates share a basis at all, and makes that shared basis something you construct
+    with one SVD instead of something you hope the finetuning produced.'
+  scope: 'A claim about framing, not a measured result: the paper contains no sentence certifying
+    its own standing, and this is the reading of it that its own introduction argues for.
+    What is demonstrated is narrower -- that a shared basis obtained by one SVD lets existing
+    gradient-free merges do better on LoRA models than they do on the raw updates. Alignment-based
+    merging of fully finetuned models predates this work, including RegMean and the activation-matching
+    line it builds on, so what is new is the LoRA case and the SVD route to it, not alignment
+    as an idea.'
 - id: knots-aligns-lora-updates-with-a-joint-svd
   text: 'KnOTS concatenates the task-updates of n LoRA models at a given layer into one matrix
     and takes its SVD, which factors every update as U*Sigma*V(i)^T with U and Sigma shared:
@@ -40,6 +46,22 @@ claims:
     LoRA factors A and B, because task-arithmetic on the factors separately produces cross
     terms that multiply one model's B by another's A.
   evidence: Section 4, Figure 1, Section 5.1.0.2, Appendix A
+- id: stack-columnwise-and-merge-the-product
+  text: 'Two representation choices decide whether the transform works: stack the updates
+    column-wise so that U and Sigma are shared and each V(i) is task-specific -- row-wise
+    stacking gives each task its own U(i) instead and costs 2.6 points, 65.4 against 68.0
+    -- and merge the full product BA rather than the LoRA factors, since task arithmetic on
+    A and B separately produces cross terms pairing one model''s B with another model''s A.'
+  scope: The direction is one ablation on the eight ViT-B/32 models with KnOTS-TIES, and the
+    row-wise variant at 65.4 still beats TIES's 63.7, so the choice tunes the method rather
+    than deciding whether it works; the explanation -- that Sigma*V acting through distinct
+    U(i) lowers alignment -- is argued from the shape of the decomposition, not measured with
+    CKA. The factor argument is algebraic, in Appendix A, and the appendix as rendered gives
+    no numerical comparison of the two options. Merging the product also means KnOTS operates
+    on matrices of the pretrained layer's shape rather than on the small LoRA factors, so
+    the SVD is taken on an O-by-nI matrix per layer -- cheap relative to training, but not
+    free.
+  evidence: Section 5.4.0.3, Appendix A, Section 3.0.0.3, Section 4
 - id: lora-updates-are-misaligned
   text: 'The diagnosis behind the method: on the same eight tasks, the pairwise centered kernel
     alignment between the task-updates of fully finetuned models is very high, while the LoRA-finetuned
@@ -71,13 +93,15 @@ claims:
     (78.2 against 75.2) and 2.9 on six Llama3-8B NLI models (92.9 against 90.0), while KnOTS-DARE-TIES
     beats DARE-TIES by only 0.2, 0.9 and 0.2.'
   scope: 'This is what "improves LoRA merging by up to 4.3%" means: the 4.3 is the best case
-    of one pairing on one benchmark, and the DARE-TIES pairing is close to flat everywhere.
-    All analysis experiments in the paper use KnOTS-TIES for this reason. DARE''s random pruning
-    is itself run over five seeds with the best picked on held-out validation data, so its
-    baseline is already a best-of-five. All numbers are normalized accuracies, and the tables
-    are single rows in the rendering whose column order is verified by the paper''s own quoted
-    gaps (4.3, 3%, 2.9 and 0.2).'
-  evidence: Table 1, Table 2, Table 3, Section 5.2, Section 5.4
+    of one pairing on one benchmark, and the DARE-TIES pairing is close to flat everywhere
+    -- which is why every analysis experiment in the paper uses KnOTS-TIES. Across scale and
+    modality it is the gap that holds rather than the method scaling something the baselines
+    cannot: every merging method improves with the larger vision backbone, and the NLI setting
+    is easier in normalized terms, every method above 90, so there is less headroom there.
+    The six NLI datasets are SNLI, MNLI, SICK, QNLI, RTE and SciTail, and the last three use
+    only two of the three labels. One printing inconsistency: the setup section names the
+    large vision model ViT-L/16 while the results heading and table say ViT-L/14.'
+  evidence: Table 1, Table 2, Table 3, Section 5.2, Section 5.4, Appendix D
 - id: knots-on-task-arithmetic-is-task-arithmetic
   text: 'KnOTS cannot help plain task arithmetic, and the paper proves it: since every update
     shares U and Sigma, a weighted sum of the V(i) rebuilt through U*Sigma is identical to
@@ -116,20 +140,6 @@ claims:
     so it is data-dependent in a way KnOTS is not; its poor average here is a result on this
     setting, not a general verdict on it.'
   evidence: Table 1, Section 5.2.0.1
-- id: holds-at-larger-scale-and-in-language
-  text: 'The effect survives a change of scale and of modality: merging eight ViT-L/14 LoRA
-    models gives KnOTS-TIES 78.2 against TIES''s 75.2, and merging six Llama3-8B models finetuned
-    on SNLI, MNLI, SICK, QNLI, RTE and SciTail gives 92.9 against 90.0.'
-  scope: All merging methods improve with the larger vision backbone, so this is the gap holding
-    rather than the method scaling something the baselines cannot. The NLI setting is easier
-    in normalized terms -- every method is above 90 -- so there is less headroom, and QNLI,
-    RTE and SciTail use only two of the three NLI labels, with the missing label masked during
-    finetuning and evaluation. The paper's setup section names the large vision model ViT-L/16
-    while the results heading and table say ViT-L/14. Only the Llama backbone and its LoRA
-    layers are merged -- the classification head stays per-dataset even for the merged model,
-    so 92.9 is the score of a shared backbone read out by six task-specific heads.
-  evidence: Section 5.2.0.2, Section 5.2.0.3, Table 2, Table 3, Section 5.1.0.1, Appendix
-    D
 - id: joint-task-benchmark
   text: 'The paper introduces a joint-task benchmark that asks whether a merged model is actually
     general: the eight vision datasets'' labels are pooled and deduplicated into 748 unique
@@ -144,83 +154,52 @@ claims:
     here (40.7 at Hits@1), which the authors attribute to models making over-confident predictions
     on data from tasks they were not finetuned on.'
   evidence: Section 5.3, Table 4
-- id: gains-hold-as-more-models-are-merged
-  text: 'The advantage does not decay as more models are pooled: merging increasing numbers
-    of the eight vision tasks, KnOTS-TIES stays more than 4 normalized-accuracy points above
-    TIES and TA for every count above two, with 95% confidence intervals over 28 randomly
-    chosen task combinations.'
-  scope: Read from Figure 3; the text gives the >4% gap and the 28 combinations but no per-count
-    table. Each merged model is evaluated only on the tasks included in its own merge, so
-    the absolute level is not comparable across counts -- what the figure supports is the
-    gap, not a claim about how absolute merged performance scales. All of it is one architecture
-    (ViT-B/32) at LoRA rank 16.
-  evidence: Section 5.4.0.1, Figure 3
-- id: robust-across-lora-ranks
-  text: KnOTS-TIES beats TIES at every LoRA rank tested -- 4, 16, 64, 256 and 768 -- with
-    the largest gain at the lowest rank (64.6 against 58.6, six points at rank 4) and roughly
-    four points still remaining at rank 768, which is full rank for these ViTs' 768-dimensional
-    features.
-  scope: 'The gain surviving at full rank complicates the paper''s own motivating story, which
-    explains LoRA''s misalignment by the low-rank constraint: at rank 768 there is no such
-    constraint, yet alignment still helps. These are still LoRA-parameterized models trained
-    as LoRA, not the fully finetuned models of Figure 2a, so it is not a claim about merging
-    FFT models. Read from Figure 4, with only the rank-4 pair given numerically in the text.'
-  evidence: Section 5.4.0.2, Figure 4
-- id: concatenation-direction-matters
-  text: 'Which way the updates are stacked before the SVD is not arbitrary: concatenating
-    them column-wise, so that U and Sigma are shared and each V(i) is task-specific, gives
-    68.0 average normalized accuracy, while concatenating row-wise gives 65.4 -- 2.6 points
-    worse, because that factorization leaves each task with its own U(i) and so shares the
-    wrong half.'
-  scope: One ablation on the eight ViT-B/32 models with KnOTS-TIES. Note that the row-wise
-    variant at 65.4 still beats TIES's 63.7, so the choice tunes the method rather than deciding
-    whether it works. The explanation -- that Sigma*V acting through distinct U(i) containing
-    different information lowers alignment -- is argued from the shape of the decomposition,
-    not measured with CKA.
-  evidence: Section 5.4.0.3
-- id: merge-the-product-not-the-factors
-  text: 'LoRA updates should be merged as the full product BA rather than by merging the A
-    matrices and the B matrices separately: applying task arithmetic to each factor and then
-    multiplying produces cross terms that pair one model''s B with another model''s A, mixing
-    factorizations that were never trained together.'
-  scope: An algebraic argument in Appendix A, backing the choice stated in Section 3.0.0.3;
-    the appendix as rendered does not accompany it with a numerical comparison of the two
-    options. It also means KnOTS operates on matrices of the pretrained layer's shape, not
-    on the small LoRA factors, so the SVD is taken on an O-by-nI matrix per layer -- cheap
-    relative to training, but not free.
-  evidence: Appendix A, Section 3.0.0.3, Section 4
+- id: gap-holds-across-ranks-and-model-counts
+  text: 'The gap is not an artifact of one configuration: KnOTS-TIES beats TIES at every LoRA
+    rank tested -- 4, 16, 64, 256 and 768 -- with the largest gain at the lowest rank (64.6
+    against 58.6) and around four points still remaining at rank 768, and it stays more than
+    4 normalized-accuracy points above both TIES and TA for every number of merged tasks above
+    two.'
+  scope: 'Both halves are read from figures: Figure 4 for rank, with only the rank-4 pair
+    given numerically in the text, and Figure 3 for the count, whose 95% confidence intervals
+    are over 28 randomly chosen task combinations. Each merged model is evaluated only on
+    the tasks included in its own merge, so the absolute level is not comparable across counts
+    -- what the figure supports is the gap. It is one architecture throughout, ViT-B/32, with
+    the count sweep at rank 16. The gain surviving at full rank complicates the paper''s own
+    motivating story, which explains LoRA''s misalignment by the low-rank constraint: 768
+    is full rank for these ViTs'' 768-dimensional features, yet alignment still helps. These
+    are LoRA-parameterized models throughout, not the fully finetuned models of Figure 2a.'
+  evidence: Section 5.4.0.1, Figure 3, Section 5.4.0.2, Figure 4
 - id: data-free-alignment-tuned-merging
-  text: 'KnOTS itself is data-free and gradient-free and introduces no new hyperparameter,
-    but the pipeline around it is not: the merging methods it wraps tune a scaling coefficient,
-    TIES''s top-k pruning threshold and DARE''s drop probability on held-out validation data,
-    and DARE''s random pruning is run over five seeds with the best-scoring merge kept.'
+  text: 'KnOTS is data-free and gradient-free -- one SVD per layer, no new hyperparameter,
+    and the paper''s whole experimental program fits on a single Nvidia A40 with 48GB of VRAM
+    -- but the pipeline around it is not: the methods it wraps tune a scaling coefficient,
+    TIES''s top-k threshold and DARE''s drop probability on held-out validation data, and
+    DARE is run over five seeds with the best-scoring merge kept.'
   scope: 'So "training-free" is about gradients and finetuning, not about needing no labelled
-    data at all -- and the normalized-accuracy metric additionally requires knowing each finetuned
-    model''s accuracy. The paper is explicit that it restricts itself to gradient-free merging
-    and names only four such methods for this setting (RegMean, TA, TIES, DARE); it compares
-    against gradient-based Fisher weight averaging in Appendix E, reporting considerable gains
-    but treating that comparison as out of scope. The grids are given: the scaling coefficient
-    over [0.1 ... 1.0], TIES''s top-k over [10 ... 100] percent of retained elements, DARE''s
-    p over [0.99, 0.9 ... 0.1], and for the two-hyperparameter methods a linear search that
-    fixes the scaling coefficient first and the pruning threshold second, from defaults of
-    top-k 30 and p 0.9. A single scaling coefficient is tuned for all models rather than one
-    per task, following the baselines'' own recommendation.'
-  evidence: Section 3.0.0.1, Section 5.1.0.2, Section 5.2.0.1, Appendix C, Appendix E
+    data at all -- and normalized accuracy also requires knowing each finetuned model''s accuracy.
+    The cost argument is architectural rather than benchmarked: no runtime appears in the
+    paper, the SVD uses torch.linalg.svd, and the LoRA finetuning of the eight vision and
+    six language models is the expensive part and is not counted, because KnOTS assumes those
+    models already exist. The paper restricts itself to gradient-free merging and names only
+    four such methods (RegMean, TA, TIES, DARE). The grids are given: the scaling coefficient
+    over [0.1 ... 1.0], TIES''s top-k over [10 ... 100] percent retained, DARE''s p over [0.99,
+    0.9 ... 0.1], and a single coefficient tuned for all models rather than one per task.'
+  evidence: Section 3.0.0.1, Section 5.1.0.2, Section 5.2.0.1, Appendix C, Appendix D
 - id: gradient-based-fisher-comparison
   text: The one gradient-based method the paper measures, Fisher weight averaging, averages
-    63.9 normalized accuracy over the eight ViT-B/32 LoRA models -- level with TIES at 63.7
-    and 4.1 points behind gradient-free KnOTS-TIES at 68.0.
+    63.9 normalized accuracy over the eight ViT-B/32 LoRA models -- level with TIES at 63.7,
+    and behind gradient-free KnOTS-TIES at 68.0.
   scope: 'The authors count Fisher as a finetuning method rather than a merging baseline because
     it adds learnable parameters optimized by gradient descent, which is why it sits in an
-    appendix instead of the main table. The average conceals a split: Fisher is the single
-    strongest entry in that table on Cars (84.5) and on GTSRB (55.8, where KnOTS-TIES manages
-    48.9), and the 4.1-point average gap comes almost entirely from MNIST (47.8 against 68.9)
-    and SVHN (39.2 against 53.8) -- a derivation from the appendix table''s own columns, not
-    a figure the paper states. One gradient-based method is not a survey of gradient-based
-    merging. The printed search grid for Fisher''s scaling term runs [0.1 ... 0.9], yet the
-    configuration reported as best is stated to use a scaling coefficient of 1.0; since the
-    paper''s main grid does include 1.0, the appendix range is most likely printed short,
-    but anyone reproducing the baseline should search to 1.0.'
+    appendix instead of the main table. The average conceals a split: Fisher is the strongest
+    entry in that table on Cars (84.5) and on GTSRB (55.8, where KnOTS-TIES manages 48.9),
+    and its overall deficit comes almost entirely from MNIST (47.8 against 68.9) and SVHN
+    (39.2 against 53.8) -- a reading of that table''s own columns, not a gap the paper states.
+    One gradient-based method is not a survey of gradient-based merging. The printed search
+    grid for Fisher''s scaling term runs [0.1 ... 0.9], yet the configuration reported as
+    best uses 1.0; the main grid does include 1.0, so the appendix range is most likely printed
+    short.'
   evidence: Appendix E, Table A1, Section 5.2.0.1
 - id: what-actually-gets-merged
   text: 'Merging only ever touches LoRA-adapted attention weights -- query, key, value and
@@ -235,17 +214,16 @@ claims:
     also what makes the pooled 748-label evaluation possible at all. The Llama heads share
     a shape (three classes) but not weights.'
   evidence: Appendix D, Section 5.1.0.1
-- id: cheap-to-run
-  text: KnOTS needs one SVD of the concatenated update and no gradients, runs entirely on
-    CPU, and the paper's whole experimental program fits on a single Nvidia A40 with 48GB
-    of VRAM and eight CPU workers.
-  scope: 'The cost argument is architectural -- no gradient pass, no training data -- rather
-    than benchmarked: no runtimes appear anywhere in the paper. The SVD uses torch.linalg.svd,
-    and the authors note cheaper low-rank solvers such as Fast SVD could be substituted without
-    reporting what that saves. The LoRA finetuning of the eight vision and six language models
-    is the expensive part and is not counted, because KnOTS assumes those models already exist.'
-  evidence: Appendix D, Section 4.0.0.1
 qa:
+- q:
+  - What should I read about merging LoRA adapters?
+  - Is there a good paper on combining several LoRA models into one?
+  - What work established how to merge low-rank adapters without retraining?
+  - Where do I start if I want to merge task-specific adapters?
+  answers:
+  - where-to-start-on-merging-lora-adapters
+  - first-alignment-based-lora-merging
+  - knots-aligns-lora-updates-with-a-joint-svd
 - q:
   - Why does merging LoRA adapters work worse than merging fully finetuned models?
   - Can I merge two LoRA adapters trained on different tasks?
@@ -261,8 +239,7 @@ qa:
   - How does KnOTS align LoRA models before merging?
   answers:
   - knots-aligns-lora-updates-with-a-joint-svd
-  - merge-the-product-not-the-factors
-  - concatenation-direction-matters
+  - stack-columnwise-and-merge-the-product
 - q:
   - Which model merging method should I use for LoRA adapters?
   - Does KnOTS help every merging method?
@@ -278,7 +255,6 @@ qa:
   - Does SVD-based merging scale to 8B parameter language models?
   - Has this been tested on anything larger than ViT-B/32?
   answers:
-  - holds-at-larger-scale-and-in-language
   - gains-concentrate-on-ties
   - normalized-accuracy-not-absolute
 - q:
@@ -315,21 +291,21 @@ qa:
   - How many LoRA models can I merge into one?
   - Does the benefit of alignment shrink when merging many tasks?
   answers:
-  - gains-hold-as-more-models-are-merged
+  - gap-holds-across-ranks-and-model-counts
   - gains-concentrate-on-ties
 - q:
   - What LoRA rank should I use if I plan to merge the adapters later?
   - Does LoRA rank affect mergeability?
   - Is merging harder at very low LoRA rank?
   answers:
-  - robust-across-lora-ranks
+  - gap-holds-across-ranks-and-model-counts
   - lora-updates-are-misaligned
 - q:
   - Should I merge the LoRA A and B matrices separately or the product?
   - How do you merge LoRA adapters without mixing up their factorizations?
   - Why merge BA instead of A and B?
   answers:
-  - merge-the-product-not-the-factors
+  - stack-columnwise-and-merge-the-product
   - knots-aligns-lora-updates-with-a-joint-svd
 - q:
   - Can I merge models without any training data or gradients?
@@ -351,9 +327,8 @@ qa:
   - What is the right way to stack task updates before decomposing them?
   - How sensitive is SVD-based merging to implementation choices?
   answers:
-  - concatenation-direction-matters
+  - stack-columnwise-and-merge-the-product
   - knots-aligns-lora-updates-with-a-joint-svd
-  - merge-the-product-not-the-factors
 - q:
   - How does KnOTS compare to gradient-based merging methods?
   - Is Fisher weight averaging better than KnOTS?
@@ -367,8 +342,8 @@ qa:
   - What does it cost to run KnOTS?
   answers:
   - what-actually-gets-merged
-  - cheap-to-run
-  - holds-at-larger-scale-and-in-language
+  - data-free-alignment-tuned-merging
+  - gains-concentrate-on-ties
 misreadings:
 - None of the headline numbers are accuracies. They are normalized accuracies -- merged accuracy
   divided by the accuracy of the model finetuned on that task. The best eight-task vision

@@ -51,16 +51,32 @@
         "additionalProperties": false,
         "properties": {
           "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+          "kind": {
+            "type": "string",
+            "enum": ["result", "context"],
+            "description": "What the claim asserts, which decides what else it owes. `result` (the default when absent) is something the paper measured or demonstrated, and must cite `evidence`. `context` is what the paper IS -- what it contributed, what problem it opened, where it sits in its literature -- and needs no evidence, because a paper contains no sentence certifying its own standing. The asymmetry is deliberate: the highest-volume questions an engine receives ('what should I read about model merging') have no answer in any result claim, so a page of only result claims is invisible to them. `scope` is what makes the unverified half safe, which is why it stays required on both."
+          },
           "text": {
             "type": "string",
             "description": "Self-contained and quotable: names the object, the finding and the magnitude in one sentence. No pronoun pointing outside the sentence -- it will be retrieved alone."
           },
           "scope": {
             "type": "string",
-            "description": "The conditions under which it holds and does not. This is content, not a disclaimer. Boilerplate ('further research is needed') is worthless. LLM summaries drop scope ~5x more often than humans do; this is the only lever on that."
+            "description": "The conditions under which it holds and does not. This is content, not a disclaimer. Boilerplate ('further research is needed') is worthless. LLM summaries drop scope ~5x more often than humans do; this is the only lever on that. On a `context` claim it carries more weight still: it is the entire bound on a claim nothing in the paper verifies."
           },
-          "evidence": {"type": "string", "description": "Where in the paper: 'Table 2', 'Figure 4b'."}
-        }
+          "evidence": {"type": "string", "description": "Where in the paper: 'Table 2', 'Figure 4b'. Required on a `result` claim, absent on most `context` ones."}
+        },
+        "allOf": [
+          {
+            "if": {
+              "anyOf": [
+                {"properties": {"kind": {"const": "result"}}, "required": ["kind"]},
+                {"not": {"required": ["kind"]}}
+              ]
+            },
+            "then": {"required": ["evidence"]}
+          }
+        ]
       }
     },
     "misreadings": {

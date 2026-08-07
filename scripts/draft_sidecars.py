@@ -338,17 +338,35 @@ def ingest(papers: list[dict]) -> int:
     return n
 
 
-def validate_draft(path: str) -> list[str]:
-    """Schema-check one draft, and check claim ids resolve, before promoting it."""
+def front_matter(path: str) -> dict | None:
+    m = re.search(r"^---\n(.*?)^---\n", open(path).read(), re.S | re.M)
+    if not m:
+        return None
+    try:
+        return yaml.safe_load(m.group(1)) or {}
+    except yaml.YAMLError:
+        return None
+
+
+def validate_draft(path: str) -> tuple[list[str], list[str]]:
+    """Check one draft before promoting it. Returns (structural, quality).
+
+    Both refuse promotion, and they are returned apart because they mean different
+    things. A structural error means the file is broken and the site would render it
+    wrong. A quality finding -- a band violation, a figure that is not in the paper --
+    means the file is well-formed and says something the author would not want to have
+    said. Accepting is the moment those become an assertion under their name, which is
+    why the tier that `validate.py` reports and shrugs at is fatal here.
+    """
     with open(path) as f:
         text = f.read()
     m = re.search(r"^---\n(.*?)^---\n", text, re.S | re.M)
     if not m:
-        return [f"{path}: no YAML front matter"]
+        return [f"{path}: no YAML front matter"], []
     try:
         fm = yaml.safe_load(m.group(1)) or {}
     except yaml.YAMLError as e:
-        return [f"{path}: unparseable front matter: {e}"]
+        return [f"{path}: unparseable front matter: {e}"], []
     errs = []
     try:
         import jsonschema
@@ -365,11 +383,144 @@ def validate_draft(path: str) -> list[str]:
         for a in qa.get("answers") or []:
             if a not in ids:
                 errs.append(f"{path}: qa answer `{a}` is not a claim id")
-    return errs
+
+    from validate import check_claim_numbers, check_sidecar_shape
+    entry = [(os.path.basename(path), fm)]
+    quality = check_sidecar_shape(entry)
+    numbers, no_text = check_claim_numbers(entry)
+    quality += numbers
+    if no_text:
+        # Not a failure, and not silent either: the rule with no exceptions is the one
+        # that must never quietly stop running.
+        print(f"      note: no cached full text, so the figures in this draft were "
+              f"not checked (python scripts/fulltext.py --slug {os.path.basename(path)[:-3]})")
+    return errs, quality
 
 
-def accept(slugs: list[str], replace: bool = False) -> int:
-    """Promote drafts into data/sidecars/, refusing anything that fails the schema.
+def oneline(s) -> str:
+    """A folded YAML scalar as one terminal line."""
+    return re.sub(r"\s+", " ", str(s or "")).strip()
+
+
+_KINDS = {"table": r"tab(?:le)?", "tab": r"tab(?:le)?",
+          "figure": r"fig(?:ure)?", "fig": r"fig(?:ure)?",
+          "section": r"(?:section|sec|§)", "sec": r"(?:section|sec|§)",
+          "appendix": r"appendix", "app": r"appendix",
+          "equation": r"(?:equation|eq)", "eq": r"(?:equation|eq)"}
+# A pointer's kind, then its number. Appendices are lettered at least as often as they
+# are numbered, and only appendices are, so the letter form is admitted for them alone --
+# otherwise every `Fig a` and `sec. b` typo becomes a pointer to go hunting for.
+_POINTER = re.compile(
+    r"\b(table|figure|fig|tab|section|sec|equation|eq)\.?\s*([0-9]+(?:\.[0-9]+)*[a-z]?)\b"
+    r"|\b(appendix|app)\.?\s*([0-9]+(?:\.[0-9]+)*|[A-Z](?:\.[0-9]+)*)\b", re.I)
+# Kinds a paper also prints as a bare heading number.
+_HEADED = ("section", "sec", "appendix", "app", "equation", "eq")
+
+
+def evidence_pointers(s: str) -> list[tuple[str, re.Pattern]]:
+    """Each 'Table 2' / 'Fig. 4b' / 'Appendix A' in an evidence string, and how to find it.
+
+    Papers abbreviate their own cross-references inconsistently -- `Table 2`, `Tab. 2`,
+    `table 2` -- so the pointer is matched by kind and number rather than verbatim.
+    """
+    out = []
+    for m in _POINTER.finditer(str(s)):
+        kind, num = (m.group(1), m.group(2)) if m.group(1) else (m.group(3), m.group(4))
+        pat = rf"{_KINDS[kind.lower()]}\.?\s*{re.escape(num)}\b"
+        # Two ways a paper names its own parts, and section pointers need the second one.
+        # Inline is the cross-reference ("as shown in Table 2"); the heading form is the
+        # part itself, printed as a bare number -- extracted text renders section 3.1 as
+        # `3.1 LoRA models are difficult to merge`, and never as `Section 3.1`, so
+        # checking the inline form alone failed every section pointer in the corpus.
+        if kind.lower() in _HEADED:
+            pat += rf"|^[ \t]*{re.escape(num)}[ \t]+\S"
+        out.append((f"{kind} {num}", re.compile(pat, re.I | re.M)))
+    return out
+
+
+def quote(flat: str, figure: str) -> str:
+    """A window of the paper's text around where a figure appears.
+
+    Found by value and not by string, because the claim may legitimately have rounded: a
+    claim's `74.5` has to point at the paper's `74.46`, and a window around the first
+    bare `74` in the paper would show a sentence with nothing to do with the number.
+    """
+    from validate import canon, rounds_to
+    for m in re.finditer(r"(?<![A-Za-z0-9.])(\d[\d,]*(?:\.\d+)?|\.\d+)", flat):
+        tok = m.group(1)
+        plain = tok.replace(",", "")
+        forms = {canon(tok)} | ({canon("0" + plain)} if plain.startswith(".") else set())
+        try:
+            val = float("0" + plain if plain[0] == "." else plain)
+        except ValueError:
+            continue
+        if figure not in forms and not rounds_to(figure, [val]):
+            continue
+        lo, hi = max(0, m.start() - 55), min(len(flat), m.end() + 55)
+        return f"...{flat[lo:hi].strip()}..."
+    return "(in the paper)"
+
+
+def show(slug: str) -> None:
+    """Print each claim beside the evidence it cites, for the one review a human owes.
+
+    Accepting a sidecar is the author asserting every line of it in public, and the
+    thing that makes that reviewable in minutes rather than an hour is having the claim,
+    its scope, the pointer it cites, and the paper's own sentence for each figure in one
+    place. Otherwise reviewing means holding the PDF open in another window, which is
+    the friction that left 116 of 117 papers without a sidecar.
+    """
+    path = os.path.join(DRAFTS, f"{slug}.md")
+    if not os.path.exists(path):
+        path = os.path.join(SIDECARS, f"{slug}.md")
+    if not os.path.exists(path):
+        return print(f"no draft and no live sidecar for {slug}")
+    fm = front_matter(path)
+    if fm is None:
+        return print(f"{path}: unreadable front matter")
+
+    from validate import figures, figures_in, rounds_to, values_in
+    cache = os.path.join(CACHE, f"{slug}.txt")
+    text = open(cache, errors="replace").read() if os.path.exists(cache) else ""
+    have, vals = (figures_in(text), values_in(text)) if text else (set(), [])
+    flat = re.sub(r"\s+", " ", text)
+
+    print(f"\n{os.path.relpath(path, ROOT)}")
+    print("one_liner: " + oneline(fm.get("one_liner")))
+    if not text:
+        print("  (no cached full text -- figures and pointers cannot be checked here)")
+
+    answered = {a for g in (fm.get("qa") or []) for a in (g.get("answers") or [])}
+    for c in fm.get("claims") or []:
+        kind = c.get("kind") or "result"
+        ev = c.get("evidence") or ("--" if kind == "context" else "MISSING")
+        orphan = "" if c.get("id") in answered else "   (no question points here)"
+        print(f"\n  [{kind}] {c.get('id')}   evidence: {ev}{orphan}")
+        print("    " + oneline(c.get("text")))
+        print("    scope: " + oneline(c.get("scope")))
+        if not text:
+            continue
+        for label, pat in evidence_pointers(c.get("evidence") or ""):
+            print(f"    {'ok' if pat.search(text) else 'NOT FOUND'}: the paper's own "
+                  f"text mentions {label}")
+        for n in figures(oneline(c.get("text")) + " " + oneline(c.get("scope"))):
+            if n.isdigit() and 1900 <= int(n) <= 2099:
+                continue
+            if not (n in have or rounds_to(n, vals)):
+                print(f"    {n:>9}  NOT IN THE PAPER -- correct it or drop the figure")
+                continue
+            # The paper's own words around the figure, so the author checks the number
+            # against the sentence it came from rather than against a page number.
+            print(f"    {n:>9}  {quote(flat, n)}")
+
+    for i, g in enumerate(fm.get("qa") or []):
+        print(f"\n  q{i + 1} -> {', '.join(g.get('answers') or []) or '(nothing)'}")
+        for q in g.get("q") or []:
+            print(f"      {q}")
+
+
+def accept(slugs: list[str], replace: bool = False, anyway: bool = False) -> int:
+    """Promote drafts into data/sidecars/, refusing anything that fails a check.
 
     An existing live sidecar is never overwritten without `--replace`, because a
     redraft of a paper that already has one is the one case where accepting blind
@@ -383,7 +534,15 @@ def accept(slugs: list[str], replace: bool = False) -> int:
         if not os.path.exists(src):
             print(f"  no draft for {slug}")
             continue
-        errs = validate_draft(src)
+        errs, quality = validate_draft(src)
+        if quality and not anyway:
+            errs += quality + [
+                "the above are quality findings, not broken structure. Fix them, or "
+                f"promote as-is with `--accept {slug} --anyway`"]
+        elif quality:
+            print(f"  {slug}: promoted with {len(quality)} known problem(s):")
+            for q in quality:
+                print(f"      ignored: {q}")
         if errs:
             print(f"  {slug}: NOT promoted --")
             for e in errs:
@@ -428,8 +587,10 @@ def review(papers: list[dict]) -> None:
         for f in rows:
             slug = os.path.basename(f)[:-3]
             p = by_slug.get(slug) or {}
-            errs = validate_draft(f)
+            errs, quality = validate_draft(f)
             flag = "  [schema errors]" if errs else ""
+            if quality:
+                flag += f"  [{len(quality)} to fix -- see --show {slug}]"
             # Say so here rather than at --accept time: a redraft of a paper that
             # already has a reviewed sidecar is read differently from a first draft,
             # and the difference should be visible while deciding what to read.
@@ -443,8 +604,14 @@ def main() -> None:
     ap.add_argument("--ingest", action="store_true",
                     help="fold build/sidecar_tasks.json answers into drafts/")
     ap.add_argument("--review", action="store_true", help="what is drafted vs live")
+    ap.add_argument("--show", nargs="+", metavar="SLUG",
+                    help="print each claim beside the evidence it cites, and the "
+                         "paper's own sentence for every figure it states")
     ap.add_argument("--accept", nargs="+", metavar="SLUG", help="promote these drafts")
     ap.add_argument("--accept-all", action="store_true", help="promote every draft")
+    ap.add_argument("--anyway", action="store_true",
+                    help="with --accept: promote despite band or figure findings, "
+                         "listing what was ignored")
     # Deliberately not honoured by --accept-all: replacing a reviewed sidecar is a
     # per-paper decision, and a flag that quietly applies it to every draft in the
     # directory is how one keystroke overwrites work nobody asked to revisit.
@@ -464,15 +631,23 @@ def main() -> None:
 
     if args.review:
         return review(papers)
+    if args.show:
+        for slug in args.show:
+            show(slug)
+        return
+    # A refusal exits non-zero. Promotion is the step a wrapper or a later command is
+    # entitled to depend on, and a refused accept that exits 0 reads as a successful one.
     if args.accept_all:
         slugs = [os.path.basename(f)[:-3]
                  for f in glob.glob(os.path.join(DRAFTS, "*.md"))]
         print(f"promoting {len(slugs)} draft(s):")
-        print(f"\n{accept(slugs)} promoted.")
-        return
+        n = accept(slugs, anyway=args.anyway)
+        print(f"\n{n} promoted.")
+        sys.exit(0 if n == len(slugs) else 1)
     if args.accept:
-        print(f"\n{accept(args.accept, replace=args.replace)} promoted.")
-        return
+        n = accept(args.accept, replace=args.replace, anyway=args.anyway)
+        print(f"\n{n} promoted.")
+        sys.exit(0 if n == len(args.accept) else 1)
     if args.ingest:
         n = ingest(papers)
         print(f"wrote {n} draft(s) to data/sidecars/drafts/")

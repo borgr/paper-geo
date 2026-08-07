@@ -52,7 +52,7 @@ fix it: *select both on your profile → Merge*.
 
 - [ ] `global-piqa-evaluating-commonsense-reasoning-across-100-lang` — the second row reads 'Global piqa: Evaluating physical commonsense reasoni'
 
-## Identity surfaces (4 open)
+## Identity surfaces (3 open)
 
 Each is blocked on an account you are logged into, not on knowing what to
 do. `python scripts/identity_tasks.py` regenerates every payload under
@@ -73,12 +73,6 @@ Full list with citations: `tasks/orcid_missing.md`. How and why:
 
 - [ ] 0 cites — Resolving Interference (RI): Disentangling Models for Improved Mod
 
-### ORCID lists 1 work that is not yours
-
-A wrong work on your record is worse than a missing one: it is the thing that
-makes an automated merge distrust the record. *Works → the entry → Delete.*
-Put-codes and titles: `tasks/orcid_remove.md`.
-
 ### Semantic Scholar — 34 papers on a second author record
 
 Every S2-backed tool (Elicit, Consensus, SciSpace, most literature agents)
@@ -88,7 +82,7 @@ There is no self-service merge, but a claimed page can pull papers across:
 `tasks/s2_merge.md`, so stopping early still captures most of the loss.
 Do not claim the second page as well.
 
-### Wikidata — 9 statement gaps on Q140867203
+### Wikidata — 5 statement gaps on Q140867203
 
 Now automatic, and it does **not** need an autoconfirmed account — that is a
 QuickStatements rule, not a MediaWiki one. Create a bot password once at
@@ -122,8 +116,8 @@ and stop — that is where the citation-splitting actually costs something.
 There is no write API, so it is one *Journal ref* form per paper on your
 submission page (a metadata edit, not a new version).
 
-- [ ] `2306.01708` (865 cites) -> NeurIPS 2023  <https://arxiv.org/abs/2306.01708>
-- [ ] `2402.14992` (283 cites) -> ICML 2024  <https://arxiv.org/abs/2402.14992>
+- [ ] `2306.01708` (866 cites) -> NeurIPS 2023  <https://arxiv.org/abs/2306.01708>
+- [ ] `2402.14992` (284 cites) -> ICML 2024  <https://arxiv.org/abs/2402.14992>
 - [ ] `2412.03304` (181 cites) -> ACL 2025  <https://arxiv.org/abs/2412.03304>
 - [ ] `2104.08202` (167 cites) -> EMNLP 2021  <https://arxiv.org/abs/2104.08202>
 - [ ] `1907.01752` (127 cites) -> ICLR 2020  <https://arxiv.org/abs/1907.01752>
@@ -135,7 +129,7 @@ submission page (a metadata edit, not a new version).
 - [ ] `1907.08971` (77 cites) -> ACL 2019  <https://arxiv.org/abs/1907.08971>
 - [ ] `2302.04863` (71 cites) -> Findings of EMNLP 2023  <https://arxiv.org/abs/2302.04863>
 
-## Sidecar drafts awaiting your verification (19)
+## Sidecar drafts awaiting your verification (17)
 
 Drafted from each paper's own full text: claims with their magnitudes,
 scope conditions, terminology and likely misreadings. Every number is a
@@ -147,8 +141,7 @@ python scripts/draft_sidecars.py --review          # what is drafted
 python scripts/draft_sidecars.py --accept <slug>   # promote, after editing
 ```
 
-- [ ] `data/sidecars/drafts/ties-merging-resolving-interference-when-merging-models.md`  (865 cites) TIES-Merging: Resolving Interference When Merging Models  **replaces the live sidecar**
-- [ ] `data/sidecars/drafts/tinybenchmarks-evaluating-llms-with-fewer-examples.md`  (283 cites) tinyBenchmarks: evaluating LLMs with fewer examples
+- [ ] `data/sidecars/drafts/tinybenchmarks-evaluating-llms-with-fewer-examples.md`  (284 cites) tinyBenchmarks: evaluating LLMs with fewer examples
 - [ ] `data/sidecars/drafts/active-learning-for-bert-an-empirical-study.md`  (244 cites) Active Learning for {BERT:} An Empirical Study
 - [ ] `data/sidecars/drafts/findings-of-the-babylm-challenge-sample-efficient-pretrainin.md`  (232 cites) Findings of the {B}aby{LM} Challenge: Sample-Efficient P
 - [ ] `data/sidecars/drafts/global-mmlu-understanding-and-addressing-cultural-and-lingui.md`  (181 cites) Global {MMLU}: Understanding and Addressing Cultural and
@@ -156,7 +149,8 @@ python scripts/draft_sidecars.py --accept <slug>   # promote, after editing
 - [ ] `data/sidecars/drafts/on-the-weaknesses-of-reinforcement-learning-for-neural-machi.md`  (127 cites) On the Weaknesses of Reinforcement Learning for Neural M
 - [ ] `data/sidecars/drafts/fusing-finetuned-models-for-better-pretraining.md`  (120 cites) Fusing finetuned models for better pretraining
 - [ ] `data/sidecars/drafts/disentqa-disentangling-parametric-and-contextual-knowledge-w.md`  (119 cites) DisentQA: Disentangling Parametric and Contextual Knowle
-- [ ] `data/sidecars/drafts/model-merging-with-svd-to-tie-the-knots.md`  (112 cites) Model merging with SVD to tie the Knots
+- [ ] `data/sidecars/drafts/beyond-binary-rewards-training-lms-to-reason-about-their-unc.md`  (99 cites) Beyond Binary Rewards: Training {LM}s to Reason About Th
+- [ ] `data/sidecars/drafts/jump-to-conclusions-short-cutting-transformers-with-linear-t.md`  (97 cites) Jump to Conclusions: Short-Cutting Transformers with Lin
 
 ## Sidecars not yet drafted (93/112)
 

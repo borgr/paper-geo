@@ -23,23 +23,27 @@ Everything else waits on this. The format is the one artifact that is judgment
 rather than derivation, it has measurably drifted across 20 files, and it is what
 gets copied to other people's installs — so drift here propagates.
 
-- [ ] **Work through the open decisions** in
+- [ ] **Work through the remaining open decisions** in
       [docs/SIDECAR.md §6](docs/SIDECAR.md#6-the-open-decisions), in file order. Each
       one ends as a rule in §2 (which is the prompt) plus an enforcement in
-      `validate.py` or the schema. Nothing else in this section starts before they are
-      settled.
-- [ ] **Regenerate the TIES sidecar** once the rules are settled. It is the only
-      accepted sidecar, it was hand-written before the drafter existed, and it is
-      the file every reader will look at first — it currently disagrees with all 19
-      drafts on casing, voice and claim count (3 claims against a median of 16). Its
-      body is now empty on purpose: the body renders publicly as "Notes from the
-      author", and what was there described the file's own review status. If you want
-      a sentence in your own voice under the claims, that is where it goes — nothing
-      else writes it.
-- [ ] **Add the shape enforcement** the schema cannot express: key order, field
-      length bands, claims with no `qa` pointing at them. Formatter where mechanical,
-      validator where not. (`qa` pointing at ids that do not exist is already an error
-      in `validate.py check_sidecars`.)
+      `validate.py` or the schema. The claim-side decisions are settled and recorded
+      there (D2, D3, C1, C2, C3, C6, A2, Q4, Q6); what is left is **the question
+      list** — Q1 natural-vs-query, Q2 what varies between paraphrases, Q3 person,
+      Q5 field names, Q8 minimum share of general questions — and the formatter pair
+      D1/D4 below.
+- [ ] **Re-draft the 17 stale drafts, or delete them.** Every one was written before
+      `kind`, the bands and the no-invented-number check existed: none has a `context`
+      claim, so `--accept` refuses each of them, and `pending()` skips any paper that
+      already has a draft — so no run will replace them. `draft_sidecars.py --all`
+      re-queues them. **The design hole behind it:** nothing marks a draft as written
+      under superseded rules, so a stale draft is indistinguishable from a fresh one
+      until an accept fails. A rules-version stamp in the draft header would make it
+      mechanical.
+- [ ] **Finish the shape enforcement** the schema cannot express. Field length bands,
+      claim-count bands and claims with no `qa` pointing at them are now
+      `check_sidecar_shape()` in `validate.py`; key order, list order, id casing and
+      wrapping are not, and are the formatter question D1/D4. (`qa` pointing at ids
+      that do not exist is an error in `check_sidecars`.)
 - [ ] **Reconcile the schema's `description` strings with the prompt.** The rules now
       have two homes, not three: `docs/SIDECAR.md` §2 is read verbatim by the drafter,
       but `schema/sidecar.schema.json` still states the reasoning per field in its own
@@ -48,7 +52,7 @@ gets copied to other people's installs — so drift here propagates.
 
 ## Next — the papers themselves
 
-- [ ] Verify the 19 drafts. Counted in `WORKLIST.md`, so no list here.
+- [ ] Verify the drafts. Counted in `WORKLIST.md`, so no list here.
 - [ ] Draft the remaining 93. The `draft` step does 10 a run; it finishes itself.
 - [ ] `FAQPage` / `mainEntity` JSON-LD on paper pages — gated on the `qa` decisions,
       because which of 2–4 paraphrases becomes the canonical `name` is one of them.
@@ -98,18 +102,31 @@ Recorded rather than fixed, so the next person does not rediscover it as a bug.
       fields have 59 call sites across 12 files, including the worklist's citation
       ranking, and the benefit is cleaner diffs — the wrong trade today, but a real
       wrongness rather than a preference.
+- [ ] **`data/papers.yaml` also carries 224 lines of derived nothing.**
+      `ownership.py reconcile()` writes `owner: null` + `owner_source: unclaimed` for
+      every unclaimed paper, so 112 papers contribute 224 lines that say only "no one
+      has claimed this yet" — the default, stated 112 times. It is committed because
+      nothing derived is ever hand-edited, and it is stable rather than volatile, so it
+      churns once and then sits still. The fix is for the absence of an `owner` key to
+      mean unclaimed — most readers already spell it `p.get("owner")` — but two do
+      not: `ownership.py`'s report filters on `owner_source == "unclaimed"` and
+      `build_site.py` indexes `p["owner"]` directly. And `owner_source` is what
+      distinguishes "unclaimed" from "deferred to a peer's manifest", so dropping the
+      first case makes the second easier to misread. Small, not free.
 - [ ] **No formatter, only a validator.** `validate.py --fix-counts` set the
       precedent that mechanical things get fixed rather than reported, and then
       nothing else followed it. Key order, list order, id casing and line wrapping in
       the sidecars are all mechanical and all currently hand-fixed, inconsistently.
       This is the same item as the shape enforcement above, seen from the tooling
       side: whichever way D4 in `docs/SIDECAR.md` goes decides both.
-- [ ] **The agent's procedure has no test.** Every data-shaped rule has a schema or a
-      `validate.py` check behind it, and `selftest()` covers the code paths with no
-      data footprint — but "did the model follow the drafting rules" is checked only
-      by a human reading the draft. The nearest mechanical proxies would be a fixture
-      paper with a known set of numbers, and an assertion that no claim contains a
-      figure absent from the evidence text. Neither exists.
+- [ ] **The agent's procedure is only half tested.** One of the two proxies now
+      exists: no claim may contain a figure absent from the paper's own full text
+      (`check_sidecar_numbers()`), which is what caught an invented gap in a draft.
+      The other does not: there is no fixture paper with a known set of numbers, so
+      the check runs against whatever text the chain happened to resolve, and a
+      thin extraction weakens it silently rather than failing. Everything else about
+      "did the model follow the drafting rules" — voice, paraphrase axes, whether a
+      scope states the real bound — is still checked only by a human reading the draft.
 - [ ] **`WORKLIST.md` mixes two kinds of instruction.** Account actions no code can
       take ("open this arXiv form and paste this journal-ref") sit in the same ranked
       list as commands to run, and a reader has to notice which is which per item.
