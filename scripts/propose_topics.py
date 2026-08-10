@@ -146,6 +146,31 @@ def pending(repos: list[dict], do_all: bool) -> list[dict]:
     return out
 
 
+def declined_to_guess(repos: list[dict]) -> list[str]:
+    """Repos still missing a label that the labeller refused to invent one for.
+
+    Missing *either* topics or a description, matching `sweep_github.py`'s own count of
+    what needs labelling -- not both. Two of the three live cases have a description and
+    no topics, so requiring both wrong-counted them as done and reported one repo where
+    there are three.
+
+    These are stuck, and stuck by two correct decisions meeting: `pending()` skips a row
+    that already has a proposal, and `promote()` refuses a `confidence: low` one -- so the
+    row keeps its non-answer, stops being asked about, and stays bare. Neither half is
+    wrong. Going quiet about the result is: `propose` printed "nothing to propose" while
+    three repos had no topics and no description, which reads as finished.
+
+    Deliberately not fixed by re-proposing them every run. The model's answer was that the
+    evidence does not support a label, and the evidence is a README -- asking the same
+    question of the same page gets the same answer while spending a call each time. The
+    fix is upstream and it is a paragraph of prose, same shape as `tasks/bib_missing.md`.
+    """
+    return [r["repo"] for r in repos
+            if not r.get("skip") and not r.get("reviewed")
+            and (not r.get("topics") or not r.get("description"))
+            and (r.get("llm_proposal") or {}).get("confidence") == "low"]
+
+
 def emit_tasks(todo: list[dict]) -> str:
     os.makedirs(BUILD, exist_ok=True)
     path = os.path.join(BUILD, "llm_tasks.json")
@@ -242,14 +267,35 @@ def promote(repos: list[dict], fresh: list[str]) -> int:
 
     Never overwrites a reviewed repo, and never blanks an existing value with an empty
     proposal -- so a bad or partial model answer degrades to "no change".
+
+    `confidence: low` is not promoted. The schema has always required the field and until
+    now nothing read it, which meant the model's one channel for saying "the README is
+    thin, I am guessing" was collected and discarded. It costs nothing today -- the three
+    low-confidence repos returned no topics, so promotion was already a no-op for them --
+    and it is the difference between that being lucky and being the rule. A low proposal
+    still lands in `llm_proposal`, so the row keeps showing up as needing a label instead
+    of quietly acquiring a guessed one.
     """
     want, n = set(fresh), 0
     for r in repos:
         p = r.get("llm_proposal") or {}
         if r.get("reviewed") or not p or r.get("repo") not in want:
             continue
+        if p.get("confidence") == "low":
+            print(f"  low confidence, not promoted: {r['repo']}")
+            continue
         if p.get("topics"):
-            r["topics"] = sorted(set(p["topics"]))[:12]
+            # `declined_topics` is the only durable record of a topic a human rejected.
+            # Deleting it from `topics` is not, and that gap was live: `nlp-free` was
+            # invented for DORA, correctly removed, and still sitting in that row's
+            # proposal waiting for the next ingest to put it back. A deletion cannot be
+            # distinguished from a topic that was never proposed, so the rejection has to
+            # be written down somewhere the next run reads.
+            declined = set(r.get("declined_topics") or [])
+            keep = sorted(set(p["topics"]) - declined)[:12]
+            for t in sorted(set(p["topics"]) & declined):
+                print(f"  declined earlier, not promoted: {r['repo']} '{t}'")
+            r["topics"] = keep
         if p.get("description"):
             r["description"] = p["description"]
         if p.get("kind"):
@@ -289,6 +335,21 @@ def main() -> None:
     todo = pending(repos, args.all)
     if not todo:
         print("nothing to propose -- every repo is reviewed or already proposed")
+        stuck = declined_to_guess(repos)
+        if stuck:
+            by_name = {r["repo"]: r for r in repos}
+            print(f"\n{len(stuck)} are still unlabelled, because the labeller declined "
+                  f"to guess:")
+            for n in stuck:
+                r = by_name[n]
+                lack = ", ".join(w for w, have in (("topics", r.get("topics")),
+                                                   ("description", r.get("description")))
+                                 if not have)
+                print(f"  {n:<20} no {lack}")
+            print("Thin or absent README, and the line above is why they will not come "
+                  "back\nas work: the proposal counts as answered. Write a README and the "
+                  "next\nproposal has something to read -- or `--all` to ask again "
+                  "regardless.")
         return
     mode = args.mode or cfg["llm"]["mode"]
     if mode == "api":

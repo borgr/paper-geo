@@ -280,7 +280,7 @@ the sidecar:
 The papers track fights for position in surfaces someone else owns. This track
 owns its surface completely, and GitHub is a top-5 AI-cited domain — so the
 ceiling is higher and the work is cheaper. The catch is that almost none of it is
-about papers: **only 1 of 31 repos maps to a paper.** Paper code lives in
+about papers: **only 1 of 30 repos maps to a paper.** Paper code lives in
 collaborators' and organisations' accounts (`prateeky2806/ties-merging`,
 `ibm-research/*`), so planning this track around "the code for the papers" would
 mis-target nearly all of it.
@@ -393,9 +393,23 @@ you or the model set.
 
 You do not need the flag to correct one label, though, and requiring it would be a
 trap: a proposal is promoted into the applied fields only in the run where that
-proposal *changed*, so deleting a wrong topic from `repos.yaml` stands on its own.
-Use `reviewed: true` for the other thing — freezing a row against answers that have
-not been written yet.
+proposal *changed*, so deleting a wrong topic survives every run in between. It does
+not survive the run where the proposal changes, which is the part this section used
+to get wrong. Nothing distinguishes a topic you deleted from one never proposed, so
+**a deletion you mean to keep goes in `declined_topics`**, next to `topics` on the
+same row:
+
+```yaml
+topics:
+- reinforcement-learning
+declined_topics:
+- nlp-free            # invented; the model keeps proposing it
+```
+
+`promote()` subtracts that list from every future proposal and says so when it does.
+This is the same rule as everywhere else here — a decision is recorded, not
+remembered — and repo labels were the one place it was broken. Use `reviewed: true`
+for the other thing: freezing a whole row against answers not yet written.
 
 `repos.yaml` holds **desired state only** — no stars, no `current_*` mirrors of
 GitHub. Those duplicate data that already lives on GitHub, churn the file on every

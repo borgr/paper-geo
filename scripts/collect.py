@@ -206,6 +206,11 @@ def record_slug_moves(papers: list[dict], papers_path: str) -> int:
     return moves
 
 
+# The last bibliography that was successfully read. Derived, so it lives in build/ and
+# a clean clone simply has no fallback until its first good run.
+BIB_CACHE = os.path.join(BUILD, "bibliography.bib")
+
+
 def bibtex_source(cfg) -> tuple[str, str]:
     """The bibliography text, from the local checkout if there is one.
 
@@ -221,13 +226,35 @@ def bibtex_source(cfg) -> tuple[str, str]:
         if os.path.isfile(local):
             with open(local, encoding="utf-8", errors="replace") as f:
                 return f.read(), local
-    return get(url).decode("utf-8", "replace"), url
+    raw = get(url).decode("utf-8", "replace")
+    if raw:
+        try:
+            os.makedirs(BUILD, exist_ok=True)
+            with open(BIB_CACHE, "w") as f:
+                f.write(raw)
+        except OSError:
+            pass
+        return raw, url
+    # The one step whose failure used to end the run. Every other step degrades, and
+    # this one had the least excuse not to: the corpus is a hundred-odd stable records
+    # read over the network on every run, so a dropped connection took out repos,
+    # drafting, the audit, the site and the worklist -- none of which needed the
+    # network at all -- and left the reader with an error instead of a run.
+    if os.path.isfile(BIB_CACHE):
+        with open(BIB_CACHE, encoding="utf-8", errors="replace") as f:
+            return f.read(), BIB_CACHE
+    return "", url
 
 
 def from_bibtex(cfg) -> list[dict]:
     raw, origin = bibtex_source(cfg)
     if not raw:
-        sys.exit(f"could not read bibliography from {origin}")
+        sys.exit(f"could not read bibliography from {origin}, and no cached copy in "
+                 f"{os.path.relpath(BIB_CACHE, ROOT)}. Nothing downstream can run "
+                 f"without the corpus, so this is the one failure that stops a run.")
+    if origin == BIB_CACHE:
+        print(f"  bibliography: {cfg['sources']['bibtex_url']} did not answer -- using "
+              f"the copy from the last run. Anything added since is missing here.")
     print(f"  bibliography: {origin}")
     papers = []
     for e in parse_bibtex(raw):
@@ -451,7 +478,16 @@ def merge_arxiv(papers: list[dict]) -> None:
             # gradually backfilling older ones -- so False means "not yet", not
             # "never". There is no author-facing way to request it; the only lever is
             # a submission whose LaTeX converts. ar5iv covers the gap meanwhile.
-            p["arxiv_html"] = bool(get(f"https://arxiv.org/html/{p['arxiv']}", retries=1))
+            #
+            # Asked once per paper, and only while the answer can still change. A build
+            # that exists is not un-built, so `True` is kept without re-asking; `False`
+            # and missing are re-probed every run because backfill lands. That is what
+            # takes this from 321 requests a run to the few dozen that are still open
+            # questions -- and 321 unpaced requests was itself the finding, recorded in
+            # the health ledger as 86 failures against a source that was working.
+            if not p.get("arxiv_html"):
+                p["arxiv_html"] = bool(get(f"https://arxiv.org/html/{p['arxiv']}",
+                                           retries=3))
             # Note: the arXiv DataCite DOI (10.48550/arXiv.<id>) is deliberately NOT
             # written here. Storing it would let it shadow a publisher DOI that shows
             # up later, and it is derivable from the id anyway -- so it is computed at

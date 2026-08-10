@@ -10,7 +10,7 @@ description: >
 
 # paper-geo
 
-112 papers and 31 repos, one command (`update.py`), one source of truth (`data/`),
+112 papers and 30 repos, one command (`update.py`), one source of truth (`data/`),
 and a short ranked list of what only a human can do (`WORKLIST.md`).
 
 ## Your contract
@@ -38,7 +38,8 @@ python scripts/propose_topics.py --ingest     # fold your repo proposals into re
 ```
 
 1. **Run it.** `python update.py`, or one step with `--step <name>`. Read-only.
-   `--refresh-bib` first if the bibliography has new entries.
+   `--refresh-bib` reads the bibliography from its local checkout rather than the
+   pushed copy; it never writes to that repo.
 2. **Read what it handed back.** The `propose` step writes `build/llm_tasks.json` and
    stops; the `draft` step writes `build/sidecar_tasks.json` and stops. Each task
    carries its own schema and its own evidence. If neither file appeared, the run
@@ -67,7 +68,7 @@ python scripts/propose_topics.py --ingest     # fold your repo proposals into re
 | the same item keeps reappearing in `WORKLIST.md` | it needs a recorded decision, not another pass |
 | you are tempted to read `docs/EVIDENCE.md` or `docs/SETUP.md` mid-run | don't. Neither is a procedure; one is why the rules exist, the other is one-time account work |
 
-**Only 1 of 31 repos maps to a paper** — paper code mostly lives in collaborators'
+**Only 1 of 30 repos maps to a paper** — paper code mostly lives in collaborators'
 accounts. Do not treat the repo track as "the code for the papers".
 
 ## Where the rules live

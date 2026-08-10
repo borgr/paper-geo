@@ -39,10 +39,13 @@ from __future__ import annotations
 
 import argparse
 import glob
+import hashlib
+import inspect
 import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -85,6 +88,97 @@ def system_prompt() -> str:
     drifted. Now there is one copy, and `common.rules_block` raises if it is gone.
     """
     return FRAMING.format(doc=RULES_DOC) + rules_block(RULES_DOC)
+
+
+def spec_sha() -> str:
+    """Short hash of everything that decides whether a draft is acceptable.
+
+    Not the rules doc alone. The rule that rejected all 17 drafts this repo had
+    accumulated -- every sidecar needs at least one `kind: context` claim -- lives in
+    `validate.check_sidecar_shape`, in code, with the prose untouched. A stamp over the
+    prose would have moved on a typo fix and held still through the one change that
+    mattered. So: the rules the model is sent, the schema it fills, and the source of
+    the two functions that judge the result.
+    """
+    from validate import check_claim_numbers, check_sidecar_shape
+    parts = (rules_block(RULES_DOC),
+             json.dumps(schema(), sort_keys=True),
+             inspect.getsource(check_sidecar_shape),
+             inspect.getsource(check_claim_numbers))
+    return hashlib.sha256("\n".join(parts).encode()).hexdigest()[:12]
+
+
+def sha(text: str) -> str:
+    return hashlib.sha256(text.encode()).hexdigest()[:12]
+
+
+STAMP = re.compile(r"^Stamp: spec=(\S+) checks=(\S+) body=(\S+)$", re.M)
+
+
+def stamp_of(path: str) -> tuple[str, str, str] | None:
+    """(spec, checks, body) as recorded when this draft was written, or None if unstamped."""
+    m = STAMP.search(open(path).read())
+    return (m.group(1), m.group(2), m.group(3)) if m else None
+
+
+def body_of(path: str) -> str:
+    """The draft's front matter verbatim -- everything a person would edit."""
+    m = re.search(r"^---\n(.*?)^---\n", open(path).read(), re.S | re.M)
+    return m.group(1) if m else ""
+
+
+def uncommitted(path: str) -> bool:
+    """Does this file differ from the last commit? True if git cannot say.
+
+    The fallback for drafts written before stamping existed, and a good signal in its
+    own right: an uncommitted change to a draft means somebody is in the middle of
+    editing it right now.
+    """
+    try:
+        return subprocess.call(["git", "diff", "--quiet", "HEAD", "--", path],
+                               cwd=ROOT, stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL) != 0
+    except OSError:
+        return True
+
+
+def edited(path: str) -> bool:
+    """Has a person changed this draft since the drafter wrote it?
+
+    The question that decides whether a re-draft may overwrite it, and the reason the
+    stamp carries a body hash at all. Their edits are the review this whole step exists
+    to collect; a queue that silently replaced them would destroy the only thing here
+    that cannot be re-derived.
+
+    An unstamped draft has to be answered from outside the file, and git answers it: a
+    committed draft nobody has touched since is the drafter's own output, and replacing
+    it costs a `git checkout` to undo. Treating unstamped as edited instead would have
+    been the safe-looking choice and the wrong one -- it would freeze exactly the 17
+    drafts this check exists to unfreeze.
+    """
+    st = stamp_of(path)
+    if st is None:
+        return uncommitted(path)
+    return st[2] != sha(body_of(path))
+
+
+def stale(path: str, spec: str) -> str | None:
+    """Why this draft is out of date, or None if it still matches its own spec.
+
+    Two ways, and they are worth telling apart when reporting to a person. "spec moved"
+    means the rules changed under a draft that was fine when written -- not the model's
+    fault and nothing for the author to read. "now failing" means the spec is the same
+    one and the checks stopped passing, which is a bug in this repo, because the only
+    other thing that could have changed is the paper's cached text.
+    """
+    st = stamp_of(path)
+    if st is None:
+        return "written before drafts recorded their spec"
+    if st[0] != spec:
+        return "spec moved"
+    if st[1] == "pass" and any(validate_draft(path, note=False)):
+        return "now failing"
+    return None
 
 
 # --------------------------------------------------------------- evidence
@@ -176,12 +270,37 @@ def schema() -> dict:
     return {k: v for k, v in s.items() if k not in ("$schema", "$id")}
 
 
+def held(spec: str) -> dict[str, str]:
+    """Drafts a re-run must not touch: {slug: why}. Everything else is re-queueable.
+
+    A draft holds its slot while it is current, and also while it is stale but
+    hand-edited -- the second case is the one worth being careful about, because those
+    are the two facts that conflict. The spec moved, so the file cannot be accepted as
+    it stands; and a person has been in it, so nothing here may overwrite it. The way
+    out is theirs to choose, so it gets reported rather than resolved.
+    """
+    out = {}
+    for f in sorted(glob.glob(os.path.join(DRAFTS, "*.md"))):
+        slug, why = os.path.basename(f)[:-3], stale(f, spec)
+        if not why:
+            out[slug] = "current"
+        elif edited(f):
+            out[slug] = f"{why}, and you have edited it"
+    return out
+
+
 def pending(papers: list[dict], do_all: bool, limit: int | None) -> list[dict]:
-    """Papers with no live sidecar and no draft yet, most cited first."""
+    """Papers with no live sidecar and no current draft, most cited first.
+
+    A draft written against an acceptability spec that has since moved counts as no
+    draft. It was written to different rules, `--accept` refuses it, and until this
+    check existed nothing in the pipeline noticed -- which is how 17 drafts came to sit
+    in that directory, not one of them acceptable, with no run ever replacing them.
+    """
     live = {os.path.basename(f)[:-3] for f in glob.glob(os.path.join(SIDECARS, "*.md"))}
-    drafted = {os.path.basename(f)[:-3] for f in glob.glob(os.path.join(DRAFTS, "*.md"))}
+    keep = {} if do_all else held(spec_sha())
     out = [p for p in sorted(papers, key=lambda q: -(q.get("citations") or 0))
-           if p["slug"] not in live and (do_all or p["slug"] not in drafted)]
+           if p["slug"] not in live and p["slug"] not in keep]
     return out[:limit] if limit else out
 
 
@@ -285,7 +404,9 @@ What to check, in the order it pays:
 4. `one_liner`: the sentence you will reuse verbatim in the README, the model card and
    the talk abstract. Make it yours.
 
-{promote}-->
+{promote}
+{stamp}
+-->
 """
 _PROMOTE_NEW = "Then promote it:  python scripts/draft_sidecars.py --accept {slug}\n"
 # Accepting over a reviewed sidecar is the one destructive path in this script, so the
@@ -314,9 +435,17 @@ def write_draft(slug: str, sidecar: dict, source: str) -> str:
     live = os.path.exists(os.path.join(SIDECARS, f"{slug}.md"))
     banner = _BANNER_REPLACE.format(slug=slug) if live else ""
     promote = (_PROMOTE_REPLACE if live else _PROMOTE_NEW).format(slug=slug)
+    stamp = f"Stamp: spec={spec_sha()} checks=? body={sha(body)}"
     with open(path, "w") as f:
-        f.write(HEADER.format(source=source, banner=banner, promote=promote)
-                + "---\n" + body + "---\n")
+        f.write(HEADER.format(source=source, banner=banner, promote=promote,
+                              stamp=stamp) + "---\n" + body + "---\n")
+    # The checks have to run against the written file, so the stamp is finished in
+    # place. Recording the verdict is what makes "the rules moved under this draft"
+    # distinguishable later from "the model wrote a draft that never passed".
+    n = sum(len(x) for x in validate_draft(path, note=False))
+    text = open(path).read().replace("checks=?", "checks=pass" if not n else f"checks={n}")
+    with open(path, "w") as f:
+        f.write(text)
     return path
 
 
@@ -348,7 +477,7 @@ def front_matter(path: str) -> dict | None:
         return None
 
 
-def validate_draft(path: str) -> tuple[list[str], list[str]]:
+def validate_draft(path: str, note: bool = True) -> tuple[list[str], list[str]]:
     """Check one draft before promoting it. Returns (structural, quality).
 
     Both refuse promotion, and they are returned apart because they mean different
@@ -389,7 +518,7 @@ def validate_draft(path: str) -> tuple[list[str], list[str]]:
     quality = check_sidecar_shape(entry)
     numbers, no_text = check_claim_numbers(entry)
     quality += numbers
-    if no_text:
+    if no_text and note:
         # Not a failure, and not silent either: the rule with no exceptions is the one
         # that must never quietly stop running.
         print(f"      note: no cached full text, so the figures in this draft were "
@@ -577,12 +706,32 @@ def review(papers: list[dict]) -> None:
     live = {os.path.basename(f)[:-3] for f in glob.glob(os.path.join(SIDECARS, "*.md"))}
     drafted = sorted(glob.glob(os.path.join(DRAFTS, "*.md")))
     by_slug = {p["slug"]: p for p in papers}
-    print(f"live sidecars      {len(live)}")
-    print(f"drafts awaiting you {len(drafted)}")
-    print(f"no sidecar, no draft {len([p for p in papers if p['slug'] not in live]) - len(drafted)}")
-    if drafted:
+    spec = spec_sha()
+    # `keep` before the counts: a stale draft is not work for the reader, so counting it
+    # under "awaiting you" asks for an evening that ends in an accept that refuses.
+    keep = held(spec)
+    obsolete = [os.path.basename(f)[:-3] for f in drafted
+                if os.path.basename(f)[:-3] not in keep]
+    stale_note = f"   ({len(obsolete)} stale, see below)" if obsolete else ""
+    print(f"live sidecars        {len(live)}")
+    print(f"drafts awaiting you  {len(drafted) - len(obsolete)}{stale_note}")
+    print(f"no sidecar, no draft "
+          f"{len([p for p in papers if p['slug'] not in live]) - len(drafted)}")
+    if obsolete:
+        print(f"\n{len(obsolete)} draft(s) written against rules that have since changed. "
+              f"Do not read these;\nthe next run replaces them:\n  "
+              + ", ".join(obsolete[:6]) + (" ..." if len(obsolete) > 6 else ""))
+        print("  python scripts/draft_sidecars.py --limit 0")
+    stuck = {s: w for s, w in keep.items() if w != "current"}
+    for s, w in stuck.items():
+        print(f"\n{s}: {w}. Nothing will overwrite your edits. Either accept what you\n"
+              f"  have with --anyway, or re-draft it yourself with --slug {s}.")
+    # Only the ones it is worth spending an evening on. Listing a stale draft here under
+    # "read, edit, then --accept" would contradict the paragraph above it.
+    yours = [f for f in drafted if os.path.basename(f)[:-3] in keep]
+    if yours:
         print("\nDrafts, most cited first — read, edit, then --accept:")
-        rows = sorted(drafted, key=lambda f: -(
+        rows = sorted(yours, key=lambda f: -(
             (by_slug.get(os.path.basename(f)[:-3]) or {}).get("citations") or 0))
         for f in rows:
             slug = os.path.basename(f)[:-3]

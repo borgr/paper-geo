@@ -17,13 +17,15 @@ work.
 
 | Clock | Trigger | What runs | Who |
 |---|---|---|---|
-| **Every run** | monthly, or after any change | `python update.py` — all ten steps, read-only | code, unattended |
+| **Every run** | the 1st of the month, or after any change | `python update.py` — all ten steps, read-only. Runs itself: [`update.yml`](.github/workflows/update.yml) | code, unattended |
 | **On new material** | a paper posted, a repo created | `python update.py --refresh-bib`, then §5 | code, then a human once |
 | **On a hand-back** | the run reports a draft or a proposal | fill the task file, `--ingest`, then the author accepts | a model, then the author |
 | **On a decision** | a rule or a format is wrong | change the rule *and* its enforcement, together | a human, deliberately |
 
 Nothing that publishes is on any of them. `--apply` and `--deploy` sit outside all
-four on purpose.
+four on purpose — on a fifth thing that is not a clock: a human deciding that now is
+the moment. Pressing **Run workflow** is that decision, which is why the manual run
+does everything the scheduled one will not. §10.
 
 ## 2. Every run
 
@@ -59,7 +61,10 @@ the run, which is what makes the loop safe to schedule (`llm.mode: api` in
 `config.yaml` for the two model steps).
 
 Monthly is plenty. Add `--refresh-bib` when your bibliography has new entries and
-lives in a local checkout of the `publications` repo (`sources.publications_path`).
+lives in a local checkout of the `publications` repo (`sources.publications_path`):
+it reads that working tree instead of the copy last pushed to GitHub. It does not
+refresh the bibliography for you — that repo owns its own pipeline, which commits
+and pushes, and this one never runs it. Refresh it there first if you need to.
 
 ### What a human reads, in order
 
@@ -106,6 +111,33 @@ be the stale one**: arXiv v2 sometimes retitles a paper your bibliography still 
 under its v1 name, and your bibliography sometimes has the correct title while arXiv
 never got updated. Read the pair and fix whichever is wrong — upstream in the `.bib`
 if it is yours, or by posting a new arXiv version if it is theirs.
+
+### When a source stops answering
+
+Because every step degrades rather than fails, a dead source is invisible in the run's
+output — it costs a field, quietly, and the run still succeeds. `build/health.json` is
+the memory that makes it visible: per source, how often it answered, when it last did,
+and what the last failure was. The closing report prints a line only when a source looks
+*broken* rather than busy, so **silence there is a claim that everything answered
+recently**, and there are three things it can say.
+
+| Line | What it means | What to do |
+|---|---|---|
+| `rate-limited every time since …` | the URL is fine and the host is refusing our pace | get the key, or slow the host down in `common.PACE` |
+| `never once answered` (with the last error named) | the URL moved, the endpoint went away, or a config field is empty | check the URL; the error in brackets says which |
+| `last answered <date>, failing since` | it worked and stopped | usually upstream; if it persists, the field it feeds is stale |
+
+Two rules keep this readable, and both are deliberately slow. A source has to fail for
+six days straight before "failing since" appears, and two before "never once answered"
+does — a source that fails sometimes needs nothing said about it, and reporting every
+failure is how the permanent one gets missed. And a source nothing has asked about in
+over a day is not reported at all, because nothing is currently known about it.
+
+What the ledger is *not*: a record of whether the things it checks exist. A 404 on a URL
+naming one record — a paper arXiv does not have, a repo HF never indexed — is the source
+answering correctly, and is counted as a success. URLs scraped out of paper full text are
+not in the ledger at all; a project page that does not resolve is a finding about the
+paper, not an outage.
 
 ## 3. Sidecars: verify a draft, don't write one
 
@@ -191,10 +223,12 @@ Then, highest value first:
    not, ask the submitting co-author for the paper password
    (<https://arxiv.org/auth/need-paper-password>, instant) or file
    <https://arxiv.org/auth/request-ownership>. Step 3 is blocked until this lands.
-2. **Index its Hugging Face paper page.** `python scripts/hf_papers.py --live`
-   writes `tasks/hf_worklist.md` (and `build/hf_worklist.html` to click through);
-   log in to HF first, then `python scripts/hf_papers.py --verify`. This cannot be
-   automated — an unauthenticated visit creates nothing.
+2. **Index its Hugging Face paper page.** `WORKLIST.md` and
+   `tasks/hf_worklist.md` give the link; log in to HF first, because an
+   unauthenticated visit returns 404 and creates nothing (verified on 50 pages, 0
+   created). Visiting the URL while logged in *is* the action — there is no form and
+   no API, so this is one of the few things here that cannot be automated at all.
+   `python scripts/audit_identity.py --no-names` re-reads the pages afterwards.
 3. **Once it has a venue, add the journal-ref on arXiv.** `WORKLIST.md` gives the
    link and the venue string. One web form per paper; no API exists. This is what
    Scholar matches citations on, so it is worth more than it looks.
@@ -240,6 +274,7 @@ independent of this tool and pays for everything else, so do it first.
 python scripts/audit_identity.py     # what is still open, read live, no login
 python scripts/scholar_check.py      # what Scholar has that the corpus does not
 python scripts/identity_tasks.py     # the payload for each fix
+python scripts/identity_tasks.py --user-page ~/Downloads/arxiv-user.html   # once, see below
 ```
 
 The audit is the one to re-run: it reads ORCID, arXiv's authority records, Wikidata
@@ -270,6 +305,7 @@ since these are lists a human works through over days — plus one from
 | `s2_merge.md` | papers to pull onto the claimed Semantic Scholar page |
 | `openalex_merge.md` | what to paste into the OpenAlex correction form |
 | `arxiv_ownership.md` | arXiv papers you are not a registered author on |
+| `arxiv_jref.md` | the journal-ref and published DOI to type into each arXiv listing |
 | `arxiv_name_fixes.md` | arXiv records that misspell or omit your name |
 | `hf_worklist.md` | HF pages to index, then to claim |
 | `orcid_remove.md` | works on your ORCID that are not yours, with put-codes |
@@ -281,6 +317,29 @@ Order: **ORCID first**, then arXiv ownership. ORCID is the lever for two of the
 others — Semantic Scholar disambiguates on it, and OpenAlex runs ORCID-driven merges
 of split profiles — and arXiv ownership is a hard prerequisite for every
 journal-ref.
+
+### The arXiv journal-ref list, and why it is clicks
+
+Asked whether a library or an agent could just fill this form. It cannot, for three
+separate and each-sufficient reasons: arXiv's API is read-only with no metadata-write
+endpoint at any access level; their `robots.txt` disallows `/user`, which is the only
+page mapping an arXiv id to the submission id the form needs; and `/jref` takes no
+identifier — signed out it redirects to login, signed in it is your articles list.
+
+So the split is: code decides *which* papers and *what to type*, you click. Every
+field value is in [`tasks/arxiv_jref.md`](tasks/arxiv_jref.md) — the journal-ref built
+from the publisher's own BibTeX, the published DOI (never the `10.48550/arXiv.…` one),
+and why `Report number:` stays blank on all of them.
+
+One optional step makes that file link straight to each paper's form instead of to the
+abs page. Sign in, open <https://arxiv.org/user>, save the page, and:
+
+```bash
+python scripts/identity_tasks.py --user-page ~/Downloads/arxiv-user.html
+```
+
+It reads the file you saved — no request is made on your behalf — and caches the ids in
+`data/arxiv_submissions.yaml`, so this is once, not per run.
 
 ## 8. Checking whether it worked
 
@@ -304,7 +363,7 @@ unanswerable at this corpus size, and what the one defensible design would be.
 ## 9. Setup, once
 
 ```bash
-pip install pyyaml jsonschema          # jsonschema is optional but catches more
+pip install -r requirements.txt        # two packages; everything else is stdlib
 gh auth login                          # the sweep and the deploy use the gh CLI
 ```
 
@@ -327,13 +386,141 @@ check cannot resolve a missing paper and has to report that no index has it. The
 is `WIKIDATA_BOT_PASSWORD`, used only by `wikidata_apply.py`, which is the only script
 that logs in anywhere.
 
-## 10. Command reference
+## 10. Unattended: what GitHub Actions does
+
+Two workflows, and the difference between them is not which actions are risky. It is
+who is watching.
+
+| Workflow | Trigger | Does | Writes outward? |
+|---|---|---|---|
+| [`check.yml`](.github/workflows/check.yml) | every push and PR | `validate.py --strict`, then the smoke suite, on 3.10 and 3.12 | no — and no network at all |
+| [`update.yml`](.github/workflows/update.yml) | 1st of the month, 06:37 UTC | `python update.py`, commit what changed | no |
+| [`update.yml`](.github/workflows/update.yml) | **Run workflow** button | the same, plus every tick-box you leave ticked | **yes** |
+
+`check.yml` is offline on purpose. A suite that goes red because Semantic Scholar is
+having an afternoon is a suite people learn to ignore, and then it is worse than none;
+everything that needs the network is in the other file, where a source failing is
+reported rather than fatal.
+
+The scheduled leg of `update.yml` re-derives and commits, and does nothing else — no
+model calls, no outward writes, no money. Nobody is reading the log at 06:37, so it
+does only what is safe unread. The button leg is the same run with the writes turned
+on, and its defaults are ticked by how hard each one is to take back: Wikidata (every
+edit a public revision with a one-click undo), repo metadata and Hugging Face links
+(own accounts, one API call to replace), the site deploy (a full rebuild from committed
+data). Untick any of them and the rest still runs.
+
+**What no leg does is accept a sidecar draft.** `--accept-all` exists, and CI could
+call it. It does not, because a claim is the one thing on this page that retraction
+does not reach: a wrong repo topic is one call to fix, and a wrong sentence about a
+result that an answer engine has already quoted cannot be un-quoted. Everything else
+here is a public fact re-derived from a source that can be re-read.
+
+### Secrets
+
+Repository → Settings → Secrets and variables → Actions. Every one is optional, and a
+missing one silently skips the step that needed it rather than failing the run — which
+is what makes a dispatch from a fork a dry run.
+
+| Secret | Needed for | Without it |
+|---|---|---|
+| `S2_API_KEY` | every leg | the anonymous rate-limit pool; the audit starts reporting papers as unindexed that are indexed |
+| `GH_TOKEN` | repo metadata, HF links, site deploy | those three skip. Must be a PAT — the built-in `GITHUB_TOKEN` cannot push to the Pages repo, which is a different repository |
+| `WIKIDATA_BOT_USER`, `WIKIDATA_BOT_PASSWORD` | the Wikidata tick-box | it skips |
+| `ANTHROPIC_API_KEY` | drafting sidecars unattended | nothing is drafted, and nothing is queued either — a task file written for an agent that is not there would cost every paper's full text to produce and then be thrown away with the runner |
+
+### What a runner cannot do
+
+**Google Scholar.** `scholar_check.py` is fetched from a datacenter IP, and Scholar
+answers those with a challenge page rather than a profile. There is no fix for that
+short of a self-hosted runner, and the check is not worth one.
+
+What the unattended run does instead is ask the narrower half of the same question
+against Semantic Scholar's author record, which answers from anywhere: *is there a paper
+an index attributes to you that the bibliography has never received?* It finds strictly
+less than Scholar — measured on this corpus, Scholar finds three absent papers and this
+finds none of them, because S2's author record does not hold them either. It is a floor,
+not a replacement: what it reliably catches is a **new** paper that reached an index and
+not the bibliography, which is the case where the delay costs something. A paper missing
+for three years is one you already know about.
+
+So the split is: the unattended run can say *no new paper went missing*, and only a run
+from a desk can say *nothing is missing*. Run `scholar_check.py` locally when you think
+of it; nothing else depends on it being fresh.
+
+**Remember anything.** `build/` is gitignored, and the health ledger is the one file
+there that is memory rather than output — it is what distinguishes "arXiv did not
+answer just now" from "arXiv has not answered since June". It cannot be committed:
+committed data here is derived facts, so a ledger in git would fill every diff with
+weather. It rides in the Actions cache instead, and the run also uploads it as an
+artifact, kept 90 days, next to whatever the task files contained.
+
+## 11. What publishes without you, and how to take it back
+
+The policy is **publish by default and leave a human to check**, and it is worth being
+exact about it, because a policy nobody wrote down is indistinguishable from a bug. The
+line is not outward-versus-local. It is:
+
+> Does this write assert a **fact re-derived** from a public source, or a **claim someone
+> interpreted**?
+
+A re-derived fact is safe to publish unattended, because the next run derives it again
+and a wrong one self-corrects. An interpreted claim does not self-correct — nothing
+recomputes it, and if an answer engine repeats it there is no edit that reaches the
+repetition. So every gate that matters sits on claims, and the ceremony on the others is
+just ceremony.
+
+| Surface | Asserts | Written by | Read by a human first | Undo |
+|---|---|---|---|---|
+| Sidecar claims (site, `links_block`) | an interpreted claim | model, then you | **always** — `--accept`, one paper at a time | none once quoted |
+| `CITATION.cff` | derived from `papers.yaml` | code | no | permanent in git history |
+| Links block in a README | accepted sidecar + derived links | code | the sidecar was | revert; stays in history |
+| HF paper-page links (`paper_code.py --apply`) | "this repo is this paper's code" | code, from the paper's own text | no | edit the HF page |
+| Repo topics / description / homepage | an interpreted claim | **model** | **no** — 26 of 30 repos | one API call; GitHub keeps no history |
+| Paper pages on the site | derived + accepted claims | code | the claims were | re-deploy, minutes; caches days |
+| Wikidata statements | derived identifiers | code | no | one-click undo, full public history |
+| IndexNow ping | nothing — a notification | code | no | nothing to retract |
+
+Two rows are load-bearing.
+
+**Repo topics and descriptions are the exception to the rule, on purpose.** They are an
+interpreted claim published with nobody having read it, which by the line above should be
+gated. It is not, because the undo is one API call against your own repo and GitHub keeps
+no history of either field, and because gating it would leave 26 of 30 repos unlabelled
+forever — the standing cost of the gate exceeds the occasional cost of a wrong label.
+`diff` therefore marks which values are model-written and unread, so the `--yes` moment
+has the fact it turns on. To change one, edit `data/repos.yaml`; to freeze a row against
+future proposals, set `reviewed: true`. A `confidence: low` proposal is never promoted.
+
+**The paper→code link is trustworthy for a reason worth knowing.** It reads like a fuzzy
+match and it is not: of the 32 unreviewed accepted links, **30 are backed by the paper's
+own full text naming that URL** ("our code is available at…"), which is a re-derived fact.
+The other two were inferred from an author's GitHub handle plus a shared word, and both
+carry independent corroboration — the repo's own README or description names the paper.
+`verdict: accept` requires the top candidate to beat the runner-up by a margin, so a
+single weak candidate with no competition can clear it; the full-text evidence is what
+makes that safe in practice rather than in principle. `build/paper_code_why.json` holds
+the evidence for every row.
+
+**What a human catches that code cannot** is not a wrong URL — it is a wrong *kind* of
+claim. An `awesome-` list is a companion resource, and calling it `codeRepository` for a
+survey with no code is a category error the match rule cannot see. Likewise whether a
+fork is *this* paper's fork. That is roughly one row in thirty, which is exactly the trap:
+the machine is right often enough that nobody will look, and the wrong ones ship as
+structured data under your name about someone else's repo. It is not a reason to gate. It
+is a reason for the check to be a habit, not a ritual.
+
+**Do not automate `--accept`.** It is the only gate on the only surface with no undo, and
+it is the one place the review is genuinely cheap — you know in one read whether a
+sentence about your own paper is true.
+
+## 12. Command reference
 
 | Command | Does | Writes anything? |
 |---|---|---|
 | `update.py` | all ten steps | no |
 | `update.py --step <name>` | one step | no |
-| `update.py --refresh-bib` | refresh the bibliography first | no |
+| `update.py --refresh-bib` | read the bibliography from its local checkout | no |
 | `update.py --apply` | + push approved repo changes and paper links | **yes, GitHub + Hugging Face** |
 | `scripts/collect.py` | rebuild `papers.yaml` | local only |
 | `scripts/collect.py --allow-shrink` | + write even if coverage dropped sharply | local only |
@@ -345,11 +532,11 @@ that logs in anywhere.
 | `scripts/ownership.py [--manifest] [--claim-all]` | reconcile with co-authors | local only |
 | `scripts/links_block.py propose\|diff\|apply` | links block in paper-code READMEs | apply: **yes** |
 | `scripts/build_site.py [--deploy]` | generate the site | deploy: **yes** |
-| `scripts/hf_papers.py [--live] [--verify]` | HF worklist / re-check | local only |
 | `scripts/audit_identity.py [--no-hf]` | live-read ORCID, arXiv, Wikidata, HF, S2 | local only |
 | `scripts/scholar_check.py [--quiet]` | diff your Google Scholar profile against the corpus — the only check that can see a paper the pipeline never received | local only |
-| `scripts/identity_tasks.py` | payloads for the one-time identity fixes | local only |
+| `scripts/identity_tasks.py [--user-page FILE]` | payloads for the one-time identity fixes; `--user-page` reads a saved copy of your arXiv articles list so the journal-ref list can deep-link each form | local only |
 | `scripts/wikidata_apply.py [--apply] [--check-account]` | apply the Wikidata diff | apply: **yes, Wikidata** |
 | `scripts/validate.py [--fix-counts] [--strict]` | schema check + shipped-bug regressions + selftest; `--fix-counts` refreshes the corpus sizes stated in the docs. Exits 1 on a structural failure (which stops `update.py`), 0 on a stale count; `--strict` makes both fatal | `--fix-counts`: the doc sentences |
 | `measure/check_structure.py [--links]` | the "A" checks | no |
 | `measure/fidelity.py [--ingest]` | the "C" diagnostic | no |
+| `python -m unittest discover -s tests` | the wiring: every module imports, every CLI builds its parser, `STEPS` and the `step_*` functions agree, nothing in the code or the prose names a file that is gone | no, and no network |

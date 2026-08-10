@@ -187,10 +187,12 @@ sources:
   # repo's own resolve_arxiv.py keeps current.
   bibtex_url: https://raw.githubusercontent.com/borgr/publications/master/orig.bib
   acl_anthology_person: https://aclanthology.org/people/leshem-choshen/
-  # Optional: local checkout of borgr/publications. When set, `update.py --refresh-bib`
-  # runs that repo's own update.py first (refreshing Scholar counts and re-resolving
-  # arXiv -> published BibTeX) and reads the bib from disk instead of over HTTP.
-  # One source of truth per fact: publications owns the bibliography, we only consume it.
+  # Optional: local checkout of borgr/publications. When set, the bib is read from
+  # that working tree instead of over HTTP, so a refresh done there is visible here
+  # without waiting for a push. Read-only, deliberately: this used to run that repo's
+  # own update.py, which commits and pushes to GitHub and Overleaf, so a GEO run
+  # published to a repo this project does not own. One source of truth per fact --
+  # publications owns the bibliography and its schedule, we only consume it.
   publications_path: null
 
 llm:
@@ -267,8 +269,15 @@ github_sweep:
   include_forks: false
   # Applied to every repo the sweep touches, on top of per-repo topics.
   base_topics: []
-  # Repos to leave completely alone.
-  exclude: []
+  # Repos to leave completely alone. Matched on the bare name, not `owner/name`.
+  #
+  # `publications` is the source bibliography. Nothing in this repo writes to it -- what
+  # belongs on a publication list is a claim about your own work -- and that rule covers
+  # its metadata too, which is easy to miss: the sweep PATCHes description and topics, so
+  # an empty exclude list meant `apply` would have written to it without ever touching a
+  # .bib file. Excluded here rather than `skip: true` on the row, so it never enters.
+  exclude:
+  - publications
 
 visibility:
   # Engines to probe in measure/visibility.py.

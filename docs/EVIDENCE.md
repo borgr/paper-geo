@@ -201,8 +201,9 @@ this project with the least direct evidence, which is stated again in §7.
 
 A dated snapshot, kept because it is the only "before" measurement that will ever
 exist. Taken from both Semantic Scholar author records; 122 unique papers then, 112
-after duplicate merging. `scripts/audit_snapshot.py` is the original standalone
-version; `scripts/collect.py` supersedes it.
+after duplicate merging. The standalone script that produced it has been deleted --
+`scripts/collect.py` superseded it, and a second copy of the same fetching was the
+kind of dead code that reads as a live tool. The numbers below are the record.
 
 ```
 papers                             122

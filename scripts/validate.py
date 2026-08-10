@@ -809,6 +809,7 @@ DOC_COUNTS = (
     ("docs/EVIDENCE.md", "~{papers} papers × 6 questions", "recompute the question total"),
     ("docs/EVIDENCE.md", "~{papers} papers × ~4 months", "recompute the paper-months"),
     ("docs/EVIDENCE.md", "sidecars for {papers} papers", "recompute the hours"),
+    ("RUN.md", "{unlabelled} of {repos} repos", ""),
 )
 
 # Docs a model is actually sent, and the section of each that it is sent. See
@@ -843,8 +844,8 @@ def count_pattern(template: str) -> re.Pattern:
     Built from the template rather than written twice, so the pattern cannot drift
     from the string the check looks for.
     """
-    parts = re.split(r"(\{papers\}|\{repos\})", template)
-    return re.compile("".join(r"\d+" if p in ("{papers}", "{repos}") else re.escape(p)
+    parts = re.split(r"(\{papers\}|\{repos\}|\{unlabelled\})", template)
+    return re.compile("".join(r"\d+" if p.startswith("{") else re.escape(p)
                               for p in parts))
 
 
@@ -858,7 +859,12 @@ def check_doc_counts(papers: list[dict], repos: list[dict], fix: bool = False) -
     same line, so substituting it without redoing the sum is how a page becomes
     confidently wrong.
     """
-    counts = {"papers": len(papers), "repos": len(repos)}
+    # `unlabelled` is how many repos carry labels nobody has read. RUN.md §11 argues from
+    # that number -- publishing unreviewed model text is worth it *because* the alternative
+    # leaves this many repos bare -- so the argument stops holding the day it drifts.
+    counts = {"papers": len(papers), "repos": len(repos),
+              "unlabelled": sum(1 for r in repos
+                                if not r.get("reviewed") and not r.get("skip"))}
     if not counts["papers"] or not counts["repos"]:
         return []            # a failed read is already reported by the schema pass
     errs = []

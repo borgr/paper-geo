@@ -65,7 +65,7 @@ import urllib.error
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import DATA, ROOT, load_config, read_yaml, write_yaml  # noqa: E402
+from common import DATA, ROOT, load_config, note_fetch, read_yaml, write_yaml  # noqa: E402
 from fulltext import resolve as resolve_fulltext  # noqa: E402
 
 BUILD = os.path.join(ROOT, "build")
@@ -377,7 +377,24 @@ class PageFacts:
         # rather than 400KB of markup in a cache that is committed to nothing but is
         # read on every rerun.
         fact["text"] = " ".join(re.sub(r"<[^>]+>", " ", fact["text"]).split()).lower()[:20000]
-        self.cache[url] = fact
+        # Only a definite answer is cached. A 404 or a 403 is the server speaking and
+        # will say the same thing tomorrow; a timeout or a DNS failure is this machine's
+        # afternoon, and caching it turns one bad moment into "that project page does
+        # not exist", permanently, with no run ever asking again. Three of the 103 probes
+        # in this cache were exactly that, one of them a page that is plainly up.
+        definite = isinstance(fact.get("status"), int) and fact["status"] < 500
+        # Deliberately not recorded in the health ledger. These URLs are lifted out of
+        # paper full text, so "does it resolve" is the question being asked, not a
+        # precondition for asking it -- a page that does not exist is this probe
+        # succeeding. The ledger disagreed: one paper writes `iclrgithub.io` where it
+        # means `iclr.github.io`, and a typo in someone's related-work section became a
+        # permanent entry reading "never once answered -- check the URL", against a
+        # host that has never existed and never will. `source_key` collapses per-record
+        # identifiers, but it cannot collapse a hostname, so every mangled URL in the
+        # corpus would earn its own line forever. The GitHub API this step also calls
+        # *is* a source and is still recorded, below.
+        if definite:
+            self.cache[url] = fact
         return fact
 
 
@@ -461,12 +478,13 @@ def hf_siblings(url: str, title_toks: set[str]) -> list[str]:
     if not m:
         return []
     kind, owner, name = m.group(1), m.group(2), m.group(3)
+    api = f"https://huggingface.co/api/{kind}?author={owner}&limit=200"
     try:
-        with urllib.request.urlopen(
-                f"https://huggingface.co/api/{kind}?author={owner}&limit=200",
-                timeout=25) as r:
+        with urllib.request.urlopen(api, timeout=25) as r:
             items = json.load(r)
+        note_fetch(api, True)
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError):
+        note_fetch(api, False)
         return []
     # A sibling has to be a variant of *this* artifact, not just another dataset the
     # owner happens to publish -- `commoncrawl` publishes dozens, and matching on a
@@ -759,11 +777,27 @@ def hf_token() -> str | None:
 
 
 def hf_get(arxiv: str) -> dict | None:
+    """HF's record for one paper, or None -- recorded either way.
+
+    A paper with no HF record and a paper HF would not answer for look identical to
+    every caller here: both are None. Only the ledger can tell them apart, and the
+    difference matters, because this is where the upvote counts and the existing
+    githubRepo/projectPage links come from.
+    """
+    url = f"https://huggingface.co/api/papers/{arxiv}"
     try:
-        with urllib.request.urlopen(
-                f"https://huggingface.co/api/papers/{arxiv}", timeout=30) as r:
-            return json.load(r)
+        with urllib.request.urlopen(url, timeout=30) as r:
+            doc = json.load(r)
+        note_fetch(url, True)
+        return doc
+    except urllib.error.HTTPError as e:
+        # A 404 is HF saying this paper is not indexed, which is a real answer about
+        # this paper rather than a fault in the source. Counting it as a failure would
+        # bury the host in failures the moment a run touches a few unindexed papers.
+        note_fetch(url, e.code == 404)
+        return None
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError):
+        note_fetch(url, False)
         return None
 
 
@@ -820,8 +854,13 @@ def main() -> None:
                 f"{e['repo'] or '-':<52} "
                 f"{'your decision' if e['frozen'] else 'score ' + str(e['score'])}")
 
-    print(f"== will publish ({len(acc)})  -- '*' = your decision, the rest a release "
-          f"phrase plus corroboration")
+    # "will publish" is a description of what --apply would do, not a queue of things
+    # waiting on the reader: nothing in this list needs them, and the ones marked '*' are
+    # rows they already reviewed. Saying so is the difference between a settled list and
+    # a 39-item chore.
+    print(f"== will publish on --apply ({len(acc)})  -- nothing here needs you. "
+          f"'*' = you already reviewed it,\n   the rest earned it with a release phrase "
+          f"plus corroboration")
     for s, r in sorted(acc, key=lambda x: -(x[1]["paper"].get("citations") or 0)):
         print(line(s, r))
     print(f"\n== review ({len(rev)})  -- your call, never pushed")
@@ -842,8 +881,9 @@ def main() -> None:
     pacc = [s for s, e in eff.items() if e["page_verdict"] == "accept"]
     prev_ = [s for s, e in eff.items() if e["page_verdict"] == "review"]
     cites = lambda s: -(results[s]["paper"].get("citations") or 0)  # noqa: E731
-    print(f"\n== project page, will publish ({len(pacc)})  -- '*' = your decision, "
-          f"the rest reachable and naming the paper")
+    print(f"\n== project page, will publish on --apply ({len(pacc)})  -- nothing here "
+          f"needs you. '*' = you\n   already reviewed it, the rest reachable and naming "
+          f"the paper")
     for s in sorted(pacc, key=cites):
         e = eff[s]
         print(f"{'*' if e['frozen'] else ' '} {-cites(s):>4} cites  {s[:52]:<52} "

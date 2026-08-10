@@ -54,8 +54,14 @@ def write_manifest(cfg, papers: list[dict]) -> str:
     base = cfg["site"]["base_url"].rstrip("/") + cfg["site"]["papers_path"]
     claims = []
     for p in papers:
-        # We only claim what we actually own and can serve a page for.
-        if p.get("owner") not in (None, me):
+        # We only claim what we actually own and can serve a page for -- which this used
+        # to say while accepting `owner: None` too, so a corpus with no owners set
+        # published 111 claims. That is the assertion the whole protocol exists to
+        # prevent: a coauthor reading it is told this domain maintains the canonical page
+        # for papers nobody agreed we own, including ones where the configured
+        # `default_owner_rule: first_author` points at somebody else. Unclaimed has to
+        # mean unclaimed, and the report right below this said so all along: "ours: 0".
+        if p.get("owner") != me:
             continue
         if p.get("canonical_page"):
             continue
@@ -176,6 +182,16 @@ def main() -> None:
 
     print(f"\nours: {stats['ours']}   peer-owned: {stats['peer']}   "
           f"unclaimed: {stats['unclaimed']}   CONFLICTS: {stats['conflict']}")
+    if not peers:
+        # Otherwise this step reports "unclaimed: 112" on every run for ever and there
+        # is no way to tell, from the output, whether that is a finding or the resting
+        # state. It is the resting state: with nobody to coordinate with there is
+        # nothing to reconcile, and unclaimed is the correct answer, not a backlog.
+        print("  No peers configured, so there is nothing to reconcile and nothing to "
+              "claim: this\n  step is idle by design. It starts doing work when a "
+              "coauthor publishes a manifest\n  and you add its URL to "
+              "`collaboration.peers` in config.yaml. To publish yours:\n  "
+              "python scripts/ownership.py --manifest")
     if stats["conflict"]:
         print("\nConflicts -- two parties claim the same paper. Resolve by talking to "
               "them; whoever keeps it, the other switches to a link:")
@@ -191,7 +207,17 @@ def main() -> None:
                   f"-> {suggest_owner(p, cfg)}")
 
     if args.manifest:
-        print(f"\nwrote {write_manifest(cfg, papers)}")
+        path_m = write_manifest(cfg, papers)
+        n = len(json.load(open(path_m))["claims"])
+        print(f"\nwrote {path_m}: {n} claim(s)")
+        if not n:
+            # Not a failure, and worth a sentence rather than a silent empty file: with
+            # no peers there is nobody to coordinate with, and claiming ownership of a
+            # coauthored paper is a thing to do on purpose, not by default.
+            print("  Nothing is claimed, so the manifest is empty. That is the correct "
+                  "state until you\n  agree ownership with a coauthor: set `owner` on "
+                  "those papers, or claim the ones\n  where you are the corresponding "
+                  "author with `--claim-all`.")
         print("Publish it at "
               f"{cfg['site']['base_url'].rstrip('/')}/paper-geo.json and give peers "
               "that URL for their config.")

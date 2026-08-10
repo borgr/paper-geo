@@ -66,19 +66,14 @@ gets copied to other people's installs — so drift here propagates.
 Deferred with a release condition in [`data/declines.yaml`](data/declines.yaml), so
 `WORKLIST.md` keeps it counted at the bottom until the papers are done.
 
-- [ ] Review the 30 proposed repo labels. 29 of the 30 are already live on GitHub
-      verbatim, so this reads as "audit what shipped", not "approve a proposal" —
+- [ ] Review the proposed repo labels. Nearly all are already live on GitHub verbatim,
+      so this reads as "audit what shipped", not "approve a proposal" —
       `sweep_github.py diff` is down to one CITATION.cff line.
-- [ ] **The `nlp-free` deletion is not recorded anywhere, so it will come back.**
-      It was the one invented topic in 30 proposals, it is correctly absent from
-      DORA's live topics — and it is still sitting in that row's `llm_proposal`.
-      `promote()` skips only `reviewed: true` rows, DORA is not one, so the next
-      `--ingest` copies the proposal back over `topics` including `nlp-free`. This
-      violates the repo's own rule that human decisions are recorded rather than
-      remembered, and it is the only place that rule is currently broken. Options:
-      `reviewed: true` on the row (freezes everything, including the description),
-      a per-topic decline, or `promote()` learning to treat a topic a human removed
-      as a decision. Pick one before the next `--ingest`.
+      A topic you delete needs `declined_topics` next to it, or the next `--ingest`
+      puts it back — see [RULES.md §11.2](docs/RULES.md#112-labelling-topics-and-descriptions).
+      Two descriptions on GitHub (`l---l`, `chara`) are low-confidence model text that
+      was promoted before the confidence gate existed. Both repos are now `skip: true`,
+      so nothing will rewrite them; the text stands until someone edits it by hand.
 - [ ] `tai314159/MuLER` is private; it has to be made public before it can be linked.
 
 ## Blocked, not forgotten
@@ -89,6 +84,31 @@ Deferred with a release condition in [`data/declines.yaml`](data/declines.yaml),
       `python scripts/wikidata_apply.py --apply`.
 - [ ] `sweep_github.py apply` and `build_site.py --deploy` — both wait on an
       explicit go-ahead by design, not by accident.
+
+## Decided against, with the measurement
+
+- [x] **Splitting `scripts/audit_identity.py` by surface. Declined — it would decouple
+      nothing.** The file is 1,595 lines and the obvious read is "five surfaces jammed
+      together", so this is written down to stop the next person acting on that read.
+      Measured with an AST walk: **zero calls between the orcid, wikidata, arxiv and hf
+      function groups.** They are already independent. All coupling runs through `main()`,
+      which is 501 lines — 60 of collect and 441 of one report — so a by-surface split
+      moves 967 lines, breaks no dependency that exists, and leaves the actual monolith
+      untouched.
+
+      The split that *would* pay is **by layer, not by surface**: 23 of the 24 report
+      sections read only their own surface's variables (the exception counts HF pages
+      against the arXiv list), so each surface could own its collect functions and its
+      report sections, leaving a ~150-line orchestrator. Blocked on a real question rather
+      than effort — the summary table reads 21 values from all five surfaces, so it stays
+      in the orchestrator, and the alternative is five per-surface reports instead of the
+      one table that answers "is my identity in order" at a glance. That table is the most
+      useful artifact the audit produces.
+
+      And the safety net is thin: the file has no offline mode, every surface is a live
+      read, and nothing pins its output — only its wiring. Verifying the move means a
+      golden-file diff over the 7 task files it writes, across two live runs whose counts
+      legitimately drift between them. Worth doing after the sidecar format, not before.
 
 ## Known wrongness we chose to ship
 

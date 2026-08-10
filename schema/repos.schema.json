@@ -35,6 +35,12 @@
           "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,49}$"},
           "description": "3-8 GitHub topics, or empty. Omit rather than guess: a wrong topic misleads retrieval. Padding is keyword stuffing."
         },
+        "declined_topics": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,49}$"},
+          "description": "Topics a human rejected. `promote()` subtracts these from every future proposal. Deleting a topic from `topics` is not enough on its own -- the next proposal puts it back, because a deletion leaves no trace and this repo records decisions rather than remembering them."
+        },
         "homepage": {
           "type": ["string", "null"],
           "format": "uri",

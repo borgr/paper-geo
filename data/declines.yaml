@@ -37,7 +37,19 @@ sections:
   # other route and it is a request, not an edit. Nothing to do here that is not
   # already being done one surface up.
   - "OpenAlex"
-items: []
+items:
+  # Two of the three Scholar rows missing from the bibliography, ruled out by the
+  # author. The third, "A Statistical Framework for Game-Based AI Evaluation", is a
+  # real workshop paper and stays open.
+  #
+  # A competition report, not a paper. It stays out of the bibliography for the same
+  # reason the BabyLM calls for papers are in it under their own kind: what a record is
+  # governs where it belongs, and 19 citations do not make a shared task a paper.
+  - "Llm merging"
+  # "sounds mine but don't bother with it" -- 0 citations, no identifier on the Scholar
+  # row, and nothing downstream resolves a work with neither. Declined rather than
+  # deferred: chasing it would cost more than the record is worth.
+  - "True or false? faithful summarization"
 deferred:
   # The papers are the higher-leverage half and the repo sweep is a bounded
   # afternoon, so it waits -- but it is real work, not declined. Keeping it in the
@@ -45,3 +57,10 @@ deferred:
   # accurate while it waits.
   - match: "Repo labels"
     until: "the sidecar format is settled and the papers are done"
+  # Fourteen release DOIs is fourteen Zenodo-GitHub authorisations and fourteen tagged
+  # releases, and it buys citability for tools nobody is citing yet. Deferred rather
+  # than declined because the papers ahead of it are worth more per hour, not because
+  # the case is wrong -- and the condition below is the honest trigger: a DOI matters
+  # once somebody wants to cite the thing.
+  - match: "Artifacts with no citation route"
+    until: "an artifact is cited or asked about somewhere you can see it, or the paper work is done"

@@ -37,8 +37,8 @@ import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, is_preprint_venue,  # noqa: E402
-                    load_config, norm_title, org_name, paper_doi, read_yaml,
-                    slugify, social_url, venue_is_conference)
+                    load_config, norm_title, note_fetch, org_name, paper_doi,
+                    read_yaml, slugify, social_url, venue_is_conference)
 from ownership import write_manifest  # noqa: E402
 
 OUT = os.path.join(BUILD, "site")
@@ -751,10 +751,16 @@ def submit_indexnow(cfg) -> None:
                                  headers={"Content-Type": "application/json; charset=utf-8"})
     try:
         code = urllib.request.urlopen(req, timeout=30).status
+        note_fetch("https://api.indexnow.org/IndexNow", True)
         print(f"indexnow: submitted {len(urls)} URLs (HTTP {code})")
     except Exception as e:
         # 403 means the key file is not reachable yet -- usually Pages has not
-        # finished publishing. Harmless: the next deploy resubmits.
+        # finished publishing. Harmless once: the next deploy resubmits. Harmless
+        # for ever is a different thing, and only the ledger can tell which one this
+        # is -- a key file that never became reachable means no deploy has ever been
+        # submitted, and the message here reads the same on the first day as on the
+        # hundredth.
+        note_fetch("https://api.indexnow.org/IndexNow", False)
         print(f"indexnow: not submitted ({e}). Retry after the deploy is live.")
 
 
