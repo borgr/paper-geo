@@ -1,0 +1,45 @@
+# Every push and every pull request. Offline, no secrets, ~30 seconds.
+#
+# The two checks here answer different questions and both are cheap. `validate.py
+# --strict` asks whether the committed *data* is coherent -- schemas, cross-references,
+# the doc lines that quote counts, the prompt blocks the drafting scripts read at
+# runtime. The smoke suite asks whether the *program* is wired together -- every module
+# imports, every CLI builds its parser, `STEPS` and the `step_*` functions agree, and
+# nothing in the code or the prose names a script that was deleted.
+#
+# Nothing here touches the network, so a red run is always something the committer did
+# and can fix. That property is worth protecting: a suite that goes red because Semantic
+# Scholar is having an afternoon is a suite people learn to ignore, and then it is worse
+# than no suite. Everything that needs the network lives in update.yml, where a failure
+# is reported rather than fatal.
+name: check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.10 is what this is developed on; 3.12 is where the warnings that are silent
+        # on 3.10 become real -- an invalid escape sequence in a docstring, for one, which
+        # is how the smoke suite found the only such bug in the repo. Both legs are
+        # seconds, and fail-fast is off so a 3.12-only break is visible as exactly that.
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: data files valid
+        run: python scripts/validate.py --strict
+      - name: program wired together
+        run: python -m unittest discover -s tests -v

@@ -1,0 +1,19 @@
+# The whole dependency list. Two packages, and everything else this project needs is in
+# the standard library on purpose: no HTTP client, no HTML parser, no template engine, no
+# test framework. That is not minimalism for its own sake -- this thing has to still run
+# in three years on whatever Python is installed, unattended, and every dependency is a
+# thing that can break a run for a reason nobody here caused.
+#
+# Both workflows in .github/workflows/ install from this file, so it is the one place a
+# new dependency has to be declared.
+PyYAML>=6.0
+jsonschema>=4.17
+
+# Not installed by default, and deliberately not a line above: `anthropic`, needed only by
+# `llm.mode: api` -- the unattended path where the drafting scripts call the model
+# themselves instead of writing a task file for an agent in a live session to fill. At a
+# desk the session *is* the agent, so the package is dead weight; .github/workflows/
+# update.yml installs it for the one leg that needs it, and draft_sidecars.py exits with
+# instructions rather than a traceback if it is missing.
+#
+#   pip install anthropic

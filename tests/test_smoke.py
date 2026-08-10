@@ -1,0 +1,730 @@
+#!/usr/bin/env python3
+"""The cheap checks that catch a broken repo before a run does.
+
+There were no tests here for a long time, and the argument against them was that this
+project is mostly string-munging over live HTTP: the interesting failures are wrong
+prose and absent sources, and neither is unit-testable. That argument holds for the
+*content*. It does not hold for the *wiring*, and the wiring is where the real bugs
+were:
+
+  - a worklist section that counted the same seventeen papers twice
+  - `--refresh-bib` invoking a pipeline in a repo this project does not own
+  - three HTTP paths that never reached the health ledger
+  - two scripts referenced in four docs after being deleted
+
+Every one of those is a claim about how the parts connect, and every one is checkable
+in under a second without touching the network. That is what this file is: no mocks,
+no fixtures, no coverage target. It answers one question -- *would `python update.py`
+even get off the ground* -- and it is what CI runs on every push.
+
+    python -m unittest discover -s tests        # or just: python tests/test_smoke.py
+
+Deliberately not here: anything that fetches. A test that needs Semantic Scholar to be
+up is a test that fails for reasons the committer cannot fix, and a suite that goes red
+for weather is a suite people stop reading -- the same failure mode the health ledger
+exists to avoid one layer up.
+"""
+from __future__ import annotations
+
+import ast
+import importlib
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import unittest
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "scripts"))
+
+# Every module that is part of the program, by the directory it lives in. `update.py`
+# is listed by hand because it is the only top-level one and importing it by filename
+# needs the same path insert the file itself does.
+SCRIPT_DIRS = ("scripts", "measure")
+# Hand-written prose. `WORKLIST.md` is generated and checked too when it exists (see
+# test_generated_worklist_links), because a bad path emitted by the worklist writer is
+# exactly the sort of thing nobody notices in generated output.
+DOCS = ("README.md", "SKILL.md", "RUN.md", "BACKLOG.md",
+        "docs/RULES.md", "docs/SIDECAR.md", "docs/SETUP.md", "docs/EVIDENCE.md")
+
+
+def modules() -> list[tuple[str, str]]:
+    """(import name, path) for every module in the program."""
+    out = [("update", os.path.join(ROOT, "update.py"))]
+    for d in SCRIPT_DIRS:
+        for f in sorted(os.listdir(os.path.join(ROOT, d))):
+            if f.endswith(".py") and not f.startswith("_"):
+                out.append((f[:-3], os.path.join(ROOT, d, f)))
+    return out
+
+
+def source(path: str) -> str:
+    with open(path, encoding="utf8") as f:
+        return f.read()
+
+
+class TestEveryModuleImports(unittest.TestCase):
+    """The floor: a module that will not import cannot be a step.
+
+    Worth its own test rather than relying on `--help` below, because the failure
+    messages are completely different -- a NameError at import time is a typo, and a
+    subprocess exiting 1 is anything at all.
+    """
+
+    def test_imports(self):
+        # measure/ shares module names with nothing, but it is not on sys.path, so add
+        # it here rather than making the modules themselves care where they are run from.
+        sys.path.insert(0, os.path.join(ROOT, "measure"))
+        sys.path.insert(0, ROOT)
+        for name, path in modules():
+            with self.subTest(module=name):
+                try:
+                    importlib.import_module(name)
+                except Exception as e:                              # noqa: BLE001
+                    self.fail(f"{os.path.relpath(path, ROOT)} does not import: "
+                              f"{type(e).__name__}: {e}")
+
+
+class TestNoSyntaxWarnings(unittest.TestCase):
+    """Compile every module with the syntax warnings promoted to errors.
+
+    Added because writing the config scan below surfaced `\\COL` inside a non-raw
+    docstring in `common.py` -- an invalid escape sequence, silent on this interpreter,
+    a `SyntaxWarning` on 3.12, and an error in some later one. Nothing in the project
+    was watching for it, and it is the cheapest possible check: the compiler already
+    knows, it just had nobody to tell.
+    """
+
+    def test_compiles_clean(self):
+        import warnings
+        for name, path in modules():
+            with self.subTest(module=name), warnings.catch_warnings():
+                warnings.simplefilter("error", SyntaxWarning)
+                warnings.simplefilter("error", DeprecationWarning)
+                try:
+                    compile(source(path), path, "exec")
+                except (SyntaxWarning, DeprecationWarning) as e:
+                    self.fail(f"{os.path.relpath(path, ROOT)}: {e}")
+
+
+class TestEveryCliAnswersHelp(unittest.TestCase):
+    """`--help` exercises argparse construction, which import alone does not.
+
+    Only the modules that actually build a parser. `identity_tasks.py` takes no
+    arguments and has a `__main__` guard, so passing it `--help` would not print help
+    -- it would regenerate every payload under `tasks/`. Detecting the parser from the
+    source is the difference between a test and a side effect.
+    """
+
+    def test_help(self):
+        for name, path in modules():
+            if "add_argument" not in source(path):
+                continue
+            with self.subTest(module=name):
+                r = subprocess.run([sys.executable, path, "--help"], cwd=ROOT,
+                                   capture_output=True, text=True, timeout=120)
+                self.assertEqual(r.returncode, 0,
+                                 f"{os.path.relpath(path, ROOT)} --help exited "
+                                 f"{r.returncode}:\n{r.stderr[-2000:]}")
+                self.assertIn("usage", r.stdout.lower(),
+                              f"{os.path.relpath(path, ROOT)} --help printed no usage")
+
+
+class TestUpdateWiring(unittest.TestCase):
+    """`STEPS` and the `step_*` functions have to agree, in both directions.
+
+    A name in `STEPS` with no function is a crash on `--step`; a function with no name
+    in `STEPS` is a step that silently never runs in a full pass, which is the worse of
+    the two because nothing reports it.
+    """
+
+    def setUp(self):
+        sys.path.insert(0, ROOT)
+        self.update = importlib.import_module("update")
+        self.tree = ast.parse(source(os.path.join(ROOT, "update.py")))
+
+    def test_steps_have_functions(self):
+        for name in self.update.STEPS:
+            self.assertTrue(callable(getattr(self.update, f"step_{name}", None)),
+                            f"STEPS names {name!r} but there is no step_{name}()")
+
+    def test_functions_are_in_steps(self):
+        defined = {n.name[5:] for n in ast.walk(self.tree)
+                   if isinstance(n, ast.FunctionDef) and n.name.startswith("step_")}
+        self.assertEqual(defined, set(self.update.STEPS),
+                         "step_* functions and STEPS disagree; the difference is a step "
+                         "that never runs or a name that crashes --step")
+
+    def test_step_order_is_the_documented_one(self):
+        # The order is load-bearing: `links` reuses the full text `draft` cached,
+        # `validate` must precede `render` so a schema failure cannot produce a page
+        # that looks reviewable, and `worklist` is last because it reports on all of it.
+        self.assertLess(self.update.STEPS.index("validate"),
+                        self.update.STEPS.index("render"))
+        self.assertEqual(self.update.STEPS[-1], "worklist")
+
+
+class TestReferencedScriptsExist(unittest.TestCase):
+    """Every `scripts/x.py` named anywhere -- code, prose, generated output -- is real.
+
+    This is the test that would have caught deleting a script that four documents still
+    told the reader to run. It covers prose deliberately: a command in RUN.md is not
+    documentation of the program, it is an instruction someone will paste, so a stale
+    one is a broken feature and not a typo.
+    """
+
+    PAT = re.compile(r"\b((?:scripts|measure)/[A-Za-z_][A-Za-z0-9_]*\.py)")
+
+    def files(self):
+        for name, path in modules():
+            yield path
+        for d in DOCS + ("WORKLIST.md",):
+            p = os.path.join(ROOT, d)
+            if os.path.exists(p):
+                yield p
+        tasks = os.path.join(ROOT, "tasks")
+        for f in sorted(os.listdir(tasks)) if os.path.isdir(tasks) else []:
+            if f.endswith(".md"):
+                yield os.path.join(tasks, f)
+
+    def test_all_exist(self):
+        bad = []
+        for path in self.files():
+            for ref in sorted(set(self.PAT.findall(source(path)))):
+                if not os.path.exists(os.path.join(ROOT, ref)):
+                    bad.append(f"{os.path.relpath(path, ROOT)} -> {ref}")
+        self.assertEqual(bad, [], "references to scripts that do not exist:\n  "
+                                  + "\n  ".join(bad))
+
+
+class TestDocLinksResolve(unittest.TestCase):
+    """Relative markdown links in the hand-written docs point at files that exist.
+
+    Only relative ones: an external URL that rots is a fact about the internet and
+    belongs to the health ledger, not to a test that must pass offline.
+    """
+
+    PAT = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
+
+    def links(self, doc: str):
+        base = os.path.dirname(os.path.join(ROOT, doc))
+        for target in self.PAT.findall(source(os.path.join(ROOT, doc))):
+            if re.match(r"^(https?:|mailto:|#)", target):
+                continue
+            yield target, os.path.normpath(os.path.join(base, target.split("#")[0]))
+
+    def test_targets_exist(self):
+        bad = [f"{doc} -> {target}" for doc in DOCS
+               for target, path in self.links(doc) if not os.path.exists(path)]
+        self.assertEqual(bad, [], "dangling relative links:\n  " + "\n  ".join(bad))
+
+    def test_anchors_exist(self):
+        """A `#section` that no heading produces lands the reader at the top silently.
+
+        Slugified the way GitHub does it -- lowercase, drop everything that is not
+        alphanumeric, space or hyphen, spaces to hyphens -- which is why an em-dash in a
+        heading leaves a double hyphen in the anchor.
+        """
+        def slugs(path):
+            out = set()
+            for line in source(path).splitlines():
+                if m := re.match(r"#{1,6}\s+(.*)", line):
+                    t = re.sub(r"[^\w\s-]", "", m.group(1).lower(), flags=re.UNICODE)
+                    out.add(re.sub(r"\s", "-", t.strip()))
+            return out
+
+        bad = []
+        for doc in DOCS:
+            for target, path in self.links(doc):
+                if "#" not in target or not os.path.exists(path):
+                    continue
+                anchor = target.split("#", 1)[1]
+                if path.endswith(".md") and anchor not in slugs(path):
+                    bad.append(f"{doc} -> {target}")
+        self.assertEqual(bad, [], "links to headings that do not exist:\n  "
+                                  + "\n  ".join(bad))
+
+
+class TestGeneratedWorklistLinks(unittest.TestCase):
+    """The same link check against `WORKLIST.md`, which is written by code.
+
+    Separate from the doc test because this one is about the emitter, not the prose: the
+    paths in the worklist are built by string concatenation in `update.py`, including one
+    long `docs/SETUP.md#...` anchor split across two source lines.
+    """
+
+    def test_links(self):
+        path = os.path.join(ROOT, "WORKLIST.md")
+        if not os.path.exists(path):
+            self.skipTest("WORKLIST.md not generated yet")
+        bad = []
+        for target in TestDocLinksResolve.PAT.findall(source(path)):
+            if re.match(r"^(https?:|mailto:|#)", target):
+                continue
+            if not os.path.exists(os.path.join(ROOT, target.split("#")[0])):
+                bad.append(target)
+        self.assertEqual(bad, [], f"WORKLIST.md links to missing files: {bad}")
+
+
+class TestWorkflowsInvokeRealCommands(unittest.TestCase):
+    """Every `python …` line in a workflow names a real script and real flags.
+
+    A workflow is the one caller nobody runs by hand, so a stale flag in one sits there
+    until the monthly run fails at 06:37 on a morning nobody is looking. Writing these
+    files produced exactly that bug twice -- `sweep_github.py apply` silently needs
+    `--yes`, and a first draft called the script directly instead of going through
+    `update.py --apply`, which would have skipped the Hugging Face half of the same job.
+
+    Flags are checked against `add_argument` in the target's source rather than by running
+    it: this has to work offline, and `--help` is already covered above.
+    """
+
+    CMD = re.compile(r"\bpython3? ((?:scripts/|measure/)?[\w/]+\.py)([^\n|;&]*)")
+
+    def workflows(self):
+        d = os.path.join(ROOT, ".github", "workflows")
+        for f in sorted(os.listdir(d)) if os.path.isdir(d) else []:
+            if f.endswith((".yml", ".yaml")):
+                yield os.path.join(d, f)
+
+    def test_parse(self):
+        import yaml
+        for path in self.workflows():
+            with self.subTest(workflow=os.path.basename(path)):
+                doc = yaml.safe_load(source(path))
+                self.assertIn("jobs", doc)
+                # YAML 1.1 reads a bare `on:` key as the boolean True. Harmless to Actions,
+                # confusing to anything else that reads these files, so assert the trigger
+                # is found under one of the two spellings rather than only the string.
+                self.assertTrue(doc.get("on") or doc.get(True), f"{path}: no triggers")
+
+    def test_commands_and_flags(self):
+        bad = []
+        for path in self.workflows():
+            body = re.sub(r"\$\{\{[^}]*\}\}", "STUB", source(path))
+            for script, rest in self.CMD.findall(body):
+                where = f"{os.path.basename(path)}: python {script}"
+                target = os.path.join(ROOT, script)
+                if not os.path.exists(target):
+                    bad.append(f"{where} -- no such file")
+                    continue
+                known = source(target)
+                for flag in re.findall(r"(?<!\w)--[a-z][a-z0-9-]*", rest):
+                    if f'"{flag}"' not in known and f"'{flag}'" not in known:
+                        bad.append(f"{where} {flag} -- not an argument of that script")
+        self.assertEqual(bad, [], "workflows call things that do not exist:\n  "
+                                  + "\n  ".join(bad))
+
+    def test_requirements_covers_what_the_workflows_install(self):
+        """The dependency list is one file, and the workflows install from it.
+
+        `pip install <name>` written straight into a workflow is how a dependency ends up
+        declared in two places and then in neither. One exception is allowed and is named
+        in requirements.txt itself, because it is only needed by one optional path.
+        """
+        reqs = source(os.path.join(ROOT, "requirements.txt"))
+        for path in self.workflows():
+            for line in source(path).splitlines():
+                if m := re.search(r"pip install (?!-r )([\w-]+)", line):
+                    self.assertIn(m.group(1), reqs,
+                                  f"{os.path.basename(path)} installs {m.group(1)!r} but "
+                                  f"requirements.txt does not mention it")
+
+
+class TestPromptsCarryTheirRules(unittest.TestCase):
+    """The docs that are program input still contain a prompt block.
+
+    `validate.py` checks this too, and on purpose: there it fails the run that made the
+    edit, here it fails the push. The failure being caught twice is the point -- a doc
+    edit that empties a prompt produces drafts written against no rules at all, and
+    nothing about the output looks wrong.
+    """
+
+    def test_blocks(self):
+        from common import rules_block
+        from validate import PROMPT_DOCS
+        for doc, what, reader in PROMPT_DOCS:
+            with self.subTest(doc=doc):
+                self.assertGreater(len(rules_block(doc)), 200,
+                                   f"{doc} ({what}) has no usable prompt block; "
+                                   f"{reader} reads it")
+
+
+class TestConfigHasWhatTheStepsIndex(unittest.TestCase):
+    """Every `cfg["a"]["b"]` in the program resolves in `config.yaml`.
+
+    A missing key is a KeyError several minutes into a run, after the network work is
+    already spent -- and the first version of this test asserted a hand-written list of
+    keys, which was wrong on its second entry (`ids.orcid`; ORCID lives under
+    `identity`). So the list is read out of the source instead. `cfg` is the only name
+    `load_config()` is ever assigned to, in all 16 places, which is what makes the scan
+    exact rather than a heuristic.
+
+    Only hard subscripts. A `.get()` is the author saying the key is optional, and this
+    test has no business overruling that.
+    """
+
+    def keys(self):
+        for _, path in modules():
+            for node in ast.walk(ast.parse(source(path))):
+                # cfg["a"]["b"] parses as Subscript(Subscript(Name)), so match the outer
+                # one and walk in. One level (cfg["ids"]) is checked too.
+                if not isinstance(node, ast.Subscript) or not isinstance(node.slice, ast.Constant):
+                    continue
+                inner, chain = node, []
+                while isinstance(inner, ast.Subscript) and isinstance(inner.slice, ast.Constant):
+                    chain.insert(0, inner.slice.value)
+                    inner = inner.value
+                if isinstance(inner, ast.Name) and inner.id == "cfg":
+                    yield os.path.relpath(path, ROOT), tuple(chain)
+
+    def test_indexed_keys_exist(self):
+        from common import load_config
+        cfg, bad, seen = load_config(), [], set()
+        for where, path in self.keys():
+            if path in seen or not all(isinstance(k, str) for k in path):
+                continue
+            seen.add(path)
+            node, shown = cfg, "".join(f'["{k}"]' for k in path)
+            for k in path:
+                if not isinstance(node, dict) or k not in node:
+                    bad.append(f"{where}: cfg{shown}")
+                    break
+                node = node[k]
+        self.assertEqual(bad, [], "config.yaml is missing keys the code indexes:\n  "
+                                  + "\n  ".join(sorted(bad)))
+        self.assertGreater(len(seen), 15, "the config scan found almost nothing, so it "
+                                          "is probably matching the wrong thing")
+
+
+class TestLedgerAdviceMatchesTheEvidence(unittest.TestCase):
+    """The health ledger's advice has to fit what it actually recorded.
+
+    Fits this file's charter -- pure functions over one dict, no network -- and the bug
+    is a wiring bug: for four months the ledger told the reader to "check the URL, the
+    key, and whether it still exists" about `api.semanticscholar.org/graph/v1/paper/*`,
+    whose URL is correct, which plainly still exists, and which was answering 429 to
+    every anonymous caller on the internet. Advice that sends someone to inspect a
+    working URL is worse than no line at all, because they conclude the ledger is wrong
+    about everything.
+    """
+
+    def setUp(self):
+        import common
+        self.common = common
+        self.dir = tempfile.mkdtemp()
+        self.saved, common.HEALTH = common.HEALTH, os.path.join(self.dir, "health.json")
+
+    def tearDown(self):
+        self.common.HEALTH = self.saved
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def write(self, **rec) -> list[str]:
+        """One ledger record, first seen nine days ago and failing as of today.
+
+        Every default is overridable -- `ok` and `fail` included, which they were not when
+        the only cases needed a never-answered source.
+        """
+        old = time.strftime("%Y-%m-%d", time.localtime(time.time() - 9 * 86400))
+        base = {"ok": 0, "fail": 9, "first_seen": old, "last_ok": None,
+                "last_fail": time.strftime("%Y-%m-%d")}
+        with open(self.common.HEALTH, "w") as f:
+            json.dump({"example.org/thing": {**base, **rec}}, f)
+        return self.common.health_report()
+
+    def test_a_rate_limited_source_is_not_reported_as_missing(self):
+        line = self.write(last_error="429")
+        self.assertEqual(len(line), 1, line)
+        self.assertIn("rate-limited", line[0])
+        self.assertNotIn("whether it still exists", line[0])
+        self.assertIn("429", line[0])
+
+    def test_a_genuinely_absent_source_still_says_so_and_names_the_error(self):
+        line = self.write(last_error="404")
+        self.assertEqual(len(line), 1, line)
+        self.assertIn("never once answered", line[0])
+        self.assertIn("404", line[0])
+
+    def test_note_fetch_records_the_reason_only_for_failures(self):
+        self.common.note_fetch("https://example.org/thing", False, "429")
+        with open(self.common.HEALTH) as f:
+            self.assertEqual("429", json.load(f)["example.org/thing"]["last_error"])
+        self.common.note_fetch("https://example.org/thing", True, "ignored")
+        with open(self.common.HEALTH) as f:
+            r = json.load(f)["example.org/thing"]
+        # Two claims, and the second one used to be false. A success does not record its
+        # own `why`, and it clears the failure's -- a reason survives only as long as it
+        # is still the answer to "what would fix this". The counters keep the history;
+        # `last_error` is about now.
+        self.assertEqual((r["ok"], r["fail"]), (1, 1))
+        self.assertNotIn("last_error", r)
+
+    def test_a_source_failing_right_now_is_reported_even_though_it_answered(self):
+        """The case both day-based branches let through, taken from a real ledger.
+
+        `api.semanticscholar.org/.../paper/search` stood at ok=3, fail=18, last_error=429,
+        refusing every call -- and this function printed nothing. It had answered once, so
+        the never-answered branch skipped it; it had answered *yesterday*, so the six-day
+        silence branch skipped it too. Both thresholds ask "has it come back", and neither
+        asks "is it working".
+        """
+        yday = time.strftime("%Y-%m-%d", time.localtime(time.time() - 86400))
+        line = self.write(ok=3, fail=18, last_ok=yday, last_error="429",
+                          since_ok=self.common.FAILING_NOW)
+        self.assertEqual(len(line), 1, line)
+        self.assertIn("failing now, not busy", line[0])
+        self.assertIn("needs a key", line[0])
+
+    def test_one_success_makes_it_busy_again(self):
+        """A hiccup that recovered must not be reported, or the line stops being read."""
+        yday = time.strftime("%Y-%m-%d", time.localtime(time.time() - 86400))
+        for n in (self.common.FAILING_NOW - 1, 0):
+            line = self.write(ok=3, fail=18, last_ok=yday, last_error="429", since_ok=n)
+            self.assertEqual([], line, f"since_ok={n} should be weather, got {line}")
+
+    def test_a_legacy_ledger_with_no_counter_is_not_an_alarm(self):
+        """`since_ok` postdates the ledger, so its absence has to read as zero."""
+        yday = time.strftime("%Y-%m-%d", time.localtime(time.time() - 86400))
+        self.assertEqual([], self.write(ok=3, fail=18, last_ok=yday, last_error="429"))
+
+    def test_note_fetch_resets_the_counter_on_success(self):
+        for _ in range(4):
+            self.common.note_fetch("https://example.org/thing", False, "429")
+        with open(self.common.HEALTH) as f:
+            self.assertEqual(4, json.load(f)["example.org/thing"]["since_ok"])
+        self.common.note_fetch("https://example.org/thing", True)
+        with open(self.common.HEALTH) as f:
+            self.assertEqual(0, json.load(f)["example.org/thing"]["since_ok"])
+
+
+class TestPacedHostsAreTheOnesWeHammer(unittest.TestCase):
+    """Every host this program fetches in a per-paper loop needs a `PACE` entry.
+
+    The failure it catches is silent and was live: `collect.py` slept 3s between arXiv
+    API pages and then probed `arxiv.org/html/<id>` once per paper with no sleep at all,
+    so one step was polite and rude to the same host in the same run. Pacing lives in
+    `common.PACE` precisely because no single call site can see the others -- which also
+    means no single call site can be trusted to notice when it is the one bursting.
+    """
+
+    def test_arxiv_and_s2_are_paced(self):
+        from common import PACE
+        for host in ("arxiv.org", "api.semanticscholar.org"):
+            self.assertIn(host, PACE, f"{host} is fetched once per paper and unpaced")
+            self.assertGreaterEqual(PACE[host], 1.0, f"{host}'s gap is not a real gap")
+
+
+class TestARearrangedTitleIsTheSamePaper(unittest.TestCase):
+    """`title_tokens` has to be loose enough to catch a swap and tight enough to be safe.
+
+    Both halves matter and they pull opposite ways, which is why this is pinned rather
+    than eyeballed. Loose enough: the audit reported "Tie the KnOTS: Model Merging with
+    SVD" as a work it could not place, against a corpus holding "Model merging with SVD
+    to tie the Knots" -- and told the reader to *check before deleting* a paper there was
+    never any reason to doubt. Tight enough matters more: a wrong match makes a stray
+    disappear from the report, and the stray that motivated the check in the first place
+    was an authorship claim on "Attention is all you need". A miss costs a minute of
+    reading; a false match is silent.
+    """
+
+    def test_a_reordered_title_matches(self):
+        from common import norm_title, title_tokens
+        a, b = "Tie the KnOTS: Model Merging with SVD", "Model merging with SVD to tie the Knots"
+        # Both of the checks that run before this one have to fail, or the fallback is
+        # not what resolves the live case and this test proves nothing.
+        self.assertNotEqual(norm_title(a), norm_title(b))
+        self.assertFalse(norm_title(a) in norm_title(b) or norm_title(b) in norm_title(a),
+                         "containment already caught it -- the token fallback is untested")
+        self.assertEqual(title_tokens(a), title_tokens(b))
+
+    def test_one_different_content_word_is_enough_to_refuse(self):
+        from common import title_tokens
+        for a, b, why in [
+                ("Attention is all you need", "Model merging with SVD to tie the Knots",
+                 "an unrelated famous paper"),
+                # Live near-miss: two BabyLM records whose subject matter genuinely
+                # differs. A stemming or overlap-based matcher absorbs this pair.
+                ("Insights from the first BabyLM Challenge: Training sample-efficient "
+                 "language models on a developmentally plausible corpus",
+                 "Findings of the BabyLM Challenge: Sample-Efficient Pretraining over a "
+                 "Developmentally Plausible Corpus", "insights/training vs findings"),
+                ("TIES-Merging: Resolving Interference When Merging Models",
+                 "Resolving Interference (RI): Disentangling Models for Improved Model "
+                 "Merging", "same topic, different papers")]:
+            self.assertNotEqual(title_tokens(a), title_tokens(b), why)
+
+    def test_no_two_real_corpus_titles_collide(self):
+        """The guard the matcher cannot enforce for itself.
+
+        Set equality is only safe while no two papers *of yours* share a content-word
+        set; if two ever do, `orcid_strays` drops that key rather than guessing, so the
+        failure is a silent return to "cannot place" rather than a wrong match. This
+        measures the real corpus so the day it stops holding is a red test and not a
+        surprise.
+        """
+        from common import DATA, read_yaml, title_tokens
+        papers = read_yaml(os.path.join(DATA, "papers.yaml"))["papers"]
+        seen = {}
+        for p in papers:
+            t = title_tokens(p["title"])
+            if len(t) >= 4:
+                seen.setdefault(t, []).append(p["title"])
+        clash = [v for v in seen.values() if len(v) > 1]
+        self.assertEqual([], clash, f"{len(clash)} pair(s) of your own titles collide")
+
+
+class TestGeneratedFilesRenderTitles(unittest.TestCase):
+    """No generated file may print a title's raw BibTeX form.
+
+    30 of 112 titles carry LaTeX -- `{B}aby{LM}`, `{BERT:}`, `Q\\({}^{\\mbox{2}}\\)` --
+    and `collect.py` already resolves every one of them into `title_display`. Reading
+    that field is a convention, spelled `p.get("title_display") or p["title"]` at 28
+    sites, and a convention held only by memory is one an emitter can drop without
+    anything noticing: five of them had, and `WORKLIST.md` shipped
+    `Q\\({}^{\\mbox{2}}\\): Evaluating Factual Consistency` in a committed file.
+
+    Checked against the corpus rather than by pattern-matching for braces, which the
+    generated files contain legitimately -- in fenced commands, in `{owner}/{repo}`
+    placeholders, in the arXiv DOI template. A 30-character prefix of a real raw title
+    cannot appear by coincidence.
+    """
+
+    def test_no_raw_latex_title_reaches_a_generated_file(self):
+        import glob
+        from common import DATA, ROOT, read_yaml
+        papers = read_yaml(os.path.join(DATA, "papers.yaml"))["papers"]
+        # Only papers whose rendering actually differs, and only where the prefix that
+        # would land in a file is itself distinctive.
+        probes = {p["title"][:30]: p["slug"] for p in papers
+                  if (p.get("title_display") or p["title"]) != p["title"]
+                  and re.search(r"[{}\\]", p["title"][:30])}
+        self.assertTrue(probes, "no LaTeX titles in the corpus -- this test proves nothing")
+        files = ([os.path.join(ROOT, "WORKLIST.md")]
+                 + sorted(glob.glob(os.path.join(ROOT, "tasks", "*.md"))))
+        leaks = []
+        for f in files:
+            if not os.path.exists(f):
+                continue
+            with open(f, encoding="utf-8") as fh:
+                body = fh.read()
+            leaks += [f"{os.path.relpath(f, ROOT)}: {slug}"
+                      for raw, slug in probes.items() if raw in body]
+        self.assertEqual([], leaks, f"{len(leaks)} raw title(s) reached a generated file")
+
+
+class TestModelTextIsLabelledBeforeItIsPublished(unittest.TestCase):
+    """`sweep_github diff` is the only moment a person sees a public write coming.
+
+    RUN.md §11 argues that model-written topics and descriptions may publish unreviewed
+    *because* the diff says which ones they are. If the marker stops appearing the
+    argument quietly becomes false, and the output still looks perfectly reasonable --
+    a diff showing a value with no provenance reads as a fact.
+    """
+
+    def test_unread_model_text_is_marked(self):
+        from sweep_github import _provenance
+        r = {"llm_proposal": {"topics": ["nlp"], "description": "x",
+                              "confidence": "medium"}}
+        self.assertIn("model", _provenance(r, "topics"))
+        self.assertIn("unread", _provenance(r, "topics"))
+        self.assertIn("medium", _provenance(r, "topics"))
+
+    def test_reviewed_and_derived_fields_are_not_blamed_on_the_model(self):
+        from sweep_github import _provenance
+        p = {"llm_proposal": {"topics": ["nlp"], "confidence": "high"}}
+        self.assertIn("you edited", _provenance({**p, "reviewed": True}, "topics"))
+        # Derived from papers.yaml, so reviewing it here would be reviewing the wrong file.
+        self.assertEqual("", _provenance(p, "homepage"))
+        # No proposal for this field: nothing to attribute.
+        self.assertEqual("", _provenance(p, "description"))
+
+
+class TestLowConfidenceLabelsAreNotPublished(unittest.TestCase):
+    """The model's one way to say "I am guessing" has to reach a decision.
+
+    `confidence` is required by the proposal schema, and for a while nothing read it --
+    so a thin-README guess was collected and then promoted exactly like a certain
+    answer. This is the check that it is wired to something.
+    """
+
+    def test_low_confidence_is_not_promoted(self):
+        from propose_topics import promote
+        rows = [{"repo": "a/b", "llm_proposal": {"topics": ["guessed"],
+                                                 "description": "guessed",
+                                                 "confidence": "low"}}]
+        promote(rows, ["a/b"])
+        self.assertNotIn("topics", rows[0], "a low-confidence guess was published")
+        self.assertNotIn("description", rows[0])
+
+    def test_high_confidence_still_is(self):
+        from propose_topics import promote
+        rows = [{"repo": "a/b", "llm_proposal": {"topics": ["nlp"], "description": "d",
+                                                 "confidence": "high"}}]
+        promote(rows, ["a/b"])
+        self.assertEqual(["nlp"], rows[0]["topics"])
+
+    def test_a_refused_guess_does_not_vanish_from_the_output(self):
+        """The gate above creates a silence, and the silence has to be broken.
+
+        `pending()` skips a row that has a proposal and `promote()` refuses a low one, so
+        the row is bare and nothing asks about it again. Both are right; the run reporting
+        "nothing to propose" and stopping there is not. This is the check that the pair
+        is reported rather than merely correct.
+        """
+        from propose_topics import declined_to_guess, pending
+        low = {"repo": "a/thin", "llm_proposal": {"topics": [], "description": "",
+                                                  "confidence": "low"}}
+        rows = [low,
+                # Half-labelled: a description and no topics. This is the live shape of
+                # two of the three, and requiring *both* to be missing hid them.
+                {"repo": "a/half", "description": "d", "topics": [],
+                 "llm_proposal": {"topics": [], "confidence": "low"}},
+                {"repo": "a/done", "topics": ["nlp"], "description": "d",
+                 "llm_proposal": {"topics": ["nlp"], "confidence": "high"}},
+                {"repo": "a/frozen", "reviewed": True,
+                 "llm_proposal": {"topics": [], "confidence": "low"}}]
+        self.assertEqual([], pending(rows, False), "a proposed row came back as work")
+        self.assertEqual(["a/thin", "a/half"], declined_to_guess(rows))
+        # Once it has both, it is no longer stuck -- whatever the old confidence said.
+        low["topics"] = ["nlp"]
+        low["description"] = "d"
+        self.assertEqual(["a/half"], declined_to_guess(rows))
+
+
+class TestARejectedTopicStaysRejected(unittest.TestCase):
+    """Deleting a topic has to be a decision, not a deletion that the next run undoes.
+
+    This was live and dated: `nlp-free` was invented for one repo, correctly removed from
+    its `topics`, and left in that row's `llm_proposal`, so the next `--ingest` would copy
+    it back. The failure is invisible in the moment -- the file simply grows a topic
+    nobody chose -- which is why it needs a test rather than vigilance.
+    """
+
+    def test_declined_topics_survive_a_re_promote(self):
+        from propose_topics import promote
+        rows = [{"repo": "a/b", "declined_topics": ["invented"],
+                 "llm_proposal": {"topics": ["real", "invented"], "confidence": "high"}}]
+        promote(rows, ["a/b"])
+        self.assertEqual(["real"], rows[0]["topics"])
+
+    def test_the_live_decline_is_recorded_in_the_data(self):
+        """The fix is only worth having if the one known rejection is written down."""
+        from common import read_yaml
+        rows = read_yaml(os.path.join(ROOT, "data", "repos.yaml"))["repos"]
+        for r in rows:
+            proposed = set((r.get("llm_proposal") or {}).get("topics") or [])
+            live = set(r.get("topics") or [])
+            declined = set(r.get("declined_topics") or [])
+            if not live:
+                continue        # never promoted, so absence is not yet a decision
+            self.assertEqual(set(), proposed - live - declined,
+                             f"{r['repo']}: proposed topics are neither published nor "
+                             f"declined, so the next --ingest will publish them")
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

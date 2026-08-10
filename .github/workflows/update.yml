@@ -1,0 +1,239 @@
+# Re-derive everything from the sources, and -- when a human pressed the button -- write
+# it out to the places that matter.
+#
+# The line between the two triggers is the whole design, and it is not about which
+# actions are dangerous. It is about who is watching:
+#
+#   schedule       nobody is reading the log at 06:37 UTC on the 1st. So this leg does
+#                  only what is safe to do unwatched: re-derive from public sources,
+#                  commit what changed, and leave the worklist saying what needs a human.
+#                  No outward writes, no model calls, no money spent.
+#
+#   workflow_dispatch  pressing the button *is* the human act -- the same act as typing
+#                  `--apply` at a desk, and the reason the author can run this on their
+#                  own schedule rather than the cron's. So this leg does everything
+#                  worthwhile: drafts the soft text, publishes to Wikidata, pushes the
+#                  repo metadata, deploys the site, pings IndexNow. Every one of those is
+#                  a tick-box below, and the defaults are set by how hard each is to take
+#                  back (see the comment on each input).
+#
+# What neither leg does: accept a model's sidecar claims into the published set without a
+# human reading them. Not because CI cannot -- `--accept-all` exists -- but because it is
+# the one surface here where retraction does not work. A wrong repo topic is one API call
+# to fix; a wrong scientific claim that an answer engine has already quoted cannot be
+# un-quoted, and the correction never reaches whoever read it. Everything else on this
+# page is a public fact re-derived from a source that can be re-read. That is not.
+name: update
+
+on:
+  schedule:
+    # 06:37 UTC on the 1st. Off the hour and off the half hour on purpose: GitHub's
+    # scheduler queues everyone's :00 together and drops runs under load.
+    - cron: "37 6 1 * *"
+  workflow_dispatch:
+    inputs:
+      drafts:
+        description: "Sidecar drafts (never auto-published; --review then --accept stays human)"
+        type: choice
+        default: draft
+        options: [skip, draft]
+      wikidata:
+        # Default on. Cheapest retraction on this page by a wide margin: every edit is a
+        # public revision with a one-click undo, the history is permanent and legible, and
+        # the content is identifiers and dates copied from sources that can be re-read.
+        description: "Publish the Wikidata author-item gaps"
+        type: boolean
+        default: true
+      apply:
+        # Default on. Own accounts, metadata only -- repo description, topics, homepage,
+        # and the paper-to-repo link on a Hugging Face paper page. No code, no history, and
+        # a bad value is one API call to replace with nothing downstream having cached it.
+        # The authorship gate in sweep_github.py is what keeps this off a repo that is not
+        # the author's, and it is a gate on the data, not on this tick-box.
+        description: "Push repo metadata to GitHub and paper-repo links to Hugging Face"
+        type: boolean
+        default: true
+      deploy:
+        # Default on. The site is the point, and it is a full rebuild from committed data
+        # -- so a bad page is fixed by fixing the data and rebuilding. The one lag is
+        # crawler and answer-engine caches, which is days, not undoable.
+        description: "Deploy the site and submit the sitemap to IndexNow"
+        type: boolean
+        default: true
+      draft_batch:
+        description: "Papers to draft this run"
+        default: "10"
+
+# One run at a time. Two concurrent runs would race on the same commit and, worse, both
+# push a different site.
+concurrency:
+  group: paper-geo-update
+  cancel-in-progress: false
+
+permissions:
+  contents: write        # to commit the re-derived data back
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      # Every source that has a key gets it. S2 without one shares a rate-limit pool with
+      # every anonymous caller on the internet, and the visible symptom is not a slow run
+      # but a wrong sentence -- the search endpoint 429s and the audit then reports "no
+      # index has this paper" about a paper an index has.
+      S2_API_KEY: ${{ secrets.S2_API_KEY }}
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      WIKIDATA_BOT_USER: ${{ secrets.WIKIDATA_BOT_USER }}
+      WIKIDATA_BOT_PASSWORD: ${{ secrets.WIKIDATA_BOT_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      # Only for the leg that drafts. See the note at the foot of requirements.txt for why
+      # this is not a line in it.
+      - name: the api-mode dependency
+        if: github.event_name == 'workflow_dispatch' && inputs.drafts == 'draft' && env.ANTHROPIC_API_KEY != ''
+        run: pip install anthropic
+
+      # The health ledger is memory, and CI is amnesiac. `build/health.json` is how the
+      # pipeline knows the difference between "arXiv did not answer just now" and "arXiv
+      # has not answered since June" -- and the second is the one worth a human's
+      # attention. It cannot be committed: it is observed state, and committed data here
+      # is derived facts only, so a run's diff would be noise about the weather. So it
+      # rides in the cache instead. The run id in the key makes every run save a fresh
+      # entry; the restore-key pulls the newest previous one.
+      - name: restore the health ledger
+        uses: actions/cache@v4
+        with:
+          path: build/health.json
+          key: paper-geo-health-${{ github.run_id }}
+          restore-keys: paper-geo-health-
+
+      # `gh` reads GH_TOKEN from the environment, but the site deploy is a `git push` into
+      # a second repo, and git does not. The default GITHUB_TOKEN cannot do it at all --
+      # it is scoped to this repository -- which is why the deploy needs a PAT.
+      - name: let git use the token
+        if: env.GH_TOKEN != ''
+        run: |
+          git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # One command, which is the point of `update.py` existing: the ten steps in order,
+      # each degrading rather than failing, and `--apply` as the single flag that turns the
+      # run from read-only into one that writes to the author's own accounts. The workflow
+      # does not reach past it to the individual scripts -- if a step needs to be called
+      # differently, that belongs in `update.py` where a human at a desk gets it too.
+      #
+      # `PAPER_GEO_LLM_MODE=api` is what lets the drafting step call Anthropic directly
+      # instead of writing a task file for an agent in a live session to fill; there is no
+      # session here. On the scheduled leg it stays `skill` and `--draft-batch 0` skips the
+      # step outright, so a cron run spends nothing and queues nothing nobody will read.
+      #
+      # No `continue-on-error`: every step in this pipeline is built to degrade rather
+      # than fail, so a non-zero exit means something actually broke, and committing
+      # half-derived data on top of that is how a bad run becomes a bad site.
+      - name: re-derive from the sources
+        env:
+          MANUAL: ${{ github.event_name == 'workflow_dispatch' }}
+          # `secrets` rather than `env` here because step-level `env:` can read the secrets
+          # context and a step-level `if:` cannot -- which is also why the tick-box steps
+          # further down test `env.X != ''` instead. Gating the mode on the key being
+          # present means a dispatch without one drafts nothing rather than exiting on a
+          # missing package.
+          PAPER_GEO_LLM_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.drafts == 'draft' && secrets.ANTHROPIC_API_KEY != '' && 'api' || 'skill' }}
+        run: |
+          # Explicit ifs rather than `[ test ] && var=x`: under the `bash -e` that Actions
+          # runs these blocks with, a failing test at the end of a block takes the whole
+          # step down, and "the tick-box was unticked" is not a failure.
+          batch='0'
+          apply=''
+          # One condition, not three: `api` already means manual *and* ticked *and* keyed,
+          # so reading it back is the only way the batch size cannot disagree with the mode.
+          # A `skill`-mode run in CI would queue a task file into gitignored build/ for an
+          # agent that does not exist -- fetching every paper's full text to do it.
+          if [ "$PAPER_GEO_LLM_MODE" = "api" ]; then
+            batch='${{ inputs.draft_batch }}'
+          fi
+          # No token, no writes -- so a dispatch from a fork is a dry run, not a crash.
+          if [ "$MANUAL" = "true" ] && [ "${{ inputs.apply }}" = "true" ] && [ -n "$GH_TOKEN" ]; then
+            apply='--apply'
+          fi
+          echo "draft batch: $batch   outward writes: ${apply:-none}"
+          python update.py --draft-batch "$batch" $apply
+
+      # `--strict` after the run, not before: the point is to catch data the run itself
+      # made incoherent, which is the failure mode a human at a desk catches by reading
+      # the output and nobody catches here. `--fix-counts` first, because a corpus that
+      # grew by one paper legitimately changes three sentences in the docs, and that is a
+      # mechanical edit rather than something to go red over.
+      - name: fix the doc counts, then insist the data is valid
+        run: |
+          python scripts/validate.py --fix-counts
+          python scripts/validate.py --strict
+
+      # `git add -A` rather than a list of output paths. An allowlist would go stale the
+      # first time a step writes somewhere new, and it would go stale *silently* -- the run
+      # would look clean and quietly stop committing one of its outputs. With `-A`, a file
+      # nobody expected shows up in the diff below and someone sees it. `build/` is
+      # gitignored, so the volatile half never reaches the index either way.
+      - name: commit what changed
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "nothing changed"
+            exit 0
+          fi
+          git commit -q -m "Re-derive from sources"
+          # A full run takes tens of minutes and a human can land a commit inside that
+          # window. Rebase rather than merge: this commit is derived output, so it has no
+          # business creating a merge commit over someone's real work.
+          if ! git pull --rebase --quiet; then
+            echo "::error::rebase onto the remote failed; derived data committed locally, not pushed. Re-run."
+            exit 1
+          fi
+          git push -q
+          git --no-pager show --stat --oneline HEAD | head -40
+
+      # ---- the two outward writes that are not behind `update.py --apply`.
+      #
+      # Wikidata is separate because it writes to a public shared knowledge base rather
+      # than to the author's own account, and the deploy is separate because it is the one
+      # thing here that publishes *prose* -- so both are worth a tick-box a human can leave
+      # unticked without giving up the rest of the run. Both are also skipped silently when
+      # their credential is absent, which is what makes a fork's dispatch a dry run rather
+      # than a crash.
+      - name: publish the Wikidata gaps
+        if: github.event_name == 'workflow_dispatch' && inputs.wikidata && env.WIKIDATA_BOT_PASSWORD != ''
+        run: python scripts/wikidata_apply.py --apply
+
+      - name: deploy the site
+        if: github.event_name == 'workflow_dispatch' && inputs.deploy && env.GH_TOKEN != ''
+        run: python scripts/build_site.py --deploy
+
+      # ---- what a human needs to see afterwards
+
+      # `WORKLIST.md` is committed and readable in the diff above. These are not: the
+      # health ledger is cached rather than committed, and the two task files live in
+      # gitignored `build/`. Keeping them for 90 days is what makes an unattended run
+      # answerable after the fact -- "did the drafting actually queue anything", "which
+      # source went quiet" -- and both questions are otherwise unanswerable once the
+      # runner is gone.
+      - name: keep the run's own record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-record
+          retention-days: 90
+          if-no-files-found: ignore
+          path: |
+            build/health.json
+            build/llm_tasks.json
+            build/sidecar_tasks.json
