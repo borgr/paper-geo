@@ -5,41 +5,6 @@ Label **Leshem Choshen** · description *Israeli computer scientists and researc
 Live diff against `config.yaml`. Re-run `python scripts/audit_identity.py`
 after editing to confirm each line cleared.
 
-## Aliases to add
-
-*Also known as* is what matches a citation that uses a different form.
-Misspellings included, and marked as such below: an alias is a search key
-rather than a claim about spelling, so the one form that can never be
-fixed at its source — a typo already printed in someone else's reference
-list — is exactly the one worth carrying here.
-
-- [ ] `Leshem Chosen`  *(misspelling; deliberate)*
-- [ ] `Lesham Choshen`  *(misspelling; deliberate)*
-
-## Identifiers to add
-
-Each of these has a *typed* property, which is why none of them belong in
-`official website`. A typed identifier is format-validated, renders as a
-link anyway, and is traversable: Scholia, Author Disambiguator and any
-SPARQL query can hop from it to the record. A bare URL is none of those.
-
-Add with *+ Add statement* → type the property name → paste the value.
-
-- [ ] **Mastodon address** (`P4033`) = `LChoshen@sigmoid.social`
-- [ ] **X username** (`P2002`) = `LChoshen`
-- [ ] **DBLP author ID** (`P2456`) reads `Leshem_Choshen` — expected `218/5237`
-
-`P2456` is the reason for the warning triangle on the item. It takes
-DBLP's *pid* — the numeric path in `dblp.org/pid/218/5237` — not the
-name-shaped URL DBLP also answers on. Wikidata builds the link by
-substituting the value into `dblp.org/pid/$1`, so a name value both
-trips the format constraint and produces a 404. Constraint violations
-do not block saving, which is why it saved and then complained.
-
-*0 references* on that statement is not the warning and is not a
-problem: external identifiers are normally unsourced, since the
-identifier resolving is the source. Ignore it.
-
 ## Worth adding while you are in the editor
 
 Not identifiers — statements that help a disambiguator separate you from a

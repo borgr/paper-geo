@@ -27,8 +27,7 @@ put a `TODO` in your bibliography.
 
 - 19 citations, 2024, Scholar says *NeurIPS 2024 Competition Track, 2024*
 - [the Scholar row](https://scholar.google.com/citations?view_op=view_citation&hl=en&user=8b8IhUYAAAAJ&citation_for_view=8b8IhUYAAAAJ:HoB7MX3m0LUC)
-- **UNRESOLVED** — not in your Semantic Scholar author record, arXiv or Crossref.
-- Semantic Scholar search did not answer — a re-run may resolve this without any work from you.
+- **UNRESOLVED** — not in your Semantic Scholar author record, arXiv, Crossref or Semantic Scholar search.
 
 ```bibtex
 @misc{TODO,
@@ -42,8 +41,7 @@ put a `TODO` in your bibliography.
 
 - 1 citation, 2025, Scholar says *NeurIPS 2025 Workshop on Evaluating the Evolving LLM Lifecycle: Benchmarks …, 2025*
 - [the Scholar row](https://scholar.google.com/citations?view_op=view_citation&hl=en&user=8b8IhUYAAAAJ&citation_for_view=8b8IhUYAAAAJ:geHnlv5EZngC)
-- **UNRESOLVED** — not in your Semantic Scholar author record, arXiv or Crossref.
-- Semantic Scholar search did not answer — a re-run may resolve this without any work from you.
+- **UNRESOLVED** — not in your Semantic Scholar author record, arXiv, Crossref or Semantic Scholar search.
 
 ```bibtex
 @misc{TODO,
@@ -57,8 +55,7 @@ put a `TODO` in your bibliography.
 
 - 0 citations, 2022, Scholar says *Proceedings of the 60th Annual Meeting of the Association for Computational …, 2022*
 - [the Scholar row](https://scholar.google.com/citations?view_op=view_citation&hl=en&user=8b8IhUYAAAAJ&citation_for_view=8b8IhUYAAAAJ:uc_IGeMz5qoC)
-- **UNRESOLVED** — not in your Semantic Scholar author record, arXiv or Crossref.
-- Semantic Scholar search did not answer — a re-run may resolve this without any work from you.
+- **UNRESOLVED** — not in your Semantic Scholar author record, arXiv, Crossref or Semantic Scholar search.
 
 ```bibtex
 @misc{TODO,

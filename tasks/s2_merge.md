@@ -40,8 +40,8 @@ Highest-citation first, so stopping early still helps most.
 | 2 | LLM Hypnosis: Exploiting User Feedback for Unauthorized Knowledge Inje | https://www.semanticscholar.org/paper/280148936 |
 | 1 | Every Eval Ever: A Unifying Schema and Community Repository for AI Eva | https://www.semanticscholar.org/paper/289263834 |
 | 1 | Automated Discovery Has No Universally Superior Harness | https://www.semanticscholar.org/paper/290376866 |
+| 1 | How Safe is Your Safety Metric? Automatic Concatenation Tests for Metr | https://www.semanticscholar.org/paper/271923863 |
 | 1 | A Latent Variable Framework for Scaling Laws in Large Language Models | https://www.semanticscholar.org/paper/283693989 |
-| 1 | Can You Trust Your Metric? Automatic Concatenation-Based Tests for Met | https://www.semanticscholar.org/paper/271923863 |
 | 0 | Resolving Interference (RI): Disentangling Models for Improved Model M | https://www.semanticscholar.org/paper/286568386 |
 | 0 | Instructions Shape Production of Language, not Processing | https://www.semanticscholar.org/paper/288257161 |
 | 0 | Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting | https://www.semanticscholar.org/paper/289098621 |

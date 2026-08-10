@@ -17,14 +17,15 @@ which is why it can be re-run — the fixes all need one.
 | ORCID works added by Crossref/DataCite | 0 | nothing yet |
 | arXiv registered author | 105 of 105 | ok |
 | Wikidata author item | Q140867203 | ok |
-| Wikidata item complete | 5 gaps | **fix** |
+| Wikidata item complete | 0 gaps | ok |
 | Wikidata paper items | 3 of 112 | optional |
 | HF pages indexed | 105 of 105 | ok |
 | HF pages claimed | 103 of 105 claimable | ok |
 | HF claims in moderation | 2 | waiting |
 | arXiv records misspelling your name | 0 | ok |
 | arXiv records omitting you | 0 | ok |
-| ORCID works we cannot place | 4 | **check** |
+| ORCID works we cannot place | 3 | **check** |
+| ORCID works listed twice | 1 | **fix** |
 | Semantic Scholar records | 2 | **fix** |
 
 ## Crossref / DataCite auto-update: no evidence it is live
@@ -98,10 +99,6 @@ Do not delete it and re-add your own: that trades a vouched-for entry for a
 self-asserted one, which is a downgrade in exactly the signal this section
 exists to provide.
 
-## Wikidata item Q140867203 exists — 2 identifiers to add
-
-Full diff, plus what the measured paper coverage means for the Author Disambiguator pass: [wikidata_followup.md](wikidata_followup.md).
-
 ## Wikidata paper coverage: 3 of 112
 
 Matched on DOI and arXiv id, not on name. This number matters because it
@@ -115,7 +112,24 @@ answer. This uses `query-scholarly.wikidata.org`.
 
 An opt-in batch for the 109 missing items is in `tasks/wikidata_papers.qs`; read the cautions in [wikidata_followup.md](wikidata_followup.md) before running it.
 
-## 1 of your papers are missing from ORCID
+## 3 works on your ORCID we cannot place
+
+Not necessarily wrong, which is why this is *check* and not *fix*: a paper
+missing from your bibliography looks exactly like a work that is not yours.
+
+Matched against the corpus by identifier, then by title, then by the title's
+content words with the order discarded — so a paper retitled between preprint
+and proceedings, or rearranged around its colon, no longer lands here. What
+reaches this list carries no identifier ORCID could group on, which is also
+why nothing else can place it.
+
+Two things end up here and they have opposite fixes. A paper of yours the
+bibliography never held is fixed **upstream, in the bibliography** — deleting
+it from ORCID loses a real work. Anything that is not a paper (a workshop
+listing, a proceedings volume) is a deletion. Titles and put-codes:
+[orcid_remove.md](orcid_remove.md).
+
+## 1 of your papers is missing from ORCID
 
 Measured by identifier, not by counting: each of these has no work group on
 the record carrying its DOI or arXiv id.
@@ -130,4 +144,18 @@ Highest citations first; the full list with DOIs is
 [orcid_missing.md](orcid_missing.md).
 
 - [ ]    0 cites — Resolving Interference (RI): Disentangling Models for Improved Mod
+
+## 1 paper is listed twice on your ORCID
+
+ORCID groups works that share an identifier. A paper whose record holds
+the publisher DOI in one entry and arXiv's `10.48550/arXiv.<id>` DOI in
+another shares no identifier between them, so it does not group: it shows
+as two works with two different titles, and every service counting your
+output counts it twice.
+
+This is a side effect of `orcid_import.bib` filling missing DOIs from arXiv.
+It is worth fixing and it is not urgent. The fix is a merge, not a deletion:
+both titles are real, and adding one entry's DOI to the other folds them into
+one work with both. Which entry to open and what to paste into it:
+[orcid_remove.md](orcid_remove.md).
 

@@ -2,7 +2,7 @@
 """paper-geo: one command, re-runnable, safe to schedule.
 
     python update.py                 # refresh everything read-only, report what needs you
-    python update.py --refresh-bib   # also re-run the publications pipeline first
+    python update.py --refresh-bib   # read the bibliography from its local checkout
     python update.py --apply         # additionally write the approved repo and link changes
     python update.py --step collect  # run a single step
 
@@ -43,7 +43,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
-from common import DATA, is_preprint_venue, load_config, read_yaml  # noqa: E402
+from common import DATA, health_report, is_preprint_venue, load_config, read_yaml  # noqa: E402
 from sweep_github import ZENODO_KINDS  # noqa: E402
 
 STEPS = ("collect", "repos", "propose", "draft", "links", "ownership", "audit",
@@ -58,11 +58,18 @@ def run(argv: list[str], cwd: str | None = None) -> int:
 def step_collect(cfg, args) -> None:
     """Rebuild data/papers.yaml from bibliography + S2 + arXiv + HF."""
     if args.refresh_bib:
+        # This used to run `python update.py` inside the publications checkout. That
+        # repo's pipeline commits and pushes -- to GitHub and to Overleaf -- so a GEO
+        # run with one extra flag published to a repo this project does not own, on
+        # somebody else's schedule, with the GEO output as its only visible purpose.
+        # The bibliography has one owner and it is not this pipeline. What remains is
+        # the half that was actually wanted: read the checkout on disk rather than the
+        # last copy pushed to GitHub, so a refresh done over there is visible here.
         path = cfg["sources"].get("publications_path")
         if path and os.path.isdir(path):
-            # publications owns the bibliography; let it refresh itself first so
-            # newly-published venues land in enhanced.bib before we read it.
-            run([sys.executable, "update.py"], cwd=path)
+            print(f"  reading the bibliography from {path} (its working tree, not the\n"
+                  f"  pushed copy). Refresh it there first if you want new entries: "
+                  f"cd {path} && python update.py")
         else:
             print("  (sources.publications_path not set -- reading bib over HTTP)")
     run([sys.executable, "scripts/collect.py"])
@@ -380,7 +387,12 @@ def scholar_gaps(sc: dict) -> list[str]:
     var = sc.get("title_variants") or []
     fix = [v for v in var if v.get("stale") == "bib"]
     call = [v for v in var if v.get("stale") not in ("bib", "scholar")]
-    if not (gate or miss or fix or call or dup):
+    # The mirror image of `not_in_corpus`, and the half that was computed but never
+    # printed: papers this pipeline has and the profile does not. It belongs on the page
+    # for the same reason as its opposite -- Scholar is the surface most people actually
+    # read, and a paper absent from it is absent from where the citations accrue.
+    gone = sc.get("not_on_scholar") or []
+    if not (gate or miss or fix or call or dup or gone):
         return []
 
     def pl(n: int, word: str = "paper") -> str:
@@ -390,7 +402,8 @@ def scholar_gaps(sc: dict) -> list[str]:
         return f"{n or 0} cite{'s' * ((n or 0) != 1)}"
 
     L = [f"## Coverage: Google Scholar and the corpus disagree on "
-         f"{pl(len(gate) + len(miss) + len(fix) + len(call) + len(dup))}", "",
+         f"{pl(len(gate) + len(miss) + len(fix) + len(call) + len(dup) + len(gone))}",
+         "",
          f"Scholar lists **{sc.get('scholar_rows')}** works and matched "
          f"**{sc.get('matched')}** of the corpus's **{sc.get('corpus')}**. Scholar is",
          "the one list of your papers that is built by a different process, so it is the",
@@ -418,6 +431,29 @@ def scholar_gaps(sc: dict) -> list[str]:
               f"{(r.get('title') or '')[:60]}" for r in miss[:12]]
         if len(miss) > 12:
             L += [f"- … and {len(miss) - 12} more in `build/scholar_diff.json`"]
+        L += [""]
+    if gone:
+        cit = sum(p.get("citations") or 0 for p in gone)
+        # The total is stated because the per-item counts do not add up in the reader's
+        # head, and the sum is the whole argument for spending the ten minutes.
+        held = ([f"Between them they hold **{cit} citations** that are absent from the",
+                 "profile Scholar shows when somebody searches your name."] if cit else [])
+        L += [f"### {pl(len(gone))} of yours are not on your Scholar profile", "",
+              "The other direction, and the one nobody looks for: these are in the",
+              "bibliography and missing from the profile. Scholar's crawler adds what it",
+              "finds, so what is still absent after years of crawling is what it will not",
+              "find on its own — a call for papers, a workshop volume, a proceedings",
+              "front matter: documents that get cited as papers but do not look like one",
+              "to a crawler."] + held + ["",
+              "*My profile → + → Add article manually*, then paste the link. Two minutes",
+              "each, and it is the only fix on this page that adds citations rather than",
+              "moving them.", ""]
+        for p in gone:
+            ref = (f" <https://arxiv.org/abs/{p['arxiv']}>" if p.get("arxiv")
+                   else f" <https://doi.org/{p['doi']}>" if p.get("doi")
+                   else f" <{p['url']}>" if p.get("url") else "")
+            L += [f"- [ ] {cites(p.get('citations'))} — {p.get('year') or '????'} — "
+                  f"{(p.get('title') or '')[:58]}{ref}"]
         L += [""]
     if fix:
         L += [f"### {pl(len(fix))} whose bibliography title is behind arXiv", "",
@@ -640,26 +676,51 @@ def step_worklist(cfg, args) -> None:
     missing_jr = top(needs_jr, 12)
     if missing_jr:
         blocked = sum(1 for p in papers if p.get("arxiv") in unowned and needs_jr(p))
+        # The cost line comes first and is measured, because the earlier version of this
+        # section led with "Google Scholar keeps two records" and that turned out to be
+        # the weakest of the three reasons *for this corpus*: the profile has almost no
+        # split pairs. Selling the strongest-sounding argument rather than the true one
+        # is how a list of 64 items gets read once and never again.
+        dups = len(scholar.get("scholar_duplicates") or [])
+        seen_n = scholar.get("corpus")
+        split = ([f"   Measured on your own profile: **{dups} split pair"
+                  f"{'s' * (dups != 1)} out of {seen_n}**, so for this",
+                  "   corpus that is mostly already handled — do not do this for that reason."]
+                 if seen_n else
+                 ["   Scholar appears to have merged most of yours already, so this is not "
+                  "the reason to do it."])
         lines += [f"## arXiv journal-ref missing ({sum(1 for p in papers if needs_jr(p))} papers)",
                   "",
-                  "**What it buys.** A preprint with no journal-ref is, to every indexer, a",
-                  "paper with no venue. Three concrete consequences:",
+                  "**It is a metadata edit, not a new version.** No recompile, no file upload,",
+                  "no new version number, no re-announcement — v2 stays v2, per arXiv's own",
+                  "help page. That is the whole cost, about a minute each, and it is worth",
+                  "knowing because the size of this list is not the size of the job.",
                   "",
-                  "1. **Google Scholar keeps two records.** It merges preprint and published",
-                  "   versions largely on venue agreement; without a journal-ref the arXiv",
-                  "   record is a separate cluster, and the citations split across the two.",
-                  "   Merging them is what moves a paper up its own search results.",
-                  "2. **The arXiv DataCite record gains a `container-title`**, which is what",
-                  "   flows to OpenAlex, ORCID auto-update and Crossref-derived tools. A",
-                  "   venue-less record is filtered out by anything ranking on venue.",
+                  "The form is per-paper and lives behind your account: open",
+                  "<https://arxiv.org/user>, find the row, follow its *journal ref* link.",
+                  "There is no paste-an-identifier page — `/jref` on its own redirects to that",
+                  "list — which is also why no script can do this for you.",
+                  "",
+                  "**What it buys, honestly ranked.**",
+                  "",
+                  "1. *Weak here.* Scholar merges preprint and published versions largely on",
+                  "   venue agreement, and a venue-less arXiv record can stay a separate",
+                  "   cluster with the citations split across the two."] + split + [
+                  "2. **The arXiv DataCite record gains a `container-title`.** This is the real",
+                  "   one and it is not visible on Scholar at all: that field is what flows to",
+                  "   OpenAlex, to ORCID auto-update, and to every Crossref-derived tool, and",
+                  "   a venue-less record is filtered out by anything ranking on venue.",
                   "3. **Answer engines cite venue as authority.** \"Published at ACL 2024\" in",
                   "   the metadata is what makes a model's answer name the venue instead of",
                   "   calling it a preprint.",
                   "",
-                  "**Recommendation:** do not work the whole list. Do the top ~15 by citations",
-                  "and stop — that is where the citation-splitting actually costs something.",
-                  "There is no write API, so it is one *Journal ref* form per paper on your",
-                  "submission page (a metadata edit, not a new version).",
+                  "**Recommendation:** the top few, when you are already logged in, and stop.",
+                  "There is no write API, so the clicking is the one part of this list code",
+                  "cannot take off you — but the typing is not. Every field value, for every",
+                  "paper, is in [`tasks/arxiv_jref.md`](tasks/arxiv_jref.md): the journal-ref",
+                  "string built from the publisher's own bibtex, the published DOI, and why",
+                  "`Report number:` stays blank. Save your arXiv articles page once and that",
+                  "file links straight to each paper's form.",
                   ""]
         if blocked:
             lines += [f"**{blocked} of these are marked (blocked)**: you are not a registered",
@@ -692,8 +753,9 @@ def step_worklist(cfg, args) -> None:
                   "(verified, 0 of 50). Visiting the URL while logged in *is* the action --",
                   "there is no form.",
                   "",
-                  "Full list: `tasks/hf_worklist.md`. Clickable, and re-checked live:",
-                  "`python scripts/hf_papers.py --live`.",
+                  "Full list, clickable: `tasks/hf_worklist.md`. Re-read the pages live",
+                  "after a session of clicking: `python scripts/audit_identity.py "
+                  "--no-names`.",
                   ""]
         for p in no_hf:
             lines.append(f"- [ ] <https://hf.co/papers/{p['arxiv']}>  ({p.get('citations') or 0} cites)")
@@ -724,7 +786,8 @@ def step_worklist(cfg, args) -> None:
         lines += ["## Same paper or different? (decide once in data/overrides.yaml)", ""]
         for p in review:
             for o in p["similar_but_distinct"]:
-                lines.append(f"- [ ] `{p['title'][:64]}`  vs  `{o[:64]}`")
+                lines.append(f"- [ ] `{(p.get('title_display') or p['title'])[:64]}`"
+                             f"  vs  `{o[:64]}`")
         lines.append("")
 
     # Two different asks, and conflating them is what made this section unusable:
@@ -732,6 +795,16 @@ def step_worklist(cfg, args) -> None:
     # in data/sidecars/drafts/ and nothing reads them until you promote one.
     drafted = sorted(os.path.basename(f)[:-3] for f in
                      glob.glob(os.path.join(DATA, "sidecars", "drafts", "*.md")))
+    # A draft written against rules that have since moved is not work for a person: it
+    # cannot be accepted as it stands, so it does not belong in the verification section
+    # above. It belongs with the undrafted papers below, because the remedy is identical
+    # -- re-run the drafter -- and giving it a heading of its own would report the same
+    # seventeen papers twice under two different counts.
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from draft_sidecars import held, spec_sha
+    keep = held(spec_sha())
+    stale_drafts = [s for s in drafted if s not in keep]
+    drafted = [s for s in drafted if s in keep]
     no_side = [p for p in papers if not p.get("has_sidecar")]
     if drafted:
         lines += [f"## Sidecar drafts awaiting your verification ({len(drafted)})", "",
@@ -758,8 +831,18 @@ def step_worklist(cfg, args) -> None:
         lines.append("")
     todraft = [p for p in no_side if p["slug"] not in set(drafted)]
     if todraft:
-        lines += [f"## Sidecars not yet drafted ({len(todraft)}/{len(papers)})", "",
-                  "Nothing to do by hand here — this is a run, not a task:",
+        # The stale count is stated here, not given a section, so that somebody who
+        # opens data/sidecars/drafts/ and finds files in it is not left wondering why
+        # they are missing from the list above.
+        stale_note = ([f"{len(stale_drafts)} of these already have a draft file on disk,"
+                       " written against sidecar rules",
+                       "that have since changed. `--accept` refuses them and the next run"
+                       " overwrites",
+                       "them, so do not spend an evening reading one; they need the same"
+                       " re-run as the rest.", ""] if stale_drafts else [])
+        lines += [f"## Sidecars not yet drafted ({len(todraft)}/{len(papers)})", ""] \
+                 + stale_note + \
+                 ["Nothing to do by hand here — this is a run, not a task:",
                   "",
                   "```bash",
                   "python scripts/draft_sidecars.py --limit 20   # queue the next 20",
@@ -768,7 +851,8 @@ def step_worklist(cfg, args) -> None:
                   "`update.py` also drafts a batch on every run, so this number falls on",
                   "its own. The top of the list, by citations, is where it pays:", ""]
         for p in sorted(todraft, key=lambda p: -(p.get("citations") or 0))[:6]:
-            lines.append(f"- {p.get('citations') or 0} cites — {p['title'][:66]}")
+            lines.append(f"- {p.get('citations') or 0} cites — "
+                         f"{(p.get('title_display') or p['title'])[:66]}")
         lines.append("")
 
     # Papers whose text no fetcher can reach. Upstream of the two sidecar sections
@@ -799,7 +883,13 @@ def step_worklist(cfg, args) -> None:
                   "else, an SSRN download behind a click. They are not slow, they are blocked,",
                   "and no rerun will change that.",
                   "",
-                  "You already have all three PDFs. Drop each one in as",
+                  # Said as a count, not as "all three": this list shrinks as the PDFs
+                  # land and grows when a paywalled paper enters the corpus, and prose
+                  # with a number frozen into it is how a generated file starts
+                  # disagreeing with its own heading.
+                  f"You are an author on {'it' if len(starved) == 1 else 'each of them'}, "
+                  f"so you already have the PDF{'s' * (len(starved) != 1)}. Drop "
+                  f"{'it' if len(starved) == 1 else 'each one'} in as",
                   "`data/fulltext/<slug>.pdf` — the directory is gitignored, so the PDF stays",
                   "on your machine and only the sidecar it produces is committed. That path is",
                   "read before any network source, so the next run picks it up and the paper",
@@ -847,6 +937,17 @@ def closing(args) -> None:
     """
     print(f"\n{'=' * 62}\n== what is left for you\n{'=' * 62}")
 
+    # Before the worklist, because a source that stopped answering makes every count
+    # below it an undercount, and a reader who does not know that reads the run as
+    # having found less to do rather than as having looked at less.
+    broken = health_report()
+    if broken:
+        print("\nSOURCES THAT ARE NOT COMING BACK ON THEIR OWN:")
+        for line in broken:
+            print(f"  {line}")
+        print("  Every step degraded around these, so the counts below are floors, not "
+              "totals.\n  Ledger: build/health.json")
+
     index = os.path.join(ROOT, "build", "site", "index.html")
     if os.path.exists(index):
         print("\nThe run's output, as a reader meets it:")
@@ -859,7 +960,12 @@ def closing(args) -> None:
             n = sum(1 for l in f if l.startswith("## "))
         lines.append(f"  WORKLIST.md              {n} thing{'s' * (n != 1)} only you can do, "
                      f"ranked by citations")
-    drafts = glob.glob(os.path.join(DATA, "sidecars", "drafts", "*.md"))
+    # Only the drafts a person could actually accept. Counting the stale ones here is
+    # how this line came to promise 17 evenings of work that would each have ended in a
+    # refused `--accept`. See draft_sidecars.held.
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from draft_sidecars import held, spec_sha
+    drafts = [s for s in held(spec_sha()) if s]
     if drafts:
         lines.append(f"  data/sidecars/drafts/    {len(drafts)} sidecar draft"
                      f"{'s' * (len(drafts) != 1)} to verify -- nothing reads these until "
@@ -890,7 +996,8 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--step", choices=STEPS, help="run one step instead of all")
     ap.add_argument("--refresh-bib", action="store_true",
-                    help="run the publications pipeline first (needs sources.publications_path)")
+                    help="read the bibliography from the local publications checkout "
+                         "(needs sources.publications_path); never writes to it")
     ap.add_argument("--apply", action="store_true",
                     help="also push approved repo changes to GitHub")
     ap.add_argument("--draft-batch", type=int, default=10, metavar="N",

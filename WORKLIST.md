@@ -5,15 +5,22 @@ not here is done, and nothing on this page is a general instruction. The
 how-to for every item below is [docs/SETUP.md](docs/SETUP.md); the live
 reading of each external surface is [tasks/identity_audit.md](tasks/identity_audit.md).
 
+## Due now — for the pipeline, not for you (1)
+
+From `data/followups.yaml`. Unblocked by the calendar, not by a decision. Say the word, or they run on the next pass; nothing here needs you except a look at the result.
+
+- [ ] **2026-08-08** (2 days ago) — Wikidata account Ktilana reaches 4 days old (registered 2026-08-04 13:15 UTC). Autoconfirmed needs 4 days AND 50 edits; the edit half is already met (56 as of 2026-08-05), so the age is what is left.
+      → Run the two QuickStatements batches -- tasks/wikidata.qs (author-item statements the API writer does not cover) and tasks/wikidata_papers.qs (the paper items) -- at https://quickstatements.toolforge.org/#/batch, then report the diff. Nothing else waits on this: statements on the author item go through scripts/wikidata_apply.py, which uses a bot password and needs no autoconfirmed account.
+      `python scripts/wikidata_apply.py --check-account`
+
 ## Waiting on the outside world
 
-- **2026-08-08** — Wikidata account Ktilana reaches 4 days old (registered 2026-08-04 13:15 UTC). Autoconfirmed needs 4 days AND 50 edits; the edit half is already met (56 as of 2026-08-05), so the age is what is left.  *(then mine to run, not yours)*
 - **2026-10-04** — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.
 - **2026-11-04** — Crossref and DataCite auto-update only fire on newly deposited metadata that already carries your iD, so the proof is a work whose ORCID source is Crossref or DataCite rather than your own name -- which cannot appear until something you publish is deposited.
 
-## Coverage: Google Scholar and the corpus disagree on 5 papers
+## Coverage: Google Scholar and the corpus disagree on 8 papers
 
-Scholar lists **117** works and matched **105** of the corpus's **112**. Scholar is
+Scholar lists **116** works and matched **105** of the corpus's **112**. Scholar is
 the one list of your papers that is built by a different process, so it is the
 only check that can see a paper this pipeline never received. Full detail:
 `build/scholar_diff.json`.
@@ -27,27 +34,28 @@ resolved from arXiv, Crossref or Semantic Scholar where any of them has
 it, is in [`tasks/bib_missing.md`](tasks/bib_missing.md) — check the
 author list before pasting: it is the index's, not yours.
 
-- [ ] 19 cites — 2024 — Llm merging: Building llms efficiently through merging
 - [ ] 1 cite — 2025 — A Statistical Framework for Game-Based AI Evaluation
-- [ ] 0 cites — 2022 — True or false? faithful summarization with attribution
 
-### 1 paper whose bibliography title is behind arXiv
+### 5 papers of yours are not on your Scholar profile
 
-arXiv states the title Scholar shows, so the source entry is the stale
-one and there is nothing to decide: correct the title in the source
-bibliography and re-run. Until then the two surfaces answer a title query
-differently, which is the exact failure this repo exists to prevent.
+The other direction, and the one nobody looks for: these are in the
+bibliography and missing from the profile. Scholar's crawler adds what it
+finds, so what is still absent after years of crawling is what it will not
+find on its own — a call for papers, a workshop volume, a proceedings
+front matter: documents that get cited as papers but do not look like one
+to a crawler.
+Between them they hold **171 citations** that are absent from the
+profile Scholar shows when somebody searches your name.
 
-- [ ] `can-you-trust-your-metric-automatic-concatenation-based-test`
-      - arXiv and Scholar: How Safe is Your Safety Metric? Automatic Concatenation 
-      - the .bib entry:    Can You Trust Your Metric? Automatic Concatenation-Based
+*My profile → + → Add article manually*, then paste the link. Two minutes
+each, and it is the only fix on this page that adds citations rather than
+moving them.
 
-### 1 paper listed twice on Scholar
-
-Two rows for one paper splits its citation count. Nothing in this repo can
-fix it: *select both on your profile → Merge*.
-
-- [ ] `global-piqa-evaluating-commonsense-reasoning-across-100-lang` — the second row reads 'Global piqa: Evaluating physical commonsense reasoni'
+- [ ] 82 cites — 2023 — Call for Papers - The BabyLM Challenge: Sample-efficient p <https://arxiv.org/abs/2301.11796>
+- [ ] 39 cites — 2024 — [Call for Papers] The 2nd BabyLM Challenge: Sample-efficie <https://arxiv.org/abs/2404.06214>
+- [ ] 33 cites — 2025 — BabyLM Turns 3: Call for papers for the 2025 BabyLM worksh <https://arxiv.org/abs/2502.10645>
+- [ ] 15 cites — 2024 — Lossless and Near-Lossless Compression for Foundation Mode <https://arxiv.org/abs/2404.15198>
+- [ ] 2 cites — 2018 — SemEval 2019 Shared Task: Cross-lingual Semantic Parsing w <https://arxiv.org/abs/1805.12386>
 
 ## Identity surfaces (3 open)
 
@@ -70,6 +78,14 @@ Full list with citations: `tasks/orcid_missing.md`. How and why:
 
 - [ ] 0 cites — Resolving Interference (RI): Disentangling Models for Improved Mod
 
+### ORCID lists 1 of your papers twice
+
+ORCID groups works that share an identifier. Two groups for one paper means
+one copy carries the arXiv DataCite DOI (`10.48550/arXiv.<id>`) and the other
+the publisher DOI, so they share no key. Fix by adding the *missing* DOI to
+either copy — the groups then fuse — or by deleting the sparser copy.
+Both put-codes per pair: `tasks/orcid_remove.md`.
+
 ### Semantic Scholar — 34 papers on a second author record
 
 Every S2-backed tool (Elicit, Consensus, SciSpace, most literature agents)
@@ -79,77 +95,59 @@ There is no self-service merge, but a claimed page can pull papers across:
 `tasks/s2_merge.md`, so stopping early still captures most of the loss.
 Do not claim the second page as well.
 
-### Wikidata — 5 statement gaps on Q140867203
-
-Now automatic, and it does **not** need an autoconfirmed account — that is a
-QuickStatements rule, not a MediaWiki one. Create a bot password once at
-<https://www.wikidata.org/wiki/Special:BotPasswords> (grants: edit existing
-pages, create/edit pages), export `WIKIDATA_BOT_USER` and
-`WIKIDATA_BOT_PASSWORD`, then:
-
-```bash
-python scripts/wikidata_apply.py            # dry run: exactly what changes
-python scripts/wikidata_apply.py --apply    # write it
-```
-
 ## arXiv journal-ref missing (64 papers)
 
-**What it buys.** A preprint with no journal-ref is, to every indexer, a
-paper with no venue. Three concrete consequences:
+**It is a metadata edit, not a new version.** No recompile, no file upload,
+no new version number, no re-announcement — v2 stays v2, per arXiv's own
+help page. That is the whole cost, about a minute each, and it is worth
+knowing because the size of this list is not the size of the job.
 
-1. **Google Scholar keeps two records.** It merges preprint and published
-   versions largely on venue agreement; without a journal-ref the arXiv
-   record is a separate cluster, and the citations split across the two.
-   Merging them is what moves a paper up its own search results.
-2. **The arXiv DataCite record gains a `container-title`**, which is what
-   flows to OpenAlex, ORCID auto-update and Crossref-derived tools. A
-   venue-less record is filtered out by anything ranking on venue.
+The form is per-paper and lives behind your account: open
+<https://arxiv.org/user>, find the row, follow its *journal ref* link.
+There is no paste-an-identifier page — `/jref` on its own redirects to that
+list — which is also why no script can do this for you.
+
+**What it buys, honestly ranked.**
+
+1. *Weak here.* Scholar merges preprint and published versions largely on
+   venue agreement, and a venue-less arXiv record can stay a separate
+   cluster with the citations split across the two.
+   Measured on your own profile: **0 split pairs out of 112**, so for this
+   corpus that is mostly already handled — do not do this for that reason.
+2. **The arXiv DataCite record gains a `container-title`.** This is the real
+   one and it is not visible on Scholar at all: that field is what flows to
+   OpenAlex, to ORCID auto-update, and to every Crossref-derived tool, and
+   a venue-less record is filtered out by anything ranking on venue.
 3. **Answer engines cite venue as authority.** "Published at ACL 2024" in
    the metadata is what makes a model's answer name the venue instead of
    calling it a preprint.
 
-**Recommendation:** do not work the whole list. Do the top ~15 by citations
-and stop — that is where the citation-splitting actually costs something.
-There is no write API, so it is one *Journal ref* form per paper on your
-submission page (a metadata edit, not a new version).
+**Recommendation:** the top few, when you are already logged in, and stop.
+There is no write API, so the clicking is the one part of this list code
+cannot take off you — but the typing is not. Every field value, for every
+paper, is in [`tasks/arxiv_jref.md`](tasks/arxiv_jref.md): the journal-ref
+string built from the publisher's own bibtex, the published DOI, and why
+`Report number:` stays blank. Save your arXiv articles page once and that
+file links straight to each paper's form.
 
-- [ ] `2306.01708` (866 cites) -> NeurIPS 2023  <https://arxiv.org/abs/2306.01708>
+- [ ] `2306.01708` (870 cites) -> NeurIPS 2023  <https://arxiv.org/abs/2306.01708>
 - [ ] `2402.14992` (284 cites) -> ICML 2024  <https://arxiv.org/abs/2402.14992>
-- [ ] `2412.03304` (181 cites) -> ACL 2025  <https://arxiv.org/abs/2412.03304>
+- [ ] `2412.03304` (182 cites) -> ACL 2025  <https://arxiv.org/abs/2412.03304>
 - [ ] `2104.08202` (167 cites) -> EMNLP 2021  <https://arxiv.org/abs/2104.08202>
 - [ ] `1907.01752` (127 cites) -> ICLR 2020  <https://arxiv.org/abs/1907.01752>
 - [ ] `2211.05655` (119 cites) -> ACL 2023  <https://arxiv.org/abs/2211.05655>
-- [ ] `2410.19735` (112 cites) -> ICLR 2025  <https://arxiv.org/abs/2410.19735>
+- [ ] `2410.19735` (114 cites) -> ICLR 2025  <https://arxiv.org/abs/2410.19735>
 - [ ] `2507.16806` (99 cites) -> ICLR 2026  <https://arxiv.org/abs/2507.16806>
 - [ ] `2402.16842` (91 cites) -> ICML 2024  <https://arxiv.org/abs/2402.16842>
 - [ ] `2405.17202` (83 cites) -> NeurIPS 2024  <https://arxiv.org/abs/2405.17202>
-- [ ] `1907.08971` (77 cites) -> ACL 2019  <https://arxiv.org/abs/1907.08971>
-- [ ] `2302.04863` (71 cites) -> Findings of EMNLP 2023  <https://arxiv.org/abs/2302.04863>
+- [ ] `1907.08971` (78 cites) -> ACL 2019  <https://arxiv.org/abs/1907.08971>
+- [ ] `2302.04863` (72 cites) -> Findings of EMNLP 2023  <https://arxiv.org/abs/2302.04863>
 
-## Sidecar drafts awaiting your verification (17)
+## Sidecars not yet drafted (110/112)
 
-Drafted from each paper's own full text: claims with their magnitudes,
-scope conditions, terminology and likely misreadings. Every number is a
-machine's reading and needs your eyes — but you are correcting a page,
-not writing one. Each file opens with what to check, in the order it pays.
-
-```bash
-python scripts/draft_sidecars.py --review          # what is drafted
-python scripts/draft_sidecars.py --accept <slug>   # promote, after editing
-```
-
-- [ ] `data/sidecars/drafts/tinybenchmarks-evaluating-llms-with-fewer-examples.md`  (284 cites) tinyBenchmarks: evaluating LLMs with fewer examples
-- [ ] `data/sidecars/drafts/active-learning-for-bert-an-empirical-study.md`  (244 cites) Active Learning for {BERT:} An Empirical Study
-- [ ] `data/sidecars/drafts/findings-of-the-babylm-challenge-sample-efficient-pretrainin.md`  (232 cites) Findings of the {B}aby{LM} Challenge: Sample-Efficient P
-- [ ] `data/sidecars/drafts/global-mmlu-understanding-and-addressing-cultural-and-lingui.md`  (181 cites) Global {MMLU}: Understanding and Addressing Cultural and
-- [ ] `data/sidecars/drafts/q2-evaluating-factual-consistency-in-knowledge-grounded-dial.md`  (167 cites) Q\({}^{\mbox{2}}\): Evaluating Factual Consistency in Kn
-- [ ] `data/sidecars/drafts/on-the-weaknesses-of-reinforcement-learning-for-neural-machi.md`  (127 cites) On the Weaknesses of Reinforcement Learning for Neural M
-- [ ] `data/sidecars/drafts/fusing-finetuned-models-for-better-pretraining.md`  (120 cites) Fusing finetuned models for better pretraining
-- [ ] `data/sidecars/drafts/disentqa-disentangling-parametric-and-contextual-knowledge-w.md`  (119 cites) DisentQA: Disentangling Parametric and Contextual Knowle
-- [ ] `data/sidecars/drafts/beyond-binary-rewards-training-lms-to-reason-about-their-unc.md`  (99 cites) Beyond Binary Rewards: Training {LM}s to Reason About Th
-- [ ] `data/sidecars/drafts/jump-to-conclusions-short-cutting-transformers-with-linear-t.md`  (97 cites) Jump to Conclusions: Short-Cutting Transformers with Lin
-
-## Sidecars not yet drafted (93/112)
+17 of these already have a draft file on disk, written against sidecar rules
+that have since changed. `--accept` refuses them and the next run overwrites
+them, so do not spend an evening reading one; they need the same re-run as the rest.
 
 Nothing to do by hand here — this is a run, not a task:
 
@@ -161,19 +159,12 @@ python scripts/draft_sidecars.py --ingest     # fold the answers in
 `update.py` also drafts a batch on every run, so this number falls on
 its own. The top of the list, by citations, is where it pays:
 
-- 172 cites — An autonomous debating system
-- 70 cites — {DORA} The Explorer: Directed Outreaching Reinforcement Action-Sel
-- 68 cites — Elements of World Knowledge {(EWoK):} {A} Cognition-Inspired Frame
-- 68 cites — A Survey on Model MoErging: Recycling and Routing Among Specialize
-- 68 cites — Efficient Benchmarking (of Language Models)
-- 64 cites — ColD Fusion: Collaborative Descent for Distributed Multitask Finet
-
-## Artifacts with no citation route (14)
-
-Tools and guides with no linked paper. A Zenodo release DOI gives each a
-citable, archived identity and a DataCite record that reaches OpenAlex
-and your ORCID works list — so they stop being GitHub-only objects.
-Steps, and the honest case for skipping some: `tasks/zenodo.md`.
+- 284 cites — tinyBenchmarks: evaluating LLMs with fewer examples
+- 244 cites — Active Learning for BERT: An Empirical Study
+- 232 cites — Findings of the BabyLM Challenge: Sample-Efficient Pretraining on 
+- 182 cites — Global MMLU: Understanding and Addressing Cultural and Linguistic 
+- 171 cites — An autonomous debating system
+- 167 cites — Q²: Evaluating Factual Consistency in Knowledge-Grounded Dialogues
 
 
 ## Deferred
@@ -181,7 +172,17 @@ Steps, and the honest case for skipping some: `tasks/zenodo.md`.
 Real work, parked on purpose. Regenerated from live state like
 everything else, so it stays accurate while it waits.
 
-### Repo labels awaiting your review (30/31)
+### Artifacts with no citation route (13)
+
+*Deferred until an artifact is cited or asked about somewhere you can see it, or the paper work is done.*
+
+Tools and guides with no linked paper. A Zenodo release DOI gives each a
+citable, archived identity and a DataCite record that reaches OpenAlex
+and your ORCID works list — so they stop being GitHub-only objects.
+Steps, and the honest case for skipping some: `tasks/zenodo.md`.
+
+
+### Repo labels awaiting your review (26/30)
 
 *Deferred until the sidecar format is settled and the papers are done.*
 
@@ -190,5 +191,5 @@ Check `data/repos.yaml`, fix anything wrong, set `reviewed: true` to freeze it, 
 
 ---
 
-*Per `data/declines.yaml` — hidden: 1 section (OpenAlex — 4 duplicate profiles). deferred to the bottom: Repo labels awaiting your review (30/31). Delete a line there to have it asked normally again.*
+*Per `data/declines.yaml` — hidden: 1 section (OpenAlex — 4 duplicate profiles) and 2 individual items. deferred to the bottom: Artifacts with no citation route (13); Repo labels awaiting your review (26/30). Delete a line there to have it asked normally again.*
 

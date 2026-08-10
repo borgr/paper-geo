@@ -5,17 +5,17 @@ _comment: 'Retired paper URLs -> the slug that replaced them. Written by scripts
   removal cannot be mistaken for a redirect that broke.'
 retired:
   beyond-binary-rewards-training-lm-s-to-reason-about-their-un: beyond-binary-rewards-training-lms-to-reason-about-their-unc
+  can-you-trust-your-metric-automatic-concatenation-based-test: how-safe-is-your-safety-metric-automatic-concatenation-tests
   com-peft-compression-for-communicating-parameter-efficient-u: compeft-compression-for-communicating-parameter-efficient-up
   compress-then-serve-serving-thousands-of-lo-ra-adapters-with: compress-then-serve-serving-thousands-of-lora-adapters-with
   findings-of-the-b-aby-lm-challenge-sample-efficient-pretrain: findings-of-the-babylm-challenge-sample-efficient-pretrainin
   findings-of-the-second-b-aby-lm-challenge-sample-efficient-p: findings-of-the-second-babylm-challenge-sample-efficient-pre
   findings-of-the-third-b-aby-lm-challenge-accelerating-langua: findings-of-the-third-babylm-challenge-accelerating-language
   global-piqa-evaluating-physical-commonsense-reasoning-across: global-piqa-evaluating-commonsense-reasoning-across-100-lang
-  high-dimensional-learning-dynamics-2024-the-emergence-of-str:
+  high-dimensional-learning-dynamics-2024-the-emergence-of-str: null
   holmes-benchmark-the-linguistic-competence-of-language-model: holmes-a-benchmark-to-assess-the-linguistic-competence-of-la
-  how-safe-is-your-safety-metric-automatic-concatenation-tests: can-you-trust-your-metric-automatic-concatenation-based-test
   insights-from-the-first-babylm-challenge-training-sample-eff: findings-of-the-babylm-challenge-sample-efficient-pretrainin
-  llm-merging-building-llm-s-efficiently-through-merging:
-  llm-merging-building-llms-efficiently-through-merging:
+  llm-merging-building-llm-s-efficiently-through-merging: null
+  llm-merging-building-llms-efficiently-through-merging: null
   n-umero-l-ogic-number-encoding-for-enhanced-llm-s-numerical: numerologic-number-encoding-for-enhanced-llms-numerical-reas
   the-s-hare-lm-collection-and-plugin-contributing-human-model: the-sharelm-collection-and-plugin-contributing-human-model-c

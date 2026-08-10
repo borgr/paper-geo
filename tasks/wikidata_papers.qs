@@ -214,7 +214,7 @@ LAST	P2093	"Alex Warstadt"	P1545	"1"
 LAST	P50	Q140867203	P1545	"2"
 LAST	P2093	"Aaron Mueller"	P1545	"3"
 LAST	P2093	"Adina Williams"	P1545	"4"
-LAST	P2093	"Ethan Wilcox"	P1545	"5"
+LAST	P2093	"Ethan Gotlieb Wilcox"	P1545	"5"
 LAST	P2093	"Chengxu Zhuang"	P1545	"6"
 CREATE
 LAST	Len	"Are You Convinced? Choosing the More Convincing Evidence with a Siamese Network"
@@ -231,6 +231,19 @@ LAST	P2093	"Guy Moshkowich"	P1545	"5"
 LAST	P2093	"Ranit Aharonov"	P1545	"6"
 LAST	P2093	"Noam Slonim"	P1545	"7"
 CREATE
+LAST	Len	"Knowledge is a Region in Weight Space for Fine-tuned Language Models"
+LAST	P31	Q13442814
+LAST	P1476	en:"Knowledge is a Region in Weight Space for Fine-tuned Language Models"
+LAST	P577	+2023-00-00T00:00:00Z/9
+LAST	P356	"10.18653/V1/2023.FINDINGS-EMNLP.95"
+LAST	P818	"2302.04863"
+LAST	P2093	"Almog Gueta"	P1545	"1"
+LAST	P2093	"Elad Venezian"	P1545	"2"
+LAST	P2093	"Colin Raffel"	P1545	"3"
+LAST	P2093	"Noam Slonim"	P1545	"4"
+LAST	P2093	"Yoav Katz"	P1545	"5"
+LAST	P50	Q140867203	P1545	"6"
+CREATE
 LAST	Len	"Will it Blend? Blending Weak and Strong Labeled Data in a Neural Network for Argumentation Mining"
 LAST	P31	Q13442814
 LAST	P1476	en:"Will it Blend? Blending Weak and Strong Labeled Data in a Neural Network for Argumentation Mining"
@@ -244,19 +257,6 @@ LAST	P2093	"Yufang Hou"	P1545	"5"
 LAST	P50	Q140867203	P1545	"6"
 LAST	P2093	"Ranit Aharonov"	P1545	"7"
 LAST	P2093	"Noam Slonim"	P1545	"8"
-CREATE
-LAST	Len	"Knowledge is a Region in Weight Space for Fine-tuned Language Models"
-LAST	P31	Q13442814
-LAST	P1476	en:"Knowledge is a Region in Weight Space for Fine-tuned Language Models"
-LAST	P577	+2023-00-00T00:00:00Z/9
-LAST	P356	"10.18653/V1/2023.FINDINGS-EMNLP.95"
-LAST	P818	"2302.04863"
-LAST	P2093	"Almog Gueta"	P1545	"1"
-LAST	P2093	"Elad Venezian"	P1545	"2"
-LAST	P2093	"Colin Raffel"	P1545	"3"
-LAST	P2093	"Noam Slonim"	P1545	"4"
-LAST	P2093	"Yoav Katz"	P1545	"5"
-LAST	P50	Q140867203	P1545	"6"
 CREATE
 LAST	Len	"Corpus Wide Argument Mining - A Working Solution"
 LAST	P31	Q13442814
@@ -404,12 +404,12 @@ LAST	P356	"10.48550/ARXIV.2404.06214"
 LAST	P818	"2404.06214"
 LAST	P50	Q140867203	P1545	"1"
 LAST	P2093	"Ryan Cotterell"	P1545	"2"
-LAST	P2093	"Michael Y. Hu"	P1545	"3"
+LAST	P2093	"Michael Hu"	P1545	"3"
 LAST	P2093	"Tal Linzen"	P1545	"4"
 LAST	P2093	"Aaron Mueller"	P1545	"5"
 LAST	P2093	"Candace Ross"	P1545	"6"
 LAST	P2093	"Alex Warstadt"	P1545	"7"
-LAST	P2093	"Ethan Wilcox"	P1545	"8"
+LAST	P2093	"E. Wilcox"	P1545	"8"
 LAST	P2093	"Adina Williams"	P1545	"9"
 LAST	P2093	"Chengxu Zhuang"	P1545	"10"
 CREATE
@@ -443,7 +443,7 @@ LAST	P356	"10.48550/ARXIV.2401.14367"
 LAST	P818	"2401.14367"
 LAST	P2093	"Asaf Yehudai"	P1545	"1"
 LAST	P2093	"Boaz Carmeli"	P1545	"2"
-LAST	P2093	"Yosi Mass"	P1545	"3"
+LAST	P2093	"Y. Mass"	P1545	"3"
 LAST	P2093	"Ofir Arviv"	P1545	"4"
 LAST	P2093	"Nathaniel Mills"	P1545	"5"
 LAST	P2093	"Assaf Toledo"	P1545	"6"
@@ -532,10 +532,10 @@ LAST	P2093	"Noam Slonim"	P1545	"4"
 LAST	P2093	"Yoav Katz"	P1545	"5"
 CREATE
 LAST	Len	"Deductive Closure Training of Language Models for Coherence, Accuracy, and Updatability"
-LAST	P31	Q13442814
+LAST	P31	Q580922
 LAST	P1476	en:"Deductive Closure Training of Language Models for Coherence, Accuracy, and Updatability"
 LAST	P577	+2024-00-00T00:00:00Z/9
-LAST	P356	"10.18653/V1/2024.FINDINGS-ACL.584"
+LAST	P356	"10.48550/ARXIV.2401.08574"
 LAST	P818	"2401.08574"
 LAST	P2093	"Afra Feyza Akyürek"	P1545	"1"
 LAST	P2093	"Ekin Akyürek"	P1545	"2"
@@ -553,7 +553,7 @@ LAST	P2093	"Rickard Brüel Gabrielsson"	P1545	"1"
 LAST	P2093	"Jiacheng Zhu"	P1545	"2"
 LAST	P2093	"Onkar Bhardwaj"	P1545	"3"
 LAST	P50	Q140867203	P1545	"4"
-LAST	P2093	"Kristjan H. Greenewald"	P1545	"5"
+LAST	P2093	"Kristjan Greenewald"	P1545	"5"
 LAST	P2093	"Mikhail Yurochkin"	P1545	"6"
 LAST	P2093	"Justin Solomon"	P1545	"7"
 CREATE
@@ -843,10 +843,10 @@ LAST	P2093	"Hannah Rose Kirk"	P1545	"19"
 LAST	P50	Q140867203	P1545	"20"
 CREATE
 LAST	Len	"Label-Efficient Model Selection for Text Generation"
-LAST	P31	Q13442814
+LAST	P31	Q580922
 LAST	P1476	en:"Label-Efficient Model Selection for Text Generation"
 LAST	P577	+2024-00-00T00:00:00Z/9
-LAST	P356	"10.18653/V1/2024.ACL-LONG.456"
+LAST	P356	"10.48550/ARXIV.2402.07891"
 LAST	P818	"2402.07891"
 LAST	P2093	"Shir Ashury-Tahan"	P1545	"1"
 LAST	P2093	"Ariel Gera"	P1545	"2"
@@ -1393,17 +1393,6 @@ LAST	P2093	"Yotam Perlitz"	P1545	"3"
 LAST	P2093	"Michal Shmueli-Scheuer"	P1545	"4"
 LAST	P2093	"Gabriel Stanovsky"	P1545	"5"
 CREATE
-LAST	Len	"Reinforcement Learning with Large Action Spaces for Neural Machine Translation"
-LAST	P31	Q580922
-LAST	P1476	en:"Reinforcement Learning with Large Action Spaces for Neural Machine Translation"
-LAST	P577	+2022-00-00T00:00:00Z/9
-LAST	P356	"10.48550/ARXIV.2210.03053"
-LAST	P818	"2210.03053"
-LAST	P2093	"Asaf Yehudai"	P1545	"1"
-LAST	P50	Q140867203	P1545	"2"
-LAST	P2093	"Lior Fox"	P1545	"3"
-LAST	P2093	"Omri Abend"	P1545	"4"
-CREATE
 LAST	Len	"Enhancing the Transformer Decoder with Transition-based Syntax"
 LAST	P31	Q13442814
 LAST	P1476	en:"Enhancing the Transformer Decoder with Transition-based Syntax"
@@ -1423,6 +1412,17 @@ LAST	P2093	"Piyawat Lertvittayakumjorn"	P1545	"1"
 LAST	P50	Q140867203	P1545	"2"
 LAST	P2093	"Eyal Shnarch"	P1545	"3"
 LAST	P2093	"Francesca Toni"	P1545	"4"
+CREATE
+LAST	Len	"Reinforcement Learning with Large Action Spaces for Neural Machine Translation"
+LAST	P31	Q580922
+LAST	P1476	en:"Reinforcement Learning with Large Action Spaces for Neural Machine Translation"
+LAST	P577	+2022-00-00T00:00:00Z/9
+LAST	P356	"10.48550/ARXIV.2210.03053"
+LAST	P818	"2210.03053"
+LAST	P2093	"Asaf Yehudai"	P1545	"1"
+LAST	P50	Q140867203	P1545	"2"
+LAST	P2093	"Lior Fox"	P1545	"3"
+LAST	P2093	"Omri Abend"	P1545	"4"
 CREATE
 LAST	Len	"CommonLID: Re-evaluating State-of-the-Art Language Identification Performance on Web Data"
 LAST	P31	Q13442814
@@ -1878,12 +1878,25 @@ LAST	Len	"Automated Discovery Has No Universally Superior Harness"
 LAST	P31	Q580922
 LAST	P1476	en:"Automated Discovery Has No Universally Superior Harness"
 LAST	P577	+2026-00-00T00:00:00Z/9
+LAST	P356	"10.48550/ARXIV.2607.18235"
 LAST	P818	"2607.18235"
-LAST	P2093	"Akshat Gupta"	P1545	"1"
+LAST	P2093	"A. Gupta"	P1545	"1"
 LAST	P2093	"Jermaine Lei"	P1545	"2"
 LAST	P2093	"Alexander Lu"	P1545	"3"
-LAST	P2093	"G. Anumanchipalli"	P1545	"4"
+LAST	P2093	"Gopala Anumanchipalli"	P1545	"4"
 LAST	P50	Q140867203	P1545	"5"
+CREATE
+LAST	Len	"How Safe is Your Safety Metric? Automatic Concatenation Tests for Metric Reliability"
+LAST	P31	Q580922
+LAST	P1476	en:"How Safe is Your Safety Metric? Automatic Concatenation Tests for Metric Reliability"
+LAST	P577	+2025-00-00T00:00:00Z/9
+LAST	P818	"2408.12259"
+LAST	P2093	"Ora Nova Fandina"	P1545	"1"
+LAST	P50	Q140867203	P1545	"2"
+LAST	P2093	"Eitan Farchi"	P1545	"3"
+LAST	P2093	"George Kour"	P1545	"4"
+LAST	P2093	"Yotam Perlitz"	P1545	"5"
+LAST	P2093	"Orna Raz"	P1545	"6"
 CREATE
 LAST	Len	"A Latent Variable Framework for Scaling Laws in Large Language Models"
 LAST	P31	Q580922
@@ -1901,18 +1914,6 @@ LAST	P2093	"Moulinath Banerjee"	P1545	"7"
 LAST	P2093	"Yuekai Sun"	P1545	"8"
 LAST	P2093	"Kean Ming Tan"	P1545	"9"
 LAST	P2093	"Gongjun Xu"	P1545	"10"
-CREATE
-LAST	Len	"Can You Trust Your Metric? Automatic Concatenation-Based Tests for Metric Validity"
-LAST	P31	Q580922
-LAST	P1476	en:"Can You Trust Your Metric? Automatic Concatenation-Based Tests for Metric Validity"
-LAST	P577	+2024-00-00T00:00:00Z/9
-LAST	P818	"2408.12259"
-LAST	P2093	"Ora Nova Fandina"	P1545	"1"
-LAST	P50	Q140867203	P1545	"2"
-LAST	P2093	"Eitan Farchi"	P1545	"3"
-LAST	P2093	"George Kour"	P1545	"4"
-LAST	P2093	"Yotam Perlitz"	P1545	"5"
-LAST	P2093	"Orna Raz"	P1545	"6"
 CREATE
 LAST	Len	"Part of Speech and Universal Dependency effects on English Arabic Machine Translation"
 LAST	P31	Q580922
@@ -1965,6 +1966,7 @@ LAST	Len	"Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting"
 LAST	P31	Q580922
 LAST	P1476	en:"Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting"
 LAST	P577	+2026-00-00T00:00:00Z/9
+LAST	P356	"10.48550/ARXIV.2606.09809"
 LAST	P818	"2606.09809"
 LAST	P2093	"Avijit Ghosh"	P1545	"1"
 LAST	P2093	"Anka Reuel"	P1545	"2"

@@ -43,6 +43,14 @@ ever answers with a challenge instead, the check says so and exits 0. It is an a
 not a gate: no run should stop because Google felt crawled, or because an index was
 busy.
 
+When Google does refuse -- which is every unattended run, because a datacenter IP gets
+a challenge page -- the author-record half still runs and asks a narrower version of
+the same question: papers an index attributes to you that the corpus has never received
+(`attributed_gaps`). It finds strictly less than Scholar does, by a margin measured in
+that function's docstring, so it does not replace running this from a desk. What it
+changes is that an unattended run stops being silent, and silence and "nothing is
+wrong" are not the same claim.
+
 Set `S2_API_KEY` in the environment if you have one. Semantic Scholar's anonymous
 pool is shared with the world and refuses often; the key is what makes the difference
 between resolving a missing paper and reporting that nobody indexes it.
@@ -69,7 +77,8 @@ from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (ARXIV_NS, BUILD, DATA, ROOT, TASKS, get,  # noqa: E402
-                    get_json, load_config, norm_title, read_yaml, synth_bibtex)
+                    get_json, load_config, norm_title, note_fetch, read_yaml,
+                    synth_bibtex)
 
 
 # Scholar answers the paper-geo User-Agent with a consent interstitial and no rows.
@@ -126,10 +135,24 @@ def text(s: str) -> str:
 
 
 def fetch(uid: str, start: int) -> str:
-    req = urllib.request.Request(PROFILE.format(uid=uid, start=start), headers=BROWSER)
+    """One page of the profile, or "" -- recorded either way in the health ledger.
+
+    This does not go through `common.get`, because Scholar needs the browser header
+    and no backoff, so it was also the one HTTP source outside the ledger. It is the
+    worst one to leave out: Scholar is the only list of these papers built by a
+    process this pipeline does not control, so it is the only check that can see a
+    paper the pipeline never received -- and when it stops working the symptom is a
+    whole section quietly missing from the worklist, which reads as "nothing to
+    report". A line on stderr during a ten-step run is not a signal anybody sees.
+    """
+    url = PROFILE.format(uid=uid, start=start)
+    req = urllib.request.Request(url, headers=BROWSER)
     try:
-        return urllib.request.urlopen(req, timeout=40).read().decode("utf8", "replace")
+        page = urllib.request.urlopen(req, timeout=40).read().decode("utf8", "replace")
+        note_fetch(url, True)
+        return page
     except Exception as e:                                          # noqa: BLE001
+        note_fetch(url, False)
         print(f"scholar: {type(e).__name__} {e} -- skipping the check", file=sys.stderr)
         return ""
 
@@ -146,6 +169,11 @@ def scholar_rows(uid: str) -> list[dict]:
             # Rows absent from a page that did load: a challenge, a renamed class, or
             # a profile that went private. All three mean "no data", and none of them
             # means "you have no papers", so the count is never reported as zero.
+            # Also recorded as a failed fetch even though the HTTP call succeeded: a
+            # 200 carrying no data is the failure this source will actually have, and
+            # a ledger that only counts transport errors would call it healthy for
+            # months while the coverage check silently checked nothing.
+            note_fetch(PROFILE.format(uid=uid, start=start), False)
             print("scholar: the page loaded but has no citation rows -- a challenge "
                   "page, or the profile is private. Nothing checked.", file=sys.stderr)
             break
@@ -342,6 +370,97 @@ def s2_mine(cfg: dict) -> list[dict] | None:
         out.extend((d.get("data") or []))
         time.sleep(1)
     return out
+
+
+def attributed_gaps(attributed: list[dict], papers: list[dict], corpus: dict[str, str],
+                    gated: dict[str, str]) -> tuple[list[dict], list[dict]]:
+    """Papers an index attributes to you that the corpus has never received.
+
+    Returns (gaps, unverifiable): the rows worth acting on, and the rows S2 holds with
+    no external identifier, which are counted but not listed. See below for why that
+    split and not some other one.
+
+    The same question the Scholar leg's `not_in_corpus` answers, asked of an endpoint
+    that answers from anywhere. It exists because the Scholar leg cannot run unattended
+    at all -- Google serves a datacenter IP a challenge page rather than a profile, so
+    the one check that can see a paper the pipeline never received was also the only
+    check that ran solely when somebody remembered to run it from a desk.
+
+    Measurably the weaker source, and worth being exact about how much weaker, because
+    the temptation is to read a quiet CI run as an all-clear. On this corpus the Scholar
+    leg finds three papers absent from the bibliography and this leg finds none of the
+    three: S2's author record does not contain them at all (125 records, 117 with an
+    identifier, and none of those three among them). So it is not a substitute, it is a
+    floor -- what it catches is a *new* paper that reached an index and not the
+    bibliography, which is the case where the delay costs something, and the case a
+    monthly unattended run is actually for. A paper missing for three years is one the
+    author already knows about.
+
+    **An identifier is required, and that is the whole design.** A row is reported only
+    if S2 gives it an arXiv id or a DOI. Measured on this author's record, that rule is
+    what makes the check worth reading: the first live run reported six absent papers and
+    every one of the six carried neither identifier. They are S2's citation-derived
+    stubs -- one is a journal name in the title field, one is the v1 title of a corpus
+    paper since renamed to something with no words in common, so no title-similarity
+    rule could have paired them either. Six rows of judgement work and nothing to act on
+    is how an unattended warning teaches its reader to skip it.
+
+    Nothing is lost by the rule that matters. A paper new enough to have gone missing has
+    an arXiv id, and a paper with no identifier anywhere cannot be added to a
+    bibliography from this list regardless -- the reader would have to go find it, which
+    is the local Scholar run's job. The suppressed rows are still counted on stderr and
+    written to `build/scholar_diff.json`, so this is a ranking, not a deletion.
+    """
+    ids = {v.lower() for p in papers for v in
+           (p.get("arxiv"), (p.get("doi") or "").removeprefix("doi:")) if v}
+    out, unverifiable, seen = [], [], set()
+    for p in attributed:
+        ext = {k: str(v) for k, v in (p.get("externalIds") or {}).items() if v}
+        ax, doi = ext.get("ArXiv", ""), ext.get("DOI", "")
+        n = norm_title(p.get("title"))
+        if not n or n in seen:
+            continue
+        # Identifier before title, and both before reporting. An arXiv id or a DOI is
+        # the same paper or it is not; a title has to survive S2's capitalisation and the
+        # rename between preprint and proceedings.
+        if ax.lower() in ids or doi.lower() in ids or find(n, corpus) or find(n, gated):
+            continue
+        seen.add(n)
+        row = {"title": p.get("title") or "", "year": p.get("year"),
+               "venue": p.get("venue") or "", "arxiv": ax or None, "doi": doi or None,
+               "url": f"https://www.semanticscholar.org/paper/{p['paperId']}"
+                      if p.get("paperId") else None}
+        # The Scholar leg's patents-and-volumes filter, for the same reason: "add it to
+        # the bibliography" is wrong advice for a patent and harmful for a proceedings
+        # volume, which would enter the corpus as a paper whose every claim is somebody
+        # else's.
+        if not_paper(row):
+            continue
+        (out if (ax or doi) else unverifiable).append(row)
+    return (sorted(out, key=lambda r: -(r.get("year") or 0)),
+            sorted(unverifiable, key=lambda r: -(r.get("year") or 0)))
+
+
+def report_gaps(gaps: list[dict], unverifiable: list[dict], quiet: bool) -> None:
+    """The lines the unattended run exists to be able to print."""
+    if gaps:
+        print(f"  {len(gaps)} paper(s) on your Semantic Scholar author record that the "
+              f"corpus does not have -- add to the bibliography, or to the authorship "
+              f"gate if not yours:", file=sys.stderr)
+        if not quiet:
+            for r in gaps[:20]:
+                print(f"    {r['year'] or '????'} {r['title'][:56]}  "
+                      f"({r.get('arxiv') or r.get('doi')})", file=sys.stderr)
+            if len(gaps) > 20:
+                print(f"    ... and {len(gaps) - 20} more in "
+                      f"build/scholar_diff.json", file=sys.stderr)
+    if unverifiable:
+        # Counted, never listed. The count exists so that a reader comparing the author
+        # record's size against the corpus can see where the difference went, and so that
+        # the day it jumps from six to sixty is a day somebody notices.
+        print(f"  {len(unverifiable)} author-record row(s) carry no arXiv id or DOI -- "
+              f"S2 stubs, not checkable from here (build/scholar_diff.json)",
+              file=sys.stderr)
 
 
 def from_s2(title: str, mine: list[dict]) -> tuple[dict | None, str]:
@@ -605,8 +724,29 @@ def main() -> None:
         dropped = []
     gated = index(r.get("title") for r in dropped)
 
+    # Fetched before the Scholar leg and used by both, so that the expensive half of
+    # this check still produces an answer on the runs where Google refuses. One request
+    # per author id, and `bib_payload` below reuses the same list rather than asking
+    # again.
+    attributed = s2_mine(cfg)
+    gaps, stubs = attributed_gaps(attributed or [], papers, mine, gated)
+
     rows = scholar_rows(uid)
     if not rows:
+        # Google refused, which is the normal case from a datacenter IP and says nothing
+        # about the corpus. Write what the author record could answer rather than
+        # nothing: a file absent and a file reporting no gaps are indistinguishable to
+        # every reader downstream, and only one of them is true.
+        os.makedirs(BUILD, exist_ok=True)
+        with open(os.path.join(BUILD, "scholar_diff.json"), "w") as f:
+            json.dump({"scholar_profile": uid, "scholar_rows": 0,
+                       "scholar_answered": False, "corpus": len(papers),
+                       "s2_answered": attributed is not None,
+                       "not_in_corpus_by_index": gaps,
+                       "index_stubs_no_id": stubs}, f, indent=1)
+        print(f"scholar: profile unavailable; author record answered for "
+              f"{len(attributed or [])} paper(s)", file=sys.stderr)
+        report_gaps(gaps, stubs, args.quiet)
         return
 
     missing, in_gate = [], []
@@ -658,13 +798,20 @@ def main() -> None:
                                                  diffs)
     paired = {v["scholar"] for v in variants} | {d["scholar"] for d in dupes}
     missing = [r for r in missing if r["title"] not in paired]
+    # The identifier travels with the row because this list is the only one here whose
+    # remedy is *adding* something to Scholar rather than correcting it, and Scholar's
+    # "Add article manually" form wants a link. A title alone would make the reader
+    # search for their own paper.
     absent = [{"slug": p.get("slug"), "title": p.get("title"), "year": p.get("year"),
-               "citations": p.get("citations")}
+               "citations": p.get("citations"), "arxiv": p.get("arxiv"),
+               "doi": p.get("doi"), "url": p.get("url")}
               for p in absent if p["slug"] not in taken]
 
     os.makedirs(BUILD, exist_ok=True)
-    out = {"scholar_profile": uid, "scholar_rows": len(rows), "corpus": len(papers),
-           "matched": len(seen),
+    out = {"scholar_profile": uid, "scholar_rows": len(rows), "scholar_answered": True,
+           "corpus": len(papers), "matched": len(seen),
+           "s2_answered": attributed is not None,
+           "not_in_corpus_by_index": gaps, "index_stubs_no_id": stubs,
            "gate_dropped": sorted(in_gate, key=lambda r: -r["citations"]),
            "title_variants": sorted(variants, key=lambda v: -v["score"]),
            "scholar_duplicates": sorted(dupes, key=lambda v: -v["score"]),
@@ -709,8 +856,7 @@ def main() -> None:
     real = sorted((r for r in missing if r["kind"] == "paper"),
                   key=lambda r: -(r.get("citations") or 0))
     path, _, done, retry = bib_payload(
-        real, (cfg.get("sources") or {}).get("bibtex_url") or "",
-        s2_mine(cfg) if real else [])
+        real, (cfg.get("sources") or {}).get("bibtex_url") or "", attributed or [])
     if real:
         how = (f"{done} with a pasteable BibTeX entry" if done else
                "none resolvable, though an index was down for "
@@ -739,8 +885,13 @@ def main() -> None:
               file=sys.stderr)
         if cited and not args.quiet:
             for p in cited[:10]:
-                print(f"    [{p['citations']:>5} cites] {(p['title'] or '')[:60]}",
+                print(f"    [{p['citations']:>5} cites] "
+                      f"{(p.get('title_display') or p['title'] or '')[:60]}",
                       file=sys.stderr)
+    # Reported on both paths. On this one it is a cross-check of the Scholar leg rather
+    # than a substitute for it: a paper both sources agree the corpus lacks is not a
+    # Scholar indexing quirk.
+    report_gaps(gaps, stubs, args.quiet)
 
 
 if __name__ == "__main__":

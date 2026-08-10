@@ -41,7 +41,7 @@ from urllib.parse import quote
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, WD_IDENTIFIERS, get, get_json,  # noqa: E402
                     load_config, name_match, norm_name, norm_title, org_name,
-                    paper_doi, read_yaml, synth_bibtex)
+                    paper_doi, plural, read_yaml, synth_bibtex, title_tokens)
 
 TASKS = os.path.join(ROOT, "tasks")
 ATOM = {"a": "http://www.w3.org/2005/Atom"}
@@ -449,8 +449,8 @@ def hf_worklist_file(st: dict) -> str:
     n = {k: len(v) for k, v in st.items()}
     path = os.path.join(TASKS, "hf_worklist.md")
     L = ["# Hugging Face paper pages", "",
-         "Live as of the last `python scripts/audit_identity.py` (or "
-         "`hf_papers.py --live`): "
+         "Live as of the last `python scripts/audit_identity.py` (`--no-names` skips "
+         "the slow half): "
          f"**{n['claimed']} claimed**, **{n['pending']} pending**, "
          f"**{n['unclaimed']} to claim**, **{n['missing']} to index**, "
          f"**{n['blocked']} blocked upstream**.", "",
@@ -704,6 +704,14 @@ def orcid_strays(orc: dict, papers) -> list[tuple]:
     already in the corpus -- and the file said *check before deleting* about papers
     there was never any reason to doubt.
 
+    Title matching runs in three widening passes, and the third exists because the first
+    two share a blind spot: both read word *order* as content. "Tie the KnOTS: Model
+    Merging with SVD" against a corpus holding "Model merging with SVD to tie the Knots"
+    is not an equal string, and once the words move across the colon neither string
+    contains the other either -- so the widest check on offer still called a paper of the
+    author's own a work it could not place. The third pass compares content-word sets
+    (`title_tokens`), which is exactly and only insensitive to arrangement.
+
     Returns `(strays, duplicate_groups, matched_slugs)`.
 
     `duplicate_groups` is what identifier matching exposes on the way: two ORCID work
@@ -722,6 +730,17 @@ def orcid_strays(orc: dict, papers) -> list[tuple]:
     by_doi = {p["doi"].lower(): p for p in papers if p.get("doi")}
     by_arxiv = {str(p["arxiv"]).lower(): p for p in papers if p.get("arxiv")}
     by_title = {norm_title(p["title"]): p for p in papers}
+    # Same corpus keyed by content-word set, for the reordering fallback below. A set two
+    # corpus papers share is dropped rather than resolved: which one an ORCID work meant
+    # would be a guess, and the guess would be invisible -- the work vanishes from this
+    # report either way, so a wrong pick reads exactly like a right one. Four tokens
+    # minimum, because the shorter the set the cheaper an accidental collision.
+    _tok = {}
+    for p in papers:
+        t = title_tokens(p["title"])
+        if len(t) >= 4:
+            _tok.setdefault(t, []).append(p)
+    by_tokens = {t: v[0] for t, v in _tok.items() if len(v) == 1}
     rejected = {}
     try:
         with open(os.path.join(BUILD, "not_mine.json")) as f:
@@ -750,7 +769,12 @@ def orcid_strays(orc: dict, papers) -> list[tuple]:
             for cn, p in by_title.items():
                 if n in cn or cn in n:
                     return p
-        return None
+        # Rearranged, which the two checks above both read as a different paper: the
+        # string is not equal and, once the words move across the colon, neither title
+        # contains the other. Live case, and the one that motivated this -- ORCID holds
+        # "Tie the KnOTS: Model Merging with SVD" for the corpus's "Model merging with
+        # SVD to tie the Knots", and the audit called it a work it could not place.
+        return by_tokens.get(title_tokens(title))
 
     out, seen = [], {}
     for title, put, ids in orc.get("work_titles") or []:
@@ -792,7 +816,8 @@ def orcid_missing_files(missing: list[dict], orcid: str) -> list[str]:
         # what the .bib next to this table emits. Two columns disagreeing about a
         # paper's identifier is how you end up checking the wrong one on ORCID.
         ident = paper_doi(p) or "— none —"
-        md.append(f"| {i} | {p.get('citations') or 0} | {p['title'][:64]} | `{ident}` |")
+        md.append(f"| {i} | {p.get('citations') or 0} | "
+                  f"{(p.get('title_display') or p['title'])[:64]} | `{ident}` |")
     noid = [p for p in missing if not paper_doi(p)]
     if noid:
         md += ["",
@@ -849,15 +874,17 @@ def orcid_remove_file(strays: list[tuple], dups: dict, papers, cfg) -> str:
               "like this. **Check before deleting.** If it is yours, the fix is upstream in",
               "the bibliography, not here.",
               "",
-              "These are matched by identifier first (the group's DOI or arXiv id) and only",
-              "then by title, so a paper retitled between preprint and proceedings no longer",
-              "lands here. A work reaching this section carries *no* identifier ORCID could",
-              "group on — which is also why nothing else can place it.", ""]
+              "These are matched by identifier first (the group's DOI or arXiv id), then by",
+              "title, then by the title's content words with the order discarded — so a paper",
+              "retitled between preprint and proceedings, or rearranged around its colon, no",
+              "longer lands here. A work reaching this section carries *no* identifier ORCID",
+              "could group on — which is also why nothing else can place it.", ""]
         L += [f"- {t}  (`{p}`)" for t, p, _ in unk]
         L += [""]
     if dups:
         by_slug = {p["slug"]: p for p in papers}
-        L += [f"## Listed twice ({len(dups)} papers, {sum(len(v) for v in dups.values())} entries)",
+        L += [f"## Listed twice ({plural(len(dups), 'paper')}, "
+              f"{plural(sum(len(v) for v in dups.values()), 'entry', 'entries')})",
               "",
               "One paper, two ORCID works. ORCID groups works that share an external",
               "identifier; these pairs share none, because one entry carries the publisher",
@@ -1466,8 +1493,29 @@ def main() -> None:
               "publisher systems, so this is worth clearing before anything else on this",
               "page. One deletion each, put-codes included:",
               "[orcid_remove.md](orcid_remove.md).", ""]
+    if o_unk:
+        # The summary table has carried a `**check**` on this count for as long as it has
+        # existed, and nothing under it -- the titles were only ever in `orcid_remove.md`,
+        # which the table does not link. A count flagged for attention with no way to
+        # reach the thing it counts is how a row stops being read.
+        L += [f"## {len(o_unk)} works on your ORCID we cannot place", "",
+              "Not necessarily wrong, which is why this is *check* and not *fix*: a paper",
+              "missing from your bibliography looks exactly like a work that is not yours.",
+              "",
+              "Matched against the corpus by identifier, then by title, then by the title's",
+              "content words with the order discarded — so a paper retitled between preprint",
+              "and proceedings, or rearranged around its colon, no longer lands here. What",
+              "reaches this list carries no identifier ORCID could group on, which is also",
+              "why nothing else can place it.",
+              "",
+              "Two things end up here and they have opposite fixes. A paper of yours the",
+              "bibliography never held is fixed **upstream, in the bibliography** — deleting",
+              "it from ORCID loses a real work. Anything that is not a paper (a workshop",
+              "listing, a proceedings volume) is a deletion. Titles and put-codes:",
+              "[orcid_remove.md](orcid_remove.md).", ""]
     if o_missing:
-        L += [f"## {len(o_missing)} of your papers are missing from ORCID", "",
+        L += [f"## {plural(len(o_missing), 'of your papers is', 'of your papers are')} "
+              f"missing from ORCID", "",
               "Measured by identifier, not by counting: each of these has no work group on",
               "the record carrying its DOI or arXiv id.",
               "",
@@ -1480,12 +1528,14 @@ def main() -> None:
               "Highest citations first; the full list with DOIs is",
               "[orcid_missing.md](orcid_missing.md).", ""]
         for p in o_missing[:10]:
-            L.append(f"- [ ] {(p.get('citations') or 0):>4} cites — {p['title'][:66]}")
+            L.append(f"- [ ] {(p.get('citations') or 0):>4} cites — "
+                     f"{(p.get('title_display') or p['title'])[:66]}")
         if len(o_missing) > 10:
             L.append(f"- … and {len(o_missing) - 10} more")
         L.append("")
     if o_dups:
-        L += [f"## {len(o_dups)} papers are listed twice on your ORCID", "",
+        L += [f"## {plural(len(o_dups), 'paper is', 'papers are')} listed twice on "
+              f"your ORCID", "",
               "ORCID groups works that share an identifier. A paper whose record holds",
               "the publisher DOI in one entry and arXiv's `10.48550/arXiv.<id>` DOI in",
               "another shares no identifier between them, so it does not group: it shows",

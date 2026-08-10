@@ -1,6 +1,6 @@
 # Hugging Face paper pages
 
-Live as of the last `python scripts/audit_identity.py` (or `hf_papers.py --live`): **103 claimed**, **2 pending**, **0 to claim**, **0 to index**, **0 blocked upstream**.
+Live as of the last `python scripts/audit_identity.py` (`--no-names` skips the slow half): **103 claimed**, **2 pending**, **0 to claim**, **0 to index**, **0 blocked upstream**.
 
 Indexing and claiming both need a logged-in browser. An unauthenticated visit
 to a paper URL returns 404 and creates nothing (verified on 50 papers — 0

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Turn the four identity fixes into artifacts you can paste or upload.
+"""Turn the identity fixes into artifacts you can paste or upload.
 
 Each of these is blocked on an authenticated account, not on knowing what to do.
 So this generates the exact payload and prints the exact clicks:
@@ -9,6 +9,7 @@ So this generates the exact payload and prints the exact clicks:
     tasks/wikidata.qs        QuickStatements to create the author item
     tasks/s2_merge.md        the papers to pull onto the claimed S2 page
     tasks/openalex_merge.md  what to put in the OpenAlex correction form
+    tasks/arxiv_jref.md      the journal-ref and DOI to add to each arXiv listing
 
 These go in tasks/ rather than build/ on purpose: they are worklists a human reads
 and works through over days, so they need to be committed, browsable on GitHub, and
@@ -18,17 +19,24 @@ Property and item IDs below were looked up against Wikidata, not recalled.
 
 Usage:
     python scripts/identity_tasks.py
+    python scripts/identity_tasks.py --user-page ~/Downloads/arxiv-user.html
 """
 from __future__ import annotations
 
+import argparse
+import datetime
 import os
 import re
 import sys
 import urllib.parse
+from html.parser import HTMLParser
+
+import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (DATA, TASKS, WD_IDENTIFIERS, load_config,  # noqa: E402
-                    org_name, paper_doi, read_yaml, synth_bibtex)
+from common import (DATA, TASKS, WD_IDENTIFIERS, clean_latex,  # noqa: E402
+                    is_preprint_venue, load_config, org_name, paper_doi,
+                    parse_bibtex, read_yaml, synth_bibtex)
 
 # Verified against wbsearchentities.
 P = {"instance_of": "P31", "occupation": "P106", "employer": "P108",
@@ -427,7 +435,305 @@ def openalex_merge(cfg) -> str:
     return path
 
 
+# ------------------------------------------------------------------ arXiv journal-ref
+#
+# Asked first whether a library could fill this form instead of a human. It cannot, and
+# the three reasons are worth writing down because they are each individually final:
+#
+#   1. There is no write API. arXiv's public API is search and metadata retrieval; there
+#      is no submission or metadata-update endpoint at any access level.
+#   2. Their robots.txt says `Disallow: /user`, and `/user` is the only page that maps an
+#      arXiv id to the submission id the jref form needs. A scraper here would be doing
+#      precisely the thing arXiv asked automated clients not to do -- to a service that
+#      hosts the papers for free.
+#   3. `/jref` is not a paste-an-identifier form. Unauthenticated it redirects to login;
+#      authenticated it is the articles list, and each row's own link carries the id.
+#
+# So the division of labour is: the author signs in and saves that one page, code reads
+# the local file, and no request is ever made on his behalf. `--user-page` is that path.
+# Without it the file still works -- it just links to the abs page and says to find the
+# row -- because the list is useful before anyone gets around to saving anything.
+
+# A trailing comma-segment worth keeping. DBLP writes booktitles as
+# `<name>, <ACRO> <year>, <city>, <country>, <dates>[, Volume N: Long Papers]`, so the
+# first segment is the venue and the rest is conference logistics -- except the track,
+# which is part of what was published and belongs in a journal-ref.
+_TRACK = re.compile(r"^\(?(?:Volume\b|.*\b(?:Papers|Demonstrations|Demos|Track)\b)", re.I)
+# `EMNLP 2022 - System Demonstrations` -> `System Demonstrations`: the acronym is already
+# in the first segment, so repeating it reads like two venues.
+_ACRO_YEAR = re.compile(r"^[A-Z][\w@.*-]*(?:[ -][A-Z][\w@.*-]*)*\s+\d{4}\s*[-–]\s*")
+# Findings volumes are per-conference, and a bibliography that says only "Findings of the
+# Association for Computational Linguistics" has dropped the half that identifies which.
+# The Anthology DOI still carries it.
+_FINDINGS_DOI = re.compile(r"/(\d{4})\.findings-(emnlp|acl|naacl|eacl)\b", re.I)
+# `Findings of the Association for Computational Linguistics, ACL 2024, Bangkok, ...`:
+# here the acronym segment is the sub-venue rather than logistics, which is the one case
+# where dropping it loses information the first segment does not carry.
+_SUBVENUE = re.compile(r"^([A-Z][\w@.*&-]*(?:[ -][A-Z][\w@.*&-]*)*)\s+(\d{4})$")
+
+
+def journal_ref(p: dict) -> str:
+    """arXiv's Journal-ref field for one paper: name, volume, year, pages.
+
+    Built from the cached bibtex rather than from `venue`, because the bibtex is the
+    publisher's own record of what was published and `venue` has been through this
+    project's shortener. Returns "" when there is no venue string to work from, which
+    the caller reports rather than papering over.
+    """
+    e = (parse_bibtex(p.get("bibtex") or "") or [{}])[0]
+    name = re.sub(r"\bthe The\b", "the",
+                  clean_latex(e.get("journal") or e.get("booktitle") or ""))
+    segs = [s.strip() for s in name.split(",") if s.strip()]
+    if not segs:
+        return ""
+    name = ", ".join([segs[0]] + [_ACRO_YEAR.sub("", s) for s in segs[1:] if _TRACK.match(s)])
+    if "findings" in name.lower() and ":" not in name:
+        for s in segs[1:]:
+            if m := _SUBVENUE.match(s):
+                name = f"{name}: {m.group(1)} {m.group(2)}"
+                break
+    if m := _FINDINGS_DOI.search(journal_doi(p)):
+        # A Findings paper whose bibliography entry says only `EACL` is claiming the main
+        # conference, which is the one kind of wrong worth overruling a source over. The
+        # DOI spells out which Findings volume it is, so use the Anthology's own title.
+        which = f"{m.group(2).upper()} {m.group(1)}"
+        low = name.lower()
+        if "findings" not in low:
+            name = f"Findings of the Association for Computational Linguistics: {which}"
+        elif which.lower() not in low:
+            name = f"{name}: {which}"
+    year = str(e.get("year") or p.get("year") or "").strip()
+    pages = re.sub(r"-{2,}", "-", (e.get("pages") or "").strip())
+    # Only a real volume number. DBLP puts the sub-venue in `volume` on some Findings
+    # entries, and `Findings of the ACL: EMNLP 2020 {EMNLP} 2020 (2020) 2678-2697` is
+    # what that produces if you trust the field.
+    if (vol := (e.get("volume") or "").strip()) and vol.isdigit():
+        return f"{name} {vol} ({year}) {pages}".strip()
+    if pages:
+        name += f", pages {pages}"
+    return f"{name}, {year}" if year and year not in name else name
+
+
+def journal_doi(p: dict) -> str:
+    """The published version's DOI, or "" -- never the arXiv one.
+
+    `paper_doi` falls back to `10.48550/arXiv.<id>`, which is right for ORCID (any
+    identifier beats none, because ORCID groups on it) and wrong here: this field means
+    "the version of record lives at this DOI", and pointing it at the arXiv listing the
+    field is attached to asserts that the preprint is the published version.
+    """
+    e = (parse_bibtex(p.get("bibtex") or "") or [{}])[0]
+    for d in (p.get("doi"), e.get("doi")):
+        d = (d or "").strip().removeprefix("doi:").removeprefix("https://doi.org/")
+        if d and not d.lower().startswith("10.48550"):
+            # The Anthology mints these lowercase; one source shouts the `/V1/`.
+            return re.sub(r"^(10\.18653)/V1/", r"\1/v1/", d)
+    return ""
+
+
+class _ArticlesPage(HTMLParser):
+    """arXiv id -> submission id, from a saved copy of the signed-in articles list.
+
+    Pairs each `/submit/<n>/jref` link with the most recent arXiv id seen before it, in
+    document order, rather than assuming a table structure -- the page has been a table,
+    a list of divs, and a table again over the years, and document order has held
+    throughout because the link is inside the row it belongs to.
+    """
+
+    ID = re.compile(r"\b(\d{4}\.\d{4,5})(?:v\d+)?\b")
+    JREF = re.compile(r"/submit/(\d+)/jref")
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.found: dict[str, str] = {}
+        self._last = ""
+
+    def handle_starttag(self, tag, attrs):
+        href = dict(attrs).get("href") or ""
+        if m := self.ID.search(href):
+            self._last = m.group(1)
+        if (m := self.JREF.search(href)) and self._last:
+            self.found[self._last] = m.group(1)
+
+    def handle_data(self, data):
+        if m := self.ID.search(data):
+            self._last = m.group(1)
+
+
+def read_articles_page(path: str) -> dict[str, str]:
+    with open(path, encoding="utf8", errors="replace") as f:
+        parser = _ArticlesPage()
+        parser.feed(f.read())
+    return parser.found
+
+
+# Written by hand rather than through `common.write_yaml` for the header: a bare map of
+# five-digit numbers to five-digit numbers is unreadable without one, and the reader who
+# needs it is whoever finds this file in a diff two years from now.
+SUBS_HEADER = """\
+# arXiv id -> submission id, read out of a copy of https://arxiv.org/user that the author
+# saved while signed in. Regenerate or extend with:
+#
+#   python scripts/identity_tasks.py --user-page ~/Downloads/arxiv-user.html
+#
+# Committed because it is stable input rather than observed state -- a submission id never
+# changes -- and because without it `tasks/arxiv_jref.md` cannot link straight to the form
+# for each paper. Not a secret: the form behind it requires the owner's session.
+"""
+
+
+def save_submissions(path: str, subs: dict) -> None:
+    with open(path, "w") as f:
+        f.write(SUBS_HEADER)
+        yaml.safe_dump(dict(sorted(subs.items())), f, sort_keys=False, default_style="'")
+
+
+def arxiv_jref(cfg, papers, subs: dict) -> tuple[str, int, int]:
+    """The papers whose arXiv listing does not say where they were published.
+
+    Two fields, tracked separately, because they go missing separately: the API reports
+    both `journal_ref` and the author-entered `doi` for every listing, and a paper can
+    easily have one and not the other. Listing only the papers with no journal-ref at
+    all would have missed the DOI-shaped half of the same visit to the same form.
+
+    Held back rather than listed: a paper with no publisher DOI whose venue year has not
+    passed. arXiv's help page is explicit that "to appear in" and "accepted for
+    publication in" are not appropriate journal references, and a minted DOI is the
+    cheapest available proof that the version of record exists rather than being
+    scheduled. That test is deliberately weak in the safe direction -- it holds back a
+    published paper sometimes, and the section says so, but it never puts a promise on
+    a listing.
+    """
+    year_now = datetime.date.today().year
+    ready, wait = [], []
+    for p in sorted(papers, key=lambda p: -(p.get("citations") or 0)):
+        if not p.get("arxiv"):
+            continue
+        doi = journal_doi(p)
+        jr = ("" if p.get("arxiv_journal_ref")
+                    or not (p.get("venue") and not is_preprint_venue(p["venue"]))
+              else journal_ref(p))
+        row = (p, jr, doi if not p.get("arxiv_doi") else "")
+        if not jr and not row[2]:
+            continue
+        (wait if not doi and int(p.get("year") or 0) >= year_now else ready).append(row)
+
+    path = os.path.join(TASKS, "arxiv_jref.md")
+    L = [f"# arXiv: the journal reference and DOI for {len(ready)} papers", "",
+         "Every one of these is a paper that appeared somewhere, whose arXiv listing does not",
+         "fully say so. That listing is what most answer engines and half the citation graph",
+         "read, so the effect is a published paper that reads as a preprint.",
+         "",
+         "A paper is here if its listing is missing the journal-ref **or** the published DOI --",
+         "they go missing separately, and both are fields on the same form, so splitting them",
+         "into two lists would mean visiting the same page twice."
+         + (f" {len(wait)} more are held back at the bottom." if wait else ""),
+         "",
+         "**Adding these does not create a new version.** No recompile, no v2, no new",
+         "announcement -- arXiv's own help page says the journal reference, DOI and report",
+         "number fields can be updated at any time without generating a new version. The",
+         "cost of doing all of them in one sitting is the clicking, nothing else.",
+         "",
+         "## The three fields", "",
+         "| Field | What to put | Why |", "|---|---|---|",
+         "| `Report number:` | **leave blank** | It means an *institutional* preprint number "
+         "-- a lab's own report series, like `MIT-CSAIL-TR-2019-002`. None of these papers "
+         "has one, and arXiv is explicit that it is not for anything else. |",
+         "| `Journal-ref:` | the line below each paper | arXiv asks for journal name, volume, "
+         "year and page numbers. Built here from the publisher's own bibtex. |",
+         "| `Journal version DOI:` | the line below each paper | The *published* DOI, with no "
+         "`doi:` prefix. Never the `10.48550/arXiv.…` one: that is this listing, so putting it "
+         "here claims the preprint is the version of record. |",
+         "",
+         "Multiple report numbers, if there ever were any, are separated by `; `.",
+         "",
+         "A few `Journal-ref:` lines below are thin -- `ICLR, 2025` rather than the spelled-out",
+         "proceedings title -- because that is all the bibliography had for a venue that",
+         "publishes through OpenReview and mints no DOI. arXiv accepts either, so expand one",
+         "if you feel like it and paste it if you do not.",
+         "",
+         "## Could a script fill this in?", "",
+         "No, and the answer is not \"nobody wrote it yet\":", "",
+         "1. arXiv's API is read-only. There is no metadata-write endpoint at any access level.",
+         "2. `robots.txt` disallows `/user`, and that is the only page mapping an arXiv id to",
+         "   the submission id the form needs -- so a scraper does the one thing arXiv asked",
+         "   automated clients not to do.",
+         "3. `/jref` takes no identifier. Signed out it redirects to login; signed in it is",
+         "   your articles list, and each row links to its own form.",
+         "",
+         "What *is* automatable is the part below: knowing which papers, and exactly what to",
+         "type in each field. That is the whole of the work that is not a click.",
+         "",
+         "### Getting the links to go straight to the form", "",
+         "The per-paper links below are deep links into your own submissions when this file",
+         "knows the submission ids, and abs-page links when it does not. To fill them in:",
+         "",
+         "1. Sign in and open <https://arxiv.org/user>.",
+         "2. Save the page (⌘S, \"Page Source\" is enough).",
+         "3. `python scripts/identity_tasks.py --user-page ~/Downloads/arxiv-user.html`",
+         "",
+         "The ids are cached in `data/arxiv_submissions.yaml`, so this is once, not per run.",
+         "No request is made on your behalf at any point -- code reads the file you saved.",
+         ""]
+    if not subs:
+        L += ["> Submission ids not known yet, so the links below go to the abs page. Do the",
+              "> three steps above once and they become one-click.", ""]
+    def block(n: int, p: dict, jr: str, doi: str) -> list[str]:
+        title = (p.get("title_display") or p["title"]).strip()
+        cites = p.get("citations")
+        sub = subs.get(p["arxiv"])
+        # Only the fields that are actually empty, and the one that is not gets a line
+        # saying what is already there -- otherwise the form and this file disagree and
+        # the reader has to work out which of them is stale.
+        fields = []
+        if jr:
+            fields.append(f"Journal-ref:          {jr}")
+        elif p.get("arxiv_journal_ref"):
+            fields.append(f"# already set:        {p['arxiv_journal_ref']}")
+        if doi:
+            fields.append(f"Journal version DOI:  {doi}")
+        elif p.get("arxiv_doi"):
+            fields.append(f"# already set:        {p['arxiv_doi']}")
+        else:
+            fields.append("Journal version DOI:  (none minted — leave blank)")
+        return [f"### {n}. {title}" + (f" — cited {cites}" if cites else ""), "",
+                f"<https://arxiv.org/submit/{sub}/jref>" if sub else
+                f"<https://arxiv.org/abs/{p['arxiv']}> — find this row in "
+                f"<https://arxiv.org/user> and use its own *journal ref* link",
+                "", "```", *fields, "```", ""]
+
+    L += [f"## {len(ready)} to fill in", "",
+          "Highest citations first, so stopping early still helps most. A commented line is a",
+          "field the listing already has -- shown so you can check it rather than retype it.",
+          ""]
+    for i, row in enumerate(ready, 1):
+        L += block(i, *row)
+    if wait:
+        L += [f"## {len(wait)} to leave alone for now", "",
+              "No publisher DOI yet and the venue year has not passed, so as far as this file",
+              "can tell the proceedings are not out -- and arXiv says \"to appear in\" and",
+              "\"accepted for publication in\" are *not* appropriate journal references. Each",
+              "moves into the list above on its own once a DOI appears.",
+              "",
+              "If you know better than the test -- the event happened, the proceedings are up --",
+              "the values are here and they are as good as any above.", ""]
+        for i, row in enumerate(wait, 1):
+            L += block(i, *row)
+    L += ["## After filling these in", "",
+          "`python update.py` re-reads the abs pages, so the next run drops each paper from",
+          "this file by itself. Nothing here needs ticking off by hand."]
+    with open(path, "w") as f:
+        f.write("\n".join(L) + "\n")
+    return path, len(ready), len(wait)
+
+
 def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("--user-page", metavar="FILE",
+                    help="a saved copy of https://arxiv.org/user; read once to learn the "
+                         "submission ids that make the journal-ref links one-click")
+    args = ap.parse_args()
+
     cfg = load_config()
     papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {})["papers"]
     os.makedirs(TASKS, exist_ok=True)
@@ -436,6 +742,21 @@ def main() -> None:
     manual = wikidata_manual(cfg)
     s2, n_strays = s2_merge(cfg, papers)
     oa = openalex_merge(cfg)
+    # The cache is committed, so the ids survive; a re-read of the same page is a no-op
+    # and a re-read of a newer one adds the papers submitted since.
+    subs_path = os.path.join(DATA, "arxiv_submissions.yaml")
+    subs = read_yaml(subs_path) or {}
+    if args.user_page:
+        found = read_articles_page(args.user_page)
+        if not found:
+            sys.exit(f"no arXiv-id-to-submission-id pairs in {args.user_page}\n"
+                     "Is it the signed-in https://arxiv.org/user page? A saved login page "
+                     "or an abs page has no /submit/<n>/jref links in it.")
+        new = {k: v for k, v in found.items() if subs.get(k) != v}
+        subs.update(found)
+        save_submissions(subs_path, subs)
+        print(f"read {args.user_page}: {len(found)} submissions, {len(new)} new -> {subs_path}\n")
+    jref, n_jref, n_wait = arxiv_jref(cfg, papers, subs)
     # Once the item exists, pointing at the creation guide is worse than not
     # mentioning it: the reader has to work out that the file no longer applies.
     made = cfg["ids"].get("wikidata")
@@ -450,6 +771,9 @@ def main() -> None:
     print(f"  {qs}   (same item as a QuickStatements batch; needs an autoconfirmed account)")
     print(f"  {s2}   ({n_strays} papers to pull onto the claimed S2 page)")
     print(f"  {oa}")
+    print(f"  {jref}   ({n_jref} arXiv listings to add a journal-ref to"
+          + (f", {n_wait} waiting on a DOI)" if n_wait else ")")
+          + ("" if subs else " -- run with --user-page for one-click links"))
     print("\nFor the live state of ORCID, arXiv, Wikidata and Hugging Face:")
     print("  python scripts/audit_identity.py")
 

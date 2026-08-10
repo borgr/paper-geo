@@ -28,28 +28,14 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, load_config, norm_title, paper_doi,  # noqa: E402
                     read_yaml, write_yaml)
 
-# Controlled vocabulary: GitHub topics must be lowercase, dashed, <=50 chars.
-# Matched case-insensitively against repo name + description + README.
-VOCAB = {
-    "nlp": ["nlp", "natural language", "language model", "linguistic"],
-    "large-language-models": ["llm", "large language model", "gpt", "language model"],
-    "evaluation": ["eval", "benchmark", "metric", "leaderboard", "assess"],
-    "benchmark": ["benchmark", "leaderboard", "arena"],
-    "model-merging": ["merg", "fusion", "model soup", "weight averag"],
-    "machine-learning": ["machine learning", "deep learning", "neural", "training"],
-    "reinforcement-learning": ["reinforcement", " rl ", "policy gradient", "reward"],
-    "datasets": ["dataset", "corpus", "data release", "crowdsourc"],
-    "pretraining": ["pretrain", "pre-train", "babylm", "sample-efficient"],
-    "scaling-laws": ["scaling law", "scaling", "compute budget"],
-    "model-compression": ["compress", "lossless", "quantiz", "zipnn"],
-    "text-games": ["text game", "textarena", "game", "agent arena"],
-    "agents": ["agent", "agentic", "tool use"],
-    "multilinguality": ["multilingual", "cross-lingual", "language coverage"],
-    "human-feedback": ["human feedback", "preference", "annotat", "rlhf"],
-    "interpretability": ["interpret", "probing", "weight space", "representation"],
-    "research-tools": ["guide", "tips", "tutorial", "template", "skill"],
-    "reproducibility": ["reproduc", "replicat", "artifact"],
-}
+# Topics and descriptions are decided in `propose_topics.py`, not here. A keyword
+# vocabulary used to live at this spot and matched substrings against name + description
+# + README; it was replaced by the labeller and then sat unused for long enough that the
+# deletion is worth a note, because a reader auditing "how does a public topic get
+# chosen?" opens this file first and the dead table answered confidently and wrongly.
+# Substring matching was also the wrong tool: `merg` matched *emergent*, `interpret`
+# matched *interpreter*, `annotat` matched *type annotations*, and `training` matched
+# every ML README there is.
 
 
 def gh(*args: str) -> str:
@@ -90,24 +76,6 @@ def list_repos(cfg) -> list[dict]:
             and r["name"] not in cfg["github_sweep"]["exclude"]
             and not r["archived"]]
     return keep
-
-
-def readme_text(full_name: str) -> str:
-    for name in ("README.md", "README.rst", "README.txt", "readme.md"):
-        try:
-            b64 = gh_json(f"repos/{full_name}/contents/{name}", ".content")
-            import base64
-            return base64.b64decode(b64).decode("utf-8", "replace")[:20000]
-        except RuntimeError:
-            continue
-    return ""
-
-
-def suggest_topics(name: str, desc: str, readme: str, base: list[str]) -> list[str]:
-    hay = f" {name} {desc} {readme} ".lower().replace("-", " ")
-    hits = [t for t, kws in VOCAB.items() if any(k in hay for k in kws)]
-    # GitHub caps topics at 20; keep the sweep conservative and human-editable.
-    return sorted(set(base + hits))[:12]
 
 
 def link_papers(repos: list[dict], papers: list[dict]) -> dict[str, dict]:
@@ -185,9 +153,9 @@ def citation_cff(paper: dict, repo: dict, cfg, entry: dict | None = None) -> str
 # Fields the human (or the model) owns. On re-propose these are carried forward
 # from the existing repos.yaml rather than regenerated, so a rerun never clobbers
 # a decision someone already made. Everything else is refreshed from GitHub.
-_OWNED = ("description", "topics", "homepage", "kind", "generic_gloss",
-          "write_citation_cff", "skip", "reviewed", "llm_proposal", "notes",
-          "zenodo_doi")
+_OWNED = ("description", "topics", "declined_topics", "homepage", "kind",
+          "generic_gloss", "write_citation_cff", "skip", "reviewed", "llm_proposal",
+          "notes", "zenodo_doi")
 
 
 # Repo kinds where a Zenodo DOI is the only citation route that will ever exist.
@@ -272,7 +240,14 @@ def phase_propose(cfg) -> None:
     linked = link_papers(repos, papers)
     site = cfg["site"]["base_url"]
     proposal, added, gone = [], [], []
-    for r in sorted(repos, key=lambda r: -r["stargazers_count"]):
+    # By name, not by stars. Row *order* keyed on a live counter is observed state stored
+    # positionally instead of as a field -- which the loop below already refuses to do,
+    # dropping `stars` a dozen lines down for exactly that reason. The cost was visible:
+    # one repo gaining a star relative to its neighbour rewrites the file as a 30-line
+    # move, so `git log data/repos.yaml` cannot answer "what changed about my repos"
+    # any more than it could if the count were written in. Nothing reads these rows
+    # positionally -- build_site, links_block, propose_topics and validate all iterate.
+    for r in sorted(repos, key=lambda r: r["full_name"].lower()):
         name = r["full_name"]
         entry = dict(prior.get(name) or {})
         entry["repo"] = name
@@ -312,7 +287,15 @@ def phase_propose(cfg) -> None:
     print(f"  reviewed (frozen):  {sum(1 for r in proposal if r.get('reviewed'))}")
     zpath, nz = zenodo_candidates(cfg)
     print(f"  artifacts with no citation route: {nz} -> {os.path.relpath(zpath, ROOT)}")
-    need = [r["repo"] for r in proposal if not r.get("topics") or not r.get("description")]
+    # Reviewed and skipped rows are excluded, or the count could never reach zero. The
+    # three early-exploratory repos that used to sit here -- nothing in them to describe,
+    # labeller returned empty topics at low confidence, which was the right answer -- are
+    # now `skip: true` with the reason in `notes`. That is what this comment used to
+    # predict and it took a while to act on: a settled "nothing to say" reported as an
+    # open item forever is how a number stops being read.
+    need = [r["repo"] for r in proposal
+            if not r.get("reviewed") and not r.get("skip")
+            and (not r.get("topics") or not r.get("description"))]
     print(f"  need topics or a description: {len(need)}")
     if need:
         print("\nnext: python scripts/propose_topics.py")
@@ -347,22 +330,55 @@ def _changes(cfg):
             yield r, cur, ch
 
 
+def _provenance(r: dict, field: str) -> str:
+    """Who wrote the value about to be published, and has anyone read it.
+
+    The `--yes` flag is the only moment a person is in the loop, and until this was
+    printed the diff showed the value without saying where it came from -- so the gate
+    asked for a judgment while withholding the one fact the judgment turns on. `topics`
+    and `description` are a model's prose; `homepage` and `CITATION.cff` are re-derived
+    from `papers.yaml`, and reviewing those means reviewing the bibliography, not this.
+    """
+    if field not in ("topics", "description"):
+        return ""
+    if r.get("reviewed"):
+        return "  [you edited this]"
+    p = r.get("llm_proposal") or {}
+    if (p.get(field) or None) is None:
+        return ""
+    return f"  [model, {p.get('confidence') or 'no confidence'}, unread]"
+
+
 def phase_diff(cfg) -> None:
+    # Materialized, not iterated twice: `_changes` re-lists every repo from the API.
+    changes = list(_changes(cfg))
     n = 0
-    for r, cur, ch in _changes(cfg):
+    for r, cur, ch in changes:
         n += 1
         print(f"\n{r['repo']}  (★{cur['stargazers_count']}, live)")
         for k, v in ch.items():
+            src = _provenance(r, k)
             if k == "topics":
-                print(f"  topics:      {sorted(cur['topics'] or []) or '[]'}  ->  {sorted(v)}")
+                print(f"  topics:      {sorted(cur['topics'] or []) or '[]'}  ->  "
+                      f"{sorted(v)}{src}")
             elif k == "CITATION.cff":
                 print(f"  CITATION.cff: + cites paper '{r['paper_slug']}'")
             elif k == "description":
                 print(f"  description: {cur['description']!r}")
-                print(f"            -> {v!r}")
+                print(f"            -> {v!r}{src}")
             else:
                 print(f"  {k}: {cur.get(k)!r}  ->  {v!r}")
+    unread = sum(1 for r, _, ch in changes
+                 if any(_provenance(r, k).endswith("unread]") for k in ch))
     print(f"\n{n} repos would change. Nothing has been written.")
+    if unread:
+        # Said plainly rather than turned into a gate. A topic or a description is undone
+        # by one API call and GitHub keeps no history of either, so the cost of a wrong
+        # one is a minute; blocking on review instead would leave 29 of 31 repos
+        # unlabelled indefinitely, which is the larger error. RUN.md §11 is where
+        # that trade is written down.
+        print(f"{unread} carry model-written text nobody has read. Publishing them is the "
+              f"default; edit repos.yaml to change one, `reviewed: true` to freeze it.")
 
 
 def phase_apply(cfg, yes: bool) -> None:

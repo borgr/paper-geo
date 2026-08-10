@@ -1,0 +1,10 @@
+# arXiv id -> submission id, read out of a copy of https://arxiv.org/user that the author
+# saved while signed in. Regenerate or extend with:
+#
+#   python scripts/identity_tasks.py --user-page ~/Downloads/arxiv-user.html
+#
+# Committed because it is stable input rather than observed state -- a submission id never
+# changes -- and because without it `tasks/arxiv_jref.md` cannot link straight to the form
+# for each paper. Not a secret: the form behind it requires the owner's session.
+'2409.02228': '7929224'
+'2602.16763': '7929219'

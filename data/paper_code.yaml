@@ -205,6 +205,8 @@ papers:
     verdict: none
   holmes-a-benchmark-to-assess-the-linguistic-competence-of-la:
     verdict: none
+  how-safe-is-your-safety-metric-automatic-concatenation-tests:
+    verdict: none
   human-learning-by-model-feedback-the-dynamics-of-iterative-p:
     verdict: accept
     repo: https://github.com/shachardon/Mid-Journey-to-alignment
@@ -355,6 +357,8 @@ papers:
   tinybenchmarks-evaluating-llms-with-fewer-examples:
     verdict: accept
     repo: https://github.com/felipemaiapolo/tinyBenchmarks
+  transition-based-graph-decoder-for-neural-machine-translatio:
+    verdict: none
   unforgettable-generalization-in-language-models:
     verdict: none
   unitxt-flexible-shareable-and-reusable-data-preparation-and:

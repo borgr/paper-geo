@@ -45,6 +45,19 @@ force_merge:
   # ICLR camera-ready lands, since `KnOTS` is the name the method is cited by.
   - - "Model merging with SVD to tie the Knots"
     - "Tie the KnOTS: Model Merging with SVD"
+  # A third arXiv-to-camera-ready retitle, and the one that cost the most: arXiv
+  # 2101.12640 is served today as "Enhancing the Transformer Decoder with
+  # Transition-based Syntax" (CoNLL 2022, DOI 10.18653/v1/2022.conll-1.27), but
+  # Semantic Scholar still keeps the v1 title as a separate record -- with no arXiv id,
+  # no DOI, and 8 of the work's 9 citations. Nothing in the identifier pass could join
+  # them, and the titles share one word. The visible costs were all downstream: the
+  # audit reported the v1 title as missing from ORCID when ORCID has it as an alternate
+  # source on the merged work; the worklist asked for a PDF for a paper that is on arXiv
+  # under the other title; and the site would have published a 1-citation page next to
+  # an 8-citation one for the same paper. ORCID's own record is the tell -- both titles
+  # appear there as two sources of one work, with the CoNLL one preferred.
+  - - "Enhancing the Transformer Decoder with Transition-based Syntax"
+    - "Transition based Graph Decoder for Neural Machine Translation"
 
 # Title pairs that look near-identical but are genuinely different papers.
 # Listing them here suppresses the `similar_but_distinct` flag so the review

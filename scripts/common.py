@@ -28,8 +28,22 @@ UA = {"User-Agent": "paper-geo/0.1 (+https://github.com/borgr/paper-geo)"}
 
 
 def load_config(path: str | None = None) -> dict:
+    """`config.yaml`, with one field the environment may override.
+
+    `llm.mode` chooses between `skill` (queue a JSON task file for the agent in a live
+    session to fill) and `api` (call Anthropic directly and write the drafts). The file
+    says `skill` because that is right at a desk, and CI has no session to fill a task
+    file -- so the unattended run needs to say `api` without editing a committed file to
+    do it. One field, named explicitly, rather than a general env-overrides-config
+    mechanism: the reason this one qualifies is that it is the only setting whose correct
+    value depends on *who is running*, and a general mechanism would invite putting a
+    secret in `config.yaml` and overriding it, which is exactly the thing to prevent.
+    """
     with open(path or os.path.join(ROOT, "config.yaml")) as f:
-        return yaml.safe_load(f)
+        cfg = yaml.safe_load(f)
+    if (mode := os.environ.get("PAPER_GEO_LLM_MODE", "").strip()) in ("skill", "api"):
+        cfg.setdefault("llm", {})["mode"] = mode
+    return cfg
 
 
 PROMPT_START = "<!-- prompt:start -->"
@@ -53,7 +67,8 @@ def rules_block(doc: str) -> str:
     """
     path = os.path.join(ROOT, doc)
     try:
-        text = open(path).read()
+        with open(path) as f:
+            text = f.read()
     except OSError as e:
         raise RuntimeError(f"{doc} is the source of a model prompt and is unreadable: {e}")
     a = text.find(PROMPT_START)
@@ -68,6 +83,201 @@ def rules_block(doc: str) -> str:
             f"{doc}: the prompt block is {len(block)} chars, under the {PROMPT_MIN} "
             f"minimum. Either it was emptied by accident or the rules moved.")
     return block
+
+
+HEALTH = os.path.join(BUILD, "health.json")
+# A source has to miss for this long, with something still trying it, before a run says
+# anything. Under it, a failure is weather: `get` already retried six times with
+# exponential backoff, the steps degrade, and the next run picks the paper back up.
+# Over it, the source is not flaky, it is gone -- and the reason to wait days rather
+# than runs is that some of these are only asked once a week.
+DEAD_DAYS = 6
+# A source that has never once answered is a different diagnosis: almost always a URL
+# that moved, an endpoint that now needs a key, or a config field nobody filled. No
+# point waiting a week to say so, but one bad afternoon should not say it either.
+NEVER_DAYS = 2
+# Consecutive recorded failures, with no success in between, before a source counts as
+# failing rather than busy. Both thresholds above are measured in days, which is the right
+# clock for "has it come back" and the wrong one for "is it working" -- a source that
+# answered yesterday and has refused every call since clears both of them. Deliberately
+# small, because a recorded failure is not one request: `get` retries six times with
+# exponential backoff before writing one down, so three of these is ~18 attempts across
+# several minutes of waiting with nothing succeeding between them. And a success resets
+# the counter, so a mid-run hiccup that recovered reads as 0 at report time, which is the
+# distinction the day-based thresholds could not draw.
+FAILING_NOW = 3
+
+
+def source_key(url: str) -> str:
+    """Host plus the shape of the path, with identifiers collapsed to `*`.
+
+    Host alone would be wrong here, and specifically wrong for the source that caused
+    this: `api.semanticscholar.org` serves an author endpoint that answers reliably and
+    a search endpoint that 429s at every anonymous caller. Recorded per host, the
+    working half hides the broken half and the ledger reports a source as healthy while
+    a step that depends on it never once succeeds.
+    """
+    m = re.match(r"https?://([^/?#]+)([^?#]*)", url)
+    if not m:
+        return url[:60]
+    segs = []
+    for s in m.group(2).split("/"):
+        if not s:
+            continue
+        # An identifier is anything that names one record rather than one endpoint.
+        segs.append("*" if (re.search(r"\d", s) and not re.fullmatch(r"v[\d.]+", s))
+                    or len(s) > 24 else s)
+    return m.group(1) + "/" + "/".join(segs[:5])
+
+
+def _health() -> dict:
+    try:
+        with open(HEALTH) as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def note_fetch(url: str, ok: bool, why: str = "") -> None:
+    """Record that a source answered, or did not. See `health_report`.
+
+    Kept in `build/`, so it is derived, gitignored, and rebuilt from nothing after a
+    clean clone -- an observed fact about one machine's network has no business in a
+    committed file.
+
+    `why` is the status code or exception name behind a failure. Without it the ledger
+    could say a source was failing but not what would fix it, and the two answers need
+    opposite responses: a 429 is a source working correctly and refusing our pace, a
+    404 on an endpoint is a source that moved. Both read as "never once answered".
+    """
+    h, key, today = _health(), source_key(url), time.strftime("%Y-%m-%d")
+    r = h.setdefault(key, {"ok": 0, "fail": 0, "first_seen": today,
+                           "last_ok": None, "last_fail": None})
+    r["ok" if ok else "fail"] += 1
+    r["last_ok" if ok else "last_fail"] = today
+    # Consecutive failures since the last success. `ok` and `fail` are cumulative over all
+    # time, and a ratio built from them cannot tell "broken an hour ago" from "flaky in
+    # March": it fires on arxiv.org/html/* (449 ok, 86 old fails, healthy today) and stays
+    # silent on a source refusing every call since yesterday. This counter answers the
+    # question the other two cannot -- is it failing *now* -- and it self-populates, so a
+    # ledger written before it existed reads as 0 rather than as an alarm.
+    r["since_ok"] = 0 if ok else r.get("since_ok", 0) + 1
+    if not ok and why:
+        r["last_error"] = why
+    elif ok:
+        # Cleared on success. `last_error` answers "what would fix this source", and a
+        # source that just answered has nothing to fix -- but the field used to outlive
+        # its own truth, because nothing ever unset it. Measured: after a run that made
+        # three clean calls to `graph/v1/paper/*` and failed zero times, the ledger still
+        # read `last_error: 429`, which is worse than saying nothing. A ledger that is
+        # silent gets checked; one that is confidently wrong gets believed. No reader
+        # loses information -- both uses of this field in `health_report` sit inside the
+        # `not r["ok"]` branch, which no success can reach.
+        r.pop("last_error", None)
+    try:
+        os.makedirs(BUILD, exist_ok=True)
+        with open(HEALTH, "w") as f:
+            json.dump(h, f, indent=1, sort_keys=True)
+    except OSError:
+        pass          # a ledger that cannot be written must not break the run it watches
+
+
+def _days_since(day: str | None) -> float:
+    if not day:
+        return float("inf")
+    try:
+        return (time.time() - time.mktime(time.strptime(day, "%Y-%m-%d"))) / 86400
+    except ValueError:
+        return float("inf")
+
+
+def health_report() -> list[str]:
+    """Sources that look broken rather than busy, worst first. Empty when all is well.
+
+    The distinction this exists to draw: a source that fails sometimes needs nothing
+    said about it, and a source that has failed every time for a week needs fixing.
+    Reporting every failure would train the reader to skip the line, which is how the
+    permanent one gets missed -- so the rule is deliberately slow, and silence here is
+    a claim that every source has answered recently.
+    """
+    out = []
+    for key, r in sorted(_health().items()):
+        if not r.get("fail"):
+            continue
+        quiet, tried = _days_since(r.get("last_ok")), _days_since(r.get("last_fail"))
+        if tried > 1:
+            continue          # nothing has asked lately, so nothing is known
+        if not r.get("ok") and _days_since(r.get("first_seen")) >= NEVER_DAYS:
+            # A source that only ever refused our pace is not broken, and telling the
+            # reader to check whether it still exists sends them to look at a working
+            # URL. It has one fix and the generic advice does not name it.
+            if r.get("last_error") in ("429", "503"):
+                out.append(f"{key}: rate-limited every time since {r['first_seen']} "
+                           f"({r['fail']} attempts, HTTP {r['last_error']}) -- the URL is "
+                           f"fine; this one needs an API key or a slower `PACE` entry")
+            else:
+                out.append(
+                    f"{key}: {r['fail']} attempts since {r['first_seen']}, never once "
+                    f"answered"
+                    + (f" (last: {r['last_error']})" if r.get("last_error") else "")
+                    + " -- check the URL, the key, and whether it still exists")
+        elif r.get("since_ok", 0) >= FAILING_NOW:
+            # The gap both branches around this one left open, and it was live: the S2
+            # search endpoint had answered 3 times, failed 18, and was refusing every call
+            # -- and this function printed nothing, because it had answered *once* (so not
+            # the branch above) and had answered *recently* (so not the branch below).
+            since = r["since_ok"]
+            out.append(f"{key}: {since} consecutive failures, nothing succeeding since "
+                       f"{r.get('last_ok') or 'ever'}"
+                       + (f", HTTP {r['last_error']}" if r.get("last_error") else "")
+                       + " -- failing now, not busy"
+                       + (" -- needs a key or a slower `PACE` entry"
+                          if r.get("last_error") in ("429", "503") else ""))
+        elif r.get("ok") and quiet >= DEAD_DAYS:
+            out.append(f"{key}: last answered {r['last_ok']}, failing since -- "
+                       f"{r['fail']} failure{'s' * (r['fail'] != 1)} against "
+                       f"{r['ok']} success{'es' * (r['ok'] != 1)}")
+    return out
+
+
+# Minimum seconds between two requests to one host, enforced here rather than at each
+# call site. `collect.py` and `scholar_check.py` sleep between their own requests and
+# `fulltext.py` does not, so the same corpus was polite from two steps and a burst from
+# the third -- and the ledger showed exactly that, with the S2 paper endpoint at zero
+# successes while the author endpoint next to it answered every time. Pacing per host is
+# the only place that can be right, because the limit belongs to the host and no single
+# caller can see the others.
+#
+# 1.05s for Semantic Scholar: their introductory limit is one request per second on all
+# endpoints, shared across the whole key (or, with no key, across every anonymous caller
+# on the internet), so the margin is deliberate. An API key raises the ceiling; it does
+# not remove it, which is why the key alone would not have fixed this.
+# 3s for arXiv: their own stated delay for programmatic access, and already the number
+# `collect.py` sleeps between API pages -- which is the point, because the sleep was in
+# the one place that did not need it. `export.arxiv.org` is a different host and keeps
+# its own explicit sleep; the burst was on `arxiv.org` itself, from two callers neither
+# of which could see the other. `collect.py` probes `arxiv.org/html/<id>` once per paper
+# in a tight loop, and `fulltext.py` then downloads that same URL for every paper it can,
+# unpaced, at 90s timeouts. The ledger recorded 86 failures against that one path shape
+# while every other arXiv path answered every time, which is the shape of a rate limiter
+# rather than a broken source: probed one at a time by hand, the same URLs answer 200 or
+# 404 without complaint. Probing only what is still an open question (see `collect.py`)
+# cuts the count; pacing makes what remains polite.
+PACE = {"api.semanticscholar.org": 1.05, "arxiv.org": 3.0}
+_last_hit: dict[str, float] = {}
+
+
+def _pace(url: str) -> None:
+    host = (re.match(r"https?://([^/?#]+)", url) or [None, ""])[1]
+    gap = PACE.get(host)
+    if not gap:
+        return
+    wait = gap - (time.monotonic() - _last_hit.get(host, 0.0))
+    if wait > 0:
+        time.sleep(wait)
+    # Stamped after the wait, so the clock starts when the request leaves rather than
+    # when it was queued.
+    _last_hit[host] = time.monotonic()
 
 
 def get(url: str, timeout: int = 40, retries: int = 6, accept: str | None = None) -> bytes:
@@ -89,20 +299,34 @@ def get(url: str, timeout: int = 40, retries: int = 6, accept: str | None = None
     delay = 4.0
     for attempt in range(retries):
         try:
+            _pace(url)
             req = urllib.request.Request(url, headers=headers)
-            return urllib.request.urlopen(req, timeout=timeout).read()
+            body = urllib.request.urlopen(req, timeout=timeout).read()
+            note_fetch(url, True)
+            return body
         except urllib.error.HTTPError as e:
             if e.code in (429, 503) and attempt < retries - 1:
                 time.sleep(delay)
                 delay *= 2
                 continue
+            # A 404 or 410 on a URL naming one record is the server answering a question
+            # about that record -- "no, not here" -- and the source is working perfectly
+            # when it says so. Counting it as a failure makes the ledger call a host
+            # broken as soon as a run asks about a few papers the host does not index,
+            # which is the ordinary case for arXiv, HF and Crossref alike. On a URL with
+            # no identifier in it, the same code means the endpoint itself is gone, and
+            # that is exactly what the ledger exists to notice. `source_key` already
+            # draws that line: an identifier is the part it collapses to `*`.
+            note_fetch(url, e.code in (404, 410) and "*" in source_key(url), str(e.code))
             return b""
-        except Exception:
+        except Exception as e:
             if attempt < retries - 1:
                 time.sleep(delay)
                 delay *= 2
                 continue
+            note_fetch(url, False, type(e).__name__)
             return b""
+    note_fetch(url, False)
     return b""
 
 
@@ -236,14 +460,46 @@ def repair_mangled(s: str) -> str:
     return _MANGLED.sub(lambda m: "{\\text" + m.group(1) + "}", s)
 
 
+def _fold_title(s: str) -> str:
+    """Accents, LaTeX and case removed; word boundaries still standing."""
+    s = unicodedata.normalize("NFKD", strip_mangled(s))
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    return _LATEX.sub(" ", s).lower()
+
+
 def norm_title(s: str | None) -> str:
     """Aggressive normalization for cross-source title matching."""
     if not s:
         return ""
-    s = unicodedata.normalize("NFKD", strip_mangled(s))
-    s = "".join(c for c in s if not unicodedata.combining(c))
-    s = _LATEX.sub(" ", s).lower()
-    return _NONWORD.sub("", s)
+    return _NONWORD.sub("", _fold_title(s))
+
+
+# Function words, dropped before comparing two titles as sets. Small on purpose: every
+# word removed is one less thing that has to agree, so the list holds only words that
+# carry no subject matter and can legitimately differ between two renderings of the same
+# title. `to` is what forced this -- it is the single word separating
+# "Model merging with SVD to tie the Knots" from "Tie the KnOTS: Model Merging with SVD".
+_STOP = frozenset("a an the of for to in on with and or from at by as is are be via "
+                  "using".split())
+
+
+def title_tokens(s: str | None) -> frozenset:
+    """A title's subject-matter words, order and punctuation discarded.
+
+    For the one mismatch `norm_title` cannot absorb: the same title *rearranged*. It
+    normalizes to one flat string, so it compares word order as though it were content,
+    and `orcid_strays`'s containment fallback cannot recover the case either -- a swap
+    around the colon leaves neither string inside the other.
+
+    Set equality rather than overlap, and no stemming. Both are about the direction the
+    error runs: a missed match reports a paper you wrote as a possible stray, which
+    wastes a minute of reading, while a wrong match silently drops a real stray -- and
+    the stray that started that check was an authorship claim on "Attention is all you
+    need". So this only ever collapses a reordering: differ by one content word, singular
+    against plural included, and it declines to match. Callers should also refuse a short
+    title, where a small set makes an accidental collision cheap.
+    """
+    return frozenset(_NONWORD.sub(" ", _fold_title(s or "")).split()) - _STOP
 
 
 def split_authors(bibtex_author: str | None) -> list[str]:
@@ -686,7 +942,7 @@ def short_venue(v: str | None, limit: int = 110, year: int | str | None = None) 
 
 
 def clean_bibtex(raw: str | None) -> str:
-    """Published BibTeX: verbatim, minus fields that only work in one person's build.
+    r"""Published BibTeX: verbatim, minus fields that only work in one person's build.
 
     `pretitle={\COL\META}` is a private macro from the source bibliography's own
     CV template. Publishing it verbatim hands readers an entry that fails to
@@ -732,6 +988,18 @@ def synth_bibtex(p: dict) -> str:
         rows += [("eprint", str(p["arxiv"])), ("archivePrefix", "arXiv")]
     body = ",\n".join(f"  {k:<12} = {{{v}}}" for k, v in rows if v)
     return f"@{kind}{{{key},\n{body}\n}}"
+
+
+def plural(n: int, one: str, many: str | None = None) -> str:
+    """`3 papers`, `1 paper` -- a count and its noun, agreeing.
+
+    Small, and worth having because of *when* the disagreement shows. Every count in the
+    audit reports something left to do, so each one trends to 1 and then to 0 as the work
+    gets done -- which means a hardcoded plural reads correctly for as long as the surface
+    is broken and turns wrong on the last item. `1 papers are listed twice` was live in
+    `tasks/identity_audit.md`, and these files are committed and browsable on GitHub.
+    """
+    return f"{n} {one if n == 1 else (many or one + 's')}"
 
 
 def slugify(s: str, maxlen: int = 60) -> str:

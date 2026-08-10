@@ -1,6 +1,6 @@
 # Zenodo: give the artifacts with no paper a citable identity
 
-14 repos qualify. The filter is `kind` in ['guide', 'tool'] **and** no linked paper: a repo whose paper exists
+13 repos qualify. The filter is `kind` in ['guide', 'tool'] **and** no linked paper: a repo whose paper exists
 already has a citation route, and minting a second one splits the citations
 between two identifiers.
 
@@ -25,17 +25,16 @@ being permanent — the archive is a snapshot of the release, not of `main`:
 5. Put the concept DOI in `data/repos.yaml` as `zenodo_doi:` — that both
    removes it from this list and lets `CITATION.cff` carry it.
 
-- [ ] **borgr/paper-sharpener** (tool) — Agentic Claude Code skills for academic writing: review simulation, revision, an
-- [ ] **borgr/tutEval** (guide) — Materials for the LREC-COLING 2024 tutorial on evaluating large language models:
-- [ ] **borgr/paper_updated** (guide) — A curated list of ways to keep up with newly published research papers.
-- [ ] **borgr/gcn_tf** (tool) — TensorFlow implementation of a labelled, gated syntactic graph convolutional net
-- [ ] **borgr/grant_search** (tool) — Agentic skill for finding AI research grants and funding calls.
-- [ ] **borgr/PoissonBinomial** (tool) — Python module computing Poisson binomial PMF, CDF, mean and standard deviation v
 - [ ] **borgr/arXiv_stuck** (guide) — An arXiv moderator's explanation of why submissions get held, stuck, or rejected
 - [ ] **borgr/ATProto-links-bot** (tool) — Relays paper links shared in the CoLab Discord to Bluesky and Semble, via a sche
 - [ ] **borgr/facultips** (guide) — A guide to applying for tenure-track faculty positions: research and teaching st
+- [ ] **borgr/gcn_tf** (tool) — TensorFlow implementation of a labelled, gated syntactic graph convolutional net
+- [ ] **borgr/grant_search** (tool) — Agentic skill for finding AI research grants and funding calls.
 - [ ] **borgr/paper-geo** (tool) — Make your papers and code findable, and correctly described, by AI answer engine
+- [ ] **borgr/paper-sharpener** (tool) — Agentic Claude Code skills for academic writing: review simulation, revision, an
+- [ ] **borgr/paper_updated** (guide) — A curated list of ways to keep up with newly published research papers.
+- [ ] **borgr/PoissonBinomial** (tool) — Python module computing Poisson binomial PMF, CDF, mean and standard deviation v
 - [ ] **borgr/post** (guide) — A guide to finding and applying for a good postdoc position.
-- [ ] **borgr/publications** (tool) — Pipeline that maintains a publications CV on Overleaf from Google Scholar, resol
 - [ ] **borgr/social-follow** (tool) — Follows research collaborators across Bluesky, Twitter/X and LinkedIn from a CSV
+- [ ] **borgr/tutEval** (guide) — Materials for the LREC-COLING 2024 tutorial on evaluating large language models:
 - [ ] **borgr/wit3scripts** (tool) — Wrapper scripts for preprocessing the WIT3 multilingual TED-talk translation cor
