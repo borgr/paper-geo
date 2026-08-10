@@ -155,12 +155,23 @@ def orcid_files(cfg, papers) -> tuple[str, str, int]:
 
 
 def wikidata_qs(cfg, papers) -> str:
-    """QuickStatements v1 commands to create the author item.
+    """QuickStatements v1 commands for the author item.
 
     Deliberately minimal: identity plus external identifiers. No claims about
     importance, no unsourced biography -- the item exists to be a stable anchor
     that other statements can point at, which is what Wikidata's structural-need
     criterion covers.
+
+    Targets the existing item when `ids.wikidata` names one, and only falls back to
+    `CREATE` when it does not. That branch is the whole point of this docstring: the
+    batch used to open with an unconditional `CREATE`, so once the item existed --
+    which is the normal state, and is recorded in config -- running the file the
+    worklist pointed at would have made a *second* person on Wikidata. Duplicate items
+    are a public mess to undo, needing a merge request rather than an edit, and
+    QuickStatements gives no warning because from its side a second create is a valid
+    request. Addressed to the QID the same statements become a safe top-up:
+    QuickStatements skips a statement that is already there, so the batch is a no-op
+    when the item is complete and adds exactly the gaps when it is not.
 
     NOTE: QuickStatements requires an *autoconfirmed* Wikidata account (4 days old,
     50 edits), so this file is unusable from a fresh account and the error message
@@ -168,14 +179,20 @@ def wikidata_qs(cfg, papers) -> str:
     one; this stays for later runs and for anyone who already edits Wikidata.
     """
     ident, ids = cfg["identity"], cfg["ids"]
-    L = ["CREATE"]
+    qid = ids.get("wikidata")
+    subject = qid or "LAST"
+    L = [] if qid else ["CREATE"]
     def add(prop, val):
-        L.append(f"LAST\t{prop}\t{val}")
-    L.append(f'LAST\tLen\t"{ident["name"]}"')
-    L.append('LAST\tDen\t"researcher in natural language processing"')
+        L.append(f"{subject}\t{prop}\t{val}")
+    # Label and description only on a new item. Aliases are additive, so they are safe
+    # to re-send, but `Len`/`Den` *overwrite* -- and on an existing item that means a
+    # batch silently reverting a label someone improved by hand.
+    if not qid:
+        L.append(f'LAST\tLen\t"{ident["name"]}"')
+        L.append('LAST\tDen\t"researcher in natural language processing"')
     for v in ident["name_variants"]:
         if v != ident["name"]:
-            L.append(f'LAST\tAen\t"{v}"')
+            L.append(f'{subject}\tAen\t"{v}"')
     add(P["instance_of"], Q["human"])
     add(P["occupation"], Q["researcher"])
     add(P["occupation"], Q["computer_scientist"])
@@ -193,7 +210,7 @@ def wikidata_qs(cfg, papers) -> str:
         q = SCHOOL_Q.get(e.get("institution"))
         if not q:
             continue
-        line = f"LAST\t{P['educated_at']}\t{q}"
+        line = f"{subject}\t{P['educated_at']}\t{q}"
         if DEGREE_Q.get(e.get("degree")):
             line += f"\t{P['academic_degree']}\t{DEGREE_Q[e['degree']]}"
         L.append(line)
@@ -247,39 +264,67 @@ def wikidata_manual(cfg) -> str:
             rows.append((label, pid,
                          str(v).rsplit("/", 1)[-1] if pid == P["openalex"] else v, ""))
     aliases = [v for v in ident["name_variants"] if v != ident["name"]]
+    qid = ids.get("wikidata")
 
-    L = ["# Wikidata: create the author item by hand", "",
-         "**Do this instead of QuickStatements if your account is new.**",
-         "QuickStatements requires an *autoconfirmed* account — 4 days old and 50 edits",
-         "— and fails with an authorisation error rather than saying so. Creating an item",
-         "through the normal editor has no such requirement. `wikidata.qs` stays in this",
-         "directory for when the account qualifies, or for a second person's item.", "",
-         "Fifteen minutes, once.", "",
-         "## 1. Check it does not already exist", "",
-         f"<https://www.wikidata.org/wiki/Special:Search?search=haswbstatement%3AP496%3D{ident['orcid']}>",
-         "",
-         "Empty result means no item claims your ORCID. Searching your *name* instead is",
-         "misleading — it returns paper items that merely list you as an author string,",
-         "which looks like a hit and is not one.", "",
-         "## 2. Create the item", "",
-         "<https://www.wikidata.org/wiki/Special:NewItem>", "",
-         f"- **Label:** `{ident['name']}`",
-         "- **Description:** `researcher in natural language processing`",
-         "  (a description is what separates you from a namesake; it must not repeat the",
-         "  label, and Wikidata rejects an item whose label+description pair already",
-         "  exists)",
-         # One per line and no backticks. Comma-joining them inside backticks is
-         # exactly how the first attempt at this went wrong: the rendered string was
-         # pasted whole into the single-alias box, producing one alias containing two
-         # names and two stray backticks, which matches no citation at all.
-         "- **Aliases** — add each as its own entry, not one comma-joined string:",
-         *[f"    - {a}" for a in aliases],
-         "",
-         "## 3. Add these statements", "",
-         "In the editor, click *+ Add statement*, type the **property name** — it",
-         "autocompletes — then the value. The P/Q numbers are only to confirm the",
-         "autocomplete resolved to the right thing.", "",
-         "| property | | value | |", "|---|---|---|---|"]
+    # Two documents from one generator, because once the item exists the create half is
+    # not "done and harmless to leave up" -- it is four numbered steps telling you to
+    # make a second item, on a page whose title says that is the job. What survives the
+    # switch is the reference table and the caveats, which are what you actually come
+    # back for.
+    if qid:
+        L = [f"# Wikidata: your author item ({qid})", "",
+             f"<https://www.wikidata.org/wiki/{qid}>", "",
+             "**The item exists, so nothing on this page creates one.** It is the reference",
+             "for what the item should hold, and the caveats worth re-reading before an",
+             f"edit. `tasks/wikidata.qs` is addressed to {qid} rather than to `CREATE`, so",
+             "running it tops up whatever is missing and does nothing where the statement is",
+             "already there.", "",
+             "Whether anything *is* missing is the `Wikidata item complete` row of",
+             "[identity_audit.md](identity_audit.md) — it compares the live item against the",
+             "table below on every run, so that row is the answer and this table is what it",
+             "checked.", "",
+             "## What the item should hold", "",
+             f"Label `{ident['name']}`, description `researcher in natural language "
+             "processing`, and these aliases, each its own entry:",
+             *[f"- {a}" for a in aliases],
+             "",
+             "In the editor, click *+ Add statement*, type the **property name** — it",
+             "autocompletes — then the value. The P/Q numbers are only to confirm the",
+             "autocomplete resolved to the right thing.", "",
+             "| property | | value | |", "|---|---|---|---|"]
+    else:
+        L = ["# Wikidata: create the author item by hand", "",
+             "**Do this instead of QuickStatements if your account is new.**",
+             "QuickStatements requires an *autoconfirmed* account — 4 days old and 50 edits",
+             "— and fails with an authorisation error rather than saying so. Creating an item",
+             "through the normal editor has no such requirement. `wikidata.qs` stays in this",
+             "directory for when the account qualifies, or for a second person's item.", "",
+             "Fifteen minutes, once.", "",
+             "## 1. Check it does not already exist", "",
+             f"<https://www.wikidata.org/wiki/Special:Search?search=haswbstatement%3AP496%3D{ident['orcid']}>",
+             "",
+             "Empty result means no item claims your ORCID. Searching your *name* instead is",
+             "misleading — it returns paper items that merely list you as an author string,",
+             "which looks like a hit and is not one.", "",
+             "## 2. Create the item", "",
+             "<https://www.wikidata.org/wiki/Special:NewItem>", "",
+             f"- **Label:** `{ident['name']}`",
+             "- **Description:** `researcher in natural language processing`",
+             "  (a description is what separates you from a namesake; it must not repeat the",
+             "  label, and Wikidata rejects an item whose label+description pair already",
+             "  exists)",
+             # One per line and no backticks. Comma-joining them inside backticks is
+             # exactly how the first attempt at this went wrong: the rendered string was
+             # pasted whole into the single-alias box, producing one alias containing two
+             # names and two stray backticks, which matches no citation at all.
+             "- **Aliases** — add each as its own entry, not one comma-joined string:",
+             *[f"    - {a}" for a in aliases],
+             "",
+             "## 3. Add these statements", "",
+             "In the editor, click *+ Add statement*, type the **property name** — it",
+             "autocompletes — then the value. The P/Q numbers are only to confirm the",
+             "autocomplete resolved to the right thing.", "",
+             "| property | | value | |", "|---|---|---|---|"]
     for label, p, val, q in rows:
         L.append(f"| {label} | `{p}` | {val} | {f'`{q}`' if q else ''} |")
     L += ["",
@@ -309,11 +354,15 @@ def wikidata_manual(cfg) -> str:
           "disambiguation matches on, so it should agree with ORCID's *Employment* exactly.",
           "P69 is what connects you to older papers carrying a student affiliation, which",
           "is the period where a namesake is hardest to tell apart from you.", "",
-          "## 4. Record the result", "",
-          "Copy the new Q-number from the URL into `config.yaml` → `ids.wikidata`, then",
-          "`python scripts/build_site.py --deploy`. It lands in the site's `sameAs` array,",
-          "which is what lets an engine fuse the Wikidata item with your pages.", "",
-          "## 5. Your paper items: measure first, because the standard advice may not apply",
+          # Dropped once the Q-number is in config, which is the only thing this step
+          # asks for -- leaving it up is an instruction to go and do what is done.
+          *([] if qid else
+            ["## 4. Record the result", "",
+             "Copy the new Q-number from the URL into `config.yaml` → `ids.wikidata`, then",
+             "`python scripts/build_site.py --deploy`. It lands in the site's `sameAs` array,",
+             "which is what lets an engine fuse the Wikidata item with your pages.", ""]),
+          f"## {'' if qid else '5. '}Your paper items: measure first, because the "
+          "standard advice may not apply",
           "",
           "The advice you will find everywhere is: your papers already exist as items",
           "auto-imported from Crossref, carrying your name as *author name string*",

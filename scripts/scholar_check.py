@@ -76,7 +76,7 @@ import xml.etree.ElementTree as ET
 from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (ARXIV_NS, BUILD, DATA, ROOT, TASKS, get,  # noqa: E402
+from common import (ARXIV_NS, BUILD, DATA, ROOT, TASKS, declined, get,  # noqa: E402
                     get_json, load_config, norm_title, note_fetch, read_yaml,
                     synth_bibtex)
 
@@ -635,12 +635,14 @@ put a `TODO` in your bibliography.
 """
 
 
-def bib_payload(rows: list[dict], bib_url: str, mine: list[dict] | None
-                ) -> tuple[str, int, int, int]:
+def bib_payload(rows: list[dict], bib_url: str, mine: list[dict] | None,
+                ruled_out: list[dict] | None = None) -> tuple[str, int, int, int]:
     """Write `tasks/bib_missing.md`: (path, papers, resolved, worth retrying).
 
     Absent when there is nothing missing, on the same principle as the worklist's
-    sections -- a file that says "none" is one more thing to read and disbelieve.
+    sections -- a file that says "none" is one more thing to read and disbelieve. That
+    holds when everything missing was declined, too: `ruled_out` is named at the foot of
+    the page when there is a page, and nothing resurrects the page to report it.
 
     A near miss is printed rather than pasted. The indexes routinely hold a paper under
     a title that is close but not the same -- a competition report renamed for the
@@ -696,6 +698,16 @@ def bib_payload(rows: list[dict], bib_url: str, mine: list[dict] | None
                        f"  title        = {{{r['title']}}},\n"
                        f"  year         = {{{r.get('year') or ''}}},\n"
                        f"  note         = {{TODO: authors, venue, DOI}}\n}}\n```\n")
+    if ruled_out:
+        # Named, not silently absent. The point of this page is that Scholar and the
+        # bibliography disagree, so a reader counting the rows here against the count on
+        # the Scholar profile needs to know the difference is a decision and not a bug.
+        out.append("\n---\n")
+        out.append(f"Also absent, and deliberately: "
+                   + ", ".join(f"*{r['title']}*" for r in ruled_out)
+                   + ". Declined in [`data/declines.yaml`](../data/declines.yaml) — delete "
+                     "the line there and the entry comes back with a resolved BibTeX "
+                     "block like the ones above.\n")
     os.makedirs(TASKS, exist_ok=True)
     with open(path, "w") as f:
         f.write("\n".join(out).rstrip() + "\n")
@@ -802,7 +814,9 @@ def main() -> None:
     # remedy is *adding* something to Scholar rather than correcting it, and Scholar's
     # "Add article manually" form wants a link. A title alone would make the reader
     # search for their own paper.
-    absent = [{"slug": p.get("slug"), "title": p.get("title"), "year": p.get("year"),
+    absent = [{"slug": p.get("slug"), "title": p.get("title"),
+               "title_display": p.get("title_display") or p.get("title"),
+               "year": p.get("year"),
                "citations": p.get("citations"), "arxiv": p.get("arxiv"),
                "doi": p.get("doi"), "url": p.get("url")}
               for p in absent if p["slug"] not in taken]
@@ -853,10 +867,22 @@ def main() -> None:
             for r in in_gate:
                 print(f"    [{r['citations']:>5} cites] {r['title'][:66]}",
                       file=sys.stderr)
-    real = sorted((r for r in missing if r["kind"] == "paper"),
-                  key=lambda r: -(r.get("citations") or 0))
+    # Split on `data/declines.yaml` before resolving anything. A row the author has ruled
+    # out of the bibliography is not a gap: it was costing an arXiv and a Crossref round
+    # trip every run to produce a pasteable entry for a paste that is never going to
+    # happen, and `WORKLIST.md` -- which reads the same file -- had already stopped
+    # listing it, so the payload and the summary disagreed about how many were open.
+    real, ruled_out = [], []
+    for r in sorted((r for r in missing if r["kind"] == "paper"),
+                    key=lambda r: -(r.get("citations") or 0)):
+        (ruled_out if declined(r["title"]) else real).append(r)
     path, _, done, retry = bib_payload(
-        real, (cfg.get("sources") or {}).get("bibtex_url") or "", attributed or [])
+        real, (cfg.get("sources") or {}).get("bibtex_url") or "", attributed or [],
+        ruled_out)
+    if ruled_out:
+        print(f"  {len(ruled_out)} more absent because you ruled them out in "
+              f"data/declines.yaml: "
+              + ", ".join(f"{r['title'][:44]!r}" for r in ruled_out), file=sys.stderr)
     if real:
         how = (f"{done} with a pasteable BibTeX entry" if done else
                "none resolvable, though an index was down for "
@@ -879,8 +905,14 @@ def main() -> None:
               f"-- ignored on purpose", file=sys.stderr)
     if absent:
         cited = [p for p in absent if (p.get("citations") or 0) > 0]
-        print(f"  {len(absent)} corpus paper(s) with no Scholar row"
-              + (f", {len(cited)} of them cited -- worth adding to your profile"
+        # "with no Scholar row" is the measurement; "worth adding to your profile" was an
+        # inference this check cannot make and which was wrong for all five of the papers
+        # it named. The profile listing shows one title per record, so a paper Scholar has
+        # merged into another record is indistinguishable here from one Scholar does not
+        # have -- and adding a merged paper by hand splits its future citations across two
+        # records. Checked on this corpus: all five were merges.
+        print(f"  {len(absent)} corpus paper(s) whose title is not in the Scholar listing"
+              + (f", {len(cited)} of them cited -- check for a merge before adding any"
                  if cited else " (Scholar indexes on its own schedule)"),
               file=sys.stderr)
         if cited and not args.quiet:

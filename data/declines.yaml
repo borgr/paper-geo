@@ -11,18 +11,26 @@
 #
 #   sections:  any worklist heading containing this string, and its whole body.
 #              Matched case-insensitively at `##` and `###` level, so a subsection
-#              can go without its siblings.
-#   items:     any `- [ ]` line containing this string -- an arXiv id, a slug, a
-#              repo name. Use this to decline the tail of a long list while
-#              keeping the top of it open.
+#              can go without its siblings. A section left with no items by the
+#              `items:` list below goes too, instructions and all.
+#   items:     any bullet containing this string -- an arXiv id, a slug, a repo name,
+#              a title. Use this to decline the tail of a long list while keeping the
+#              top of it open. Case-insensitive, and matched as a plain substring, so
+#              the shortest fragment that is unambiguous is the one to write.
 #   deferred:  not declined, just not now. `{match: "...", until: "..."}` moves the
 #              matching section to a "Deferred" heading at the bottom of the
 #              worklist, still regenerated from live state, with `until` printed as
 #              the condition that brings it back up. Use this instead of `sections`
 #              when you do intend to do the work.
 #
-# Read by update.py's worklist step, which reports at the bottom of WORKLIST.md
-# how much it hid. Delete a line here and the item is asked again on the next run.
+# Read by update.py's worklist step, which reports at the bottom of WORKLIST.md how
+# much it hid -- including any pattern here that matched nothing, because a title is
+# truncated in that file and a pattern aimed past the cut is a line that looks like a
+# decision and is not one. The `items:` patterns are also read by the generators of
+# tasks/bib_missing.md and tasks/orcid_remove.md, so a decision recorded once stops
+# the question in the payload as well as in the summary.
+#
+# Delete a line here and the item is asked again on the next run.
 #
 # Examples, both deliberately commented out -- nothing is declined until you say so:
 #
@@ -50,6 +58,37 @@ items:
   # row, and nothing downstream resolves a work with neither. Declined rather than
   # deferred: chasing it would cost more than the record is worth.
   - "True or false? faithful summarization"
+  #
+  # --- Scholar has these; it merged them, so their titles are not in the listing ---
+  #
+  # Checked against a live fetch of the profile (116 rows) on 2026-08-10. In each case the
+  # absorbing record is named below and is itself matched by this pipeline, so the
+  # citations are counted -- under the surviving title. Adding these by hand would create
+  # a second record and split future citations, which is why they are declined rather
+  # than deferred: there is no version of this that becomes work later.
+  #
+  # Not detectable in code, and measured rather than assumed. Title similarity cannot
+  # separate these from genuinely absent papers: "BabyLM Turns 3" against its own
+  # absorbing record scores Jaccard 0.06, while "BabyLM Turns 3" against the *different*
+  # paper "BabyLM Turns 4" scores 0.45. Any threshold loose enough to catch the real
+  # merges fuses two distinct papers, so the judgement is recorded here instead.
+  #
+  # -> "Findings of the BabyLM challenge" (403 cites on Scholar)
+  - "Call for Papers - The BabyLM Challenge"
+  # -> "Findings of the second BabyLM challenge" (119)
+  - "The 2nd BabyLM Challenge"
+  # -> "Findings of the third BabyLM challenge" (58)
+  - "BabyLM Turns 3"
+  # -> "SemEval-2019 task 1: Cross-lingual semantic parsing with UCCA" (46). Matched on
+  # the front of the title, not on its "- Call for Participation" tail: the worklist
+  # truncates a title at 58 characters, and a pattern past the cut matches nothing. The
+  # space-and-"Shared Task" spelling here is what separates it from the SemEval paper
+  # that stays open.
+  - "SemEval 2019 Shared Task"
+  # -> "Zipnn: Lossless compression for ai models" (46). The corpus holds ZipNN as its own
+  # paper and that one *did* match a Scholar row, so this is the same structure as the
+  # BabyLM pairs: two corpus papers, one Scholar record, the earlier title folded in.
+  - "Lossless and Near-Lossless Compression"
 deferred:
   # The papers are the higher-leverage half and the repo sweep is a bounded
   # afternoon, so it waits -- but it is real work, not declined. Keeping it in the

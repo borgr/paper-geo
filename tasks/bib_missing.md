@@ -23,20 +23,6 @@ nobody registered it anywhere machine-readable. Pasting that stub as it stands w
 put a `TODO` in your bibliography.
 
 
-## Llm merging: Building llms efficiently through merging
-
-- 19 citations, 2024, Scholar says *NeurIPS 2024 Competition Track, 2024*
-- [the Scholar row](https://scholar.google.com/citations?view_op=view_citation&hl=en&user=8b8IhUYAAAAJ&citation_for_view=8b8IhUYAAAAJ:HoB7MX3m0LUC)
-- **UNRESOLVED** — not in your Semantic Scholar author record, arXiv, Crossref or Semantic Scholar search.
-
-```bibtex
-@misc{TODO,
-  title        = {Llm merging: Building llms efficiently through merging},
-  year         = {2024},
-  note         = {TODO: authors, venue, DOI}
-}
-```
-
 ## A Statistical Framework for Game-Based AI Evaluation
 
 - 1 citation, 2025, Scholar says *NeurIPS 2025 Workshop on Evaluating the Evolving LLM Lifecycle: Benchmarks …, 2025*
@@ -51,16 +37,7 @@ put a `TODO` in your bibliography.
 }
 ```
 
-## True or false? faithful summarization with attribution
 
-- 0 citations, 2022, Scholar says *Proceedings of the 60th Annual Meeting of the Association for Computational …, 2022*
-- [the Scholar row](https://scholar.google.com/citations?view_op=view_citation&hl=en&user=8b8IhUYAAAAJ&citation_for_view=8b8IhUYAAAAJ:uc_IGeMz5qoC)
-- **UNRESOLVED** — not in your Semantic Scholar author record, arXiv, Crossref or Semantic Scholar search.
+---
 
-```bibtex
-@misc{TODO,
-  title        = {True or false? faithful summarization with attribution},
-  year         = {2022},
-  note         = {TODO: authors, venue, DOI}
-}
-```
+Also absent, and deliberately: *Llm merging: Building llms efficiently through merging*, *True or false? faithful summarization with attribution*. Declined in [`data/declines.yaml`](../data/declines.yaml) — delete the line there and the entry comes back with a resolved BibTeX block like the ones above.

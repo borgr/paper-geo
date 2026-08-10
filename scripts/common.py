@@ -1046,3 +1046,31 @@ def read_yaml(path: str, default=None):
         return default
     with open(path) as f:
         return yaml.safe_load(f)
+
+
+def declined(text: str | None) -> str | None:
+    """The `data/declines.yaml` `items:` pattern this text was declined by, if any.
+
+    `apply_declines` filters `WORKLIST.md` after it is rendered, which was the whole
+    mechanism for a while -- and it meant a decision reached the summary and none of the
+    payloads. Live consequence: "LLM Merging" was ruled out of the bibliography on
+    purpose, and `tasks/orcid_remove.md` went on printing it under *check before
+    deleting* every run, where the honest reading of that heading is "we have not looked
+    at this yet". A generated file asking again for what was decided is the exact failure
+    the declines file exists to prevent, so the generators read it too.
+
+    Case-insensitive, unlike the sections matcher which already was: the patterns are
+    titles typed by hand against whichever surface showed them, and Scholar title-cases
+    what BibTeX does not. A pattern that takes on the worklist and misses in `tasks/`
+    over one capital is the same silent-no-op trap as a pattern aimed past a truncation.
+
+    Returns the matching pattern rather than a bool so the caller can print *which*
+    decision this was -- "declined" with no pointer sends the reader off to grep for it.
+    """
+    if not text:
+        return None
+    low = text.lower()
+    for pat in (read_yaml(os.path.join(DATA, "declines.yaml")) or {}).get("items") or []:
+        if str(pat).lower() in low:
+            return str(pat)
+    return None

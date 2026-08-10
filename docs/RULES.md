@@ -280,7 +280,7 @@ the sidecar:
 The papers track fights for position in surfaces someone else owns. This track
 owns its surface completely, and GitHub is a top-5 AI-cited domain — so the
 ceiling is higher and the work is cheaper. The catch is that almost none of it is
-about papers: **only 1 of 30 repos maps to a paper.** Paper code lives in
+about papers: **only 1 of 31 repos maps to a paper.** Paper code lives in
 collaborators' and organisations' accounts (`prateeky2806/ties-merging`,
 `ibm-research/*`), so planning this track around "the code for the papers" would
 mis-target nearly all of it.

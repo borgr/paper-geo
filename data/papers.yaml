@@ -2684,6 +2684,65 @@ papers:
   has_sidecar: false
   owner: null
   owner_source: unclaimed
+- key: wilcox2024bigger
+  slug: bigger-is-not-always-better-the-importance-of-human-scale-la
+  title: 'Bigger is not always better: The importance of human-scale language modeling for psycholinguistics'
+  authors:
+  - Ethan Gotlieb Wilcox
+  - Michael Y Hu
+  - Aaron Mueller
+  - Alex Warstadt
+  - Leshem Choshen
+  - Chengxu Zhuang
+  - Adina Williams
+  - Ryan Cotterell
+  - Tal Linzen
+  authors_truncated: null
+  year: 2025
+  venue: Journal of Memory and Language
+  type: article
+  doi: 10.1016/j.jml.2025.104650
+  arxiv: null
+  url: null
+  abstract: 'When trained to place high probability on a training corpus, neural network language models
+    can learn a surprising amount about language. Recent work has demonstrated that large performance
+    improvements can arise from simply increasing, i.e., scaling, the size of the corpora they are trained
+    on and the number of parameters in those models. Accordingly, many contemporary systems are trained
+    on trillions of words. While largely beneficial to performance on language applications, scaling has
+    several downsides for both computational psycholinguistics and natural language processing research.
+    We discuss the scientific challenges presented by the scaling paradigm, as well as the benefits that
+    would result from language models that can learn from human-scale data. In the second half of this
+    paper, we report on findings from a recent effort to bring about human-scale language model pretraining:
+    the first iteration of the BabyLM Challenge, a shared task organized by the authors that invited participants
+    to train a language model on 100 million words or less. The challenge produced several concrete best
+    practices for practitioners interested in small-scale language modeling. For cognitive scientists,
+    the challenge demonstrated that robust linguistic generalizations can be learned by models trained
+    on a human-scale dataset, though this is not yet achieved through cognitively plausible mechanisms.
+    Furthermore, it established a population of “BabyLMs” that are all effective at data-efficient language
+    learning. Studying such models can help us identify hypotheses for the computational mechanisms that
+    underlie human language acquisition. • Psycholinguistics benefits from computational models trained
+    at human data scale. • We report on the BabyLM Challenge, an effort to train models at human scale.
+    • BabyLM models achieve close to human-level performance on some tasks. • High language modeling performance
+    is attainable with academic computational resources. • We identify actionable insights for human-scale
+    language modeling.'
+  bibtex: "@article{wilcox2024bigger,\n  title={Bigger is not always better: The importance of human-scale\
+    \ language modeling for psycholinguistics},\n  author={Wilcox, Ethan Gotlieb and Hu, Michael Y and\
+    \ Mueller, Aaron and Warstadt, Alex and Choshen, Leshem and Zhuang, Chengxu and Williams, Adina and\
+    \ Cotterell, Ryan and Linzen, Tal},\n  journal={Journal of Memory and Language},\n  volume={144},\n\
+    \  pages={104650},\n  year={2025},\n  publisher={Elsevier}\n}"
+  s2_author_record: '41019330'
+  citations: 31
+  acl: null
+  s2_corpus_id: 278862573
+  links:
+    doi: https://doi.org/10.1016/j.jml.2025.104650
+    semantic_scholar: https://www.semanticscholar.org/paper/278862573
+  abstract_source: openalex
+  title_display: 'Bigger is not always better: The importance of human-scale language modeling for psycholinguistics'
+  venue_display: Journal of Memory and Language
+  has_sidecar: false
+  owner: null
+  owner_source: unclaimed
 - key: DBLP:conf/bea/KantorKCCLTMS19
   slug: learning-to-combine-grammatical-error-corrections
   title: Learning to combine Grammatical Error Corrections
@@ -2758,65 +2817,6 @@ papers:
     publisher: https://doi.org/10.18653/v1/w19-4414
   title_display: Learning to combine Grammatical Error Corrections
   venue_display: BEA@ACL 2019
-  has_sidecar: false
-  owner: null
-  owner_source: unclaimed
-- key: wilcox2024bigger
-  slug: bigger-is-not-always-better-the-importance-of-human-scale-la
-  title: 'Bigger is not always better: The importance of human-scale language modeling for psycholinguistics'
-  authors:
-  - Ethan Gotlieb Wilcox
-  - Michael Y Hu
-  - Aaron Mueller
-  - Alex Warstadt
-  - Leshem Choshen
-  - Chengxu Zhuang
-  - Adina Williams
-  - Ryan Cotterell
-  - Tal Linzen
-  authors_truncated: null
-  year: 2025
-  venue: Journal of Memory and Language
-  type: article
-  doi: 10.1016/j.jml.2025.104650
-  arxiv: null
-  url: null
-  abstract: 'When trained to place high probability on a training corpus, neural network language models
-    can learn a surprising amount about language. Recent work has demonstrated that large performance
-    improvements can arise from simply increasing, i.e., scaling, the size of the corpora they are trained
-    on and the number of parameters in those models. Accordingly, many contemporary systems are trained
-    on trillions of words. While largely beneficial to performance on language applications, scaling has
-    several downsides for both computational psycholinguistics and natural language processing research.
-    We discuss the scientific challenges presented by the scaling paradigm, as well as the benefits that
-    would result from language models that can learn from human-scale data. In the second half of this
-    paper, we report on findings from a recent effort to bring about human-scale language model pretraining:
-    the first iteration of the BabyLM Challenge, a shared task organized by the authors that invited participants
-    to train a language model on 100 million words or less. The challenge produced several concrete best
-    practices for practitioners interested in small-scale language modeling. For cognitive scientists,
-    the challenge demonstrated that robust linguistic generalizations can be learned by models trained
-    on a human-scale dataset, though this is not yet achieved through cognitively plausible mechanisms.
-    Furthermore, it established a population of “BabyLMs” that are all effective at data-efficient language
-    learning. Studying such models can help us identify hypotheses for the computational mechanisms that
-    underlie human language acquisition. • Psycholinguistics benefits from computational models trained
-    at human data scale. • We report on the BabyLM Challenge, an effort to train models at human scale.
-    • BabyLM models achieve close to human-level performance on some tasks. • High language modeling performance
-    is attainable with academic computational resources. • We identify actionable insights for human-scale
-    language modeling.'
-  bibtex: "@article{wilcox2024bigger,\n  title={Bigger is not always better: The importance of human-scale\
-    \ language modeling for psycholinguistics},\n  author={Wilcox, Ethan Gotlieb and Hu, Michael Y and\
-    \ Mueller, Aaron and Warstadt, Alex and Choshen, Leshem and Zhuang, Chengxu and Williams, Adina and\
-    \ Cotterell, Ryan and Linzen, Tal},\n  journal={Journal of Memory and Language},\n  volume={144},\n\
-    \  pages={104650},\n  year={2025},\n  publisher={Elsevier}\n}"
-  s2_author_record: '41019330'
-  citations: 30
-  acl: null
-  s2_corpus_id: 278862573
-  links:
-    doi: https://doi.org/10.1016/j.jml.2025.104650
-    semantic_scholar: https://www.semanticscholar.org/paper/278862573
-  abstract_source: openalex
-  title_display: 'Bigger is not always better: The importance of human-scale language modeling for psycholinguistics'
-  venue_display: Journal of Memory and Language
   has_sidecar: false
   owner: null
   owner_source: unclaimed

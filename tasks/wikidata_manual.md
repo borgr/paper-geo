@@ -1,35 +1,23 @@
-# Wikidata: create the author item by hand
+# Wikidata: your author item (Q140867203)
 
-**Do this instead of QuickStatements if your account is new.**
-QuickStatements requires an *autoconfirmed* account — 4 days old and 50 edits
-— and fails with an authorisation error rather than saying so. Creating an item
-through the normal editor has no such requirement. `wikidata.qs` stays in this
-directory for when the account qualifies, or for a second person's item.
+<https://www.wikidata.org/wiki/Q140867203>
 
-Fifteen minutes, once.
+**The item exists, so nothing on this page creates one.** It is the reference
+for what the item should hold, and the caveats worth re-reading before an
+edit. `tasks/wikidata.qs` is addressed to Q140867203 rather than to `CREATE`, so
+running it tops up whatever is missing and does nothing where the statement is
+already there.
 
-## 1. Check it does not already exist
+Whether anything *is* missing is the `Wikidata item complete` row of
+[identity_audit.md](identity_audit.md) — it compares the live item against the
+table below on every run, so that row is the answer and this table is what it
+checked.
 
-<https://www.wikidata.org/wiki/Special:Search?search=haswbstatement%3AP496%3D0000-0002-0085-6496>
+## What the item should hold
 
-Empty result means no item claims your ORCID. Searching your *name* instead is
-misleading — it returns paper items that merely list you as an author string,
-which looks like a hit and is not one.
-
-## 2. Create the item
-
-<https://www.wikidata.org/wiki/Special:NewItem>
-
-- **Label:** `Leshem Choshen`
-- **Description:** `researcher in natural language processing`
-  (a description is what separates you from a namesake; it must not repeat the
-  label, and Wikidata rejects an item whose label+description pair already
-  exists)
-- **Aliases** — add each as its own entry, not one comma-joined string:
-    - Choshen, Leshem
-    - L. Choshen
-
-## 3. Add these statements
+Label `Leshem Choshen`, description `researcher in natural language processing`, and these aliases, each its own entry:
+- Choshen, Leshem
+- L. Choshen
 
 In the editor, click *+ Add statement*, type the **property name** — it
 autocompletes — then the value. The P/Q numbers are only to confirm the
@@ -93,13 +81,7 @@ disambiguation matches on, so it should agree with ORCID's *Employment* exactly.
 P69 is what connects you to older papers carrying a student affiliation, which
 is the period where a namesake is hardest to tell apart from you.
 
-## 4. Record the result
-
-Copy the new Q-number from the URL into `config.yaml` → `ids.wikidata`, then
-`python scripts/build_site.py --deploy`. It lands in the site's `sameAs` array,
-which is what lets an engine fuse the Wikidata item with your pages.
-
-## 5. Your paper items: measure first, because the standard advice may not apply
+## Your paper items: measure first, because the standard advice may not apply
 
 The advice you will find everywhere is: your papers already exist as items
 auto-imported from Crossref, carrying your name as *author name string*

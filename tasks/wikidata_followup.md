@@ -47,10 +47,13 @@ name variant; it searches one string at a time. Do not press *create missing
 author item* while your item exists — that is how duplicate author items
 appear.
 
-**It will not get you to 50 edits.** The autoconfirmed threshold was going to
-be paid for by this step. With a handful of linkable items it cannot be, so
-either make the 50 elsewhere or skip QuickStatements and edit by hand —
-the item's own statements are a 15-minute job either way.
+**It will not get you to 50 edits.** Worth saying because the autoconfirmed
+threshold QuickStatements needs — 4 days old and 50 edits — looks like
+something this step would pay for, and with a handful of linkable items it
+cannot. Whether you still owe them is one command rather than an assumption:
+`python scripts/wikidata_apply.py --check-account`. If you do, either make the
+50 elsewhere or skip QuickStatements and edit by hand — the item's own
+statements are a 15-minute job either way.
 
 **Creating the missing items — optional, and read this first.**
 

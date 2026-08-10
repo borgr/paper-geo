@@ -39,9 +39,10 @@ import xml.etree.ElementTree as ET
 from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, ROOT, WD_IDENTIFIERS, get, get_json,  # noqa: E402
-                    load_config, name_match, norm_name, norm_title, org_name,
-                    paper_doi, plural, read_yaml, synth_bibtex, title_tokens)
+from common import (BUILD, DATA, ROOT, WD_IDENTIFIERS, declined, get,  # noqa: E402
+                    get_json, load_config, name_match, norm_name, norm_title,
+                    org_name, paper_doi, plural, read_yaml, synth_bibtex,
+                    title_tokens)
 
 TASKS = os.path.join(ROOT, "tasks")
 ATOM = {"a": "http://www.w3.org/2005/Atom"}
@@ -89,7 +90,7 @@ def orcid_public(orcid: str) -> dict:
     # *Source* line, and it is the difference between "the pipeline is running" and "I
     # clicked through a wizard and nothing was granted".
     sources = {}
-    for g in ((act.get("works") or {}).get("group") or []):
+    for gidx, g in enumerate(((act.get("works") or {}).get("group") or [])):
         # The group's external ids are what ORCID itself groups on, and they are the
         # only reliable key back to the corpus: a title changes between preprint and
         # proceedings ("Transition based Graph Decoder" -> "Enhancing the Transformer
@@ -98,13 +99,33 @@ def orcid_public(orcid: str) -> dict:
         # both then look like works we have never heard of. Identifiers do not drift.
         ids = [((e.get("external-id-type") or "").lower(), e.get("external-id-value") or "")
                for e in ((g.get("external-ids") or {}).get("external-id") or [])]
-        for i, s in enumerate(g.get("work-summary") or []):
+        for s in (g.get("work-summary") or []):
             src = ((s.get("source") or {}).get("source-name") or {}).get("value") or "(self)"
             sources[src] = sources.get(src, 0) + 1
-            if i == 0:
-                t = ((s.get("title") or {}).get("title") or {}).get("value")
-                if t:
-                    titles.append((t, s.get("put-code"), ids))
+            t = ((s.get("title") or {}).get("title") or {}).get("value")
+            if not t:
+                continue
+            # Every work in the group, not just the first, and each with the ids *it*
+            # carries rather than the group's union. Reading only `i == 0` was hiding a
+            # whole class of error: ORCID groups on shared identifiers, so a work that
+            # carries the wrong DOI lands inside another paper's group and its title is
+            # never looked at. The live case is put-code 222829712, "Resolving
+            # Interference (RI): Disentangling Models for Improved Model Merging" (2026),
+            # filed under TIES-Merging's `10.48550/ARXIV.2306.01708`. The group resolved
+            # to TIES, RI's own arXiv id `2603.13467` appears nowhere on the record as an
+            # identifier, and the audit therefore reported RI as *missing from ORCID*
+            # while it was sitting on the record the whole time. Own ids over group ids
+            # for the same reason: the union would resolve every work in a group to
+            # whichever paper the group is about, which is what made the error invisible.
+            own = [((e.get("external-id-type") or "").lower(), e.get("external-id-value") or "")
+                   for e in ((s.get("external-ids") or {}).get("external-id") or [])]
+            # The group index rides along because it is the difference between a real
+            # duplicate and a cosmetic one. Two works in *different* groups show on the
+            # profile as two works, and every service counting output counts both. Two
+            # works in the *same* group are one entry with "2 versions" -- ORCID already
+            # unified them, and nothing downstream double-counts. Same slug reached twice,
+            # two different severities, so they cannot share a report section.
+            titles.append((t, s.get("put-code"), own or ids, gidx))
     affs = {}
     for sect in ("employments", "educations"):
         rows = []
@@ -441,8 +462,13 @@ def hf_worklist_file(st: dict) -> str:
     quietly replace checked numbers with older ones, and the file gives no hint which
     it is holding.
     """
-    def rows(group):
-        return [f"- [ ] {p.get('citations') or 0:>4} cites — "
+    def rows(group, task=True):
+        # A checkbox is an instruction, so only the buckets you can act on get one. The
+        # pending bucket said "Nothing to do" in its own prose and then printed twelve
+        # checkboxes under it, which is the file arguing with itself -- and it put two
+        # items on the open-task count that no amount of work could close.
+        box = "- [ ] " if task else "- "
+        return [f"{box}{p.get('citations') or 0:>4} cites — "
                 f"<https://hf.co/papers/{p['arxiv']}> — "
                 f"{(p.get('title_display') or p['title'])[:70]}" for p in group]
 
@@ -470,8 +496,11 @@ def hf_worklist_file(st: dict) -> str:
     if n["pending"]:
         L += [f"## Pending — {n['pending']} claims in moderation", "",
               "Your user is linked but the status is not verified yet. Nothing to do;",
-              "listed only so a re-run does not look like the claim failed.", ""]
-        L += rows(st["pending"]) + [""]
+              "listed only so a re-run does not look like the claim failed.", "",
+              "If one of these is still here weeks from now the claim was probably",
+              "dropped rather than queued: open the page, and if your name is no longer",
+              "linked, claim it again.", ""]
+        L += rows(st["pending"], task=False) + [""]
     if n["blocked"]:
         L += [f"## Blocked upstream — {n['blocked']} pages you cannot claim", "",
               "No author string on these pages resembles your name, so there is no claim",
@@ -479,7 +508,9 @@ def hf_worklist_file(st: dict) -> str:
               "fix is on arXiv, not here — see `arxiv_name_fixes.md`. Once the arXiv",
               "metadata is corrected these move to the claim list on a later run.", ""]
         for p in st["blocked"]:
-            L.append(f"- [ ] <https://hf.co/papers/{p['arxiv']}> — "
+            # No checkbox for the same reason as `pending`: there is no control on the
+            # page to press, so the action is the arXiv one and lives in that file.
+            L.append(f"- <https://hf.co/papers/{p['arxiv']}> — "
                      f"{(p.get('title_display') or p['title'])[:60]}")
             L.append(f"      HF lists: {', '.join(p.get('hf_authors') or [])[:150]}")
         L.append("")
@@ -647,10 +678,18 @@ def paper_link_section(q: str, cov: dict, qs_path: str | None) -> list[str]:
           "name variant; it searches one string at a time. Do not press *create missing",
           "author item* while your item exists — that is how duplicate author items",
           "appear.", "",
-          "**It will not get you to 50 edits.** The autoconfirmed threshold was going to",
-          "be paid for by this step. With a handful of linkable items it cannot be, so",
-          "either make the 50 elsewhere or skip QuickStatements and edit by hand —",
-          "the item's own statements are a 15-minute job either way.", ""]
+          # Phrased so it cannot go stale. It used to read "the autoconfirmed threshold
+          # *was going to* be paid for by this step", which asserted a live state this
+          # generator cannot see: the account name lives in an env var or a gitignored
+          # file, so a run has no way to know whether the 50 are still owed -- and the
+          # paragraph went on describing a wait that had been over for days.
+          "**It will not get you to 50 edits.** Worth saying because the autoconfirmed",
+          "threshold QuickStatements needs — 4 days old and 50 edits — looks like",
+          "something this step would pay for, and with a handful of linkable items it",
+          "cannot. Whether you still owe them is one command rather than an assumption:",
+          "`python scripts/wikidata_apply.py --check-account`. If you do, either make the",
+          "50 elsewhere or skip QuickStatements and edit by hand — the item's own",
+          "statements are a 15-minute job either way.", ""]
     if qs_path:
         n_new = sum(1 for x in open(qs_path) if x.strip() == "CREATE")
         L += ["**Creating the missing items — optional, and read this first.**", "",
@@ -694,8 +733,15 @@ def orcid_strays(orc: dict, papers) -> list[tuple]:
     (Semantic Scholar, OpenAlex, publisher lookups) reads it as your claim.
 
     Each stray is tagged `confirmed` when the collector also rejected it on author
-    name, and `unknown` otherwise -- a title we simply do not have, which is as likely
-    to be a real paper missing from the bibliography as an error.
+    name, `declined` when `data/declines.yaml` says its absence from the bibliography
+    was a decision, and `unknown` otherwise -- a title we simply do not have, which is
+    as likely to be a real paper missing from the bibliography as an error.
+
+    The `declined` tag is not a shade of `unknown`; it is its opposite. "Check before
+    deleting" over a work whose absence *is* the decision asks the reader to redo the
+    thinking that produced the decline, and the live case is a competition report the
+    author ruled out on purpose -- a legitimate ORCID entry that this corpus will never
+    hold, so nothing but a recorded decision can ever stop the question coming back.
 
     Matching is by identifier first and title only as a fallback, because titles drift
     and identifiers do not. Every "unknown" this check ever reported turned out to be
@@ -712,7 +758,23 @@ def orcid_strays(orc: dict, papers) -> list[tuple]:
     author's own a work it could not place. The third pass compares content-word sets
     (`title_tokens`), which is exactly and only insensitive to arrangement.
 
-    Returns `(strays, duplicate_groups, matched_slugs)`.
+    Returns `(strays, duplicate_groups, matched_slugs, misfiled, merged_versions)`.
+
+    `duplicate_groups` and `merged_versions` are both "this paper appears more than once"
+    and they are split because only one of them is a problem. Two works in *different*
+    ORCID groups show on the profile as two works and every service counting output counts
+    both; two works in the *same* group are one profile entry with "N versions", which
+    ORCID has already unified and nothing downstream double-counts.
+
+    `misfiled` is the class that hid behind all of this: a work whose identifier belongs
+    to a *different* paper. ORCID groups on shared identifiers, so such a work is filed
+    inside another paper's group, and reading one title per group meant its own title was
+    never compared to anything. The absorbed paper then reports as missing from a record
+    that has held it all along — and the fix the report offered, adding it, would have
+    produced a second copy. It is detected by disagreement: the identifier resolves to
+    one corpus paper while the title matches another *exactly*. Nothing looser counts,
+    because looser disagreement is the ordinary preprint/proceedings drift that
+    identifier-first matching exists to survive.
 
     `duplicate_groups` is what identifier matching exposes on the way: two ORCID work
     groups resolving to one corpus paper, which is the same paper listed twice. ORCID
@@ -748,7 +810,7 @@ def orcid_strays(orc: dict, papers) -> list[tuple]:
     except (OSError, ValueError):
         pass
 
-    def resolve(title, ids):
+    def by_ids(ids):
         for typ, val in ids:
             v = val.lower()
             if typ == "doi":
@@ -759,33 +821,68 @@ def orcid_strays(orc: dict, papers) -> list[tuple]:
                     return by_doi[v]
             elif typ == "arxiv" and v.lstrip("arxiv:") in by_arxiv:
                 return by_arxiv[v.lstrip("arxiv:")]
+        return None
+
+    def by_titles(title):
+        """The corpus paper this title names, and how sure the match is.
+
+        The confidence matters to one caller only, and only for the exact case: an
+        identifier disagreeing with an *exact* title is a mistyped identifier, while an
+        identifier disagreeing with a looser match is just title drift.
+        """
         n = norm_title(title)
         if n in by_title:
-            return by_title[n]
-        # Last resort, and only in the containment direction: an ORCID title that is a
-        # prefix or suffix of a corpus title is a dropped subtitle, not a new paper.
-        # Guarded by length so a short title cannot swallow a long unrelated one.
+            return by_title[n], "exact"
+        # Only in the containment direction: an ORCID title that is a prefix or suffix
+        # of a corpus title is a dropped subtitle, not a new paper. Guarded by length so
+        # a short title cannot swallow a long unrelated one.
         if len(n) >= 25:
             for cn, p in by_title.items():
                 if n in cn or cn in n:
-                    return p
-        # Rearranged, which the two checks above both read as a different paper: the
-        # string is not equal and, once the words move across the colon, neither title
-        # contains the other. Live case, and the one that motivated this -- ORCID holds
-        # "Tie the KnOTS: Model Merging with SVD" for the corpus's "Model merging with
-        # SVD to tie the Knots", and the audit called it a work it could not place.
-        return by_tokens.get(title_tokens(title))
+                    return p, "loose"
+        # Rearranged, which both checks above read as a different paper: the string is
+        # not equal and, once the words move across the colon, neither title contains
+        # the other. Live case, and the one that motivated this -- ORCID holds "Tie the
+        # KnOTS: Model Merging with SVD" for the corpus's "Model merging with SVD to tie
+        # the Knots", and the audit called it a work it could not place.
+        p = by_tokens.get(title_tokens(title))
+        return (p, "loose") if p else (None, None)
 
-    out, seen = [], {}
-    for title, put, ids in orc.get("work_titles") or []:
-        hit = resolve(title, ids)
-        if hit is None:
-            n = norm_title(title)
-            out.append((title, put, "confirmed" if n in rejected else "unknown"))
+    out, seen, misfiled = [], {}, []
+    for title, put, ids, gidx in orc.get("work_titles") or []:
+        hid = by_ids(ids)
+        tid, how = by_titles(title)
+        # The identifier normally wins -- titles drift between preprint and proceedings
+        # and identifiers do not. The exception is the whole reason this branch exists: an
+        # identifier pointing at paper A while the title is character-for-character paper
+        # B is not drift, it is the wrong DOI typed into the work. Trusting the id there
+        # silently merges two different papers, and the *absorbed* one then reports as
+        # missing from a record that holds it. Only `exact` overrides, because a loose
+        # match is exactly the drift the identifier is there to survive.
+        if hid is not None and tid is not None and hid["slug"] != tid["slug"]:
+            if how == "exact":
+                misfiled.append((title, put, ids, tid, hid))
+                hit = tid
+            else:
+                hit = hid
         else:
-            seen.setdefault(hit["slug"], []).append((title, put, ids))
-    dups = {slug: v for slug, v in seen.items() if len(v) > 1}
-    return out, dups, set(seen)
+            hit = hid or tid
+        if hit is None:
+            # `confirmed` outranks `declined`: "no form of your name is on this paper"
+            # is a stronger statement than "not going in the bibliography", and it is
+            # the one that ends in a deletion.
+            out.append((title, put,
+                        "confirmed" if norm_title(title) in rejected
+                        else "declined" if declined(title) else "unknown"))
+        else:
+            seen.setdefault(hit["slug"], []).append((title, put, ids, gidx))
+    # Split on group membership, not on count. `dups` is the profile actually showing a
+    # paper twice; `versions` is one entry ORCID has already folded, which is worth a
+    # mention and is not worth a **fix**.
+    dups = {s: v for s, v in seen.items() if len({g for *_r, g in v}) > 1}
+    versions = {s: v for s, v in seen.items()
+                if s not in dups and len(v) > 1}
+    return out, dups, set(seen), misfiled, versions
 
 
 def orcid_missing_files(missing: list[dict], orcid: str) -> list[str]:
@@ -841,6 +938,7 @@ def orcid_remove_file(strays: list[tuple], dups: dict, papers, cfg) -> str:
     """tasks/orcid_remove.md — works to delete from the ORCID record, with put-codes."""
     conf = [s for s in strays if s[2] == "confirmed"]
     unk = [s for s in strays if s[2] == "unknown"]
+    dec = [s for s in strays if s[2] == "declined"]
     L = ["# ORCID: works to remove", "",
          "Works on the record that are not in `data/papers.yaml`. Regenerated live by",
          "`python scripts/audit_identity.py`; the file is empty when the record is clean.",
@@ -880,6 +978,21 @@ def orcid_remove_file(strays: list[tuple], dups: dict, papers, cfg) -> str:
               "longer lands here. A work reaching this section carries *no* identifier ORCID",
               "could group on — which is also why nothing else can place it.", ""]
         L += [f"- {t}  (`{p}`)" for t, p, _ in unk]
+        L += [""]
+    if dec:
+        # Plain bullets and its own heading, below the section that asks a question. These
+        # are not candidates for anything: they are on ORCID legitimately and absent from
+        # the corpus on purpose, so the only honest instruction is "nothing".
+        L += [f"## On ORCID, deliberately not in the bibliography ({len(dec)})", "",
+              "**Nothing to do.** Each of these is a work you decided not to add to the",
+              "source bibliography, so it can never match a corpus paper and would sit under",
+              "*check before deleting* forever -- asking you to redo the thinking that",
+              "produced the decision. The decision itself is the line quoted after each one,",
+              "in [`data/declines.yaml`](../data/declines.yaml); delete that line and the work",
+              "moves back up to the section above.", "",
+              "Leave them on ORCID. A work being outside a CV bibliography says nothing about",
+              "whether it is yours, and these are.", ""]
+        L += [f"- {t}  (`{p}`) — declined as `{declined(t)}`" for t, p, _ in dec]
         L += [""]
     if dups:
         by_slug = {p["slug"]: p for p in papers}
@@ -931,7 +1044,7 @@ def orcid_remove_file(strays: list[tuple], dups: dict, papers, cfg) -> str:
                 # No arXiv DOI, or more than two entries: say so rather than guess which
                 # to keep. Either way the fix is the same shape, one identifier.
                 L.append(f"| {t} | " + " | ".join(f"`{p}` — {ti[:28]} ({doi_of(i) or 'no DOI'})"
-                                                  for ti, p, i in entries)
+                                                  for ti, p, i, _g in entries)
                          + " | *pick the entry with the venue; add the other's DOI* |")
         L += ["", "If you would rather have one entry than a grouped pair, delete the",
               "**folds in** one instead — *Works* → the entry → **⋮ / Actions** →",
@@ -1189,7 +1302,7 @@ def main() -> None:
     want_kw = [k for k in (ident.get("keywords") or [])
                if k.lower() not in {k2.lower() for k2 in orc["keywords"]}]
 
-    o_stray, o_dups, o_have = orcid_strays(orc, papers)
+    o_stray, o_dups, o_have, o_misfiled, o_vers = orcid_strays(orc, papers)
     o_conf = [s for s in o_stray if s[2] == "confirmed"]
     o_unk = [s for s in o_stray if s[2] == "unknown"]
     # Papers of yours the record does not hold. Sorted by citations, because the cost of
@@ -1241,6 +1354,12 @@ def main() -> None:
          # check behind it only ever asked whether the count was above zero.
          f"| ORCID holds your papers | {len(papers) - len(o_missing)} of {len(papers)} | "
          f"{status(not o_missing)} |",
+         # Above the two rows it causes, because it is the row to act on first: a wrong
+         # identifier inflates *missing* and *listed twice* at the same time, and fixing
+         # either of those in the order the page reads them makes the record worse.
+         f"| ORCID identifiers point at the right paper | "
+         f"{orc['works'] - len(o_misfiled)} of {orc['works']} works | "
+         f"{status(not o_misfiled)} |",
          f"| ORCID canonical URL | {'present' if has_canon else 'absent'} | {status(has_canon)} |",
          f"| ORCID name variants | {len(orc['other_names'])} listed | {status(not missing_variants)} |",
          f"| ORCID keywords | {len(orc['keywords'])} of "
@@ -1300,6 +1419,11 @@ def main() -> None:
             L.append(f"| ORCID works we cannot place | {len(o_unk)} | **check** |")
     if o_dups:
         L.append(f"| ORCID works listed twice | {len(o_dups)} | **fix** |")
+    if o_vers:
+        # Not **fix**: ORCID shows these as one entry with N versions, so nothing
+        # downstream double-counts them. Listed only so this table and the profile page
+        # agree about how many works are there, which is the one reason to look.
+        L.append(f"| ORCID works ORCID already merged | {len(o_vers)} | optional |")
     L += [f"| Semantic Scholar records | {len(ids['semantic_scholar'])} | "
           f"{status(len(ids['semantic_scholar']) == 1)} |", ""]
 
@@ -1513,6 +1637,43 @@ def main() -> None:
               "it from ORCID loses a real work. Anything that is not a paper (a workshop",
               "listing, a proceedings volume) is a deletion. Titles and put-codes:",
               "[orcid_remove.md](orcid_remove.md).", ""]
+    if o_misfiled:
+        L += [f"## {plural(len(o_misfiled), 'work on your ORCID carries', 'works on your ORCID carry')} "
+              f"another paper's identifier", "",
+              "**Fix these before the two sections below**, because this is what puts entries",
+              "in them. A work whose DOI belongs to a different paper gets filed by ORCID into",
+              "that paper's group — ORCID groups on shared identifiers and has no other way to",
+              "know. The real paper then has no identifier anywhere on the record, so it reads",
+              "as *missing from ORCID*, and the group it was absorbed into reads as *listed",
+              "twice*. Both of those are wrong, and both suggested fixes make it worse: adding",
+              "the paper creates a second copy, merging the group destroys a distinct work.",
+              "",
+              "Not a title guess. Each of these has an identifier resolving to one of your",
+              "papers and a title matching another one character-for-character.", ""]
+        for title, put, ids, right, wrong in o_misfiled:
+            want = paper_doi(right) or "— the paper has no DOI to set —"
+            full = right.get("title_display") or right["title"]
+            other = (wrong.get("title_display") or wrong["title"])[:52]
+            # The DOI the work actually carries, resolved -- not the other paper's
+            # canonical DOI, which is a different string and would send you somewhere
+            # that does not demonstrate the problem. The point of this link is that
+            # following the identifier on your own record lands on someone else's paper.
+            carried = next((v for t, v in ids if t == "doi"), None)
+            has = ", ".join(f"{t}:{v}" for t, v in ids) or "— none —"
+            blame = f"[{other}](https://doi.org/{carried})" if carried else other
+            L += [f"- [ ] **{full[:70]}**"]
+            # Compared untruncated, printed truncated: comparing the 70-character display
+            # form against the full ORCID title made every long title look like a mismatch
+            # and printed the same words twice.
+            if norm_title(title) != norm_title(full):
+                L.append(f"      - on ORCID it is titled {title[:70]!r}")
+            L += [f"      - put-code `{put}`",
+                  f"      - carries `{has}` — that identifier is {blame}",
+                  f"      - should carry `{want}`",
+                  "      - fix: <https://orcid.org/my-orcid#works> → find that work → the",
+                  "        pencil icon → replace the DOI under *Identifiers* → *Save changes*.",
+                  "        Edit rather than delete-and-re-add, so the put-code keeps its",
+                  "        citations and its source attribution.", ""]
     if o_missing:
         L += [f"## {plural(len(o_missing), 'of your papers is', 'of your papers are')} "
               f"missing from ORCID", "",
@@ -1609,6 +1770,9 @@ def main() -> None:
                   "orcid_strays_confirmed": [t for t, _p, _k in o_conf],
                   "orcid_strays_unknown": [t for t, _p, _k in o_unk],
                   "orcid_duplicate_groups": sorted(o_dups),
+                  "orcid_misfiled_ids": [{"put": put, "should_be": right["slug"],
+                                          "carries": [f"{t}:{v}" for t, v in ids]}
+                                         for _t, put, ids, right, _w in o_misfiled],
                   "orcid_missing_papers": [p["slug"] for p in o_missing],
                   "orcid_autoupdate_works": sum(auto_src.values()),
                   "orcid_missing_employment": missing_empl,

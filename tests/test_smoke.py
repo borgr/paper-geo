@@ -726,5 +726,244 @@ class TestARejectedTopicStaysRejected(unittest.TestCase):
                              f"declined, so the next --ingest will publish them")
 
 
+class TestAWrongIdentifierIsNotAMissingPaper(unittest.TestCase):
+    """The ORCID failure that made both of its own symptoms unfixable.
+
+    ORCID groups works that share an external identifier, and the audit used to read one
+    title per group. So a work carrying *another paper's* DOI was filed inside that
+    paper's group and its own title was never compared to anything. Live case: put-code
+    222829712, "Resolving Interference (RI)" (2026), carrying TIES-Merging's
+    `10.48550/ARXIV.2306.01708`. The record held RI the whole time, and the audit
+    reported it as **missing from ORCID** while reporting the TIES group as **listed
+    twice** -- and both offered fixes made the record worse, since adding RI creates a
+    second copy and merging the group destroys a distinct paper.
+
+    Two properties are pinned here because each was broken on its own:
+    reading every work in a group, and separating a real duplicate from one ORCID has
+    already folded. Fixing the first broke the second -- "listed twice" went from 1 to 6
+    -- because works that share a group display as a single entry with "N versions" and
+    nothing downstream double-counts them.
+    """
+
+    CORPUS = [{"slug": "ties", "title": "TIES-Merging: Resolving Interference When "
+                                        "Merging Models",
+               "doi": "10.52202/075280-0310", "arxiv": "2306.01708"},
+              {"slug": "ri", "title": "Resolving Interference (RI): Disentangling "
+                                      "Models for Improved Model Merging",
+               "doi": "10.48550/ARXIV.2603.13467", "arxiv": "2603.13467"}]
+
+    def strays(self, work_titles):
+        from audit_identity import orcid_strays
+        return orcid_strays({"work_titles": work_titles, "works": len(work_titles)},
+                            self.CORPUS)
+
+    def test_the_live_case_is_reported_as_misfiled_not_as_missing(self):
+        # Both works in ORCID group 0, because that is what sharing an identifier does.
+        _stray, dups, have, misfiled, _vers = self.strays([
+            ("TIES-Merging: Resolving Interference When Merging Models", "1",
+             [("doi", "10.48550/arxiv.2306.01708")], 0),
+            ("Resolving Interference (RI): Disentangling Models for Improved Model "
+             "Merging", "222829712", [("doi", "10.48550/ARXIV.2306.01708")], 0)])
+        self.assertEqual({"ties", "ri"}, have,
+                         "RI is on the record, so it must not report as missing")
+        self.assertEqual(1, len(misfiled))
+        title, put, _ids, right, wrong = misfiled[0]
+        self.assertEqual("222829712", put)
+        self.assertEqual("ri", right["slug"], "the title says which paper it really is")
+        self.assertEqual("ties", wrong["slug"], "the identifier says whose DOI it holds")
+        self.assertIn("Resolving Interference (RI)", title)
+        self.assertEqual({}, dups, "one group is not the profile showing a paper twice")
+
+    def test_an_identifier_still_beats_a_loose_title_match(self):
+        """Identifier-first is the rule; the exact-title conflict is the one exception.
+
+        A dropped subtitle or a preprint/proceedings retitle is the ordinary drift that
+        matching on identifiers exists to survive, so it must not be read as a misfiling.
+        """
+        _s, _d, have, misfiled, _v = self.strays([
+            ("TIES-Merging: Resolving Interference", "1",
+             [("doi", "10.52202/075280-0310")], 0)])
+        self.assertEqual([], misfiled, "a shortened title is drift, not a wrong DOI")
+        self.assertEqual({"ties"}, have)
+
+    def test_two_groups_are_a_duplicate_and_one_group_is_not(self):
+        same = self.strays([("TIES-Merging: Resolving Interference When Merging Models",
+                             "1", [("doi", "10.52202/075280-0310")], 0),
+                            ("TIES-Merging: Resolving Interference When Merging Models",
+                             "2", [("arxiv", "2306.01708")], 0)])
+        self.assertEqual({}, same[1], "ORCID already folded these into one entry")
+        self.assertEqual({"ties"}, set(same[4]), "worth a mention, not a fix")
+
+        split = self.strays([("TIES-Merging: Resolving Interference When Merging Models",
+                              "1", [("doi", "10.52202/075280-0310")], 0),
+                             ("TIES-Merging: Resolving Interference When Merging Models",
+                              "2", [("arxiv", "2306.01708")], 1)])
+        self.assertEqual({"ties"}, set(split[1]),
+                         "two groups show as two works, so every service counts both")
+        self.assertEqual({}, split[4])
+
+
+class TestDecliningTheLastItemTakesTheSection(unittest.TestCase):
+    """A heading with instructions and no items reads as an open task.
+
+    Live: all five "not on your Scholar profile" papers turned out to be Scholar merges
+    and were declined, which left the heading, four paragraphs telling the reader to go
+    and check the profile, and a citation total standing over an empty list -- in a file
+    whose first line promises open items only.
+
+    The other half is the guard: a section whose body is prose and a pointer legitimately
+    has nothing to count, and dropping those would take most of the page.
+    """
+
+    def declined(self, rules, lines):
+        """`apply_declines` over a rules file written here, not `data/declines.yaml`.
+
+        Reading the live file made these tests assertions about which papers Leshem has
+        decided about, which is not what they are checking -- and the first version
+        failed exactly that way, on a fixture bullet that no live pattern matched.
+        """
+        import update
+        with tempfile.TemporaryDirectory() as d:
+            with open(os.path.join(d, "declines.yaml"), "w", encoding="utf-8") as fh:
+                fh.write(rules)
+            keep, update.DATA = update.DATA, d
+            try:
+                return update.apply_declines(lines)
+            finally:
+                update.DATA = keep
+
+    def test_a_section_emptied_by_declines_is_removed(self):
+        lines = self.declined(
+            'items: ["2306.01708"]\n',
+            ["## Kept", "", "prose that is not a list", "",
+             "### Emptied", "", "why you should care", "",
+             "- [ ] 2306.01708 -> NeurIPS 2023", "",
+             "### Survives", "", "- [ ] 9999.99999 -> somewhere", ""])
+        # Body only. What was removed is named in the report below the rule, and has to
+        # be: hiding a section silently is the failure this whole mechanism avoids.
+        body, report = "\n".join(lines).split("---", 1)
+        self.assertNotIn("Emptied", body)
+        self.assertNotIn("why you should care", body)
+        self.assertIn("Emptied — every item declined", report)
+        self.assertIn("Kept", body)
+        self.assertIn("prose that is not a list", body)
+        self.assertIn("Survives", body)
+
+    def test_a_heading_that_counts_its_list_is_recounted(self):
+        """A count in a heading is a promise about the list under it.
+
+        Live: two of the three papers missing from the bibliography were declined, and
+        the heading went on reading "3 papers absent from the source bibliography" over a
+        single bullet. The filter runs after the emitters, so only the filter can fix it
+        -- and the outer heading dropped its total for exactly this reason, which a
+        subsection's cannot do: the number is what tells you the size of the job.
+        """
+        lines = self.declined(
+            'items: ["bbbb", "cccc"]\n',
+            ["## Coverage", "",
+             "### 3 papers absent from the source bibliography", "",
+             "- [ ] 1 cite — aaaa", "- [ ] 2 cites — bbbb", "- [ ] 3 cites — cccc", "",
+             "### 2 works on your ORCID carry another paper's identifier", "",
+             "- [ ] put-code 1", "- [ ] put-code 2", ""])
+        body = "\n".join(lines).split("---", 1)[0]
+        self.assertIn("### 1 paper absent from the source bibliography", body)
+        self.assertNotIn("3 papers absent", body)
+        # Untouched: nothing was declined under it, so its count was never wrong.
+        self.assertIn("### 2 works on your ORCID", body)
+
+    def test_a_number_that_is_not_the_count_is_left_alone(self):
+        """The guard on the recount, which is the half that can do damage.
+
+        Rewriting a heading that merely opens with a digit turns a correct sentence into
+        a wrong one, so the rule is narrow: the number has to have been the length of the
+        list before the filter ran.
+        """
+        lines = self.declined(
+            'items: ["bbbb"]\n',
+            ["## H", "", "### 7 of your repos are unlabelled", "",
+             "- [ ] aaaa", "- [ ] bbbb", ""])
+        self.assertIn("### 7 of your repos are unlabelled", "\n".join(lines))
+
+    def test_a_pattern_that_matches_nothing_says_so(self):
+        """The mirror of the above, and the bug that produced it.
+
+        Declines match the rendered text, which is what makes them exact and also what
+        makes them brittle: titles are truncated in the worklist, so a pattern aimed at
+        the tail of one silently matches nothing. Four of the five Scholar declines took
+        and the fifth did not, and nothing said which.
+        """
+        lines = self.declined(
+            'items: ["2306.01708", "Call for Participation"]\n',
+            ["## H", "", "- [ ] 2306.01708 -> NeurIPS", ""])
+        tail = "\n".join(lines).split("Matching nothing this run")
+        self.assertEqual(len(tail), 2, "the dead pattern was not reported at all")
+        self.assertIn("`Call for Participation`", tail[1])
+        self.assertNotIn("`2306.01708`", tail[1],
+                         "a pattern that did its job must not be listed as dead")
+
+
+class TestADeclineReachesThePayloadsToo(unittest.TestCase):
+    """A decision recorded once has to stop the question everywhere it is asked.
+
+    `apply_declines` filters `WORKLIST.md` after rendering, which for a while was the
+    whole mechanism -- so the summary stopped asking and the payload under it did not.
+    Live: "LLM Merging" was ruled out of the bibliography on purpose, and
+    `tasks/orcid_remove.md` went on printing it under *check before deleting*, which
+    reads as "nobody has looked at this yet".
+    """
+
+    def test_the_generators_read_the_same_patterns_the_worklist_does(self):
+        from common import DATA, declined, read_yaml
+        items = (read_yaml(os.path.join(DATA, "declines.yaml")) or {}).get("items") or []
+        if not items:
+            self.skipTest("nothing declined, so there is nothing to reach")
+        for pat in items:
+            self.assertEqual(declined(f"prefix {pat} suffix"), pat)
+        self.assertIsNone(declined("a title nobody has ruled out"))
+        self.assertIsNone(declined(None), "an absent title must not raise")
+
+    def test_matching_survives_a_change_of_case(self):
+        """The trap this was: `items:` was the one case-sensitive matcher in the repo.
+
+        The patterns are titles typed from whichever surface the decision was made on,
+        and Scholar title-cases what BibTeX does not -- so `"Llm merging"`, copied from
+        the Scholar row, silently missed ORCID's `"LLM Merging"`.
+        """
+        from common import declined
+        pat = "Llm merging"
+        if declined(f"x {pat} y") != pat:
+            self.skipTest(f"{pat!r} is no longer declined")
+        self.assertEqual(declined("LLM Merging: Building LLMs Efficiently"), pat)
+
+
+class TestNoBatchCreatesASecondAuthorItem(unittest.TestCase):
+    """`tasks/wikidata.qs` opened with an unconditional `CREATE`.
+
+    Once the author item existed -- the normal state, recorded in `config.yaml` as
+    `ids.wikidata` -- running the file that the top of `WORKLIST.md` pointed at would
+    have created a *second* Leshem Choshen on Wikidata. Duplicate items need a merge
+    request rather than an edit to undo, and QuickStatements cannot warn about it because
+    from its side a second create is a valid request.
+
+    Addressed to the QID instead, the same statements are a safe top-up: QuickStatements
+    skips a statement that is already present.
+    """
+
+    def test_the_batch_targets_the_existing_item(self):
+        from common import load_config
+        qid = (load_config().get("ids") or {}).get("wikidata")
+        if not qid:
+            self.skipTest("no author item recorded yet, so CREATE is correct")
+        with open(os.path.join(ROOT, "tasks", "wikidata.qs"), encoding="utf-8") as fh:
+            body = fh.read()
+        self.assertNotIn("CREATE", body, "this would make a second person on Wikidata")
+        self.assertNotIn("LAST\t", body, "LAST addresses the last created item")
+        self.assertIn(f"{qid}\t", body)
+        # Len/Den overwrite rather than add, so a top-up batch must not carry them: it
+        # would silently revert a label or description someone improved by hand.
+        for cmd in ("\tLen\t", "\tDen\t"):
+            self.assertNotIn(cmd, body, f"{cmd.strip()} overwrites on an existing item")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

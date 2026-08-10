@@ -14,7 +14,7 @@ Scholar, OpenAlex, Crossref and publisher submission systems read it as your
 assertion of authorship, and a claim on a famous paper is the kind of error
 someone eventually notices and reads uncharitably.
 
-## On ORCID, unknown to us (3)
+## On ORCID, unknown to us (2)
 
 Not necessarily wrong — a paper missing from the bibliography looks exactly
 like this. **Check before deleting.** If it is yours, the fix is upstream in
@@ -28,7 +28,20 @@ could group on — which is also why nothing else can place it.
 
 - High-dimensional Learning Dynamics 2024: The Emergence of Structure and Reasoning Workshop at ICML24  (`222732427`)
 - Insights from the first BabyLM Challenge: Training sample-efficient language models on a developmentally plausible corpus  (`222732476`)
-- LLM Merging: Building LLMs Efficiently through Merging  (`222732439`)
+
+## On ORCID, deliberately not in the bibliography (1)
+
+**Nothing to do.** Each of these is a work you decided not to add to the
+source bibliography, so it can never match a corpus paper and would sit under
+*check before deleting* forever -- asking you to redo the thinking that
+produced the decision. The decision itself is the line quoted after each one,
+in [`data/declines.yaml`](../data/declines.yaml); delete that line and the work
+moves back up to the section above.
+
+Leave them on ORCID. A work being outside a CV bibliography says nothing about
+whether it is yours, and these are.
+
+- LLM Merging: Building LLMs Efficiently through Merging  (`222732439`) — declined as `Llm merging`
 
 ## Listed twice (1 paper, 2 entries)
 

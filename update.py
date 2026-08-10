@@ -263,6 +263,13 @@ def apply_declines(lines: list[str]) -> list[str]:
     What was hidden is reported at the bottom of the file rather than silently
     dropped: a decline is a decision, and a decision that leaves no trace is
     indistinguishable from a bug that ate a task.
+
+    Patterns that matched nothing are reported for the mirror-image reason. Matching the
+    rendered text is what makes a decline exact, and it is also what makes it brittle:
+    the emitters truncate a long title, so a pattern aimed at the tail of one silently
+    does nothing and the item comes back every run looking un-decided. A pattern can also
+    go quiet because the work got done, which is worth knowing too -- either way the
+    honest report is "this line is no longer doing anything", not silence.
     """
     d = read_yaml(os.path.join(DATA, "declines.yaml")) or {}
     secs = [s for s in (d.get("sections") or []) if s]
@@ -271,6 +278,14 @@ def apply_declines(lines: list[str]) -> list[str]:
     if not (secs or items or defs):
         return lines
     out, dropped_secs, dropped_items = [], [], 0
+    used: set[str] = set()            # patterns that actually removed or moved something
+    here = None                       # heading the current line sits under
+    emptied: list[str] = []           # headings that lost an item to `items:`
+    # Per heading: bullets it had before filtering, and bullets taken off it. Enough to
+    # recount a heading that counts its own list, and enough to know not to -- a number
+    # that did not match the list in the first place is not this filter's to rewrite.
+    seen_n: dict[str, int] = {}
+    cut_n: dict[str, int] = {}
     held: list[str] = []              # deferred sections, in the order they appeared
     held_secs: list[str] = []
     hold_at = 0                       # heading depth currently being held, 0 = none
@@ -290,10 +305,13 @@ def apply_declines(lines: list[str]) -> list[str]:
             hit = next((s for s in secs if s.lower() in ln.lower()), None)
             dfr = next((x for x in defs if x["match"].lower() in ln.lower()), None)
             skip_at, hold_at = (depth if hit else 0), (depth if dfr else 0)
+            here = ln
             if hit:
+                used.add(hit)
                 dropped_secs.append(ln.lstrip("# ").strip())
                 continue
             if dfr:
+                used.add(dfr["match"])
                 # Demoted one level: it sits under the "Deferred" heading now, and a
                 # `##` inside a `##` would read as a sibling of the work that is open.
                 held_secs.append(ln.lstrip("# ").strip())
@@ -305,10 +323,67 @@ def apply_declines(lines: list[str]) -> list[str]:
         if hold_at:
             held.append(ln)
             continue
-        if ln.lstrip().startswith("- ") and any(i in ln for i in items):
-            dropped_items += 1
-            continue
+        if ln.lstrip().startswith("- "):
+            if here:
+                seen_n[here] = seen_n.get(here, 0) + 1
+            # Case-insensitively, like the two heading matchers above and like
+            # `common.declined`, which reads the same patterns for the `tasks/` files.
+            # It used to be the one case-sensitive matcher in the file, so `"Llm
+            # merging"` -- typed from the Scholar row, which is where the decision was
+            # made -- silently missed `"LLM Merging"` everywhere else.
+            hit_i = next((i for i in items if i.lower() in ln.lower()), None)
+            if hit_i:
+                used.add(hit_i)
+                dropped_items += 1
+                if here:
+                    cut_n[here] = cut_n.get(here, 0) + 1
+                    if here not in emptied:
+                        emptied.append(here)
+                continue
         out.append(ln)
+
+    # A section that lost its last item goes with it. Declining all five "not on your
+    # Scholar profile" papers left the heading, four paragraphs of instructions and a
+    # citation total standing over an empty list -- which reads as an open task, and is
+    # the one thing a file of open items must not contain. Only for sections that *had*
+    # items: a heading whose body is prose and a pointer is a section with nothing to
+    # count, and dropping those would take most of the page.
+    for head in emptied:
+        try:
+            i = out.index(head)
+        except ValueError:
+            continue                  # its own `sections:` entry removed it already
+        depth = len(head) - len(head.lstrip("#"))
+        j = next((k for k in range(i + 1, len(out))
+                  if re.match(r"##+ \S", out[k])
+                  and len(out[k]) - len(out[k].lstrip("#")) <= depth), len(out))
+        if not any(l.lstrip().startswith("- ") for l in out[i + 1:j]):
+            dropped_secs.append(head.lstrip("# ").strip() + " — every item declined")
+            del out[i:j]
+
+    # A heading that counts its own list ("3 papers absent from the source
+    # bibliography") over a list of one. The outer heading dropped its total for this
+    # reason -- see `scholar_gaps` -- but a subsection's count is the emitter's `pl(n)`
+    # and cannot be dropped: it is what tells you the size of the job before you read
+    # it. So recount it here, where what survived is known. Live case: two of the three
+    # missing bibliography entries are declined, and the heading went on saying three.
+    #
+    # Only when the number *was* the length of the list. A heading that happens to open
+    # with a digit meaning something else ("2 of your 5 repos") is not a count of the
+    # bullets under it, and rewriting it would turn a correct sentence into a wrong one.
+    for head, cut in cut_n.items():
+        m = re.match(r"(#+ )(\d+) ([A-Za-z]+)(?= |$)", head)
+        if not m or int(m.group(2)) != seen_n.get(head):
+            continue
+        try:
+            i = out.index(head)
+        except ValueError:
+            continue                  # the section went with its last item
+        n = seen_n[head] - cut
+        # The noun the emitters put after the count is `pl()`'s, so it is regular and a
+        # trailing `s` is the plural rather than part of the word.
+        stem = m.group(3)[:-1] if m.group(3).endswith("s") else m.group(3)
+        out[i] = f"{m.group(1)}{n} {stem}{'s' * (n != 1)}{head[m.end():]}"
 
     # A heading that counts its own subsections ("Identity surfaces (4 open)") now
     # counts one that is no longer there, and a header disagreeing with the list under
@@ -342,8 +417,16 @@ def apply_declines(lines: list[str]) -> list[str]:
         note.append(f"hidden: {' and '.join(hid)}")
     if held_secs:
         note.append(f"deferred to the bottom: {'; '.join(held_secs)}")
-    return out + ["---", "", f"*Per `data/declines.yaml` — {'. '.join(note)}. "
-                             f"Delete a line there to have it asked normally again.*", ""]
+    tail = [f"*Per `data/declines.yaml` — {'. '.join(note) or 'nothing hidden'}. "
+            f"Delete a line there to have it asked normally again.*"]
+    dead = [p for p in secs + items + [x["match"] for x in defs] if p not in used]
+    if dead:
+        tail += ["", "*Matching nothing this run, so doing nothing: "
+                 + ", ".join(f"`{p}`" for p in dead)
+                 + ". Either the work got done, or the pattern misses its line — titles"
+                   " are truncated in this file, so a pattern aimed past the cut never"
+                   " matches. Check before trusting it as declined.*"]
+    return out + ["---", "", *tail, ""]
 
 
 def tidy(lines: list[str]) -> list[str]:
@@ -364,7 +447,7 @@ def tidy(lines: list[str]) -> list[str]:
     return out
 
 
-def scholar_gaps(sc: dict) -> list[str]:
+def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
     """The worklist section for `build/scholar_diff.json`, or nothing.
 
     First on the page when it is there, ahead of every fix to a paper we do have.
@@ -401,8 +484,13 @@ def scholar_gaps(sc: dict) -> list[str]:
     def cites(n) -> str:
         return f"{n or 0} cite{'s' * ((n or 0) != 1)}"
 
-    L = [f"## Coverage: Google Scholar and the corpus disagree on "
-         f"{pl(len(gate) + len(miss) + len(fix) + len(call) + len(dup) + len(gone))}",
+    # No total in the heading. It summed six buckets, and `declines.yaml` filters this
+    # file *after* it is built -- so declining a whole bucket left a heading counting
+    # papers that were no longer under it, with no way for the post-filter to recount an
+    # ad-hoc phrasing. The two numbers in the body are measurements of Scholar rather
+    # than of this list, so nothing downstream can make them wrong, and each subsection
+    # already carries its own count.
+    L = ["## Coverage: Google Scholar and the corpus disagree",
          "",
          f"Scholar lists **{sc.get('scholar_rows')}** works and matched "
          f"**{sc.get('matched')}** of the corpus's **{sc.get('corpus')}**. Scholar is",
@@ -427,6 +515,14 @@ def scholar_gaps(sc: dict) -> list[str]:
               "resolved from arXiv, Crossref or Semantic Scholar where any of them has",
               "it, is in [`tasks/bib_missing.md`](tasks/bib_missing.md) — check the",
               "author list before pasting: it is the index's, not yours.", ""]
+        # Derived from `sources.bibtex_url` rather than written out, because the one
+        # external file this whole pipeline depends on is the one link worth never
+        # letting drift. raw.githubusercontent -> the GitHub editor for the same file.
+        edit = re.sub(r"^https://raw\.githubusercontent\.com/([^/]+/[^/]+)/(.+)$",
+                      r"https://github.com/\1/edit/\2",
+                      ((cfg or {}).get("sources") or {}).get("bibtex_url") or "")
+        if edit.startswith("https://github.com/"):
+            L += [f"Edit it here: <{edit}>", ""]
         L += [f"- [ ] {cites(r.get('citations'))} — {r.get('year') or '????'} — "
               f"{(r.get('title') or '')[:60]}" for r in miss[:12]]
         if len(miss) > 12:
@@ -434,26 +530,42 @@ def scholar_gaps(sc: dict) -> list[str]:
         L += [""]
     if gone:
         cit = sum(p.get("citations") or 0 for p in gone)
-        # The total is stated because the per-item counts do not add up in the reader's
-        # head, and the sum is the whole argument for spending the ten minutes.
-        held = ([f"Between them they hold **{cit} citations** that are absent from the",
-                 "profile Scholar shows when somebody searches your name."] if cit else [])
-        L += [f"### {pl(len(gone))} of yours are not on your Scholar profile", "",
-              "The other direction, and the one nobody looks for: these are in the",
-              "bibliography and missing from the profile. Scholar's crawler adds what it",
-              "finds, so what is still absent after years of crawling is what it will not",
-              "find on its own — a call for papers, a workshop volume, a proceedings",
-              "front matter: documents that get cited as papers but do not look like one",
-              "to a crawler."] + held + ["",
-              "*My profile → + → Add article manually*, then paste the link. Two minutes",
-              "each, and it is the only fix on this page that adds citations rather than",
-              "moving them.", ""]
+        # Stated as an upper bound, not as a loss. The old wording called these citations
+        # "absent from the profile", which is exactly the inference this section can no
+        # longer make: on a merged record the citations are present, counted, and on the
+        # surviving title. Claiming a loss made the sum an argument for adding papers that
+        # were already there.
+        held = ([f"Together these carry **{cit} citations** in the corpus. Treat that as",
+                 "the most this could be worth, not as citations you are missing — on a",
+                 "merged record they are already counted under the surviving title."]
+                if cit else [])
+        L += [f"### {pl(len(gone))} whose title does not appear on your Scholar profile",
+              "",
+              "That is all this check knows, and the heading says so deliberately. It reads",
+              "the profile listing, which shows **one title per record** — so a paper Scholar",
+              "has folded into another record is indistinguishable here from a paper Scholar",
+              "does not have. Both look like a title that is not in the list.",
+              "",
+              "**So check for a merge before adding anything.** Scholar merges a call for",
+              "papers into the findings paper of the same workshop, and a preprint into its",
+              "retitled successor — the citations are all on the surviving record, which is",
+              "the outcome you want. Adding the folded paper by hand does not recover",
+              "anything; it creates a second record that splits future citations.",
+              "",
+              "Open <https://scholar.google.com/citations?user="
+              f"{sc.get('scholar_profile')}&view_op=list_works&sortby=pubdate> and look for",
+              "the related record — the findings paper, the newer title. If your paper is",
+              "inside it, decline the line here and you will not be asked again. Only if",
+              "nothing on the profile covers it is *+ → Add article manually* the fix."]
+        L += held + ["",
+                     "Declining is one line in [`data/declines.yaml`](data/declines.yaml)"
+                     " under `items:`.", ""]
         for p in gone:
             ref = (f" <https://arxiv.org/abs/{p['arxiv']}>" if p.get("arxiv")
                    else f" <https://doi.org/{p['doi']}>" if p.get("doi")
                    else f" <{p['url']}>" if p.get("url") else "")
             L += [f"- [ ] {cites(p.get('citations'))} — {p.get('year') or '????'} — "
-                  f"{(p.get('title') or '')[:58]}{ref}"]
+                  f"{(p.get('title_display') or p.get('title') or '')[:58]}{ref}"]
         L += [""]
     if fix:
         L += [f"### {pl(len(fix))} whose bibliography title is behind arXiv", "",
@@ -527,7 +639,7 @@ def step_worklist(cfg, args) -> None:
              "how-to for every item below is [docs/SETUP.md](docs/SETUP.md); the live",
              "reading of each external surface is [tasks/identity_audit.md](tasks/identity_audit.md).", ""]
     lines += due_followups()
-    lines += scholar_gaps(scholar)
+    lines += scholar_gaps(scholar, cfg)
 
     n_strays = sum(1 for p in papers
                     if p.get("s2_author_record") in
@@ -539,6 +651,7 @@ def step_worklist(cfg, args) -> None:
     o_miss = state.get("orcid_missing_papers") or []
     o_conf = state.get("orcid_strays_confirmed") or []
     o_dupg = state.get("orcid_duplicate_groups") or []
+    o_bad = state.get("orcid_misfiled_ids") or []
     facets = ((state.get("orcid_missing_variants") or [])
               + (state.get("orcid_missing_keywords") or [])
               + (state.get("orcid_missing_other_pages") or [])
@@ -568,13 +681,57 @@ def step_worklist(cfg, args) -> None:
          ["A wrong work on your record is worse than a missing one: it is the thing that",
           "makes an automated merge distrust the record. *Works → the entry → Delete.*",
           "Put-codes and titles: `tasks/orcid_remove.md`.", ""]),
+        # Before the duplicate and the missing-paper sections, because it is what puts
+        # entries in them -- and it was the one **fix** in the audit table that this page
+        # never listed, so the only way to meet it was to open `identity_audit.md` on
+        # your own initiative. A worklist that omits the item it tells you to do first is
+        # worse than one that omits it silently.
+        (bool(o_bad),
+         f"### {len(o_bad)} work on your ORCID carries another paper's identifier"
+         if len(o_bad) == 1 else
+         f"### {len(o_bad)} works on your ORCID carry another paper's identifier",
+         ["**Do this before the rest of this section.** A work whose DOI belongs to a",
+          "different paper is filed by ORCID into *that* paper's group — grouping is on",
+          "shared identifiers and there is nothing else it can go on. So the real paper",
+          "ends up with no identifier on the record and reads as missing, the group that",
+          "absorbed it reads as listed twice, and both of the obvious fixes make it",
+          "worse: adding the paper creates a second copy, merging the group destroys a",
+          "distinct work.", "",
+          "1. Open <https://orcid.org/my-orcid#works>. The put-code, the identifier the",
+          "   work is carrying, and the one it should carry are in the",
+          "   [misfiled-identifier section of `tasks/identity_audit.md`]"
+          "(tasks/identity_audit.md) — which also links the carried DOI, so you can see",
+          "   for yourself that it resolves to somebody else's paper.",
+          "2. The pencil icon on that work → replace the DOI under *Identifiers* →",
+          "   *Save changes*.",
+          "3. **Edit, do not delete and re-add.** The put-code is what carries the",
+          "   entry's citations and its source attribution.", ""]
+         + [f"- [ ] put-code `{b['put']}` — carries `{(b.get('carries') or ['?'])[0]}`, "
+            f"belongs to *{((by_slug.get(b.get('should_be')) or {}).get('title') or b.get('should_be') or '?')[:52]}*"
+            for b in o_bad]
+         + [""]),
         (bool(o_dupg),
          f"### ORCID lists {len(o_dupg)} of your papers twice",
          ["ORCID groups works that share an identifier. Two groups for one paper means",
           "one copy carries the arXiv DataCite DOI (`10.48550/arXiv.<id>`) and the other",
-          "the publisher DOI, so they share no key. Fix by adding the *missing* DOI to",
-          "either copy — the groups then fuse — or by deleting the sparser copy.",
-          "Both put-codes per pair: `tasks/orcid_remove.md`.", ""]),
+          "the publisher DOI, so they share no key.", "",
+          "1. Open <https://orcid.org/my-orcid#works> and find the pair — both put-codes",
+          "   and both titles are in [`tasks/orcid_remove.md`](tasks/orcid_remove.md).",
+          "2. **Prefer the merge to the deletion.** On the entry that is missing a DOI,",
+          "   the pencil icon → *Add identifier* → paste the other's DOI → *Save*. The",
+          "   two groups then fuse into one work carrying both, and neither entry loses",
+          "   its citations or its source attribution.",
+          "3. Only delete if one copy is genuinely emptier and you do not want its",
+          "   metadata — a deletion also drops whatever that entry was the only source of.",
+          "",
+          # Points at the section above when there is one, and at the audit when there is
+          # not. A "do that first" whose target is not on the page is an instruction the
+          # reader has to go and look for, and the answer is usually "there was nothing".
+          ("**Do the misfiled-identifier section above first.**" if o_bad else
+           "If [the misfiled-identifier section](tasks/identity_audit.md) ever has"
+           " anything in it, do that first."),
+          "A work carrying the wrong DOI lands in another paper's group and shows up",
+          "here as a duplicate that merging would destroy.", ""]),
         (bool(facets),
          f"### ORCID facet fields ({len(facets)} still empty)",
          ["Separate from works, and two minutes: *Also known as*, *Keywords*, *Websites*.",
@@ -584,10 +741,19 @@ def step_worklist(cfg, args) -> None:
          f"### Semantic Scholar — {n_strays} papers on a second author record",
          ["Every S2-backed tool (Elicit, Consensus, SciSpace, most literature agents)",
           "resolves you to one page, so each currently sees about half the corpus.",
-          "There is no self-service merge, but a claimed page can pull papers across:",
-          "*Edit Author Page → Add Papers*. Citation-ordered list with URLs:",
-          "`tasks/s2_merge.md`, so stopping early still captures most of the loss.",
-          "Do not claim the second page as well.", ""]),
+          "Support has already been asked to merge the two records and declined, so the",
+          "self-service route is the only one: a claimed page can pull papers across one",
+          "at a time.", "",
+          f"1. Open your claimed page: <https://www.semanticscholar.org/author/"
+          f"{ids['semantic_scholar_primary']}>",
+          "2. *Edit Author Page → Add Papers*.",
+          "3. Paste a paper's S2 URL, pick it, and choose *the author is correct, but the",
+          "   paper is missing from my author page*. Changes appear in about 24 hours.",
+          "",
+          "The URLs are in [`tasks/s2_merge.md`](tasks/s2_merge.md), highest-citation",
+          "first, so stopping early still captures most of the loss. **Do not claim the",
+          "second page as well** — a second claimed record is harder to undo than an",
+          "unclaimed one, and it makes the split look deliberate.", ""]),
         (bool(state.get("wikidata_gaps")),
          f"### Wikidata — {state.get('wikidata_gaps')} statement gaps on "
          f"{state.get('wikidata') or 'your item'}",
@@ -673,6 +839,49 @@ def step_worklist(cfg, args) -> None:
         return bool(p.get("arxiv") and not p.get("arxiv_journal_ref")
                     and p.get("venue") and not is_preprint_venue(p["venue"]))
 
+    def subm_ids() -> list[str]:
+        """The five-minute step that turns "find the row" into a link, or nothing.
+
+        The submission id the journal-ref form is addressed by appears on exactly one
+        page in the world, your own articles list, and `robots.txt` disallows it -- so
+        the only route is a copy of the page saved by hand, and the only reason to save
+        it is that it removes a search from every one of sixty rows. That was a closing
+        sentence at the end of the recommendation paragraph, which is where a
+        prerequisite goes to be skipped: by the time you read it you have already done
+        the first one the slow way.
+
+        Empty once every listed paper has an id, because then there is nothing to say --
+        and empty rather than "all done", which would be one more line asserting that
+        something you cannot see is fine.
+        """
+        want = [str(p["arxiv"]) for p in papers if needs_jr(p)]
+        have = read_yaml(os.path.join(DATA, "arxiv_submissions.yaml")) or {}
+        n = sum(1 for a in want if a in have)
+        if not want or n >= len(want):
+            return []
+        # Agrees with itself at n == 1, which is the number this actually runs at: two
+        # ids got cached while the ingester was being tested, so the first thing anyone
+        # reads under this heading is the sentence about the other sixty.
+        one = n == 1
+        return [
+            f"**Five minutes first, if you are doing more than a couple.** {n} of the",
+            f"{len(want)} rows {'has' if one else 'have'} a direct link into "
+            f"{'its' if one else 'their'} own form;",
+            f"the other {len(want) - n} have to be found by eye on that list. The id the",
+            "form is addressed by is only ever shown on your own articles page, and arXiv's",
+            "`robots.txt` disallows fetching it — so the route is a copy you save:",
+            "",
+            "1. Sign in and open <https://arxiv.org/user>.",
+            "2. Save the page — ⌘S, *Page Source* is enough.",
+            "3. `python scripts/identity_tasks.py --user-page ~/Downloads/arxiv-user.html`",
+            "",
+            "Submission ids never change, so this is once and not per run, and nothing is",
+            "requested on your behalf at any point — the code reads the file you saved.",
+            "After it, every entry in [`tasks/arxiv_jref.md`](tasks/arxiv_jref.md) opens",
+            "its own form.",
+            "",
+        ]
+
     missing_jr = top(needs_jr, 12)
     if missing_jr:
         blocked = sum(1 for p in papers if p.get("arxiv") in unowned and needs_jr(p))
@@ -700,7 +909,7 @@ def step_worklist(cfg, args) -> None:
                   "<https://arxiv.org/user>, find the row, follow its *journal ref* link.",
                   "There is no paste-an-identifier page — `/jref` on its own redirects to that",
                   "list — which is also why no script can do this for you.",
-                  "",
+                  ""] + subm_ids() + [
                   "**What it buys, honestly ranked.**",
                   "",
                   "1. *Weak here.* Scholar merges preprint and published versions largely on",
@@ -719,8 +928,7 @@ def step_worklist(cfg, args) -> None:
                   "cannot take off you — but the typing is not. Every field value, for every",
                   "paper, is in [`tasks/arxiv_jref.md`](tasks/arxiv_jref.md): the journal-ref",
                   "string built from the publisher's own bibtex, the published DOI, and why",
-                  "`Report number:` stays blank. Save your arXiv articles page once and that",
-                  "file links straight to each paper's form.",
+                  "`Report number:` stays blank.",
                   ""]
         if blocked:
             lines += [f"**{blocked} of these are marked (blocked)**: you are not a registered",
@@ -956,8 +1164,16 @@ def closing(args) -> None:
     lines = []
     worklist = os.path.join(ROOT, "WORKLIST.md")
     if os.path.exists(worklist):
+        # Checkboxes, not headings, and only the ones above `## Deferred`. Counting `## `
+        # counted the two headings that exist to say there is nothing to do -- the dated
+        # waiting list and the deferred pile -- so the first number of the run was both
+        # the wrong unit and inflated by the sections promising the least.
+        n = 0
         with open(worklist) as f:
-            n = sum(1 for l in f if l.startswith("## "))
+            for l in f:
+                if l.startswith("## Deferred"):
+                    break
+                n += l.lstrip().startswith("- [ ] ")
         lines.append(f"  WORKLIST.md              {n} thing{'s' * (n != 1)} only you can do, "
                      f"ranked by citations")
     # Only the drafts a person could actually accept. Counting the stale ones here is

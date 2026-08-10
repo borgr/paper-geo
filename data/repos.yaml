@@ -215,6 +215,14 @@ repos:
     confidence: low
   kind: other
   write_links_block: false
+- repo: borgr/claude-readable-reports
+  description: A Claude Code output style for answer-first, jargon-resolved agent reports
+  topics: []
+  homepage: null
+  write_citation_cff: false
+  write_links_block: false
+  skip: false
+  reviewed: false
 - repo: borgr/DORA
   paper_slug: dora-the-explorer-directed-outreaching-reinforcement-action
   description: Directed exploration in reinforcement learning via E-values; supplementary code for the

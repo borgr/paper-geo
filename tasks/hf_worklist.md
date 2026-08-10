@@ -11,6 +11,10 @@ created), which is why this is a list and not a script.
 Your user is linked but the status is not verified yet. Nothing to do;
 listed only so a re-run does not look like the claim failed.
 
-- [ ]   18 cites — <https://hf.co/papers/2410.10783> — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content
-- [ ]    4 cites — <https://hf.co/papers/2409.02228> — Unforgettable Generalization in Language Models
+If one of these is still here weeks from now the claim was probably
+dropped rather than queued: open the page, and if your name is no longer
+linked, claim it again.
+
+-   18 cites — <https://hf.co/papers/2410.10783> — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content
+-    4 cites — <https://hf.co/papers/2409.02228> — Unforgettable Generalization in Language Models
 

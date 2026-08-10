@@ -476,7 +476,7 @@ just ceremony.
 | `CITATION.cff` | derived from `papers.yaml` | code | no | permanent in git history |
 | Links block in a README | accepted sidecar + derived links | code | the sidecar was | revert; stays in history |
 | HF paper-page links (`paper_code.py --apply`) | "this repo is this paper's code" | code, from the paper's own text | no | edit the HF page |
-| Repo topics / description / homepage | an interpreted claim | **model** | **no** — 26 of 30 repos | one API call; GitHub keeps no history |
+| Repo topics / description / homepage | an interpreted claim | **model** | **no** — 27 of 31 repos | one API call; GitHub keeps no history |
 | Paper pages on the site | derived + accepted claims | code | the claims were | re-deploy, minutes; caches days |
 | Wikidata statements | derived identifiers | code | no | one-click undo, full public history |
 | IndexNow ping | nothing — a notification | code | no | nothing to retract |
@@ -486,7 +486,7 @@ Two rows are load-bearing.
 **Repo topics and descriptions are the exception to the rule, on purpose.** They are an
 interpreted claim published with nobody having read it, which by the line above should be
 gated. It is not, because the undo is one API call against your own repo and GitHub keeps
-no history of either field, and because gating it would leave 26 of 30 repos unlabelled
+no history of either field, and because gating it would leave 27 of 31 repos unlabelled
 forever — the standing cost of the gate exceeds the occasional cost of a wrong label.
 `diff` therefore marks which values are model-written and unread, so the `--yes` moment
 has the fact it turns on. To change one, edit `data/repos.yaml`; to freeze a row against

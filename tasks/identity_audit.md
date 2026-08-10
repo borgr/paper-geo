@@ -7,7 +7,8 @@ which is why it can be re-run — the fixes all need one.
 | surface | state | |
 |---|---|---|
 | ORCID works (public) | 115 | ok |
-| ORCID holds your papers | 111 of 112 | **fix** |
+| ORCID holds your papers | 112 of 112 | ok |
+| ORCID identifiers point at the right paper | 114 of 115 works | **fix** |
 | ORCID canonical URL | present | ok |
 | ORCID name variants | 2 listed | ok |
 | ORCID keywords | 13 of 13 | ok |
@@ -24,8 +25,9 @@ which is why it can be re-run — the fixes all need one.
 | HF claims in moderation | 2 | waiting |
 | arXiv records misspelling your name | 0 | ok |
 | arXiv records omitting you | 0 | ok |
-| ORCID works we cannot place | 3 | **check** |
+| ORCID works we cannot place | 2 | **check** |
 | ORCID works listed twice | 1 | **fix** |
+| ORCID works ORCID already merged | 5 | optional |
 | Semantic Scholar records | 2 | **fix** |
 
 ## Crossref / DataCite auto-update: no evidence it is live
@@ -112,7 +114,7 @@ answer. This uses `query-scholarly.wikidata.org`.
 
 An opt-in batch for the 109 missing items is in `tasks/wikidata_papers.qs`; read the cautions in [wikidata_followup.md](wikidata_followup.md) before running it.
 
-## 3 works on your ORCID we cannot place
+## 2 works on your ORCID we cannot place
 
 Not necessarily wrong, which is why this is *check* and not *fix*: a paper
 missing from your bibliography looks exactly like a work that is not yours.
@@ -129,21 +131,27 @@ it from ORCID loses a real work. Anything that is not a paper (a workshop
 listing, a proceedings volume) is a deletion. Titles and put-codes:
 [orcid_remove.md](orcid_remove.md).
 
-## 1 of your papers is missing from ORCID
+## 1 work on your ORCID carries another paper's identifier
 
-Measured by identifier, not by counting: each of these has no work group on
-the record carrying its DOI or arXiv id.
+**Fix these before the two sections below**, because this is what puts entries
+in them. A work whose DOI belongs to a different paper gets filed by ORCID into
+that paper's group — ORCID groups on shared identifiers and has no other way to
+know. The real paper then has no identifier anywhere on the record, so it reads
+as *missing from ORCID*, and the group it was absorbed into reads as *listed
+twice*. Both of those are wrong, and both suggested fixes make it worse: adding
+the paper creates a second copy, merging the group destroys a distinct work.
 
-This is the row that matters most on the page and the one a works *count*
-hides. ORCID is the key Semantic Scholar disambiguates on and the key OpenAlex
-is running profile merges from, so a paper absent here is a paper those two
-have no authoritative reason to attach to you — which is the same failure the
-split S2 record is made of.
+Not a title guess. Each of these has an identifier resolving to one of your
+papers and a title matching another one character-for-character.
 
-Highest citations first; the full list with DOIs is
-[orcid_missing.md](orcid_missing.md).
-
-- [ ]    0 cites — Resolving Interference (RI): Disentangling Models for Improved Mod
+- [ ] **Resolving Interference (RI): Disentangling Models for Improved Model M**
+      - put-code `222829712`
+      - carries `doi:10.48550/ARXIV.2306.01708` — that identifier is [TIES-Merging: Resolving Interference When Merging Mo](https://doi.org/10.48550/ARXIV.2306.01708)
+      - should carry `10.48550/ARXIV.2603.13467`
+      - fix: <https://orcid.org/my-orcid#works> → find that work → the
+        pencil icon → replace the DOI under *Identifiers* → *Save changes*.
+        Edit rather than delete-and-re-add, so the put-code keeps its
+        citations and its source attribution.
 
 ## 1 paper is listed twice on your ORCID
 
