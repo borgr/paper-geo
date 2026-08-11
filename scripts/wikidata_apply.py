@@ -19,8 +19,11 @@ Two are often confused:
   *unattended bot account*, which this is not: it is your account, editing your own
   item, when you run the script.
 
-So the item's statements never had to wait for the 50 edits. Only the two `.qs`
-batch files do.
+So neither the item's statements nor the paper items ever had to wait for the 50 edits.
+`--papers` creates a publication item per call of `wbeditentity`, which the same bot
+password authorises, so the QuickStatements batch in `tasks/wikidata_papers.qs` is now
+a fallback rather than the route: something to paste if the bot password is revoked, or
+if you would rather watch a batch run than trust a script.
 
 Setup, once:
 
@@ -36,12 +39,22 @@ Or put those two lines in `.wikidata_bot` in the repo root -- gitignored, and re
 automatically. Never in `config.yaml`: that file is committed and is the one place
 this project asks you to put things about yourself in public.
 
-    python scripts/wikidata_apply.py                 # dry run: exactly what would change
-    python scripts/wikidata_apply.py --apply         # do it
+    python scripts/wikidata_apply.py                  # dry run: exactly what would change
+    python scripts/wikidata_apply.py --apply          # do it
     python scripts/wikidata_apply.py --check-account  # age, edit count, autoconfirmed
+    python scripts/wikidata_apply.py --papers         # dry run: the items that are missing
+    python scripts/wikidata_apply.py --papers --apply --limit 5   # create five of them
 
 Dry run is the default and prints one line per intended edit with the API action it
 would call. Read-only until `--apply`, like everything else here.
+
+`--papers` is the one part of this that creates rather than corrects, so it is also the
+one part with a memory. Every item it creates is recorded in
+`data/wikidata_created.yaml` before the next one starts, and the coverage query treats
+that file as ground truth -- because the scholarly query service lags hours behind an
+edit, and without the ledger a second run inside that window would create all 108 items
+again. `--max-new N` refuses to run when more than N items are missing, which is what
+makes an unattended run safe: a backlog is a decision, one new paper is not.
 """
 from __future__ import annotations
 
@@ -50,12 +63,14 @@ import http.cookiejar
 import json
 import os
 import sys
+import time
 import urllib.parse
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from common import ROOT, UA, get_json, load_config, norm_name  # noqa: E402
+from common import (DATA, ROOT, UA, get_json, load_config,  # noqa: E402
+                    norm_name, read_yaml)
 
 API = "https://www.wikidata.org/w/api.php"
 CREDS_FILE = os.path.join(ROOT, ".wikidata_bot")
@@ -244,18 +259,165 @@ def claim_guids(qid: str, pid: str) -> list[tuple[str, str]]:
     return out
 
 
+# --------------------------------------------------------------- paper items
+
+# Proleptic Gregorian, which is the calendar every Wikibase date carries whether or not
+# it matters. Omitting it is accepted and then stored as this anyway.
+CAL = "http://www.wikidata.org/entity/Q1985727"
+
+
+def item_json(it: dict) -> dict:
+    """One paper from `audit_identity.paper_item`, as a `wbeditentity` payload.
+
+    One call per item rather than a create followed by a claim per statement. An item
+    that exists with a title and no identifier is indistinguishable from a placeholder
+    somebody should delete, and a run interrupted between the two calls leaves exactly
+    that -- under your name, on a wiki, with no way for a later run to recognise it.
+    `wbeditentity` is atomic: the item arrives whole or not at all.
+    """
+    def claim(pid: str, dv, dtype: str, quals: dict | None = None) -> dict:
+        c = {"mainsnak": {"snaktype": "value", "property": pid,
+                          "datavalue": {"value": dv, "type": dtype}},
+             "type": "statement", "rank": "normal"}
+        if quals:
+            c["qualifiers"] = quals
+        return c
+
+    claims = [claim("P31", {"entity-type": "item", "id": it["instance_of"]},
+                    "wikibase-entityid"),
+              claim("P1476", {"text": it["title"], "language": "en"}, "monolingualtext")]
+    if it["year"]:
+        # Precision 9 is "year". The bibliography carries a year and no month, and a
+        # date of January would be a fact nothing in this pipeline knows.
+        claims.append(claim("P577", {"time": f"+{it['year']}-00-00T00:00:00Z",
+                                     "timezone": 0, "before": 0, "after": 0,
+                                     "precision": 9, "calendarmodel": CAL}, "time"))
+    if it["doi"]:
+        claims.append(claim("P356", it["doi"], "string"))
+    if it["arxiv"]:
+        claims.append(claim("P818", it["arxiv"], "string"))
+    for a in it["authors"]:
+        ordinal = {"P1545": [{"snaktype": "value", "property": "P1545",
+                              "datavalue": {"value": str(a["ordinal"]),
+                                            "type": "string"}}]}
+        if a["pid"] == "P50":
+            claims.append(claim("P50", {"entity-type": "item", "id": a["qid"]},
+                                "wikibase-entityid", ordinal))
+        else:
+            claims.append(claim("P2093", a["name"], "string", ordinal))
+    return {"labels": {"en": {"language": "en", "value": it["label"]}}, "claims": claims}
+
+
+def papers_plan(cfg: dict, limit: int | None = None) -> list[dict] | None:
+    """The paper items Wikidata is missing, measured now rather than read from a file.
+
+    Re-measured on every run instead of reading `tasks/wikidata_papers.qs`, because the
+    batch file is as old as the last `update.py` and the thing being avoided is creating
+    an item that already exists. Coverage folds in `data/wikidata_created.yaml`, so a
+    run minutes after the last one still knows what it did.
+
+    Returns None -- not [] -- when the query service does not answer. "Nothing is
+    missing" and "I could not find out" differ by 108 items.
+    """
+    from audit_identity import paper_item, wikidata_paper_coverage
+    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers") or []
+    if not papers:
+        sys.exit("data/papers.yaml is empty -- run `python update.py --step collect` first.")
+    cov = wikidata_paper_coverage(papers)
+    if not cov:
+        return None
+    out = [i for i in (paper_item(p, cfg) for p in cov["absent"]) if i]
+    return out[:limit] if limit else out
+
+
+def create_papers(s: "Session", items: list[dict]) -> int:
+    """Create each item, recording the QID before moving on. Returns how many landed."""
+    from audit_identity import record_created
+    ok = 0
+    for i, it in enumerate(items, 1):
+        try:
+            r = s.edit("wbeditentity", new="item", data=json.dumps(item_json(it)),
+                       summary=f"create item for {it['doi'] or it['arxiv']} (paper-geo)")
+            qid = ((r.get("entity") or {}).get("id")) or ""
+            if not qid:
+                raise RuntimeError("no entity id in the response")
+            # Before the next create, not after the loop: the run that most needs this
+            # written is the one that dies in the middle.
+            record_created(it["slug"], qid)
+            ok += 1
+            print(f"  {i}/{len(items)} {qid} — {it['label'][:58]}")
+        except (RuntimeError, urllib.error.URLError) as e:
+            print(f"  {i}/{len(items)} FAILED — {it['label'][:58]}\n     {e}")
+        # Politeness, not a rate limit: nothing here is close to one. It keeps a
+        # hundred creations off the recent-changes feed as a single burst, which is
+        # what gets a good-faith batch reverted wholesale.
+        time.sleep(1.5)
+    return ok
+
+
+def papers_main(args, cfg: dict, user: str | None, password: str | None) -> int:
+    items = papers_plan(cfg, args.limit)
+    if items is None:
+        sys.exit("query-scholarly.wikidata.org did not answer, so what is missing is "
+                 "unknown. Nothing was created. Try again later.")
+    if not items:
+        print("Every paper with a DOI or an arXiv id already has a Wikidata item.")
+        return 0
+    if args.max_new and len(items) > args.max_new:
+        # The unattended guard. An automated run should keep up with new papers and
+        # should never decide, on its own, to add a hundred items to somebody's wiki.
+        print(f"{len(items)} items are missing, which is more than --max-new "
+              f"{args.max_new}. That is a backlog rather than a new paper, so it is "
+              f"yours to start:\n  python scripts/wikidata_apply.py --papers --apply")
+        return 0
+
+    print(f"{len(items)} paper item{'' if len(items) == 1 else 's'} "
+          f"{'to create' if args.apply else 'that WOULD be created'}:\n")
+    for i, it in enumerate(items, 1):
+        kind = "article" if it["instance_of"] == "Q13442814" else "preprint"
+        print(f"  {i}. {it['label'][:64]}")
+        print(f"     {kind}, {it['year'] or 'no year'}, "
+              f"{it['doi'] or it['arxiv']}, {len(it['authors'])} authors")
+    print()
+    if not args.apply:
+        print("Dry run. Re-run with --apply to create these.\n"
+              "Same statements as tasks/wikidata_papers.qs, which is the "
+              "paste-it-yourself route.")
+        return 0
+    if not (user and password):
+        sys.exit("--apply needs WIKIDATA_BOT_USER and WIKIDATA_BOT_PASSWORD "
+                 "(see the header of this file).")
+    s = Session()
+    s.login(user, password)
+    print(f"logged in as {s.user}\n")
+    ok = create_papers(s, items)
+    print(f"\n{ok}/{len(items)} created, recorded in data/wikidata_created.yaml.\n"
+          f"Commit that file -- it is what stops the next run recreating them while "
+          f"the query service catches up.")
+    return 0 if ok == len(items) else 1
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--apply", action="store_true", help="write to Wikidata")
     ap.add_argument("--check-account", action="store_true",
                     help="age, edit count and autoconfirmed, then exit")
     ap.add_argument("--user", help="account name for --check-account")
+    ap.add_argument("--papers", action="store_true",
+                    help="create items for your papers Wikidata lacks, instead of "
+                         "updating the author item")
+    ap.add_argument("--limit", type=int, help="--papers: create at most this many")
+    ap.add_argument("--max-new", type=int,
+                    help="--papers: do nothing at all if more than this many are "
+                         "missing. For unattended runs.")
     args = ap.parse_args()
 
     cfg = load_config()
     user, password = read_creds()
     if args.check_account:
         return check_account(args.user or user or cfg["ids"].get("wikidata_account"))
+    if args.papers:
+        return papers_main(args, cfg, user, password)
 
     qid = cfg["ids"].get("wikidata")
     if not qid:

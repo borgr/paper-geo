@@ -25,33 +25,31 @@
 # Delete an entry when it is done. Re-run `python update.py --step worklist` after.
 
 followups:
-  # `human`, not `agent`. QuickStatements is a browser tool behind a logged-in
-  # autoconfirmed account, so no pipeline run can do this however long it waits -- and
-  # under the "for the pipeline, not for you" heading it read as something that would
-  # happen on its own.
+  # `human`, and the only human part left is the decision. The clicking is gone: the
+  # paper items go in through the API now, on the bot password, so no browser tool and
+  # no autoconfirmed account are involved. What cannot be delegated is that these are
+  # about a hundred new permanent pages on a shared wiki, created under your name --
+  # a decision, and the one thing on this page that somebody else has to clean up if
+  # it is wrong.
   - due: 2026-08-08
     owner: human
     what: >-
-      Wikidata account Ktilana is autoconfirmed, so QuickStatements will accept a batch
-      from it. Confirmed by the check below on 2026-08-10: registered 2026-08-04, 63
-      edits, groups include `autoconfirmed`. The wait is over; what is left is a
-      decision about the paper items.
+      The paper items are the last Wikidata decision left. The author item Q140867203 is
+      already complete and stays that way by itself; around a hundred of your papers
+      have no Wikidata item at all, which is what keeps them out of every answer engine
+      that reads Wikidata rather than the web.
     then: >-
-      One batch is worth running and one is not. tasks/wikidata_papers.qs creates a
-      public Wikidata item for each paper of yours that has none -- title, date, DOI or
-      arXiv id, co-authors as name strings. Paste it at
-      https://quickstatements.toolforge.org/#/batch, pick "QuickStatements version 1",
-      and run. How many items that is, this run, is measured at the top of
-      tasks/wikidata_followup.md and deliberately not repeated here: a count typed into
-      a data file drifts away from the batch it describes. It is around a hundred new
-      permanent public items either way, so read the "Is this legitimate?" section of
-      tasks/wikidata_manual.md once before starting, and release it in a couple of
-      batches rather than all at once so a formatting error costs ten items instead of
-      all of them. tasks/wikidata.qs needs nothing from you: it is addressed to the
-      existing item Q140867203 rather than creating one, and the audit's "Wikidata item
-      complete" row reads 0 gaps, so it would add nothing. Run it only if that row ever
-      shows a gap.
-    check: python scripts/wikidata_apply.py --check-account
+      Read it, then run it in batches. `--papers` with no `--apply` prints exactly what
+      it would create, one line per item: kind, year, identifier, how many authors. The
+      statements are the same ones tasks/wikidata_papers.qs holds, which is the
+      paste-it-yourself fallback and no longer the route. Do the first ten, open two of
+      them on the wiki, then keep going -- a batch of ten finds a wrong statement on item
+      3 rather than on item 103. Every item is recorded in data/wikidata_created.yaml as
+      it lands, so an interrupted run resumes without recreating anything, and once the
+      backlog is gone the monthly CI run keeps up with new papers on its own (it refuses
+      above four missing items, so it does nothing at all until you have drained this).
+      Read the "Is this legitimate?" section of tasks/wikidata_manual.md once first.
+    check: python scripts/wikidata_apply.py --papers --limit 10
 
   - due: 2026-10-04
     what: >-

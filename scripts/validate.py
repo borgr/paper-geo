@@ -348,8 +348,8 @@ def fallback_papers(doc) -> list[str]:
     return errs
 
 
-OVERRIDE_KEYS = {"force_merge", "force_distinct", "also_mine", "extra_arxiv", "drop",
-                 "hf_claim_requested", "fields", "absent"}
+OVERRIDE_KEYS = {"force_merge", "force_distinct", "also_mine", "extra_arxiv",
+                 "extra_openreview", "drop", "hf_claim_requested", "fields", "absent"}
 
 
 def check_overrides() -> list[str]:
@@ -410,6 +410,37 @@ def check_slug_history() -> list[str]:
     return [f"slug_history.yaml: `{old}` redirects to `{new}`, which is not a paper"
             " -- point it at a live slug, or set it to null if the URL is meant to 404"
             for old, new in sorted(hist.items()) if new is not None and new not in live]
+
+
+def check_wikidata_created() -> list[str]:
+    """The created-item ledger must point at live slugs and look like QIDs.
+
+    A slug that has left the corpus is the failure worth catching. The ledger is what
+    stops `wikidata_apply.py --papers` recreating an item the query service has not
+    indexed yet, and it does that by slug -- so a renamed paper stops matching its own
+    entry and the next run mints a second item for it. Duplicate publication items are
+    the one mistake here that somebody else has to clean up.
+
+    `slug_history.yaml` is honoured, because a rename that went through the chain is
+    exactly the case that must not be reported: the old slug still resolves.
+    """
+    items = (read_yaml(os.path.join(DATA, "wikidata_created.yaml")) or {}).get("items")
+    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers") or []
+    if not (items and papers):
+        return []
+    hist = (read_yaml(os.path.join(DATA, "slug_history.yaml")) or {}).get("retired") or {}
+    live = {p.get("slug") for p in papers} | {k for k, v in hist.items() if v}
+    errs = []
+    for slug, qid in sorted(items.items()):
+        if not re.fullmatch(r"Q[1-9][0-9]*", str(qid)):
+            errs.append(f"wikidata_created.yaml: `{slug}` -> `{qid}` is not a QID")
+        if slug not in live:
+            errs.append(
+                f"wikidata_created.yaml: `{slug}` is not a paper, so the item "
+                f"`{qid}` no longer suppresses anything and the next "
+                f"`wikidata_apply.py --papers` may create a duplicate. Point the key at "
+                f"the paper's current slug, or add the rename to slug_history.yaml")
+    return errs
 
 
 def check_name_lists() -> list[str]:
@@ -928,6 +959,7 @@ def main() -> None:
     errs += unparseable + check_sidecars(sidecars)
     errs += check_overrides()
     errs += check_slug_history()
+    errs += check_wikidata_created()
     errs += check_name_lists()
     errs += check_affiliations()
     errs += check_prompt_blocks()

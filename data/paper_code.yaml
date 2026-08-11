@@ -12,6 +12,8 @@ papers:
   a-latent-variable-framework-for-scaling-laws-in-large-langua:
     verdict: accept
     repo: https://github.com/felipemaiapolo/statistical-scaling-law
+  a-statistical-framework-for-game-based-ai-evaluation:
+    verdict: none
   a-survey-on-model-moerging-recycling-and-routing-among-speci:
     verdict: accept
     repo: https://github.com/pclucas14/awesome-moerging
@@ -201,6 +203,8 @@ papers:
   growing-pains-extensible-and-efficient-llm-benchmarking-via:
     verdict: accept
     repo: https://github.com/eliyahabba/growing-pains
+    page_verdict: accept
+    project_page: https://eliyahabba.github.io/growing-pains/
   high-dimensional-learning-dynamics-2024-the-emergence-of-str:
     verdict: none
   holmes-a-benchmark-to-assess-the-linguistic-competence-of-la:

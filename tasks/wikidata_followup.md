@@ -27,7 +27,7 @@ and all of them are personal data you would then be maintaining.
 
 ## Then: your papers
 
-**Measured this run: 3 of 112 have a Wikidata item.**
+**Measured this run: 3 of 113 have a Wikidata item.**
 (Matched on DOI and arXiv id across 111 papers that carry one
 — exact keys, so this is coverage and not a name-search guess.)
 
@@ -55,22 +55,36 @@ cannot. Whether you still owe them is one command rather than an assumption:
 50 elsewhere or skip QuickStatements and edit by hand — the item's own
 statements are a 15-minute job either way.
 
-**Creating the missing items — optional, and read this first.**
+**Creating the missing items — read this first, then run it in batches.**
 
-`tasks/wikidata_papers.qs` holds a QuickStatements batch for
-108 papers: title, publication date, DOI or arXiv id, and the author
-list with you as `author` → Q140867203 and co-authors as `author name string`
-with position qualifiers. Only papers carrying a DOI or arXiv id are
-included — a resolvable identifier is what puts a publication item
-clearly in scope, and it is the key the batch was deduplicated on.
+108 papers have no Wikidata item. Each would get its title,
+publication date, DOI or arXiv id, and the author list with you as
+`author` → Q140867203 and co-authors as `author name string` with position
+qualifiers. Only papers carrying a DOI or arXiv id are included — a
+resolvable identifier is what puts a publication item clearly in scope,
+and it is the key coverage was measured on.
+
+```bash
+python scripts/wikidata_apply.py --papers              # what it would create
+python scripts/wikidata_apply.py --papers --apply --limit 10
+```
+
+No autoconfirmed account and no browser tool: this is the same bot password
+the author item uses. Each item is one atomic `wbeditentity`, recorded in
+`data/wikidata_created.yaml` before the next one starts — so an interrupted
+run resumes where it stopped, and a re-run in the hours before the query
+service catches up does not create everything twice.
+`tasks/wikidata_papers.qs` holds the same statements as a
+QuickStatements batch, kept as the fallback if the bot password is ever
+revoked.
 
 Honest accounting before you run it: this buys a Scholia profile, a
 SPARQL-answerable corpus, and an authorship graph — real, but a weaker
-surface than arXiv, ORCID or your own pages. It costs an autoconfirmed
-account, a batch review, and permanent public items. Items created here
-are much harder to clean up than a page in this repo. Run it in
-QuickStatements with the batch preview open, on the first ten rows,
-before releasing the rest.
+surface than arXiv, ORCID or your own pages. It costs permanent public
+items on somebody else's wiki, which are much harder to clean up than a
+page in this repo: undoing a statement is one click, undoing an item is a
+deletion request a volunteer has to action. Which is the whole argument for
+`--limit 10` — open two of the first ten on the wiki before continuing.
 
 One gap the dedup cannot cover: a paper item that exists with neither a
 DOI nor an arXiv id would not have matched, so it could be recreated.

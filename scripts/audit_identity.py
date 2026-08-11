@@ -42,7 +42,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, WD_IDENTIFIERS, declined, get,  # noqa: E402
                     get_json, load_config, name_match, norm_name, norm_title,
                     org_name, paper_doi, plural, read_yaml, synth_bibtex,
-                    title_tokens)
+                    title_tokens, write_yaml)
 
 TASKS = os.path.join(ROOT, "tasks")
 ATOM = {"a": "http://www.w3.org/2005/Atom"}
@@ -272,6 +272,41 @@ def wikidata_gaps(qid: str, cfg) -> dict:
             "description": (ent.get("descriptions") or {}).get("en", {}).get("value", "")}
 
 
+CREATED = os.path.join(DATA, "wikidata_created.yaml")
+
+
+def created_items() -> dict:
+    """slug -> QID for every Wikidata item this repo created, read from `data/`.
+
+    Committed, and the only file under `data/` that is neither derived nor a decision.
+    It is a receipt: what an edit did, on a wiki, at a time when nothing else could tell
+    you. Two reasons it cannot live in `build/`, which is where observed state belongs.
+    A CI runner starts from a clone, so a gitignored ledger is always empty there and
+    every scheduled run would look like the first one. And re-deriving it is exactly
+    what fails -- the query service lags behind the edit, which is the whole problem it
+    exists to solve.
+
+    So it is never hand-edited either, and a stale line here is self-correcting rather
+    than dangerous: coverage would already have found the item by its DOI.
+    """
+    return (read_yaml(CREATED) or {}).get("items") or {}
+
+
+def record_created(slug: str, qid: str) -> None:
+    """Append one created item to the ledger, immediately.
+
+    Written per item rather than once at the end of the batch: the run that most needs
+    this file is the one that dies in the middle, and a ledger written after the loop
+    records nothing about the eleven items already on the wiki.
+    """
+    d = read_yaml(CREATED) or {}
+    items = d.setdefault("items", {})
+    if items.get(slug) == qid:
+        return
+    items[slug] = qid
+    write_yaml(CREATED, d)
+
+
 def wikidata_paper_coverage(papers, chunk: int = 50) -> dict:
     """How many of your papers exist as Wikidata items -- measured, not assumed.
 
@@ -297,6 +332,13 @@ def wikidata_paper_coverage(papers, chunk: int = 50) -> dict:
 
     Returns {} when the endpoint does not answer. An empty result and a failed query
     must not be indistinguishable, or a timeout silently becomes evidence of absence.
+
+    Items this repo created itself are folded in from `data/wikidata_created.yaml`
+    regardless of what the query says, because the query lags: the scholarly endpoint
+    can take hours to index a new item, and until it does, an item created an hour ago
+    reads as absent. Without the ledger, a second run inside that window creates the
+    whole batch again -- and a duplicate publication item is the one failure here that
+    somebody else has to merge.
     """
     keys: dict[str, dict] = {}
     for p in papers:
@@ -330,11 +372,69 @@ def wikidata_paper_coverage(papers, chunk: int = 50) -> dict:
                 found[keys[v]["slug"]] = qid
     if not answered:
         return {}
+    for slug, qid in (created_items() or {}).items():
+        found.setdefault(slug, qid)
 
     present = [(p, found[p["slug"]]) for p in papers if p["slug"] in found]
     absent = [p for p in papers if p["slug"] not in found]
     return {"present": present, "absent": absent,
             "checked": len({p["slug"] for p in keys.values()}), "total": len(papers)}
+
+
+def paper_item(p: dict, cfg) -> dict | None:
+    """The Wikidata item one paper should become -- one description, two renderers.
+
+    Returns None for a paper carrying neither a DOI nor an arXiv id. That is not a
+    formatting convenience: an external identifier anyone can resolve is what makes a
+    publication item uncontroversially in scope, and it is also the key coverage was
+    measured on, so an item without one could be a duplicate of an item already there
+    and nothing would be able to tell.
+
+    This exists as a function because there are now two ways to create these items --
+    the QuickStatements batch below, and `wikidata_apply.py --papers` through the API --
+    and the failure mode of two emitters is not that one is wrong. It is that they
+    disagree, so the file you read to check the batch describes items other than the
+    ones the API path creates. One dict, rendered twice, cannot do that.
+
+    Co-authors go in as `author name string` (P2093) with a series-ordinal qualifier,
+    not as `author` (P50). Pointing P50 at a guessed person item is the error that takes
+    someone else's item and welds it to your paper -- the same asymmetry that governs
+    the authorship gate in the collector. Strings are what the Crossref importers
+    themselves deposit, and a later disambiguator upgrades them safely.
+    """
+    if not (p.get("doi") or p.get("arxiv")):
+        return None
+    me = cfg["ids"].get("wikidata")
+    title = (p.get("title_display") or p["title"]).replace('"', "'").strip()
+    authors = []
+    for i, a in enumerate(p.get("authors") or [], 1):
+        a = a.replace('"', "'").strip()
+        if not a:
+            continue
+        if me and norm_name(a) == norm_name(cfg["identity"]["name"]):
+            authors.append({"pid": "P50", "qid": me, "ordinal": i})
+        else:
+            authors.append({"pid": "P2093", "name": a, "ordinal": i})
+    return {
+        "slug": p["slug"],
+        # Wikidata rejects a label over 250 characters outright, and a QuickStatements
+        # batch stops on the offending row rather than skipping it.
+        "label": title[:245],
+        "title": title,
+        # A 10.48550 DOI is arXiv minting one for its own preprint, so it is not
+        # evidence of publication -- classing those as scholarly articles would assert
+        # a venue that does not exist.
+        "instance_of": ("Q13442814"
+                        if p.get("doi")
+                        and not str(p["doi"]).lower().startswith("10.48550/")
+                        else "Q580922"),
+        "year": int(p["year"]) if p.get("year") else None,
+        # Uppercase because that is Wikidata's convention for P356, and coverage
+        # matches the string exactly.
+        "doi": str(p["doi"]).upper() if p.get("doi") else None,
+        "arxiv": str(p["arxiv"]) if p.get("arxiv") else None,
+        "authors": authors,
+    }
 
 
 def wikidata_papers_qs(cov: dict, cfg) -> tuple[str | None, int]:
@@ -344,54 +444,34 @@ def wikidata_papers_qs(cov: dict, cfg) -> tuple[str | None, int]:
     "dozens already imported" the usual advice assumes, the job would be relinking
     author name strings and this file would be the wrong tool.
 
-    Restricted to papers carrying a DOI or an arXiv id. That is not a formatting
-    convenience: an external identifier anyone can resolve is what makes a
-    publication item uncontroversially in scope, and it is also the key this batch
-    was deduplicated on, so a row without one could be creating a duplicate.
-
-    Co-authors go in as `author name string` (P2093) with a series-ordinal
-    qualifier, not as `author` (P50). Pointing P50 at a guessed person item is the
-    error that takes someone else's item and welds it to your paper -- the same
-    asymmetry that governs the authorship gate in the collector. Strings are what
-    the Crossref importers themselves deposit, and a later disambiguator upgrades
-    them safely.
+    Kept alongside `wikidata_apply.py --papers`, which does the same work through the
+    API and needs no autoconfirmed account, because the two fail differently: a paste
+    into QuickStatements needs no credential stored anywhere, and it is the fallback if
+    the bot password is ever revoked. Both render `paper_item`, so they agree by
+    construction.
     """
-    absent = [p for p in (cov.get("absent") or []) if p.get("doi") or p.get("arxiv")]
-    if not absent:
+    items = [i for i in (paper_item(p, cfg) for p in (cov.get("absent") or [])) if i]
+    if not items:
         return None, 0
-    me = cfg["ids"].get("wikidata")
     L: list[str] = []
-    for p in absent:
-        title = (p.get("title_display") or p["title"]).replace('"', "'").strip()
-        # Wikidata rejects a label over 250 characters outright, and the batch stops
-        # on the offending row rather than skipping it.
-        label = title[:245]
-        # A 10.48550 DOI is arXiv minting one for its own preprint, so it is not
-        # evidence of publication -- classing those as scholarly articles would assert
-        # a venue that does not exist.
-        published = bool(p.get("doi")) and not str(p["doi"]).lower().startswith("10.48550/")
+    for it in items:
         L += ["CREATE",
-              f'LAST\tLen\t"{label}"',
-              f"LAST\tP31\t{'Q13442814' if published else 'Q580922'}",
-              f'LAST\tP1476\ten:"{title}"']
-        if p.get("year"):
-            L.append(f'LAST\tP577\t+{int(p["year"])}-00-00T00:00:00Z/9')
-        if p.get("doi"):
-            L.append('LAST\tP356\t"%s"' % str(p["doi"]).upper())
-        if p.get("arxiv"):
-            L.append('LAST\tP818\t"%s"' % p["arxiv"])
-        for i, a in enumerate(p.get("authors") or [], 1):
-            a = a.replace('"', "'").strip()
-            if not a:
-                continue
-            if me and norm_name(a) == norm_name(cfg["identity"]["name"]):
-                L.append(f'LAST\tP50\t{me}\tP1545\t"{i}"')
-            else:
-                L.append(f'LAST\tP2093\t"{a}"\tP1545\t"{i}"')
+              f'LAST\tLen\t"{it["label"]}"',
+              f"LAST\tP31\t{it['instance_of']}",
+              f'LAST\tP1476\ten:"{it["title"]}"']
+        if it["year"]:
+            L.append(f'LAST\tP577\t+{it["year"]}-00-00T00:00:00Z/9')
+        if it["doi"]:
+            L.append('LAST\tP356\t"%s"' % it["doi"])
+        if it["arxiv"]:
+            L.append('LAST\tP818\t"%s"' % it["arxiv"])
+        for a in it["authors"]:
+            val = a["qid"] if a["pid"] == "P50" else '"%s"' % a["name"]
+            L.append(f'LAST\t{a["pid"]}\t{val}\tP1545\t"{a["ordinal"]}"')
     path = os.path.join(TASKS, "wikidata_papers.qs")
     with open(path, "w") as f:
         f.write("\n".join(L) + "\n")
-    return path, len(absent)
+    return path, len(items)
 
 
 # Hugging Face records a per-author `status` beside the linked user. These two mean
@@ -692,20 +772,33 @@ def paper_link_section(q: str, cov: dict, qs_path: str | None) -> list[str]:
           "statements are a 15-minute job either way.", ""]
     if qs_path:
         n_new = sum(1 for x in open(qs_path) if x.strip() == "CREATE")
-        L += ["**Creating the missing items — optional, and read this first.**", "",
-              f"`{os.path.relpath(qs_path, ROOT)}` holds a QuickStatements batch for",
-              f"{n_new} papers: title, publication date, DOI or arXiv id, and the author",
-              f"list with you as `author` → {q} and co-authors as `author name string`",
-              "with position qualifiers. Only papers carrying a DOI or arXiv id are",
-              "included — a resolvable identifier is what puts a publication item",
-              "clearly in scope, and it is the key the batch was deduplicated on.", "",
+        L += ["**Creating the missing items — read this first, then run it in batches.**",
+              "",
+              f"{n_new} papers have no Wikidata item. Each would get its title,",
+              f"publication date, DOI or arXiv id, and the author list with you as",
+              f"`author` → {q} and co-authors as `author name string` with position",
+              "qualifiers. Only papers carrying a DOI or arXiv id are included — a",
+              "resolvable identifier is what puts a publication item clearly in scope,",
+              "and it is the key coverage was measured on.", "",
+              "```bash",
+              "python scripts/wikidata_apply.py --papers              # what it would create",
+              "python scripts/wikidata_apply.py --papers --apply --limit 10",
+              "```", "",
+              "No autoconfirmed account and no browser tool: this is the same bot password",
+              "the author item uses. Each item is one atomic `wbeditentity`, recorded in",
+              "`data/wikidata_created.yaml` before the next one starts — so an interrupted",
+              "run resumes where it stopped, and a re-run in the hours before the query",
+              "service catches up does not create everything twice.",
+              f"`{os.path.relpath(qs_path, ROOT)}` holds the same statements as a",
+              "QuickStatements batch, kept as the fallback if the bot password is ever",
+              "revoked.", "",
               "Honest accounting before you run it: this buys a Scholia profile, a",
               "SPARQL-answerable corpus, and an authorship graph — real, but a weaker",
-              "surface than arXiv, ORCID or your own pages. It costs an autoconfirmed",
-              "account, a batch review, and permanent public items. Items created here",
-              "are much harder to clean up than a page in this repo. Run it in",
-              "QuickStatements with the batch preview open, on the first ten rows,",
-              "before releasing the rest.", "",
+              "surface than arXiv, ORCID or your own pages. It costs permanent public",
+              "items on somebody else's wiki, which are much harder to clean up than a",
+              "page in this repo: undoing a statement is one click, undoing an item is a",
+              "deletion request a volunteer has to action. Which is the whole argument for",
+              "`--limit 10` — open two of the first ten on the wiki before continuing.", "",
               "One gap the dedup cannot cover: a paper item that exists with neither a",
               "DOI nor an arXiv id would not have matched, so it could be recreated.",
               "Searching the exact title in Wikidata's own search box is the check.", ""]
@@ -934,6 +1027,42 @@ def orcid_missing_files(missing: list[dict], orcid: str) -> list[str]:
     return out
 
 
+def dup_pairs(dups: dict, papers: list[dict]) -> list[dict]:
+    """One row per ORCID duplicate: which entry to keep, which folds in, what to paste.
+
+    Split out of the table in `orcid_remove_file` so `build/identity_state.json` carries
+    the same three values, because the worklist could not say any of them. It had the
+    count and a pointer to this file -- "ORCID lists 1 of your papers twice", then four
+    numbered steps, and no title and no put-code anywhere on the page. A section naming
+    nothing reads as a section with nothing in it.
+
+    Which to keep is derived, not judged: the preprint entry is the one whose DOI carries
+    arXiv's DataCite prefix, so the published entry is simply the other one. When that
+    does not hold -- neither DOI is arXiv's, or there are more than two entries -- the
+    row says so and names every entry rather than guessing, and `doi` is None.
+    """
+    by_slug = {p["slug"]: p for p in papers}
+    arx = re.compile(r"^10\.48550/arxiv\.", re.I)
+
+    def doi_of(ids):
+        return next((v for t, v in ids if t == "doi"), None)
+
+    out = []
+    for slug, entries in (dups or {}).items():
+        pre = [e for e in entries if arx.match(doi_of(e[2]) or "")]
+        pub = [e for e in entries if e not in pre]
+        row = {"slug": slug,
+               "title": (by_slug.get(slug) or {}).get("title") or slug,
+               "entries": [{"put": p, "title": t, "doi": doi_of(i)}
+                           for t, p, i, _g in entries]}
+        if len(pre) == 1 and len(pub) == 1:
+            row |= {"keep": pub[0][1], "keep_title": pub[0][0],
+                    "folds": pre[0][1], "folds_title": pre[0][0],
+                    "doi": doi_of(pre[0][2])}
+        out.append(row)
+    return out
+
+
 def orcid_remove_file(strays: list[tuple], dups: dict, papers, cfg) -> str:
     """tasks/orcid_remove.md — works to delete from the ORCID record, with put-codes."""
     conf = [s for s in strays if s[2] == "confirmed"]
@@ -995,7 +1124,6 @@ def orcid_remove_file(strays: list[tuple], dups: dict, papers, cfg) -> str:
         L += [f"- {t}  (`{p}`) — declined as `{declined(t)}`" for t, p, _ in dec]
         L += [""]
     if dups:
-        by_slug = {p["slug"]: p for p in papers}
         L += [f"## Listed twice ({plural(len(dups), 'paper')}, "
               f"{plural(sum(len(v) for v in dups.values()), 'entry', 'entries')})",
               "",
@@ -1025,26 +1153,19 @@ def orcid_remove_file(strays: list[tuple], dups: dict, papers, cfg) -> str:
               "collapse on the next page load.", "",
               "| paper | keep (published, has the venue) | folds in | DOI to add to the keep entry |",
               "|---|---|---|---|"]
-        arx = re.compile(r"^10\.48550/arxiv\.", re.I)
-
-        def doi_of(ids):
-            return next((v for t, v in ids if t == "doi"), None)
-
-        for slug, entries in dups.items():
-            t = (by_slug.get(slug) or {}).get("title", slug)[:44]
-            # The preprint entry is the one whose DOI is arXiv's DataCite prefix, which
-            # is what makes this generatable rather than a judgement: the published
-            # entry is simply the other one, and its DOI is the venue's.
-            pre = [e for e in entries if arx.match(doi_of(e[2]) or "")]
-            pub = [e for e in entries if e not in pre]
-            if len(pre) == 1 and len(pub) == 1:
-                L.append(f"| {t} | `{pub[0][1]}` — {pub[0][0][:30]} | "
-                         f"`{pre[0][1]}` — {pre[0][0][:30]} | `{doi_of(pre[0][2])}` |")
+        # Rows from `dup_pairs`, which the state file reads too -- the table and the
+        # worklist have to name the same put-code or one of them is lying.
+        for row in dup_pairs(dups, papers):
+            t = row["title"][:44]
+            if row.get("doi"):
+                L.append(f"| {t} | `{row['keep']}` — {row['keep_title'][:30]} | "
+                         f"`{row['folds']}` — {row['folds_title'][:30]} | `{row['doi']}` |")
             else:
                 # No arXiv DOI, or more than two entries: say so rather than guess which
                 # to keep. Either way the fix is the same shape, one identifier.
-                L.append(f"| {t} | " + " | ".join(f"`{p}` — {ti[:28]} ({doi_of(i) or 'no DOI'})"
-                                                  for ti, p, i, _g in entries)
+                L.append(f"| {t} | "
+                         + " | ".join(f"`{e['put']}` — {e['title'][:28]} "
+                                      f"({e['doi'] or 'no DOI'})" for e in row["entries"])
                          + " | *pick the entry with the venue; add the other's DOI* |")
         L += ["", "If you would rather have one entry than a grouped pair, delete the",
               "**folds in** one instead — *Works* → the entry → **⋮ / Actions** →",
@@ -1582,15 +1703,19 @@ def main() -> None:
               "Matched on DOI and arXiv id, not on name. This number matters because it",
               "decides which Wikidata job is worth doing: relinking author strings on",
               "items that already exist, or creating the items. At this coverage it is",
-              "the second, and the first cannot pay for the 50 edits QuickStatements",
-              "needs. One trap worth writing down — scholarly articles were moved out of",
+              "the second, and there is nothing to relink until they exist.",
+              "One trap worth writing down — scholarly articles were moved out of",
               "Wikidata's main query graph, so a publication query against",
               "`query.wikidata.org` returns zero rows with a 200, and looks like an",
               "answer. This uses `query-scholarly.wikidata.org`.", ""]
         if wd_qs:
-            L += [f"An opt-in batch for the {len(wd_cov['absent'])} missing items is in "
-                  f"`{os.path.relpath(wd_qs, ROOT)}`; read the cautions in "
-                  "[wikidata_followup.md](wikidata_followup.md) before running it.", ""]
+            L += [f"The {len(wd_cov['absent'])} missing items are created by "
+                  "`python scripts/wikidata_apply.py --papers --apply --limit 10`, which "
+                  "needs the bot password and nothing else; "
+                  f"`{os.path.relpath(wd_qs, ROOT)}` is the same statements as a "
+                  "QuickStatements batch, as a fallback. Read the cautions in "
+                  "[wikidata_followup.md](wikidata_followup.md) first — these are "
+                  "permanent public items.", ""]
     if stray:
         L += [f"## {len(stray)} arXiv papers you own are not in your bibliography", "",
               "Read off `arxiv.org/a/<orcid>`, which is the only place this shows up: the",
@@ -1770,9 +1895,26 @@ def main() -> None:
                   "orcid_strays_confirmed": [t for t, _p, _k in o_conf],
                   "orcid_strays_unknown": [t for t, _p, _k in o_unk],
                   "orcid_duplicate_groups": sorted(o_dups),
+                  # `orcid_remove.md` has the pairs in a table; the worklist had a
+                  # pointer to it and no values, which reads as "there is something here"
+                  # over an empty section. Both put-codes and the one DOI to paste travel
+                  # with the count now, so the summary can say the whole job in a line.
+                  "orcid_duplicate_pairs": dup_pairs(o_dups, papers),
+                  # `should_carry` as well as `should_be`: the slug says which paper the
+                  # work is, and the reader needs the string to paste. Two clicks on
+                  # ORCID and a copy from a second file is what having only the slug cost.
+                  # `carried_*` so the worklist can link the wrong DOI and name the paper
+                  # it belongs to. That link is the evidence for the whole item -- following
+                  # the identifier on your own record and landing on somebody else's paper
+                  # -- and without it the instruction is "trust us, replace this".
                   "orcid_misfiled_ids": [{"put": put, "should_be": right["slug"],
-                                          "carries": [f"{t}:{v}" for t, v in ids]}
-                                         for _t, put, ids, right, _w in o_misfiled],
+                                          "should_carry": paper_doi(right),
+                                          "carries": [f"{t}:{v}" for t, v in ids],
+                                          "carried_doi": next((v for t, v in ids
+                                                               if t == "doi"), None),
+                                          "carried_title": (wrong.get("title_display")
+                                                            or wrong["title"])}
+                                         for _t, put, ids, right, wrong in o_misfiled],
                   "orcid_missing_papers": [p["slug"] for p in o_missing],
                   "orcid_autoupdate_works": sum(auto_src.values()),
                   "orcid_missing_employment": missing_empl,
@@ -1788,7 +1930,16 @@ def main() -> None:
                   "wikidata_papers_present": (len(wd_cov["present"]) if wd_cov
                                               else None),
                   "wikidata_papers_absent": (len(wd_cov["absent"]) if wd_cov
-                                             else None)})
+                                             else None),
+                  # How many of the absent ones can actually be created, which is a
+                  # smaller number: a paper with neither a DOI nor an arXiv id has no key
+                  # to deduplicate against, so nothing will mint an item for it. The
+                  # worklist heads its section with this rather than with `absent`,
+                  # because a heading saying 109 over a command that creates 108 is the
+                  # count-does-not-match-the-list failure in a new place.
+                  "wikidata_papers_creatable": (
+                      sum(1 for p in wd_cov["absent"] if paper_item(p, cfg))
+                      if wd_cov else None)})
     with open(state_path, "w") as f:
         json.dump(state, f, indent=1)
 

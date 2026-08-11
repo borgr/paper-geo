@@ -32,6 +32,11 @@ from common import (ARXIV_NS, BUILD, DATA, ROOT, arxiv_id,  # noqa: E402
                     is_preprint_venue, load_config, name_match, norm_title,
                     parse_bibtex, read_yaml, short_venue, slugify, split_authors,
                     write_yaml)
+# The only OpenReview reader in the repo. Imported rather than reimplemented because the
+# filters are the load-bearing part -- a strict title match, an author list, and a venue
+# that is not a withdrawn or still-under-review submission -- and a second copy of them
+# here would be a second set of rules for admitting a paper to the corpus.
+from scholar_check import from_openreview  # noqa: E402
 
 
 
@@ -299,6 +304,13 @@ def from_arxiv_ids(papers: list[dict], ids: list[str]) -> int:
     that the bibliography does not mention -- which is exactly this list.
     """
     have = {p["arxiv"] for p in papers if p.get("arxiv")}
+    # An id the bibliography now carries is the good outcome -- it is what this list is
+    # waiting for -- but skipping it silently is how a stopgap becomes permanent. Said
+    # once, here, because this is the only code that can tell.
+    for i in ids:
+        if str(i).strip() in have:
+            print(f"  overrides.extra_arxiv: the bibliography has {i} now -- delete "
+                  f"that line", file=sys.stderr)
     # str(): an unquoted `2604.12843` in YAML is a float, and a float here would both
     # fail to join and, worse, silently drop a trailing zero from the id.
     want = [s for i in ids if (s := str(i).strip()) and s not in have]
@@ -337,7 +349,7 @@ def from_arxiv_ids(papers: list[dict], ids: list[str]) -> int:
             # is the split this whole project exists to avoid. The page renders its
             # cite block from the fields instead.
             "bibtex": None,
-            "_from_arxiv_override": True,
+            "_override": "extra_arxiv",
             "_norm": norm_title(title),
         })
         n += 1
@@ -345,6 +357,64 @@ def from_arxiv_ids(papers: list[dict], ids: list[str]) -> int:
     if missing:
         print(f"  ! extra_arxiv ids arXiv did not return: {', '.join(sorted(missing))}",
               file=sys.stderr)
+    return n
+
+
+def from_openreview_titles(papers: list[dict], titles: list[str]) -> int:
+    """Add papers by title from OpenReview, for the ones no other index can name.
+
+    `extra_arxiv`'s sibling, for the papers it cannot express. That list is keyed by
+    arXiv id, which assumes the paper was preprinted; a workshop paper generally was
+    not, and no publisher registered a DOI for it either, so there is no identifier to
+    put in a list at all. What there is, is the site the workshop ran on.
+
+    Keyed by title for that reason, and not by forum id, which would be the better key:
+    OpenReview's `notes` endpoint answers 403 without a token, while `notes/search`
+    answers anyone. So a title is the only handle an unauthenticated run has, and
+    `from_openreview`'s strict matching is what makes it safe to use as one.
+
+    Same narrow job and the same intended lifetime as `extra_arxiv`: it covers the
+    interval before the entry lands in the bibliography, after which the title leaves
+    this list. Nothing is typed by hand -- the record is fetched, so it cannot drift from
+    what OpenReview says, and a withdrawn or still-under-review submission is refused
+    upstream in `from_openreview` rather than published as a paper.
+    """
+    have = {p["_norm"] for p in papers if p.get("_norm")}
+    n = 0
+    for t in titles:
+        t = str(t).strip()
+        if not t:
+            continue
+        if norm_title(t) in have:
+            print(f"  overrides.extra_openreview: the bibliography has "
+                  f"{t[:52]!r} now -- delete that line", file=sys.stderr)
+            continue
+        rec, _, answered = from_openreview(t)
+        if not rec:
+            print(f"  ! extra_openreview: OpenReview "
+                  f"{'has no accepted paper titled' if answered else 'did not answer for'}"
+                  f" {t[:52]!r}", file=sys.stderr)
+            continue
+        papers.append({
+            "key": f"openreview{rec['openreview']}",
+            "slug": slugify(rec["title"]),
+            "title": rec["title"],
+            "authors": rec["authors"],
+            "year": int(rec["year"]) if (rec.get("year") or "").isdigit() else None,
+            "venue": rec["venue"],
+            "type": rec["type"],
+            "doi": None,
+            "arxiv": None,
+            "url": rec["url"],
+            "abstract": rec.get("abstract"),
+            # No `bibtex`, for the reason `from_arxiv_ids` gives: a key we invent would
+            # compete with the one the bibliography publishes later, and two citation
+            # keys for one paper is the split this project exists to avoid.
+            "bibtex": None,
+            "_override": "extra_openreview",
+            "_norm": norm_title(rec["title"]),
+        })
+        n += 1
     return n
 
 
@@ -993,6 +1063,9 @@ def main() -> None:
         n_extra = from_arxiv_ids(papers, ov_early.get("extra_arxiv") or [])
         if n_extra:
             print(f"  + {n_extra} from overrides.extra_arxiv", file=sys.stderr)
+        n_or = from_openreview_titles(papers, ov_early.get("extra_openreview") or [])
+        if n_or:
+            print(f"  + {n_or} from overrides.extra_openreview", file=sys.stderr)
         print("semantic scholar ...", file=sys.stderr)
         merge_s2(papers, cfg)
         if not args.no_arxiv:

@@ -286,12 +286,17 @@
           "type": "string",
           "description": "Venue trimmed at a word boundary for display."
         },
-        "_from_arxiv_override": {
+        "_override": {
           "type": [
-            "boolean",
+            "string",
             "null"
           ],
-          "description": "Record came from data/overrides.yaml `extra_arxiv` rather than the bibliography -- arXiv says you own the paper but the .bib has not caught up. Underscore-prefixed because it is provenance for a temporary state: the fix is one entry upstream, after which the id leaves overrides.yaml and this flag disappears."
+          "enum": [
+            "extra_arxiv",
+            "extra_openreview",
+            null
+          ],
+          "description": "Which data/overrides.yaml list put this record in the corpus, for the papers the bibliography has not caught up with. Underscore-prefixed because it is provenance for a temporary state: the fix is one entry upstream, after which the line leaves overrides.yaml and the marker with it. It also disappears when the bibliography's own entry merges with this record, which is the same fact arriving the other way -- so the papers still carrying it are exactly the ones still absent upstream, which is what WORKLIST.md counts."
         }
       }
     }

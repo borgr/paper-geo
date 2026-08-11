@@ -577,6 +577,381 @@ class TestARearrangedTitleIsTheSamePaper(unittest.TestCase):
         self.assertEqual([], clash, f"{len(clash)} pair(s) of your own titles collide")
 
 
+class TestAnIndexAnswerNeedsMoreThanWordOverlap(unittest.TestCase):
+    """The gate between "an index returned this" and "this is your paper".
+
+    `same_paper` compares two titles already known to be yours, so a wrong pair costs one
+    line a reader dismisses. The resolvers ask arXiv, Crossref, OpenReview and Semantic
+    Scholar's search endpoint, which answer from the whole literature, and there the same
+    threshold costs a stranger's paper pasted into your bibliography under your name.
+    `same_work` is the tighter gate those four use, and both directions are live cases:
+    the two refusals below were real acceptances before it existed, and the four matches
+    are retitles the loose gate is there to catch.
+    """
+
+    def test_a_prepended_word_changes_the_subject(self):
+        from scholar_check import same_paper, same_work
+        for query, indexed in [
+                # Word overlap cannot separate these: 2 of 4 content words and 3 of 5 are
+                # present, both at or over the 0.5 threshold. What separates them is that
+                # the extra words went in *front*, where they do not qualify a title but
+                # replace its subject -- "Tensor Product Attention" is not "Attention".
+                ("Attention is all you need",
+                 "Tensor Product Attention Is All You Need"),
+                ("An autonomous debating system",
+                 "A superpersuasive autonomous policy debating system")]:
+            self.assertTrue(same_paper(query, indexed),
+                            "the loose gate no longer takes this, so the tight gate is "
+                            "not what is being measured")
+            self.assertFalse(same_work(query, indexed),
+                             f"{indexed!r} would enter the bibliography as {query!r}")
+
+    def test_a_real_retitle_still_resolves(self):
+        from scholar_check import same_work
+        for a, b, why in [
+                # Every legitimate variant keeps its opening word. A dropped subtitle,
+                ("Genie: Achieving Human Parity in Content-Grounded Datasets Generation",
+                 "Genie: Achieving Human Parity", "subtitle dropped"),
+                # a venue retitle that appends,
+                ("The Mighty ToRR: A Benchmark for Table Reasoning and Robustness",
+                 "The Mighty ToRR: A Benchmark for Table Reasoning and Robustness in "
+                 "LLMs", "camera-ready appended two words"),
+                # and the live competition report, where "Competition:" is inserted after
+                # the head rather than before it -- which is why the rule is the first
+                # content word and not a character prefix, a rule this pair would fail.
+                ("Llm merging: Building llms efficiently through merging",
+                 "LLM Merging Competition: Building LLMs Efficiently through Merging",
+                 "a word inserted after the head"),
+                ("Global PIQA: Evaluating Commonsense Reasoning Across 100+ Languages "
+                 "and Cultures",
+                 "Global PIQA: Evaluating Physical Commonsense Reasoning Across 100+ "
+                 "Languages and Cultures", "a word dropped mid-title")]:
+            self.assertTrue(same_work(a, b), why)
+
+    def test_the_four_open_indexes_all_use_the_tight_gate(self):
+        """A fifth resolver added tomorrow has to be the tight kind too.
+
+        Structural because it is the mistake that already happened once in this file:
+        `from_openreview` was written against `same_paper` like the three resolvers
+        beside it, and made two false authorship claims on its first live run. Reading
+        the source is the only way to catch the next one before it fetches anything.
+        """
+        from common import ROOT
+        src = source(os.path.join(ROOT, "scripts", "scholar_check.py"))
+        for fn in ("from_arxiv", "from_crossref", "from_openreview"):
+            body = src.split(f"\ndef {fn}(", 1)[1].split("\ndef ", 1)[0]
+            self.assertIn("same_work(", body, f"{fn} decides on the loose gate")
+            self.assertNotIn("same_paper(", body, f"{fn} decides on the loose gate")
+        # `from_s2_search` reads a search answer through `from_s2`, which serves both
+        # candidate sets, so its tightening is the flag rather than the call.
+        body = src.split("\ndef from_s2_search(", 1)[1].split("\ndef ", 1)[0]
+        self.assertIn("strict=True", body, "the S2 search endpoint answers loosely")
+
+    def test_every_open_index_is_named_when_it_had_nothing(self):
+        """`UNRESOLVED` has to name the indexes actually asked, not a stale list.
+
+        The names were written twice -- once in `resolve`, once in the `bib_missing.md`
+        header -- and adding OpenReview updated only one, so the file a human reads went
+        on saying "not in all three indexes" after four were asked. One list now, and
+        this is what keeps a second copy from growing back.
+        """
+        import ast
+        import re as _re
+        from scholar_check import OPEN_INDEXES, S2_RECORD
+        from common import ROOT
+        path = os.path.join(ROOT, "scripts", "scholar_check.py")
+        src = source(path)
+        self.assertGreaterEqual(len(OPEN_INDEXES), 4)
+        for _, name in OPEN_INDEXES:
+            self.assertEqual(1, src.count(f'"{name}"'), f"{name} is spelled twice")
+        self.assertEqual(1, src.count(f'"{S2_RECORD}"') + src.count(f"'{S2_RECORD}'"))
+        # Emitted text only, which is what a hard-coded count would go stale in. Prose
+        # is exempt on purpose: the comment above `OPEN_INDEXES` quotes the wrong
+        # sentence in order to explain it, and a plain substring search over the file
+        # cannot tell that apart from the file emitting it.
+        tree = ast.parse(src)
+        docs = {id(n.body[0].value) for n in ast.walk(tree)
+                if isinstance(n, (ast.Module, ast.ClassDef, ast.FunctionDef,
+                                  ast.AsyncFunctionDef))
+                and n.body and isinstance(n.body[0], ast.Expr)
+                and isinstance(n.body[0].value, ast.Constant)
+                and isinstance(n.body[0].value.value, str)}
+        for n in ast.walk(tree):
+            if (isinstance(n, ast.Constant) and isinstance(n.value, str)
+                    and id(n) not in docs):
+                self.assertIsNone(
+                    _re.search(r"all (two|three|four|five) indexes", n.value),
+                    f"line {n.lineno} emits a resolver count that goes stale silently")
+
+
+class TestASubmissionIsNotAPublication(unittest.TestCase):
+    """OpenReview hosts the submission, not only the paper.
+
+    Every other index this program asks holds published work, so a title match there is
+    evidence of publication. OpenReview also holds what was withdrawn, desk-rejected and
+    still under review -- and a note in any of those states has a real title, real
+    authors and a `venue` string reading *ICLR 2026 Conference Withdrawn Submission*.
+    Rendered as `@inproceedings{booktitle = {ICLR 2026}}`, that is a claim the paper
+    appeared at ICLR, which it did not and now never will.
+
+    The one rule works because OpenReview names every non-accepted state the same way:
+    the `venueid`'s last path segment ends in `Submission`. Pinned here against the live
+    shapes the two API sweeps returned, because the rule is inferred from that naming
+    convention rather than from anything documented -- if it changes, the failure is a
+    withdrawn paper in a bibliography, and nothing downstream would question it.
+    """
+
+    def test_no_venue_state_gets_in(self):
+        from scholar_check import published
+        for vid, venue in [
+                ("ICLR.cc/2026/Conference/Withdrawn_Submission",
+                 "ICLR 2026 Conference Withdrawn Submission"),
+                ("ICLR.cc/2025/Conference/Desk_Rejected_Submission",
+                 "ICLR 2025 Conference Desk Rejected Submission"),
+                ("NeurIPS.cc/2024/Conference/Rejected_Submission",
+                 "NeurIPS 2024 Conference Rejected Submission"),
+                # Still under review: the plain group, and the venue string that names
+                # the state instead of the venue.
+                ("ICLR.cc/2026/Conference/Submission", "Submitted to ICLR 2026"),
+                # And the notes that leave the id off entirely.
+                ("", "Submitted to ACL ARR 2025 February"),
+                ("", "")]:
+            self.assertFalse(published({"venueid": {"value": vid},
+                                        "venue": {"value": venue}}),
+                             f"{venue or vid!r} is not a publication")
+
+    def test_an_accepted_paper_gets_in(self):
+        from scholar_check import published
+        for vid, venue in [
+                ("ICLR.cc/2024/Conference", "ICLR 2024 Poster"),
+                # The live case this was written for.
+                ("NeurIPS.cc/2025/Workshop/LLM_Evaluation",
+                 "NeurIPS 2025 LLM Evaluation Workshop"),
+                ("EWRL/2025/Workshop", "EWRL 2025"),
+                # A dblp mirror, which is a journal and typed `article` -- see below.
+                ("dblp.org/journals/CORR/2021", "CoRR 2021")]:
+            self.assertTrue(published({"venueid": {"value": vid},
+                                       "venue": {"value": venue}}),
+                            f"{venue!r} is a publication and would be refused")
+
+    def test_a_journal_note_is_not_proceedings(self):
+        """The other axis of the same mistake: asserting a venue that does not exist.
+
+        Nearly everything OpenReview hosts itself is a conference or workshop paper, so
+        `inproceedings` is the right default -- but a note mirrored from dblp or
+        deposited as a public article is a journal, and `inproceedings` there invents
+        proceedings, the way a withdrawn submission invents an acceptance.
+        """
+        from common import ROOT
+        src = source(os.path.join(ROOT, "scripts", "scholar_check.py"))
+        body = src.split("\ndef from_openreview(", 1)[1].split("\ndef ", 1)[0]
+        for marker in ("/journals/", "Public_Article", '"article"'):
+            self.assertIn(marker, body, f"{marker} no longer routes to a journal type")
+
+
+class TestAStopgapCannotGoQuiet(unittest.TestCase):
+    """`extra_arxiv` and `extra_openreview` have a stated lifetime, so something has to
+    watch both ends of it.
+
+    They exist because a paper the bibliography has not received yet has no page at all,
+    and the fix is one entry upstream -- after which the line here is dead weight. Both
+    transitions are silent by default, in opposite ways. While the paper is missing
+    upstream, the Scholar block cannot report it: that block finds bibliography gaps by
+    diffing Scholar against the corpus, and the override has already closed the gap. Once
+    the paste lands, the paper correctly stops being reported -- and the line it leaves
+    behind is announced once, on stderr, in a five-minute run. The live `extra_arxiv` id
+    got there exactly that way, which is what this pins.
+    """
+
+    def _render(self, papers, overrides):
+        """`upstream_gaps` against a synthetic corpus and a synthetic overrides file."""
+        import tempfile
+        import update
+        from common import write_yaml
+        with tempfile.TemporaryDirectory() as d:
+            write_yaml(os.path.join(d, "overrides.yaml"), overrides)
+            old, update.DATA = update.DATA, d
+            try:
+                return "\n".join(update.upstream_gaps(papers, {}))
+            finally:
+                update.DATA = old
+
+    def test_a_paper_only_an_override_supplies_is_reported(self):
+        out = self._render(
+            [{"slug": "s", "title": "A Statistical Framework for Game-Based AI Evaluation",
+              "authors": ["Felipe Maia Polo", "Leshem Choshen"], "year": 2025,
+              "venue": "NeurIPS 2025 LLM Evaluation Workshop", "type": "inproceedings",
+              "url": "https://openreview.net/forum?id=1VWfIsRdZA",
+              "_override": "extra_openreview"}],
+            {"extra_openreview": ["A Statistical Framework for Game-Based AI Evaluation"]})
+        self.assertIn("the bibliography does not have", out)
+        self.assertIn("A Statistical Framework", out)
+        # Pasteable, or the reader has to reconstruct the entry from the site.
+        self.assertIn("```bibtex", out)
+        self.assertIn("@inproceedings", out)
+        self.assertNotIn("redundant", out, "the line is still load-bearing")
+
+    def test_the_line_is_reported_once_its_paper_arrives(self):
+        # Same id, no marker: the record came from the bibliography this run, so the
+        # override supplied nothing and the line is spent.
+        out = self._render(
+            [{"slug": "s", "title": "Growing Pains", "arxiv": "2604.12843",
+              "key": "habba2026growing", "_override": None}],
+            {"extra_arxiv": ["2604.12843"]})
+        self.assertIn("redundant", out)
+        self.assertIn("2604.12843", out)
+        self.assertNotIn("the bibliography does not have", out,
+                         "the gap is closed -- reporting it again asks for a done paste")
+
+    def test_a_line_whose_paper_never_resolved_is_not_called_done(self):
+        """The two failures a single "is it in the corpus" check would conflate.
+
+        A title that OpenReview has no accepted paper for adds nothing to the corpus
+        either -- and reporting *that* as redundant would tell the reader to delete the
+        line, discarding the request. It stays unreported here, because the collector
+        already refuses it loudly by name on the run that tried.
+        """
+        out = self._render(
+            [{"slug": "s", "title": "Some other paper", "arxiv": "2101.00001",
+              "_override": None}],
+            {"extra_openreview": ["A paper OpenReview does not have"],
+             "extra_arxiv": ["2604.12843"]})
+        self.assertEqual("", out)
+
+    def test_the_live_file_has_no_spent_lines(self):
+        """And the report is empty right now, which is the only state worth committing.
+
+        A committed override that the corpus proves redundant is a line every future
+        reader has to re-derive the status of.
+        """
+        from common import DATA, read_yaml
+        papers = read_yaml(os.path.join(DATA, "papers.yaml"))["papers"]
+        ov = read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
+        self.assertNotIn("redundant", self._render(papers, ov))
+
+
+class TestBothWikidataWritersDescribeTheSameItem(unittest.TestCase):
+    """Two ways to create a paper item, and the danger is not that one is wrong.
+
+    A QuickStatements batch needs no stored credential and is the fallback if the bot
+    password is revoked; `wikidata_apply.py --papers` writes the same items through the
+    API. The failure mode of two emitters is that they *disagree*, so the `.qs` file a
+    human reads before pasting describes items other than the ones the API path creates
+    -- and on a wiki, undoing the wrong one is a deletion request rather than a click.
+    Both render `audit_identity.paper_item`, which is what makes them agree; this
+    measures the agreement over the real corpus rather than trusting the arrangement.
+    """
+
+    def _items(self):
+        from common import DATA, read_yaml, load_config
+        from audit_identity import paper_item
+        papers = read_yaml(os.path.join(DATA, "papers.yaml"))["papers"]
+        cfg = load_config()
+        return [(p, paper_item(p, cfg)) for p in papers]
+
+    def test_the_batch_and_the_api_carry_the_same_facts(self):
+        import re as _re
+        from wikidata_apply import item_json
+        for p, it in self._items():
+            if not it:
+                continue
+            j = item_json(it)
+            # The QuickStatements rendering of this one item, without writing a file:
+            # every value the batch would paste, pulled out of the API payload's twin.
+            qs = {"P31": it["instance_of"], "P1476": it["title"]}
+            got = {}
+            for c in j["claims"]:
+                pid = c["mainsnak"]["property"]
+                dv = c["mainsnak"]["datavalue"]["value"]
+                if pid in ("P31", "P50"):
+                    got.setdefault(pid, []).append(dv["id"])
+                elif pid == "P1476":
+                    got[pid] = dv["text"]
+                elif pid == "P577":
+                    got[pid] = dv["time"]
+                else:
+                    got.setdefault(pid, []).append(dv)
+            self.assertEqual([qs["P31"]], got["P31"], p["slug"])
+            self.assertEqual(qs["P1476"], got["P1476"], p["slug"])
+            self.assertEqual([it["doi"]] if it["doi"] else [], got.get("P356", []),
+                             p["slug"])
+            self.assertEqual([it["arxiv"]] if it["arxiv"] else [], got.get("P818", []),
+                             p["slug"])
+            if it["year"]:
+                self.assertEqual(f"+{it['year']}-00-00T00:00:00Z", got["P577"], p["slug"])
+                self.assertEqual(9, [c for c in j["claims"]
+                                     if c["mainsnak"]["property"] == "P577"
+                                     ][0]["mainsnak"]["datavalue"]["value"]["precision"],
+                                 "precision 9 is a year; anything finer is invented")
+            # Every author, in order, and each one ordinal-qualified: an item whose
+            # author order is lost is not a smaller version of the paper, it is a
+            # different claim about who wrote it.
+            authors = [c for c in j["claims"]
+                       if c["mainsnak"]["property"] in ("P50", "P2093")]
+            self.assertEqual(len(it["authors"]), len(authors), p["slug"])
+            self.assertEqual([str(a["ordinal"]) for a in it["authors"]],
+                             [c["qualifiers"]["P1545"][0]["datavalue"]["value"]
+                              for c in authors], p["slug"])
+            self.assertLessEqual(len(j["labels"]["en"]["value"]), 250,
+                                 "Wikidata rejects the label and the batch stops here")
+            self.assertFalse(_re.search(r'(?<!\\)"', it["label"] + it["title"]),
+                             "a bare quote ends the QuickStatements value early")
+
+    def test_a_paper_with_no_identifier_is_not_created(self):
+        """No DOI and no arXiv id means no item, from either writer.
+
+        Not a formatting convenience. An external identifier is what puts a publication
+        item uncontroversially in scope, and it is also the key coverage is measured on
+        -- so an item created without one cannot be recognised by a later run, and might
+        already exist under a title nothing here can match.
+        """
+        from audit_identity import paper_item
+        from common import load_config
+        cfg = load_config()
+        self.assertIsNone(paper_item(
+            {"slug": "x", "title": "A paper nobody registered", "authors": ["A B"],
+             "year": 2025}, cfg))
+        # And the corpus really contains such papers, so the None branch is reached on a
+        # live run rather than only in this test. If this ever goes red, every paper has
+        # an identifier -- a better state than the one this line was written in, and the
+        # right response is to delete the line.
+        self.assertTrue(any(it is None for _, it in self._items()),
+                        "every paper now has an identifier; this assertion has no job "
+                        "left, delete it")
+
+    def test_a_recorded_item_is_not_created_twice(self):
+        """The receipt that closes the query service's lag.
+
+        Coverage is measured by SPARQL, and the scholarly query service trails an edit by
+        long enough that the next scheduled run cannot see what this one created. Without
+        the ledger it would create the item again, which is the one failure here that
+        cannot be undone with a click. Written per item, because the run that most needs
+        it is the one that dies mid-batch.
+        """
+        import tempfile
+        import audit_identity as ai
+        with tempfile.TemporaryDirectory() as d:
+            old, ai.CREATED = ai.CREATED, os.path.join(d, "wikidata_created.yaml")
+            try:
+                self.assertEqual({}, ai.created_items(), "a missing ledger is empty")
+                ai.record_created("some-paper", "Q123")
+                ai.record_created("other-paper", "Q456")
+                # Re-recording the same pair is what an interrupted-then-resumed run
+                # does, and it must not append a second line.
+                ai.record_created("some-paper", "Q123")
+                self.assertEqual({"some-paper": "Q123", "other-paper": "Q456"},
+                                 ai.created_items())
+            finally:
+                ai.CREATED = old
+        # The fold-in itself: coverage adds the ledger to what SPARQL found, so a
+        # recorded slug lands in `present` and never in `absent`, which is the list both
+        # writers create from.
+        src = source(os.path.join(ai.ROOT, "scripts", "audit_identity.py"))
+        body = src.split("\ndef wikidata_paper_coverage(", 1)[1].split("\ndef ", 1)[0]
+        self.assertIn("created_items()", body, "coverage ignores the ledger")
+        self.assertIn("setdefault", body, "the ledger must not overwrite a live answer")
+
+
 class TestGeneratedFilesRenderTitles(unittest.TestCase):
     """No generated file may print a title's raw BibTeX form.
 

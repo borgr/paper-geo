@@ -95,8 +95,35 @@ also_mine: []
 # to fix upstream, or an ownership claim on a paper that is not yours to withdraw.
 # Quote the ids. Unquoted, `2604.12843` is a YAML float, and the digits after the
 # decimal point are silently reformatted.
-extra_arxiv:
-  - "2604.12843"   # arXiv says you own it; absent from enhanced.bib. Add it upstream.
+#
+# Empty because it worked: `2604.12843` sat here until the entry landed upstream, and the
+# corpus now gets that paper from the bibliography with its published citation key. The
+# worklist reports a line here as redundant once its paper arrives, so the next one does
+# not have to be noticed in scrollback.
+extra_arxiv: []
+
+# Papers to add by title from OpenReview, for the ones no identifier can name.
+#
+# `extra_arxiv` above is keyed by arXiv id, which assumes the paper was preprinted. A
+# workshop paper usually was not, and no publisher registered a DOI for it either -- so
+# there is no identifier to list, and the paper is invisible to every check in this repo
+# that starts from one. The site the workshop ran on is what is left.
+#
+# Titles rather than forum ids, which would be the better key: OpenReview's `notes`
+# endpoint answers 403 without a token and only `notes/search` is open, so a title is the
+# only handle an unauthenticated run has. Nothing here is typed by hand -- the record is
+# fetched every run, so it cannot drift from what OpenReview says -- and a submission that
+# was withdrawn, rejected, or is still under review is refused rather than published.
+#
+# Same lifetime as the list above: it covers the interval until the entry lands upstream,
+# and WORKLIST.md counts what is still waiting. `python update.py --step collect` says
+# "the bibliography has ... now" once the paste lands, which is when the line goes.
+extra_openreview:
+  # A NeurIPS 2025 LLM Evaluation Workshop paper (openreview.net/forum?id=1VWfIsRdZA),
+  # yours with Felipe Maia Polo, Yuekai Sun and Kristjan Greenewald. It was sitting in
+  # tasks/bib_missing.md as an unresolvable stub, because a workshop paper is on nobody's
+  # arXiv and carries no DOI -- the blind spot that `from_openreview` now covers.
+  - "A Statistical Framework for Game-Based AI Evaluation"
 
 # Records to drop entirely: things in the bibliography that are not papers.
 #

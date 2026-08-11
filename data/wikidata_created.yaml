@@ -1,0 +1,8 @@
+note: 'Wikidata items that `scripts/wikidata_apply.py --papers` created, slug -> QID. Not
+  derived and not a decision: a receipt. The scholarly query service lags hours behind an
+  edit, so for those hours this file is the only thing that knows the item exists -- without
+  it a second run recreates the whole batch, and a duplicate publication item is the one
+  mistake here somebody else has to clean up. Never edit by hand; `validate.py` checks every
+  key is still a live slug. This key survives the rewrites because the writer preserves what
+  it did not put there.'
+items: {}

@@ -10,7 +10,7 @@ description: >
 
 # paper-geo
 
-112 papers and 31 repos, one command (`update.py`), one source of truth (`data/`),
+113 papers and 31 repos, one command (`update.py`), one source of truth (`data/`),
 and a short ranked list of what only a human can do (`WORKLIST.md`).
 
 ## Your contract

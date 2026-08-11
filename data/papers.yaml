@@ -257,7 +257,7 @@ papers:
     \ for Computational Linguistics\",\n    url = \"https://aclanthology.org/2023.conll-babylm.1\",\n\
     \    doi = \"10.18653/v1/2023.conll-babylm.1\",\n    pages = \"1--34\",\n}"
   s2_author_record: '41019330'
-  citations: 232
+  citations: 233
   acl: null
   s2_corpus_id: 266182457
   arxiv_journal_ref: 2023. In Proceedings of the BabyLM Challenge at the 27th Conference on Computational
@@ -2037,7 +2037,7 @@ papers:
     \ modeling, but community-driven research can yield actionable insights about effective strategies\
     \ for small-scale language modeling.\"\n}"
   s2_author_record: '41019330'
-  citations: 62
+  citations: 63
   acl: null
   s2_corpus_id: 274581556
   arxiv_journal_ref: null
@@ -4807,65 +4807,6 @@ papers:
   has_sidecar: false
   owner: null
   owner_source: unclaimed
-- key: DBLP:journals/corr/abs-2407-10944
-  slug: naturally-occurring-feedback-is-common-extractable-and-usefu
-  title: Naturally Occurring Feedback is Common, Extractable and Useful
-  authors:
-  - Shachar Don-Yehiya
-  - Leshem Choshen
-  - Omri Abend
-  authors_truncated: null
-  year: 2025
-  venue: null
-  type: misc
-  doi: null
-  arxiv: '2407.10944'
-  url: https://arxiv.org/abs/2407.10944
-  abstract: 'Human feedback data is a critical component in developing language models. However, collecting
-    this feedback is costly and ultimately not scalable. Inspired by the way human interlocutors provide
-    spontaneous unsolicited feedback to each other, we propose to extract feedback that users naturally
-    include when interacting with chat models. We manually annotated conversations to confirm the presence
-    of naturally occurring feedback in a standard corpus, finding that as much as 30% of the chats include
-    explicit feedback. Comparing to older datasets, we find that naturally occurring feedback is more
-    prevalent in recent conversation datasets, suggesting that more than ever, naturally occurring feedback
-    can serve as a valuable resource for feedback data. We propose a method for automatically extracting
-    this feedback, and apply it to over 1M conversations to obtain hundreds of thousands of feedback samples.
-    The extracted feedback shows promise: training with it improves over baseline models and enhances
-    model alignment to human preferences.'
-  bibtex: "@misc{DBLP:journals/corr/abs-2407-10944,\n      title={Naturally Occurring Feedback is Common,\
-    \ Extractable and Useful}, \n      author={Shachar Don-Yehiya and Leshem Choshen and Omri Abend},\n\
-    \      year={2025},\n      eprint={2407.10944},\n      archivePrefix={arXiv},\n      primaryClass={cs.CL},\n\
-    \      url={https://arxiv.org/abs/2407.10944}, \n}"
-  s2_author_record: '41019330'
-  citations: 14
-  acl: null
-  s2_corpus_id: 271212637
-  arxiv_journal_ref: null
-  arxiv_doi: null
-  arxiv_comment: null
-  arxiv_html: true
-  hf_indexed: true
-  hf_upvotes: 4
-  hf_claimed_authors: 1
-  hf_claimed_by_me: true
-  hf_github_repo: https://github.com/shachardon/naturally_occurring_feedback
-  hf_github_stars: 14
-  hf_n_models: 0
-  hf_n_datasets: 1
-  links:
-    arxiv: https://arxiv.org/abs/2407.10944
-    arxiv_pdf: https://arxiv.org/pdf/2407.10944
-    html: https://arxiv.org/html/2407.10944
-    html_source: arxiv
-    huggingface: https://huggingface.co/papers/2407.10944
-    alphaxiv: https://www.alphaxiv.org/abs/2407.10944
-    semantic_scholar: https://www.semanticscholar.org/paper/271212637
-    code: https://github.com/shachardon/naturally_occurring_feedback
-  title_display: Naturally Occurring Feedback is Common, Extractable and Useful
-  venue_display: ''
-  has_sidecar: false
-  owner: null
-  owner_source: unclaimed
 - key: charpentier-etal-2025-findings
   slug: findings-of-the-third-babylm-challenge-accelerating-language
   title: 'Findings of the Third {B}aby{LM} Challenge: Accelerating Language Modeling Research with Cognitively
@@ -4941,7 +4882,7 @@ papers:
     \ BabyLM Challenge shows that there is still room to innovate in a data-constrained setting, and that\
     \ community-driven research can yield actionable insights for language modeling.\"\n}"
   s2_author_record: '41019330'
-  citations: 13
+  citations: 14
   acl: null
   s2_corpus_id: 282893571
   links:
@@ -4951,6 +4892,65 @@ papers:
   title_display: 'Findings of the Third BabyLM Challenge: Accelerating Language Modeling Research with
     Cognitively Plausible Data'
   venue_display: Proceedings of the First BabyLM Workshop
+  has_sidecar: false
+  owner: null
+  owner_source: unclaimed
+- key: DBLP:journals/corr/abs-2407-10944
+  slug: naturally-occurring-feedback-is-common-extractable-and-usefu
+  title: Naturally Occurring Feedback is Common, Extractable and Useful
+  authors:
+  - Shachar Don-Yehiya
+  - Leshem Choshen
+  - Omri Abend
+  authors_truncated: null
+  year: 2025
+  venue: null
+  type: misc
+  doi: null
+  arxiv: '2407.10944'
+  url: https://arxiv.org/abs/2407.10944
+  abstract: 'Human feedback data is a critical component in developing language models. However, collecting
+    this feedback is costly and ultimately not scalable. Inspired by the way human interlocutors provide
+    spontaneous unsolicited feedback to each other, we propose to extract feedback that users naturally
+    include when interacting with chat models. We manually annotated conversations to confirm the presence
+    of naturally occurring feedback in a standard corpus, finding that as much as 30% of the chats include
+    explicit feedback. Comparing to older datasets, we find that naturally occurring feedback is more
+    prevalent in recent conversation datasets, suggesting that more than ever, naturally occurring feedback
+    can serve as a valuable resource for feedback data. We propose a method for automatically extracting
+    this feedback, and apply it to over 1M conversations to obtain hundreds of thousands of feedback samples.
+    The extracted feedback shows promise: training with it improves over baseline models and enhances
+    model alignment to human preferences.'
+  bibtex: "@misc{DBLP:journals/corr/abs-2407-10944,\n      title={Naturally Occurring Feedback is Common,\
+    \ Extractable and Useful}, \n      author={Shachar Don-Yehiya and Leshem Choshen and Omri Abend},\n\
+    \      year={2025},\n      eprint={2407.10944},\n      archivePrefix={arXiv},\n      primaryClass={cs.CL},\n\
+    \      url={https://arxiv.org/abs/2407.10944}, \n}"
+  s2_author_record: '41019330'
+  citations: 14
+  acl: null
+  s2_corpus_id: 271212637
+  arxiv_journal_ref: null
+  arxiv_doi: null
+  arxiv_comment: null
+  arxiv_html: true
+  hf_indexed: true
+  hf_upvotes: 4
+  hf_claimed_authors: 1
+  hf_claimed_by_me: true
+  hf_github_repo: https://github.com/shachardon/naturally_occurring_feedback
+  hf_github_stars: 14
+  hf_n_models: 0
+  hf_n_datasets: 1
+  links:
+    arxiv: https://arxiv.org/abs/2407.10944
+    arxiv_pdf: https://arxiv.org/pdf/2407.10944
+    html: https://arxiv.org/html/2407.10944
+    html_source: arxiv
+    huggingface: https://huggingface.co/papers/2407.10944
+    alphaxiv: https://www.alphaxiv.org/abs/2407.10944
+    semantic_scholar: https://www.semanticscholar.org/paper/271212637
+    code: https://github.com/shachardon/naturally_occurring_feedback
+  title_display: Naturally Occurring Feedback is Common, Extractable and Useful
+  venue_display: ''
   has_sidecar: false
   owner: null
   owner_source: unclaimed
@@ -8119,18 +8119,19 @@ papers:
   doi: null
   arxiv: '2604.12843'
   url: null
-  abstract: The rapid release of both language models and benchmarks makes it increasingly costly to evaluate
-    every model on every dataset. In practice, models are often evaluated on different samples, making
-    scores difficult to compare across studies. To address this, we propose a framework based on multidimensional
-    Item Response Theory (IRT) that uses anchor items to calibrate new benchmarks to the evaluation suite
-    while holding previously calibrated item parameters fixed. Our approach supports a realistic evaluation
-    setting in which datasets are introduced over time and models are evaluated only on the datasets available
-    at the time of evaluation, while a fixed anchor set for each dataset is used so that results from
-    different evaluation periods can be compared directly. In large-scale experiments on more than $400$
-    models, our framework predicts full-evaluation performance within 2-3 percentage points using only
-    $100$ anchor questions per dataset, with Spearman $ρ\geq 0.9$ for ranking preservation, showing that
-    it is possible to extend benchmark suites over time while preserving score comparability, at a constant
-    evaluation cost per new dataset. Code available at https://github.com/eliyahabba/growing-pains
+  abstract: 'The rapid release of both language models and benchmarks makes it increasingly costly to
+    evaluate every model on every dataset. In practice, models are often evaluated on different samples,
+    making scores difficult to compare across studies. To address this, we propose a framework based on
+    multidimensional Item Response Theory (IRT) that uses anchor items to calibrate new benchmarks to
+    the evaluation suite while holding previously calibrated item parameters fixed. Our approach supports
+    a realistic evaluation setting in which datasets are introduced over time and models are evaluated
+    only on the datasets available at the time of evaluation, while a fixed anchor set for each dataset
+    is used so that results from different evaluation periods can be compared directly. In large-scale
+    experiments on more than 400 models, our framework predicts full-evaluation performance within 2-3
+    percentage points using only 100 anchor questions per dataset, with Spearman $ρ\geq 0.9$ for ranking
+    preservation preservation. This shows that benchmark suites can grow over time while preserving score
+    comparability, since adding a new dataset requires running existing models only on that dataset''s
+    anchors. Code and data are available at: https://eliyahabba.github.io/growing-pains/'
   bibtex: "@article{habba2026growing,\n  title={Growing Pains: Extensible and Efficient LLM Benchmarking\
     \ Via Fixed Parameter Calibration},\n  author={Habba, Eliya and Itzhak, Itay and Yehudai, Asaf and\
     \ Perlitz, Yotam and Bandel, Elron and Shmueli-Scheuer, Michal and Choshen, Leshem and Stanovsky,\
@@ -8593,6 +8594,37 @@ papers:
     semantic_scholar: https://www.semanticscholar.org/paper/280012277
   title_display: Can Gradient Descent Simulate Prompting?
   venue_display: arXiv
+  has_sidecar: false
+  owner: null
+  owner_source: unclaimed
+- key: openreview1VWfIsRdZA
+  slug: a-statistical-framework-for-game-based-ai-evaluation
+  title: A Statistical Framework for Game-Based AI Evaluation
+  authors:
+  - Felipe Maia Polo
+  - Leshem Choshen
+  - Yuekai Sun
+  - Kristjan Greenewald
+  year: 2025
+  venue: NeurIPS 2025 LLM Evaluation Workshop
+  type: inproceedings
+  doi: null
+  arxiv: null
+  url: https://openreview.net/forum?id=1VWfIsRdZA
+  abstract: We introduce a statistical framework for evaluating large language models (LLMs) in two-player
+    games. The model separates premature endings, such as timeouts or repeated invalid moves, from the
+    conditional outcome of win, draw, or loss. Both parts share a low-dimensional skill space for models
+    and games, which lets us capture reliability (avoiding failures) and proficiency (winning valid games).
+    Using the TextArena dataset (57 models, 30 games, about 38k matches including human players), we learn
+    skills that can be used to compare similarity between LLMs' skill profiles, rank models, or predict
+    performance in other tasks such as solving mathematical problems. In sum, our method turns arena outcomes
+    into a structured and interpretable map of model reliability and capability.
+  bibtex: null
+  _override: extra_openreview
+  links:
+    publisher: https://openreview.net/forum?id=1VWfIsRdZA
+  title_display: A Statistical Framework for Game-Based AI Evaluation
+  venue_display: NeurIPS 2025 LLM Evaluation Workshop
   has_sidecar: false
   owner: null
   owner_source: unclaimed

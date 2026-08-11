@@ -212,7 +212,7 @@ Journal-ref:          Proceedings of the 61st Annual Meeting of the Association 
 Journal version DOI:  10.18653/v1/2023.ACL-LONG.46
 ```
 
-### 18. Findings of the Second BabyLM Challenge: Sample-Efficient Pretraining on Developmentally Plausible Corpora — cited 62
+### 18. Findings of the Second BabyLM Challenge: Sample-Efficient Pretraining on Developmentally Plausible Corpora — cited 63
 
 <https://arxiv.org/abs/2412.05149> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 

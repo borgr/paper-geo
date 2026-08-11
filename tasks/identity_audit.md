@@ -7,7 +7,7 @@ which is why it can be re-run — the fixes all need one.
 | surface | state | |
 |---|---|---|
 | ORCID works (public) | 115 | ok |
-| ORCID holds your papers | 112 of 112 | ok |
+| ORCID holds your papers | 112 of 113 | **fix** |
 | ORCID identifiers point at the right paper | 114 of 115 works | **fix** |
 | ORCID canonical URL | present | ok |
 | ORCID name variants | 2 listed | ok |
@@ -19,7 +19,7 @@ which is why it can be re-run — the fixes all need one.
 | arXiv registered author | 105 of 105 | ok |
 | Wikidata author item | Q140867203 | ok |
 | Wikidata item complete | 0 gaps | ok |
-| Wikidata paper items | 3 of 112 | optional |
+| Wikidata paper items | 3 of 113 | optional |
 | HF pages indexed | 105 of 105 | ok |
 | HF pages claimed | 103 of 105 claimable | ok |
 | HF claims in moderation | 2 | waiting |
@@ -101,18 +101,18 @@ Do not delete it and re-add your own: that trades a vouched-for entry for a
 self-asserted one, which is a downgrade in exactly the signal this section
 exists to provide.
 
-## Wikidata paper coverage: 3 of 112
+## Wikidata paper coverage: 3 of 113
 
 Matched on DOI and arXiv id, not on name. This number matters because it
 decides which Wikidata job is worth doing: relinking author strings on
 items that already exist, or creating the items. At this coverage it is
-the second, and the first cannot pay for the 50 edits QuickStatements
-needs. One trap worth writing down — scholarly articles were moved out of
+the second, and there is nothing to relink until they exist.
+One trap worth writing down — scholarly articles were moved out of
 Wikidata's main query graph, so a publication query against
 `query.wikidata.org` returns zero rows with a 200, and looks like an
 answer. This uses `query-scholarly.wikidata.org`.
 
-An opt-in batch for the 109 missing items is in `tasks/wikidata_papers.qs`; read the cautions in [wikidata_followup.md](wikidata_followup.md) before running it.
+The 110 missing items are created by `python scripts/wikidata_apply.py --papers --apply --limit 10`, which needs the bot password and nothing else; `tasks/wikidata_papers.qs` is the same statements as a QuickStatements batch, as a fallback. Read the cautions in [wikidata_followup.md](wikidata_followup.md) first — these are permanent public items.
 
 ## 2 works on your ORCID we cannot place
 
@@ -152,6 +152,22 @@ papers and a title matching another one character-for-character.
         pencil icon → replace the DOI under *Identifiers* → *Save changes*.
         Edit rather than delete-and-re-add, so the put-code keeps its
         citations and its source attribution.
+
+## 1 of your papers is missing from ORCID
+
+Measured by identifier, not by counting: each of these has no work group on
+the record carrying its DOI or arXiv id.
+
+This is the row that matters most on the page and the one a works *count*
+hides. ORCID is the key Semantic Scholar disambiguates on and the key OpenAlex
+is running profile merges from, so a paper absent here is a paper those two
+have no authoritative reason to attach to you — which is the same failure the
+split S2 record is made of.
+
+Highest citations first; the full list with DOIs is
+[orcid_missing.md](orcid_missing.md).
+
+- [ ]    0 cites — A Statistical Framework for Game-Based AI Evaluation
 
 ## 1 paper is listed twice on your ORCID
 

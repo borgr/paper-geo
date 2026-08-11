@@ -43,7 +43,8 @@ import sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
-from common import DATA, health_report, is_preprint_venue, load_config, read_yaml  # noqa: E402
+from common import (DATA, health_report, is_preprint_venue, load_config,  # noqa: E402
+                    norm_title, read_yaml, synth_bibtex)
 from sweep_github import ZENODO_KINDS  # noqa: E402
 
 STEPS = ("collect", "repos", "propose", "draft", "links", "ownership", "audit",
@@ -495,12 +496,21 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
          f"Scholar lists **{sc.get('scholar_rows')}** works and matched "
          f"**{sc.get('matched')}** of the corpus's **{sc.get('corpus')}**. Scholar is",
          "the one list of your papers that is built by a different process, so it is the",
-         "only check that can see a paper this pipeline never received. Full detail:",
-         "`build/scholar_diff.json`.", ""]
+         "only check that can see a paper this pipeline never received.", "",
+         # Was `build/scholar_diff.json` in backticks, which is a filename you cannot
+         # open: `build/` is gitignored, so it is absent on GitHub and absent after a
+         # clone, and it is where every "full detail" pointer on this page led. Naming
+         # the command that makes it is the difference between a dead end and a step.
+         "Every bucket in full, including what is truncated below:",
+         "[`build/scholar_diff.json`](build/scholar_diff.json) — local only, because",
+         "`build/` is not committed. `python update.py --step audit` writes it, and after",
+         "a fresh clone that is the one command between you and the file.", ""]
     if gate:
         L += [f"### {pl(len(gate))} the authorship gate excluded  — a bug, or a "
               f"wrong Scholar row", "",
-              "Scholar says these are yours and `build/not_mine.json` says they are not.",
+              "Scholar says these are yours and"
+              " [`build/not_mine.json`](build/not_mine.json) — written by the same run,",
+              "local only — says they are not.",
               "One of the two is wrong. If the paper is yours, add its title under",
               "`also_mine` in [`data/overrides.yaml`](data/overrides.yaml); if Scholar has",
               "merged a namesake's paper into your profile, delete it there, because a",
@@ -526,7 +536,8 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
         L += [f"- [ ] {cites(r.get('citations'))} — {r.get('year') or '????'} — "
               f"{(r.get('title') or '')[:60]}" for r in miss[:12]]
         if len(miss) > 12:
-            L += [f"- … and {len(miss) - 12} more in `build/scholar_diff.json`"]
+            L += [f"- … and {len(miss) - 12} more in "
+                  f"[`build/scholar_diff.json`](build/scholar_diff.json)"]
         L += [""]
     if gone:
         cit = sum(p.get("citations") or 0 for p in gone)
@@ -595,6 +606,92 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
     return L
 
 
+def upstream_gaps(papers: list[dict], cfg) -> list[str]:
+    """Papers the corpus has only because an override names them.
+
+    Its own section rather than a line in the Scholar block above, because it is not a
+    disagreement between two surfaces -- both surfaces are right. The bibliography really
+    does not have these, and the corpus really does, and the only reason they are not
+    reported as missing is that an override put them in.
+
+    Which is why this exists at all. `extra_arxiv` and `extra_openreview` are stopgaps
+    with a stated lifetime: they cover the interval before the entry lands upstream, and
+    both files say to delete the line after. Nothing enforced that, and the Scholar block
+    cannot -- it finds papers missing from the bibliography by diffing Scholar against the
+    corpus, so an override closes the gap it would have reported. The stopgap goes silent
+    at the moment it starts being permanent.
+
+    The marker is provenance, not a decision: `collect.py` sets it on the records it adds
+    from an override, and it disappears when the bibliography's own entry merges with the
+    record. So a paper still carrying it is still absent upstream, and a paste that
+    already happened cannot be reported here.
+
+    Which is the second half, and the reason this function reads `overrides.yaml` as well
+    as the corpus. The moment the paste lands, the paper stops being reported above --
+    correctly, the gap is closed -- and the line that covered the interval is left behind
+    with nothing pointing at it. `collect.py` says so on stderr, once, in the middle of a
+    five-minute run nobody watches to the end; the id sitting in `extra_arxiv` today got
+    there that way. A stopgap whose removal is only ever announced in scrollback is a
+    permanent stopgap, so it gets a line in the file that is read instead.
+    """
+    L = []
+    pend = sorted((p for p in papers if p.get("_override")),
+                  key=lambda p: -(p.get("citations") or 0))
+    edit = re.sub(r"^https://raw\.githubusercontent\.com/([^/]+/[^/]+)/(.+)$",
+                  r"https://github.com/\1/edit/\2",
+                  ((cfg or {}).get("sources") or {}).get("bibtex_url") or "")
+    if pend:
+        L += [f"## {len(pend)} paper{'s' * (len(pend) != 1)} in the corpus that the "
+              f"bibliography does not have", "",
+              "Added by `extra_arxiv` or `extra_openreview` in",
+              "[`data/overrides.yaml`](data/overrides.yaml), so each has a page and a "
+              "canonical",
+              "URL already — this is not about the site. It is that the bibliography is this",
+              "pipeline's only real input, and every run these papers depend on a line in an",
+              "override file instead. Paste the entry upstream and delete that line.", ""]
+        if edit.startswith("https://github.com/"):
+            L += [f"Edit the bibliography here: <{edit}>", ""]
+    for p in pend[:5]:
+        # Synthesised from the fetched record, which is why the citation key is not one to
+        # keep: the bibliography assigns keys, and the reason these records carry no
+        # `bibtex` of their own is that an invented key competing with the published one
+        # is the split this project exists to avoid. Paste the fields, not the key.
+        L += [f"- [ ] **{(p.get('title_display') or p.get('title') or '')[:66]}** — "
+              f"`{p['_override']}`, {p.get('citations') or 0} cites", "",
+              "  ```bibtex", *(f"  {ln}" for ln in synth_bibtex(p).splitlines()),
+              "  ```", ""]
+    if len(pend) > 5:
+        L += [f"- … and {len(pend) - 5} more, listed in `data/overrides.yaml`", ""]
+
+    # A line is spent when the corpus has its paper *without* the marker: the record came
+    # from the bibliography this run, so the override added nothing. Matched on the same
+    # keys `collect.py` adds by -- an arXiv id, a normalised title -- so a line that never
+    # resolved to a paper at all is not reported here as done. That one is already loud:
+    # the collector prints `! extra_openreview: OpenReview has no accepted paper titled`.
+    ov = read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
+    from_bib = [p for p in papers if not p.get("_override")]
+    ids = {p["arxiv"] for p in from_bib if p.get("arxiv")}
+    titles = {norm_title(p.get("title") or "") for p in from_bib}
+    spent = [("extra_arxiv", str(i).strip()) for i in (ov.get("extra_arxiv") or [])
+             if str(i).strip() in ids]
+    spent += [("extra_openreview", str(t).strip())
+              for t in (ov.get("extra_openreview") or [])
+              if norm_title(str(t).strip()) in titles]
+    if spent:
+        L += [f"## {len(spent)} override line{'s' * (len(spent) != 1)} the bibliography "
+              f"has made redundant", "",
+              "The good outcome, and the last step of it. Each of these is in",
+              "[`data/overrides.yaml`](data/overrides.yaml) to cover the interval before the",
+              "paper reached the bibliography, and the bibliography now has it — the corpus",
+              "record carries its published citation key. Deleting the line changes no",
+              "output; leaving it means the next reader cannot tell which lines are still",
+              "load-bearing, which is how a stopgap becomes part of the design.", ""]
+        for k, v in spent:
+            L.append(f"- [ ] `{k}:` delete `{v[:60]}`")
+        L.append("")
+    return L
+
+
 def step_worklist(cfg, args) -> None:
     """Report what still needs the account owner, ranked by leverage.
 
@@ -640,6 +737,7 @@ def step_worklist(cfg, args) -> None:
              "reading of each external surface is [tasks/identity_audit.md](tasks/identity_audit.md).", ""]
     lines += due_followups()
     lines += scholar_gaps(scholar, cfg)
+    lines += upstream_gaps(papers, cfg)
 
     n_strays = sum(1 for p in papers
                     if p.get("s2_author_record") in
@@ -657,6 +755,61 @@ def step_worklist(cfg, args) -> None:
               + (state.get("orcid_missing_other_pages") or [])
               + ([] if state.get("orcid_has_canonical_url", True) else ["canonical URL"]))
     by_slug = {p["slug"]: p for p in papers}
+
+    def misfiled_item(b: dict) -> list[str]:
+        """One misfiled ORCID identifier, carrying every value the edit needs.
+
+        This section used to say what the failure was, then send you to
+        `tasks/identity_audit.md` for the put-code, the DOI to take off and the DOI to
+        put on. Three values, one line each, and the file that has them is a second file
+        -- so the item on the page you are working from named none of them and the
+        instruction "replace the DOI" had no object.
+        """
+        p = by_slug.get(b.get("should_be")) or {}
+        title = p.get("title_display") or p.get("title") or b.get("should_be") or "?"
+        out = [f"- [ ] **{title[:66]}** — put-code `{b['put']}`"]
+        doi = b.get("carried_doi")
+        if doi:
+            # Linked, because the link is the evidence: following the identifier that is
+            # on your own record lands on a paper that is not this one.
+            out.append(f"      - remove `{doi}` — it resolves to "
+                       f"[{(b.get('carried_title') or 'another paper')[:44]}]"
+                       f"(https://doi.org/{doi}), a different paper")
+        else:
+            out.append("      - remove the identifier it carries: "
+                       f"`{', '.join(b.get('carries') or ['?'])}`")
+        if b.get("should_carry"):
+            out.append(f"      - add `{b['should_carry']}` — the DOI of the paper this "
+                       f"entry actually is")
+        elif p.get("arxiv"):
+            out.append(f"      - add the arXiv id `{p['arxiv']}`, identifier type "
+                       f"`arxiv`. This paper has no DOI, and an entry carrying no "
+                       f"identifier at all is what makes ORCID read it as missing")
+        else:
+            out.append("      - add nothing — this paper has neither a DOI nor an arXiv "
+                       "id, so taking the wrong one off is the whole fix")
+        return out + [""]
+
+    def dup_item(r: dict) -> list[str]:
+        """One ORCID duplicate pair: which entry to open, and the one value to paste."""
+        if r.get("doi"):
+            return [f"- [ ] **{r['title'][:60]}** — open put-code `{r['keep']}` "
+                    f"(*{r['keep_title'][:38]}*) and add the DOI `{r['doi']}`, which is "
+                    f"the one on put-code `{r['folds']}` (*{r['folds_title'][:38]}*)", ""]
+        # No arXiv-DOI entry, or more than two: naming every entry is the honest form,
+        # because which one has the venue is a judgement and this is not making it.
+        return [f"- [ ] **{r['title'][:60]}** — {len(r['entries'])} entries: "
+                + "; ".join(f"`{e['put']}` ({e['doi'] or 'no DOI'})"
+                            for e in r["entries"])
+                + ". Open whichever has the venue and add one of the others' DOIs.", ""]
+
+    # Absent from Wikidata and not creatable: no DOI, no arXiv id, so no key to check
+    # against. Named here rather than inline because the difference between the two
+    # counts is the only honest way to say why the command below creates fewer items
+    # than the paragraph above it describes.
+    wd_nokey = ((state.get("wikidata_papers_absent") or 0)
+                - (state.get("wikidata_papers_creatable") or 0))
+
     ident_items = [
         (bool(o_miss),
          f"### ORCID is missing {len(o_miss)} of your {len(papers)} papers",
@@ -697,33 +850,33 @@ def step_worklist(cfg, args) -> None:
           "absorbed it reads as listed twice, and both of the obvious fixes make it",
           "worse: adding the paper creates a second copy, merging the group destroys a",
           "distinct work.", "",
-          "1. Open <https://orcid.org/my-orcid#works>. The put-code, the identifier the",
-          "   work is carrying, and the one it should carry are in the",
-          "   [misfiled-identifier section of `tasks/identity_audit.md`]"
-          "(tasks/identity_audit.md) — which also links the carried DOI, so you can see",
-          "   for yourself that it resolves to somebody else's paper.",
-          "2. The pencil icon on that work → replace the DOI under *Identifiers* →",
-          "   *Save changes*.",
-          "3. **Edit, do not delete and re-add.** The put-code is what carries the",
-          "   entry's citations and its source attribution.", ""]
-         + [f"- [ ] put-code `{b['put']}` — carries `{(b.get('carries') or ['?'])[0]}`, "
-            f"belongs to *{((by_slug.get(b.get('should_be')) or {}).get('title') or b.get('should_be') or '?')[:52]}*"
-            for b in o_bad]
-         + [""]),
+          "Each item below is one edit, and every value it needs is in the item — the",
+          "work to open, the identifier to take off it, the one to put on. Open",
+          "<https://orcid.org/my-orcid#works>, find the work by its title, then the pencil",
+          "icon → under *Identifiers* replace the DOI → *Save changes*. **Edit it; do not",
+          "delete and re-add** — the put-code is what carries the entry's citations and its",
+          "source attribution, and a new entry starts with neither.", "",
+          "The carried DOI is linked so you can see for yourself that it resolves to",
+          "somebody else's paper before you touch anything. Nothing else needs deleting:",
+          "one identifier is replaced by another and the work itself stays.", ""]
+         + [ln for b in o_bad for ln in misfiled_item(b)]),
         (bool(o_dupg),
          f"### ORCID lists {len(o_dupg)} of your papers twice",
          ["ORCID groups works that share an identifier. Two groups for one paper means",
           "one copy carries the arXiv DataCite DOI (`10.48550/arXiv.<id>`) and the other",
           "the publisher DOI, so they share no key.", "",
-          "1. Open <https://orcid.org/my-orcid#works> and find the pair — both put-codes",
-          "   and both titles are in [`tasks/orcid_remove.md`](tasks/orcid_remove.md).",
-          "2. **Prefer the merge to the deletion.** On the entry that is missing a DOI,",
-          "   the pencil icon → *Add identifier* → paste the other's DOI → *Save*. The",
-          "   two groups then fuse into one work carrying both, and neither entry loses",
-          "   its citations or its source attribution.",
-          "3. Only delete if one copy is genuinely emptier and you do not want its",
-          "   metadata — a deletion also drops whatever that entry was the only source of.",
-          "",
+          "**Merge, do not delete.** Both titles are real — one is the preprint's, one is",
+          "what the paper was called on acceptance — and adding one entry's DOI to the",
+          "other folds them into a single work carrying both, with no entry losing its",
+          "citations or its source attribution. Open the **keep** entry at",
+          "<https://orcid.org/my-orcid#works>, the pencil icon → **+ Add identifier** →",
+          "type `doi` → paste the value below → *Save*. The pair collapses on the next",
+          "page load.", ""]
+         + [ln for r in (state.get("orcid_duplicate_pairs") or []) for ln in dup_item(r)]
+         + ["Delete instead only if you would rather have one entry than a grouped pair —",
+            "same number of clicks, and the preprint title stops being findable on your",
+            "record.",
+            "",
           # Points at the section above when there is one, and at the audit when there is
           # not. A "do that first" whose target is not on the page is an instruction the
           # reader has to go and look for, and the answer is usually "there was nothing".
@@ -766,6 +919,41 @@ def step_worklist(cfg, args) -> None:
           "python scripts/wikidata_apply.py            # dry run: exactly what changes",
           "python scripts/wikidata_apply.py --apply    # write it",
           "```", ""]),
+        (bool(state.get("wikidata_papers_creatable")),
+         f"### Wikidata — {state.get('wikidata_papers_creatable')} of your papers "
+         f"have no item",
+         # Listed under "only you can do this" for the decision, not the labour: the
+         # labour is the command below. What is yours is that these are permanent pages
+         # on a wiki that is not yours, and the undo is a deletion request rather than a
+         # click -- the one place on this page where that is true.
+         #
+         # The count is `creatable`, not `absent`: a paper with neither a DOI nor an
+         # arXiv id is absent and stays absent, and a heading of 109 over a command that
+         # creates 108 is the same defect as a heading counting a list it does not match.
+         ["Same bot password, and the same statements as the QuickStatements batch in",
+          "`tasks/wikidata_papers.qs` — which is now only the fallback. This is where",
+          f"`{state.get('wikidata') or 'your author item'}` gets the incoming author",
+          "links that make a Scholia profile and a SPARQL-answerable corpus exist at",
+          "all.", ""]
+         + ([f"{wd_nokey} more have no item either and are not in the command below:",
+             "they carry neither a DOI nor an arXiv id, so there is no key to check",
+             "Wikidata against and creating one risks a duplicate nobody can find. They",
+             "arrive here once the paper is deposited anywhere.", ""]
+            if wd_nokey > 0 else [])
+         + [
+          "```bash",
+          "python scripts/wikidata_apply.py --papers                    # what it would create",
+          "python scripts/wikidata_apply.py --papers --apply --limit 10  # ten of them",
+          "```", "",
+          "In batches, and this is the reason: ten items finds a wrong statement on item",
+          "3 rather than on item 103, and an item is harder to retract than anything else",
+          "here. Each one is recorded in `data/wikidata_created.yaml` as it lands, so",
+          "stopping and resuming creates nothing twice — the query service lags hours",
+          "behind the edit and that file is what covers the gap.", "",
+          "Once this list is empty the monthly CI run keeps up with new papers by itself.",
+          "It refuses while a backlog exists, so it is doing nothing until you start.",
+          "Cautions worth reading once: [`tasks/wikidata_followup.md`]"
+          "(tasks/wikidata_followup.md).", ""]),
         (bool(ids.get("openalex_duplicates")),
          f"### OpenAlex — {len(ids.get('openalex_duplicates') or [])} duplicate profiles",
          ["Lowest priority, and the preferred route is to do nothing here: OpenAlex",
@@ -1053,14 +1241,26 @@ def step_worklist(cfg, args) -> None:
                  ["Nothing to do by hand here — this is a run, not a task:",
                   "",
                   "```bash",
-                  "python scripts/draft_sidecars.py --limit 20   # queue the next 20",
-                  "python scripts/draft_sidecars.py --ingest     # fold the answers in",
+                  "python scripts/draft_sidecars.py --review      # every paper: live, draft,"
+                  " or neither",
+                  "python scripts/draft_sidecars.py --limit 20    # queue the next 20",
+                  "python scripts/draft_sidecars.py --ingest      # fold the answers in",
+                  "python scripts/draft_sidecars.py --slug <slug> # queue exactly one",
                   "```", "",
+                  # "How do I find them" was a fair question: this section listed six
+                  # titles and named no file, no slug and no way to see the other hundred.
+                  # The slug is the handle every command above takes and the filename every
+                  # sidecar has, so it is what the list has to carry.
+                  "`--review` is the whole list; the six below are the top of it by",
+                  "citations, which is where drafting pays. A draft lands in",
+                  "`data/sidecars/drafts/<slug>.md` and nothing reads it until you",
+                  "`--accept` it, which moves it to `data/sidecars/<slug>.md` — the",
+                  "published one, and the only one the site builds from.", "",
                   "`update.py` also drafts a batch on every run, so this number falls on",
-                  "its own. The top of the list, by citations, is where it pays:", ""]
+                  "its own.", ""]
         for p in sorted(todraft, key=lambda p: -(p.get("citations") or 0))[:6]:
-            lines.append(f"- {p.get('citations') or 0} cites — "
-                         f"{(p.get('title_display') or p['title'])[:66]}")
+            lines.append(f"- `{p['slug']}` — {p.get('citations') or 0} cites — "
+                         f"{(p.get('title_display') or p['title'])[:56]}")
         lines.append("")
 
     # Papers whose text no fetcher can reach. Upstream of the two sidecar sections

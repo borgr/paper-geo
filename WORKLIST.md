@@ -9,9 +9,9 @@ reading of each external surface is [tasks/identity_audit.md](tasks/identity_aud
 
 From `data/followups.yaml`. Each of these was waiting on something outside this repo that should have landed by now.
 
-- [ ] **2026-08-08** (2 days ago) — Wikidata account Ktilana is autoconfirmed, so QuickStatements will accept a batch from it. Confirmed by the check below on 2026-08-10: registered 2026-08-04, 63 edits, groups include `autoconfirmed`. The wait is over; what is left is a decision about the paper items.
-      → One batch is worth running and one is not. tasks/wikidata_papers.qs creates a public Wikidata item for each paper of yours that has none -- title, date, DOI or arXiv id, co-authors as name strings. Paste it at https://quickstatements.toolforge.org/#/batch, pick "QuickStatements version 1", and run. How many items that is, this run, is measured at the top of tasks/wikidata_followup.md and deliberately not repeated here: a count typed into a data file drifts away from the batch it describes. It is around a hundred new permanent public items either way, so read the "Is this legitimate?" section of tasks/wikidata_manual.md once before starting, and release it in a couple of batches rather than all at once so a formatting error costs ten items instead of all of them. tasks/wikidata.qs needs nothing from you: it is addressed to the existing item Q140867203 rather than creating one, and the audit's "Wikidata item complete" row reads 0 gaps, so it would add nothing. Run it only if that row ever shows a gap.
-      `python scripts/wikidata_apply.py --check-account`
+- [ ] **2026-08-08** (3 days ago) — The paper items are the last Wikidata decision left. The author item Q140867203 is already complete and stays that way by itself; around a hundred of your papers have no Wikidata item at all, which is what keeps them out of every answer engine that reads Wikidata rather than the web.
+      → Read it, then run it in batches. `--papers` with no `--apply` prints exactly what it would create, one line per item: kind, year, identifier, how many authors. The statements are the same ones tasks/wikidata_papers.qs holds, which is the paste-it-yourself fallback and no longer the route. Do the first ten, open two of them on the wiki, then keep going -- a batch of ten finds a wrong statement on item 3 rather than on item 103. Every item is recorded in data/wikidata_created.yaml as it lands, so an interrupted run resumes without recreating anything, and once the backlog is gone the monthly CI run keeps up with new papers on its own (it refuses above four missing items, so it does nothing at all until you have drained this). Read the "Is this legitimate?" section of tasks/wikidata_manual.md once first.
+      `python scripts/wikidata_apply.py --papers --limit 10`
 
 ## Waiting on the outside world
 
@@ -20,29 +20,57 @@ From `data/followups.yaml`. Each of these was waiting on something outside this 
 
 ## Coverage: Google Scholar and the corpus disagree
 
-Scholar lists **116** works and matched **105** of the corpus's **112**. Scholar is
+Scholar lists **116** works and matched **106** of the corpus's **113**. Scholar is
 the one list of your papers that is built by a different process, so it is the
-only check that can see a paper this pipeline never received. Full detail:
-`build/scholar_diff.json`.
+only check that can see a paper this pipeline never received.
 
-### 1 paper absent from the source bibliography
+Every bucket in full, including what is truncated below:
+[`build/scholar_diff.json`](build/scholar_diff.json) — local only, because
+`build/` is not committed. `python update.py --step audit` writes it, and after
+a fresh clone that is the one command between you and the file.
 
-Not in the corpus and not rejected — they never arrived. The bibliography
-is this pipeline's only input, so the fix is one entry there; adding them
-to `data/` would be overwritten on the next run. A BibTeX entry for each,
-resolved from arXiv, Crossref or Semantic Scholar where any of them has
-it, is in [`tasks/bib_missing.md`](tasks/bib_missing.md) — check the
-author list before pasting: it is the index's, not yours.
+## 1 paper in the corpus that the bibliography does not have
 
-Edit it here: <https://github.com/borgr/publications/edit/master/orig.bib>
+Added by `extra_arxiv` or `extra_openreview` in
+[`data/overrides.yaml`](data/overrides.yaml), so each has a page and a canonical
+URL already — this is not about the site. It is that the bibliography is this
+pipeline's only real input, and every run these papers depend on a line in an
+override file instead. Paste the entry upstream and delete that line.
 
-- [ ] 1 cite — 2025 — A Statistical Framework for Game-Based AI Evaluation
+Edit the bibliography here: <https://github.com/borgr/publications/edit/master/orig.bib>
 
-## Identity surfaces (3 open)
+- [ ] **A Statistical Framework for Game-Based AI Evaluation** — `extra_openreview`, 0 cites
+
+  ```bibtex
+  @inproceedings{polo2025a,
+    author       = {Felipe Maia Polo and Leshem Choshen and Yuekai Sun and Kristjan Greenewald},
+    title        = {A Statistical Framework for Game-Based AI Evaluation},
+    year         = {2025},
+    booktitle    = {NeurIPS 2025 LLM Evaluation Workshop},
+    url          = {https://openreview.net/forum?id=1VWfIsRdZA}
+  }
+  ```
+
+## Identity surfaces (5 open)
 
 Each is blocked on an account you are logged into, not on knowing what to
 do. `python scripts/identity_tasks.py` regenerates every payload under
 `tasks/` — committed, so browsable on GitHub.
+
+### ORCID is missing 1 of your 113 papers
+
+Highest leverage on this page. Semantic Scholar's disambiguation and
+OpenAlex's profile merges are both ORCID-driven, so this is the one fix that
+makes the others more likely to fix themselves.
+
+One upload, not one form per paper: *Works → + Add → Add BibTeX* →
+**`tasks/orcid_missing.bib`** (only the missing ones) or
+`tasks/orcid_import.bib` (all of them; ORCID groups on shared identifiers, so
+re-importing what is already there merges rather than duplicates).
+Full list with citations: `tasks/orcid_missing.md`. How and why:
+[docs/SETUP.md §1](docs/SETUP.md#1-orcid--populate-it-then-wire-it-everywhere).
+
+- [ ] 0 cites — A Statistical Framework for Game-Based AI Evaluation
 
 ### 1 work on your ORCID carries another paper's identifier
 
@@ -54,16 +82,20 @@ absorbed it reads as listed twice, and both of the obvious fixes make it
 worse: adding the paper creates a second copy, merging the group destroys a
 distinct work.
 
-1. Open <https://orcid.org/my-orcid#works>. The put-code, the identifier the
-   work is carrying, and the one it should carry are in the
-   [misfiled-identifier section of `tasks/identity_audit.md`](tasks/identity_audit.md) — which also links the carried DOI, so you can see
-   for yourself that it resolves to somebody else's paper.
-2. The pencil icon on that work → replace the DOI under *Identifiers* →
-   *Save changes*.
-3. **Edit, do not delete and re-add.** The put-code is what carries the
-   entry's citations and its source attribution.
+Each item below is one edit, and every value it needs is in the item — the
+work to open, the identifier to take off it, the one to put on. Open
+<https://orcid.org/my-orcid#works>, find the work by its title, then the pencil
+icon → under *Identifiers* replace the DOI → *Save changes*. **Edit it; do not
+delete and re-add** — the put-code is what carries the entry's citations and its
+source attribution, and a new entry starts with neither.
 
-- [ ] put-code `222829712` — carries `doi:10.48550/ARXIV.2306.01708`, belongs to *Resolving Interference (RI): Disentangling Models fo*
+The carried DOI is linked so you can see for yourself that it resolves to
+somebody else's paper before you touch anything. Nothing else needs deleting:
+one identifier is replaced by another and the work itself stays.
+
+- [ ] **Resolving Interference (RI): Disentangling Models for Improved Mod** — put-code `222829712`
+      - remove `10.48550/ARXIV.2306.01708` — it resolves to [TIES-Merging: Resolving Interference When Me](https://doi.org/10.48550/ARXIV.2306.01708), a different paper
+      - add `10.48550/ARXIV.2603.13467` — the DOI of the paper this entry actually is
 
 ### ORCID lists 1 of your papers twice
 
@@ -71,14 +103,19 @@ ORCID groups works that share an identifier. Two groups for one paper means
 one copy carries the arXiv DataCite DOI (`10.48550/arXiv.<id>`) and the other
 the publisher DOI, so they share no key.
 
-1. Open <https://orcid.org/my-orcid#works> and find the pair — both put-codes
-   and both titles are in [`tasks/orcid_remove.md`](tasks/orcid_remove.md).
-2. **Prefer the merge to the deletion.** On the entry that is missing a DOI,
-   the pencil icon → *Add identifier* → paste the other's DOI → *Save*. The
-   two groups then fuse into one work carrying both, and neither entry loses
-   its citations or its source attribution.
-3. Only delete if one copy is genuinely emptier and you do not want its
-   metadata — a deletion also drops whatever that entry was the only source of.
+**Merge, do not delete.** Both titles are real — one is the preprint's, one is
+what the paper was called on acceptance — and adding one entry's DOI to the
+other folds them into a single work carrying both, with no entry losing its
+citations or its source attribution. Open the **keep** entry at
+<https://orcid.org/my-orcid#works>, the pencil icon → **+ Add identifier** →
+type `doi` → paste the value below → *Save*. The pair collapses on the next
+page load.
+
+- [ ] **Model merging with SVD to tie the Knots** — open put-code `222732423` (*Tie the KnOTS: Model Merging with SVD*) and add the DOI `10.48550/arXiv.2410.19735`, which is the one on put-code `222829704` (*Model merging with SVD to tie the Knot*)
+
+Delete instead only if you would rather have one entry than a grouped pair —
+same number of clicks, and the preprint title stops being findable on your
+record.
 
 **Do the misfiled-identifier section above first.**
 A work carrying the wrong DOI lands in another paper's group and shows up
@@ -101,6 +138,34 @@ The URLs are in [`tasks/s2_merge.md`](tasks/s2_merge.md), highest-citation
 first, so stopping early still captures most of the loss. **Do not claim the
 second page as well** — a second claimed record is harder to undo than an
 unclaimed one, and it makes the split look deliberate.
+
+### Wikidata — 108 of your papers have no item
+
+Same bot password, and the same statements as the QuickStatements batch in
+`tasks/wikidata_papers.qs` — which is now only the fallback. This is where
+`Q140867203` gets the incoming author
+links that make a Scholia profile and a SPARQL-answerable corpus exist at
+all.
+
+2 more have no item either and are not in the command below:
+they carry neither a DOI nor an arXiv id, so there is no key to check
+Wikidata against and creating one risks a duplicate nobody can find. They
+arrive here once the paper is deposited anywhere.
+
+```bash
+python scripts/wikidata_apply.py --papers                    # what it would create
+python scripts/wikidata_apply.py --papers --apply --limit 10  # ten of them
+```
+
+In batches, and this is the reason: ten items finds a wrong statement on item
+3 rather than on item 103, and an item is harder to retract than anything else
+here. Each one is recorded in `data/wikidata_created.yaml` as it lands, so
+stopping and resuming creates nothing twice — the query service lags hours
+behind the edit and that file is what covers the gap.
+
+Once this list is empty the monthly CI run keeps up with new papers by itself.
+It refuses while a backlog exists, so it is doing nothing until you start.
+Cautions worth reading once: [`tasks/wikidata_followup.md`](tasks/wikidata_followup.md).
 
 ## arXiv journal-ref missing (64 papers)
 
@@ -134,7 +199,7 @@ its own form.
 1. *Weak here.* Scholar merges preprint and published versions largely on
    venue agreement, and a venue-less arXiv record can stay a separate
    cluster with the citations split across the two.
-   Measured on your own profile: **0 split pairs out of 112**, so for this
+   Measured on your own profile: **0 split pairs out of 113**, so for this
    corpus that is mostly already handled — do not do this for that reason.
 2. **The arXiv DataCite record gains a `container-title`.** This is the real
    one and it is not visible on Scholar at all: that field is what flows to
@@ -164,7 +229,7 @@ string built from the publisher's own bibtex, the published DOI, and why
 - [ ] `1907.08971` (78 cites) -> ACL 2019  <https://arxiv.org/abs/1907.08971>
 - [ ] `2302.04863` (72 cites) -> Findings of EMNLP 2023  <https://arxiv.org/abs/2302.04863>
 
-## Sidecars not yet drafted (110/112)
+## Sidecars not yet drafted (111/113)
 
 17 of these already have a draft file on disk, written against sidecar rules
 that have since changed. `--accept` refuses them and the next run overwrites
@@ -173,19 +238,43 @@ them, so do not spend an evening reading one; they need the same re-run as the r
 Nothing to do by hand here — this is a run, not a task:
 
 ```bash
-python scripts/draft_sidecars.py --limit 20   # queue the next 20
-python scripts/draft_sidecars.py --ingest     # fold the answers in
+python scripts/draft_sidecars.py --review      # every paper: live, draft, or neither
+python scripts/draft_sidecars.py --limit 20    # queue the next 20
+python scripts/draft_sidecars.py --ingest      # fold the answers in
+python scripts/draft_sidecars.py --slug <slug> # queue exactly one
 ```
 
-`update.py` also drafts a batch on every run, so this number falls on
-its own. The top of the list, by citations, is where it pays:
+`--review` is the whole list; the six below are the top of it by
+citations, which is where drafting pays. A draft lands in
+`data/sidecars/drafts/<slug>.md` and nothing reads it until you
+`--accept` it, which moves it to `data/sidecars/<slug>.md` — the
+published one, and the only one the site builds from.
 
-- 284 cites — tinyBenchmarks: evaluating LLMs with fewer examples
-- 244 cites — Active Learning for BERT: An Empirical Study
-- 232 cites — Findings of the BabyLM Challenge: Sample-Efficient Pretraining on 
-- 182 cites — Global MMLU: Understanding and Addressing Cultural and Linguistic 
-- 171 cites — An autonomous debating system
-- 167 cites — Q²: Evaluating Factual Consistency in Knowledge-Grounded Dialogues
+`update.py` also drafts a batch on every run, so this number falls on
+its own.
+
+- `tinybenchmarks-evaluating-llms-with-fewer-examples` — 284 cites — tinyBenchmarks: evaluating LLMs with fewer examples
+- `active-learning-for-bert-an-empirical-study` — 244 cites — Active Learning for BERT: An Empirical Study
+- `findings-of-the-babylm-challenge-sample-efficient-pretrainin` — 233 cites — Findings of the BabyLM Challenge: Sample-Efficient Pretr
+- `global-mmlu-understanding-and-addressing-cultural-and-lingui` — 182 cites — Global MMLU: Understanding and Addressing Cultural and L
+- `an-autonomous-debating-system` — 171 cites — An autonomous debating system
+- `q2-evaluating-factual-consistency-in-knowledge-grounded-dial` — 167 cites — Q²: Evaluating Factual Consistency in Knowledge-Grounded
+
+## Papers whose full text nothing can fetch (1)
+
+Every one of these is a real paper that is not on arXiv, so there is no
+HTML rendering and no open PDF to extract — a Nature paywall, an Elsevier
+page that serves an open-access licence to browsers and 403s to everything
+else, an SSRN download behind a click. They are not slow, they are blocked,
+and no rerun will change that.
+
+You are an author on it, so you already have the PDF. Drop it in as
+`data/fulltext/<slug>.pdf` — the directory is gitignored, so the PDF stays
+on your machine and only the sidecar it produces is committed. That path is
+read before any network source, so the next run picks it up and the paper
+joins the drafting queue.
+
+- [ ] `data/fulltext/a-statistical-framework-for-game-based-ai-evaluation.pdf` — 0 cites, NeurIPS 2025 LLM Evaluation Workshop — A Statistical Framework for Game-Based AI Evaluation
 
 
 ## Deferred
@@ -212,5 +301,5 @@ Check `data/repos.yaml`, fix anything wrong, set `reviewed: true` to freeze it, 
 
 ---
 
-*Per `data/declines.yaml` — hidden: 2 sections (OpenAlex — 4 duplicate profiles; 5 papers whose title does not appear on your Scholar profile — every item declined) and 7 individual items. deferred to the bottom: Artifacts with no citation route (13); Repo labels awaiting your review (27/31). Delete a line there to have it asked normally again.*
+*Per `data/declines.yaml` — hidden: 3 sections (OpenAlex — 4 duplicate profiles; 2 papers absent from the source bibliography — every item declined; 5 papers whose title does not appear on your Scholar profile — every item declined) and 7 individual items. deferred to the bottom: Artifacts with no citation route (13); Repo labels awaiting your review (27/31). Delete a line there to have it asked normally again.*
 

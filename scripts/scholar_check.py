@@ -259,11 +259,58 @@ def variant_score(a: str, b: str) -> tuple[float, str] | None:
 
 
 def same_paper(a: str, b: str) -> bool:
-    """Are these two title strings the same title, allowing for house style."""
+    """Are these two title strings the same title, allowing for house style.
+
+    Loose on purpose, and only safe because of who the two strings belong to: both sides
+    are already known to be yours -- a corpus paper against a Scholar row, or against
+    your own Semantic Scholar author record. Use `same_work` for a title that came out
+    of an index.
+    """
     if norm_title(a) == norm_title(b):
         return True
     sc = variant_score(a, b)
     return bool(sc and sc[0] >= 0.5)
+
+
+def first_word(t: str) -> str:
+    """A title's first subject-matter word, articles and prepositions skipped."""
+    return next((w for w in re.findall(r"[a-z0-9]+", t.lower()) if w not in STOP), "")
+
+
+def same_work(a: str, b: str) -> bool:
+    """Are these the same paper, where one title came from the whole literature.
+
+    `same_paper` compares two titles that are both already yours, so a wrong pair costs
+    one line a human dismisses. An index answers from every paper ever published, and
+    there the same threshold costs a stranger's paper pasted into your bibliography
+    under your name -- a public page asserting authorship you do not have, which is the
+    worst thing this file can produce.
+
+    Two real acceptances, both from the loose gate alone, before this existed:
+
+        Attention is all you need      ->  Tensor Product Attention Is All You Need
+        An autonomous debating system  ->  A superpersuasive autonomous policy
+                                           debating system
+
+    Word overlap cannot separate those -- the query's words really are all present, 5 of
+    7 and 3 of 5. What separates them is *where* the extra words went. Every legitimate
+    variant of a title keeps its opening: a dropped subtitle, a venue retitle that
+    appends, the competition report indexed as "LLM Merging Competition: Building LLMs
+    Efficiently through Merging" against Scholar's "Llm merging: Building llms
+    efficiently ..." -- all still start at "llm". Words *prepended* to a title do not
+    qualify it, they change its subject: "Tensor Product Attention" is not "Attention",
+    and that is what both false positives did.
+
+    So: the same first content word, on top of the loose gate. The cost is a title
+    genuinely rearranged across the colon ("Tie the KnOTS: Model Merging with SVD" one
+    side, "Model Merging with SVD to Tie the KnOTS" the other), which stops resolving
+    automatically and comes back as a near-miss line asking whether it is the same
+    paper. That is the right direction to fail in: the question takes ten seconds and
+    the wrong entry takes a retraction.
+    """
+    if norm_title(a) == norm_title(b):
+        return True
+    return bool(same_paper(a, b) and (w := first_word(a)) and w == first_word(b))
 
 
 def arxiv_titles() -> dict[str, str]:
@@ -463,12 +510,21 @@ def report_gaps(gaps: list[dict], unverifiable: list[dict], quiet: bool) -> None
               file=sys.stderr)
 
 
-def from_s2(title: str, mine: list[dict]) -> tuple[dict | None, str]:
-    """Match a title against the fetched author record. No request of its own."""
+def from_s2(title: str, mine: list[dict],
+            strict: bool = False) -> tuple[dict | None, str]:
+    """Match a title against the fetched author record. No request of its own.
+
+    `strict` because `from_s2_search` reuses this to read a *search* answer, and the two
+    candidate sets are not the same kind of thing: your author record holds papers
+    Semantic Scholar already believes are yours, where a loose title match is recovering
+    a retitle, and the search endpoint holds the literature, where it is picking up
+    somebody else's paper.
+    """
+    ok = same_work if strict else same_paper
     near = ""
     for p in mine:
         got = p.get("title") or ""
-        if not same_paper(got, title):
+        if not ok(got, title):
             if near_miss(got, title):
                 near = near or got
             continue
@@ -503,7 +559,7 @@ def from_arxiv(title: str) -> tuple[dict | None, str, bool]:
     near = ""
     for e in entries:
         got = " ".join((e.findtext("a:title", "", ARXIV_NS) or "").split())
-        if not same_paper(got, title):
+        if not same_work(got, title):
             if near_miss(got, title):
                 near = near or got
             continue
@@ -535,7 +591,7 @@ def from_crossref(title: str) -> tuple[dict | None, str, bool]:
     manager group on.
 
     Its ranking is fuzzy: an unmatched query returns five plausible strangers rather
-    than nothing, which is why the `same_paper` filter decides and the query only
+    than nothing, which is why the `same_work` filter decides and the query only
     proposes. Verified against three known ACL entries from the corpus -- all three
     came back with the exact registered DOI.
     """
@@ -545,7 +601,7 @@ def from_crossref(title: str) -> tuple[dict | None, str, bool]:
     near = ""
     for it in ((d.get("message") or {}).get("items") or []):
         got = " ".join(((it.get("title") or [""])[0] or "").split())
-        if not same_paper(got, title):
+        if not same_work(got, title):
             if near_miss(got, title):
                 near = near or got
             continue
@@ -558,6 +614,104 @@ def from_crossref(title: str) -> tuple[dict | None, str, bool]:
                 "type": ("inproceedings" if it.get("type") == "proceedings-article"
                          else "article"),
                 "url": f"https://doi.org/{it['DOI']}"}, "", True
+    return None, near, True
+
+
+OPENREVIEW = "https://api2.openreview.net/notes/search?limit=10&term="
+
+# "NeurIPS 2025 LLM Evaluation Workshop Poster" -- the last word is how the paper was
+# presented, not where. A bibliography that says "Poster" is describing the furniture.
+_DECISION = re.compile(r"\s+(virtual)?(poster|oral|spotlight|talk|paper)$", re.I)
+
+
+def val(c: dict, k: str):
+    """OpenReview's api2 wraps every content field as {"value": ...}; api1 did not."""
+    v = (c or {}).get(k)
+    return v.get("value") if isinstance(v, dict) else v
+
+
+def published(c: dict) -> bool:
+    """Did this OpenReview note actually get in anywhere.
+
+    OpenReview hosts the submission, not only the paper, so a title match there says
+    less than a title match anywhere else: "A superpersuasive autonomous policy debating
+    system" is a real note with seven real authors and a venue reading *ICLR 2026
+    Conference Withdrawn Submission*. Cited as `@inproceedings{booktitle = {ICLR 2026}}`
+    that is a claim the paper appeared at ICLR, which it did not and now never will.
+
+    One rule covers every rejected state, because OpenReview names them all the same
+    way: a note that did not get in lives in a group whose last path segment ends in
+    `Submission` -- `Withdrawn_Submission`, `Desk_Rejected_Submission`,
+    `Rejected_Submission`, or plain `Submission` while review is still running. An
+    accepted paper's `venueid` is the venue's own group and ends in `Conference`,
+    `Workshop`, or the workshop's name. `Submitted to ...` catches the venues that put
+    the state in the display string and leave the id off.
+    """
+    vid, venue = (val(c, "venueid") or "").strip(), (val(c, "venue") or "").strip()
+    if venue.lower().startswith("submitted to") or venue.lower().endswith("submission"):
+        return False
+    return bool(vid) and not vid.rsplit("/", 1)[-1].lower().endswith("submission")
+
+
+def from_openreview(title: str) -> tuple[dict | None, str, bool]:
+    """The OpenReview record for a title, the nearest title offered, and whether it
+    replied.
+
+    The three resolvers above share a blind spot, and it is a whole publication venue
+    rather than an edge case: a workshop paper. It is not preprinted (so not on arXiv),
+    the publisher never registers a DOI (so not on Crossref), and it reaches Semantic
+    Scholar late or never. Which is exactly what left "A Statistical Framework for
+    Game-Based AI Evaluation" sitting in `bib_missing.md` as an UNRESOLVED `@misc{TODO}`
+    stub -- a real paper of yours, whose full author list and venue were one request
+    away, on the site the workshop actually ran on.
+
+    Three filters, all load-bearing. `same_work` decides, as everywhere an index
+    answers: this endpoint reports thousands of matches for any query and ranks loosely,
+    so it proposes and never decides. A note is only accepted if it carries an author
+    list -- reviews and comments are notes too, they come back from the same search, and
+    a review's title is sometimes the paper's, so a title match alone would produce an
+    entry whose authors are the reviewers, which is to say nobody. And `published`
+    refuses a submission that was withdrawn, rejected, or is still under review.
+    """
+    d = get_json(OPENREVIEW + urllib.parse.quote(searchable(title)), retries=2)
+    if d is None:
+        return None, "", False
+    near = ""
+    for n in (d.get("notes") or []):
+        c = n.get("content") or {}
+        got = " ".join((val(c, "title") or "").split())
+        if not got:
+            continue
+        if not same_work(got, title):
+            if near_miss(got, title):
+                near = near or got
+            continue
+        authors = [a for a in (val(c, "authors") or []) if a]
+        if not authors or not published(c):
+            continue
+        vid = (val(c, "venueid") or "").strip()
+        venue = _DECISION.sub("", (val(c, "venue") or "").strip())
+        # The venue string carries the year ("NeurIPS 2025 LLM Evaluation Workshop"), and
+        # so does the venue id. Both beat the note's timestamps, which are when it was
+        # uploaded and can fall on the wrong side of a new year.
+        m = re.search(r"\b(19|20)\d{2}\b", f"{venue} {vid}")
+        return {"title": got, "year": m.group(0) if m else "",
+                "authors": authors, "venue": venue,
+                # For `collect.from_openreview_titles`, which builds a corpus record from
+                # this and needs the two things a citation does not: the abstract a page
+                # renders, and the forum id, which is the paper's stable address here --
+                # a note id changes when a revision is filed, the forum does not.
+                "abstract": " ".join((val(c, "abstract") or "").split()) or None,
+                "openreview": n.get("forum") or n["id"],
+                # Workshop and conference papers are both `inproceedings`, and they are
+                # nearly all of what OpenReview hosts itself. The exception is a note
+                # mirrored from dblp or deposited as a public article, where the venue is
+                # a journal -- `inproceedings` there would assert proceedings that do not
+                # exist, the same mistake `published` guards on the other axis.
+                "type": ("article"
+                         if "/journals/" in vid or vid.endswith("Public_Article")
+                         else "inproceedings"),
+                "url": f"https://openreview.net/forum?id={n['id']}"}, "", True
     return None, near, True
 
 
@@ -578,8 +732,20 @@ def from_s2_search(title: str) -> tuple[dict | None, str, bool]:
                  f"&limit=5&fields={S2_FIELDS}", retries=3)
     if d is None:
         return None, "", False
-    rec, near = from_s2(title, d.get("data") or [])
+    rec, near = from_s2(title, d.get("data") or [], strict=True)
     return rec, near, True
+
+
+S2_RECORD = "your Semantic Scholar author record"
+
+# Every index `resolve` asks a title question of, in the order it asks them. A list and
+# not four calls, because `bib_payload` has to name the ones that had nothing: with two
+# copies of these names, adding a resolver to one of them leaves the other reporting "not
+# in all three indexes" after asking four -- which is how OpenReview's arrival went
+# unmentioned in the file a human actually reads.
+OPEN_INDEXES = ((from_arxiv, "arXiv"), (from_crossref, "Crossref"),
+                (from_openreview, "OpenReview"),
+                (from_s2_search, "Semantic Scholar search"))
 
 
 def resolve(title: str, mine: list[dict] | None) -> tuple[dict | None, str, list[str]]:
@@ -596,9 +762,8 @@ def resolve(title: str, mine: list[dict] | None) -> tuple[dict | None, str, list
     if rec:
         return rec, "", down
     if mine is None:
-        down.append("your Semantic Scholar author record")
-    for fn, name in ((from_arxiv, "arXiv"), (from_crossref, "Crossref"),
-                     (from_s2_search, "Semantic Scholar search")):
+        down.append(S2_RECORD)
+    for fn, name in OPEN_INDEXES:
         rec, got, ok = fn(title)
         if rec:
             return rec, "", down
@@ -621,16 +786,19 @@ it is your publication list, and what belongs on it is a claim about your own wo
 Two things to check per entry, because neither is decidable from a Scholar row.
 **Is it yours** — Scholar merges a namesake's paper into a profile now and then, and a
 wrong entry here would become a page under your name. A resolved entry is weaker
-evidence than it looks: arXiv and Crossref match on title alone and know nothing about
-whose paper it is. **Is the entry right** — a resolved entry carries the index's author
+evidence than it looks: an index matches on title and knows nothing about whose paper it
+is. Titles that merely *contain* yours are refused, so the resolvers no longer hand you
+*Tensor Product Attention Is All You Need* — but a genuine namesake collision still
+reads as a match. **Is the entry right** — a resolved entry carries the index's author
 list and venue, not yours; a stub carries only what Scholar displayed, which is a
 truncated author list and a venue string that is sometimes an arXiv id.
 
 Patents, theses, blog posts and proceedings volumes never reach this file -- the check
-classifies those and reports them apart. An entry marked `UNRESOLVED` was looked for in
-all three indexes and found in none, which for a proceedings-only paper usually means
-nobody registered it anywhere machine-readable. Pasting that stub as it stands would
-put a `TODO` in your bibliography.
+classifies those and reports them apart. An entry marked `UNRESOLVED` names the indexes
+that were asked and had nothing, which for a proceedings-only paper usually means nobody
+registered it anywhere machine-readable. Pasting that stub as it stands would put a
+`TODO` in your bibliography. A paper on OpenReview that was withdrawn, rejected, or is
+still under review resolves to nothing on purpose: there is no venue to cite yet.
 
 """
 
@@ -679,8 +847,7 @@ def bib_payload(rows: list[dict], bib_url: str, mine: list[dict] | None,
         else:
             # Naming the indexes is the point: "not found" and "not asked" are
             # different facts, and only one of them is worth acting on.
-            asked = [n for n in ("your Semantic Scholar author record", "arXiv",
-                                 "Crossref", "Semantic Scholar search")
+            asked = [n for n in (S2_RECORD, *(n for _, n in OPEN_INDEXES))
                      if n not in down]
             out.append(f"- **UNRESOLVED** — not in "
                        f"{', '.join(asked[:-1])} or {asked[-1]}." if len(asked) > 1

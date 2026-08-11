@@ -7,7 +7,13 @@
 #   schedule       nobody is reading the log at 06:37 UTC on the 1st. So this leg does
 #                  only what is safe to do unwatched: re-derive from public sources,
 #                  commit what changed, and leave the worklist saying what needs a human.
-#                  No outward writes, no model calls, no money spent.
+#                  No model calls, no money spent, and exactly one outward write -- a
+#                  Wikidata item for a paper that arrived since the last run, capped at
+#                  four and refusing outright above that. Without it, "keep my new papers
+#                  on Wikidata" is a monthly chore for a human, which is the chore this
+#                  whole repo exists to remove. The cap is what makes it unattendable:
+#                  four items is a new paper or two, and anything larger is a backlog,
+#                  which is a decision and stays a press.
 #
 #   workflow_dispatch  pressing the button *is* the human act -- the same act as typing
 #                  `--apply` at a desk, and the reason the author can run this on their
@@ -44,6 +50,16 @@ on:
         description: "Publish the Wikidata author-item gaps"
         type: boolean
         default: true
+      wikidata_papers:
+        # A count rather than a tick-box, and the reason is that this is the only step
+        # here that creates pages on a shared wiki rather than editing your own. An
+        # item is also the one thing on this page whose retraction is not one click:
+        # undoing a statement is a revision, undoing an item is a deletion request
+        # somebody else has to action. So it runs in batches -- ten items, then a human
+        # looks at ten items, then ten more. A hundred and eight in one burst finds out
+        # on item 103 what a batch of ten finds out on item 3. `0` skips.
+        description: "Wikidata items to create for papers that have none (0 to skip)"
+        default: "10"
       apply:
         # Default on. Own accounts, metadata only -- repo description, topics, homepage,
         # and the paper-to-repo link on a Hugging Face paper page. No code, no history, and
@@ -125,6 +141,38 @@ jobs:
           git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
           git config --global user.name  "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # Creating the missing Wikidata paper items -- both legs, differing only in who is
+      # watching, which is the line the two triggers are drawn on everywhere else here.
+      #
+      # Before the re-derive rather than after it, for two reasons that happen to agree.
+      # The ledger this writes, `data/wikidata_created.yaml`, has to reach the commit
+      # step below -- and it has to be committed at all, because a runner starts from a
+      # clone and the scholarly query service lags hours behind an edit, so a ledger in
+      # gitignored `build/` would leave every run believing it was the first one. And
+      # running first means the audit later in this same run measures coverage with the
+      # ledger already in place, so the worklist this run commits says how many items are
+      # missing *now* rather than how many were missing before the step ran.
+      #
+      # The consequence is that it works from the committed `data/papers.yaml`, one run
+      # old. That is the better input anyway: a paper record that has been committed and
+      # read is a safer thing to mint a public item from than one a collector derived
+      # forty seconds ago, and a paper first seen in this very run gets its item on the
+      # next one. A human in a hurry can press the button twice.
+      #
+      # `--max-new 4` on the unattended leg is a refusal rather than a cap: above four
+      # missing items it prints what it would have done and exits 0. So while the
+      # 108-item backlog exists the cron does nothing here at all, and the moment a human
+      # has drained it the same command starts keeping up with new papers on its own.
+      # Nothing needs switching over -- the guard notices.
+      - name: create Wikidata items for papers that have none
+        if: env.WIKIDATA_BOT_PASSWORD != '' && (github.event_name == 'schedule' || inputs.wikidata_papers != '0')
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            python scripts/wikidata_apply.py --papers --apply --max-new 4
+          else
+            python scripts/wikidata_apply.py --papers --apply --limit '${{ inputs.wikidata_papers }}'
+          fi
 
       # One command, which is the point of `update.py` existing: the ten steps in order,
       # each degrading rather than failing, and `--apply` as the single flag that turns the
@@ -213,6 +261,7 @@ jobs:
       - name: publish the Wikidata gaps
         if: github.event_name == 'workflow_dispatch' && inputs.wikidata && env.WIKIDATA_BOT_PASSWORD != ''
         run: python scripts/wikidata_apply.py --apply
+
 
       - name: deploy the site
         if: github.event_name == 'workflow_dispatch' && inputs.deploy && env.GH_TOKEN != ''
