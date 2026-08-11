@@ -5,6 +5,36 @@ not here is done, and nothing on this page is a general instruction. The
 how-to for every item below is [docs/SETUP.md](docs/SETUP.md); the live
 reading of each external surface is [tasks/identity_audit.md](tasks/identity_audit.md).
 
+## Start here
+
+The page below is ordered by leverage and citation count, which is the right
+order to read it in and not the order to work it in. This is that order, with
+what each item costs — the one thing a section cannot say about itself,
+because it does not know what else is open. Each line names the section that
+holds the instructions; nothing here repeats them.
+
+**A command, and nothing to decide.** Any day, in any order: these drain
+backlogs the rest of the page is waiting on, and the run does the work.
+
+1. **Wikidata — 108 of your papers have no item** — `python scripts/wikidata_apply.py --papers --limit 10`, repeated. The monthly CI leg refuses to touch new papers while a backlog this size exists, so this is the one item that turns maintenance back on.
+2. **Sidecars not yet drafted (111/113)** — `python scripts/draft_sidecars.py --limit 20`, then read the drafts and `--accept` the ones you would sign. This is the content the rest of the pipeline exists to publish, and it is the only place your judgement is the input.
+
+**One edit each, and each one closes a section outright.** This is where
+the page gets visibly shorter.
+
+3. **1 work on your ORCID carries another paper's identifier** — one ORCID edit, and it has to come before the other two ORCID sections: a wrong DOI is what makes one paper read as missing and another as duplicated.
+4. **ORCID lists 1 of your papers twice** — one ORCID edit: add the DOI to the entry you are keeping.
+5. **ORCID is missing 1 of your 113 papers** — one BibTeX upload. Highest leverage on the page — Semantic Scholar and OpenAlex both re-cluster off ORCID, so this is the fix that makes other sections shrink without you.
+6. **1 paper in the corpus that the bibliography does not have** — one paste into `orig.bib`. The pipeline's only real input is that file, and the override line standing in for it goes on the next run.
+7. **Papers whose full text nothing can fetch (1)** — drop the PDF you already have into `data/fulltext/` (gitignored, so it stays on your machine and only the sidecar it produces is committed).
+
+**As much as you have patience for.** Per-paper clicking, because
+there is no write API behind either surface — and both are ordered so
+that stopping early still captures most of the value.
+
+8. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns 63 hunt-by-eye rows into one-click links. Then the top few and stop — that section argues its own case honestly.
+9. **Semantic Scholar — 34 papers on a second author record** — one paste per paper from `tasks/s2_merge.md`, highest-citation first.
+
 ## Due now (1)
 
 From `data/followups.yaml`. Each of these was waiting on something outside this repo that should have landed by now.

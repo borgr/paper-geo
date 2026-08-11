@@ -1032,6 +1032,65 @@ class TestBothWikidataWritersDescribeTheSameItem(unittest.TestCase):
         self.assertIn("setdefault", body, "the ledger must not overwrite a live answer")
 
 
+class TestTheWorklistSaysWhatToDoFirst(unittest.TestCase):
+    """A page of eighteen well-explained items still does not say where to start.
+
+    Each section argues its own case, and none of them can order the page, because none
+    knows what else is open -- so the constraints lived inline ("do this before the rest
+    of this section", "highest leverage on this page") and reconstructing the order meant
+    reading all three hundred lines.
+    """
+
+    def _plan(self, lines):
+        import update
+        out = update.next_steps(lines)
+        i = out.index("## Start here")
+        j = next(k for k in range(i + 1, len(out)) if out[k].startswith("## "))
+        return out[i:j]
+
+    def test_only_the_sections_that_are_open_are_planned(self):
+        """The whole point of a generated plan: a section that is done is not in it."""
+        plan = "\n".join(self._plan(["# T", "", "## ORCID is missing 1 of your 113 papers",
+                                     "", "## Papers whose full text nothing can fetch (1)"]))
+        self.assertIn("ORCID is missing 1 of your 113 papers", plan)
+        self.assertIn("Papers whose full text nothing can fetch (1)", plan)
+        self.assertNotIn("Wikidata", plan, "planned a section this run did not render")
+
+    def test_the_plan_carries_the_headings_own_counts(self):
+        """Not a second copy of the numbers.
+
+        A plan that recomputed "108 papers" would drift from the heading that computes it
+        for real, and the reader would have two numbers and no way to tell which is live.
+        """
+        plan = "\n".join(self._plan(["# T", "", "## Wikidata — 41 of your papers have no item"]))
+        self.assertIn("**Wikidata — 41 of your papers have no item**", plan)
+
+    def test_nothing_is_planned_when_nothing_is_open(self):
+        lines = ["# T", "", "## Waiting on the outside world", ""]
+        import update
+        self.assertEqual(lines, update.next_steps(lines))
+
+    def test_every_heading_is_either_a_step_or_declared_not_one(self):
+        """The one coupling that can rot silently.
+
+        `PLAN` is keyed on heading fragments, so a section added or reworded later is
+        simply absent from the plan -- no error, no empty line, nothing to notice. This
+        asserts against the live file: every heading in it is matched by a `PLAN` entry
+        or named in `NOT_STEPS`, so the choice has to be made rather than defaulted.
+        """
+        import update
+        path = os.path.join(ROOT, "WORKLIST.md")
+        if not os.path.exists(path):
+            self.skipTest("no WORKLIST.md yet; run python update.py")
+        known = [f for f, _, _ in update.PLAN] + list(update.NOT_STEPS)
+        for ln in source(path).splitlines():
+            if not re.match(r"##+ \S", ln) or ln == "## Start here":
+                continue
+            self.assertTrue(any(k.lower() in ln.lower() for k in known),
+                            f"{ln!r} is in neither PLAN nor NOT_STEPS, so the plan at the "
+                            f"top of WORKLIST.md silently leaves it out")
+
+
 class TestADeclinedSectionTakesItsPayloadWithIt(unittest.TestCase):
     """The worklist hides a section; the file that section handed you is committed.
 

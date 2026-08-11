@@ -234,6 +234,110 @@ def due_followups() -> list[str]:
 PAYLOAD = re.compile(r"tasks/[\w.]+\.(?:md|bib|txt|qs)")
 STAMP = "<!-- declines -->"
 
+# The order to work the open sections in, and what each one costs. Three tiers, because
+# the question a reader actually arrives with is not "what is most important" -- the
+# sections are already citation-ranked for that -- but "what can I finish with the time
+# I have in front of me right now", and the three answers are a command, a minute, and
+# an afternoon.
+TIERS = (
+    ("run", ["**A command, and nothing to decide.** Any day, in any order: these drain",
+             "backlogs the rest of the page is waiting on, and the run does the work."]),
+    ("minute", ["**One edit each, and each one closes a section outright.** This is where",
+                "the page gets visibly shorter."]),
+    ("afternoon", ["**As much as you have patience for.** Per-paper clicking, because",
+                   "there is no write API behind either surface — and both are ordered so",
+                   "that stopping early still captures most of the value."]),
+)
+# Matched on a fragment of the heading rather than carrying its own copy of the counts:
+# the line the reader sees is the section's own heading, so "108 papers" cannot drift
+# into "104 papers" here. An entry whose section is absent this run is absent from the
+# plan -- the same live-state contract as the rest of the file.
+PLAN = (
+    ("Wikidata —", "run",
+     "`python scripts/wikidata_apply.py --papers --limit 10`, repeated. The monthly CI "
+     "leg refuses to touch new papers while a backlog this size exists, so this is the "
+     "one item that turns maintenance back on"),
+    ("Sidecars not yet drafted", "run",
+     "`python scripts/draft_sidecars.py --limit 20`, then read the drafts and `--accept` "
+     "the ones you would sign. This is the content the rest of the pipeline exists to "
+     "publish, and it is the only place your judgement is the input"),
+    ("carries another paper's identifier", "minute",
+     "one ORCID edit, and it has to come before the other two ORCID sections: a wrong "
+     "DOI is what makes one paper read as missing and another as duplicated"),
+    ("papers twice", "minute",
+     "one ORCID edit: add the DOI to the entry you are keeping"),
+    ("ORCID is missing", "minute",
+     "one BibTeX upload. Highest leverage on the page — Semantic Scholar and OpenAlex "
+     "both re-cluster off ORCID, so this is the fix that makes other sections shrink "
+     "without you"),
+    ("the bibliography does not have", "minute",
+     "one paste into `orig.bib`. The pipeline's only real input is that file, and the "
+     "override line standing in for it goes on the next run"),
+    ("full text nothing can fetch", "minute",
+     "drop the PDF you already have into `data/fulltext/` (gitignored, so it stays on "
+     "your machine and only the sidecar it produces is committed)"),
+    ("arXiv journal-ref", "afternoon",
+     "save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` "
+     "first: two minutes, once, and it turns 63 hunt-by-eye rows into one-click links. "
+     "Then the top few and stop — that section argues its own case honestly"),
+    ("Semantic Scholar —", "afternoon",
+     "one paste per paper from `tasks/s2_merge.md`, highest-citation first"),
+)
+# Headings that are not work: context, containers, and the parked list. Named so that a
+# section added later cannot quietly miss the plan -- the test asserts every heading is
+# in one list or the other.
+#
+# `Due now` is here rather than in the plan because it is a clock, not a task. Its items
+# are dated pointers into the sections below, so ranking it too lists the same work
+# twice -- live case: the followup that came due *is* the Wikidata batch, same command,
+# and the plan had it at 1 and again at 2.
+NOT_STEPS = ("Due now", "Waiting on the outside world", "Coverage:", "Identity surfaces",
+             "Deferred", "Artifacts with no citation route",
+             "Repo labels awaiting your review")
+
+
+def next_steps(lines: list[str]) -> list[str]:
+    """The whole file with an ordered plan inserted at the top.
+
+    Every section here explains itself well and none of them can answer the question the
+    reader actually opens the file with, because none of them knows what else is open:
+    *what do I do next, and can I finish it now?* The ordering constraints existed but
+    were scattered inline -- "do this before the rest of this section", "highest leverage
+    on this page", "the top few and stop" -- so reconstructing the order meant reading
+    all three hundred lines and holding them in your head.
+
+    So this is a plan and not a summary: each line is the section's own heading, the
+    route into it, and the cost. No instruction is repeated, because a second copy of an
+    instruction is the thing that goes stale while looking authoritative.
+
+    A post-pass over the rendered text, after `apply_declines`, for the same reason that
+    one is: a declined or deferred section must not be listed here as the next thing to
+    do, and matching what was actually rendered is what guarantees it is not.
+    """
+    heads = [l for l in lines if re.match(r"##+ \S", l)]
+    n, body = 0, []
+    for tier, blurb in TIERS:
+        got = []
+        for frag, t, route in PLAN:
+            if t != tier:
+                continue
+            h = next((x for x in heads if frag.lower() in x.lower()), None)
+            if h:
+                n += 1
+                got.append(f"{n}. **{h.lstrip('# ').strip()}** — {route}.")
+        if got:
+            body += ["", *blurb, "", *got]
+    if not body:
+        return lines
+    block = ["## Start here", "",
+             "The page below is ordered by leverage and citation count, which is the right",
+             "order to read it in and not the order to work it in. This is that order, with",
+             "what each item costs — the one thing a section cannot say about itself,",
+             "because it does not know what else is open. Each line names the section that",
+             "holds the instructions; nothing here repeats them.", *body, ""]
+    i = next((k for k, l in enumerate(lines) if l.startswith("## ")), len(lines))
+    return lines[:i] + block + lines[i:]
+
 
 def stamp_payloads(off: dict[str, str], later: dict[str, dict]) -> list[str]:
     """Put the decision at the top of the payload file a hidden section pointed at.
@@ -1401,7 +1505,7 @@ def step_worklist(cfg, args) -> None:
                   "Check `data/repos.yaml`, fix anything wrong, set `reviewed: true` to freeze "
                   "it, then `python scripts/sweep_github.py diff`.", ""]
 
-    lines = tidy(apply_declines(lines))
+    lines = next_steps(tidy(apply_declines(lines)))
 
     out = os.path.join(ROOT, "WORKLIST.md")
     with open(out, "w") as f:
