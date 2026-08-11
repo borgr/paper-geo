@@ -269,7 +269,7 @@
             "config",
             "unclaimed"
           ],
-          "description": "How ownership was determined: our own claim, a peer's published manifest, a local config override, or nobody has claimed it."
+          "description": "How ownership was determined: our own claim, a peer's published manifest, a local config override, or nobody has claimed it. This file is the only place a `self` claim is recorded, so `collect.py` carries this field and `owner`/`canonical_page`/`owner_conflict` across its rewrite rather than re-deriving them -- see `collect.carry_claims` for what a dropped claim costs."
         },
         "owner_conflict": {
           "type": "array",

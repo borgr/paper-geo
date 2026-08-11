@@ -157,6 +157,54 @@ def _committed_papers(papers_path: str) -> list[dict]:
     return (read_yaml(papers_path) or {}).get("papers") or []
 
 
+CARRIED = ("owner", "owner_source", "canonical_page", "owner_conflict")
+
+
+def carry_claims(papers: list[dict], papers_path: str) -> int:
+    """Keep the ownership fields this file does not derive, across the rewrite.
+
+    Everything else in `papers.yaml` is re-derived from live sources every run, which is
+    the point -- and it is why `owner_source: self` cannot survive here on its own.
+    `ownership.py` recovers our claim by reading the value already in the file
+    (`p.get("owner") == me or p.get("owner_source") == "self"`), so a rewrite that drops
+    the field does not merely blank it: the next reconcile finds nothing to recover, sets
+    the paper back to `unclaimed`, and the manifest we publish for peers -- the file they
+    read to avoid building a second canonical page for the same paper -- loses the claim
+    permanently. A decision destroyed by the next scheduled run, silently, which is
+    exactly what `overrides.yaml` exists to prevent for hand-made judgments.
+
+    The peer half is carried for the sibling reason: `canonical_page` is what `render`
+    reads to link to a co-author's page instead of publishing a competing one, so between
+    a collect and the next ownership run its absence is a duplicate page, which is the
+    harm the whole mechanism exists to prevent. Both are re-derived by the next
+    `ownership.py` run, so carrying them forward is at worst one run stale -- the same
+    contract as citation counts, and unlike them these cannot be re-fetched.
+
+    Keyed by slug, from the working copy rather than the committed one: a claim made and
+    not yet committed is still a claim.
+
+    The key is carried even when its value is null, which is the difference between a
+    clean diff and a 113-line one. `owner: null` is not a claim, but it is what
+    `ownership.py` writes for `unclaimed`, so dropping it and letting the next step put
+    it back makes every collect-only run rewrite a line per paper for no change in
+    meaning. Presence of the key, not truthiness of the value, is therefore the test --
+    safe because nothing in this file ever sets one of these four, so `k not in p` is the
+    same question as "did collect derive this".
+    """
+    prev = {p["slug"]: p for p in (read_yaml(papers_path) or {}).get("papers") or []
+            if p.get("slug")}
+    n = 0
+    for p in papers:
+        was = prev.get(p.get("slug"))
+        if not was:
+            continue
+        got = [k for k in CARRIED if k in was and k not in p]
+        for k in got:
+            p[k] = was[k]
+        n += bool(got)
+    return n
+
+
 def record_slug_moves(papers: list[dict], papers_path: str) -> int:
     """Remember every URL this run retires, so build_site.py can redirect it.
 
@@ -1188,6 +1236,12 @@ def main() -> None:
     if n_retired:
         print(f"  slugs moved: {n_retired} (old URLs recorded in data/slug_history.yaml)",
               file=sys.stderr)
+
+    # Last, so it is carrying over the records that are actually about to be written.
+    n_own = carry_claims(papers, out)
+    if n_own:
+        print(f"  ownership carried over: {n_own} papers (re-derived by "
+              f"`update.py --step ownership`)", file=sys.stderr)
 
     write_yaml(out, {"generated_by": "scripts/collect.py", "papers": papers})
 

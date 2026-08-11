@@ -830,6 +830,86 @@ class TestAStopgapCannotGoQuiet(unittest.TestCase):
         self.assertNotIn("redundant", self._render(papers, ov))
 
 
+class TestARewriteDoesNotUnclaimYourPapers(unittest.TestCase):
+    """A claim lives in a file the collector regenerates wholesale, so it needs carrying.
+
+    `ownership.py` recovers our own claim by reading the value already in `papers.yaml`
+    -- there is nowhere else it is written down. `collect.py` rebuilds that file from live
+    sources, so without this the sequence is: claim a paper, run the loop, the reconcile
+    finds no `self` to recover, the paper goes back to `unclaimed`, and the manifest peers
+    read to avoid building a second canonical page for it loses the claim for good. Found
+    by committing exactly that: a collect-only run had dropped `owner` and `owner_source`
+    from every paper, and the only reason nothing was lost is that nothing is claimed yet.
+    """
+
+    def _carry(self, prev, fresh):
+        import tempfile
+        from collect import carry_claims
+        from common import write_yaml
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "papers.yaml")
+            write_yaml(path, {"papers": prev})
+            carry_claims(fresh, path)
+            return fresh
+
+    def test_our_own_claim_survives(self):
+        got = self._carry([{"slug": "p", "owner": "Me", "owner_source": "self"}],
+                          [{"slug": "p", "title": "freshly collected"}])
+        self.assertEqual("self", got[0]["owner_source"])
+        self.assertEqual("Me", got[0]["owner"])
+
+    def test_a_peers_page_survives_until_ownership_runs_again(self):
+        """Because `render` reads `canonical_page` to decide not to compete.
+
+        Between a collect and the next ownership run, a missing `canonical_page` is a
+        second page for a paper a co-author already publishes -- the duplication the whole
+        mechanism exists to prevent, and the one thing here that is expensive to undo.
+        """
+        got = self._carry(
+            [{"slug": "p", "owner": "A Peer", "owner_source": "peer",
+              "canonical_page": "https://peer.example/p"}],
+            [{"slug": "p", "title": "freshly collected"}])
+        self.assertEqual("https://peer.example/p", got[0]["canonical_page"])
+        self.assertEqual("peer", got[0]["owner_source"])
+
+    def test_carrying_never_overwrites_what_this_run_derived(self):
+        got = self._carry([{"slug": "p", "owner": "A Peer", "owner_source": "peer"}],
+                          [{"slug": "p", "owner": "Me", "owner_source": "self"}])
+        self.assertEqual("self", got[0]["owner_source"])
+        # And a paper that is new this run has nothing to carry, rather than inheriting a
+        # neighbour's claim.
+        self.assertEqual([{"slug": "new"}],
+                         self._carry([{"slug": "p", "owner_source": "self"}],
+                                     [{"slug": "new"}]))
+
+    def test_an_unclaimed_paper_is_carried_too_so_the_diff_stays_empty(self):
+        """`owner: null` is not a claim, and dropping it is still wrong.
+
+        It is what `ownership.py` writes for `unclaimed`, so a carry that tests
+        truthiness leaves the key out, the next step puts it back, and every collect-only
+        run shows a removed line per paper -- 113 of them, all meaning nothing. The point
+        of the file's history is to say what changed about the papers.
+        """
+        got = self._carry([{"slug": "p", "owner": None, "owner_source": "unclaimed"}],
+                          [{"slug": "p", "title": "freshly collected"}])
+        self.assertIn("owner", got[0])
+        self.assertIsNone(got[0]["owner"])
+
+    def test_ownership_still_reads_the_field_this_protects(self):
+        """The coupling is invisible from either file alone, so it is asserted.
+
+        If `ownership.py` ever recovers the self-claim from somewhere else, this carry is
+        dead weight and should go. If it still reads `papers.yaml`, deleting the carry
+        re-arms the bug -- and nothing else in the suite would say so.
+        """
+        from common import ROOT
+        body = source(os.path.join(ROOT, "scripts", "ownership.py"))
+        body = body.split("\ndef reconcile(", 1)[1].split("\ndef ", 1)[0]
+        self.assertIn('owner_source") == "self"', body)
+        from collect import CARRIED
+        self.assertIn("owner_source", CARRIED)
+
+
 class TestBothWikidataWritersDescribeTheSameItem(unittest.TestCase):
     """Two ways to create a paper item, and the danger is not that one is wrong.
 

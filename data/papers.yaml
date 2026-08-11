@@ -8157,6 +8157,7 @@ papers:
     huggingface: https://huggingface.co/papers/2604.12843
     alphaxiv: https://www.alphaxiv.org/abs/2604.12843
     code: https://github.com/eliyahabba/growing-pains
+    project: https://eliyahabba.github.io/growing-pains/
   title_display: 'Growing Pains: Extensible and Efficient LLM Benchmarking Via Fixed Parameter Calibration'
   venue_display: arXiv
   has_sidecar: false
