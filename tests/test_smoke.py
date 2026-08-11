@@ -1032,6 +1032,77 @@ class TestBothWikidataWritersDescribeTheSameItem(unittest.TestCase):
         self.assertIn("setdefault", body, "the ledger must not overwrite a live answer")
 
 
+class TestADeclinedSectionTakesItsPayloadWithIt(unittest.TestCase):
+    """The worklist hides a section; the file that section handed you is committed.
+
+    `tasks/` is in the repo on purpose, so it is browsable -- which is also why a payload
+    there outlives the decision that retired it. `tasks/openalex_merge.md` is the live
+    case: `sections: OpenAlex` has been declined for a while and that file went on telling
+    a reader to go fill in the correction form. `common.declined` closed the same hole for
+    `items:`; this is the section-level half.
+    """
+
+    def _stamp(self, body, off=None, later=None):
+        """`stamp_payloads` against a throwaway `tasks/` tree, returning the file's text."""
+        import tempfile
+        import update
+        with tempfile.TemporaryDirectory() as d:
+            os.makedirs(os.path.join(d, "tasks"))
+            path = os.path.join(d, "tasks", "thing.md")
+            with open(path, "w") as f:
+                f.write(body)
+            old, update.ROOT = update.ROOT, d
+            try:
+                got = update.stamp_payloads(off or {}, later or {})
+                with open(path) as f:
+                    return got, f.read()
+            finally:
+                update.ROOT = old
+
+    def test_a_declined_sections_payload_names_the_decision(self):
+        got, out = self._stamp("# The form\n\nGo fill it in.\n",
+                               off={"tasks/thing.md": "OpenAlex"})
+        self.assertEqual(["tasks/thing.md"], got)
+        self.assertIn("**Declined.**", out)
+        self.assertIn("`OpenAlex`", out, "a banner with no pattern sends you off to grep")
+        self.assertIn("# The form", out, "the routes in the file are still the work")
+
+    def test_a_deferred_sections_payload_carries_the_condition(self):
+        """Not the same message: deferred work is work, and the reader needs the trigger."""
+        _, out = self._stamp(
+            "# Zenodo\n", later={"tasks/thing.md": {"until": "a paper is cited"}})
+        self.assertIn("Deferred until a paper is cited", out)
+        self.assertNotIn("**Declined.**", out)
+
+    def test_stamping_twice_does_not_stack_two_banners(self):
+        """`--step worklist` twice without the step that rewrites `tasks/` in between."""
+        import update
+        _, out = self._stamp(f"{update.STAMP}\n> **Declined.** an older wording\n\n# Form\n",
+                             off={"tasks/thing.md": "OpenAlex"})
+        self.assertEqual(1, out.count(update.STAMP))
+        self.assertNotIn("older wording", out)
+        self.assertIn("# Form", out)
+
+    def test_a_named_file_that_was_not_written_is_skipped(self):
+        """A section can name a payload a degraded run never got to write."""
+        got, out = self._stamp("# Form\n", off={"tasks/absent.md": "OpenAlex"})
+        self.assertEqual([], got)
+        self.assertEqual("# Form\n", out)
+
+    def test_every_real_payload_extension_is_matchable(self):
+        """The paths come out of rendered prose, so the pattern is the whole coupling.
+
+        A new payload written with an extension `PAYLOAD` does not know about would be
+        pointed at by the worklist, hidden with its section, and never stamped -- silently,
+        which is the failure mode this whole mechanism is about.
+        """
+        import update
+        from common import ROOT
+        for name in os.listdir(os.path.join(ROOT, "tasks")):
+            self.assertEqual([f"tasks/{name}"], update.PAYLOAD.findall(f"tasks/{name}"),
+                             f"PAYLOAD does not match tasks/{name}")
+
+
 class TestGeneratedFilesRenderTitles(unittest.TestCase):
     """No generated file may print a title's raw BibTeX form.
 

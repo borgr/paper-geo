@@ -301,5 +301,5 @@ Check `data/repos.yaml`, fix anything wrong, set `reviewed: true` to freeze it, 
 
 ---
 
-*Per `data/declines.yaml` — hidden: 3 sections (OpenAlex — 4 duplicate profiles; 2 papers absent from the source bibliography — every item declined; 5 papers whose title does not appear on your Scholar profile — every item declined) and 7 individual items. deferred to the bottom: Artifacts with no citation route (13); Repo labels awaiting your review (27/31). Delete a line there to have it asked normally again.*
+*Per `data/declines.yaml` — hidden: 3 sections (OpenAlex — 4 duplicate profiles; 2 papers absent from the source bibliography — every item declined; 5 papers whose title does not appear on your Scholar profile — every item declined) and 7 individual items. deferred to the bottom: Artifacts with no citation route (13); Repo labels awaiting your review (27/31). marked in `tasks/openalex_merge.md`, `tasks/zenodo.md`. Delete a line there to have it asked normally again.*
 

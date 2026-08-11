@@ -1,3 +1,7 @@
+<!-- declines -->
+> **Declined.** [`data/declines.yaml`](../data/declines.yaml) has `OpenAlex` under `sections:`, so `WORKLIST.md` no longer lists this and nothing below is being asked of you.
+> Delete that line to have it asked normally again.
+
 # OpenAlex: merge duplicate author profiles
 
 Keep: https://openalex.org/A5040286212

@@ -1,3 +1,7 @@
+<!-- declines -->
+> **Deferred until an artifact is cited or asked about somewhere you can see it, or the paper work is done.** Parked on purpose in [`data/declines.yaml`](../data/declines.yaml), not declined — this is real work, just not before the rest.
+> It is at the bottom of `WORKLIST.md` under *Deferred*.
+
 # Zenodo: give the artifacts with no paper a citable identity
 
 13 repos qualify. The filter is `kind` in ['guide', 'tool'] **and** no linked paper: a repo whose paper exists

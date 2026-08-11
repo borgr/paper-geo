@@ -231,6 +231,67 @@ def due_followups() -> list[str]:
     return out
 
 
+PAYLOAD = re.compile(r"tasks/[\w.]+\.(?:md|bib|txt|qs)")
+STAMP = "<!-- declines -->"
+
+
+def stamp_payloads(off: dict[str, str], later: dict[str, dict]) -> list[str]:
+    """Put the decision at the top of the payload file a hidden section pointed at.
+
+    `apply_declines` takes a section out of `WORKLIST.md`, and the `tasks/` file that
+    section handed you is written by an earlier step that knows nothing about the
+    decision. So the file stays in the repo -- committed and browsable, which is the
+    point of `tasks/` -- telling a reader to go fill in a form the author ruled out.
+    That is the same failure `common.declined` closed for `items:`, one level up: a
+    generated file asking for what was already decided is what `declines.yaml` exists
+    to prevent, and `tasks/openalex_merge.md` is the live case.
+
+    The decision-to-payload link is not written down here, because the worklist already
+    states it: every section that has a payload names the file in its own body, so the
+    paths come out of the text that was hidden. A section declined in future gets this
+    with no wiring, and one that hands you nothing needs none.
+
+    Not a deletion. The routes and identifiers in those files are the work, the decision
+    can be revisited, and `deferred:` means it will be. Re-derived every run like
+    everything else, so deleting the line in `declines.yaml` removes the banner on the
+    next one -- and the marker makes a second worklist run replace the banner rather
+    than stack another copy on top of it.
+
+    Only the `sections:` and `deferred:` paths reach here. A section that vanished because
+    every *item* in it was declined is not stamped, and should not be: `common.declined`
+    already filters those generators row by row, which is the finer and better answer --
+    the payload keeps whatever was not decided instead of carrying a banner over a list
+    that is now partly open.
+    """
+    done = []
+    for path, why in [*((p, ("off", w)) for p, w in off.items()),
+                      *((p, ("later", d)) for p, d in later.items())]:
+        full = os.path.join(ROOT, path)
+        if not os.path.exists(full):
+            continue                  # the section names a file this run did not write
+        with open(full) as f:
+            body = f.read()
+        if body.startswith(STAMP):
+            body = body.split("\n\n", 1)[-1]
+        kind, w = why
+        if kind == "off":
+            head = [STAMP,
+                    f"> **Declined.** [`data/declines.yaml`](../data/declines.yaml) has "
+                    f"`{w}` under `sections:`, so `WORKLIST.md` no longer lists this and "
+                    f"nothing below is being asked of you.",
+                    "> Delete that line to have it asked normally again."]
+        else:
+            head = [STAMP,
+                    f"> **Deferred until {w.get('until', 'you say otherwise')}.** Parked "
+                    f"on purpose in [`data/declines.yaml`](../data/declines.yaml), not "
+                    f"declined — this is real work, just not before the rest.",
+                    "> It is at the bottom of `WORKLIST.md` under *Deferred*."]
+        with open(full, "w") as f:
+            f.write("\n".join(head) + "\n\n" + body)
+        done.append(path)
+    return sorted(done)
+
+
 def apply_declines(lines: list[str]) -> list[str]:
     """Drop what data/declines.yaml says has been decided against.
 
@@ -291,6 +352,11 @@ def apply_declines(lines: list[str]) -> list[str]:
     held_secs: list[str] = []
     hold_at = 0                       # heading depth currently being held, 0 = none
     skip_at = 0                       # heading depth currently being skipped, 0 = none
+    # `tasks/` files named inside a section that is being hidden or held, and the pattern
+    # that did it -- so `stamp_payloads` can say so at the top of the file itself.
+    off: dict[str, str] = {}
+    later: dict[str, dict] = {}
+    skip_pat, hold_dfr = "", {}
     for ln in lines:
         # Both levels: the four identity surfaces are `###` under one `##`, so declining
         # OpenAlex must remove a subsection without taking ORCID with it -- and
@@ -306,6 +372,7 @@ def apply_declines(lines: list[str]) -> list[str]:
             hit = next((s for s in secs if s.lower() in ln.lower()), None)
             dfr = next((x for x in defs if x["match"].lower() in ln.lower()), None)
             skip_at, hold_at = (depth if hit else 0), (depth if dfr else 0)
+            skip_pat, hold_dfr = hit or "", dfr or {}
             here = ln
             if hit:
                 used.add(hit)
@@ -320,8 +387,10 @@ def apply_declines(lines: list[str]) -> list[str]:
                          f"*Deferred until {dfr.get('until', 'you say otherwise')}.*"]
                 continue
         if skip_at:
+            off.update({p: skip_pat for p in PAYLOAD.findall(ln)})
             continue
         if hold_at:
+            later.update({p: hold_dfr for p in PAYLOAD.findall(ln)})
             held.append(ln)
             continue
         if ln.lstrip().startswith("- "):
@@ -418,6 +487,12 @@ def apply_declines(lines: list[str]) -> list[str]:
         note.append(f"hidden: {' and '.join(hid)}")
     if held_secs:
         note.append(f"deferred to the bottom: {'; '.join(held_secs)}")
+    # Reported here as well as stamped there, because the file is committed: a reader who
+    # only ever opens `tasks/` should find the decision, and a reader who only ever opens
+    # this one should know a file changed under them.
+    stamped = stamp_payloads(off, later)
+    if stamped:
+        note.append("marked in " + ", ".join(f"`{p}`" for p in stamped))
     tail = [f"*Per `data/declines.yaml` — {'. '.join(note) or 'nothing hidden'}. "
             f"Delete a line there to have it asked normally again.*"]
     dead = [p for p in secs + items + [x["match"] for x in defs] if p not in used]
