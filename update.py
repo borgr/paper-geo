@@ -257,10 +257,10 @@ PLAN = (
      "`python scripts/wikidata_apply.py --papers --limit 10`, repeated. The monthly CI "
      "leg refuses to touch new papers while a backlog this size exists, so this is the "
      "one item that turns maintenance back on"),
-    ("Sidecars not yet drafted", "run",
-     "`python scripts/draft_sidecars.py --limit 20`, then read the drafts and `--accept` "
-     "the ones you would sign. This is the content the rest of the pipeline exists to "
-     "publish, and it is the only place your judgement is the input"),
+    ("Sidecar drafts awaiting your verification", "minute",
+     "read the draft and `--accept` it. The only place on this page where your "
+     "judgement is the input rather than the check, because accepting publishes an "
+     "assertion under your name"),
     ("carries another paper's identifier", "minute",
      "one ORCID edit, and it has to come before the other two ORCID sections: a wrong "
      "DOI is what makes one paper read as missing and another as duplicated"),
@@ -278,10 +278,11 @@ PLAN = (
      "your machine and only the sidecar it produces is committed)"),
     ("arXiv journal-ref", "afternoon",
      "save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` "
-     "first: two minutes, once, and it turns 63 hunt-by-eye rows into one-click links. "
-     "Then the top few and stop — that section argues its own case honestly"),
+     "first: two minutes, once, and it turns every hunt-by-eye row into a one-click "
+     "link. Then the top few and stop — that section argues its own case honestly"),
     ("Semantic Scholar —", "afternoon",
-     "one paste per paper from `tasks/s2_merge.md`, highest-citation first"),
+     "one paste per paper into the Add Papers form, highest-citation first; every URL "
+     "is in the section"),
 )
 # Headings that are not work: context, containers, and the parked list. Named so that a
 # section added later cannot quietly miss the plan -- the test asserts every heading is
@@ -291,8 +292,13 @@ PLAN = (
 # are dated pointers into the sections below, so ranking it too lists the same work
 # twice -- live case: the followup that came due *is* the Wikidata batch, same command,
 # and the plan had it at 1 and again at 2.
+#
+# `Sidecars not yet drafted` is not a step either, and that is a correction: drafting is
+# the *agent's* job under `CLAUDE.md`'s code > agent > human ranking, so a plan that told
+# the author to run it was handing back work that should never have reached them. What is
+# theirs is the draft that comes out, which has its own section above it.
 NOT_STEPS = ("Due now", "Waiting on the outside world", "Coverage:", "Identity surfaces",
-             "Deferred", "Artifacts with no citation route",
+             "Deferred", "Artifacts with no citation route", "Sidecars not yet drafted",
              "Repo labels awaiting your review")
 
 
@@ -609,6 +615,58 @@ def apply_declines(lines: list[str]) -> list[str]:
     return out + ["---", "", *tail, ""]
 
 
+# Sections that ask for nothing on purpose, and are worth their space anyway: one says
+# what is already in flight so it is not started again, the other holds work that is
+# real but parked, and each of its children carries its own command.
+KEEPS = ("Waiting on the outside world", "Deferred", "Start here")
+# What "asks for something" looks like in the rendered page: a checkbox, or a fenced
+# block holding a command or a payload. Deliberately *not* a backticked command inside
+# prose -- that is how the Coverage section read as actionable while asking for nothing:
+# its only command regenerates the local file it points at.
+ASKS = re.compile(r"^\s*(?:- \[ \]|```)")
+
+
+def drop_hollow(lines: list[str], say=print) -> list[str]:
+    """Remove a section that no longer asks for anything.
+
+    `declines.yaml` filters this file after it is built, item by item, which is the
+    right granularity -- and it leaves a parent heading standing over the hole. The live
+    case: all three subsections under *Coverage: Google Scholar and the corpus disagree*
+    were declined, and what survived was a heading, two measurements, and a pointer to a
+    file in gitignored `build/`. Nothing to do, on a page whose first line promises open
+    items only, which is exactly what makes a reader stop trusting the page.
+
+    Judged on the checkbox, the command or the pasteable payload rather than on prose,
+    because prose is what a hollow section is made of. A parent survives on its
+    children: a `##` whose `###` still asks is not hollow.
+    """
+    blocks: list[tuple[str, list[str]]] = [("", [])]
+    for ln in lines:
+        if re.match(r"#{2,3} \S", ln):
+            blocks.append((ln, [ln]))
+        else:
+            blocks[-1][1].append(ln)
+    keep, kept_parent = [False] * len(blocks), False
+    for i, (head, body) in enumerate(blocks):
+        if head.startswith("## ") or not head:
+            kept_parent = any(k in head for k in KEEPS)
+        keep[i] = (not head or kept_parent or any(ASKS.search(l) for l in body))
+        # A `##` inherits from the `###`s that follow it, before the next `##`.
+        if keep[i] and head.startswith("### "):
+            for j in range(i - 1, 0, -1):
+                if blocks[j][0].startswith("## "):
+                    keep[j] = True
+                    break
+    gone = [b[0] for b, k in zip(blocks, keep) if not k]
+    if gone:
+        say("  hollow, dropped: " + "; ".join(h.lstrip("# ").strip() for h in gone))
+    out = []
+    for i, (_, body) in enumerate(blocks):
+        if keep[i]:
+            out += body
+    return out
+
+
 def tidy(lines: list[str]) -> list[str]:
     """Insert the blank line markdown needs before a heading.
 
@@ -871,6 +929,36 @@ def upstream_gaps(papers: list[dict], cfg) -> list[str]:
     return L
 
 
+def orcid_missing_items(slugs: list[str], by_slug: dict) -> list[str]:
+    """The missing papers, with the entry ORCID will import shown per paper.
+
+    ORCID's BibTeX route takes a *file*, so the payload the reader needs at hand is a
+    path and not text to paste -- but a file they cannot see the inside of is a file
+    they have to open in another tab to know what they are about to put on their record,
+    and the whole point of that record is that it is theirs. So the entry is shown here
+    while the list is short enough for that to be a courtesy rather than a wall: three
+    is the length at which this reads as "check these" instead of "scroll past this".
+
+    Above that, titles and citations only, since the decision has collapsed into one
+    upload and the per-paper detail is what `tasks/orcid_missing.md` is for.
+    """
+    rows = [by_slug.get(s) or {"slug": s} for s in slugs]
+    if len(rows) > 3:
+        return ([f"- [ ] {p.get('citations') or 0} cites — "
+                 f"{(p.get('title') or p['slug'])[:66]}" for p in rows[:8]]
+                + ([f"- … and {len(rows) - 8} more in "
+                    "[`tasks/orcid_missing.md`](tasks/orcid_missing.md)"]
+                   if len(rows) > 8 else []))
+    out = []
+    for p in rows:
+        out += [f"- [ ] **{(p.get('title') or p['slug'])[:66]}** — "
+                f"{p.get('citations') or 0} cites — what the file will add:", "",
+                "  ```bibtex",
+                *(f"  {ln}" for ln in (p.get("bibtex") or synth_bibtex(p)).strip().splitlines()),
+                "  ```", ""]
+    return out
+
+
 def step_worklist(cfg, args) -> None:
     """Report what still needs the account owner, ranked by leverage.
 
@@ -918,9 +1006,14 @@ def step_worklist(cfg, args) -> None:
     lines += scholar_gaps(scholar, cfg)
     lines += upstream_gaps(papers, cfg)
 
-    n_strays = sum(1 for p in papers
-                    if p.get("s2_author_record") in
-                    [a for a in ids["semantic_scholar"] if a != ids["semantic_scholar_primary"]])
+    # The papers themselves and not just their count: the URL to paste into the Add
+    # Papers form is a field on each one, so a section that reports only how many there
+    # are has sent the reader to a second file for the one thing it is asking them to do.
+    strays = sorted([p for p in papers if p.get("s2_author_record") in
+                     [a for a in ids["semantic_scholar"]
+                      if a != ids["semantic_scholar_primary"]]],
+                    key=lambda p: -(p.get("citations") or 0))
+    n_strays = len(strays)
 
     # Each entry: (predicate, heading, body lines). Built as data so the whole
     # identity block is one loop and adding a surface is one tuple -- the previous
@@ -995,17 +1088,15 @@ def step_worklist(cfg, args) -> None:
          ["Highest leverage on this page. Semantic Scholar's disambiguation and",
           "OpenAlex's profile merges are both ORCID-driven, so this is the one fix that",
           "makes the others more likely to fix themselves.", "",
-          "One upload, not one form per paper: *Works → + Add → Add BibTeX* →",
-          "**`tasks/orcid_missing.bib`** (only the missing ones) or",
-          "`tasks/orcid_import.bib` (all of them; ORCID groups on shared identifiers, so",
-          "re-importing what is already there merges rather than duplicates).",
-          "Full list with citations: `tasks/orcid_missing.md`. How and why:",
+          "One upload, not one form per paper. At <https://orcid.org/my-orcid#works>:",
+          "*+ Add → Add BibTeX → Choose file* →",
+          "[`tasks/orcid_missing.bib`](tasks/orcid_missing.bib) (only the missing ones) or",
+          "[`tasks/orcid_import.bib`](tasks/orcid_import.bib) (all of them; ORCID groups on",
+          "shared identifiers, so re-importing what is already there merges rather than",
+          "duplicates). It previews the entries and you confirm — nothing lands unseen.",
+          "Why it matters, once:",
           "[docs/SETUP.md §1](docs/SETUP.md#1-orcid--populate-it-then-wire-it-everywhere).", ""]
-         + [f"- [ ] {(by_slug.get(s) or {}).get('citations') or 0} cites — "
-            f"{((by_slug.get(s) or {}).get('title') or s)[:66]}"
-            for s in o_miss[:8]]
-         + ([f"- … and {len(o_miss) - 8} more in `tasks/orcid_missing.md`"]
-            if len(o_miss) > 8 else [])),
+         + orcid_missing_items(o_miss, by_slug)),
         (bool(o_conf),
          f"### ORCID lists {len(o_conf)} work that is not yours"
          if len(o_conf) == 1 else
@@ -1082,10 +1173,18 @@ def step_worklist(cfg, args) -> None:
           "3. Paste a paper's S2 URL, pick it, and choose *the author is correct, but the",
           "   paper is missing from my author page*. Changes appear in about 24 hours.",
           "",
-          "The URLs are in [`tasks/s2_merge.md`](tasks/s2_merge.md), highest-citation",
-          "first, so stopping early still captures most of the loss. **Do not claim the",
-          "second page as well** — a second claimed record is harder to undo than an",
-          "unclaimed one, and it makes the split look deliberate.", ""]),
+          "Highest-citation first, so stopping early still captures most of the loss.",
+          "**Do not claim the second page as well** — a second claimed record is harder to",
+          "undo than an unclaimed one, and it makes the split look deliberate.", ""]
+         + [f"- [ ] {p.get('citations') or 0} cites — "
+            f"{(p.get('title_display') or p['title'])[:56]} — "
+            + (f"<https://www.semanticscholar.org/paper/{p['s2_corpus_id']}>"
+               if p.get("s2_corpus_id") else
+               "**no S2 id known** — search the title on the Add Papers form")
+            for p in strays[:12]]
+         + ([f"- … and {len(strays) - 12} more in "
+             "[`tasks/s2_merge.md`](tasks/s2_merge.md), same order"]
+            if len(strays) > 12 else []) + [""]),
         (bool(state.get("wikidata_gaps")),
          f"### Wikidata — {state.get('wikidata_gaps')} statement gaps on "
          f"{state.get('wikidata') or 'your item'}",
@@ -1292,23 +1391,49 @@ def step_worklist(cfg, args) -> None:
                   "",
                   "**Recommendation:** the top few, when you are already logged in, and stop.",
                   "There is no write API, so the clicking is the one part of this list code",
-                  "cannot take off you — but the typing is not. Every field value, for every",
-                  "paper, is in [`tasks/arxiv_jref.md`](tasks/arxiv_jref.md): the journal-ref",
-                  "string built from the publisher's own bibtex, the published DOI, and why",
-                  "`Report number:` stays blank.",
+                  "cannot take off you — but the typing is not: both field values are below,",
+                  "per paper, built from the publisher's own bibtex. The same for all",
+                  f"{sum(1 for p in papers if needs_jr(p))} is in "
+                  "[`tasks/arxiv_jref.md`](tasks/arxiv_jref.md).",
                   ""]
         if blocked:
             lines += [f"**{blocked} of these are marked (blocked)**: you are not a registered",
                       "author on them, so the form will refuse. Claim ownership first (above).",
                       ""]
+        # The two field values, inline, rather than a pointer to `tasks/arxiv_jref.md`.
+        # A row that says only "-> ACL 2025" leaves the reader to work out what arXiv
+        # wants in a field it calls `Journal-ref:`, and the answer is a full citation
+        # string this code already builds from the publisher's bibtex. Held in one file
+        # and pointed at from the other is the failure that costs the most here: the
+        # section they are working from is not the section that knows what to type.
+        from identity_tasks import journal_doi, journal_ref  # noqa: E402
+        subs = read_yaml(os.path.join(DATA, "arxiv_submissions.yaml")) or {}
         for p in missing_jr:
-            # The citation form, which is what to type into the form: the full proceedings
-            # name truncated to fit this line is not a bibliographic reference.
-            venue = p.get("venue_display") or p.get("venue") or "?"
             flag = "  **(blocked)**" if p["arxiv"] in unowned else ""
-            lines.append(f"- [ ] `{p['arxiv']}` ({p.get('citations') or 0} cites) -> {venue}  "
-                         f"<https://arxiv.org/abs/{p['arxiv']}>{flag}")
-        lines.append("")
+            title = (p.get("title_display") or p["title"]).strip()
+            lines.append(f"- [ ] **{p.get('citations') or 0} cites** — {title}{flag}")
+            sub = subs.get(p["arxiv"])
+            # Nested bullets rather than indented prose: a continuation line at this
+            # indent is a lazy paragraph continuation, so the form link rendered glued to
+            # the end of the title.
+            lines.append(f"      - the form: <https://arxiv.org/submit/{sub}/jref>" if sub else
+                         f"      - the form: find `{p['arxiv']}` on <https://arxiv.org/user> "
+                         f"→ its *journal ref* link "
+                         f"([abs](https://arxiv.org/abs/{p['arxiv']}))")
+            if jr := journal_ref(p):
+                lines.append(f"      - `Journal-ref:` `{jr}`")
+            else:
+                # Said rather than omitted: an absent line reads as "nothing to paste",
+                # and the reader types the venue name, which is not a journal-ref.
+                venue = p.get("venue_display") or p.get("venue") or "?"
+                lines.append(f"      - `Journal-ref:` — not derivable from the bibliography "
+                             f"(venue is *{venue}*); type the proceedings title yourself")
+            doi = journal_doi(p)
+            lines.append(f"      - `Journal version DOI:` `{doi}`" if doi else
+                         "      - `Journal version DOI:` — none minted, leave blank")
+        lines += ["", "`Report number:` stays blank on all of them: it means an "
+                  "*institutional* preprint", "number (a lab's own report series) and none "
+                  "of these has one.", ""]
 
     # Prefer the audit's live sets over the collector's cached flags where present:
     # this list is worked by hand over days, and a stale copy sends you back to
@@ -1388,10 +1513,9 @@ def step_worklist(cfg, args) -> None:
                   "machine's reading and needs your eyes — but you are correcting a page,",
                   "not writing one. Each file opens with what to check, in the order it pays.",
                   "",
-                  "```bash",
-                  "python scripts/draft_sidecars.py --review          # what is drafted",
-                  "python scripts/draft_sidecars.py --accept <slug>   # promote, after editing",
-                  "```", ""]
+                  "Each item carries the two commands with its own slug already in them:",
+                  "`--show` prints every claim beside the sentence it came from, which is the",
+                  "check; `--accept` publishes it.", ""]
         for slug in sorted(drafted, key=lambda s: -((by_slug.get(s) or {})
                                                     .get("citations") or 0))[:10]:
             p = by_slug.get(slug) or {}
@@ -1400,9 +1524,13 @@ def step_worklist(cfg, args) -> None:
             # of which is already published, rather than checking a new page. `--accept`
             # refuses it without `--replace` for the same reason.
             mark = "  **replaces the live sidecar**" if p.get("has_sidecar") else ""
-            lines.append(f"- [ ] `data/sidecars/drafts/{slug}.md`  "
-                         f"({p.get('citations') or 0} cites) "
-                         f"{(p.get('title') or '')[:56]}{mark}")
+            lines.append(f"- [ ] **{(p.get('title') or slug)[:60]}** — "
+                         f"{p.get('citations') or 0} cites{mark}")
+            lines.append(f"      - read: [`data/sidecars/drafts/{slug}.md`]"
+                         f"(data/sidecars/drafts/{slug}.md)")
+            lines.append(f"      - check: `python scripts/draft_sidecars.py --show {slug}`")
+            lines.append(f"      - publish: `python scripts/draft_sidecars.py --accept "
+                         f"{slug}{' --replace' if p.get('has_sidecar') else ''}`")
         lines.append("")
     todraft = [p for p in no_side if p["slug"] not in set(drafted)]
     if todraft:
@@ -1417,14 +1545,18 @@ def step_worklist(cfg, args) -> None:
                        " re-run as the rest.", ""] if stale_drafts else [])
         lines += [f"## Sidecars not yet drafted ({len(todraft)}/{len(papers)})", ""] \
                  + stale_note + \
-                 ["Nothing to do by hand here — this is a run, not a task:",
+                 ["**Not yours.** Drafting reads each paper's full text and writes claims,",
+                  "scope and glosses into a draft file — agent work, and the queue drains",
+                  "when you ask an agent for a batch or when a full run takes one. It is here",
+                  "so the number is visible, not so you will do it. What comes back is the",
+                  "section above, and that one is yours.",
                   "",
                   "```bash",
                   "python scripts/draft_sidecars.py --review      # every paper: live, draft,"
                   " or neither",
-                  "python scripts/draft_sidecars.py --limit 20    # queue the next 20",
+                  "python scripts/draft_sidecars.py --limit 20    # queue the next 20 (then"
+                  " an agent fills them)",
                   "python scripts/draft_sidecars.py --ingest      # fold the answers in",
-                  "python scripts/draft_sidecars.py --slug <slug> # queue exactly one",
                   "```", "",
                   # "How do I find them" was a fair question: this section listed six
                   # titles and named no file, no slug and no way to see the other hundred.
@@ -1482,9 +1614,17 @@ def step_worklist(cfg, args) -> None:
                   "read before any network source, so the next run picks it up and the paper",
                   "joins the drafting queue.", ""]
         for p in sorted(starved, key=lambda p: -(p.get("citations") or 0)):
-            lines.append(f"- [ ] `data/fulltext/{p['slug']}.pdf` — "
-                         f"{p.get('citations') or 0} cites, {p.get('venue_display') or 'no venue'}"
-                         f" — {(p.get('title_display') or p.get('title') or '')[:52]}")
+            lines.append(f"- [ ] **{(p.get('title_display') or p.get('title') or '')[:60]}** "
+                         f"— {p.get('citations') or 0} cites, "
+                         f"{p.get('venue_display') or 'no venue'}")
+            # Where the file is, not just where it goes. "You already have the PDF" is
+            # true and still leaves a search: the page this project already knows the URL
+            # of is the page the PDF is one click behind.
+            src = p.get("url") or p.get("openreview") or p.get("doi_url") or (
+                f"https://doi.org/{p['doi']}" if p.get("doi") else "")
+            lines.append(f"      - get it from <{src}>" if src else
+                         "      - no landing page known — wherever your own copy is")
+            lines.append(f"      - save it as `data/fulltext/{p['slug']}.pdf`")
         lines.append("")
 
     # Artifacts that are not papers and have no paper: a tool or a guide nobody can
@@ -1505,7 +1645,7 @@ def step_worklist(cfg, args) -> None:
                   "Check `data/repos.yaml`, fix anything wrong, set `reviewed: true` to freeze "
                   "it, then `python scripts/sweep_github.py diff`.", ""]
 
-    lines = next_steps(tidy(apply_declines(lines)))
+    lines = next_steps(tidy(drop_hollow(apply_declines(lines))))
 
     out = os.path.join(ROOT, "WORKLIST.md")
     with open(out, "w") as f:

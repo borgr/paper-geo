@@ -575,8 +575,11 @@ def journal_doi(p: dict) -> str:
     for d in (p.get("doi"), e.get("doi")):
         d = (d or "").strip().removeprefix("doi:").removeprefix("https://doi.org/")
         if d and not d.lower().startswith("10.48550"):
-            # The Anthology mints these lowercase; one source shouts the `/V1/`.
-            return re.sub(r"^(10\.18653)/V1/", r"\1/v1/", d)
+            # The Anthology mints these entirely lowercase and one source shouts them
+            # back, `/V1/` and `2021.EMNLP-MAIN.619` alike. Lowercased whole rather than
+            # patched segment by segment, and only for this prefix, because it is the one
+            # registrant here whose canonical form is known.
+            return d.lower() if d.startswith("10.18653/") else d
     return ""
 
 

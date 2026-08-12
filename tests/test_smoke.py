@@ -48,7 +48,7 @@ SCRIPT_DIRS = ("scripts", "measure")
 # Hand-written prose. `WORKLIST.md` is generated and checked too when it exists (see
 # test_generated_worklist_links), because a bad path emitted by the worklist writer is
 # exactly the sort of thing nobody notices in generated output.
-DOCS = ("README.md", "SKILL.md", "RUN.md", "BACKLOG.md",
+DOCS = ("README.md", "SKILL.md", "RUN.md", "BACKLOG.md", "CLAUDE.md",
         "docs/RULES.md", "docs/SIDECAR.md", "docs/SETUP.md", "docs/EVIDENCE.md")
 
 
@@ -1030,6 +1030,74 @@ class TestBothWikidataWritersDescribeTheSameItem(unittest.TestCase):
         body = src.split("\ndef wikidata_paper_coverage(", 1)[1].split("\ndef ", 1)[0]
         self.assertIn("created_items()", body, "coverage ignores the ledger")
         self.assertIn("setdefault", body, "the ledger must not overwrite a live answer")
+
+
+class TestEveryOpenItemIsWorkableWhereItStands(unittest.TestCase):
+    """The contract in `CLAUDE.md`: a destination, the instruction, the payload inline.
+
+    Two of the three are checkable mechanically, and they are the two that rotted. A
+    section used to say "the URLs are in `tasks/s2_merge.md`" or "-> ACL 2025", which
+    reads as complete and is not: the reader still has to open a second file to find out
+    what to paste, or work out for themselves what arXiv wants in a field this code
+    already knows the value of. So: a section that asks for something has to name where,
+    and a section that asks for nothing has no business on the page at all.
+    """
+
+    def sections(self):
+        """The live worklist as (heading, body-lines), `##` and `###` alike."""
+        path = os.path.join(ROOT, "WORKLIST.md")
+        if not os.path.exists(path):
+            self.skipTest("no WORKLIST.md yet; run python update.py")
+        out, opened = [("(preamble)", [])], []
+        for ln in source(path).splitlines():
+            if re.match(r"#{2,3} \S", ln):
+                # A `##` owns its `###`s. Not a nicety: `drop_hollow` keeps a parent
+                # whose child asks, so scoring a parent on the prose above its first
+                # child would fail every section that is structured that way.
+                opened = [(ln, [])] if ln.startswith("## ") else [*opened[:1], (ln, [])]
+                out += opened[-1:]
+            for _, body in opened or out[-1:]:
+                body.append(ln)
+        return out
+
+    def test_a_section_that_asks_says_where_to_act(self):
+        """A checkbox with no destination in sight is a chore with no address."""
+        for head, body in self.sections():
+            if not any(l.startswith("- [ ]") for l in body):
+                continue
+            text = "\n".join(body)
+            self.assertTrue(re.search(r"https?://|`(?:data|tasks|scripts)/|`python ", text),
+                            f"{head!r} asks for something but names no URL, no path and no "
+                            f"command -- so there is nowhere to go and do it")
+
+    def test_nothing_on_the_page_asks_for_nothing(self):
+        """`drop_hollow`, checked against the file it ran on.
+
+        The first line of the file promises open items only. A heading left standing
+        over declined children broke that promise for the whole page, not just its own
+        section, which is why this is asserted on the output rather than on the pass.
+        """
+        import update
+        parent = ""
+        for head, body in self.sections():
+            if head.startswith("## "):
+                parent = head
+            # Mirrors `drop_hollow`: a `##` that asks for nothing on purpose keeps its
+            # children too, since what is parked there is prose until it is unparked.
+            if head == "(preamble)" or any(k in parent + head for k in update.KEEPS):
+                continue
+            self.assertTrue(any(update.ASKS.search(l) for l in body),
+                            f"{head!r} has no checkbox and no command block: it asks for "
+                            f"nothing, and `drop_hollow` should have taken it out")
+
+    def test_a_parent_survives_on_its_children(self):
+        """The `##`/`###` case, which the live file cannot exercise both ways."""
+        import update
+        quiet = {"say": lambda *_: None}
+        kept = update.drop_hollow(["## Parent", "prose", "### Child", "- [ ] do it"], **quiet)
+        self.assertIn("## Parent", kept)
+        self.assertNotIn("## Parent", update.drop_hollow(
+            ["## Parent", "prose", "### Child", "more prose"], **quiet))
 
 
 class TestTheWorklistSaysWhatToDoFirst(unittest.TestCase):

@@ -17,29 +17,28 @@ holds the instructions; nothing here repeats them.
 backlogs the rest of the page is waiting on, and the run does the work.
 
 1. **Wikidata — 108 of your papers have no item** — `python scripts/wikidata_apply.py --papers --limit 10`, repeated. The monthly CI leg refuses to touch new papers while a backlog this size exists, so this is the one item that turns maintenance back on.
-2. **Sidecars not yet drafted (111/113)** — `python scripts/draft_sidecars.py --limit 20`, then read the drafts and `--accept` the ones you would sign. This is the content the rest of the pipeline exists to publish, and it is the only place your judgement is the input.
 
 **One edit each, and each one closes a section outright.** This is where
 the page gets visibly shorter.
 
-3. **1 work on your ORCID carries another paper's identifier** — one ORCID edit, and it has to come before the other two ORCID sections: a wrong DOI is what makes one paper read as missing and another as duplicated.
-4. **ORCID lists 1 of your papers twice** — one ORCID edit: add the DOI to the entry you are keeping.
-5. **ORCID is missing 1 of your 113 papers** — one BibTeX upload. Highest leverage on the page — Semantic Scholar and OpenAlex both re-cluster off ORCID, so this is the fix that makes other sections shrink without you.
-6. **1 paper in the corpus that the bibliography does not have** — one paste into `orig.bib`. The pipeline's only real input is that file, and the override line standing in for it goes on the next run.
-7. **Papers whose full text nothing can fetch (1)** — drop the PDF you already have into `data/fulltext/` (gitignored, so it stays on your machine and only the sidecar it produces is committed).
+2. **1 work on your ORCID carries another paper's identifier** — one ORCID edit, and it has to come before the other two ORCID sections: a wrong DOI is what makes one paper read as missing and another as duplicated.
+3. **ORCID lists 1 of your papers twice** — one ORCID edit: add the DOI to the entry you are keeping.
+4. **ORCID is missing 1 of your 113 papers** — one BibTeX upload. Highest leverage on the page — Semantic Scholar and OpenAlex both re-cluster off ORCID, so this is the fix that makes other sections shrink without you.
+5. **1 paper in the corpus that the bibliography does not have** — one paste into `orig.bib`. The pipeline's only real input is that file, and the override line standing in for it goes on the next run.
+6. **Papers whose full text nothing can fetch (1)** — drop the PDF you already have into `data/fulltext/` (gitignored, so it stays on your machine and only the sidecar it produces is committed).
 
 **As much as you have patience for.** Per-paper clicking, because
 there is no write API behind either surface — and both are ordered so
 that stopping early still captures most of the value.
 
-8. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns 63 hunt-by-eye rows into one-click links. Then the top few and stop — that section argues its own case honestly.
-9. **Semantic Scholar — 34 papers on a second author record** — one paste per paper from `tasks/s2_merge.md`, highest-citation first.
+7. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
+8. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section.
 
 ## Due now (1)
 
 From `data/followups.yaml`. Each of these was waiting on something outside this repo that should have landed by now.
 
-- [ ] **2026-08-08** (3 days ago) — The paper items are the last Wikidata decision left. The author item Q140867203 is already complete and stays that way by itself; around a hundred of your papers have no Wikidata item at all, which is what keeps them out of every answer engine that reads Wikidata rather than the web.
+- [ ] **2026-08-08** (4 days ago) — The paper items are the last Wikidata decision left. The author item Q140867203 is already complete and stays that way by itself; around a hundred of your papers have no Wikidata item at all, which is what keeps them out of every answer engine that reads Wikidata rather than the web.
       → Read it, then run it in batches. `--papers` with no `--apply` prints exactly what it would create, one line per item: kind, year, identifier, how many authors. The statements are the same ones tasks/wikidata_papers.qs holds, which is the paste-it-yourself fallback and no longer the route. Do the first ten, open two of them on the wiki, then keep going -- a batch of ten finds a wrong statement on item 3 rather than on item 103. Every item is recorded in data/wikidata_created.yaml as it lands, so an interrupted run resumes without recreating anything, and once the backlog is gone the monthly CI run keeps up with new papers on its own (it refuses above four missing items, so it does nothing at all until you have drained this). Read the "Is this legitimate?" section of tasks/wikidata_manual.md once first.
       `python scripts/wikidata_apply.py --papers --limit 10`
 
@@ -47,17 +46,6 @@ From `data/followups.yaml`. Each of these was waiting on something outside this 
 
 - **2026-10-04** — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.
 - **2026-11-04** — Crossref and DataCite auto-update only fire on newly deposited metadata that already carries your iD, so the proof is a work whose ORCID source is Crossref or DataCite rather than your own name -- which cannot appear until something you publish is deposited.
-
-## Coverage: Google Scholar and the corpus disagree
-
-Scholar lists **116** works and matched **106** of the corpus's **113**. Scholar is
-the one list of your papers that is built by a different process, so it is the
-only check that can see a paper this pipeline never received.
-
-Every bucket in full, including what is truncated below:
-[`build/scholar_diff.json`](build/scholar_diff.json) — local only, because
-`build/` is not committed. `python update.py --step audit` writes it, and after
-a fresh clone that is the one command between you and the file.
 
 ## 1 paper in the corpus that the bibliography does not have
 
@@ -93,14 +81,26 @@ Highest leverage on this page. Semantic Scholar's disambiguation and
 OpenAlex's profile merges are both ORCID-driven, so this is the one fix that
 makes the others more likely to fix themselves.
 
-One upload, not one form per paper: *Works → + Add → Add BibTeX* →
-**`tasks/orcid_missing.bib`** (only the missing ones) or
-`tasks/orcid_import.bib` (all of them; ORCID groups on shared identifiers, so
-re-importing what is already there merges rather than duplicates).
-Full list with citations: `tasks/orcid_missing.md`. How and why:
+One upload, not one form per paper. At <https://orcid.org/my-orcid#works>:
+*+ Add → Add BibTeX → Choose file* →
+[`tasks/orcid_missing.bib`](tasks/orcid_missing.bib) (only the missing ones) or
+[`tasks/orcid_import.bib`](tasks/orcid_import.bib) (all of them; ORCID groups on
+shared identifiers, so re-importing what is already there merges rather than
+duplicates). It previews the entries and you confirm — nothing lands unseen.
+Why it matters, once:
 [docs/SETUP.md §1](docs/SETUP.md#1-orcid--populate-it-then-wire-it-everywhere).
 
-- [ ] 0 cites — A Statistical Framework for Game-Based AI Evaluation
+- [ ] **A Statistical Framework for Game-Based AI Evaluation** — 0 cites — what the file will add:
+
+  ```bibtex
+  @inproceedings{polo2025a,
+    author       = {Felipe Maia Polo and Leshem Choshen and Yuekai Sun and Kristjan Greenewald},
+    title        = {A Statistical Framework for Game-Based AI Evaluation},
+    year         = {2025},
+    booktitle    = {NeurIPS 2025 LLM Evaluation Workshop},
+    url          = {https://openreview.net/forum?id=1VWfIsRdZA}
+  }
+  ```
 
 ### 1 work on your ORCID carries another paper's identifier
 
@@ -164,10 +164,22 @@ at a time.
 3. Paste a paper's S2 URL, pick it, and choose *the author is correct, but the
    paper is missing from my author page*. Changes appear in about 24 hours.
 
-The URLs are in [`tasks/s2_merge.md`](tasks/s2_merge.md), highest-citation
-first, so stopping early still captures most of the loss. **Do not claim the
-second page as well** — a second claimed record is harder to undo than an
-unclaimed one, and it makes the split look deliberate.
+Highest-citation first, so stopping early still captures most of the loss.
+**Do not claim the second page as well** — a second claimed record is harder to
+undo than an unclaimed one, and it makes the split look deliberate.
+
+- [ ] 46 cites — NumeroLogic: Number Encoding for Enhanced LLMs' Numerica — <https://www.semanticscholar.org/paper/268819308>
+- [ ] 26 cites — Sloth: scaling laws for LLM skills to predict multi-benc — <https://www.semanticscholar.org/paper/274597594>
+- [ ] 22 cites — A Hitchhiker's Guide to Scaling Law Estimation — <https://www.semanticscholar.org/paper/273350789>
+- [ ] 21 cites — DOVE: A Large-Scale Multi-Dimensional Predictions Datase — <https://www.semanticscholar.org/paper/276774995>
+- [ ] 21 cites — Benchmark Agreement Testing Done Right: A Guide for LLM  — <https://www.semanticscholar.org/paper/287923131>
+- [ ] 20 cites — When AI Benchmarks Plateau: A Systematic Study of Benchm — <https://www.semanticscholar.org/paper/285787943>
+- [ ] 18 cites — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv P — <https://www.semanticscholar.org/paper/273345528>
+- [ ] 16 cites — Label-Efficient Model Selection for Text Generation — <https://www.semanticscholar.org/paper/267627835>
+- [ ] 13 cites — The Mighty ToRR: A Benchmark for Table Reasoning and Rob — <https://www.semanticscholar.org/paper/276617897>
+- [ ] 8 cites — NeurIPS 2023 LLM Efficiency Fine-tuning Competition — <https://www.semanticscholar.org/paper/277104779>
+- [ ] 8 cites — Navigating the Modern Evaluation Landscape: Consideratio — <https://www.semanticscholar.org/paper/269804253>
+- … and 22 more in [`tasks/s2_merge.md`](tasks/s2_merge.md), same order
 
 ### Wikidata — 108 of your papers have no item
 
@@ -241,23 +253,61 @@ its own form.
 
 **Recommendation:** the top few, when you are already logged in, and stop.
 There is no write API, so the clicking is the one part of this list code
-cannot take off you — but the typing is not. Every field value, for every
-paper, is in [`tasks/arxiv_jref.md`](tasks/arxiv_jref.md): the journal-ref
-string built from the publisher's own bibtex, the published DOI, and why
-`Report number:` stays blank.
+cannot take off you — but the typing is not: both field values are below,
+per paper, built from the publisher's own bibtex. The same for all
+64 is in [`tasks/arxiv_jref.md`](tasks/arxiv_jref.md).
 
-- [ ] `2306.01708` (870 cites) -> NeurIPS 2023  <https://arxiv.org/abs/2306.01708>
-- [ ] `2402.14992` (284 cites) -> ICML 2024  <https://arxiv.org/abs/2402.14992>
-- [ ] `2412.03304` (182 cites) -> ACL 2025  <https://arxiv.org/abs/2412.03304>
-- [ ] `2104.08202` (167 cites) -> EMNLP 2021  <https://arxiv.org/abs/2104.08202>
-- [ ] `1907.01752` (127 cites) -> ICLR 2020  <https://arxiv.org/abs/1907.01752>
-- [ ] `2211.05655` (119 cites) -> ACL 2023  <https://arxiv.org/abs/2211.05655>
-- [ ] `2410.19735` (114 cites) -> ICLR 2025  <https://arxiv.org/abs/2410.19735>
-- [ ] `2507.16806` (99 cites) -> ICLR 2026  <https://arxiv.org/abs/2507.16806>
-- [ ] `2402.16842` (91 cites) -> ICML 2024  <https://arxiv.org/abs/2402.16842>
-- [ ] `2405.17202` (83 cites) -> NeurIPS 2024  <https://arxiv.org/abs/2405.17202>
-- [ ] `1907.08971` (78 cites) -> ACL 2019  <https://arxiv.org/abs/1907.08971>
-- [ ] `2302.04863` (72 cites) -> Findings of EMNLP 2023  <https://arxiv.org/abs/2302.04863>
+- [ ] **870 cites** — TIES-Merging: Resolving Interference When Merging Models
+      - the form: find `2306.01708` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2306.01708))
+      - `Journal-ref:` `Advances in Neural Information Processing Systems 36: Annual Conference on Neural Information Processing Systems 2023`
+      - `Journal version DOI:` `10.52202/075280-0310`
+- [ ] **284 cites** — tinyBenchmarks: evaluating LLMs with fewer examples
+      - the form: find `2402.14992` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2402.14992))
+      - `Journal-ref:` `Forty-first International Conference on Machine Learning, 2024`
+      - `Journal version DOI:` — none minted, leave blank
+- [ ] **182 cites** — Global MMLU: Understanding and Addressing Cultural and Linguistic Biases in Multilingual Evaluation
+      - the form: find `2412.03304` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2412.03304))
+      - `Journal-ref:` `Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 18761-18799, 2025`
+      - `Journal version DOI:` `10.18653/v1/2025.acl-long.919`
+- [ ] **167 cites** — Q²: Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question Generation and Question Answering
+      - the form: find `2104.08202` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2104.08202))
+      - `Journal-ref:` `Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing, pages 7856-7870`
+      - `Journal version DOI:` `10.18653/v1/2021.emnlp-main.619`
+- [ ] **127 cites** — On the Weaknesses of Reinforcement Learning for Neural Machine Translation
+      - the form: find `1907.01752` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/1907.01752))
+      - `Journal-ref:` `8th International Conference on Learning Representations, 2020`
+      - `Journal version DOI:` — none minted, leave blank
+- [ ] **119 cites** — DisentQA: Disentangling Parametric and Contextual Knowledge with Counterfactual Question Answering
+      - the form: find `2211.05655` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2211.05655))
+      - `Journal-ref:` `Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 10056-10070, 2023`
+      - `Journal version DOI:` `10.18653/v1/2023.acl-long.559`
+- [ ] **114 cites** — Model merging with SVD to tie the Knots
+      - the form: find `2410.19735` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2410.19735))
+      - `Journal-ref:` `ICLR, 2025`
+      - `Journal version DOI:` — none minted, leave blank
+- [ ] **99 cites** — Beyond Binary Rewards: Training LMs to Reason About Their Uncertainty
+      - the form: find `2507.16806` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2507.16806))
+      - `Journal-ref:` `The Fourteenth International Conference on Learning Representations, 2026`
+      - `Journal version DOI:` — none minted, leave blank
+- [ ] **91 cites** — Asymmetry in Low-Rank Adapters of Foundation Models
+      - the form: find `2402.16842` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2402.16842))
+      - `Journal-ref:` `Forty-first International Conference on Machine Learning, 2024`
+      - `Journal version DOI:` — none minted, leave blank
+- [ ] **83 cites** — Efficient multi-prompt evaluation of LLMs
+      - the form: find `2405.17202` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2405.17202))
+      - `Journal-ref:` `The Thirty-eighth Annual Conference on Neural Information Processing Systems, 2024`
+      - `Journal version DOI:` — none minted, leave blank
+- [ ] **78 cites** — Are You Convinced? Choosing the More Convincing Evidence with a Siamese Network
+      - the form: find `1907.08971` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/1907.08971))
+      - `Journal-ref:` `Proceedings of the 57th Conference of the Association for Computational Linguistics, Volume 1: Long Papers, pages 967-976, 2019`
+      - `Journal version DOI:` `10.18653/v1/p19-1093`
+- [ ] **72 cites** — Knowledge is a Region in Weight Space for Fine-tuned Language Models
+      - the form: find `2302.04863` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2302.04863))
+      - `Journal-ref:` `Findings of the Association for Computational Linguistics: EMNLP 2023, pages 1350-1370`
+      - `Journal version DOI:` `10.18653/v1/2023.findings-emnlp.95`
+
+`Report number:` stays blank on all of them: it means an *institutional* preprint
+number (a lab's own report series) and none of these has one.
 
 ## Sidecars not yet drafted (111/113)
 
@@ -265,13 +315,16 @@ string built from the publisher's own bibtex, the published DOI, and why
 that have since changed. `--accept` refuses them and the next run overwrites
 them, so do not spend an evening reading one; they need the same re-run as the rest.
 
-Nothing to do by hand here — this is a run, not a task:
+**Not yours.** Drafting reads each paper's full text and writes claims,
+scope and glosses into a draft file — agent work, and the queue drains
+when you ask an agent for a batch or when a full run takes one. It is here
+so the number is visible, not so you will do it. What comes back is the
+section above, and that one is yours.
 
 ```bash
 python scripts/draft_sidecars.py --review      # every paper: live, draft, or neither
-python scripts/draft_sidecars.py --limit 20    # queue the next 20
+python scripts/draft_sidecars.py --limit 20    # queue the next 20 (then an agent fills them)
 python scripts/draft_sidecars.py --ingest      # fold the answers in
-python scripts/draft_sidecars.py --slug <slug> # queue exactly one
 ```
 
 `--review` is the whole list; the six below are the top of it by
@@ -304,7 +357,9 @@ on your machine and only the sidecar it produces is committed. That path is
 read before any network source, so the next run picks it up and the paper
 joins the drafting queue.
 
-- [ ] `data/fulltext/a-statistical-framework-for-game-based-ai-evaluation.pdf` — 0 cites, NeurIPS 2025 LLM Evaluation Workshop — A Statistical Framework for Game-Based AI Evaluation
+- [ ] **A Statistical Framework for Game-Based AI Evaluation** — 0 cites, NeurIPS 2025 LLM Evaluation Workshop
+      - get it from <https://openreview.net/forum?id=1VWfIsRdZA>
+      - save it as `data/fulltext/a-statistical-framework-for-game-based-ai-evaluation.pdf`
 
 
 ## Deferred
@@ -331,5 +386,5 @@ Check `data/repos.yaml`, fix anything wrong, set `reviewed: true` to freeze it, 
 
 ---
 
-*Per `data/declines.yaml` — hidden: 3 sections (OpenAlex — 4 duplicate profiles; 2 papers absent from the source bibliography — every item declined; 5 papers whose title does not appear on your Scholar profile — every item declined) and 7 individual items. deferred to the bottom: Artifacts with no citation route (13); Repo labels awaiting your review (27/31). marked in `tasks/openalex_merge.md`, `tasks/zenodo.md`. Delete a line there to have it asked normally again.*
+*Per `data/declines.yaml` — hidden: 3 sections (OpenAlex — 4 duplicate profiles; 2 papers absent from the source bibliography — every item declined; 5 papers whose title does not appear on your Scholar profile — every item declined) and 8 individual items. deferred to the bottom: Artifacts with no citation route (13); Repo labels awaiting your review (27/31). marked in `tasks/openalex_merge.md`, `tasks/zenodo.md`. Delete a line there to have it asked normally again.*
 

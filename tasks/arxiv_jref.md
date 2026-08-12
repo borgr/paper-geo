@@ -92,7 +92,7 @@ Journal version DOI:  10.18653/v1/2025.acl-long.919
 
 ```
 Journal-ref:          Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing, pages 7856-7870
-Journal version DOI:  10.18653/v1/2021.EMNLP-MAIN.619
+Journal version DOI:  10.18653/v1/2021.emnlp-main.619
 ```
 
 ### 5. On the Weaknesses of Reinforcement Learning for Neural Machine Translation — cited 127
@@ -110,7 +110,7 @@ Journal version DOI:  (none minted — leave blank)
 
 ```
 Journal-ref:          Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 10056-10070, 2023
-Journal version DOI:  10.18653/v1/2023.ACL-LONG.559
+Journal version DOI:  10.18653/v1/2023.acl-long.559
 ```
 
 ### 7. Model merging with SVD to tie the Knots — cited 114
@@ -146,7 +146,7 @@ Journal version DOI:  (none minted — leave blank)
 
 ```
 Journal-ref:          Proceedings of the 57th Conference of the Association for Computational Linguistics, Volume 1: Long Papers, pages 967-976, 2019
-Journal version DOI:  10.18653/v1/P19-1093
+Journal version DOI:  10.18653/v1/p19-1093
 ```
 
 ### 11. Knowledge is a Region in Weight Space for Fine-tuned Language Models — cited 72
@@ -155,7 +155,7 @@ Journal version DOI:  10.18653/v1/P19-1093
 
 ```
 Journal-ref:          Findings of the Association for Computational Linguistics: EMNLP 2023, pages 1350-1370
-Journal version DOI:  10.18653/v1/2023.FINDINGS-EMNLP.95
+Journal version DOI:  10.18653/v1/2023.findings-emnlp.95
 ```
 
 ### 12. Corpus Wide Argument Mining - A Working Solution — cited 70
@@ -200,7 +200,7 @@ Journal version DOI:  (none minted — leave blank)
 
 ```
 Journal-ref:          Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers), pages 2519-2536
-Journal version DOI:  10.18653/v1/2024.NAACL-LONG.139
+Journal version DOI:  10.18653/v1/2024.naacl-long.139
 ```
 
 ### 17. ColD Fusion: Collaborative Descent for Distributed Multitask Finetuning — cited 64
@@ -209,7 +209,7 @@ Journal version DOI:  10.18653/v1/2024.NAACL-LONG.139
 
 ```
 Journal-ref:          Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 788-806, 2023
-Journal version DOI:  10.18653/v1/2023.ACL-LONG.46
+Journal version DOI:  10.18653/v1/2023.acl-long.46
 ```
 
 ### 18. Findings of the Second BabyLM Challenge: Sample-Efficient Pretraining on Developmentally Plausible Corpora — cited 63
@@ -236,7 +236,7 @@ Journal version DOI:  10.18653/v1/2024.emnlp-main.12
 
 ```
 Journal-ref:          Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 8281-8297, 2022
-Journal version DOI:  10.18653/v1/2022.ACL-LONG.568
+Journal version DOI:  10.18653/v1/2022.acl-long.568
 ```
 
 ### 21. SemEval-2019 Task 1: Cross-lingual Semantic Parsing with UCCA — cited 38
@@ -245,7 +245,7 @@ Journal version DOI:  10.18653/v1/2022.ACL-LONG.568
 
 ```
 Journal-ref:          Proceedings of the 13th International Workshop on Semantic Evaluation, pages 1-10, 2019
-Journal version DOI:  10.18653/v1/S19-2001
+Journal version DOI:  10.18653/v1/s19-2001
 ```
 
 ### 22. Inherent Biases in Reference-based Evaluation for Grammatical Error Correction — cited 38
@@ -254,7 +254,7 @@ Journal version DOI:  10.18653/v1/S19-2001
 
 ```
 Journal-ref:          Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics, Volume 1: Long Papers, pages 632-642, 2018
-Journal version DOI:  10.18653/v1/P18-1059
+Journal version DOI:  10.18653/v1/p18-1059
 ```
 
 ### 23. Reference-less Measure of Faithfulness for Grammatical Error Correction — cited 36
@@ -263,7 +263,7 @@ Journal version DOI:  10.18653/v1/P18-1059
 
 ```
 Journal-ref:          Proceedings of the 2018 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Volume 2 (Short Papers), pages 124-129
-Journal version DOI:  10.18653/v1/N18-2020
+Journal version DOI:  10.18653/v1/n18-2020
 ```
 
 ### 24. Automatic Metric Validation for Grammatical Error Correction — cited 35
@@ -272,7 +272,7 @@ Journal version DOI:  10.18653/v1/N18-2020
 
 ```
 Journal-ref:          Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics, Volume 1: Long Papers, pages 1372-1382, 2018
-Journal version DOI:  10.18653/v1/P18-1127
+Journal version DOI:  10.18653/v1/p18-1127
 ```
 
 ### 25. Learning to combine Grammatical Error Corrections — cited 31
@@ -281,7 +281,7 @@ Journal version DOI:  10.18653/v1/P18-1127
 
 ```
 Journal-ref:          Proceedings of the Fourteenth Workshop on Innovative Use of NLP for Building Educational Applications, pages 139-148, 2019
-Journal version DOI:  10.18653/v1/W19-4414
+Journal version DOI:  10.18653/v1/w19-4414
 ```
 
 ### 26. Where to start? Analyzing the potential value of intermediate models — cited 30
@@ -290,7 +290,7 @@ Journal version DOI:  10.18653/v1/W19-4414
 
 ```
 Journal-ref:          Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing, pages 1446-1470
-Journal version DOI:  10.18653/v1/2023.EMNLP-MAIN.90
+Journal version DOI:  10.18653/v1/2023.emnlp-main.90
 ```
 
 ### 27. Deductive Closure Training of Language Models for Coherence, Accuracy, and Updatability — cited 29
@@ -317,7 +317,7 @@ Journal version DOI:  (none minted — leave blank)
 
 ```
 Journal-ref:          Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 7639-7653, 2022
-Journal version DOI:  10.18653/v1/2022.ACL-LONG.526
+Journal version DOI:  10.18653/v1/2022.acl-long.526
 ```
 
 ### 30. Sloth: scaling laws for LLM skills to predict multi-benchmark performance across families — cited 26
@@ -335,7 +335,7 @@ Journal version DOI:  (none minted — leave blank)
 
 ```
 Journal-ref:          Proceedings of the 57th Conference of the Association for Computational Linguistics, Volume 1: Long Papers, pages 4271-4279, 2019
-Journal version DOI:  10.18653/v1/P19-1419
+Journal version DOI:  10.18653/v1/p19-1419
 ```
 
 ### 32. Data Contamination Report from the 2024 CONDA Shared Task — cited 23
@@ -344,7 +344,7 @@ Journal version DOI:  10.18653/v1/P19-1419
 
 ```
 Journal-ref:          The First Data Contamination Workshop, pages 41-56, 2024
-Journal version DOI:  10.18653/v1/2024.CONDA-1.4
+Journal version DOI:  10.18653/v1/2024.conda-1.4
 ```
 
 ### 33. Classifying Syntactic Errors in Learner Language — cited 23
@@ -353,7 +353,7 @@ Journal version DOI:  10.18653/v1/2024.CONDA-1.4
 
 ```
 Journal-ref:          Proceedings of the 24th Conference on Computational Natural Language Learning, pages 97-107, 2020
-Journal version DOI:  10.18653/v1/2020.CONLL-1.7
+Journal version DOI:  10.18653/v1/2020.conll-1.7
 ```
 
 ### 34. A Hitchhiker's Guide to Scaling Law Estimation — cited 22
@@ -398,7 +398,7 @@ Journal version DOI:  (none minted — leave blank)
 
 ```
 Journal-ref:          Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing, System Demonstrations, pages 159-168
-Journal version DOI:  10.18653/v1/2022.EMNLP-DEMOS.16
+Journal version DOI:  10.18653/v1/2022.emnlp-demos.16
 ```
 
 ### 39. Automatically Extracting Challenge Sets for Non-Local Phenomena in Neural Machine Translation — cited 20
@@ -407,7 +407,7 @@ Journal version DOI:  10.18653/v1/2022.EMNLP-DEMOS.16
 
 ```
 Journal-ref:          Proceedings of the 23rd Conference on Computational Natural Language Learning, pages 291-303, 2019
-Journal version DOI:  10.18653/v1/K19-1028
+Journal version DOI:  10.18653/v1/k19-1028
 ```
 
 ### 40. LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content — cited 18
@@ -452,7 +452,7 @@ Journal version DOI:  (none minted — leave blank)
 
 ```
 Journal-ref:          Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing, pages 18763-18783
-Journal version DOI:  10.18653/v1/2024.EMNLP-MAIN.1045
+Journal version DOI:  10.18653/v1/2024.emnlp-main.1045
 ```
 
 ### 45. Human Learning by Model Feedback: The Dynamics of Iterative Prompting with Midjourney — cited 16
@@ -461,7 +461,7 @@ Journal version DOI:  10.18653/v1/2024.EMNLP-MAIN.1045
 
 ```
 Journal-ref:          Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing, pages 4146-4161
-Journal version DOI:  10.18653/v1/2023.EMNLP-MAIN.253
+Journal version DOI:  10.18653/v1/2023.emnlp-main.253
 ```
 
 ### 46. Mediators in Determining what Processing BERT Performs First — cited 16
@@ -479,7 +479,7 @@ Journal-ref:          Proceedings of the 2021 Conference of the North American C
 
 ```
 Journal-ref:          Findings of the Association for Computational Linguistics: EMNLP 2020, pages 2678-2697
-Journal version DOI:  10.18653/v1/2020.FINDINGS-EMNLP.243
+Journal version DOI:  10.18653/v1/2020.findings-emnlp.243
 ```
 
 ### 48. The Mighty ToRR: A Benchmark for Table Reasoning and Robustness — cited 13
@@ -506,7 +506,7 @@ Journal-ref:          Proceedings of the 11th Joint Conference on Lexical and Co
 
 ```
 Journal-ref:          Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing, pages 11170-11183
-Journal version DOI:  10.18653/v1/2022.EMNLP-MAIN.767
+Journal version DOI:  10.18653/v1/2022.emnlp-main.767
 ```
 
 ### 51. The ShareLM Collection and Plugin: Contributing Human-Model Chats for the Benefit of the Community — cited 11
@@ -524,7 +524,7 @@ Journal version DOI:  10.18653/v1/2025.acl-demo.17
 
 ```
 Journal-ref:          Proceedings of the 26th Conference on Computational Natural Language Learning, pages 384-404, 2022
-Journal version DOI:  10.18653/v1/2022.CONLL-1.27
+Journal version DOI:  10.18653/v1/2022.conll-1.27
 ```
 
 ### 53. GrASP: A Library for Extracting and Exploring Human-Interpretable Textual Patterns — cited 8
@@ -551,7 +551,7 @@ Journal version DOI:  (none minted — leave blank)
 
 ```
 Journal-ref:          Proceedings of the 64th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 33063-33080, 2026
-Journal version DOI:  10.18653/v1/2026.ACL-LONG.1527
+Journal version DOI:  10.18653/v1/2026.acl-long.1527
 ```
 
 ### 56. Holmes: A Benchmark to Assess the Linguistic Competence of Language Models — cited 7
@@ -578,7 +578,7 @@ Journal-ref:          Findings of the Association for Computational Linguistics:
 
 ```
 Journal-ref:          Proceedings of the 64th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 15491-15513, 2026
-Journal version DOI:  10.18653/v1/2026.ACL-LONG.706
+Journal version DOI:  10.18653/v1/2026.acl-long.706
 ```
 
 ### 59. Will it Merge? On The Causes of Model Mergeability — cited 2
@@ -587,7 +587,7 @@ Journal version DOI:  10.18653/v1/2026.ACL-LONG.706
 
 ```
 Journal-ref:          Findings of the Association for Computational Linguistics: ACL 2026, pages 26551-26570
-Journal version DOI:  10.18653/v1/2026.FINDINGS-ACL.1322
+Journal version DOI:  10.18653/v1/2026.findings-acl.1322
 ```
 
 ### 60. On Neurons Invariant to Sentence Structural Changes in Neural Machine Translation — cited 2
@@ -596,7 +596,7 @@ Journal version DOI:  10.18653/v1/2026.FINDINGS-ACL.1322
 
 ```
 Journal-ref:          Proceedings of the 26th Conference on Computational Natural Language Learning, pages 194-212, 2022
-Journal version DOI:  10.18653/v1/2022.CONLL-1.14
+Journal version DOI:  10.18653/v1/2022.conll-1.14
 ```
 
 ### 61. Stop Guessing When to Stop Testing: Efficient Model Evaluation with Just Enough Data
@@ -605,7 +605,7 @@ Journal version DOI:  10.18653/v1/2022.CONLL-1.14
 
 ```
 Journal-ref:          Findings of the Association for Computational Linguistics: ACL 2026, pages 871-881
-Journal version DOI:  10.18653/v1/2026.FINDINGS-ACL.43
+Journal version DOI:  10.18653/v1/2026.findings-acl.43
 ```
 
 ### 62. MuLER: Detailed and Scalable Reference-based Evaluation
@@ -614,7 +614,7 @@ Journal version DOI:  10.18653/v1/2026.FINDINGS-ACL.43
 
 ```
 Journal-ref:          Proceedings of the 27th Conference on Computational Natural Language Learning, pages 436-455, 2023
-Journal version DOI:  10.18653/v1/2023.CONLL-1.29
+Journal version DOI:  10.18653/v1/2023.conll-1.29
 ```
 
 ## 3 to leave alone for now
