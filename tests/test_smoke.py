@@ -263,11 +263,41 @@ class TestGeneratedWorklistLinks(unittest.TestCase):
             self.skipTest("WORKLIST.md not generated yet")
         bad = []
         for target in TestDocLinksResolve.PAT.findall(source(path)):
-            if re.match(r"^(https?:|mailto:|#)", target):
+            # `file:` is skipped and not resolved: the only one is the sidecar review
+            # page, which lives under the gitignored `build/`, so it is absent from a
+            # fresh clone and from CI while the worklist that links it is committed.
+            # Asserting it exists would fail everywhere except the machine that last ran
+            # `update.py`. `test_the_review_page_link_is_the_path_the_code_writes` covers
+            # the failure this one cannot -- the emitter pointing somewhere wrong.
+            if re.match(r"^(https?:|mailto:|file:|#)", target):
                 continue
             if not os.path.exists(os.path.join(ROOT, target.split("#")[0])):
                 bad.append(target)
         self.assertEqual(bad, [], f"WORKLIST.md links to missing files: {bad}")
+
+    def test_the_review_page_link_is_the_path_the_code_writes(self):
+        """The one link in the worklist that no existence check can reach.
+
+        It is built by concatenation in `update.py` and consumed by a human clicking it,
+        so a stale or misspelled path fails silently -- the click opens nothing and the
+        review does not happen. Comparing against the constant catches the two ways that
+        happens: the emitter drifting, and the page moving.
+        """
+        path = os.path.join(ROOT, "WORKLIST.md")
+        if not os.path.exists(path):
+            self.skipTest("WORKLIST.md not generated yet")
+        import draft_sidecars
+        text = source(path)
+        links = re.findall(r"file://(\S*?)[)>#]", text)
+        for got in links:
+            self.assertEqual(got, draft_sidecars.REVIEW_PAGE,
+                             "the worklist links a file:// path that is not the review "
+                             "page the drafter writes")
+        # Without this the test passes on a worklist that dropped the link entirely,
+        # which is the same failure as linking the wrong path: nothing to click.
+        if "## Sidecar drafts awaiting" in text:
+            self.assertTrue(links, "a section asks for a sidecar review but links no "
+                                   "review page, so reading means running --show per paper")
 
 
 class TestWorkflowsInvokeRealCommands(unittest.TestCase):

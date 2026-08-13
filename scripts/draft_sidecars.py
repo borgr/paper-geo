@@ -590,23 +590,27 @@ def quote(flat: str, figure: str) -> str:
     return "(in the paper)"
 
 
-def show(slug: str) -> None:
-    """Print each claim beside the evidence it cites, for the one review a human owes.
+def checked(slug: str) -> dict | str:
+    """A draft with every claim already checked against the paper, or why it cannot be.
 
-    Accepting a sidecar is the author asserting every line of it in public, and the
-    thing that makes that reviewable in minutes rather than an hour is having the claim,
-    its scope, the pointer it cites, and the paper's own sentence for each figure in one
-    place. Otherwise reviewing means holding the PDF open in another window, which is
-    the friction that left 116 of 117 papers without a sidecar.
+    The one review a human owes is asserting each line in public, and what makes that a
+    minutes-long job rather than an hour is having the claim, its scope, the pointer it
+    cites and the paper's own sentence for each figure in one place -- otherwise
+    reviewing means holding the PDF open in another window, which is the friction that
+    left 116 of 117 papers without a sidecar.
+
+    Returns the checking, not a rendering of it, because there are two readers: a
+    terminal (`show`) and a browser (`review_page`). Two renderers over one check is the
+    only arrangement where the page and the command cannot disagree about a number.
     """
     path = os.path.join(DRAFTS, f"{slug}.md")
     if not os.path.exists(path):
         path = os.path.join(SIDECARS, f"{slug}.md")
     if not os.path.exists(path):
-        return print(f"no draft and no live sidecar for {slug}")
+        return f"no draft and no live sidecar for {slug}"
     fm = front_matter(path)
     if fm is None:
-        return print(f"{path}: unreadable front matter")
+        return f"{os.path.relpath(path, ROOT)}: unreadable front matter"
 
     from validate import figures, figures_in, rounds_to, values_in
     cache = os.path.join(CACHE, f"{slug}.txt")
@@ -614,38 +618,268 @@ def show(slug: str) -> None:
     have, vals = (figures_in(text), values_in(text)) if text else (set(), [])
     flat = re.sub(r"\s+", " ", text)
 
-    print(f"\n{os.path.relpath(path, ROOT)}")
-    print("one_liner: " + oneline(fm.get("one_liner")))
-    if not text:
-        print("  (no cached full text -- figures and pointers cannot be checked here)")
-
     answered = {a for g in (fm.get("qa") or []) for a in (g.get("answers") or [])}
+    claims = []
     for c in fm.get("claims") or []:
         kind = c.get("kind") or "result"
-        ev = c.get("evidence") or ("--" if kind == "context" else "MISSING")
-        orphan = "" if c.get("id") in answered else "   (no question points here)"
-        print(f"\n  [{kind}] {c.get('id')}   evidence: {ev}{orphan}")
-        print("    " + oneline(c.get("text")))
-        print("    scope: " + oneline(c.get("scope")))
-        if not text:
-            continue
-        for label, pat in evidence_pointers(c.get("evidence") or ""):
-            print(f"    {'ok' if pat.search(text) else 'NOT FOUND'}: the paper's own "
-                  f"text mentions {label}")
-        for n in figures(oneline(c.get("text")) + " " + oneline(c.get("scope"))):
-            if n.isdigit() and 1900 <= int(n) <= 2099:
-                continue
-            if not (n in have or rounds_to(n, vals)):
-                print(f"    {n:>9}  NOT IN THE PAPER -- correct it or drop the figure")
-                continue
-            # The paper's own words around the figure, so the author checks the number
-            # against the sentence it came from rather than against a page number.
-            print(f"    {n:>9}  {quote(flat, n)}")
+        row = {"kind": kind, "id": c.get("id"),
+               "evidence": c.get("evidence") or ("--" if kind == "context" else "MISSING"),
+               "text": oneline(c.get("text")), "scope": oneline(c.get("scope")),
+               "orphan": c.get("id") not in answered, "pointers": [], "figures": []}
+        if text:
+            row["pointers"] = [(label, bool(pat.search(text)))
+                               for label, pat in evidence_pointers(c.get("evidence") or "")]
+            for n in figures(row["text"] + " " + row["scope"]):
+                if n.isdigit() and 1900 <= int(n) <= 2099:
+                    continue
+                # The paper's own words around the figure, so the author checks the
+                # number against the sentence it came from, not against a page number.
+                row["figures"].append((n, quote(flat, n)
+                                       if (n in have or rounds_to(n, vals)) else None))
+        claims.append(row)
 
-    for i, g in enumerate(fm.get("qa") or []):
+    return {"slug": slug, "path": os.path.relpath(path, ROOT), "has_text": bool(text),
+            "live": path.startswith(SIDECARS), "one_liner": oneline(fm.get("one_liner")),
+            "claims": claims, "qa": fm.get("qa") or [],
+            "misreadings": fm.get("misreadings") or [],
+            "terminology": fm.get("terminology") or {}}
+
+
+def show(slug: str) -> None:
+    """`checked` for a terminal."""
+    d = checked(slug)
+    if isinstance(d, str):
+        return print(d)
+
+    print(f"\n{d['path']}")
+    print("one_liner: " + d["one_liner"])
+    if not d["has_text"]:
+        print("  (no cached full text -- figures and pointers cannot be checked here)")
+
+    for c in d["claims"]:
+        orphan = "   (no question points here)" if c["orphan"] else ""
+        print(f"\n  [{c['kind']}] {c['id']}   evidence: {c['evidence']}{orphan}")
+        print("    " + c["text"])
+        print("    scope: " + c["scope"])
+        for label, ok in c["pointers"]:
+            print(f"    {'ok' if ok else 'NOT FOUND'}: the paper's own text "
+                  f"mentions {label}")
+        for n, sentence in c["figures"]:
+            note = sentence or "NOT IN THE PAPER -- correct it or drop the figure"
+            print(f"    {n:>9}  {note}")
+
+    for i, g in enumerate(d["qa"]):
         print(f"\n  q{i + 1} -> {', '.join(g.get('answers') or []) or '(nothing)'}")
         for q in g.get("q") or []:
             print(f"      {q}")
+
+
+REVIEW_PAGE = os.path.join(BUILD, "sidecar_review.html")
+
+_CSS = """
+:root { --bg:#fff; --fg:#1a1a1a; --dim:#5c5c5c; --line:#e3e3e3; --card:#fafafa;
+        --bad:#a3122a; --badbg:#fdeef1; --ok:#1c6b3c; --warn:#8a5a00; --warnbg:#fdf6e7; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#16181c; --fg:#e8e8e8; --dim:#a0a0a0; --line:#2e3238; --card:#1d2025;
+          --bad:#ff8fa3; --badbg:#3a1520; --ok:#7ddaa0; --warn:#e8c07a; --warnbg:#3a2f14; } }
+* { box-sizing:border-box }
+body { background:var(--bg); color:var(--fg); margin:0 auto; padding:2rem 1.25rem 6rem;
+       max-width:52rem; font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif }
+h1 { font-size:1.5rem; margin:0 0 .25rem } h2 { font-size:1.2rem; margin:2.5rem 0 .25rem }
+h3 { font-size:.95rem; margin:1.75rem 0 .5rem; color:var(--dim);
+     text-transform:uppercase; letter-spacing:.06em }
+a { color:inherit } code,kbd { font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace }
+.sub { color:var(--dim); margin:0 0 2rem }
+.paper { border-top:2px solid var(--fg); padding-top:1rem; margin-top:3rem }
+.one { font-size:1.05rem; margin:.5rem 0 1rem }
+.cmd { background:var(--card); border:1px solid var(--line); border-radius:6px;
+       padding:.6rem .75rem; overflow-x:auto; white-space:pre }
+.claim { background:var(--card); border:1px solid var(--line); border-left:3px solid var(--line);
+         border-radius:6px; padding:.75rem .9rem; margin:.6rem 0 }
+.claim.context { border-left-color:var(--dim) }
+.claim.flagged { border-left-color:var(--bad) }
+.id { color:var(--dim); font:12px/1.4 ui-monospace,Menlo,monospace }
+.scope { color:var(--dim); font-size:.9rem; margin:.4rem 0 0 }
+.checks { margin:.55rem 0 0; padding:0; list-style:none; font-size:.85rem }
+.checks li { padding:.15rem 0 }
+.n { display:inline-block; min-width:3.5rem; font:12px ui-monospace,Menlo,monospace;
+     color:var(--fg) }
+.bad { color:var(--bad); background:var(--badbg); padding:.1rem .3rem; border-radius:3px }
+.ok { color:var(--ok) } .warn { color:var(--warn) } .dim { color:var(--dim) }
+.q { margin:.5rem 0 1rem } .q li { color:var(--dim) }
+.q b { color:var(--fg); font-weight:600 }
+table { border-collapse:collapse; width:100%; font-size:.9rem }
+td { border-top:1px solid var(--line); padding:.45rem .5rem; vertical-align:top }
+td:first-child { white-space:nowrap; color:var(--fg); font-weight:600; width:11rem }
+.note { background:var(--warnbg); border:1px solid var(--line); border-radius:6px;
+        padding:.75rem .9rem; color:var(--fg); font-size:.9rem }
+.toc { padding-left:1.2rem } .toc li { margin:.2rem 0 }
+"""
+
+
+def _flags(d: dict) -> list[str]:
+    """Everything on one draft that a reader should not have to hunt for."""
+    out = []
+    figs = sum(1 for c in d["claims"] for n, s in c["figures"] if s is None)
+    ptrs = sum(1 for c in d["claims"] for _, ok in c["pointers"] if not ok)
+    orph = sum(1 for c in d["claims"] if c["orphan"])
+    if figs:
+        out.append(f"{figs} figure{'s' if figs > 1 else ''} not in the paper")
+    if ptrs:
+        out.append(f"{ptrs} pointer{'s' if ptrs > 1 else ''} the paper does not mention")
+    if orph:
+        out.append(f"{orph} claim{'s' if orph > 1 else ''} no question points at")
+    if not d["has_text"]:
+        out.append("no cached full text, so nothing here was checked against the paper")
+    return out
+
+
+def review_page(papers: list[dict]) -> str:
+    """Every fresh draft, checked, as one self-contained page to read in a browser.
+
+    `--show` puts the same thing in a terminal, one slug at a time. This exists because
+    reviewing is the only job on the worklist that is reading rather than pasting, and
+    asking someone to run a command per paper to read prose is the wrong shape: the
+    reading should be a link. Written to build/ and never to build/site/, because these
+    are claims the author has not accepted and `--deploy` must not be able to reach them.
+    """
+    from html import escape as e
+
+    by_slug = {p.get("slug"): p for p in papers}
+    on_disk = sorted(os.path.basename(p)[:-3] for p in glob.glob(os.path.join(DRAFTS, "*.md")))
+    keep = held(spec_sha())
+    fresh = [s for s in on_disk if s in keep]
+    stale = [s for s in on_disk if s not in keep]
+    fresh.sort(key=lambda s: -((by_slug.get(s) or {}).get("citations") or 0))
+
+    done = [d for d in (checked(s) for s in fresh) if isinstance(d, dict)]
+    out = ["<!doctype html><meta charset=utf-8>",
+           "<meta name=viewport content='width=device-width,initial-scale=1'>",
+           f"<title>Sidecar drafts to review ({len(done)})</title>", f"<style>{_CSS}</style>",
+           f"<h1>{len(done)} sidecar draft{'s' if len(done) != 1 else ''} to review</h1>"]
+
+    if not done:
+        out.append("<p class=sub>Nothing is waiting. Queue more with "
+                   "<code>python scripts/draft_sidecars.py --limit 20</code>.</p>")
+    else:
+        out += ["<p class=sub>Generated by the last run — reading this is the whole "
+                "review. Each figure is shown beside the paper's own sentence, so the "
+                "check is comparing two lines, not opening a PDF. Accepting is the one "
+                "act that publishes an assertion under your name.</p>",
+                "<h3>On this page</h3><ol class=toc>"]
+        for d in done:
+            p = by_slug.get(d["slug"]) or {}
+            bad = _flags(d)
+            out.append(f"<li><a href='#{e(d['slug'])}'>{e((p.get('title') or d['slug'])[:70])}"
+                       f"</a> — {p.get('citations') or 0} cites"
+                       + (f" · <span class=bad>{e('; '.join(bad))}</span>" if bad else "")
+                       + "</li>")
+        out.append("</ol>")
+
+    for d in done:
+        p = by_slug.get(d["slug"]) or {}
+        slug = d["slug"]
+        out += [f"<div class=paper id='{e(slug)}'>",
+                f"<h2>{e(p.get('title') or slug)}</h2>",
+                f"<p class=sub>{p.get('citations') or 0} cites · "
+                f"<code>{e(d['path'])}</code></p>"]
+        if bad := _flags(d):
+            out.append("<p class=note><b>Before accepting:</b> "
+                       + e("; ".join(bad)) + ".</p>")
+        out.append(f"<p class=one>{e(d['one_liner'])}</p>")
+        out.append("<div class=cmd>python scripts/draft_sidecars.py --accept "
+                   + e(slug) + (" --replace" if p.get("has_sidecar") else "") + "</div>")
+
+        out.append(f"<h3>Claims ({len(d['claims'])})</h3>")
+        for c in d["claims"]:
+            bad_here = (any(s is None for _, s in c["figures"])
+                        or any(not ok for _, ok in c["pointers"]))
+            cls = "claim" + (" context" if c["kind"] == "context" else "") \
+                          + (" flagged" if bad_here else "")
+            out += [f"<div class='{cls}'>",
+                    f"<div class=id>[{c['kind']}] {e(str(c['id']))} · cites "
+                    f"{e(str(c['evidence']))}"
+                    + ("  · no question points here" if c["orphan"] else "") + "</div>",
+                    f"<div>{e(c['text'])}</div>",
+                    f"<p class=scope><b>Scope.</b> {e(c['scope'])}</p>"]
+            if c["pointers"] or c["figures"]:
+                out.append("<ul class=checks>")
+                for label, ok in c["pointers"]:
+                    out.append(f"<li><span class={'ok' if ok else 'bad'}>"
+                               f"{'the paper mentions' if ok else 'THE PAPER NEVER MENTIONS'}"
+                               f"</span> {e(label)}</li>")
+                for n, sentence in c["figures"]:
+                    if sentence is None:
+                        out.append(f"<li><span class=n>{e(n)}</span> "
+                                   f"<span class=bad>not in the paper — correct it or "
+                                   f"drop the figure</span></li>")
+                    else:
+                        out.append(f"<li><span class=n>{e(n)}</span> "
+                                   f"<span class=dim>{e(sentence)}</span></li>")
+                out.append("</ul>")
+            out.append("</div>")
+
+        if d["qa"]:
+            out.append(f"<h3>Questions this answers ({len(d['qa'])})</h3>")
+            for g in d["qa"]:
+                out.append("<ul class=q>")
+                for i, q in enumerate(g.get("q") or []):
+                    out.append(f"<li>{'<b>' if not i else ''}{e(q)}"
+                               f"{'</b>' if not i else ''}</li>")
+                out.append(f"<li class=id>answered by {e(', '.join(g.get('answers') or []))}"
+                           f"</li></ul>")
+
+        if d["misreadings"]:
+            out.append(f"<h3>Misreadings it heads off ({len(d['misreadings'])})</h3><ul>")
+            out += [f"<li>{e(oneline(m))}</li>" for m in d["misreadings"]]
+            out.append("</ul>")
+
+        if d["terminology"]:
+            out.append(f"<h3>Terminology ({len(d['terminology'])})</h3><table>")
+            out += [f"<tr><td>{e(str(k))}</td><td>{e(oneline(v))}</td></tr>"
+                    for k, v in d["terminology"].items()]
+            out.append("</table>")
+        out.append("</div>")
+
+    # The published ones, for the other reason to open this page: not "what must I
+    # check" but "what does an accepted sidecar actually look like". They are already
+    # rendered into the site, so link the built page rather than restating it here.
+    live = sorted(os.path.basename(f)[:-3] for f in glob.glob(os.path.join(SIDECARS, "*.md")))
+    if live:
+        out += [f"<h2>{len(live)} already published</h2>",
+                "<p class=sub>Accepted, and rendered into the site — this is what a paper "
+                "page looks like once it has a sidecar, which is the comparison worth "
+                "making against a page that has none.</p><ul>"]
+        for s in live:
+            p = by_slug.get(s) or {}
+            built = os.path.join(BUILD, "site", "papers", s, "index.html")
+            title = e((p.get("title") or s)[:70])
+            if os.path.exists(built):
+                out.append(f"<li><a href='file://{e(built)}'>{title}</a> · "
+                           f"<a href='file://{e(os.path.dirname(built))}/llms.txt'>llms.txt"
+                           f"</a></li>")
+            else:
+                out.append(f"<li>{title} <span class=dim>— not built yet; "
+                           f"run <code>python update.py --step render</code></span></li>")
+        out.append("</ul>")
+
+    if stale:
+        out += [f"<h2>{len(stale)} stale draft{'s' if len(stale) > 1 else ''} — do not "
+                f"read</h2>",
+                "<p class=sub>Written against sidecar rules that have since changed. "
+                "<code>--accept</code> refuses them and the next drafting run replaces "
+                "them, so reading one is wasted effort.</p><ul>"]
+        out += [f"<li class=id>{e(s)}</li>" for s in stale]
+        out.append("</ul>")
+
+    return "\n".join(out) + "\n"
+
+
+def write_review_page(papers: list[dict]) -> str:
+    os.makedirs(BUILD, exist_ok=True)
+    with open(REVIEW_PAGE, "w") as fh:
+        fh.write(review_page(papers))
+    return REVIEW_PAGE
 
 
 def accept(slugs: list[str], replace: bool = False, anyway: bool = False) -> int:
@@ -730,6 +964,8 @@ def review(papers: list[dict]) -> None:
     # "read, edit, then --accept" would contradict the paragraph above it.
     yours = [f for f in drafted if os.path.basename(f)[:-3] in keep]
     if yours:
+        print(f"\nRead all {len(yours)} in a browser, already checked against each paper:"
+              f"\n  file://{write_review_page(papers)}")
         print("\nDrafts, most cited first — read, edit, then --accept:")
         rows = sorted(yours, key=lambda f: -(
             (by_slug.get(os.path.basename(f)[:-3]) or {}).get("citations") or 0))
@@ -756,6 +992,9 @@ def main() -> None:
     ap.add_argument("--show", nargs="+", metavar="SLUG",
                     help="print each claim beside the evidence it cites, and the "
                          "paper's own sentence for every figure it states")
+    ap.add_argument("--page", action="store_true",
+                    help="write build/sidecar_review.html -- every draft, checked, as "
+                         "one page to read in a browser instead of one --show per paper")
     ap.add_argument("--accept", nargs="+", metavar="SLUG", help="promote these drafts")
     ap.add_argument("--accept-all", action="store_true", help="promote every draft")
     ap.add_argument("--anyway", action="store_true",
@@ -778,6 +1017,9 @@ def main() -> None:
     cfg = load_config()
     papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers", [])
 
+    if args.page:
+        print(f"file://{write_review_page(papers)}")
+        return
     if args.review:
         return review(papers)
     if args.show:
@@ -800,7 +1042,10 @@ def main() -> None:
     if args.ingest:
         n = ingest(papers)
         print(f"wrote {n} draft(s) to data/sidecars/drafts/")
-        print("Next: python scripts/draft_sidecars.py --review")
+        # Regenerated here rather than left for the next full run: a draft that exists
+        # and a review page that does not know about it is the one state where reading
+        # the page would silently miss work.
+        print(f"Read them: file://{write_review_page(papers)}")
         return
 
     # An explicit --slug is an instruction, not a candidate list: no limit and no

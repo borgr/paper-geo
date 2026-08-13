@@ -30,7 +30,7 @@ that stopping early still captures most of the value.
 
 From `data/followups.yaml`. Each of these was waiting on something outside this repo that should have landed by now.
 
-- [ ] **2026-08-08** (4 days ago) — The paper items are the last Wikidata decision left. The author item Q140867203 is already complete and stays that way by itself; around a hundred of your papers have no Wikidata item at all, which is what keeps them out of every answer engine that reads Wikidata rather than the web.
+- [ ] **2026-08-08** (5 days ago) — The paper items are the last Wikidata decision left. The author item Q140867203 is already complete and stays that way by itself; around a hundred of your papers have no Wikidata item at all, which is what keeps them out of every answer engine that reads Wikidata rather than the web.
       → Read it, then run it in batches. `--papers` with no `--apply` prints exactly what it would create, one line per item: kind, year, identifier, how many authors. The statements are the same ones tasks/wikidata_papers.qs holds, which is the paste-it-yourself fallback and no longer the route. Do the first ten, open two of them on the wiki, then keep going -- a batch of ten finds a wrong statement on item 3 rather than on item 103. Every item is recorded in data/wikidata_created.yaml as it lands, so an interrupted run resumes without recreating anything, and once the backlog is gone the monthly CI run keeps up with new papers on its own (it refuses above four missing items, so it does nothing at all until you have drained this). Read the "Is this legitimate?" section of tasks/wikidata_manual.md once first.
       `python scripts/wikidata_apply.py --papers --limit 10`
 
@@ -202,15 +202,20 @@ number (a lab's own report series) and none of these has one.
 Drafted from each paper's own full text: claims with their magnitudes,
 scope conditions, terminology and likely misreadings. Every number is a
 machine's reading and needs your eyes — but you are correcting a page,
-not writing one. Each file opens with what to check, in the order it pays.
+not writing one.
 
-Each item carries the two commands with its own slug already in them:
-`--show` prints every claim beside the sentence it came from, which is the
-check; `--accept` publishes it.
+**Read all 1 here — one page, no commands:**
+<file:///Users/lc/PycharmProjects/paper-geo/build/sidecar_review.html>
+
+This run generated it. Every figure a draft states is printed beside the
+paper's own sentence containing that number, and anything the paper does
+not say is flagged in red at the top of the page and again on the claim —
+so the check is comparing two lines, never opening a PDF. The only thing
+left is `--accept`, which is below and which publishes the page under your
+name.
 
 - [ ] **A Statistical Framework for Game-Based AI Evaluation** — 0 cites
-      - read: [`data/sidecars/drafts/a-statistical-framework-for-game-based-ai-evaluation.md`](data/sidecars/drafts/a-statistical-framework-for-game-based-ai-evaluation.md)
-      - check: `python scripts/draft_sidecars.py --show a-statistical-framework-for-game-based-ai-evaluation`
+      - read: [in the review page](file:///Users/lc/PycharmProjects/paper-geo/build/sidecar_review.html#a-statistical-framework-for-game-based-ai-evaluation) · [raw draft](data/sidecars/drafts/a-statistical-framework-for-game-based-ai-evaluation.md)
       - publish: `python scripts/draft_sidecars.py --accept a-statistical-framework-for-game-based-ai-evaluation`
 
 ## Sidecars not yet drafted (110/113)
