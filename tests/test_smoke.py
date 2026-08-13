@@ -1296,6 +1296,59 @@ class TestModelTextIsLabelledBeforeItIsPublished(unittest.TestCase):
         self.assertEqual("", _provenance(p, "description"))
 
 
+class TestAVisibleQuestionIsAlsoAMachineReadableOne(unittest.TestCase):
+    """The questions block is the most retrievable thing on a paper page.
+
+    It is also the easiest to render as decoration. For a year it went out as a plain
+    `<dl>`: up to twenty questions in the words a reader actually types, and nothing on
+    the page said they were questions. A parser saw paragraphs. So the coupling worth
+    holding is not "FAQPage exists somewhere" but "every question the page shows is one
+    a parser can find", which is what silently stops being true when the renderer and
+    the markup drift apart.
+    """
+
+    def _cfg(self):
+        from common import load_config
+        return load_config()
+
+    def _sidecar(self):
+        return {
+            "one_liner": "x",
+            "claims": [{"id": "c1", "text": "The claim, stated plainly." * 3,
+                        "scope": "Holds under these conditions." * 4}],
+            "qa": [{"q": ["Does it work?", "Is it known to work?"], "answers": ["c1"]}],
+            "terminology": {"widget": "a thing"},
+        }
+
+    def test_every_rendered_question_is_in_the_faq_markup(self):
+        import json
+        import re
+        import build_site
+        p = {"slug": "s", "title": "T", "authors": ["A"], "year": 2024, "venue": "V"}
+        html = build_site.paper_page(p, self._sidecar(), self._cfg())
+        asked = [q for q in ("Does it work?", "Is it known to work?") if q in html]
+        self.assertEqual(2, len(asked), "the renderer stopped showing the phrasings")
+        blocks = [json.loads(b.replace("<\\/", "</")) for b in
+                  re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.S)]
+        faq = [b for b in blocks if b.get("@type") == "FAQPage"]
+        self.assertEqual(1, len(faq), "a page with questions emitted no FAQPage")
+        names = [faq[0]["mainEntity"][0]["name"], *faq[0]["mainEntity"][0]["alternateName"]]
+        for q in asked:
+            self.assertIn(q, names, f"{q!r} is on the page but not in the FAQ markup")
+
+    def test_a_page_with_no_sidecar_emits_no_empty_faq(self):
+        """An FAQPage with nothing in it is a claim to answer questions we have not answered."""
+        import json
+        import re
+        import build_site
+        p = {"slug": "s", "title": "T", "authors": ["A"], "year": 2024, "venue": "V"}
+        html = build_site.paper_page(p, {}, self._cfg())
+        types = [json.loads(b.replace("<\\/", "</")).get("@type") for b in
+                 re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.S)]
+        self.assertNotIn("FAQPage", types)
+        self.assertNotIn("DefinedTermSet", types)
+
+
 class TestLowConfidenceLabelsAreNotPublished(unittest.TestCase):
     """The model's one way to say "I am guessing" has to reach a decision.
 

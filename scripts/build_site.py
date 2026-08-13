@@ -280,6 +280,71 @@ def article_jsonld(p: dict, sc: dict, cfg) -> dict:
     return d
 
 
+def faq_jsonld(p: dict, sc: dict, cfg) -> dict | None:
+    """The questions block as FAQPage, which is the only part of it a parser can read.
+
+    A sidecar carries up to twenty question groups of up to four phrasings each -- the
+    closest thing on the page to the words a reader actually types, and the reason the
+    block exists. Rendered as a <dl> it is prose; as FAQPage it is a question with an
+    answer attached, which is what a retrieval system indexes and what a summariser
+    quotes instead of re-deriving.
+
+    One Question per group rather than per phrasing: the phrasings are the same question
+    asked differently, so they belong in alternateName, and duplicating the node once per
+    wording would inflate the graph with answers that are byte-identical.
+    """
+    claims = {c["id"]: c for c in (sc.get("claims") or []) if c.get("id")}
+    base = cfg["site"]["base_url"].rstrip("/") + cfg["site"]["papers_path"]
+    url = f"{base}/{p['slug']}/"
+    entities = []
+    for qa in sc.get("qa") or []:
+        phrasings = [" ".join(q.split()) for q in (qa.get("q") or []) if q.strip()]
+        answers = [claims[cid] for cid in (qa.get("answers") or []) if cid in claims]
+        if not phrasings or not answers:
+            continue
+        # The claim verbatim with its scope, never a paraphrase: the scope is the half
+        # that stops the answer being quoted past what the paper supports.
+        text = "\n\n".join(f"{' '.join(c['text'].split())} "
+                           f"Holds for: {' '.join(c['scope'].split())}" for c in answers)
+        node = {"@type": "Question",
+                "name": phrasings[0],
+                "answerCount": 1,
+                "acceptedAnswer": {"@type": "Answer", "text": text, "url": url}}
+        if len(phrasings) > 1:
+            node["alternateName"] = phrasings[1:]
+        entities.append(node)
+    if not entities:
+        return None
+    return {"@context": "https://schema.org", "@type": "FAQPage",
+            "@id": f"{url}#faq", "url": url,
+            "name": f"Questions answered by {p.get('title_display') or p['title']}",
+            "mainEntity": entities}
+
+
+def terms_jsonld(p: dict, sc: dict, cfg) -> dict | None:
+    """Terminology as DefinedTerm, not as a bare Thing.
+
+    These entries exist because a term means something narrower in this paper than in
+    the field, and DefinedTermSet is the vocabulary for exactly that -- a definition
+    that belongs to a named source rather than a floating label.
+    """
+    terms = sc.get("terminology") or {}
+    if not terms:
+        return None
+    base = cfg["site"]["base_url"].rstrip("/") + cfg["site"]["papers_path"]
+    url = f"{base}/{p['slug']}/"
+    return {
+        "@context": "https://schema.org", "@type": "DefinedTermSet",
+        "@id": f"{url}#terms", "url": url,
+        "name": f"Terminology in {p.get('title_display') or p['title']}",
+        "hasDefinedTerm": [
+            {"@type": "DefinedTerm", "name": t,
+             "description": " ".join(str(d).split()),
+             "inDefinedTermSet": f"{url}#terms"}
+            for t, d in terms.items()],
+    }
+
+
 def highwire(p: dict, cfg) -> str:
     """Google Scholar's preferred metadata scheme.
 
@@ -414,6 +479,9 @@ def paper_page(p: dict, sc: dict, cfg) -> str:
              f'<a href="llms.txt">llms.txt</a></footer>')
 
     head = highwire(p, cfg) + jsonld(article_jsonld(p, sc, cfg))
+    for extra in (faq_jsonld(p, sc, cfg), terms_jsonld(p, sc, cfg)):
+        if extra:
+            head += jsonld(extra)
     return page(f"{p['title']} — {ident['name']}", "\n".join(b),
                 head=head, canonical=url)
 
@@ -517,7 +585,7 @@ def build(cfg) -> dict:
 
     stats = {"pages": 0, "with_sidecar": 0, "peer_owned": 0, "redirects": 0}
     urls = [site + "/", f"{site}/papers/", f"{site}/guides/"]
-    index_rows, llms = [], []
+    index_rows, llms, questions = [], [], []
 
     for p in sorted(papers, key=lambda p: (-(p.get("citations") or 0))):
         ptitle = p.get("title_display") or p["title"]
@@ -546,6 +614,13 @@ def build(cfg) -> dict:
             f'{f" · {cites} citations" if cites else ""}</span></li>')
         llms.append(f"- [{title}]({site}/papers/{slug}/llms.txt)"
                     + (f" — {' '.join(sc['one_liner'].split())}" if sc.get("one_liner") else ""))
+        # A question index, collected here so the root file can be matched on the words
+        # a reader types rather than on 113 titles. First phrasing only: the rest are the
+        # same question, and this file is an index, not the answer.
+        for qa in sc.get("qa") or []:
+            first = next((" ".join(q.split()) for q in (qa.get("q") or []) if q.strip()), "")
+            if first:
+                questions.append(f"- {first} — [{title}]({site}/papers/{slug}/llms.txt)")
 
     # ---- redirects for URLs a merge retired. Deliberately absent from the sitemap
     # and from the index: a sitemap should list only canonical URLs, and a redirect
@@ -639,7 +714,14 @@ claim holds under, and common misreadings -- written by the author, not extracte
 
 ## Papers
 {chr(10).join(llms)}
+{f'''
+## Questions these papers answer
 
+Each line is a question one of the papers below states an answer to, with the page
+that answers it. The answer and the conditions it holds under are on that page.
+
+{chr(10).join(sorted(questions))}
+''' if questions else ''}
 ## Guides
 {chr(10).join(f"- [{r['repo'].split('/')[-1]}]({r.get('homepage') or 'https://github.com/' + r['repo']}) — {r.get('description') or ''}" for r in sorted(guides, key=lambda r: r['repo']))}
 """)
