@@ -1,8 +1,115 @@
-note: 'Wikidata items that `scripts/wikidata_apply.py --papers` created, slug -> QID. Not
-  derived and not a decision: a receipt. The scholarly query service lags hours behind an
-  edit, so for those hours this file is the only thing that knows the item exists -- without
-  it a second run recreates the whole batch, and a duplicate publication item is the one
-  mistake here somebody else has to clean up. Never edit by hand; `validate.py` checks every
-  key is still a live slug. This key survives the rewrites because the writer preserves what
-  it did not put there.'
-items: {}
+note: 'Wikidata items that `scripts/wikidata_apply.py --papers` created, slug -> QID. Not derived and
+  not a decision: a receipt. The scholarly query service lags hours behind an edit, so for those hours
+  this file is the only thing that knows the item exists -- without it a second run recreates the whole
+  batch, and a duplicate publication item is the one mistake here somebody else has to clean up. Never
+  edit by hand; `validate.py` checks every key is still a live slug. This key survives the rewrites because
+  the writer preserves what it did not put there.'
+items:
+  ties-merging-resolving-interference-when-merging-models: Q141029633
+  tinybenchmarks-evaluating-llms-with-fewer-examples: Q141029634
+  active-learning-for-bert-an-empirical-study: Q141029635
+  findings-of-the-babylm-challenge-sample-efficient-pretrainin: Q141029636
+  global-mmlu-understanding-and-addressing-cultural-and-lingui: Q141029638
+  q2-evaluating-factual-consistency-in-knowledge-grounded-dial: Q141029639
+  on-the-weaknesses-of-reinforcement-learning-for-neural-machi: Q141029640
+  fusing-finetuned-models-for-better-pretraining: Q141029641
+  disentqa-disentangling-parametric-and-contextual-knowledge-w: Q141029642
+  model-merging-with-svd-to-tie-the-knots: Q141029643
+  beyond-binary-rewards-training-lms-to-reason-about-their-unc: Q141029645
+  jump-to-conclusions-short-cutting-transformers-with-linear-t: Q141029646
+  asymmetry-in-low-rank-adapters-of-foundation-models: Q141029647
+  efficient-multi-prompt-evaluation-of-llms: Q141029648
+  call-for-papers-the-babylm-challenge-sample-efficient-pretra: Q141029649
+  are-you-convinced-choosing-the-more-convincing-evidence-with: Q141029650
+  knowledge-is-a-region-in-weight-space-for-fine-tuned-languag: Q141029651
+  will-it-blend-blending-weak-and-strong-labeled-data-in-a-neu: Q141029652
+  corpus-wide-argument-mining-a-working-solution: Q141029653
+  dora-the-explorer-directed-outreaching-reinforcement-action: Q141029654
+  elements-of-world-knowledge-ewok-a-cognition-inspired-framew: Q141029655
+  a-survey-on-model-moerging-recycling-and-routing-among-speci: Q141029657
+  efficient-benchmarking-of-language-models: Q141029658
+  let-s-agree-to-agree-neural-networks-share-classification-or: Q141029659
+  findings-of-the-second-babylm-challenge-sample-efficient-pre: Q141029660
+  numerologic-number-encoding-for-enhanced-llms-numerical-reas: Q141029661
+  the-grammar-learning-trajectories-of-neural-language-models: Q141029662
+  call-for-papers-the-2nd-babylm-challenge-sample-efficient-pr: Q141029663
+  semeval-2019-task-1-cross-lingual-semantic-parsing-with-ucca: Q141029664
+  inherent-biases-in-reference-based-evaluation-for-grammatica: Q141029665
+  genie-achieving-human-parity-in-content-grounded-datasets-ge: Q141029666
+  reference-less-measure-of-faithfulness-for-grammatical-error: Q141029667
+  automatic-metric-validation-for-grammatical-error-correction: Q141029668
+  babylm-turns-3-call-for-papers-for-the-2025-babylm-workshop: Q141029669
+  bigger-is-not-always-better-the-importance-of-human-scale-la: Q141029670
+  learning-to-combine-grammatical-error-corrections: Q141029671
+  where-to-start-analyzing-the-potential-value-of-intermediate: Q141029672
+  deductive-closure-training-of-language-models-for-coherence: Q141029673
+  compress-then-serve-serving-thousands-of-lora-adapters-with: Q141029674
+  sloth-scaling-laws-for-llm-skills-to-predict-multi-benchmark: Q141029675
+  the-language-of-legal-and-illegal-activity-on-the-darknet: Q141029676
+  data-contamination-report-from-the-2024-conda-shared-task: Q141029677
+  classifying-syntactic-errors-in-learner-language: Q141029678
+  a-hitchhiker-s-guide-to-scaling-law-estimation: Q141029679
+  unitxt-flexible-shareable-and-reusable-data-preparation-and: Q141029680
+  zipnn-lossless-compression-for-ai-models: Q141029682
+  dove-a-large-scale-multi-dimensional-predictions-dataset-tow: Q141029683
+  compeft-compression-for-communicating-parameter-efficient-up: Q141029684
+  benchmark-agreement-testing-done-right-a-guide-for-llm-bench: Q141029685
+  label-sleuth-from-unlabeled-text-to-a-classifier-in-a-few-ho: Q141029687
+  when-ai-benchmarks-plateau-a-systematic-study-of-benchmark-s: Q141029688
+  automatically-extracting-challenge-sets-for-non-local-phenom: Q141029689
+  livexiv-a-multi-modal-live-benchmark-based-on-arxiv-papers-c: Q141029690
+  beneath-the-surface-of-consistency-exploring-cross-lingual-k: Q141029691
+  the-future-of-open-human-feedback: Q141029692
+  label-efficient-model-selection-for-text-generation: Q141029693
+  fuse-to-forget-bias-reduction-and-selective-memorization-thr: Q141029694
+  human-learning-by-model-feedback-the-dynamics-of-iterative-p: Q141029695
+  mediators-in-determining-what-processing-bert-performs-first: Q141029696
+  lossless-and-near-lossless-compression-for-foundation-models: Q141029697
+  unsupervised-expressive-rules-provide-explainability-and-ass: Q141029698
+  findings-of-the-third-babylm-challenge-accelerating-language: Q141029699
+  naturally-occurring-feedback-is-common-extractable-and-usefu: Q141029702
+  the-mighty-torr-a-benchmark-for-table-reasoning-and-robustne: Q141029708
+  semantics-aware-attention-improves-neural-machine-translatio: Q141029715
+  prequel-quality-estimation-of-machine-translation-outputs-in: Q141029722
+  serrant-a-syntactic-classifier-for-english-grammatical-error: Q141029728
+  the-sharelm-collection-and-plugin-contributing-human-model-c: Q141029736
+  global-piqa-evaluating-commonsense-reasoning-across-100-lang: Q141029743
+  general-agent-evaluation: Q141029751
+  neurips-2023-llm-efficiency-fine-tuning-competition: Q141029757
+  navigating-the-modern-evaluation-landscape-considerations-in: Q141029760
+  enhancing-the-transformer-decoder-with-transition-based-synt: Q141029761
+  grasp-a-library-for-extracting-and-exploring-human-interpret: Q141029762
+  reinforcement-learning-with-large-action-spaces-for-neural-m: Q141029763
+  commonlid-re-evaluating-state-of-the-art-language-identifica: Q141029764
+  textarena: Q141029765
+  holmes-a-benchmark-to-assess-the-linguistic-competence-of-la: Q141029766
+  comsum-commit-messages-summarization-and-meaning-preservatio: Q141029767
+  do-llms-benefit-from-their-own-words: Q141029769
+  errormap-and-erroratlas-charting-the-failure-landscape-of-la: Q141029770
+  pretraining-language-models-for-diachronic-linguistic-change: Q141029772
+  babybabellm-a-multilingual-benchmark-of-developmentally-plau: Q141029773
+  unforgettable-generalization-in-language-models: Q141029774
+  cube-a-standard-for-unifying-agent-benchmarks: Q141029775
+  mediocrity-is-the-key-for-llm-as-a-judge-anchor-selection: Q141029776
+  mindgames-a-live-arena-for-evaluating-social-and-strategic-r: Q141029777
+  robustness-as-an-emergent-property-of-task-performance: Q141029778
+  will-it-merge-on-the-causes-of-model-mergeability: Q141029779
+  llm-hypnosis-exploiting-user-feedback-for-unauthorized-knowl: Q141029780
+  on-neurons-invariant-to-sentence-structural-changes-in-neura: Q141029781
+  semeval-2019-shared-task-cross-lingual-semantic-parsing-with: Q141029782
+  every-eval-ever-a-unifying-schema-and-community-repository-f: Q141029783
+  babylm-turns-4-and-goes-multilingual-call-for-papers-for-the: Q141029784
+  automated-discovery-has-no-universally-superior-harness: Q141029785
+  how-safe-is-your-safety-metric-automatic-concatenation-tests: Q141029786
+  a-latent-variable-framework-for-scaling-laws-in-large-langua: Q141029787
+  part-of-speech-and-universal-dependency-effects-on-english-a: Q141029788
+  resolving-interference-ri-disentangling-models-for-improved: Q141029789
+  instructions-shape-production-of-language-not-processing: Q141029791
+  growing-pains-extensible-and-efficient-llm-benchmarking-via: Q141029792
+  evaluation-cards-an-interpretive-layer-for-ai-evaluation-rep: Q141029793
+  stop-guessing-when-to-stop-testing-efficient-model-evaluatio: Q141029794
+  cross-lingual-exploration-for-parametric-knowledge: Q141029795
+  crisp-complex-reasoning-with-interpretable-step-based-plans: Q141029796
+  can-gradient-descent-simulate-prompting: Q141029797
+  muler-detailed-and-scalable-reference-based-evaluation: Q141029798
+  some-grammatical-errors-are-frequent-others-are-important: Q141029801
