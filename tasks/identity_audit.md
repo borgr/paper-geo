@@ -6,9 +6,9 @@ which is why it can be re-run — the fixes all need one.
 
 | surface | state | |
 |---|---|---|
-| ORCID works (public) | 115 | ok |
-| ORCID holds your papers | 112 of 113 | **fix** |
-| ORCID identifiers point at the right paper | 114 of 115 works | **fix** |
+| ORCID works (public) | 116 | ok |
+| ORCID holds your papers | 113 of 113 | ok |
+| ORCID identifiers point at the right paper | 116 of 116 works | ok |
 | ORCID canonical URL | present | ok |
 | ORCID name variants | 2 listed | ok |
 | ORCID keywords | 13 of 13 | ok |
@@ -19,20 +19,19 @@ which is why it can be re-run — the fixes all need one.
 | arXiv registered author | 105 of 105 | ok |
 | Wikidata author item | Q140867203 | ok |
 | Wikidata item complete | 0 gaps | ok |
-| Wikidata paper items | 3 of 113 | optional |
+| Wikidata paper items | 111 of 113 | optional |
 | HF pages indexed | 105 of 105 | ok |
 | HF pages claimed | 103 of 105 claimable | ok |
 | HF claims in moderation | 2 | waiting |
 | arXiv records misspelling your name | 0 | ok |
 | arXiv records omitting you | 0 | ok |
 | ORCID works we cannot place | 2 | **check** |
-| ORCID works listed twice | 1 | **fix** |
-| ORCID works ORCID already merged | 5 | optional |
+| ORCID works ORCID already merged | 6 | optional |
 | Semantic Scholar records | 2 | **fix** |
 
 ## Crossref / DataCite auto-update: no evidence it is live
 
-All 115 public works are **self-asserted** — the `source` on every
+All 116 public works are **self-asserted** — the `source` on every
 one of them is your own name. A work that Crossref or DataCite adds carries
 *their* name instead, so this row is the only public read on whether those
 connections exist. It is currently reading zero.
@@ -101,7 +100,7 @@ Do not delete it and re-add your own: that trades a vouched-for entry for a
 self-asserted one, which is a downgrade in exactly the signal this section
 exists to provide.
 
-## Wikidata paper coverage: 3 of 113
+## Wikidata paper coverage: 111 of 113
 
 Matched on DOI and arXiv id, not on name. This number matters because it
 decides which Wikidata job is worth doing: relinking author strings on
@@ -111,8 +110,6 @@ One trap worth writing down — scholarly articles were moved out of
 Wikidata's main query graph, so a publication query against
 `query.wikidata.org` returns zero rows with a 200, and looks like an
 answer. This uses `query-scholarly.wikidata.org`.
-
-The 110 missing items are created by `python scripts/wikidata_apply.py --papers --apply --limit 10`, which needs the bot password and nothing else; `tasks/wikidata_papers.qs` is the same statements as a QuickStatements batch, as a fallback. Read the cautions in [wikidata_followup.md](wikidata_followup.md) first — these are permanent public items.
 
 ## 2 works on your ORCID we cannot place
 
@@ -129,57 +126,5 @@ Two things end up here and they have opposite fixes. A paper of yours the
 bibliography never held is fixed **upstream, in the bibliography** — deleting
 it from ORCID loses a real work. Anything that is not a paper (a workshop
 listing, a proceedings volume) is a deletion. Titles and put-codes:
-[orcid_remove.md](orcid_remove.md).
-
-## 1 work on your ORCID carries another paper's identifier
-
-**Fix these before the two sections below**, because this is what puts entries
-in them. A work whose DOI belongs to a different paper gets filed by ORCID into
-that paper's group — ORCID groups on shared identifiers and has no other way to
-know. The real paper then has no identifier anywhere on the record, so it reads
-as *missing from ORCID*, and the group it was absorbed into reads as *listed
-twice*. Both of those are wrong, and both suggested fixes make it worse: adding
-the paper creates a second copy, merging the group destroys a distinct work.
-
-Not a title guess. Each of these has an identifier resolving to one of your
-papers and a title matching another one character-for-character.
-
-- [ ] **Resolving Interference (RI): Disentangling Models for Improved Model M**
-      - put-code `222829712`
-      - carries `doi:10.48550/ARXIV.2306.01708` — that identifier is [TIES-Merging: Resolving Interference When Merging Mo](https://doi.org/10.48550/ARXIV.2306.01708)
-      - should carry `10.48550/ARXIV.2603.13467`
-      - fix: <https://orcid.org/my-orcid#works> → find that work → the
-        pencil icon → replace the DOI under *Identifiers* → *Save changes*.
-        Edit rather than delete-and-re-add, so the put-code keeps its
-        citations and its source attribution.
-
-## 1 of your papers is missing from ORCID
-
-Measured by identifier, not by counting: each of these has no work group on
-the record carrying its DOI or arXiv id.
-
-This is the row that matters most on the page and the one a works *count*
-hides. ORCID is the key Semantic Scholar disambiguates on and the key OpenAlex
-is running profile merges from, so a paper absent here is a paper those two
-have no authoritative reason to attach to you — which is the same failure the
-split S2 record is made of.
-
-Highest citations first; the full list with DOIs is
-[orcid_missing.md](orcid_missing.md).
-
-- [ ]    0 cites — A Statistical Framework for Game-Based AI Evaluation
-
-## 1 paper is listed twice on your ORCID
-
-ORCID groups works that share an identifier. A paper whose record holds
-the publisher DOI in one entry and arXiv's `10.48550/arXiv.<id>` DOI in
-another shares no identifier between them, so it does not group: it shows
-as two works with two different titles, and every service counting your
-output counts it twice.
-
-This is a side effect of `orcid_import.bib` filling missing DOIs from arXiv.
-It is worth fixing and it is not urgent. The fix is a merge, not a deletion:
-both titles are real, and adding one entry's DOI to the other folds them into
-one work with both. Which entry to open and what to paste into it:
 [orcid_remove.md](orcid_remove.md).
 

@@ -13,26 +13,18 @@ what each item costs — the one thing a section cannot say about itself,
 because it does not know what else is open. Each line names the section that
 holds the instructions; nothing here repeats them.
 
-**A command, and nothing to decide.** Any day, in any order: these drain
-backlogs the rest of the page is waiting on, and the run does the work.
-
-1. **Wikidata — 108 of your papers have no item** — `python scripts/wikidata_apply.py --papers --limit 10`, repeated. The monthly CI leg refuses to touch new papers while a backlog this size exists, so this is the one item that turns maintenance back on.
-
 **One edit each, and each one closes a section outright.** This is where
 the page gets visibly shorter.
 
-2. **1 work on your ORCID carries another paper's identifier** — one ORCID edit, and it has to come before the other two ORCID sections: a wrong DOI is what makes one paper read as missing and another as duplicated.
-3. **ORCID lists 1 of your papers twice** — one ORCID edit: add the DOI to the entry you are keeping.
-4. **ORCID is missing 1 of your 113 papers** — one BibTeX upload. Highest leverage on the page — Semantic Scholar and OpenAlex both re-cluster off ORCID, so this is the fix that makes other sections shrink without you.
-5. **1 paper in the corpus that the bibliography does not have** — one paste into `orig.bib`. The pipeline's only real input is that file, and the override line standing in for it goes on the next run.
-6. **Papers whose full text nothing can fetch (1)** — drop the PDF you already have into `data/fulltext/` (gitignored, so it stays on your machine and only the sidecar it produces is committed).
+1. **Sidecar drafts awaiting your verification (1)** — read the draft and `--accept` it. The only place on this page where your judgement is the input rather than the check, because accepting publishes an assertion under your name.
+2. **1 paper in the corpus that the bibliography does not have** — one paste into `orig.bib`. The pipeline's only real input is that file, and the override line standing in for it goes on the next run.
 
 **As much as you have patience for.** Per-paper clicking, because
 there is no write API behind either surface — and both are ordered so
 that stopping early still captures most of the value.
 
-7. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
-8. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section.
+3. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
+4. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section.
 
 ## Due now (1)
 
@@ -69,87 +61,11 @@ Edit the bibliography here: <https://github.com/borgr/publications/edit/master/o
   }
   ```
 
-## Identity surfaces (5 open)
+## Identity surfaces (1 open)
 
 Each is blocked on an account you are logged into, not on knowing what to
 do. `python scripts/identity_tasks.py` regenerates every payload under
 `tasks/` — committed, so browsable on GitHub.
-
-### ORCID is missing 1 of your 113 papers
-
-Highest leverage on this page. Semantic Scholar's disambiguation and
-OpenAlex's profile merges are both ORCID-driven, so this is the one fix that
-makes the others more likely to fix themselves.
-
-One upload, not one form per paper. At <https://orcid.org/my-orcid#works>:
-*+ Add → Add BibTeX → Choose file* →
-[`tasks/orcid_missing.bib`](tasks/orcid_missing.bib) (only the missing ones) or
-[`tasks/orcid_import.bib`](tasks/orcid_import.bib) (all of them; ORCID groups on
-shared identifiers, so re-importing what is already there merges rather than
-duplicates). It previews the entries and you confirm — nothing lands unseen.
-Why it matters, once:
-[docs/SETUP.md §1](docs/SETUP.md#1-orcid--populate-it-then-wire-it-everywhere).
-
-- [ ] **A Statistical Framework for Game-Based AI Evaluation** — 0 cites — what the file will add:
-
-  ```bibtex
-  @inproceedings{polo2025a,
-    author       = {Felipe Maia Polo and Leshem Choshen and Yuekai Sun and Kristjan Greenewald},
-    title        = {A Statistical Framework for Game-Based AI Evaluation},
-    year         = {2025},
-    booktitle    = {NeurIPS 2025 LLM Evaluation Workshop},
-    url          = {https://openreview.net/forum?id=1VWfIsRdZA}
-  }
-  ```
-
-### 1 work on your ORCID carries another paper's identifier
-
-**Do this before the rest of this section.** A work whose DOI belongs to a
-different paper is filed by ORCID into *that* paper's group — grouping is on
-shared identifiers and there is nothing else it can go on. So the real paper
-ends up with no identifier on the record and reads as missing, the group that
-absorbed it reads as listed twice, and both of the obvious fixes make it
-worse: adding the paper creates a second copy, merging the group destroys a
-distinct work.
-
-Each item below is one edit, and every value it needs is in the item — the
-work to open, the identifier to take off it, the one to put on. Open
-<https://orcid.org/my-orcid#works>, find the work by its title, then the pencil
-icon → under *Identifiers* replace the DOI → *Save changes*. **Edit it; do not
-delete and re-add** — the put-code is what carries the entry's citations and its
-source attribution, and a new entry starts with neither.
-
-The carried DOI is linked so you can see for yourself that it resolves to
-somebody else's paper before you touch anything. Nothing else needs deleting:
-one identifier is replaced by another and the work itself stays.
-
-- [ ] **Resolving Interference (RI): Disentangling Models for Improved Mod** — put-code `222829712`
-      - remove `10.48550/ARXIV.2306.01708` — it resolves to [TIES-Merging: Resolving Interference When Me](https://doi.org/10.48550/ARXIV.2306.01708), a different paper
-      - add `10.48550/ARXIV.2603.13467` — the DOI of the paper this entry actually is
-
-### ORCID lists 1 of your papers twice
-
-ORCID groups works that share an identifier. Two groups for one paper means
-one copy carries the arXiv DataCite DOI (`10.48550/arXiv.<id>`) and the other
-the publisher DOI, so they share no key.
-
-**Merge, do not delete.** Both titles are real — one is the preprint's, one is
-what the paper was called on acceptance — and adding one entry's DOI to the
-other folds them into a single work carrying both, with no entry losing its
-citations or its source attribution. Open the **keep** entry at
-<https://orcid.org/my-orcid#works>, the pencil icon → **+ Add identifier** →
-type `doi` → paste the value below → *Save*. The pair collapses on the next
-page load.
-
-- [ ] **Model merging with SVD to tie the Knots** — open put-code `222732423` (*Tie the KnOTS: Model Merging with SVD*) and add the DOI `10.48550/arXiv.2410.19735`, which is the one on put-code `222829704` (*Model merging with SVD to tie the Knot*)
-
-Delete instead only if you would rather have one entry than a grouped pair —
-same number of clicks, and the preprint title stops being findable on your
-record.
-
-**Do the misfiled-identifier section above first.**
-A work carrying the wrong DOI lands in another paper's group and shows up
-here as a duplicate that merging would destroy.
 
 ### Semantic Scholar — 34 papers on a second author record
 
@@ -180,34 +96,6 @@ undo than an unclaimed one, and it makes the split look deliberate.
 - [ ] 8 cites — NeurIPS 2023 LLM Efficiency Fine-tuning Competition — <https://www.semanticscholar.org/paper/277104779>
 - [ ] 8 cites — Navigating the Modern Evaluation Landscape: Consideratio — <https://www.semanticscholar.org/paper/269804253>
 - … and 22 more in [`tasks/s2_merge.md`](tasks/s2_merge.md), same order
-
-### Wikidata — 108 of your papers have no item
-
-Same bot password, and the same statements as the QuickStatements batch in
-`tasks/wikidata_papers.qs` — which is now only the fallback. This is where
-`Q140867203` gets the incoming author
-links that make a Scholia profile and a SPARQL-answerable corpus exist at
-all.
-
-2 more have no item either and are not in the command below:
-they carry neither a DOI nor an arXiv id, so there is no key to check
-Wikidata against and creating one risks a duplicate nobody can find. They
-arrive here once the paper is deposited anywhere.
-
-```bash
-python scripts/wikidata_apply.py --papers                    # what it would create
-python scripts/wikidata_apply.py --papers --apply --limit 10  # ten of them
-```
-
-In batches, and this is the reason: ten items finds a wrong statement on item
-3 rather than on item 103, and an item is harder to retract than anything else
-here. Each one is recorded in `data/wikidata_created.yaml` as it lands, so
-stopping and resuming creates nothing twice — the query service lags hours
-behind the edit and that file is what covers the gap.
-
-Once this list is empty the monthly CI run keeps up with new papers by itself.
-It refuses while a backlog exists, so it is doing nothing until you start.
-Cautions worth reading once: [`tasks/wikidata_followup.md`](tasks/wikidata_followup.md).
 
 ## arXiv journal-ref missing (64 papers)
 
@@ -309,7 +197,23 @@ per paper, built from the publisher's own bibtex. The same for all
 `Report number:` stays blank on all of them: it means an *institutional* preprint
 number (a lab's own report series) and none of these has one.
 
-## Sidecars not yet drafted (111/113)
+## Sidecar drafts awaiting your verification (1)
+
+Drafted from each paper's own full text: claims with their magnitudes,
+scope conditions, terminology and likely misreadings. Every number is a
+machine's reading and needs your eyes — but you are correcting a page,
+not writing one. Each file opens with what to check, in the order it pays.
+
+Each item carries the two commands with its own slug already in them:
+`--show` prints every claim beside the sentence it came from, which is the
+check; `--accept` publishes it.
+
+- [ ] **A Statistical Framework for Game-Based AI Evaluation** — 0 cites
+      - read: [`data/sidecars/drafts/a-statistical-framework-for-game-based-ai-evaluation.md`](data/sidecars/drafts/a-statistical-framework-for-game-based-ai-evaluation.md)
+      - check: `python scripts/draft_sidecars.py --show a-statistical-framework-for-game-based-ai-evaluation`
+      - publish: `python scripts/draft_sidecars.py --accept a-statistical-framework-for-game-based-ai-evaluation`
+
+## Sidecars not yet drafted (110/113)
 
 17 of these already have a draft file on disk, written against sidecar rules
 that have since changed. `--accept` refuses them and the next run overwrites
@@ -342,24 +246,6 @@ its own.
 - `global-mmlu-understanding-and-addressing-cultural-and-lingui` — 182 cites — Global MMLU: Understanding and Addressing Cultural and L
 - `an-autonomous-debating-system` — 171 cites — An autonomous debating system
 - `q2-evaluating-factual-consistency-in-knowledge-grounded-dial` — 167 cites — Q²: Evaluating Factual Consistency in Knowledge-Grounded
-
-## Papers whose full text nothing can fetch (1)
-
-Every one of these is a real paper that is not on arXiv, so there is no
-HTML rendering and no open PDF to extract — a Nature paywall, an Elsevier
-page that serves an open-access licence to browsers and 403s to everything
-else, an SSRN download behind a click. They are not slow, they are blocked,
-and no rerun will change that.
-
-You are an author on it, so you already have the PDF. Drop it in as
-`data/fulltext/<slug>.pdf` — the directory is gitignored, so the PDF stays
-on your machine and only the sidecar it produces is committed. That path is
-read before any network source, so the next run picks it up and the paper
-joins the drafting queue.
-
-- [ ] **A Statistical Framework for Game-Based AI Evaluation** — 0 cites, NeurIPS 2025 LLM Evaluation Workshop
-      - get it from <https://openreview.net/forum?id=1VWfIsRdZA>
-      - save it as `data/fulltext/a-statistical-framework-for-game-based-ai-evaluation.pdf`
 
 
 ## Deferred
