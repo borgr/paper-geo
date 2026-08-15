@@ -700,8 +700,8 @@ def check_sidecar_shape(entries: list[tuple[str, dict]]) -> list[str]:
 
 # -------------------------------------------------------------- readability tier
 #
-# Three ways a well-formed sidecar is still hard to read, each measured over the 324
-# drafted claims before being written down. They are not in the shape tier above, and
+# The ways a well-formed sidecar is still a bad passage to retrieve, each one measured
+# over the drafted corpus before being written down. They are not in the shape tier, and
 # the reason is which files each tier reaches: `validate.py` globs `data/sidecars/*.md`,
 # so the shape tier judges the author's *published* words, and `--strict` makes it
 # fatal. These findings are about what to write next, not about retracting what is
@@ -718,6 +718,23 @@ CLAIM_SENTENCE_WORDS = 32
 # Each colon, semicolon or dash past the first is where a second proposition was bolted
 # on rather than made its own claim. One is the normal "finding: the number".
 CLAIM_SEPARATORS = 1
+
+# The `FAQPage` answer `build_site.py` publishes is the claim, then the literal words
+# "Holds for:", then the whole scope. So a scope longer than its claim makes the answer
+# mostly caveat -- and it fails in both directions at once, since an extractive
+# summariser quotes the front and drops exactly the part that was there to protect the
+# claim, while the embedding of the whole answer drifts toward hedging vocabulary. 290 of
+# 325 drafted scopes are longer than their claim; one runs 14 sentences against a
+# 348-character claim. Three conditions is the ceiling because a fourth means the claim
+# was stated more broadly than it holds, and narrowing the claim is the better fix.
+SCOPE_SENTENCES = 3
+
+# Half of a page's `result` claims must state a figure. A number is what makes a passage
+# worth quoting rather than paraphrasing, and a paraphrase is a citation lost. Measured
+# by `figures`, so a model name (`T5`, `ViT-L/14`) does not count as a magnitude. The
+# median drafted page reaches 61% and the weakest 33%. Never satisfiable by inventing
+# one: `check_claim_numbers` would catch that, and it is fatal at `--accept`.
+RESULT_FIGURES = 0.5
 
 # A reference with no antecedent on screen. Both halves of a question's job fail on
 # one: nobody queries "a model like this", and a `FAQPage` answer is extracted with no
@@ -750,6 +767,41 @@ _CLASSIFIES = re.compile(
     r"characterisation|characterization|judgement|judgment)\b"
     r"|the\s+(?:paper's|claim|point)\s+)", re.I)
 
+# Claim text that opens by talking about the paper instead of naming its object. Rule 2
+# has said since the file existed that a claim may not lean on "we" or "this paper";
+# nothing enforced it, and 8% of drafts open exactly that way -- "The paper proves...",
+# "The contribution is a frame as much as a method". Extracted alone that says nothing
+# about *which* paper, and it spends the quotable front on commentary. Only the
+# unambiguous heads are listed: "the prevailing practice -- reading a hidden
+# representation directly --" names its subject in the appositive and must not fire.
+_ABOUT_PAPER = re.compile(
+    r"^\s*(?:th(?:e|is)\s+(?:paper|study|authors?)(?:'s)?\b"
+    r"|the\s+(?:contribution|diagnosis|takeaway|framing|point)\b"
+    r"|an?\s+(?:key\s+)?(?:contribution|diagnosis|framing)\b"
+    r"|what\s+th(?:e|is)\s+paper\b)", re.I)
+
+# The author's voice, anywhere in a claim rather than only at its front. Same rule, same
+# reason: the claim is retrieved with no byline attached to it. `us` is deliberately not
+# in here: case-insensitively it matches the "US" of "US Law" and "the US concentration",
+# and a claim that says "us" without also saying "we" or "our" does not occur.
+_FIRST_PERSON = re.compile(r"\b(?:we|our)\b", re.I)
+
+# A definition or a correction that points at the page around it. Terminology is
+# published as a schema.org `DefinedTerm` inside a `DefinedTermSet`, so the definition
+# travels with nothing but the term beside it: "the metric for every merging table here"
+# then defines nothing. A misreading renders as a bare list item and an llms.txt bullet,
+# with the same consequence. 30% of drafted definitions and 15% of misreadings dangle.
+#
+# The two patterns differ on purpose. A definition has no business naming the paper at
+# all -- the enclosing set is already titled "Terminology in <paper title>", so
+# "This paper's shorthand for..." is both dangling and redundant. A misreading legitimately
+# says what the paper does and does not state ("the paper does not say whether human
+# matches were used"), so only the words with no possible referent are barred there.
+_DEIXIS_TERM = re.compile(
+    r"\bhere\b|\b(?:we|our)\b|\bth(?:is|e)\s+(?:paper|work|study)(?:'s)?\b"
+    r"|\bthe\s+authors?\b", re.I)
+_DEIXIS_MISREADING = re.compile(r"\bhere\b|\b(?:we|our)\b", re.I)
+
 
 def sentences(s) -> list[str]:
     """A field split where a reader would pause. Approximate on purpose.
@@ -764,11 +816,13 @@ def sentences(s) -> list[str]:
 def readability(fm: dict) -> list[tuple[str, str, str]]:
     """Every readability finding on one sidecar, as (kind, locus, message).
 
-    `kind` is `claim` or `question` and `locus` is the claim's `id` or the question's
-    own text, so a caller can put each finding next to the thing it is about.
-    `check_readability` flattens the same list for a terminal, and
-    `draft_sidecars.checked` buckets it for the review page -- one check, two
-    renderings, which is the only arrangement where the page and the command cannot
+    `kind` says which field the finding is about -- `claim`, `question`, `term`,
+    `misreading` or `page` -- and `locus` is the thing's own handle: a claim's `id`, a
+    question's or misreading's text, a term's name, and the empty string for a
+    page-level finding that belongs to no single field. A caller can therefore put each
+    finding next to what it is about. `check_readability` flattens the same list for a
+    terminal and `draft_sidecars.checked` buckets it for the review page -- one check,
+    two renderings, which is the only arrangement where the page and the command cannot
     disagree.
     """
     out = []
@@ -792,11 +846,54 @@ def readability(fm: dict) -> list[tuple[str, str, str]]:
             out.append((*at, f"{seps} stacked colons/dashes in text (max "
                             f"{CLAIM_SEPARATORS}) -- each one past the first is a "
                             "second finding that should be its own claim"))
-        first = sentences(c.get("scope"))
-        if first and _CLASSIFIES.match(first[0]):
-            out.append((*at, "scope opens by classifying the claim, and scope is "
-                            'published after the words "Holds for:" -- give the '
-                            f"condition instead: “{' '.join(first[0].split()[:9])}...”"))
+        m = _ABOUT_PAPER.match(text) or _FIRST_PERSON.search(text)
+        if m:
+            out.append((*at, f"text leans on {m.group(0).strip()!r} -- a claim is "
+                            "retrieved with no title and no byline beside it, so name "
+                            "the object instead of the paper that reports it"))
+
+        scope = str(c.get("scope") or "").strip()
+        conds = sentences(scope)
+        if len(conds) > SCOPE_SENTENCES:
+            out.append((*at, f"scope is {len(conds)} sentences (max {SCOPE_SENTENCES}) -- "
+                            "the published answer is the claim then \"Holds for:\" then "
+                            "all of this, so a fourth condition means the claim was "
+                            "stated more broadly than it holds: narrow the claim"))
+        if scope and len(scope) > len(text):
+            out.append((*at, f"scope is longer than the claim it bounds ({len(scope)} vs "
+                            f"{len(text)} chars) -- that makes the published answer "
+                            "mostly caveat, and the caveat is the half a summariser "
+                            "drops anyway"))
+        for i, s in enumerate(conds):
+            if _CLASSIFIES.match(s):
+                where = "opens by" if i == 0 else f"sentence {i + 1} of scope is"
+                out.append((*at, f"scope {where} classifying the claim, and scope is "
+                                'published after the words "Holds for:" -- give the '
+                                f"condition instead: “{' '.join(s.split()[:9])}...”"))
+
+    # Page-level, so it has no single locus. Counted over `result` claims only: a
+    # `context` claim asserts where the work sits and usually has no number to carry.
+    res = [c for c in (fm.get("claims") or [])
+           if isinstance(c, dict) and (c.get("kind") or "result") == "result"]
+    withnum = [c for c in res if figures(c.get("text"))]
+    if res and len(withnum) < RESULT_FIGURES * len(res):
+        out.append(("page", "", f"only {len(withnum)} of {len(res)} result claims state a "
+                    f"figure (want {RESULT_FIGURES:.0%}) -- go back to the tables for the "
+                    "magnitudes these claims dropped, or fold two number-free claims into "
+                    "the measured claim they are both circling. Never invent one"))
+
+    for term, definition in (fm.get("terminology") or {}).items():
+        m = _DEIXIS_TERM.search(str(definition))
+        if m:
+            out.append(("term", str(term), f"definition says {m.group(0).strip()!r} -- it is "
+                        "published as a DefinedTerm with nothing but the term beside it, so "
+                        "define what the word means, not its role on this page"))
+
+    for mis in (fm.get("misreadings") or []):
+        m = _DEIXIS_MISREADING.search(str(mis))
+        if m:
+            out.append(("misreading", str(mis), f"{m.group(0).strip()!r} has nothing to point "
+                        "at once this bullet is extracted on its own -- name the thing"))
 
     for g in (fm.get("qa") or []):
         if not isinstance(g, dict):
@@ -811,12 +908,18 @@ def readability(fm: dict) -> list[tuple[str, str, str]]:
 
 
 def check_readability(entries: list[tuple[str, dict]]) -> list[str]:
-    """Claims a reader has to re-read, and questions nobody could have typed.
+    """Claims a reader has to re-read, and passages that say nothing once extracted.
 
     Kept out of `validate.py`'s own run on purpose -- see the tier note above.
     """
-    return [f"{name}: {at} -- {msg}" if kind == "question"
-            else f"{name}: claim {at!r}: {msg}"
+    def line(name, kind, at, msg):
+        if kind == "page":
+            return f"{name}: {msg}"
+        if kind in ("question", "misreading"):
+            return f"{name}: {at} -- {msg}"
+        return f"{name}: {kind} {at!r}: {msg}"
+
+    return [line(name, kind, at, msg)
             for name, fm in entries for kind, at, msg in readability(fm)]
 
 

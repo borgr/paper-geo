@@ -53,12 +53,33 @@ claim — stated without a magnitude — but it never gets an invented one. This
 only rule here with no exceptions, because a wrong number is the one error a reader
 cannot detect and the author is publicly answerable for.
 
+**Then get those numbers onto the page: at least half of the `result` claims must
+carry one.** A figure is the single strongest thing a claim can contain — it is what
+makes a passage worth quoting rather than paraphrasing, and a paraphrase is a citation
+lost. Across the drafts the median page manages 61% and the weakest 33%, which is a
+page mostly asserting that something was demonstrated. Under half, the fix is to go
+back to the tables for magnitudes the claims dropped, or to fold two number-free
+claims into the one measured claim they are both circling. It is never to invent one —
+see above — and a page whose paper genuinely reports few figures is allowed to say so
+and stay under.
+
+**Write a magnitude as a numeral, not a word.** "4 latent dimensions", not "four".
+This is not a style preference: the check above and the one that verifies every figure
+against the paper's own text both read numerals, so a magnitude spelled out is a
+magnitude nothing can verify — and the paper's tables wrote it as a numeral anyway.
+
 **2. Claims are the core**; everything else is scaffolding. Each one:
 
 - **is self-contained.** It will be retrieved alone, with no title and no
   surrounding paragraph, so it must name the object and the finding without
   depending on anything outside itself. No "we", no "this paper", no pronoun
-  pointing outside the claim.
+  pointing outside the claim. **Name the thing, never "the paper".** 8% of drafted
+  claims open with *"The paper proves…"*, *"The contribution is a frame as much as a
+  method"*, *"The diagnosis behind the method:"* — which spends the quotable front on
+  commentary and, extracted alone, says nothing about *which* paper. "KnOTS reframes
+  LoRA merging as an alignment problem" is the same sentence with a subject. This
+  holds for `context` claims too: a claim about what the work contributes still names
+  the work.
 - **carries one proposition,** and is as long as that takes. Not a paragraph
   covering three findings — a passage about three things embeds as their average
   and is retrieved weakly for each. Not one sentence with three findings stacked
@@ -110,12 +131,31 @@ the 125M model shows no effect" is scope. It is a separate, adjacent field becau
 summarisers drop scope far more often than they drop findings, which is the most
 common way a paper ends up misrepresented.
 
+**It is shorter than the claim it bounds, and at most three sentences.** This is the
+rule current drafts break hardest: the published answer in a `FAQPage` is literally
+the claim, then the words "Holds for:", then the whole scope — and 290 of 325 scopes
+are longer than the claim they qualify, at a median of 1.5×, up to one that is 14
+sentences and 1368 characters against a 348-character claim. So the median published
+answer is mostly caveat, which fails in both directions at once: an extractive
+summariser quotes the front and cuts, so the part you wrote to protect the claim is
+the part that gets dropped, while the embedding of the whole answer is dragged toward
+hedging vocabulary and away from the finding. Scope earns its place by being short
+enough to survive being quoted with the claim.
+
+If more than three conditions are genuinely load-bearing, **the claim is too broad —
+narrow the claim.** That is the move, and it is not a loss of honesty: a claim stated
+about what it actually covers needs fewer caveats than one stated broadly and then
+walked back. Two things also do not belong here and account for much of the length: a
+restatement of the finding, and anything a reader could only misread *if* they read
+past the page — that second one is `misreadings`, which exists for it.
+
 **It is published after the literal words `Holds for:`** — in the page's claim list,
 in each `FAQPage` answer, and in `llms.txt`. So write it to complete that sentence.
 "Holds for: T5-base and T5-large, up to seven models" reads. "Holds for: This is a
 description of the published algorithm, so it is as reliable as reading it" does not
 parse, and 12% of drafted scopes open exactly like that — classifying the claim
-instead of bounding it. **Never open `scope` by saying what kind of claim this is.**
+instead of bounding it. **No sentence of `scope` may say what kind of claim this is** —
+not the first, and not a later one, which is where another 27 of them hide.
 If the reliability of a claim is worth saying, it is a clause at the end, after the
 conditions; and for a `context` claim the honest bound *is* a condition — "as of
 publication in 2023", "about English-language benchmarks only" — so say that
@@ -167,9 +207,23 @@ one with real query volume, and it is the reason `context` claims exist.
 conclude, and what is actually true. Only include one the paper gives you a reason
 to expect — a result that is easy to over-generalise, a negative result, a method
 whose name promises more than it does. Do not invent a plausible misunderstanding.
+Each one renders as its own bullet and is extracted as one, so **a misreading may not
+say "here" or "we"** — 15% of drafted ones do, and a correction that opens *"Low
+agreement here is not weak annotation"* corrects nothing once "here" is gone.
 
 **6. Terminology** is only for terms this paper coins or uses in a non-obvious
 sense. Not a glossary of the field.
+
+Each entry is published as a schema.org `DefinedTerm` inside a `DefinedTermSet`, which
+means the definition travels **alone**, with nothing but the term beside it — so it
+gets the same self-containment rule as a claim, and 30% of drafted definitions break
+it. *"The metric for every merging table here"*, *"used here on the residual stream"*,
+*"This paper's shorthand for ordinary finetuning"* — as an extracted definition each
+of those points at a page that is not there. Define the term, not its role on this
+page: *"the merged model's accuracy on a task divided by the accuracy of that task's
+own finetuned model"* is the same fact with nothing dangling. The attribution is not
+lost by dropping the deixis; the enclosing set is already named "Terminology in
+&lt;paper title&gt;".
 
 **7. `coined` and `gloss`,** only if the paper actually coins a name. `gloss` is the
 plain-language phrase that goes adjacent to the name everywhere.
@@ -318,9 +372,13 @@ he retract a page over a long sentence. `--anyway` overrides the whole tier.
 | 19 | ≤14 `misreadings`, ≤13 `terminology` entries, and no misreading phrased as a question | shape | `check_sidecar_shape` |
 | 20 | **every number in a claim appears in the paper's own text** | accept-time | `validate.py check_claim_numbers` against `build/fulltext/<slug>.txt`, and `--accept` refuses. Skipped, loudly, when the text is not cached |
 | 21 | claim `text` is ≤2 sentences of ≤32 words, with ≤1 colon/semicolon/dash | accept-time | `validate.py readability` — [§2 rule 2](#2-the-rules) |
-| 22 | `scope` does not open by classifying the claim | accept-time | `readability` — it is published after "Holds for:", so it has to complete that sentence |
+| 22 | no sentence of `scope` classifies the claim | accept-time | `readability` — it is published after "Holds for:", so every sentence has to complete that phrase |
 | 23 | no `qa` phrasing leans on a reference with no antecedent in it | accept-time | `readability` — bare `this`/`these`, `this paper`, `the authors`, trailing `here`, opening `it`/`they` |
-| 24 | canonical key order | — | **nothing — open, D1** |
+| 24 | `scope` is ≤3 sentences and no longer than its own claim | accept-time | `readability` — the `FAQPage` answer is claim + "Holds for:" + scope, so a scope longer than the claim makes the published answer mostly caveat |
+| 25 | claim `text` does not open with "the paper"/"the contribution" | accept-time | `readability` — [§2 rule 2](#2-the-rules)'s self-containment bullet, which until now nothing enforced |
+| 26 | no `terminology` definition and no misreading says "here"/"we"/"this paper" | accept-time | `readability` — a `DefinedTerm` travels alone, so a definition of its role on the page defines nothing |
+| 27 | ≥half of a page's `result` claims carry a number | accept-time | `readability`, page-level — [§2 rule 1](#2-the-rules). Never satisfied by inventing one; rule 20 would catch that |
+| 28 | canonical key order | — | **nothing — open, D1** |
 
 ## 5. What the drift actually looks like
 

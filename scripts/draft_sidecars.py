@@ -650,6 +650,12 @@ def checked(slug: str) -> dict | str:
             "live": path.startswith(SIDECARS), "one_liner": oneline(fm.get("one_liner")),
             "claims": claims, "qa": fm.get("qa") or [],
             "prose_q": {k[1]: v for k, v in prose.items() if k[0] == "question"},
+            # Same bucketing for the fields below the claims, each keyed by the handle
+            # the renderers already print: a misreading by its own text, a term by its
+            # name. `prose_page` belongs to no field, so it is a bare list.
+            "prose_m": {k[1]: v for k, v in prose.items() if k[0] == "misreading"},
+            "prose_t": {k[1]: v for k, v in prose.items() if k[0] == "term"},
+            "prose_page": [m for k, v in prose.items() if k[0] == "page" for m in v],
             "misreadings": fm.get("misreadings") or [],
             "terminology": fm.get("terminology") or {}}
 
@@ -664,6 +670,8 @@ def show(slug: str) -> None:
     print("one_liner: " + d["one_liner"])
     if not d["has_text"]:
         print("  (no cached full text -- figures and pointers cannot be checked here)")
+    for m in d["prose_page"]:
+        print(f"  WHOLE PAGE  {m}")
 
     for c in d["claims"]:
         orphan = "   (no question points here)" if c["orphan"] else ""
@@ -685,6 +693,17 @@ def show(slug: str) -> None:
             print(f"      {q}")
             for m in d["prose_q"].get(str(q)) or []:
                 print(f"        UNANSWERABLE ALONE  {m}")
+
+    # Printed only when something is wrong with them: a correct misreading or definition
+    # is already in the draft the author is reading beside this output.
+    for mis, why in d["prose_m"].items():
+        print(f"\n  misreading: {mis}")
+        for m in why:
+            print(f"      DANGLES  {m}")
+    for term, why in d["prose_t"].items():
+        print(f"\n  term: {term}")
+        for m in why:
+            print(f"      DANGLES  {m}")
 
 
 REVIEW_PAGE = os.path.join(BUILD, "sidecar_review.html")
@@ -738,10 +757,15 @@ def _flags(d: dict) -> list[str]:
     orph = sum(1 for c in d["claims"] if c["orphan"])
     hard = sum(1 for c in d["claims"] if c["prose"])
     vague = len(d["prose_q"])
+    loose = len(d["prose_m"]) + len(d["prose_t"])
     if hard:
         out.append(f"{hard} claim{'s' if hard > 1 else ''} to shorten or split")
     if vague:
         out.append(f"{vague} question{'s' if vague > 1 else ''} with nothing to point at")
+    if loose:
+        out.append(f"{loose} definition{'s' if loose > 1 else ''} or misreading"
+                   f"{'s' if loose > 1 else ''} that dangle once extracted")
+    out += d["prose_page"]
     if figs:
         out.append(f"{figs} figure{'s' if figs > 1 else ''} not in the paper")
     if ptrs:
@@ -860,15 +884,27 @@ def review_page(papers: list[dict]) -> str:
                 out.append(f"<li class=id>answered by {e(', '.join(g.get('answers') or []))}"
                            f"</li></ul>")
 
+        # Both blocks below are published as standalone fragments -- a misreading as its
+        # own list item, a term as a `DefinedTerm` with nothing beside it -- so the note
+        # goes inline, under the words that dangle.
         if d["misreadings"]:
             out.append(f"<h3>Misreadings it heads off ({len(d['misreadings'])})</h3><ul>")
-            out += [f"<li>{e(oneline(m))}</li>" for m in d["misreadings"]]
+            for m in d["misreadings"]:
+                why = d["prose_m"].get(str(m)) or []
+                out.append(f"<li>{e(oneline(m))}"
+                           + "".join(f"<br><span class=bad>dangles alone</span> "
+                                     f"<span class=dim>{e(w)}</span>" for w in why)
+                           + "</li>")
             out.append("</ul>")
 
         if d["terminology"]:
             out.append(f"<h3>Terminology ({len(d['terminology'])})</h3><table>")
-            out += [f"<tr><td>{e(str(k))}</td><td>{e(oneline(v))}</td></tr>"
-                    for k, v in d["terminology"].items()]
+            for k, v in d["terminology"].items():
+                why = d["prose_t"].get(str(k)) or []
+                out.append(f"<tr><td>{e(str(k))}</td><td>{e(oneline(v))}"
+                           + "".join(f"<br><span class=bad>dangles alone</span> "
+                                     f"<span class=dim>{e(w)}</span>" for w in why)
+                           + "</td></tr>")
             out.append("</table>")
         out.append("</div>")
 

@@ -407,11 +407,27 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
                     "the authors attribute to capacity rather than to data.",
             "scope": "This is a description of the published algorithm, so it is as "
                      "reliable as reading it. Holds for encoder-decoder models only.",
+        }, {
+            "id": "about-the-paper",
+            # Rule 2's self-containment bullet, which nothing enforced until the GEO
+            # pass, plus a scope longer than the claim and one condition over the cap.
+            "text": "The paper proves the reward is maximised by the wanted behaviour.",
+            "scope": "Bounded scoring rules only, and only for the two-outcome case. "
+                     "Verified numerically at five arms and at ten. The extension to "
+                     "continuous outcomes is not attempted anywhere in the paper. "
+                     "Nothing is claimed about unbounded rules.",
+        }, {
+            "id": "first-person",
+            "text": "We find that merged models trail multitask training.",
+            "scope": "Vision encoders only.",
         }],
+        # One of three result claims carries a figure, so the page-level rule fires too.
         "qa": [{"q": ["How much data does it take to fit a model like this?",
                       "Was this validated on more than one dataset?",
                       "What do the authors recommend?"],
                 "answers": ["overloaded"]}],
+        "misreadings": ["Low agreement here is not weak annotation."],
+        "terminology": {"normalized accuracy": "The metric for every merging table here."},
     }
     GOOD = {
         "claims": [{
@@ -434,7 +450,14 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
         for want, rule in (("-word sentence", "the sentence-length cap"),
                            ("stacked colons", "the separator cap"),
                            ("classifying the claim", "the scope-opening rule"),
-                           ("like this", "the unbound-reference rule")):
+                           ("like this", "the unbound-reference rule"),
+                           ("leans on 'The paper'", "the claim self-containment rule"),
+                           ("leans on 'We'", "the same rule on first person"),
+                           ("scope is 4 sentences", "the scope condition cap"),
+                           ("longer than the claim it bounds", "the scope proportion rule"),
+                           ("result claims state a figure", "the page-level figure rule"),
+                           ("define what the word means", "the terminology deixis rule"),
+                           ("nothing to point at", "the misreading deixis rule")):
             with self.subTest(rule=rule):
                 self.assertIn(want, found, f"{rule} stopped firing: {found!r}")
 
@@ -457,6 +480,20 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
         ok = {"qa": [{"q": ["How do you merge LoRA adapters without mixing up their "
                             "factorizations?",
                             "Can I compare two models by their skill profile?"]}]}
+        self.assertEqual(check_readability([("ok.md", ok)]), [])
+
+    def test_a_misreading_may_still_say_what_the_paper_does_not_state(self):
+        """Why `_DEIXIS_MISREADING` is narrower than `_DEIXIS_TERM`, in a test.
+
+        A correction's whole job can be to say what the paper leaves open, so "the paper"
+        is load-bearing there and only the words with no possible referent are barred. A
+        definition is the opposite case: it is published as a `DefinedTerm` inside a set
+        already titled after the paper, so naming the paper is both dangling and
+        redundant.
+        """
+        from validate import check_readability
+        ok = {"misreadings": ["The dataset contains matches involving human players, and "
+                              "the paper does not state whether they were used."]}
         self.assertEqual(check_readability([("ok.md", ok)]), [])
 
 

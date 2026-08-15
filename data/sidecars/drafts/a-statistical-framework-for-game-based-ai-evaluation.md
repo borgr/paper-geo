@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept a-statistical-framework-for-game-based-ai-evaluation
 
-Stamp: spec=067c3e36328a checks=pass body=4c86bea639fd
+Stamp: spec=fa2b90e5b6f0 checks=pass body=ddb15e38d40b
 -->
 ---
 one_liner: 'A statistical framework for game-based AI evaluation models each match twice:
@@ -31,104 +31,82 @@ claims:
     rates, a two-part latent-skill model treats forfeits and completed games as linked parts
     of one likelihood. It belongs to the multidimensional item-response-theory tradition rather
     than the Elo one.
-  scope: 'Two-player, turn-taking text games with recorded termination reasons; not single-player
-    benchmarks, not pairwise human preference votes without a game state, and not multi-player
-    games. Results are preliminary and from a workshop paper: one dataset, no comparison against
-    Bradley-Terry or Elo baselines, and no held-out predictive evaluation.'
+  scope: Two-player, turn-taking text games whose logs record why a match ended, not single-player
+    benchmarks and not pairwise preference votes without a game state. One dataset, no Bradley-Terry
+    or Elo baseline, and no held-out predictive evaluation.
 - id: forfeits-carry-skill-rather-than-noise
   kind: context
   text: Timeouts and invalid moves in game-based LLM evaluation are modelled as typed outcomes
     that carry skill information rather than being discarded or folded into a loss. A win-rate
     summary does the latter and loses that signal.
-  scope: 'Any arena whose logs record why a match ended. No experiment quantifies what is
-    lost by ignoring forfeits, so the contribution is the modelling choice and not a measured
-    comparison against a leaderboard that discards them. The reliability reading of those
-    failures rests on the two termination categories TextArena records: timeout, and the two-strike
-    invalid-move rule.'
+  scope: Arenas whose logs record why a match ended. Nothing measures what a leaderboard loses
+    by discarding forfeits, so the standing of the choice is argument rather than evidence.
 - id: two-part-model-with-a-shared-skill-space
   text: Each match is factorised into a multinomial logistic model over how the game ended
     and, conditional on the game being valid, a paired-comparison model over win, draw and
     loss. Both components read the same per-model skill vector.
   scope: 'TextArena''s termination types: either player timing out, either player making two
-    invalid moves in a row, or a valid game as the reference class. The two components are
-    coupled only through the shared skill vector and the constraint that a prematurely ended
-    game has no win/draw/loss outcome; each keeps its own per-game parameters.'
+    invalid moves in a row, or a valid game as the reference class. The two components stay
+    coupled only through the shared skill vector.'
   evidence: Methodology, 3.1, 3.2
 - id: skill-enters-both-parts-linearly
   kind: result
   text: Skill enters both the termination model and the win model linearly, through inner
     products with per-game loading vectors. A model can be reliable on one game and unreliable
     on another only through that game's loadings.
-  scope: The model as specified, in every fit -- no per-game loading vectors are reported,
-    so the separability is a property of the parameterisation and not a measured result. It
-    is what lets one shared skill vector per model behave differently across games, and why
-    the framework carries per-game parameters at all.
+  scope: Every fit of the model as specified. No per-game loading vector is reported, so linearity
+    is a property of the parameterisation and not a measured result.
   evidence: Methodology, 3.1, 3.2
 - id: four-latent-dimensions-on-textarena
-  text: Four latent skill dimensions were selected for the TextArena fit, chosen by validation
-    loss on a small held-out subset of the matches.
-  scope: 'One dataset and one selection procedure: the size of the held-out subset, the grid
-    of dimensions compared, and the loss values are not reported. Four is therefore the choice
-    this dataset supported rather than a recommended dimensionality for game arenas in general,
-    and the paper reports it as a preliminary result.'
+  text: A 4-dimensional skill space was selected for the TextArena fit over 57 models and
+    22 game types, chosen by validation loss on a held-out subset of the matches.
+  scope: One dataset and one selection run; the held-out size, the grid of dimensionalities
+    compared and the loss values are unreported.
   evidence: Data analysis
 - id: rotation-turns-loadings-into-two-reliability-axes
   text: After a geomin rotation of the fitted skill space, one dimension aligns with avoiding
-    timeouts and a second with avoiding invalid moves. Both readings come off the mean loadings
-    across games.
-  scope: 'Mean loadings averaged over games, with standard deviations shown across games and
-    no test that the axes are separable. The labels are the authors'' reading of which failure
-    type each dimension loads on, and they depend on the geomin criterion: a different criterion
-    gives different axes over the same fit. Only two of the four dimensions are interpreted.'
+    timeouts and a second with avoiding invalid moves. Both readings come off loadings averaged
+    over the 22 game types.
+  scope: Mean loadings, with standard deviations across games and no test that the two axes
+    separate. A different rotation criterion gives different axes over the same fit.
   evidence: Figure 2, Data analysis
 - id: identifiable-only-up-to-a-rotation
   text: Centering and whitening the skills across models removes the translation and scale
     indeterminacies, but the likelihood is invariant to any common orthogonal rotation of
     the skill space. The parameters are therefore identifiable only up to a rotation.
-  scope: Any fit of this model, and standard in factor analysis and multidimensional item-response
-    theory. Fit and predictive performance are unchanged by the rotation, so a statement about
-    a single named skill dimension is a statement about a chosen rotation rather than about
-    the fit; quantities that depend only on inner products, such as the skill-profile similarities,
-    are unaffected.
+  scope: Any fit of this model, as in factor analysis and multidimensional item-response theory.
+    Fit and predictive performance are unchanged by the rotation, and quantities that depend
+    only on inner products, such as profile similarities, are unaffected.
   evidence: Section 3.3
 - id: skill-profiles-place-a-model-next-to-its-own-distillations
-  text: Cosine similarity between fitted skill profiles puts deepseek-r1 closest to deepseek-r1-distill-llama-70b,
-    deepseek-r1-distill-llama-8b and OpenAI's o1, so profiles recover a grouping that tracks
-    model lineage and reasoning style rather than raw strength.
-  scope: One reference model, reported as a figure of similarities normalised so the maximum
-    is 1 and the minimum 0 -- so the values order the other models and carry no absolute meaning,
-    and no significance test or uncertainty is given. The lineage reading is an observation
-    about which models the figure places nearby, not a demonstrated property of distillation.
+  text: Cosine similarity between fitted skill profiles puts deepseek-r1 closest to its own
+    llama-70b and llama-8b distillations and to o1, out of the 57 models fitted. Profiles
+    track lineage and reasoning style rather than raw strength.
+  scope: One reference model, read off a figure of similarities normalised to a 0-to-1 range,
+    so the values order the other models and carry no absolute meaning.
   evidence: Figure 1, Data analysis
 - id: the-games-instruction-skill-tracks-math-more-than-ifeval
   text: The TextArena complex-instruction-following skill correlates more strongly with a
     skill estimated from MATH than with one estimated from IFEval. Both benchmark skills come
     from one-dimensional item-response-theory fits over the same 57 models.
-  scope: Pearson correlations reported in a figure, without the coefficients, confidence intervals
-    or a test in the text, so the comparison is a direction rather than a magnitude. The model
-    is invariant to translation, so the sign of a correlation is not interpretable on its
-    own. The reading offered -- that following instructions inside a game engages reasoning
-    beyond what IFEval targets -- is the authors' interpretation of that ordering.
+  scope: Pearson correlations shown in a figure, with no coefficients or intervals in the
+    text, so the comparison is a direction and not a magnitude. Translation invariance leaves
+    the sign of any one correlation uninterpretable.
   evidence: Figure 3, Data analysis
 - id: position-bias-and-draws-are-separate-parameters
   text: 'Moving first is modelled twice and separately: one per-game, per-failure-type term
     shifts the odds of ending a match prematurely, another per-game term the odds of winning
     a valid game. A separate non-negative draw margin controls how often valid games end drawn.'
-  scope: Every game in the fit carries its own bias terms, but none is reported as a fitted
-    quantity, so the paper shows the two effects are separable in the model rather than how
-    large they are in TextArena. The premature-termination bias is motivated by the first
-    mover making more moves and so having more chances to fail.
+  scope: Every game in the fit carries its own bias terms, none of them reported as a fitted
+    quantity, so what is shown is that the two effects are separable and not how large either
+    is.
   evidence: Section 3.1, Section 3.2
 - id: fitted-on-57-models-and-22-game-types
   text: 'The fit uses the public TextArena trace dataset: 57 language models, 30 game types
     and roughly 38k recorded matches. Dropping game types with fewer than 50 valid matches
     leaves 22 game modalities.'
-  scope: A subset of the matches involves human players, and the paper does not say whether
-    those matches were used in the fit. The filter is on valid matches per game type, so games
-    where most matches ended prematurely are the ones most likely to have been dropped --
-    which matters for a model whose stated contribution is that premature endings are informative.
-    Parameters are estimated by maximum likelihood; no error bars on the fitted skills are
-    reported.
+  scope: Maximum-likelihood point estimates, with no error bars on the fitted skills. Some
+    traces involve human players, and whether those entered the fit is not stated.
   evidence: Data analysis, Appendix A
 qa:
 - q:
@@ -212,6 +190,8 @@ misreadings:
 - 'The correlation result does not say that game-based instruction following matches IFEval.
   It says the opposite ordering: the games-derived skill correlates more strongly with a MATH-derived
   skill than with an IFEval-derived one.'
+- Only 2 of the 4 fitted dimensions are given interpretations. The other 2 are estimated but
+  unlabelled, so a 4-dimensional skill space is not the same thing as 4 named skills.
 - No coefficients, confidence intervals or significance tests are reported for the similarity
   and correlation results -- they are figures in a preliminary workshop paper, and the similarity
   figure is normalised so its maximum is 1 and its minimum 0, which makes the values an ordering
@@ -223,14 +203,15 @@ misreadings:
   ended prematurely -- exactly the outcomes the framework is built to model. The 22 modalities
   analysed are the ones that survived that filter, not the 30 the dataset contains.
 - The dataset contains matches involving human players, and the paper does not state whether
-  they were used in the fit. Nothing here should be read as a human-versus-model skill comparison.
+  they were used in the fit. Nothing in the fitted skills should be read as a human-versus-model
+  comparison.
 - Two invalid moves in a row end the match under the dataset's two-strike rule; a single invalid
   move does not. The reliability dimension is estimated from those terminations, not from
   a count of every malformed output.
 terminology:
   premature termination: A match that ended before a win, draw or loss -- by a player timing
-    out or by committing two invalid moves in a row. Modelled here as its own typed outcome
-    rather than as a loss or a discarded record.
+    out or by committing two invalid moves in a row. The framework models it as a typed outcome
+    of its own rather than as a loss or a discarded record.
   two-strike rule: The dataset's convention that two consecutive invalid moves by the same
     player end the match. It is the event the reliability side of the model is fitted to.
   draw margin: A non-negative per-game parameter controlling how much of the skill-difference
@@ -243,7 +224,7 @@ terminology:
   loadings: The per-game vectors that say which skills a game draws on -- one set for the
     valid-play outcome and one per failure type for premature endings. A game's loadings are
     what let one shared skill vector behave differently across games.
-  reliability: Used here for the ability to avoid timeouts and invalid moves, that is, to
-    keep a match valid -- kept separate from proficiency, the ability to win matches that
+  reliability: In game-based evaluation, the ability to avoid timeouts and invalid moves and
+    so keep a match valid. Kept separate from proficiency, the ability to win matches that
     stay valid.
 ---
