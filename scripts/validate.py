@@ -955,6 +955,36 @@ def figures(s: str) -> list[str]:
                               if not (len(t) == 1 and t.isdigit())))
 
 
+# A line-number gutter, as a PDF extractor hands it over: the numbers a review-copy
+# template prints down the margin arrive inline, as one long ascending run. Consecutive
+# and ascending is the whole test, because that is what a gutter is and what a table of
+# measurements never is -- a table of integer counts survives, so the check keeps erring
+# toward accepting a real figure.
+_INT_RUN = re.compile(r"(?<![\w.])\d{1,4}(?:\s+\d{1,4}){4,}(?![\w.])")
+_GUTTER_RUN = 5
+
+
+def deline(text: str) -> str:
+    """The paper's text with line-number gutters dropped.
+
+    A gutter verifies almost any small integer -- `1 2 3 ... 36` contains 22, 30 and 36 --
+    so leaving it in makes `check_claim_numbers` pass a figure the paper never states,
+    and makes the review quote the gutter instead of the sentence. Both failures are
+    silent, which is why this runs on the text rather than on the finding.
+    """
+    def keep(m: re.Match) -> str:
+        toks, out, run = m.group(0).split(), [], []
+        for t in toks + ["x"]:
+            if run and t.isdigit() and int(t) == int(run[-1]) + 1:
+                run.append(t)
+                continue
+            if len(run) < _GUTTER_RUN:
+                out += run
+            run = [t] if t.isdigit() else []
+        return " " + " ".join(out) + " "
+    return _INT_RUN.sub(keep, text)
+
+
 def figures_in(text: str) -> set[str]:
     r"""Every reading of every number in the paper's own text.
 
@@ -1026,7 +1056,8 @@ def check_claim_numbers(entries: list[tuple[str, dict]]) -> tuple[list[str], lis
         if not os.path.exists(path):
             skipped.append(name)
             continue
-        text = open(path, errors="replace").read()
+        with open(path, errors="replace") as fh:
+            text = deline(fh.read())
         have, vals = figures_in(text), values_in(text)
         for c in (fm.get("claims") or []):
             if not isinstance(c, dict):

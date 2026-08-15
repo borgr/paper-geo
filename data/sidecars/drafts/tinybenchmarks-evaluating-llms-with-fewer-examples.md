@@ -16,198 +16,154 @@ What to check, in the order it pays:
    the talk abstract. Make it yours.
 
 Then promote it:  python scripts/draft_sidecars.py --accept tinybenchmarks-evaluating-llms-with-fewer-examples
+
+Stamp: spec=4f2ab401ad91 checks=pass body=70e67cf73ef6
 -->
 ---
 one_liner: 'A benchmark''s headline number does not need the whole benchmark: fit item response
   theory to the correctness data of hundreds of already-evaluated models, pick 100 examples
   per scenario from it, and the estimate lands within about 2% of the full-benchmark score
   -- 100 of MMLU''s 14,000 examples, a 140-fold cut.'
-coined: tinyBenchmarks
-gloss: Released 100-example-per-scenario subsets of the Open LLM Leaderboard, MMLU (tinyMMLU),
-  HELM Lite and AlpacaEval 2.0, chosen by clustering item response theory representations
-  of examples, shipped with the fitted IRT parameters and a CPU-only estimator that corrects
-  the small-sample score.
 claims:
 - id: hundred-examples-per-scenario-within-two-percent
-  text: Across four benchmarks, 100 examples per scenario are enough to estimate an unseen
-    LLM's full-benchmark performance to within about 2% average error.
-  scope: 'Per scenario, not per benchmark: the same claim is 600 of 29K examples on the six-scenario
-    Open LLM Leaderboard, 1000 of 10K on HELM Lite''s ten, 100 of 14K on MMLU and 100 of 805
-    on AlpacaEval 2.0. The 2% is an average over test LLMs of the error in the aggregate score,
-    not a bound on any single model and not an error on any component scenario. Results are
-    averaged over 5 restarts.'
-  evidence: Section 1 and Section 5 'Key findings'; Figure 3 and its caption give the four
-    example counts.
+  text: Across 4 benchmarks, 100 examples per scenario are enough to estimate an unseen LLM's
+    full-benchmark score to within about 2% average error. On MMLU the error stays at or below
+    4% across 99 test LLMs, bar one at extremely low performance.
+  scope: 600 of 29K examples on the Open LLM Leaderboard, 1000 of 10K on HELM Lite, 100 of
+    14K on MMLU and 100 of 805 on AlpacaEval 2.0. The 4% is one benchmark and the best strategy,
+    and the 2% bounds no single model.
+  evidence: Section 1 and Section 5 'Key findings'; Figure 3 for the four example counts;
+    Figure 6 and its caption for the worst case.
+- id: where-to-start-on-cheap-benchmark-evaluation
+  kind: context
+  text: For cutting the cost of running a large benchmark, this is the reference for curated
+    100-example subsets plus an item-response-theory correction. The tinyMMLU and tinyAlpacaEval
+    datasets come from it.
+  scope: True for benchmarks with public per-example correctness data from many already-evaluated
+    models, not for a new or private benchmark. Nothing in the paper certifies this positioning.
+  evidence: Abstract and Section 1; the released datasets are listed in Section 6.
 - id: mmlu-in-one-hundred-examples
-  text: MMLU's roughly 14,000 examples reduce to 100, a factor of 140, and on LLMs released
-    between 30 December and 18 January the estimate is within 1.9% of the true full-MMLU accuracy.
-  evidence: Abstract and Section 1; the 1.9% and the release-date window are Figure 1's caption.
-    14000/100 = 140 as printed.
-  scope: The 1.9% is the average error over that set of recent models on the aggregate MMLU
-    accuracy. MMLU is treated as one scenario whose score is the average over its 57 subjects,
-    so 100 examples is under two per subject.
-- id: thirty-examples-suffice-on-the-leaderboard
-  text: On the Open LLM Leaderboard 30 examples per scenario are already enough -- 180 of
-    29,000 examples, a factor of about 160.
-  scope: 'One benchmark, and the least demanding of the four: MMLU on its own still wants
-    100. Stated for the best-performing strategies, and the aggregate Leaderboard score is
-    an average of six scenario accuracies, which averages six independent errors down.'
-  evidence: Section 5 'Key findings', which prints both the factor and the 29K-to-180 reduction.
+  text: MMLU's 14K examples reduce to 100, a factor of 140, and the Open LLM Leaderboard's
+    29K to 180 at 30 per scenario, a factor of about 160. On LLMs released between 30 December
+    and 18 January the MMLU estimate lands within 1.9%.
+  scope: An average error over those recent models on aggregate MMLU accuracy, itself the
+    mean over 57 subjects. The Leaderboard is the least demanding of the 4 benchmarks and
+    only its best strategies reach 30.
+  evidence: Abstract and Section 1; Figure 1's caption for the 1.9% and the release-date window;
+    Section 5 'Key findings' prints both reduction factors.
 - id: the-method-needs-a-pool-of-already-evaluated-models
-  text: 'The example selection and the correction both come from correctness data for LLMs
-    already evaluated on the entire benchmark: 395 models from the Open LLM Leaderboard, 428
-    in total once the specialized set is added.'
-  scope: This is the precondition, and it is what the paper's savings are measured against
-    rather than included in. A benchmark with no such public correctness matrix has to be
-    run in full on many models before any of this applies. 395 + 40 specialized = 435 against
-    a stated total of 428, so 7 models are in both sets (my arithmetic on their two counts).
-    Leaderboard data was downloaded in January 2024 and models were selected by filtering
-    to MMLU above 0.3, ordering by average performance and taking equally spaced models --
-    not a random sample of the leaderboard.
+  text: 'Both the example selection and the correction are fitted on correctness data from
+    LLMs already run on the whole benchmark: 395 Open LLM Leaderboard models, 428 once the
+    specialized set is added.'
+  scope: A benchmark with no public correctness matrix has to be run in full on many models
+    first. Those 395 were filtered to MMLU above 0.3, then taken at equal spacing by average
+    performance.
   evidence: Section 2 states the assumption of access to prior full-benchmark correctness;
     Section 5 'Benchmarks and models' gives 395 and the 75/25 split; Appendix D gives the
     filtering procedure and the 428 total.
 - id: irt-representations-rather-than-raw-correctness
-  text: Examples are clustered to find representative 'anchor points', and the embedding that
-    gets shipped is the fitted IRT item parameters rather than the vector of model correctness.
-  scope: Correctness clustering is the adapted prior method (Vivek et al.'s anchor points);
-    its embedding has one dimension per training LLM, where the IRT embedding is at most 16-dimensional
-    in these experiments. Both are compared throughout; IRT is chosen for the release on the
-    robustness evidence, not on average accuracy alone.
+  text: Examples are clustered into representative anchor points, and what ships is the fitted
+    IRT item parameters rather than the vector of model correctness. That embedding is at
+    most 16-dimensional in these experiments.
+  scope: Correctness clustering, the prior method it adapts, instead spends one dimension
+    per training LLM. Both are compared throughout, and IRT is chosen on robustness rather
+    than average accuracy.
   evidence: 'Sections 3.2 and 4.1: the embedding is E_i = (alpha_i, beta_i), and footnote
     3 caps its dimension at 16.'
 - id: the-correction-mixes-the-sample-with-the-model
-  text: The shipped estimator, gp-IRT, is a convex combination of the plain weighted average
-    over the chosen examples and an IRT-model prediction for every example not run, with the
-    weight moving toward the raw data as the sample grows.
-  scope: 'The mixing weight comes from a heuristic, not an optimization: it applies a corollary
-    of Song (1988) for the optimal linear combination of two estimators while approximating
-    the sampling estimator''s bias and the IRT estimator''s variance as zero, with the IRT
-    bias estimated by a split-half procedure on the training models. With anchor points rather
-    than random sampling the variance constant is divided by 4 by default, which is a stipulated
-    halving of the standard deviation.'
-  evidence: Section 4.2, equations 4.3 and 4.4, and the seven-step bias estimate that follows;
-    the 'divide by 4' default is stated at the end of Section 4.2.
-- id: the-correction-never-hurt
-  text: The '++' correction matched or improved its uncorrected counterpart in every configuration
-    tested, and adds only seconds of CPU time.
-  scope: '''Always improves or matches'' is the paper''s summary of its own experiments across
-    four benchmarks and two split types, not a proved property; the estimator is a shrinkage
-    of the sample toward a model that can be misspecified. The running-time claim is IRT ability-fitting
-    time, reported as negligible in a figure.'
-  evidence: Section 5 'Key findings'; Appendix E.3 and Figure 13 for the running time.
+  text: The shipped estimator, gp-IRT, convexly combines the plain average over the examples
+    run with an IRT prediction for the rest, weighted toward the raw data as the sample grows.
+    It matched or improved the uncorrected version in every configuration tested.
+  scope: The mixing weight is a heuristic, with sampling bias and IRT variance approximated
+    as zero and the IRT bias estimated by split-half. Never hurting is a summary of those
+    runs rather than a proved property.
+  evidence: Section 4.2 with equations 4.3 and 4.4; Section 5 'Key findings' for the comparison
+    against the uncorrected estimators; Appendix E.3 and Figure 13 for running time.
 - id: irt-anchors-survive-specialized-models
   text: On 40 hand-picked domain-specialized LLMs the correctness-based anchors degrade the
     most, while the IRT-based anchors are only slightly affected.
-  scope: The comparison is between selection strategies under one distribution shift on MMLU,
-    and 'only slightly affected' still means worse than on random models. This is the paper's
-    stated reason for shipping IRT anchors, and its limitations section recommends periodically
-    refitting rather than treating the robustness as settled.
+  scope: One distribution shift, on MMLU, between selection strategies. Slightly affected
+    still means worse than on unspecialized models.
   evidence: Section 5 'Specialized LLMs' and Figure 5; Appendix D describes how the 40 specialized
     models were identified.
-- id: worst-case-error-around-four-percent
-  text: For the best strategy on MMLU with 100 examples, estimation error across 99 test LLMs
-    never exceeds 4% -- with one exception, an LLM of extremely low performance -- and is
-    slightly smaller for more capable models.
-  scope: One benchmark, one split, one strategy, and stated with its exception in the paper's
-    own sentence. The average for the same setting is 2%, so 4% is the spread rather than
-    a guarantee; the capability trend is described as having no strong dependency.
-  evidence: Section 5 'Estimation error analysis' and Figure 6, whose caption says the worst
-    case is at most 4% across almost all models.
 - id: it-holds-when-the-test-models-are-newer
-  text: Splitting train and test models by date rather than at random leaves the conclusions
-    in place, including when three quarters of the data is held out for testing -- about three
-    months of future models for the Leaderboard and MMLU, six for AlpacaEval 2.0.
-  scope: 'A temporal shift over weeks to months in 2024, which is the shift the method is
-    meant to absorb. Severe shifts are the acknowledged failure case: a model that fails simple
-    questions while answering hard ones changes the correctness pattern the anchors were chosen
-    for.'
+  text: Splitting train and test models by release date rather than at random leaves the conclusions
+    in place, including with 75% of models held out. That is about 3 months of future models,
+    6 for AlpacaEval 2.0.
+  scope: 'A temporal shift of weeks to months in 2024. Severe shift is the acknowledged failure
+    case: a model that fails easy questions while answering hard ones breaks the pattern anchors
+    were picked for.'
   evidence: Section 5 'Evaluation pipeline' for the by-date split; Appendix E.1 and Figure
     11 for the 75%-test ablation; Section 6.2 for the failure mode.
 - id: random-sampling-catches-up-at-two-to-four-times-the-budget
-  text: 'Plain stratified random sampling reaches the same accuracy as the IRT method given
-    a few times more examples: 400 per task against 100 on the Open LLM Leaderboard, 200 against
-    100 on AlpacaEval 2.0, more than 400 against 100 on MMLU.'
-  scope: So the curated subsets buy a factor of two to four over the simplest possible baseline,
-    not the factor of 140 -- that larger factor is against running the whole benchmark. Measured
-    on random model splits with no distribution shift, which is the setting most favourable
-    to random sampling. Where examples are cheap but few, as on AlpacaEval 2.0's 805 GPT-4-judged
-    examples, the two-fold difference is still money.
+  text: Stratified random sampling reaches the same accuracy given a few times more examples.
+    It needs 400 per task against 100 on the Open LLM Leaderboard, 200 against 100 on AlpacaEval
+    2.0 and over 400 against 100 on MMLU.
+  scope: Random model splits with no distribution shift, the setting most favourable to random
+    sampling. The factor of 140 is against running the whole benchmark, not against this baseline.
   evidence: Appendix E.2, whose heading asks exactly this question, and Figure 12.
 - id: the-consistency-result-assumes-the-item-parameters-are-known
-  text: The proposition behind the estimator says the IRT correction converges to the best
-    possible prediction of the true score, assuming the item difficulty and discrimination
-    parameters are already known exactly.
-  scope: 'Asymptotic in the total number of examples the ability parameter is fitted on, and
-    conditional on two assumptions: that the fitted ability converges, and that the true item
-    parameters are known with uniformly bounded discrimination norms. In practice those parameters
-    are themselves estimated from the training models, so the error the proposition brackets
-    is not the error the user faces. The proof is four inequalities using that the logistic
-    function is 1/4-Lipschitz plus Cauchy-Schwarz.'
+  text: Proposition 4.1 shows the IRT correction converges to the best possible prediction
+    of the true score, assuming each example's difficulty and discrimination are already known
+    exactly.
+  scope: Asymptotic in the examples the ability is fitted on, with convergent ability estimates
+    and bounded discrimination norms. In practice those item parameters are estimated too.
   evidence: Proposition 4.1 with its two numbered assumptions; the proof is Appendix C.
 - id: graded-scores-are-modelled-through-a-binary-proxy
-  text: Where correctness is a number in [0,1] rather than right-or-wrong -- AlpacaEval 2.0,
-    several HELM and Leaderboard scenarios -- it is thresholded into a binary variable before
-    the IRT model sees it.
-  scope: The threshold is chosen per scenario so that the total of the binarized scores approximately
-    matches the total of the original ones across training models and examples, which preserves
-    the mean but not the distribution. Stated as a simple and effective fix rather than as
-    a modelling result.
+  text: Where correctness is graded in [0,1] rather than right-or-wrong, as on AlpacaEval
+    2.0 and several HELM and Leaderboard scenarios, it is thresholded to a binary variable
+    before the IRT model sees it.
+  scope: The threshold is set per scenario so binarized totals approximately match the original
+    ones across training models, which preserves the mean and not the distribution.
   evidence: Section 4.3, including the equation that defines the threshold.
 - id: a-tiny-benchmark-estimates-the-headline-not-the-profile
-  text: tinyMMLU's 100 examples are spread over MMLU's 57 subjects with unequal weights --
-    the heaviest are high school psychology, elementary mathematics and professional law --
-    so what it estimates is the aggregate score.
-  scope: Under two examples per subject on average, so a per-subject reading is not available
-    from it at all; the weights are the anchor-cluster sizes and are reported as more uniform
-    than the correctness-based alternative, measured by effective sample size, not as uniform.
+  text: tinyMMLU's 100 examples spread over MMLU's 57 subjects with unequal weights, the heaviest
+    being high school psychology, elementary mathematics and professional law. What it estimates
+    is the aggregate score.
+  scope: Under 2 examples per subject, so no per-subject reading is available. The weights
+    are anchor-cluster sizes, reported as more uniform than the correctness-based alternative
+    rather than as uniform.
   evidence: Appendix B, with Figure 9 for the weight spread and Figure 10 for the per-subject
     weight.
-- id: adaptive-testing-was-tried-and-left-out
-  text: Choosing each next example adaptively during evaluation improved the estimates further,
-    but the implementation takes over five minutes to run and was not shipped.
-  scope: 'Preliminary, presented as an extension: MMLU in the main text and other benchmarks
-    in the appendix. The five minutes is against seconds for the released estimator, which
-    is the reason given for leaving it out.'
-  evidence: Section 6.1 'Adaptive testing' with Figure 8; Appendix E.5 and Figure 16 for the
-    other benchmarks.
 - id: the-same-machinery-estimates-prompt-template-performance
   text: Fitting the same model with prompt templates in place of examples predicts how a model
     will score under an unseen template, or how an unseen model will score under a given template.
-  scope: One dataset and one small model family -- eight LLaMA models, vanilla or Alpaca-tuned,
-    on ANLI's 750 points wrapped in 15 promptsource templates -- held out by model size (65B
-    in test) and by template. Offered as a promising application, not a result about template
-    variation in general.
+    It is offered as an application rather than a general result about template variation.
+  scope: One dataset and 8 LLaMA models, vanilla or Alpaca-tuned, on ANLI's 750 points in
+    15 promptsource templates, held out by model size, with 65B in test, and by template.
   evidence: Section 6.1 'Prompt evaluation' and Figure 7.
 - id: what-it-does-not-do
-  text: 'It does not make the first evaluations cheaper, does not remove the need to keep
-    re-running them, and is not a new benchmark: it is a subset of an existing one plus an
-    estimator, and the paper asks for both to be refreshed periodically as models change.'
-  scope: The correctness matrix that the anchors and IRT parameters are fitted on comes from
-    full evaluations of hundreds of models. The limitations section names severe distribution
-    shift as the failure mode and refitting on more modern LLMs as the mitigation, which makes
-    a tiny benchmark a maintained artefact rather than a fixed dataset.
-  evidence: Section 2 for the data assumption; Section 6.2 'Limitations' for the refresh recommendation.
+  text: A tiny benchmark is a subset of an existing benchmark plus an estimator, so it makes
+    the first full evaluations no cheaper. Choosing examples adaptively did better still,
+    but takes over 5 minutes to run and was not shipped.
+  scope: The correctness matrix behind the subset comes from full evaluations of hundreds
+    of models, and both subset and fitted parameters need refreshing as models change. Severe
+    distribution shift is the named failure mode.
+  evidence: Section 7 'Limitations'; Section 6.2 and Appendix E.4 for the adaptive extension
+    and its running time.
 - id: how-it-was-run
-  text: Four benchmarks, six strategies -- stratified random, correctness clustering and IRT
-    clustering, each with and without the IRT correction -- with models split into train and
-    test either at random or by date, and the estimate compared against each test model's
-    true full-benchmark score.
-  scope: Open LLM Leaderboard and MMLU use 395 models at 75/25; HELM Lite v1.0.0 splits by
-    training organization and uses 11-fold cross-validation for the random split; AlpacaEval
-    2.0 has 100 models over 805 examples with 4-fold cross-validation. The IRT model is fitted
-    by variational inference with normal priors and Gamma hyperpriors, point estimates taken
-    as variational means, and its dimension chosen from {2, 5, 10, 15} on a validation split.
-    Results averaged over 5 restarts.
+  text: '4 benchmarks and 6 strategies were compared: stratified random, correctness clustering
+    and IRT clustering, each with and without the IRT correction. The IRT model is fitted
+    by variational inference, its dimension chosen from 2, 5, 10 and 15.'
+  scope: 395 models at 75/25 for the Leaderboard and MMLU, HELM Lite v1.0.0 split by training
+    organization with 11-fold cross-validation, AlpacaEval 2.0 over 805 examples. Every result
+    averages 5 restarts.
   evidence: Sections 4.4 and 5; Appendix D for the per-benchmark scenario lists.
 qa:
+- q:
+  - How can I evaluate an LLM on a benchmark without running every example?
+  - What is tinyMMLU?
+  - Is there a smaller version of MMLU or AlpacaEval?
+  - How do I cut the cost of LLM benchmark evaluation?
+  answers:
+  - where-to-start-on-cheap-benchmark-evaluation
 - q:
   - How many examples do you actually need to evaluate an LLM on a benchmark?
   - Can I get a benchmark score from a small sample?
   - How few examples give a reliable benchmark number?
   answers:
   - hundred-examples-per-scenario-within-two-percent
-  - thirty-examples-suffice-on-the-leaderboard
+  - mmlu-in-one-hundred-examples
 - q:
   - How much of MMLU do I need to run?
   - What is tinyMMLU?
@@ -235,17 +191,16 @@ qa:
   - What is gp-IRT?
   answers:
   - the-correction-mixes-the-sample-with-the-model
-  - the-correction-never-hurt
 - q:
   - Is the small-sample estimate ever badly wrong?
   - What is the worst error to expect?
-  - How reliable is this for a weak model?
+  - How reliable is a small-sample benchmark estimate for a weak model?
   answers:
-  - worst-case-error-around-four-percent
+  - hundred-examples-per-scenario-within-two-percent
   - it-holds-when-the-test-models-are-newer
 - q:
   - Would random sampling not do just as well?
-  - How much better is this than sampling examples at random?
+  - How much better are curated benchmark subsets than random sampling?
   - Is the curation worth it?
   answers:
   - random-sampling-catches-up-at-two-to-four-times-the-budget
@@ -256,12 +211,12 @@ qa:
   answers:
   - the-consistency-result-assumes-the-item-parameters-are-known
 - q:
-  - Does this work for benchmarks scored by a judge or by F1 rather than accuracy?
+  - Do tiny benchmarks work when scoring uses a judge or F1 rather than accuracy?
   - How are graded or continuous scores handled?
   answers:
   - graded-scores-are-modelled-through-a-binary-proxy
 - q:
-  - Does it still work for a domain-specialized or fine-tuned model?
+  - Do tiny benchmarks still work for a domain-specialized or fine-tuned model?
   - What happens when the test models are unlike the training models?
   answers:
   - irt-anchors-survive-specialized-models
@@ -270,10 +225,10 @@ qa:
   - Can the examples be chosen adaptively as the evaluation runs?
   - Why is adaptive testing not part of the release?
   answers:
-  - adaptive-testing-was-tried-and-left-out
+  - what-it-does-not-do
 - q:
-  - Can this estimate how a prompt template will score?
-  - Does it apply to prompt selection as well as example selection?
+  - Can item response theory estimate how a prompt template will score?
+  - Does the anchor-point method apply to prompt selection as well as example selection?
   answers:
   - the-same-machinery-estimates-prompt-template-performance
 - q:
@@ -328,6 +283,8 @@ misreadings:
   takes over five minutes, against seconds for the shipped estimator.
 - The prompt-template result is a proof of concept on one dataset -- eight LLaMA models, ANLI,
   15 templates -- and is not a claim about prompt sensitivity in general.
+- 'The two model counts for the Leaderboard do not add up: 395 selected plus 40 specialized
+  is 435, against a stated total of 428, so 7 models are in both sets and are counted once.'
 terminology:
   tinyBenchmarks: 'The released artefacts: 100-example-per-scenario subsets of the Open LLM
     Leaderboard, MMLU, HELM Lite and AlpacaEval 2.0, plus the fitted IRT parameters and the
@@ -335,17 +292,17 @@ terminology:
   tinyMMLU: The 100-example subset of MMLU, chosen by the IRT anchor-point method at the seed
     with the best test performance, with the per-example weights that go with it.
   scenario: A dataset within a benchmark -- ARC or GSM8K within the Open LLM Leaderboard.
-    A subscenario is a division inside one, such as MMLU's 57 subjects. Budgets in this paper
-    are per scenario.
+    A subscenario is a division inside one, such as MMLU's 57 subjects. Example budgets are
+    counted per scenario.
   correctness: 'The benchmark''s score for one model on one example, written Y_il: either
     0/1 or a graded value in [0,1]. The matrix of these over models and examples is the input
     the method is fitted on.'
   anchor point: An example chosen as representative of a cluster of examples, carrying the
     cluster's share of the total as its weight, so that a weighted average over anchors approximates
     the average over everything.
-  item response theory: 'The psychometric model behind standardized testing, here with examples
-    as items and LLMs as testees: the probability of a correct answer is logistic in an ability
-    vector, a per-example discrimination vector and a per-example bias.'
+  item response theory: 'The psychometric model behind standardized testing, applied with
+    examples as items and LLMs as testees: the probability of a correct answer is logistic
+    in an ability vector, a per-example discrimination vector and a per-example bias.'
   ability, discrimination, bias: 'The IRT parameters: theta_l is what a model has, alpha_i
     is which of its dimensions example i calls on, beta_i shifts the difficulty. An example
     is represented for clustering by (alpha_i, beta_i).'
@@ -364,8 +321,4 @@ terminology:
   effective sample size: 'A measure of how unequal a set of weights is, borrowed from Monte
     Carlo: 0.50 means the weighted average behaves as if influenced by only half the examples.
     Used to compare tinyMMLU''s weights against the correctness-based ones.'
-links_extra:
-  code: https://github.com/felipemaiapolo/tinyBenchmarks
-  the tiny datasets: https://huggingface.co/tinyBenchmarks
-  HELM Lite, the benchmark version used: https://crfm.stanford.edu/helm/lite
 ---

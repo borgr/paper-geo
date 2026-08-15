@@ -47,6 +47,7 @@ import re
 import shutil
 import subprocess
 import sys
+import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -614,14 +615,14 @@ def checked(slug: str) -> dict | str:
     if fm is None:
         return f"{os.path.relpath(path, ROOT)}: unreadable front matter"
 
-    from validate import figures, figures_in, readability, rounds_to, values_in
+    from validate import deline, figures, figures_in, readability, rounds_to, values_in
     # Bucketed by what each finding is about, so the renderers put it next to the
     # sentence rather than in a list at the bottom that reads as someone else's problem.
     prose = {}
     for kind, at, msg in readability(fm):
         prose.setdefault((kind, at), []).append(msg)
     cache = os.path.join(CACHE, f"{slug}.txt")
-    text = open(cache, errors="replace").read() if os.path.exists(cache) else ""
+    text = deline(open(cache, errors="replace").read()) if os.path.exists(cache) else ""
     have, vals = (figures_in(text), values_in(text)) if text else (set(), [])
     flat = re.sub(r"\s+", " ", text)
 
@@ -734,6 +735,8 @@ a { color:inherit } code,kbd { font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,m
 .scope { color:var(--dim); font-size:.9rem; margin:.4rem 0 0 }
 .checks { margin:.55rem 0 0; padding:0; list-style:none; font-size:.85rem }
 .checks li { padding:.15rem 0 }
+.checks a { text-decoration:underline; text-decoration-color:var(--dim);
+            text-underline-offset:2px }
 .n { display:inline-block; min-width:3.5rem; font:12px ui-monospace,Menlo,monospace;
      color:var(--fg) }
 .bad { color:var(--bad); background:var(--badbg); padding:.1rem .3rem; border-radius:3px }
@@ -775,6 +778,32 @@ def _flags(d: dict) -> list[str]:
     if not d["has_text"]:
         out.append("no cached full text, so nothing here was checked against the paper")
     return out
+
+
+def at_sentence(links: dict, phrase: str) -> str:
+    """The paper's own HTML, scrolled to the phrase — or "" if it cannot be linked.
+
+    A text fragment rather than a section anchor, because the anchor ids of an arXiv or
+    ar5iv rendition are generated and change between versions, while the sentence is the
+    thing being checked. A fragment that fails to match costs nothing: the browser opens
+    the paper at the top, which is where a "read the paper" link would have gone anyway.
+
+    Only the review page links these. On a published page the same link, repeated once
+    per claim, would add no retrievable fact to a passage that already carries the
+    citation -- the paper is linked once, canonically, and that is the useful count.
+    """
+    url = links.get("html") or links.get("arxiv_pdf") or links.get("publisher")
+    if not url or "/html/" not in url:
+        return ""
+    # The window a quote comes from is cut mid-word at both ends, so the first and last
+    # tokens are dropped: a fragment matches on an exact substring, and half a word
+    # never does.
+    words = re.sub(r"\s+", " ", phrase.strip().strip(".")).split()
+    if len(words) > 3:
+        words = words[1:-1]
+    if not words:
+        return ""
+    return url + "#:~:text=" + urllib.parse.quote(" ".join(words[:12]))
 
 
 def review_page(papers: list[dict]) -> str:
@@ -855,18 +884,27 @@ def review_page(papers: list[dict]) -> str:
                 out.append("</ul>")
             if c["pointers"] or c["figures"]:
                 out.append("<ul class=checks>")
+                links = p.get("links") or {}
                 for label, ok in c["pointers"]:
+                    href = at_sentence(links, label) if ok else ""
+                    shown = f"<a href='{e(href)}'>{e(label)}</a>" if href else e(label)
                     out.append(f"<li><span class={'ok' if ok else 'bad'}>"
                                f"{'the paper mentions' if ok else 'THE PAPER NEVER MENTIONS'}"
-                               f"</span> {e(label)}</li>")
+                               f"</span> {shown}</li>")
                 for n, sentence in c["figures"]:
                     if sentence is None:
                         out.append(f"<li><span class=n>{e(n)}</span> "
                                    f"<span class=bad>not in the paper — correct it or "
                                    f"drop the figure</span></li>")
                     else:
+                        # The quote itself is the link, so checking a figure against the
+                        # paper's sentence and then against the paper costs one click
+                        # rather than a search in another window.
+                        href = at_sentence(links, sentence)
+                        body = f"<span class=dim>{e(sentence)}</span>"
                         out.append(f"<li><span class=n>{e(n)}</span> "
-                                   f"<span class=dim>{e(sentence)}</span></li>")
+                                   + (f"<a href='{e(href)}'>{body}</a>" if href else body)
+                                   + "</li>")
                 out.append("</ul>")
             out.append("</div>")
 

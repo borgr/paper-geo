@@ -37,6 +37,7 @@ import sys
 import tempfile
 import time
 import unittest
+import urllib.parse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -1812,6 +1813,95 @@ class TestNoBatchCreatesASecondAuthorItem(unittest.TestCase):
         # would silently revert a label or description someone improved by hand.
         for cmd in ("\tLen\t", "\tDen\t"):
             self.assertNotIn(cmd, body, f"{cmd.strip()} overwrites on an existing item")
+
+
+class TestAGutterIsNotEvidence(unittest.TestCase):
+    """A review-copy line-number margin verified almost any figure a draft could state.
+
+    PDF extraction hands the margin over inline, so `check_claim_numbers` was reading
+    `1 2 3 ... 40` as the paper stating 12, 30 and 40, and the review page was quoting
+    the margin instead of the sentence. Both failures are silent, and neither shows up in
+    committed data -- only in whichever paper happens to be typeset that way.
+
+    The other direction matters as much: a table of integer measurements must survive,
+    because dropping it would reject a figure the paper really does state.
+    """
+
+    def test_a_gutter_run_is_dropped(self):
+        from validate import deline, figures_in
+        gutter = " ".join(str(n) for n in range(1, 41))
+        self.assertNotIn("30", figures_in(deline(f"Some prose. {gutter} More prose.")))
+
+    def test_a_table_of_counts_survives(self):
+        from validate import deline, figures_in
+        # Not consecutive, so not a gutter -- these are counts a claim may cite.
+        kept = figures_in(deline("Sizes 12 40 7 33 91 18 across the six splits."))
+        for n in ("12", "40", "33", "91"):
+            self.assertIn(n, kept)
+
+    def test_a_short_run_survives(self):
+        from validate import deline
+        # Four ascending integers are a sequence in a sentence, not a margin.
+        self.assertIn("2 3 4 5", deline("Dimensions 2 3 4 5 were tried."))
+
+    def test_the_number_checker_reads_the_stripped_text(self):
+        import validate
+        gutter = " ".join(str(n) for n in range(1, 41))
+        sidecar = {"claims": [{"id": "c", "kind": "result",
+                               "text": "The model was trained on 30 tasks.",
+                               "scope": "One benchmark.", "evidence": "Table 1."}]}
+        was = validate.ROOT
+        with tempfile.TemporaryDirectory() as tmp:
+            os.makedirs(os.path.join(tmp, "build", "fulltext"))
+            path = os.path.join(tmp, "build", "fulltext", "p.txt")
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write(f"Prose about tasks. {gutter} More prose.")
+            validate.ROOT = tmp
+            try:
+                errs, skipped = validate.check_claim_numbers([("p.md", sidecar)])
+            finally:
+                validate.ROOT = was
+        self.assertFalse(skipped)
+        self.assertTrue(any("30" in e for e in errs), errs)
+
+
+class TestAQuoteLinksIntoThePaper(unittest.TestCase):
+    """The review page's quotes are links; the published page's are not.
+
+    Two separate decisions. Linking on the review page is free -- `review_page` writes
+    outside `build/site/`, so `--deploy` cannot reach it -- and it turns checking a claim
+    from a search into a click. Publishing the same link once per claim would add no
+    retrievable fact to a passage that already carries the canonical paper link, so
+    `at_sentence` is called from the review page only.
+
+    A fragment needs the paper's own HTML. An OpenReview or PDF-only paper has nowhere to
+    scroll to, and the honest answer there is no link rather than a broken one.
+    """
+
+    HTML = {"html": "https://arxiv.org/html/2402.14992v2"}
+
+    def test_a_fragment_is_built_for_an_html_paper(self):
+        from draft_sidecars import at_sentence
+        url = at_sentence(self.HTML, "ing examples per scenario are enough to estima")
+        self.assertTrue(url.startswith(self.HTML["html"] + "#:~:text="), url)
+        # First and last tokens go: a window cut mid-word never matches as a substring.
+        self.assertNotIn("ing", urllib.parse.unquote(url.split("text=")[1]).split())
+        self.assertIn("scenario", urllib.parse.unquote(url.split("text=")[1]))
+
+    def test_a_paper_with_no_html_gets_no_link(self):
+        from draft_sidecars import at_sentence
+        self.assertEqual("", at_sentence({"openreview": "https://openreview.net/f"}, "x y z"))
+        self.assertEqual("", at_sentence({"arxiv_pdf": "https://arxiv.org/pdf/1.pdf"}, "x y z"))
+        self.assertEqual("", at_sentence(self.HTML, "   "))
+
+    def test_only_the_review_page_links_quotes(self):
+        with open(os.path.join(ROOT, "scripts", "draft_sidecars.py"), encoding="utf-8") as fh:
+            tree = ast.parse(fh.read())
+        callers = {fn.name for fn in ast.walk(tree)
+                   if isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef))
+                   for n in ast.walk(fn)
+                   if isinstance(n, ast.Call) and getattr(n.func, "id", "") == "at_sentence"}
+        self.assertEqual({"review_page"}, callers)
 
 
 if __name__ == "__main__":

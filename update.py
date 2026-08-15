@@ -1535,7 +1535,8 @@ def step_worklist(cfg, args) -> None:
             # of which is already published, rather than checking a new page. `--accept`
             # refuses it without `--replace` for the same reason.
             mark = "  **replaces the live sidecar**" if p.get("has_sidecar") else ""
-            lines.append(f"- [ ] **{(p.get('title') or slug)[:60]}** — "
+            title = p.get("title_display") or p.get("title") or slug
+            lines.append(f"- [ ] **{title[:60]}** — "
                          f"{p.get('citations') or 0} cites{mark}")
             lines.append(f"      - read: [in the review page](file://{page}#{slug}) · "
                          f"[raw draft](data/sidecars/drafts/{slug}.md)")

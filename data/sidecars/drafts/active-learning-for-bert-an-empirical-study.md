@@ -16,6 +16,8 @@ What to check, in the order it pays:
    the talk abstract. Make it yours.
 
 Then promote it:  python scripts/draft_sidecars.py --accept active-learning-for-bert-an-empirical-study
+
+Stamp: spec=4f2ab401ad91 checks=pass body=3978c77cbfb4
 -->
 ---
 one_liner: Active learning on top of BERT raises F1 by 4-8 points over random sampling for
@@ -24,77 +26,83 @@ one_liner: Active learning on top of BERT raises F1 by 4-8 points over random sa
   sample.
 claims:
 - id: al-helps-bert-imbalanced-practical
-  text: Active learning strategies raise BERT's F1 by 4-8 points on average over a random-sampling
-    baseline in the imbalanced-practical setting, where the initial 100 labelled examples
-    are drawn from a keyword query and the positive class prior is 15% or lower.
-  scope: Binary text classification, BERT-BASE, an annotation budget of 100 seed examples
-    plus 5 iterations of 50; the 4-8 point margin is specific to the imbalanced-practical
-    scenario. Gains in the balanced setting exist but are much smaller, and two strategies
-    (Expected Gradient Length, Perceptron Ensemble) do not beat random there at all.
+  text: Active learning raises BERT's F1 by 4-8 points on average over random sampling in
+    the imbalanced-practical setting. There the 100 seed labels come from a keyword query
+    and the positive class prior is 15% or lower.
+  scope: Binary English text classification with BERT-BASE, on a budget of 100 seed examples
+    plus 5 iterations of 50. Balanced-setting gains are much smaller, and 2 of the 7 strategies
+    never beat random there.
   evidence: Section 4, Figure 1 (bottom row), Table 3
+- id: where-to-start-on-active-learning-for-transformers
+  kind: context
+  text: 'For deciding whether active learning is worth it when fine-tuning BERT on a small
+    labelling budget, this is the systematic empirical answer: 7 strategies, 10 binary datasets
+    and 3 class-balance scenarios.'
+  scope: True for English binary text classification with BERT-BASE at a budget of 100 seed
+    labels plus 5 rounds of 50. Nothing in the paper certifies this positioning.
+  evidence: Section 1 and Section 3; Table 1 for the datasets.
 - id: no-single-strategy-wins
-  text: 'No one active learning strategy consistently outperforms the others for BERT: across
-    seven strategies, three scenarios and ten datasets, no pair of strategies differs significantly
-    after Bonferroni correction, even though every strategy beats random sampling on skewed
-    data.'
-  scope: Holds across the seven strategies tested (Least Confidence, Monte Carlo Dropout,
-    Perceptron Ensemble, Expected Gradient Length, Core-Set, Discriminative Active Learning,
-    and Random as baseline) at this budget; strategies do differ substantially in runtime,
-    so the choice is a cost decision rather than an accuracy one.
+  text: No active learning strategy consistently outperforms the others for BERT. Across 7
+    strategies, 3 scenarios and 10 datasets, no pair differs significantly after Bonferroni
+    correction, even where every strategy beats random sampling.
+  scope: 'The 7 tested at this budget: Least Confidence, Monte Carlo Dropout, Perceptron Ensemble,
+    Expected Gradient Length, Core-Set, Discriminative Active Learning, and random. Runtimes
+    do differ, so the choice is a cost decision.'
   evidence: Section 4, Table 3
 - id: all-strategies-beat-random-when-skewed
   text: Every active learning strategy tested significantly outperforms random sampling for
     BERT when the target class prior is 15% or lower, with Wilcoxon p-values after Bonferroni
     correction from below 10^-2 to below 10^-9.
-  scope: The imbalanced and imbalanced-practical scenarios only. In the balanced setting (20-50%
-    positive prior) Expected Gradient Length and Perceptron Ensemble show no significant improvement
-    over random.
+  scope: The imbalanced and imbalanced-practical scenarios only. At a 20-50% positive prior,
+    Expected Gradient Length and Perceptron Ensemble show no significant improvement over
+    random.
   evidence: Table 3
 - id: recall-not-precision-drives-the-gain
-  text: When the labelled seed comes from a keyword query, active learning's F1 gain for BERT
-    is driven entirely by recall rather than precision, and the model recovers from the query's
-    bias to match the F1 it reaches from an unbiased positive sample after a few iterations.
-  scope: Imbalanced-practical scenario; in the imbalanced scenario with an unbiased positive
-    seed the same F1 gain is driven mostly by precision instead. The starting model from a
-    biased query seed has lower F1 at iteration 0 in every case.
+  text: When BERT's labelled seed comes from a keyword query, the F1 gain from active learning
+    is driven entirely by recall. Within a few iterations the model matches the F1 it reaches
+    from an unbiased positive sample.
+  scope: The imbalanced-practical scenario. Given an unbiased positive seed instead, the same
+    gain comes mostly from precision, and a biased query seed always starts from a lower F1
+    at iteration 0.
   evidence: Section 4, Appendix Figures 4 and 5
 - id: uncertainty-strategies-pick-redundant-batches
-  text: Uncertainty-based selection for BERT (Least Confidence, Monte Carlo Dropout, Perceptron
-    Ensemble, Expected Gradient Length) produces batches that are measurably less diverse
-    and less representative than those from the batch-aware strategies, with Discriminative
-    Active Learning scoring highest on both diversity and representativeness.
-  scope: Measured on the first 50-example batch after the initial model, with diversity as
-    minimum-distance coverage and representativeness as inverse KNN-density over BERT [CLS]
-    vectors; greedy Core-Set is diverse but scores low on representativeness except in the
-    imbalanced-practical scenario.
+  text: Uncertainty-based selection for BERT picks 50-example batches measurably less diverse
+    and less representative than batch-aware selection does, out of the 7 strategies compared.
+    Discriminative Active Learning scores highest on both.
+  scope: The first batch after the initial model, with diversity as minimum-distance coverage
+    and representativeness as inverse KNN-density over BERT [CLS] vectors. Greedy Core-Set
+    is diverse but not representative.
   evidence: Section 5, Figure 2
 - id: batch-overlap-under-15-percent
-  text: 'Different active learning strategies select largely different examples: for every
-    pair of the strategies tested, expected overlap between the selected 50-example batches
-    does not exceed 15%.'
-  scope: One batch, measured from the same BERT model and the same unlabelled pool. Overlap
-    is higher within the uncertainty-based family and in the imbalanced scenarios; the single
-    highest overlap is between Expected Gradient Length and Least Confidence. The paper does
-    not test whether combining low-overlap strategies helps.
+  text: Active learning strategies select largely different examples from one BERT model and
+    pool. For every pair of the 7 strategies, expected overlap between their selected 50-example
+    batches stays at or below 15%.
+  scope: One batch per pair. Overlap is highest inside the uncertainty-based family and in
+    the imbalanced scenarios, peaking between Expected Gradient Length and Least Confidence.
   evidence: Section 5
 - id: batch-size-and-sequence-length-tradeoff
-  text: 'BERT fine-tuning stability under a 100-500 example budget depends strongly on batch
-    size, and with fixed GPU memory the best setting traded sequence length for it: batch
-    size 50 with a 100-WordPiece-token maximum, BERT-BASE, 5 epochs, learning rate 5e-5, retrained
-    from scratch at every iteration.'
-  scope: An empirical finding on this hardware (single Tesla K80) and these ten datasets,
-    not a general recipe. Random 100-example seeds on the skewed datasets were unstable enough
-    to be unusable, which is why the imbalanced scenarios add 100 weakly-labelled negatives.
+  text: 'BERT fine-tuning stability on 100-500 examples depends strongly on batch size. Under
+    fixed GPU memory the best setting traded sequence length for it: batch size 50, a 100-WordPiece-token
+    cap, 5 epochs at learning rate 5e-5, retrained from scratch each iteration.'
+  scope: A single Tesla K80 and 10 binary datasets, so a starting point rather than a recipe.
+    Random 100-example seeds on the skewed datasets were too unstable to use, which is why
+    the imbalanced scenarios add 100 weakly-labelled negatives.
   evidence: Section 3.5, Section 3.2
 - id: scale-of-the-study
-  text: 'The study covers 2,520 BERT fine-tuning runs: 14 dataset-scenario combinations, 5
-    initial seeds each, one base model plus 7 selection strategies over 5 iterations, across
-    10 binary text classification datasets.'
-  scope: All English, all binary tasks derived by selecting one target class per dataset,
-    all BERT-BASE. Iteration runtimes differ by three orders of magnitude between strategies
-    (under 1 second for random, 1106 for Expected Gradient Length at 7,000 unlabelled examples).
+  text: 'Comparing active learning strategies for BERT took 2,520 fine-tuning runs: 14 dataset-scenario
+    combinations, 5 seeds each, one base model plus 7 strategies over 5 iterations, on 10
+    binary text classification datasets.'
+  scope: All English, all binary tasks made by picking one target class per dataset, all BERT-BASE.
+    Iteration runtime spans 3 orders of magnitude, up to 1106 seconds for Expected Gradient
+    Length at 7,000 unlabelled examples.
   evidence: Section 3.4, Table 1, Table 2
 qa:
+- q:
+  - Where should I start on active learning for text classification with transformers?
+  - What is the reference study on active learning for BERT?
+  - How do I choose an active learning strategy for a small labelling budget?
+  answers:
+  - where-to-start-on-active-learning-for-transformers
 - q:
   - Does active learning actually help when fine-tuning BERT?
   - Is active learning worth it for BERT text classification?
@@ -148,11 +156,11 @@ misreadings:
   tasks. They say nothing about few-shot prompting, instruction-tuned models, or multi-class
   settings, none of which were tested.
 terminology:
-  imbalanced-practical: 'This paper''s third scenario, and its main contribution: the initial
-    labelled set is obtained by a keyword query rather than sampled, so it is enriched with
-    positive examples but biased towards whatever the query matches -- the situation a practitioner
-    is actually in.'
-  imbalanced: Used here for a positive class prior of 15% or lower, with the assumption that
+  imbalanced-practical: An active learning scenario in which the initial labelled set is retrieved
+    by a keyword query rather than sampled, so it is enriched with positive examples but biased
+    toward whatever the query matches. It is the situation a practitioner bootstrapping a
+    rare-class classifier is actually in.
+  imbalanced: An active learning scenario with a positive class prior of 15% or lower, where
     an unbiased sample of 100 positive examples can still be obtained. Distinct from imbalanced-practical,
     which drops that assumption.
   diversity: A batch-level measure, defined as the inverse of the mean over the unlabelled
@@ -161,6 +169,4 @@ terminology:
   representativeness: 'One over the average KNN-density (K=10) of the batch''s instances in
     [CLS] space: high values mean the batch avoids outliers, rather than that it covers the
     label distribution.'
-links_extra:
-  code: https://github.com/IBM/low-resource-text-classification-framework
 ---

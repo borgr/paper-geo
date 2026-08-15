@@ -16,7 +16,7 @@ holds the instructions; nothing here repeats them.
 **One edit each, and each one closes a section outright.** This is where
 the page gets visibly shorter.
 
-1. **Sidecar drafts awaiting your verification (1)** — read the draft and `--accept` it. The only place on this page where your judgement is the input rather than the check, because accepting publishes an assertion under your name.
+1. **Sidecar drafts awaiting your verification (4)** — read the draft and `--accept` it. The only place on this page where your judgement is the input rather than the check, because accepting publishes an assertion under your name.
 2. **1 paper in the corpus that the bibliography does not have** — one paste into `orig.bib`. The pipeline's only real input is that file, and the override line standing in for it goes on the next run.
 
 **As much as you have patience for.** Per-paper clicking, because
@@ -197,14 +197,14 @@ per paper, built from the publisher's own bibtex. The same for all
 `Report number:` stays blank on all of them: it means an *institutional* preprint
 number (a lab's own report series) and none of these has one.
 
-## Sidecar drafts awaiting your verification (1)
+## Sidecar drafts awaiting your verification (4)
 
 Drafted from each paper's own full text: claims with their magnitudes,
 scope conditions, terminology and likely misreadings. Every number is a
 machine's reading and needs your eyes — but you are correcting a page,
 not writing one.
 
-**Read it here — one page, no commands:**
+**Read all 4 here — one page, no commands:**
 <file:///Users/lc/PycharmProjects/paper-geo/build/sidecar_review.html>
 
 This run generated it. Every figure a draft states is printed beside the
@@ -214,13 +214,22 @@ so the check is comparing two lines, never opening a PDF. The only thing
 left is `--accept`, which is below and which publishes the page under your
 name.
 
+- [ ] **tinyBenchmarks: evaluating LLMs with fewer examples** — 284 cites
+      - read: [in the review page](file:///Users/lc/PycharmProjects/paper-geo/build/sidecar_review.html#tinybenchmarks-evaluating-llms-with-fewer-examples) · [raw draft](data/sidecars/drafts/tinybenchmarks-evaluating-llms-with-fewer-examples.md)
+      - publish: `python scripts/draft_sidecars.py --accept tinybenchmarks-evaluating-llms-with-fewer-examples`
+- [ ] **Active Learning for BERT: An Empirical Study** — 244 cites
+      - read: [in the review page](file:///Users/lc/PycharmProjects/paper-geo/build/sidecar_review.html#active-learning-for-bert-an-empirical-study) · [raw draft](data/sidecars/drafts/active-learning-for-bert-an-empirical-study.md)
+      - publish: `python scripts/draft_sidecars.py --accept active-learning-for-bert-an-empirical-study`
+- [ ] **Findings of the BabyLM Challenge: Sample-Efficient Pretraini** — 233 cites
+      - read: [in the review page](file:///Users/lc/PycharmProjects/paper-geo/build/sidecar_review.html#findings-of-the-babylm-challenge-sample-efficient-pretrainin) · [raw draft](data/sidecars/drafts/findings-of-the-babylm-challenge-sample-efficient-pretrainin.md)
+      - publish: `python scripts/draft_sidecars.py --accept findings-of-the-babylm-challenge-sample-efficient-pretrainin`
 - [ ] **A Statistical Framework for Game-Based AI Evaluation** — 0 cites
       - read: [in the review page](file:///Users/lc/PycharmProjects/paper-geo/build/sidecar_review.html#a-statistical-framework-for-game-based-ai-evaluation) · [raw draft](data/sidecars/drafts/a-statistical-framework-for-game-based-ai-evaluation.md)
       - publish: `python scripts/draft_sidecars.py --accept a-statistical-framework-for-game-based-ai-evaluation`
 
-## Sidecars not yet drafted (110/113)
+## Sidecars not yet drafted (107/113)
 
-17 of these already have a draft file on disk, written against sidecar rules
+14 of these already have a draft file on disk, written against sidecar rules
 that have since changed. `--accept` refuses them and the next run overwrites
 them, so do not spend an evening reading one; they need the same re-run as the rest.
 
@@ -245,12 +254,12 @@ published one, and the only one the site builds from.
 `update.py` also drafts a batch on every run, so this number falls on
 its own.
 
-- `tinybenchmarks-evaluating-llms-with-fewer-examples` — 284 cites — tinyBenchmarks: evaluating LLMs with fewer examples
-- `active-learning-for-bert-an-empirical-study` — 244 cites — Active Learning for BERT: An Empirical Study
-- `findings-of-the-babylm-challenge-sample-efficient-pretrainin` — 233 cites — Findings of the BabyLM Challenge: Sample-Efficient Pretr
 - `global-mmlu-understanding-and-addressing-cultural-and-lingui` — 182 cites — Global MMLU: Understanding and Addressing Cultural and L
 - `an-autonomous-debating-system` — 171 cites — An autonomous debating system
 - `q2-evaluating-factual-consistency-in-knowledge-grounded-dial` — 167 cites — Q²: Evaluating Factual Consistency in Knowledge-Grounded
+- `on-the-weaknesses-of-reinforcement-learning-for-neural-machi` — 127 cites — On the Weaknesses of Reinforcement Learning for Neural M
+- `fusing-finetuned-models-for-better-pretraining` — 121 cites — Fusing finetuned models for better pretraining
+- `disentqa-disentangling-parametric-and-contextual-knowledge-w` — 119 cites — DisentQA: Disentangling Parametric and Contextual Knowle
 
 
 ## Deferred
