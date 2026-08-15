@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept tinybenchmarks-evaluating-llms-with-fewer-examples
 
-Stamp: spec=4f2ab401ad91 checks=pass body=70e67cf73ef6
+Stamp: spec=64fd55c31d7c checks=pass body=6590df293e77
 -->
 ---
 one_liner: 'A benchmark''s headline number does not need the whole benchmark: fit item response
@@ -139,7 +139,7 @@ claims:
   scope: The correctness matrix behind the subset comes from full evaluations of hundreds
     of models, and both subset and fitted parameters need refreshing as models change. Severe
     distribution shift is the named failure mode.
-  evidence: Section 7 'Limitations'; Section 6.2 and Appendix E.4 for the adaptive extension
+  evidence: Section 6.2 'Limitations'; Section 6.1 and Figure 8 for the adaptive extension
     and its running time.
 - id: how-it-was-run
   text: '4 benchmarks and 6 strategies were compared: stratified random, correctness clustering
@@ -174,7 +174,7 @@ qa:
 - q:
   - What does tinyBenchmarks need before it can be used on a benchmark?
   - Can I build a tiny version of my own benchmark?
-  - What data does the method assume I already have?
+  - What data does a curated benchmark subset assume I already have?
   answers:
   - the-method-needs-a-pool-of-already-evaluated-models
   - what-it-does-not-do
@@ -205,7 +205,7 @@ qa:
   answers:
   - random-sampling-catches-up-at-two-to-four-times-the-budget
 - q:
-  - Is there a guarantee that the estimator is correct?
+  - Is a small-sample benchmark estimate proved to converge to the true score?
   - What does the theory actually prove?
   - How strong is the consistency result?
   answers:
@@ -239,7 +239,7 @@ qa:
   - what-it-does-not-do
   - the-consistency-result-assumes-the-item-parameters-are-known
 - q:
-  - How were the experiments set up?
+  - How were the tinyBenchmarks experiments set up?
   - Which benchmarks and models were used?
   - How was the IRT model fitted?
   answers:

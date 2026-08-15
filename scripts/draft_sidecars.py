@@ -102,11 +102,13 @@ def spec_sha() -> str:
     every function that judges the result -- `readability` included, because a draft
     written before the sentence caps existed is exactly a draft `--accept` now refuses.
     """
-    from validate import check_claim_numbers, check_sidecar_shape, readability
+    from validate import (check_claim_evidence, check_claim_numbers, check_sidecar_shape,
+                          readability)
     parts = (rules_block(RULES_DOC),
              json.dumps(schema(), sort_keys=True),
              inspect.getsource(check_sidecar_shape),
              inspect.getsource(check_claim_numbers),
+             inspect.getsource(check_claim_evidence),
              inspect.getsource(readability))
     return hashlib.sha256("\n".join(parts).encode()).hexdigest()[:12]
 
@@ -230,7 +232,81 @@ def readme(p: dict, limit: int = 6000) -> str:
     return text[:limit]
 
 
+_CAPTION = re.compile(r"^[ \t]*(Figure|Fig\.|Table)[ \t]*(\d+)[ \t]*[:.]?[ \t]*(.{0,180})", re.M)
+_SECTION = re.compile(r"^[ \t]*(\d+(?:\.\d+){0,2})[ \t]*\n*[ \t]*([A-Z][^\n]{0,70})", re.M)
+_APPENDIX = re.compile(r"\bAppendix[ \t]+([A-Z](?:\.\d+)*)")
+# Above this, a line-leading numeral is a page number or a math expression rather than a
+# section: measured, `55` and `212` are what a real paper's text offers at line start.
+_SECTION_MAX = 20
+_CAPTIONS_CHARS = 4000
+
+
+def _runs(nums) -> str:
+    """`1-8, 11, 13` from a set of numerals, which is the form a person checks against."""
+    xs = sorted({int(n) for n in nums})
+    out, i = [], 0
+    while i < len(xs):
+        j = i
+        while j + 1 < len(xs) and xs[j + 1] == xs[j] + 1:
+            j += 1
+        out.append(str(xs[i]) if j == i else f"{xs[i]}-{xs[j]}")
+        i = j + 1
+    return ", ".join(out) or "(none found)"
+
+
+def inventory(text: str) -> str:
+    """What the paper's own numbering contains, lifted out of the text ahead of drafting.
+
+    Two jobs, both of them code doing work the model was doing badly by hand.
+
+    The pointer list is the one that pays. `evidence:` is a citation into the paper, and a
+    citation to a section that does not exist is the error class `validate` makes fatal at
+    `--accept` -- caught once already, a Limitations claim citing Section 7 of a paper
+    whose last section is 6. Discovering that at review time is a round trip; handing over
+    the real numbering costs nothing and removes the guess.
+
+    The captions are lifted because they are where magnitudes live and because the full
+    text is *truncated* -- beginning and end kept -- so a caption in the middle of a long
+    paper is exactly what the model never sees. Half of a page's result claims must state
+    a figure, and this is the densest source of them in any paper.
+
+    Approximate, and safe in the direction it errs: PDF text loses column order, so a
+    caption can arrive scrambled and a heading can be missed. Nothing here is authority --
+    `check_claim_evidence` verifies pointers against the text independently.
+    """
+    from validate import deline
+    text = deline(text)
+    figs, tabs, caps, seen = set(), set(), [], set()
+    for kind, num, rest in _CAPTION.findall(text):
+        (tabs if kind == "Table" else figs).add(num)
+        label = f"{'Table' if kind == 'Table' else 'Figure'} {num}"
+        if label not in seen:
+            seen.add(label)
+            caps.append(f"{label}: {' '.join(rest.split())}")
+    secs = sorted({s for s, _ in _SECTION.findall(text)
+                   if int(s.split(".")[0]) <= _SECTION_MAX},
+                  key=lambda s: [int(x) for x in s.split(".")])
+    parts = [f"sections numbered in the text: {', '.join(secs) or '(none found)'}",
+             f"figures: {_runs(figs)}",
+             f"tables: {_runs(tabs)}",
+             f"appendices: {', '.join(sorted(set(_APPENDIX.findall(text)))) or '(none found)'}",
+             "Cite only pointers from these lists. A claim's `evidence` naming a section "
+             "the paper does not have is rejected at accept time."]
+    if caps:
+        body, used = [], 0
+        for c in caps:
+            if used + len(c) > _CAPTIONS_CHARS:
+                body.append(f"... {len(caps) - len(body)} more captions not shown")
+                break
+            body.append(c)
+            used += len(c)
+        parts += ["", "figure and table captions (where the magnitudes are, and the part "
+                      "the truncation above may have cut):", *body]
+    return "\n".join(parts)
+
+
 def evidence(p: dict, cfg: dict, no_fulltext: bool = False) -> str:
+    from validate import deline
     ft, ft_source = ("", "") if no_fulltext else fulltext(p, cfg)
     rm = "" if no_fulltext else readme(p)
     parts = [f"title: {p.get('title_display') or p['title']}",
@@ -251,7 +327,12 @@ def evidence(p: dict, cfg: dict, no_fulltext: bool = False) -> str:
         how = (f"shortened to {len(ft):,} of {len(ft) + cut:,} characters, "
                "beginning and end kept, the gap marked in place"
                if cut else f"complete, {len(ft):,} characters")
-        parts += [f"full text (from {ft_source}; {how}):", ft, ""]
+        parts += ["what the paper's own numbering contains:", inventory(ft), "",
+                  # Delined for the same reason the checkers deline: a PDF's line-number
+                  # gutter is a column of numerals with no meaning, and a drafter reading
+                  # `47` beside a sentence has been handed a magnitude that is not one.
+                  # Generation and checking now read the same text.
+                  f"full text (from {ft_source}; {how}):", deline(ft), ""]
     else:
         parts += ["full text: NOT AVAILABLE from any open source. Draft from the "
                   "abstract only,",
@@ -452,6 +533,44 @@ def write_draft(slug: str, sidecar: dict, source: str) -> str:
     return path
 
 
+def restamp(slugs: list[str] | None = None) -> tuple[list[str], list[tuple[str, str]]]:
+    """Re-check drafts as they stand and rewrite their stamps. Returns (done, refused).
+
+    The operation that was missing, and the gap was structural: `spec_sha` hashes the
+    source of every function that judges a draft, so editing any check -- even adding a
+    rule that the drafts already satisfy -- marks all of them "spec moved". The only way
+    back was `--ingest`, which rewrites front matter from the task file and destroys the
+    author's review, which is the one thing here that cannot be re-derived. So a checker
+    edit either cost the review or left the drafts parked; this is the third option.
+
+    It refuses a draft that does not currently pass, and that restriction is the whole
+    safety property. A stamp is what makes `pending` skip a slug and `held` keep it, so
+    stamping a failing draft would park it where nothing queues it and nothing reports it.
+    A draft that fails the new rules should stay stale until somebody fixes it or replaces
+    it -- which is what `held` already says out loud.
+    """
+    spec, done, refused = spec_sha(), [], []
+    for f in sorted(glob.glob(os.path.join(DRAFTS, "*.md"))):
+        slug = os.path.basename(f)[:-3]
+        if slugs and slug not in slugs:
+            continue
+        n = sum(len(x) for x in validate_draft(f, note=False))
+        if n:
+            refused.append((slug, f"{n} finding(s) against the current checks"))
+            continue
+        text = open(f).read()
+        want = f"Stamp: spec={spec} checks=pass body={sha(body_of(f))}"
+        if STAMP.search(text):
+            text = STAMP.sub(want, text, count=1)
+        else:
+            refused.append((slug, "no Stamp line to rewrite -- re-draft it instead"))
+            continue
+        with open(f, "w") as fh:
+            fh.write(text)
+        done.append(slug)
+    return done, refused
+
+
 def ingest(papers: list[dict]) -> int:
     if not os.path.exists(TASKS):
         sys.exit(f"no {TASKS} -- run without --ingest first")
@@ -516,11 +635,12 @@ def validate_draft(path: str, note: bool = True) -> tuple[list[str], list[str]]:
             if a not in ids:
                 errs.append(f"{path}: qa answer `{a}` is not a claim id")
 
-    from validate import check_claim_numbers, check_readability, check_sidecar_shape
+    from validate import (check_claim_evidence, check_claim_numbers, check_readability,
+                          check_sidecar_shape)
     entry = [(os.path.basename(path), fm)]
     quality = check_sidecar_shape(entry) + check_readability(entry)
     numbers, no_text = check_claim_numbers(entry)
-    quality += numbers
+    quality += numbers + check_claim_evidence(entry)[0]
     if no_text and note:
         # Not a failure, and not silent either: the rule with no exceptions is the one
         # that must never quietly stop running.
@@ -533,41 +653,6 @@ def oneline(s) -> str:
     """A folded YAML scalar as one terminal line."""
     return re.sub(r"\s+", " ", str(s or "")).strip()
 
-
-_KINDS = {"table": r"tab(?:le)?", "tab": r"tab(?:le)?",
-          "figure": r"fig(?:ure)?", "fig": r"fig(?:ure)?",
-          "section": r"(?:section|sec|§)", "sec": r"(?:section|sec|§)",
-          "appendix": r"appendix", "app": r"appendix",
-          "equation": r"(?:equation|eq)", "eq": r"(?:equation|eq)"}
-# A pointer's kind, then its number. Appendices are lettered at least as often as they
-# are numbered, and only appendices are, so the letter form is admitted for them alone --
-# otherwise every `Fig a` and `sec. b` typo becomes a pointer to go hunting for.
-_POINTER = re.compile(
-    r"\b(table|figure|fig|tab|section|sec|equation|eq)\.?\s*([0-9]+(?:\.[0-9]+)*[a-z]?)\b"
-    r"|\b(appendix|app)\.?\s*([0-9]+(?:\.[0-9]+)*|[A-Z](?:\.[0-9]+)*)\b", re.I)
-# Kinds a paper also prints as a bare heading number.
-_HEADED = ("section", "sec", "appendix", "app", "equation", "eq")
-
-
-def evidence_pointers(s: str) -> list[tuple[str, re.Pattern]]:
-    """Each 'Table 2' / 'Fig. 4b' / 'Appendix A' in an evidence string, and how to find it.
-
-    Papers abbreviate their own cross-references inconsistently -- `Table 2`, `Tab. 2`,
-    `table 2` -- so the pointer is matched by kind and number rather than verbatim.
-    """
-    out = []
-    for m in _POINTER.finditer(str(s)):
-        kind, num = (m.group(1), m.group(2)) if m.group(1) else (m.group(3), m.group(4))
-        pat = rf"{_KINDS[kind.lower()]}\.?\s*{re.escape(num)}\b"
-        # Two ways a paper names its own parts, and section pointers need the second one.
-        # Inline is the cross-reference ("as shown in Table 2"); the heading form is the
-        # part itself, printed as a bare number -- extracted text renders section 3.1 as
-        # `3.1 LoRA models are difficult to merge`, and never as `Section 3.1`, so
-        # checking the inline form alone failed every section pointer in the corpus.
-        if kind.lower() in _HEADED:
-            pat += rf"|^[ \t]*{re.escape(num)}[ \t]+\S"
-        out.append((f"{kind} {num}", re.compile(pat, re.I | re.M)))
-    return out
 
 
 def quote(flat: str, figure: str) -> str:
@@ -615,7 +700,8 @@ def checked(slug: str) -> dict | str:
     if fm is None:
         return f"{os.path.relpath(path, ROOT)}: unreadable front matter"
 
-    from validate import deline, figures, figures_in, readability, rounds_to, values_in
+    from validate import (deline, evidence_pointers, figures, figures_in, readability,
+                          rounds_to, values_in)
     # Bucketed by what each finding is about, so the renderers put it next to the
     # sentence rather than in a list at the bottom that reads as someone else's problem.
     prose = {}
@@ -842,7 +928,8 @@ def review_page(papers: list[dict]) -> str:
         for d in done:
             p = by_slug.get(d["slug"]) or {}
             bad = _flags(d)
-            out.append(f"<li><a href='#{e(d['slug'])}'>{e((p.get('title') or d['slug'])[:70])}"
+            out.append(f"<li><a href='#{e(d['slug'])}'>"
+                       f"{e((p.get('title_display') or p.get('title') or d['slug'])[:70])}"
                        f"</a> — {p.get('citations') or 0} cites"
                        + (f" · <span class=bad>{e('; '.join(bad))}</span>" if bad else "")
                        + "</li>")
@@ -852,7 +939,7 @@ def review_page(papers: list[dict]) -> str:
         p = by_slug.get(d["slug"]) or {}
         slug = d["slug"]
         out += [f"<div class=paper id='{e(slug)}'>",
-                f"<h2>{e(p.get('title') or slug)}</h2>",
+                f"<h2>{e(p.get('title_display') or p.get('title') or slug)}</h2>",
                 f"<p class=sub>{p.get('citations') or 0} cites · "
                 f"<code>{e(d['path'])}</code></p>"]
         if bad := _flags(d):
@@ -958,7 +1045,7 @@ def review_page(papers: list[dict]) -> str:
         for s in live:
             p = by_slug.get(s) or {}
             built = os.path.join(BUILD, "site", "papers", s, "index.html")
-            title = e((p.get("title") or s)[:70])
+            title = e((p.get("title_display") or p.get("title") or s)[:70])
             if os.path.exists(built):
                 out.append(f"<li><a href='file://{e(built)}'>{title}</a> · "
                            f"<a href='file://{e(os.path.dirname(built))}/llms.txt'>llms.txt"
@@ -1094,6 +1181,11 @@ def main() -> None:
     ap.add_argument("--ingest", action="store_true",
                     help="fold build/sidecar_tasks.json answers into drafts/")
     ap.add_argument("--review", action="store_true", help="what is drafted vs live")
+    ap.add_argument("--restamp", nargs="*", metavar="SLUG",
+                    help="re-check drafts in place and rewrite their stamps: what to run "
+                         "after editing a check, so a rule change does not cost the "
+                         "reviewing already done. Refuses any draft that now fails. "
+                         "No slugs means every draft")
     ap.add_argument("--show", nargs="+", metavar="SLUG",
                     help="print each claim beside the evidence it cites, and the "
                          "paper's own sentence for every figure it states")
@@ -1124,6 +1216,13 @@ def main() -> None:
 
     if args.page:
         print(f"file://{write_review_page(papers)}")
+        return
+    if args.restamp is not None:
+        done, refused = restamp(args.restamp or None)
+        print(f"re-stamped {len(done)} draft(s) against the current spec"
+              + (f": {', '.join(done)}" if done else ""))
+        for slug, why in refused:
+            print(f"  left stale: {slug} -- {why}")
         return
     if args.review:
         return review(papers)

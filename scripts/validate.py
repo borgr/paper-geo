@@ -749,10 +749,37 @@ _UNBOUND = re.compile(
     r"|\b(?:is|are|was|were|does|do|did|has|have|had|can|could|would|will|should)\s+"
     r"th(?:is|ese|ose)\b"
     r"|\bth(?:is|ese|ose)\b\s*[?,.]|\bth(?:is|ese|ose)\b$"
-    r"|\bthe authors?\b"
+    # "the authors of Global-MMLU" names them, so only the unattached form counts.
+    r"|\bthe authors?\b(?!\s+of\b)"
     r"|\bhere\b\s*\??$"
+    # Expletive `it` is not a reference: "is it enough to train only B" has no antecedent
+    # to want, and the adjective-plus-infinitive frame is what tells them apart.
     r"|^(?:is|are|was|were|does|do|did|has|have|can|could|would|will|should)\s+"
-    r"(?:it|they|its|their)\b", re.I)
+    r"(?:it|they|its|their)\b(?!\s+\w+\s+(?:to|that)\b)", re.I)
+
+# The same failure one step subtler, and the one the demonstrative rules miss entirely:
+# a definite noun phrase whose referent is the paper the reader is not looking at.
+# "Is there a guarantee that the estimator is correct?" contains no demonstrative and no
+# pronoun, and is still unanswerable and unmatchable -- *which* estimator is the whole
+# question. Only the bare form counts, `the` immediately followed by the role noun: a
+# qualifier in between is what makes it specific, so "the anchor-point method" and "the
+# best active-learning strategy" are exactly the phrasings this must leave alone.
+_BARE_DEFINITE = re.compile(
+    r"\bthe\s+(?:estimator|correction|method|approach|framework|algorithm|model|models"
+    r"|pipeline|metric|technique|system|procedure|setup|dataset|benchmark|corpus"
+    r"|suite|study|experiment|experiments|finding|findings|task|game|challenge"
+    r"|paper|work|authors?|tool|score|scores)\b"
+    # A relative clause binds it as well as an adjective does: "the models I merge" and
+    # "the model they came from" both say which, and both are the natural English.
+    r"(?!\s+(?:I|we|you|they|that|which|who|whose)\b)", re.I)
+
+# ...unless the question names something a query would contain. A capitalised token past
+# the first word, a coined name, a digit: any of them gives "the model" something on
+# screen to attach to, and firing anyway would push drafters toward vaguer questions
+# rather than more specific ones. The first word is excluded because every question
+# starts capitalised.
+_NAMES_SOMETHING = re.compile(r"\S+\s+.*?\b[A-Z][A-Za-z0-9]*[A-Z0-9][A-Za-z0-9-]*\b"
+                              r"|\S+\s+.*?\b[A-Z][a-z]{2,}\b|\d")
 
 # A scope opening by saying what kind of claim it qualifies. It is published after the
 # literal words "Holds for:", so this is the one thing there that cannot parse.
@@ -785,6 +812,37 @@ _ABOUT_PAPER = re.compile(
 # in here: case-insensitively it matches the "US" of "US Law" and "the US concentration",
 # and a claim that says "us" without also saying "we" or "our" does not occur.
 _FIRST_PERSON = re.compile(r"\b(?:we|our)\b", re.I)
+
+# A `result` claim that describes how a component is built instead of asserting what was
+# found. "Q² works in three steps: mark every named entity..." is true, is in the paper,
+# and answers no question a reader arrives with -- it is a method section compressed, and
+# retrieved on its own it gives a summariser machinery to paraphrase and nothing to quote.
+#
+# Deliberately a small allowlist of construction frames rather than the absence of a
+# finding, because the absence test cannot be made to work: measured over every sidecar
+# and draft, "no figure and no comparative word" flags 12 claims of which 5 are findings
+# (a proved consistency theorem, "expert labelers named source reliability first"). The
+# frames below flag 8 and all 8 are descriptions. The cost is recall, and the loss is
+# knowable: a description carrying a contrast escapes, because "rather than" trips
+# `_ASSERTS`. So this catches the clear cases and rule 2 of `docs/SIDECAR.md` carries the
+# rest -- which is the right split, since the judgement is what a reader wanted to know
+# and no regex holds that.
+_DESCRIBES = re.compile(
+    r"\bworks? by\b|\bin (?:two|three|four|five|2|3|4|5) steps\b|\bconsists? of\b"
+    r"|\b(?:is|are) (?:implemented|distributed as|formatted|computed|defined|structured"
+    r"|clustered|factorised|factorized|thresholded|encoded|represented|parameterised"
+    r"|parameterized|fed)\b"
+    r"|\bshares? all parameters\b|\btrains? (?:a|an|the|one|two)\b|\bemits?\b"
+    r"|\bare determined by\b|\bby modell?ing\b|\bproceeds\b|\bpasses?\b.*\bthrough\b", re.I)
+
+# ...unless the same sentence also does a claim's job. A magnitude is not enough on its
+# own -- a dimension count sits happily inside a description -- so what counts is the
+# vocabulary of a result: a comparison, an outcome verb, or a negation.
+_ASSERTS = re.compile(
+    r"\b(?:better|worse|best|worst|higher|lower|faster|slower|stronger|weaker|than|beats?"
+    r"|outperform\w*|improv\w+|degrad\w+|gain\w*|drops?|dropped|fail\w*|reach\w+|matched"
+    r"|exceed\w*|proved|proves|shows?|showed|found|find|no|not|never|only|enough"
+    r"|suffice\w*)\b", re.I)
 
 # A definition or a correction that points at the page around it. Terminology is
 # published as a schema.org `DefinedTerm` inside a `DefinedTermSet`, so the definition
@@ -851,6 +909,13 @@ def readability(fm: dict) -> list[tuple[str, str, str]]:
             out.append((*at, f"text leans on {m.group(0).strip()!r} -- a claim is "
                             "retrieved with no title and no byline beside it, so name "
                             "the object instead of the paper that reports it"))
+        if (c.get("kind") or "result") == "result":
+            m = _DESCRIBES.search(text)
+            if m and not _ASSERTS.search(text):
+                out.append((*at, f"{m.group(0).strip()!r} describes how the thing is built, "
+                                "and the claim asserts no finding -- say what the reader "
+                                "learns from it, and move the construction into "
+                                "`terminology` or drop it"))
 
         scope = str(c.get("scope") or "").strip()
         conds = sentences(scope)
@@ -899,7 +964,11 @@ def readability(fm: dict) -> list[tuple[str, str, str]]:
         if not isinstance(g, dict):
             continue
         for q in (g.get("q") or []):
-            m = _UNBOUND.search(str(q))
+            # The bare-definite rule yields to a question that names something, which
+            # the demonstrative rules must not: "does this method beat MMLU baselines"
+            # names a benchmark and is still unanswerable about *which* method.
+            m = _UNBOUND.search(str(q)) or (
+                None if _NAMES_SOMETHING.search(str(q)) else _BARE_DEFINITE.search(str(q)))
             if m:
                 out.append(("question", str(q), f"{m.group(0).strip()!r} has no antecedent in the "
                                     "question, so it matches no query and cannot be "
@@ -953,6 +1022,48 @@ def figures(s: str) -> list[str]:
     """
     return list(dict.fromkeys(canon(t) for t in _FIGURE.findall(str(s))
                               if not (len(t) == 1 and t.isdigit())))
+
+
+_KINDS = {"table": r"tab(?:le)?", "tab": r"tab(?:le)?",
+          "figure": r"fig(?:ure)?", "fig": r"fig(?:ure)?",
+          "section": r"(?:section|sec|§)", "sec": r"(?:section|sec|§)",
+          "appendix": r"appendix", "app": r"appendix",
+          "equation": r"(?:equation|eq)", "eq": r"(?:equation|eq)"}
+# A pointer's kind, then its number. Appendices are lettered at least as often as they
+# are numbered, and only appendices are, so the letter form is admitted for them alone --
+# otherwise every `Fig a` and `sec. b` typo becomes a pointer to go hunting for.
+_POINTER = re.compile(
+    r"\b(table|figure|fig|tab|section|sec|equation|eq)\.?\s*([0-9]+(?:\.[0-9]+)*[a-z]?)\b"
+    r"|\b(appendix|app)\.?\s*([0-9]+(?:\.[0-9]+)*|[A-Z](?:\.[0-9]+)*)\b", re.I)
+# Kinds a paper also prints as a bare heading number.
+_HEADED = ("section", "sec", "appendix", "app", "equation", "eq")
+
+
+def evidence_pointers(s: str) -> list[tuple[str, re.Pattern]]:
+    """Each 'Table 2' / 'Fig. 4b' / 'Appendix A' in an evidence string, and how to find it.
+
+    Papers abbreviate their own cross-references inconsistently -- `Table 2`, `Tab. 2`,
+    `table 2` -- so the pointer is matched by kind and number rather than verbatim.
+    """
+    out = []
+    for m in _POINTER.finditer(str(s)):
+        kind, num = (m.group(1), m.group(2)) if m.group(1) else (m.group(3), m.group(4))
+        pat = rf"{_KINDS[kind.lower()]}\.?\s*{re.escape(num)}\b"
+        # Two ways a paper names its own parts, and section pointers need the second one.
+        # Inline is the cross-reference ("as shown in Table 2"); the heading form is the
+        # part itself, printed as a bare number -- extracted text renders section 3.1 as
+        # `3.1 LoRA models are difficult to merge`, and never as `Section 3.1`, so
+        # checking the inline form alone failed every section pointer in the corpus.
+        if kind.lower() in _HEADED:
+            pat += rf"|^[ \t]*{re.escape(num)}[ \t]+\S"
+            # Some extractors break the heading across lines -- `1\n\nIntroduction` --
+            # which the same-line form above cannot see, and every "Section N" pointer
+            # in such a paper then reads as a citation to a section that does not
+            # exist. The title's capital is what separates a heading from a table cell:
+            # `1` above `0.42` is data, `1` above `Introduction` is a section.
+            pat += rf"|^[ \t]*{re.escape(num)}[ \t]*\n+[ \t]*[A-Z]"
+        out.append((f"{kind} {num}", re.compile(pat, re.I | re.M)))
+    return out
 
 
 # A line-number gutter, as a PDF extractor hands it over: the numbers a review-copy
@@ -1074,6 +1185,38 @@ def check_claim_numbers(entries: list[tuple[str, dict]]) -> tuple[list[str], lis
                     f"{name}: claim {c.get('id', '?')!r} states "
                     f"{', '.join(missing)}, which {'is' if len(missing) == 1 else 'are'}"
                     " not in the paper's own text -- correct it or drop the figure")
+    return errs, skipped
+
+
+def check_claim_evidence(entries: list[tuple[str, dict]]) -> tuple[list[str], list[str]]:
+    """Every `Table 2` / `Section 6.2` a claim cites must be a part the paper has.
+
+    The same class of error as a wrong figure, and treated the same way: `evidence` is
+    what makes a claim checkable, so a pointer into a section that does not exist is
+    worse than no pointer at all -- it sends the one reader who verifies to the wrong
+    place and reads, to everyone else, as diligence. A real one caught it on the first
+    run: a Limitations claim cited "Section 7" of a paper whose last section is 6.
+
+    Only the pointer's existence is checked, never that the part supports the claim.
+    That needs a reader, and this check does not pretend otherwise.
+    """
+    errs, skipped = [], []
+    for name, fm in entries:
+        path = os.path.join(ROOT, "build", "fulltext", f"{name[:-3]}.txt")
+        if not os.path.exists(path):
+            skipped.append(name)
+            continue
+        with open(path, errors="replace") as fh:
+            text = deline(fh.read())
+        for c in (fm.get("claims") or []):
+            if not isinstance(c, dict):
+                continue
+            gone = [label for label, pat in evidence_pointers(c.get("evidence") or "")
+                    if not pat.search(text)]
+            if gone:
+                errs.append(
+                    f"{name}: claim {c.get('id', '?')!r} cites {', '.join(gone)}, which "
+                    f"the paper never mentions -- correct the pointer or drop it")
     return errs, skipped
 
 
@@ -1228,6 +1371,7 @@ def main() -> None:
     soft += check_sidecar_shape(sidecars)
     number_errs, no_text = check_claim_numbers(sidecars)
     soft += number_errs
+    soft += check_claim_evidence(sidecars)[0]
 
     if not have_js:
         print("note: jsonschema not installed -- using the built-in subset of checks")

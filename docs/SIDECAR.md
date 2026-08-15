@@ -44,8 +44,13 @@ Write the fields in this order. They depend on each other in this direction, and
 writing the questions first produces questions whose answers you then have to
 invent.
 
-**1. Find the paper's own numbers first.** Locate the tables and figures carrying
-the results before writing a word. Then hold to one rule for the rest of the draft:
+**1. Start from the paper's own numbers.** The evidence you were given opens with the
+paper's numbering extracted for you — which sections, figures, tables and appendices
+exist, and every figure and table caption, which is both where the magnitudes are and
+the part the truncated full text may have cut. Read that block before writing a word,
+and **cite only pointers it lists**: a claim whose `evidence` names a section the paper
+does not have is rejected at accept time, and that has already happened once. Then hold
+to one rule for the rest of the draft:
 **every figure you write must appear in the paper's own text.** Not "a plausible
 magnitude", not one inferred from a chart, not one carried over from a similar
 paper. If you cannot find the number for a finding, the finding can still become a
@@ -68,7 +73,42 @@ This is not a style preference: the check above and the one that verifies every 
 against the paper's own text both read numerals, so a magnitude spelled out is a
 magnitude nothing can verify — and the paper's tables wrote it as a numeral anyway.
 
-**2. Claims are the core**; everything else is scaffolding. Each one:
+**2. Claims are the core**; everything else is scaffolding.
+
+**A claim asserts something a reader wanted to know. It does not describe a part of the
+paper.** This is the rule that decides whether the page is worth anything, and it is the
+one the drafts break most often without breaking any other rule. The failing claims are
+all true, all in the paper, and all answer a question nobody asked:
+
+> *"Q² works in three steps: mark every named entity and noun phrase in the response as
+> an informative span, generate a question for each…"*
+> *"Examples are clustered into representative anchor points, and what ships is the
+> fitted IRT item parameters rather than the vector of model correctness."*
+> *"Each match is factorised into a multinomial logistic model over how the game ended
+> and, conditional on that, a model of who won."*
+
+Each is a method section compressed. Retrieved on its own it hands a summariser
+machinery to paraphrase and nothing to quote, and it answers no query, because the
+reader who would type its words has already read the paper.
+
+The test, applied to every claim before it goes in: **if a stranger read only this
+sentence, what do they now know that they can use?** "Examples are clustered into anchor
+points" fails it — the reader knows a design detail and can do nothing with it. The
+finding underneath it passes: *"100 examples per scenario estimate an unseen model's
+full-benchmark score to within about 2%."* Same paper, same section, one is the
+mechanism and the other is why anyone cares.
+
+The mechanism is not wasted. It goes in the **second sentence** of the claim it explains,
+where it is the *because* of a finding; or into `terminology`, which exists to define the
+paper's own machinery; or it is dropped. What it may not be is the claim.
+
+Two honest exceptions, and they are narrow. A mechanism is the claim when the mechanism
+*is* the contribution and stating it is the finding — *"RLCR adds a Brier-score
+calibration term to the correctness reward"* is what the paper did. And a `context`
+claim's job is to say what the work *is*, so it names the contribution by design. Both
+still have to say what the reader gets, not walk through how the thing is assembled.
+
+Each claim:
 
 - **is self-contained.** It will be retrieved alone, with no title and no
   surrounding paragraph, so it must name the object and the finding without
@@ -191,6 +231,18 @@ So no phrasing may lean on **`this`/`these`/`those` with nothing before them**, 
 inside the same question is fine and often the natural English — *"can I compare two
 models by their skill profile"* names its subject. The rule is about references with
 no antecedent on screen, not about pronouns.
+
+The same failure one step subtler, and the one that survives every rule above: **a bare
+`the` plus a role noun.** *"Is there a guarantee that the estimator is correct?"* has no
+demonstrative and no pronoun and is still not a question anyone will ask, because *which*
+estimator is the entire question. So is *"how are the model parameters estimated?"*, and
+*"does the method use pseudo-labels?"*. What fixes them is a qualifier or a name, and it
+is the same word a stranger would have typed: *"is the tinyBenchmarks IRT correction
+proved consistent?"*, *"how are IRT item difficulty and discrimination estimated from
+model correctness?"*. Naming something anywhere in the question is enough — *"does the
+anchor-point method apply to prompt selection?"* is specific, and *"the models I merge"*
+is bound by its own relative clause. Bare `the estimator`, `the method`, `the framework`,
+`the dataset`, `the authors`, `the paper` are the forms to avoid.
 
 Phrase questions in the vocabulary of someone who has **not** read the paper. A
 question built around the paper's own coined name has no lexical path from what
@@ -378,7 +430,10 @@ he retract a page over a long sentence. `--anyway` overrides the whole tier.
 | 25 | claim `text` does not open with "the paper"/"the contribution" | accept-time | `readability` — [§2 rule 2](#2-the-rules)'s self-containment bullet, which until now nothing enforced |
 | 26 | no `terminology` definition and no misreading says "here"/"we"/"this paper" | accept-time | `readability` — a `DefinedTerm` travels alone, so a definition of its role on the page defines nothing |
 | 27 | ≥half of a page's `result` claims carry a number | accept-time | `readability`, page-level — [§2 rule 1](#2-the-rules). Never satisfied by inventing one; rule 20 would catch that |
-| 28 | canonical key order | — | **nothing — open, D1** |
+| 28 | **every section, figure and table a claim's `evidence` cites exists in the paper** | accept-time | `validate.py check_claim_evidence` against the cached text, and `--accept` refuses. Only existence, never support: no check here can tell whether Figure 4 shows what the claim says it shows |
+| 29 | no `qa` phrasing leans on a bare `the` + role noun | accept-time | `readability` — rule 23's subtler form. Yields to any question that names something, so a qualifier or a name is the fix |
+| 30 | a `result` claim does not describe construction without asserting a finding | accept-time | `readability`, partial by construction — a small allowlist of frames ("works by", "consists of", "is clustered"), suppressed when the claim also does a claim's job. Prose [§2 rule 2](#2-the-rules) carries the rest, because whether a sentence says something a reader wanted is not a regex |
+| 31 | canonical key order | — | **nothing — open, D1** |
 
 ## 5. What the drift actually looks like
 

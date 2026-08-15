@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept a-statistical-framework-for-game-based-ai-evaluation
 
-Stamp: spec=4f2ab401ad91 checks=pass body=ddb15e38d40b
+Stamp: spec=64fd55c31d7c checks=pass body=cd2eabcb12b9
 -->
 ---
 one_liner: 'A statistical framework for game-based AI evaluation models each match twice:
@@ -42,21 +42,21 @@ claims:
   scope: Arenas whose logs record why a match ended. Nothing measures what a leaderboard loses
     by discarding forfeits, so the standing of the choice is argument rather than evidence.
 - id: two-part-model-with-a-shared-skill-space
-  text: Each match is factorised into a multinomial logistic model over how the game ended
-    and, conditional on the game being valid, a paired-comparison model over win, draw and
-    loss. Both components read the same per-model skill vector.
+  text: One per-model skill vector explains both how a match ended and who won it, so a forfeit
+    and a loss are scored on the same scale instead of one being discarded. Coupling a model
+    of termination to a paired-comparison model of the winner through that vector is what allows
+    it.
   scope: 'TextArena''s termination types: either player timing out, either player making two
-    invalid moves in a row, or a valid game as the reference class. The two components stay
-    coupled only through the shared skill vector.'
-  evidence: Methodology, 3.1, 3.2
+    invalid moves in a row, or a valid game as the reference class.'
+  evidence: Sections 3.1 and 3.2
 - id: skill-enters-both-parts-linearly
   kind: result
-  text: Skill enters both the termination model and the win model linearly, through inner
-    products with per-game loading vectors. A model can be reliable on one game and unreliable
-    on another only through that game's loadings.
-  scope: Every fit of the model as specified. No per-game loading vector is reported, so linearity
-    is a property of the parameterisation and not a measured result.
-  evidence: Methodology, 3.1, 3.2
+  text: A model can be reliable on one game and unreliable on another, because reliability
+    is carried by per-game loading vectors rather than by one global trait. Skill enters the
+    termination model and the win model linearly through those loadings.
+  scope: Every fit of the model as specified. No per-game loading vector is reported, so this
+    is what the parameterisation allows and not a measured difference between games.
+  evidence: Sections 3.1 and 3.2
 - id: four-latent-dimensions-on-textarena
   text: A 4-dimensional skill space was selected for the TextArena fit over 57 models and
     22 game types, chosen by validation loss on a held-out subset of the matches.
@@ -170,7 +170,7 @@ qa:
   - fitted-on-57-models-and-22-game-types
   - four-latent-dimensions-on-textarena
 - q:
-  - How are the model parameters estimated?
+  - How are latent skill vectors estimated from game outcomes?
   - Are latent-skill models of arena outcomes fit by maximum likelihood or Bayesian inference?
   answers:
   - two-part-model-with-a-shared-skill-space

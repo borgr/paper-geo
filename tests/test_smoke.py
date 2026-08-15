@@ -497,6 +497,131 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
                               "the paper does not state whether they were used."]}
         self.assertEqual(check_readability([("ok.md", ok)]), [])
 
+    def test_a_bare_definite_is_caught_and_a_named_subject_is_not(self):
+        """The subtlest form of the unbound-reference rule, and its escape hatch.
+
+        "Is there a guarantee that the estimator is correct?" has no demonstrative and no
+        pronoun, so every other rule passes it, and *which* estimator is the whole
+        question. The escape hatch matters as much as the rule: the moment a question
+        names something a query would contain, "the method" has a referent on screen, and
+        firing anyway would push a drafter toward vaguer questions rather than sharper
+        ones.
+        """
+        from validate import check_readability
+        bad = {"qa": [{"q": ["Is there a guarantee that the estimator is correct?",
+                             "How are the model parameters estimated?"]}]}
+        found = " ".join(check_readability([("bad.md", bad)]))
+        for want in ("'the estimator' has no antecedent", "'the model' has no antecedent"):
+            with self.subTest(want=want):
+                self.assertIn(want, found)
+        ok = {"qa": [{"q": ["Does the anchor-point method apply to prompt selection?",
+                            "Do the models I merge have to be related to my task?",
+                            "What do the authors of Global-MMLU recommend?",
+                            "Is it enough to train only the B matrix in LoRA?"]}]}
+        self.assertEqual(check_readability([("ok.md", ok)]), [])
+
+    def test_a_claim_that_only_describes_construction_is_caught(self):
+        """Rule 30, and the two things it must not do.
+
+        A `result` claim walking through how a component is assembled answers no query --
+        the reader who would type its words has already read the paper. The rule is a
+        small allowlist of construction frames rather than the absence of a finding,
+        because the absence test misclassifies findings: measured over every sidecar here,
+        "no figure and no comparative" flags a proved consistency theorem. So the two
+        negative cases below are the design, not leniency -- a mechanism sentence that
+        also states an outcome is a claim, and a `context` claim's job is to say what the
+        work is.
+        """
+        from validate import check_readability
+        bad = {"claims": [{
+            "id": "pipeline",
+            "text": "Q2 works in three steps: mark every named entity in the response as "
+                    "an informative span, generate a question for each, and answer it "
+                    "against the knowledge the response was grounded in.",
+            "scope": "Knowledge-grounded dialogue with a written grounding document, and "
+                     "English responses only.",
+        }]}
+        self.assertIn("describes how the thing is built",
+                      " ".join(check_readability([("bad.md", bad)])))
+        ok = {"claims": [{
+            "id": "asserts-an-outcome",
+            "text": "RLCR consists of a correctness reward plus a Brier-score term, and it "
+                    "improves calibration error by 12 points without costing accuracy.",
+            "scope": "Two reasoning benchmarks at 7B, with the confidence read from the "
+                     "model's own stated number rather than from its logits.",
+        }, {
+            "id": "context-may-say-what-the-work-is",
+            "kind": "context",
+            "text": "Q2 is the reference for automatic factual-consistency evaluation of "
+                    "knowledge-grounded dialogue, and it consists of question generation "
+                    "followed by question answering.",
+            "scope": "As of publication in 2021, for English dialogue grounded in a "
+                     "written document; nothing in the paper certifies this positioning.",
+        }]}
+        self.assertEqual([f for f in check_readability([("ok.md", ok)])
+                          if "describes how" in f], [])
+
+
+class TestTheEvidencePackHandsOverThePapersNumbering(unittest.TestCase):
+    """What the drafter is given before it writes, which is where `code > agent` lands.
+
+    Rule 1 used to tell a model to "locate the tables and figures carrying the results".
+    Enumerating labels in text is code's work, and doing it in code buys two things a
+    prompt cannot: the pointer list is exact, so a claim citing a section the paper does
+    not have becomes avoidable rather than caught at review; and captions survive the
+    full text's truncation, which is what removes them from a long paper's middle.
+    """
+
+    PAPER = "\n".join([
+        "1", "", "Introduction", "Prose about the setting.",
+        "2", "", "Method", "More prose.",
+        "2.1", "", "Estimator", "Detail.",
+        # A page number and a math expression, which is what a real extraction offers at
+        # line start and what the section cap is there to exclude.
+        "212", "", "Bounded by the display above.",
+        "Figure 1: Accuracy against sample size on MMLU, 14 models.",
+        "Table 3: Per-scenario error at 100 examples.",
+        "We refer to Appendix B for the proof.",
+    ])
+
+    def test_the_pointers_it_lists_are_the_ones_the_paper_has(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import draft_sidecars
+        inv = draft_sidecars.inventory(self.PAPER)
+        self.assertIn("1, 2, 2.1", inv)
+        self.assertNotIn("212", inv)
+        self.assertIn("figures: 1", inv)
+        self.assertIn("tables: 3", inv)
+        self.assertIn("appendices: B", inv)
+
+    def test_it_carries_the_captions_where_the_magnitudes_are(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import draft_sidecars
+        inv = draft_sidecars.inventory(self.PAPER)
+        self.assertIn("Accuracy against sample size on MMLU, 14 models", inv)
+        self.assertIn("Per-scenario error at 100 examples", inv)
+
+    def test_the_drafter_reads_the_same_stripped_text_the_checkers_do(self):
+        """A gutter numeral in the prompt is a magnitude the model was handed by mistake.
+
+        `check_claim_numbers` and `check_claim_evidence` both `deline` before looking, so
+        a figure the drafter copied out of a line-number column is a claim the accept gate
+        rejects for a number the paper does not contain. Generation and checking have to
+        read the same text, and this is the assertion that they do.
+        """
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import draft_sidecars
+        src = source(os.path.join(ROOT, "scripts", "draft_sidecars.py"))
+        tree = ast.parse(src)
+        fn = next(f for f in ast.walk(tree)
+                  if isinstance(f, ast.FunctionDef) and f.name == "evidence")
+        called = {n.func.id for n in ast.walk(fn)
+                  if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+        self.assertIn("deline", called,
+                      "evidence() stopped stripping the gutter, so the prompt now carries "
+                      "numerals the accept gate will reject")
+        self.assertIn("inventory", called)
+
 
 class TestConfigHasWhatTheStepsIndex(unittest.TestCase):
     """Every `cfg["a"]["b"]` in the program resolves in `config.yaml`.
@@ -1381,13 +1506,20 @@ class TestGeneratedFilesRenderTitles(unittest.TestCase):
     and `collect.py` already resolves every one of them into `title_display`. Reading
     that field is a convention, spelled `p.get("title_display") or p["title"]` at 28
     sites, and a convention held only by memory is one an emitter can drop without
-    anything noticing: five of them had, and `WORKLIST.md` shipped
+    anything noticing: eight of them had, and `WORKLIST.md` shipped
     `Q\\({}^{\\mbox{2}}\\): Evaluating Factual Consistency` in a committed file.
 
     Checked against the corpus rather than by pattern-matching for braces, which the
     generated files contain legitimately -- in fenced commands, in `{owner}/{repo}`
     placeholders, in the arXiv DOI template. A 30-character prefix of a real raw title
     cannot appear by coincidence.
+
+    `build/sidecar_review.html` is covered here too, and it is the reason the count
+    above moved: three of its emitters read `title` directly, so the one page whose
+    whole purpose is the author reading claims against a paper named the paper in
+    BibTeX. It is a build artifact rather than a committed file, so it is checked when
+    present and skipped when the tree has not been built -- which is enough, because
+    the gates run after `update.py` and CI builds before it tests.
     """
 
     def test_no_raw_latex_title_reaches_a_generated_file(self):
@@ -1400,7 +1532,8 @@ class TestGeneratedFilesRenderTitles(unittest.TestCase):
                   if (p.get("title_display") or p["title"]) != p["title"]
                   and re.search(r"[{}\\]", p["title"][:30])}
         self.assertTrue(probes, "no LaTeX titles in the corpus -- this test proves nothing")
-        files = ([os.path.join(ROOT, "WORKLIST.md")]
+        files = ([os.path.join(ROOT, "WORKLIST.md"),
+                  os.path.join(ROOT, "build", "sidecar_review.html")]
                  + sorted(glob.glob(os.path.join(ROOT, "tasks", "*.md"))))
         leaks = []
         for f in files:
