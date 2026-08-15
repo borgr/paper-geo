@@ -18,6 +18,23 @@ Two halves, deliberately separate: **§2–§4 are settled** and enforced where 
 last column of §4 says so. **§6 is open** — each row is a decision nobody has made,
 with the real options and what ships if we keep not deciding.
 
+## How a draft is made
+
+Six stages. The first two and the last three are code; the model does one of them,
+and it is the only stage whose output is not reproducible from public sources.
+
+| | What happens | Where |
+|---|---|---|
+| 1 | **Text is resolved.** arXiv HTML, ar5iv, or a hand-dropped PDF, cached and delined. No text, no draft — see §1 | `scripts/fulltext.py` |
+| 2 | **Evidence is packed.** Metadata, then the paper's own numbering extracted — which sections, figures, tables and appendices exist, and every caption — then the full text. The numbering block exists so pointers are read rather than guessed, and the captions because the truncation cuts mid-paper ones | `evidence()`, `inventory()` in `scripts/draft_sidecars.py` |
+| 3 | **A task file is written** carrying the system prompt (this file's §2, read live), the schema, and one task per paper with `sidecar: null` | `emit_tasks()` → `build/sidecar_tasks.json` |
+| 4 | **The model fills `sidecar`.** The only judgment stage: claims, scope, questions, misreadings, terminology, one-liner. It writes nothing else, anywhere | the agent |
+| 5 | **Drafts are ingested and checked.** Structural checks against the schema, then the quality tier — claim length, numbers traceable to the text, pointers that exist, questions that stand alone. Each draft is stamped with a hash of the rules that judged it, so a later rule change marks it stale rather than silently passing | `--ingest`, `validate_draft()`, `--restamp` |
+| 6 | **The author reviews and accepts.** `--review` builds one page with every flag and every claim linked into the paper's own sentence; `--accept <slug>` promotes it out of `drafts/` and is the only step a human must perform | `build/sidecar_review.html` |
+
+Between 5 and 6 nothing is published: the site, the validator and the coverage count
+all glob `data/sidecars/*.md` non-recursively and cannot see `drafts/`.
+
 ---
 
 ## 1. Before drafting: is there anything to draft from?
