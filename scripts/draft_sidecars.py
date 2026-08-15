@@ -98,13 +98,15 @@ def spec_sha() -> str:
     `validate.check_sidecar_shape`, in code, with the prose untouched. A stamp over the
     prose would have moved on a typo fix and held still through the one change that
     mattered. So: the rules the model is sent, the schema it fills, and the source of
-    the two functions that judge the result.
+    every function that judges the result -- `readability` included, because a draft
+    written before the sentence caps existed is exactly a draft `--accept` now refuses.
     """
-    from validate import check_claim_numbers, check_sidecar_shape
+    from validate import check_claim_numbers, check_sidecar_shape, readability
     parts = (rules_block(RULES_DOC),
              json.dumps(schema(), sort_keys=True),
              inspect.getsource(check_sidecar_shape),
-             inspect.getsource(check_claim_numbers))
+             inspect.getsource(check_claim_numbers),
+             inspect.getsource(readability))
     return hashlib.sha256("\n".join(parts).encode()).hexdigest()[:12]
 
 
@@ -513,9 +515,9 @@ def validate_draft(path: str, note: bool = True) -> tuple[list[str], list[str]]:
             if a not in ids:
                 errs.append(f"{path}: qa answer `{a}` is not a claim id")
 
-    from validate import check_claim_numbers, check_sidecar_shape
+    from validate import check_claim_numbers, check_readability, check_sidecar_shape
     entry = [(os.path.basename(path), fm)]
-    quality = check_sidecar_shape(entry)
+    quality = check_sidecar_shape(entry) + check_readability(entry)
     numbers, no_text = check_claim_numbers(entry)
     quality += numbers
     if no_text and note:
@@ -612,7 +614,12 @@ def checked(slug: str) -> dict | str:
     if fm is None:
         return f"{os.path.relpath(path, ROOT)}: unreadable front matter"
 
-    from validate import figures, figures_in, rounds_to, values_in
+    from validate import figures, figures_in, readability, rounds_to, values_in
+    # Bucketed by what each finding is about, so the renderers put it next to the
+    # sentence rather than in a list at the bottom that reads as someone else's problem.
+    prose = {}
+    for kind, at, msg in readability(fm):
+        prose.setdefault((kind, at), []).append(msg)
     cache = os.path.join(CACHE, f"{slug}.txt")
     text = open(cache, errors="replace").read() if os.path.exists(cache) else ""
     have, vals = (figures_in(text), values_in(text)) if text else (set(), [])
@@ -625,7 +632,8 @@ def checked(slug: str) -> dict | str:
         row = {"kind": kind, "id": c.get("id"),
                "evidence": c.get("evidence") or ("--" if kind == "context" else "MISSING"),
                "text": oneline(c.get("text")), "scope": oneline(c.get("scope")),
-               "orphan": c.get("id") not in answered, "pointers": [], "figures": []}
+               "orphan": c.get("id") not in answered, "pointers": [], "figures": [],
+               "prose": prose.get(("claim", str(c.get("id") or "?")), [])}
         if text:
             row["pointers"] = [(label, bool(pat.search(text)))
                                for label, pat in evidence_pointers(c.get("evidence") or "")]
@@ -641,6 +649,7 @@ def checked(slug: str) -> dict | str:
     return {"slug": slug, "path": os.path.relpath(path, ROOT), "has_text": bool(text),
             "live": path.startswith(SIDECARS), "one_liner": oneline(fm.get("one_liner")),
             "claims": claims, "qa": fm.get("qa") or [],
+            "prose_q": {k[1]: v for k, v in prose.items() if k[0] == "question"},
             "misreadings": fm.get("misreadings") or [],
             "terminology": fm.get("terminology") or {}}
 
@@ -660,7 +669,9 @@ def show(slug: str) -> None:
         orphan = "   (no question points here)" if c["orphan"] else ""
         print(f"\n  [{c['kind']}] {c['id']}   evidence: {c['evidence']}{orphan}")
         print("    " + c["text"])
-        print("    scope: " + c["scope"])
+        print("    Holds for: " + c["scope"])
+        for m in c["prose"]:
+            print(f"    READS BADLY  {m}")
         for label, ok in c["pointers"]:
             print(f"    {'ok' if ok else 'NOT FOUND'}: the paper's own text "
                   f"mentions {label}")
@@ -672,6 +683,8 @@ def show(slug: str) -> None:
         print(f"\n  q{i + 1} -> {', '.join(g.get('answers') or []) or '(nothing)'}")
         for q in g.get("q") or []:
             print(f"      {q}")
+            for m in d["prose_q"].get(str(q)) or []:
+                print(f"        UNANSWERABLE ALONE  {m}")
 
 
 REVIEW_PAGE = os.path.join(BUILD, "sidecar_review.html")
@@ -723,6 +736,12 @@ def _flags(d: dict) -> list[str]:
     figs = sum(1 for c in d["claims"] for n, s in c["figures"] if s is None)
     ptrs = sum(1 for c in d["claims"] for _, ok in c["pointers"] if not ok)
     orph = sum(1 for c in d["claims"] if c["orphan"])
+    hard = sum(1 for c in d["claims"] if c["prose"])
+    vague = len(d["prose_q"])
+    if hard:
+        out.append(f"{hard} claim{'s' if hard > 1 else ''} to shorten or split")
+    if vague:
+        out.append(f"{vague} question{'s' if vague > 1 else ''} with nothing to point at")
     if figs:
         out.append(f"{figs} figure{'s' if figs > 1 else ''} not in the paper")
     if ptrs:
@@ -793,7 +812,7 @@ def review_page(papers: list[dict]) -> str:
         out.append(f"<h3>Claims ({len(d['claims'])})</h3>")
         for c in d["claims"]:
             bad_here = (any(s is None for _, s in c["figures"])
-                        or any(not ok for _, ok in c["pointers"]))
+                        or any(not ok for _, ok in c["pointers"]) or c["prose"])
             cls = "claim" + (" context" if c["kind"] == "context" else "") \
                           + (" flagged" if bad_here else "")
             out += [f"<div class='{cls}'>",
@@ -801,7 +820,15 @@ def review_page(papers: list[dict]) -> str:
                     f"{e(str(c['evidence']))}"
                     + ("  · no question points here" if c["orphan"] else "") + "</div>",
                     f"<div>{e(c['text'])}</div>",
-                    f"<p class=scope><b>Scope.</b> {e(c['scope'])}</p>"]
+                    f"<p class=scope><b>Holds for.</b> {e(c['scope'])}</p>"]
+            # The wording above is the site's, verbatim: scope is published after
+            # "Holds for:", and a scope that does not complete that sentence is only
+            # visible when the review shows it the way a reader will meet it.
+            if c["prose"]:
+                out.append("<ul class=checks>")
+                out += [f"<li><span class=bad>reads badly</span> "
+                        f"<span class=dim>{e(m)}</span></li>" for m in c["prose"]]
+                out.append("</ul>")
             if c["pointers"] or c["figures"]:
                 out.append("<ul class=checks>")
                 for label, ok in c["pointers"]:
@@ -824,8 +851,12 @@ def review_page(papers: list[dict]) -> str:
             for g in d["qa"]:
                 out.append("<ul class=q>")
                 for i, q in enumerate(g.get("q") or []):
+                    why = d["prose_q"].get(str(q)) or []
                     out.append(f"<li>{'<b>' if not i else ''}{e(q)}"
-                               f"{'</b>' if not i else ''}</li>")
+                               f"{'</b>' if not i else ''}"
+                               + "".join(f"<br><span class=bad>unanswerable alone</span> "
+                                         f"<span class=dim>{e(m)}</span>" for m in why)
+                               + "</li>")
                 out.append(f"<li class=id>answered by {e(', '.join(g.get('answers') or []))}"
                            f"</li></ul>")
 

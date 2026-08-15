@@ -384,6 +384,82 @@ class TestPromptsCarryTheirRules(unittest.TestCase):
                                    f"{reader} reads it")
 
 
+class TestTheReadabilityRulesStillFire(unittest.TestCase):
+    """The one tier `validate.py --strict` cannot cover, covered here instead.
+
+    `check_readability` runs only at `--accept` and on the review page, because
+    `validate.py` reads the author's published sidecars and a long sentence there is not
+    a reason to retract a page. That exemption is also how the tier could quietly stop
+    working: nothing in the committed data has to violate it, so no run would notice a
+    regex that stopped matching. So the fixtures below are the rules -- one sidecar that
+    breaks each, one that breaks none.
+    """
+
+    BAD = {
+        "claims": [{
+            "id": "overloaded",
+            # 43 words, which is the median of the 324 drafted claims, in one sentence
+            # with three findings stacked behind separators -- the exact drafted shape.
+            "text": "The method raises exact-match accuracy by 4.6 points over the "
+                    "fine-tuned baseline on the WMT16 English-German test set, and the "
+                    "gain holds at every model scale tested: it is largest at 7B, "
+                    "smallest at 125M, and absent below that -- which is the pattern "
+                    "the authors attribute to capacity rather than to data.",
+            "scope": "This is a description of the published algorithm, so it is as "
+                     "reliable as reading it. Holds for encoder-decoder models only.",
+        }],
+        "qa": [{"q": ["How much data does it take to fit a model like this?",
+                      "Was this validated on more than one dataset?",
+                      "What do the authors recommend?"],
+                "answers": ["overloaded"]}],
+    }
+    GOOD = {
+        "claims": [{
+            "id": "clean",
+            "text": "The method raises exact-match accuracy by 4.6 points over the "
+                    "fine-tuned baseline on the WMT16 English-German test set. The gain "
+                    "is largest at 7B and absent below 125M parameters.",
+            "scope": "Encoder-decoder models above 125M parameters; no effect measured "
+                     "below that, and only the WMT16 English-German pair was tested.",
+        }],
+        "qa": [{"q": ["How much data does it take to fit a latent-skill model of arena "
+                      "outcomes?",
+                      "Was the WMT16 result replicated on another language pair?"],
+                "answers": ["clean"]}],
+    }
+
+    def test_each_rule_catches_its_own_violation(self):
+        from validate import check_readability
+        found = " ".join(check_readability([("bad.md", self.BAD)]))
+        for want, rule in (("-word sentence", "the sentence-length cap"),
+                           ("stacked colons", "the separator cap"),
+                           ("classifying the claim", "the scope-opening rule"),
+                           ("like this", "the unbound-reference rule")):
+            with self.subTest(rule=rule):
+                self.assertIn(want, found, f"{rule} stopped firing: {found!r}")
+
+    def test_a_clean_sidecar_is_left_alone(self):
+        """The half that decides whether the rules are usable rather than just strict.
+
+        A check that fires on well-written text is one the author overrides with
+        `--anyway` every time, and then the tier is decoration.
+        """
+        from validate import check_readability
+        self.assertEqual(check_readability([("good.md", self.GOOD)]), [])
+
+    def test_a_pronoun_with_an_antecedent_is_not_a_finding(self):
+        """The distinction the rule is actually about, and the one easy to over-enforce.
+
+        "their" here points at "adapters", inside the question -- so the question stands
+        alone and banning it would push the drafter into stilted English for nothing.
+        """
+        from validate import check_readability
+        ok = {"qa": [{"q": ["How do you merge LoRA adapters without mixing up their "
+                            "factorizations?",
+                            "Can I compare two models by their skill profile?"]}]}
+        self.assertEqual(check_readability([("ok.md", ok)]), [])
+
+
 class TestConfigHasWhatTheStepsIndex(unittest.TestCase):
     """Every `cfg["a"]["b"]` in the program resolves in `config.yaml`.
 

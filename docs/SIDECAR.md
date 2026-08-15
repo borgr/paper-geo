@@ -56,8 +56,20 @@ cannot detect and the author is publicly answerable for.
 **2. Claims are the core**; everything else is scaffolding. Each one:
 
 - **is self-contained.** It will be retrieved alone, with no title and no
-  surrounding paragraph, so it must name the object and the finding in one
-  sentence. No "we", no "this paper", no pronoun pointing outside the sentence.
+  surrounding paragraph, so it must name the object and the finding without
+  depending on anything outside itself. No "we", no "this paper", no pronoun
+  pointing outside the claim.
+- **carries one proposition,** and is as long as that takes. Not a paragraph
+  covering three findings — a passage about three things embeds as their average
+  and is retrieved weakly for each. Not one sentence with three findings stacked
+  behind colons and dashes either, which is the failure the drafts actually have:
+  the median claim's first sentence runs **43 words**, and the longest runs 79.
+  A second finding is a second claim, not a second clause.
+- **leads with the whole claim, then stops or explains.** Extractive answers quote
+  the front of a passage and cut, so sentence one has to be true and complete on
+  its own; sentence two, if there is one, carries the mechanism or the comparison.
+  Two sentences of ordinary length are better than one of 43 words in every way
+  that matters here — easier to read, and safe to truncate.
 - **has an `id`** matching `^[a-z0-9-]+$`. Ids are internal — no reader ever sees
   one.
 - **has a `kind`,** which decides what else it owes:
@@ -98,6 +110,17 @@ the 125M model shows no effect" is scope. It is a separate, adjacent field becau
 summarisers drop scope far more often than they drop findings, which is the most
 common way a paper ends up misrepresented.
 
+**It is published after the literal words `Holds for:`** — in the page's claim list,
+in each `FAQPage` answer, and in `llms.txt`. So write it to complete that sentence.
+"Holds for: T5-base and T5-large, up to seven models" reads. "Holds for: This is a
+description of the published algorithm, so it is as reliable as reading it" does not
+parse, and 12% of drafted scopes open exactly like that — classifying the claim
+instead of bounding it. **Never open `scope` by saying what kind of claim this is.**
+If the reliability of a claim is worth saying, it is a clause at the end, after the
+conditions; and for a `context` claim the honest bound *is* a condition — "as of
+publication in 2023", "about English-language benchmarks only" — so say that
+instead.
+
 **4. Questions.** Each `qa` entry is **one question in 2–4 paraphrases**, answered
 by a list of claim **ids**. The rule that is easy to get backwards:
 
@@ -111,6 +134,23 @@ sentence verbatim plus its scope, so a reader sees the question followed immedia
 by the real answer — never a slug, never a paraphrase. **Never a question whose
 answer is not adjacent.** Every claim should be reachable from some question; a claim
 no question points at renders with no route to it.
+
+**Every phrasing has to name its own subject.** A question is a *query*: it is
+matched against what a stranger typed, and it is then published inside a `FAQPage`
+where `Question.name` is extracted and shown with no page around it. "How much data
+does it take to fit a model like this?" fails both times over — nobody types "a model
+like this", so it matches nothing, and quoted alone it is unanswerable because
+nothing on screen says what "this" was. Vagueness does not broaden reach here; it
+removes the only words that could have matched. Write the subject in: *"how much data
+does it take to fit a latent-skill model of arena outcomes?"* — longer, and the extra
+words are the ones a query would contain.
+
+So no phrasing may lean on **`this`/`these`/`those` with nothing before them**, on
+**`this paper`/`this method`/`this approach`**, on **`the authors`**, on a trailing
+**`here`**, or on **`it`/`they` as the opening subject**. A pronoun bound to a noun
+inside the same question is fine and often the natural English — *"can I compare two
+models by their skill profile"* names its subject. The rule is about references with
+no antecedent on screen, not about pronouns.
 
 Phrase questions in the vocabulary of someone who has **not** read the paper. A
 question built around the paper's own coined name has no lexical path from what
@@ -149,17 +189,20 @@ out. Write fewer, better ones and stop.
 | Field | Band | Why this band |
 |---|---|---|
 | `claims` | **5–15**, of which **≥1 `context`** and **more `result` than `context`** | a paper has a handful of real findings; twenty claims means one finding split five ways, which is paraphrasing under another name. The `result` majority is what keeps a page a record of work rather than a page about its own importance |
-| claim `text` | **60–450 chars** | one sentence, quotable verbatim. Aim near `one_liner`'s 320; the ceiling is where a sentence has become a paragraph |
+| claim `text` | **60–450 chars**, **≤2 sentences**, **≤32 words each**, **≤1** colon/semicolon/dash | one proposition, quotable verbatim. Aim near `one_liner`'s 320. The char band alone let a 79-word single sentence pass, which is why the sentence caps exist: each extra separator is where a second finding got bolted on instead of becoming its own claim |
 | `scope` | **80–800 chars** | a condition list, and the longest field on purpose — it is the one summarisers drop, so brevity here buys nothing. The ceiling is where it stops being a list of conditions and becomes an essay that dilutes the claim it qualifies |
 | `qa` | **4–20 groups**, ≥1 answered by a `context` claim | question groups are query surface, so the ceiling is loose: it exists to catch a run of invented questions, not to ration real ones |
 | `q` per group | **2–4 phrasings** | |
 | `misreadings` | **0–14**, each stated as a correction and never as a question | only ones the paper gives you a reason to expect |
 | `terminology` | **0–13** | this paper's own terms, not a glossary of the field |
 
-The three length and count ceilings are the 90th percentile of what the 317 already
-drafted claims do, so they cut a tail and leave honest practice alone. The `claims`
-and `q` bands are not: they are the anti-paraphrase rule, and most current drafts
-break them. That is the intended reading — the fix is redrafting, not a wider band.
+The three character ceilings are the 90th percentile of what the 324 already drafted
+claims do, so they cut a tail and leave honest practice alone. The `claims`, `q` and
+sentence limits are not: they are the anti-paraphrase and anti-overloading rules, and
+most current drafts break them. Median first sentence today is 43 words against a cap
+of 32; 99 of 324 claims stack two or more separators. That is the intended reading —
+the fix is a period, not a wider band, because splitting one 43-word sentence into
+two costs no content and is what makes the front of the passage safe to quote.
 
 **Accuracy over coverage, everywhere.** Three claims you can point at a table for
 are worth more than eight that read well. If the evidence you were given does not
@@ -245,8 +288,12 @@ structural: a violation breaks something downstream, so it exits 1 and stops the
 **Shape** rules are the bands in §2 §9 and the coverage rules: a violation is a
 quality problem on a page that still renders, so `validate.py` reports it and exits 0
 (`--strict` makes it fatal) — but `--accept` refuses, because accepting is the moment
-the author asserts it in public. **Accept-time** rules need the paper's full text,
-which is a build artifact and may be absent.
+the author asserts it in public. **Accept-time** rules run only at `--accept` and on
+the review page, either because they need the paper's full text (a build artifact that
+may be absent) or because they are about what to write next rather than about
+retracting what is already published: `validate.py` reads `data/sidecars/*.md`, which
+is the author's live words, so a readability finding there would make `--strict` demand
+he retract a page over a long sentence. `--anyway` overrides the whole tier.
 
 | | Rule | Tier | Enforced by |
 |---|---|---|---|
@@ -270,7 +317,10 @@ which is a build artifact and may be absent.
 | 18 | `coined` present ⇒ `gloss` present | shape | `check_sidecar_shape` (was D2) |
 | 19 | ≤14 `misreadings`, ≤13 `terminology` entries, and no misreading phrased as a question | shape | `check_sidecar_shape` |
 | 20 | **every number in a claim appears in the paper's own text** | accept-time | `validate.py check_claim_numbers` against `build/fulltext/<slug>.txt`, and `--accept` refuses. Skipped, loudly, when the text is not cached |
-| 21 | canonical key order | — | **nothing — open, D1** |
+| 21 | claim `text` is ≤2 sentences of ≤32 words, with ≤1 colon/semicolon/dash | accept-time | `validate.py readability` — [§2 rule 2](#2-the-rules) |
+| 22 | `scope` does not open by classifying the claim | accept-time | `readability` — it is published after "Holds for:", so it has to complete that sentence |
+| 23 | no `qa` phrasing leans on a reference with no antecedent in it | accept-time | `readability` — bare `this`/`these`, `this paper`, `the authors`, trailing `here`, opening `it`/`they` |
+| 24 | canonical key order | — | **nothing — open, D1** |
 
 ## 5. What the drift actually looks like
 

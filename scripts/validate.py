@@ -698,6 +698,128 @@ def check_sidecar_shape(entries: list[tuple[str, dict]]) -> list[str]:
     return errs
 
 
+# -------------------------------------------------------------- readability tier
+#
+# Three ways a well-formed sidecar is still hard to read, each measured over the 324
+# drafted claims before being written down. They are not in the shape tier above, and
+# the reason is which files each tier reaches: `validate.py` globs `data/sidecars/*.md`,
+# so the shape tier judges the author's *published* words, and `--strict` makes it
+# fatal. These findings are about what to write next, not about retracting what is
+# already out, so they run at `--accept` -- where the author can still take the note or
+# override it with `--anyway` -- and on the review page, where he reads the draft.
+#
+# A sentence limit rather than only the character band, because the band measures the
+# wrong thing: 450 chars admits one 79-word sentence, and that is the actual defect.
+# Splitting it costs no content, so unlike the character ceilings these are not the
+# 90th percentile of current practice -- current practice fails them, by design.
+
+CLAIM_SENTENCES = 2
+CLAIM_SENTENCE_WORDS = 32
+# Each colon, semicolon or dash past the first is where a second proposition was bolted
+# on rather than made its own claim. One is the normal "finding: the number".
+CLAIM_SEPARATORS = 1
+
+# A reference with no antecedent on screen. Both halves of a question's job fail on
+# one: nobody queries "a model like this", and a `FAQPage` answer is extracted with no
+# page around it, so the words have nothing to point at. Deliberately narrow -- a
+# pronoun bound to a noun inside the same question ("compare models by their skill
+# profile") is ordinary English and must not fire, so only two shapes count: a
+# demonstrative that no noun precedes, and `it`/`they` as the opening subject.
+_UNBOUND = re.compile(
+    r"\blike th(?:is|ese|ose)\b"
+    r"|\bth(?:is|ese|ose)\s+(?:paper|work|study|method|approach|framework|model|"
+    r"result|technique|trick|setup|finding|idea|dataset|benchmark|system|thing)s?\b"
+    r"|\b(?:is|are|was|were|does|do|did|has|have|had|can|could|would|will|should)\s+"
+    r"th(?:is|ese|ose)\b"
+    r"|\bth(?:is|ese|ose)\b\s*[?,.]|\bth(?:is|ese|ose)\b$"
+    r"|\bthe authors?\b"
+    r"|\bhere\b\s*\??$"
+    r"|^(?:is|are|was|were|does|do|did|has|have|can|could|would|will|should)\s+"
+    r"(?:it|they|its|their)\b", re.I)
+
+# A scope opening by saying what kind of claim it qualifies. It is published after the
+# literal words "Holds for:", so this is the one thing there that cannot parse.
+# `holds` is the failure mode of telling a drafter to complete "Holds for:" -- it writes
+# "Holds for: Holds by construction", which the fixed list of classifying nouns misses.
+_CLASSIFIES = re.compile(
+    r"^\s*(?:holds?\b|applies\b"
+    r"|th(?:is|ese|at)\s+(?:is|are)\b"
+    r"|it\s+is\s+(?:a|an|the)\b"
+    r"|an?\s+(?:claim|description|counting|framing|reading|statement|definition|"
+    r"design|property|consequence|restatement|algebraic|entry|observation|"
+    r"characterisation|characterization|judgement|judgment)\b"
+    r"|the\s+(?:paper's|claim|point)\s+)", re.I)
+
+
+def sentences(s) -> list[str]:
+    """A field split where a reader would pause. Approximate on purpose.
+
+    An abbreviation or a decimal splits wrongly, and that is tolerable: the caps below
+    are about a sentence a reader has to hold in their head, so over-splitting only
+    ever makes the check kinder.
+    """
+    return [x for x in re.split(r"(?<=[.;!?])\s+", str(s or "").strip()) if x]
+
+
+def readability(fm: dict) -> list[tuple[str, str, str]]:
+    """Every readability finding on one sidecar, as (kind, locus, message).
+
+    `kind` is `claim` or `question` and `locus` is the claim's `id` or the question's
+    own text, so a caller can put each finding next to the thing it is about.
+    `check_readability` flattens the same list for a terminal, and
+    `draft_sidecars.checked` buckets it for the review page -- one check, two
+    renderings, which is the only arrangement where the page and the command cannot
+    disagree.
+    """
+    out = []
+    for c in (fm.get("claims") or []):
+        if not isinstance(c, dict):
+            continue
+        at = ("claim", str(c.get("id") or "?"))
+        text = str(c.get("text") or "").strip()
+        ss = sentences(text)
+        if len(ss) > CLAIM_SENTENCES:
+            out.append((*at, f"text is {len(ss)} sentences (max {CLAIM_SENTENCES}) -- "
+                            "a third sentence is a second claim"))
+        for s in ss:
+            n = len(s.split())
+            if n > CLAIM_SENTENCE_WORDS:
+                out.append((*at, f"a {n}-word sentence (max {CLAIM_SENTENCE_WORDS}) -- "
+                                f"split it, the front of a claim is what gets quoted: "
+                                f"“{' '.join(s.split()[:9])}...”"))
+        seps = len(re.findall(r"(?: -- | [-–—] |: |; )", text))
+        if seps > CLAIM_SEPARATORS:
+            out.append((*at, f"{seps} stacked colons/dashes in text (max "
+                            f"{CLAIM_SEPARATORS}) -- each one past the first is a "
+                            "second finding that should be its own claim"))
+        first = sentences(c.get("scope"))
+        if first and _CLASSIFIES.match(first[0]):
+            out.append((*at, "scope opens by classifying the claim, and scope is "
+                            'published after the words "Holds for:" -- give the '
+                            f"condition instead: “{' '.join(first[0].split()[:9])}...”"))
+
+    for g in (fm.get("qa") or []):
+        if not isinstance(g, dict):
+            continue
+        for q in (g.get("q") or []):
+            m = _UNBOUND.search(str(q))
+            if m:
+                out.append(("question", str(q), f"{m.group(0).strip()!r} has no antecedent in the "
+                                    "question, so it matches no query and cannot be "
+                                    "quoted alone -- name the subject"))
+    return out
+
+
+def check_readability(entries: list[tuple[str, dict]]) -> list[str]:
+    """Claims a reader has to re-read, and questions nobody could have typed.
+
+    Kept out of `validate.py`'s own run on purpose -- see the tier note above.
+    """
+    return [f"{name}: {at} -- {msg}" if kind == "question"
+            else f"{name}: claim {at!r}: {msg}"
+            for name, fm in entries for kind, at, msg in readability(fm)]
+
+
 # --------------------------------------------------------------- accept-time tier
 
 _GROUPED = r"\d{1,3}(?:,\d{3})+"
