@@ -52,6 +52,28 @@ page in every way that matters. Drop the paper's PDF into `data/fulltext/<slug>.
 
 ## 2. The rules
 
+Nine steps, written in the order the fields depend on each other. The index below is
+what each step is *for* and the one emphasis that dominates it — it is a way into the
+block, not a second copy of it: the rules themselves are stated once, in the block,
+and §4 says what enforces each. A test asserts this table has a row per step, so a
+tenth step cannot be added without appearing here.
+
+| Step | Writes | The emphasis it is built around |
+|---|---|---|
+| 1 | *(nothing — reading)* | Every figure in the draft appears in the paper's own text. The one rule with no exceptions, because a wrong number is what a reader cannot detect and the author is publicly answerable for. Then: get them onto the page, at least half the `result` claims carrying one, written as numerals |
+| 2 | `claims` | A claim asserts something a reader wanted to know; it does not describe a part of the paper. Applied as: if a stranger read only this sentence, what do they now know that they can use? Each claim stands alone, names its subject, carries one proposition, and leads with the whole thing |
+| 3 | `scope` | Content, not a disclaimer — the condition that actually bounds the result. Shorter than the claim it bounds, because it is published after the literal words `Holds for:` and has to survive being quoted with it |
+| 4 | `qa` | Every phrasing names its own subject, in the vocabulary of someone who has not read the paper. Paraphrase the question deliberately; never paraphrase the claim. One group must be a general question of the field |
+| 5 | `misreadings` | A correction the paper gives you a reason to expect, never an invented one, and readable with nothing beside it |
+| 6 | `terminology` | Define the term, not its role on this page — the definition is published alone as a `DefinedTerm` |
+| 7 | `coined`, `gloss` | The gloss is the lexical route from what people type to a name they have never seen |
+| 8 | `one_liner` | One sentence the author reuses verbatim in the page, the README, the model card and the talk. Identical reuse is the mechanism |
+| 9 | *(how much of each)* | Bands, not targets: every claim and question group competes with its siblings on its own page, so write fewer, better ones and stop |
+
+Above all of them, and the reason to leave a field out rather than fill it:
+**accuracy over coverage** — the draft is read by the paper's own author, who will
+verify every line.
+
 <!-- prompt:start -->
 What you produce is consumed two ways: rendered on the paper's canonical page, and
 retrieved as isolated passages by retrieval-augmented systems. The second drives

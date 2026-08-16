@@ -384,6 +384,25 @@ class TestPromptsCarryTheirRules(unittest.TestCase):
                                    f"{doc} ({what}) has no usable prompt block; "
                                    f"{reader} reads it")
 
+    def test_the_index_above_the_block_has_a_row_per_step(self):
+        """§2's index is an index, and an index that has drifted is worse than none.
+
+        It exists because the prompt is one long block and a reader could not see what
+        step 4 was for without reading step 4. The cost of that convenience is a second
+        place where the steps are listed, so the count is checked rather than trusted:
+        a tenth step added to the prompt fails here until it appears in the table.
+        """
+        from common import ROOT, rules_block
+        with open(os.path.join(ROOT, "docs", "SIDECAR.md"), encoding="utf-8") as fh:
+            head = fh.read().split("<!-- prompt:start -->")[0]
+        # From the index's own header, so the pipeline table further up -- also numbered
+        # rows, also above the block -- is not mistaken for it.
+        head = head.split("| Step | Writes |")[-1]
+        steps = re.findall(r"^\*\*(\d+)\.", rules_block("docs/SIDECAR.md"), re.M)
+        rows = re.findall(r"^\| (\d+) \|", head, re.M)
+        self.assertEqual(steps, rows,
+                         f"§2's prompt has steps {steps} and its index lists {rows}")
+
 
 class TestTheReadabilityRulesStillFire(unittest.TestCase):
     """The one tier `validate.py --strict` cannot cover, covered here instead.
