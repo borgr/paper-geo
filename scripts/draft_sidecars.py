@@ -442,6 +442,14 @@ def emit_tasks(pairs: list[tuple[dict, str]], cfg) -> str:
     return TASKS
 
 
+# A sidecar is a large structured object, and reasoning tokens are drawn from the same
+# budget: serialised, the existing pages run 30k-42k characters, so six of them exceed
+# 8192 output tokens on their own before any thinking. A truncated response is not
+# recoverable and, worse, arrives as invalid JSON -- which reads as "the model wrote
+# something malformed" when it wrote something correct and got cut off.
+API_MAX_TOKENS = 32000
+
+
 def call_api(pairs: list[tuple[dict, str]], cfg) -> dict:
     """One Messages API call per paper, validated against the sidecar schema."""
     try:
@@ -451,7 +459,9 @@ def call_api(pairs: list[tuple[dict, str]], cfg) -> dict:
     client = anthropic.Anthropic()
     sch, out, sys_prompt = schema(), {}, system_prompt()
     for p, ev in pairs:
-        req = dict(model=cfg["llm"]["model"], max_tokens=8192, system=sys_prompt,
+        req = dict(model=cfg["llm"]["model"],
+                   max_tokens=cfg["llm"].get("max_tokens", API_MAX_TOKENS),
+                   system=sys_prompt,
                    messages=[{"role": "user", "content": USER.format(evidence=ev)}])
         oc = {"effort": cfg["llm"].get("effort", "medium"),
               "format": {"type": "json_schema", "schema": sch}}
@@ -461,6 +471,12 @@ def call_api(pairs: list[tuple[dict, str]], cfg) -> dict:
             msg = client.messages.create(**req, extra_body={"output_config": oc})
         if msg.stop_reason == "refusal":
             print(f"  refused: {p['slug']}", file=sys.stderr)
+            continue
+        if msg.stop_reason == "max_tokens":
+            # Named separately from a parse failure because the fix is different: raise
+            # `llm.max_tokens`, do not go looking for a malformed field.
+            print(f"  truncated at max_tokens: {p['slug']} -- raise llm.max_tokens "
+                  f"(now {req['max_tokens']})", file=sys.stderr)
             continue
         text = next((b.text for b in msg.content if b.type == "text"), "")
         try:

@@ -44,6 +44,21 @@ gets copied to other people's installs — so drift here propagates.
       `check_sidecar_shape()` in `validate.py`; key order, list order, id casing and
       wrapping are not, and are the formatter question D1/D4. (`qa` pointing at ids
       that do not exist is an error in `check_sidecars`.)
+- [ ] **Decide where a topic-level claim lives.** The schema has two tiers — `result`
+      (what this paper measured) and `context` (what this paper *is*) — and both are
+      assertions *about one paper*. Neither answers the highest-volume query class,
+      which is about the topic and where this paper is one of several contributors:
+      "does merging fine-tuned models actually work", "how few examples can evaluate a
+      model". A `context` claim gets close by naming the paper's standing, but a claim
+      that states what is true *of the field* is not one the paper supports, and the
+      canonical page publishes claims as the author's own assertions in `about` and in
+      the `FAQPage` answers — so putting field-level claims there widens what he is
+      answerable for with no gate behind it. **Two candidate homes,** and the choice is
+      not obvious: a `kind: topic` with a mandatory citation of who else established
+      it, or a per-line-of-work topic page that cites several of his papers plus
+      others' — which [docs/EVIDENCE.md §2](docs/EVIDENCE.md#2-what-the-geo-literature-establishes)
+      independently argues for on recency grounds, since a paper's date is fixed and a
+      topic page's is not. The second keeps the paper pages honest and is more work.
 - [ ] **Reconcile the schema's `description` strings with the prompt.** The rules now
       have two homes, not three: `docs/SIDECAR.md` §2 is read verbatim by the drafter,
       but `schema/sidecar.schema.json` still states the reasoning per field in its own

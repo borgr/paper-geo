@@ -218,6 +218,11 @@ def call_api(todo: list[dict], cfg) -> list[str]:
         if msg.stop_reason == "refusal":
             print(f"  refused: {r['repo']}", file=sys.stderr)
             continue
+        if msg.stop_reason == "max_tokens":
+            # Distinct from a parse failure: truncated JSON is invalid JSON, and
+            # "unparseable" sends the reader looking for a bad field that is not there.
+            print(f"  truncated at max_tokens: {r['repo']}", file=sys.stderr)
+            continue
         text = next((b.text for b in msg.content if b.type == "text"), "")
         try:
             r["llm_proposal"] = json.loads(text)
