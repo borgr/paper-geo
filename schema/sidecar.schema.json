@@ -4,7 +4,7 @@
   "title": "data/sidecars/<slug>.md front matter",
   "description": "The only hand-written per-paper input. Targets fidelity -- being described correctly -- not just visibility. One sidecar per paper, ONE owner even when the paper has many authors: two co-authors independently paraphrasing the same finding is the fragmentation problem at scale.",
   "type": "object",
-  "required": ["one_liner", "claims"],
+  "required": ["one_liner", "claims", "qa"],
   "additionalProperties": false,
   "properties": {
     "key": {"type": "string", "description": "BibTeX key, for cross-checking against papers.yaml."},

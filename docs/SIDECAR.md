@@ -229,7 +229,9 @@ restatement of the finding, and anything a reader could only misread *if* they r
 past the page — that second one is `misreadings`, which exists for it.
 
 **It is published after the literal words `Holds for:`** — in the page's claim list,
-in each `FAQPage` answer, and in `llms.txt`. So write it to complete that sentence.
+in each `FAQPage` answer, and in `llms.txt`. So write it to complete that sentence,
+and **do not write those two words yourself**: the page adds them, so a scope opening
+"Holds for" or "Applies to" publishes them twice. Start at the condition.
 "Holds for: T5-base and T5-large, up to seven models" reads. "Holds for: This is a
 description of the published algorithm, so it is as reliable as reading it" does not
 parse, and 12% of drafted scopes open exactly like that — classifying the claim

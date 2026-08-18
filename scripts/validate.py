@@ -648,7 +648,16 @@ def check_sidecar_shape(entries: list[tuple[str, dict]]) -> list[str]:
                     bad(f"{where}: {field} is {n} chars, outside {flo}-{fhi}")
 
         lo, hi = QA_GROUPS
-        if qa and not lo <= len(qa) <= hi:
+        if not qa:
+            # Every other question rule below is guarded by `if qa`, so before this line
+            # a sidecar with no questions at all passed all of them -- the FAQ surface,
+            # the entry-point rule and the orphan check alike. Invisible while only one
+            # model wrote drafts, because it always wrote questions; open-weight models
+            # asked to fill the same schema return claims and stop, since `qa` is not in
+            # the schema's `required` and nothing made them.
+            bad("no `qa` groups at all -- the questions are half of what a sidecar "
+                f"publishes, and the band is {lo}-{hi}")
+        elif not lo <= len(qa) <= hi:
             bad(f"{len(qa)} qa groups, outside the {lo}-{hi} band")
         lo, hi = PHRASINGS
         for i, g in enumerate(qa):
@@ -794,6 +803,12 @@ _CLASSIFIES = re.compile(
     r"characterisation|characterization|judgement|judgment)\b"
     r"|the\s+(?:paper's|claim|point)\s+)", re.I)
 
+# The subset of the above that is the renderer's own prefix, written into the field. A
+# separate pattern rather than a branch on the match text, because "Holds for models
+# above 1B" and "This is a description of the algorithm" need opposite advice.
+_PREFIX_DOUBLED = re.compile(r"^\s*(?:holds?\s+(?:for|only|in|when|under|true)"
+                             r"|applies\s+(?:to|only|when|in|under))\b", re.I)
+
 # Claim text that opens by talking about the paper instead of naming its object. Rule 2
 # has said since the file existed that a claim may not lean on "we" or "this paper";
 # nothing enforced it, and 8% of drafts open exactly that way -- "The paper proves...",
@@ -930,11 +945,25 @@ def readability(fm: dict) -> list[tuple[str, str, str]]:
                             "mostly caveat, and the caveat is the half a summariser "
                             "drops anyway"))
         for i, s in enumerate(conds):
-            if _CLASSIFIES.match(s):
-                where = "opens by" if i == 0 else f"sentence {i + 1} of scope is"
+            if not _CLASSIFIES.match(s):
+                continue
+            where = "opens by" if i == 0 else f"sentence {i + 1} of scope is"
+            head = f"“{' '.join(s.split()[:9])}...”"
+            if _PREFIX_DOUBLED.match(s):
+                # Same pattern, different mistake, and they were reported as one: a scope
+                # reading "Holds for the TextArena dataset, ..." is not classifying the
+                # claim at all, it is repeating the two words the renderer already puts
+                # in front of it. Told it classifies, a reader goes looking for a
+                # judgement to delete and finds a correct condition. Two of the three
+                # open-weight models drafted every scope this way -- the rule states
+                # where the field is published and they read that as text to include.
+                out.append((*at, f"scope {where} repeating the \"Holds for:\" prefix the "
+                                 "page adds -- delete those words and start at the "
+                                 f"condition: {head}"))
+            else:
                 out.append((*at, f"scope {where} classifying the claim, and scope is "
-                                'published after the words "Holds for:" -- give the '
-                                f"condition instead: “{' '.join(s.split()[:9])}...”"))
+                                 'published after the words "Holds for:" -- give the '
+                                 f"condition instead: {head}"))
 
     # Page-level, so it has no single locus. Counted over `result` claims only: a
     # `context` claim asserts where the work sits and usually has no number to carry.

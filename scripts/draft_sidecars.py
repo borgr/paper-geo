@@ -29,11 +29,19 @@ drafting safe to do in bulk. Promotion is explicit:
     python scripts/draft_sidecars.py --accept <slug>     # promote one, after you edited it
     python scripts/draft_sidecars.py --accept-all        # promote every draft
 
-Two modes, matching propose_topics.py:
+Three modes, and `--mode` overrides the configured one for a single run:
 
   llm.mode: skill  (default)  writes build/sidecar_tasks.json for an agent session to
                               fill in. No API key. This is the paper-geo skill's path.
-  llm.mode: api               calls the Anthropic API directly, for unattended reruns.
+  llm.mode: api               one Anthropic Messages call per paper, schema-enforced.
+  llm.mode: openai            one chat completion per paper against any OpenAI-compatible
+                              endpoint -- a local server, a gateway, an open-weight
+                              model. Endpoint and model come from the environment and
+                              never from config.yaml, which is committed and public.
+
+The nine drafting steps are sections of one prompt, not nine turns: every mode above
+sends the same system prompt and the same schema and reads back one object. Nothing
+here needs tool use or a multi-turn agent, which is why `api` and `openai` exist.
 """
 from __future__ import annotations
 
@@ -485,6 +493,163 @@ def call_api(pairs: list[tuple[dict, str]], cfg) -> dict:
         except json.JSONDecodeError:
             print(f"  unparseable: {p['slug']}", file=sys.stderr)
     return out
+
+
+# An OpenAI-compatible backend, for gateways and open-weight models. Three env vars
+# rather than config keys, and that split is deliberate: `config.yaml` is committed and
+# public, while an inference gateway's URL may be internal to whoever is running this.
+# So the endpoint is env-only and nothing about it can be committed by accident.
+#
+#   PAPER_GEO_LLM_BASE_URL   the /v1 base, e.g. https://<gateway>/<model-slug>/v1
+#   PAPER_GEO_LLM_MODEL      the model id the body must carry (often vendor-prefixed)
+#   PAPER_GEO_LLM_API_KEY    the key, if the gateway wants one
+#   PAPER_GEO_LLM_KEY_HEADER optional header name to send the key under, for gateways
+#                            that authenticate on a custom header instead of Bearer
+ENV_BASE, ENV_MODEL = "PAPER_GEO_LLM_BASE_URL", "PAPER_GEO_LLM_MODEL"
+ENV_KEY, ENV_HEADER = "PAPER_GEO_LLM_API_KEY", "PAPER_GEO_LLM_KEY_HEADER"
+
+
+def _first_json(text: str):
+    """The first complete JSON object in a response, or None.
+
+    Needed because a model without enforced decoding wraps the object in a ``` fence,
+    or prefaces it, or emits a reasoning trace first. Brace-matching rather than a
+    regex, since claim text legitimately contains braces.
+    """
+    start = text.find("{")
+    while start != -1:
+        depth, instr, esc = 0, False, False
+        for i in range(start, len(text)):
+            c = text[i]
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == '"':
+                instr = not instr
+            elif not instr and c == "{":
+                depth += 1
+            elif not instr and c == "}":
+                depth -= 1
+                if depth == 0:
+                    try:
+                        return json.loads(text[start:i + 1])
+                    except json.JSONDecodeError:
+                        break
+        start = text.find("{", start + 1)
+    return None
+
+
+# Keywords a constrained-decoding backend cannot compile. vLLM's grammar backends accept
+# a `response_format` containing them and then quietly decode unguided, which is the worst
+# available outcome: measured against Granite 3.3 8B, the full schema produced claims keyed
+# `statement`/`magnitude`/`unit` -- invented fields, valid JSON, nothing the repo can read
+# -- while the same request with these keywords removed produced the schema's own keys.
+#
+# Nothing is lost by dropping them here. The only conditional in the sidecar schema is
+# "a `result` claim needs `evidence`", and that is a schema-tier rule `validate.py`
+# enforces on the draft afterwards, where a violation is a finding rather than a token
+# the decoder should never have been allowed to emit.
+_UNDECODABLE = ("allOf", "anyOf", "oneOf", "not", "if", "then", "else")
+
+
+def decodable(node):
+    """The schema with conditional keywords removed, for guided decoding only."""
+    if isinstance(node, dict):
+        return {k: decodable(v) for k, v in node.items() if k not in _UNDECODABLE}
+    if isinstance(node, list):
+        return [decodable(x) for x in node]
+    return node
+
+
+def call_openai(pairs: list[tuple[dict, str]], cfg) -> tuple[dict, str]:
+    """One chat completion per paper against an OpenAI-compatible endpoint.
+
+    Returns (answers, provenance). The same prompt and the same schema as the Anthropic
+    path -- the point of this backend is that the rules are the variable under test and
+    the model is not, so nothing here may reword anything.
+
+    Schema enforcement is attempted and not required. vLLM-backed gateways accept
+    `response_format: json_schema` and decode against it; others reject the field with a
+    400, and refusing to run on those would make this backend useless for exactly the
+    open models it exists to try. So: enforce if the endpoint allows it, otherwise ask
+    in the prompt and parse what comes back -- and say which happened, because "the
+    model produced a valid sidecar" and "the decoder could not produce anything else"
+    are different results.
+    """
+    try:
+        from openai import OpenAI
+    except ImportError:
+        sys.exit("pip install openai, or set llm.mode: skill in config.yaml")
+    base = os.environ.get(ENV_BASE)
+    model = os.environ.get(ENV_MODEL) or cfg["llm"].get("model_openai")
+    if not base or not model:
+        sys.exit(f"llm.mode: openai needs ${ENV_BASE} and ${ENV_MODEL} in the "
+                 f"environment (the endpoint is never committed -- see call_openai)")
+    key = os.environ.get(ENV_KEY, "unused")
+    headers = {os.environ[ENV_HEADER]: key} if os.environ.get(ENV_HEADER) else None
+    client = OpenAI(base_url=base, api_key=key, default_headers=headers)
+
+    # A hosted open-weight model has a context window the request has to fit inside, and
+    # unlike the Anthropic path `max_tokens` is not a budget but part of that sum: Qwen
+    # 2.5 72B at 32768 rejected the whole batch outright, because a paper's evidence runs
+    # ~10.6k tokens and the reply was asked to reserve 32000. So ask the endpoint what it
+    # can hold and reserve what is left. `/v1/models` is the only source for it, it is one
+    # call, and a gateway that does not answer just leaves the configured number alone.
+    window = None
+    try:
+        window = max((getattr(m, "max_model_len", None) or 0) for m in client.models.list())
+    except Exception:                                # noqa: BLE001 -- optional refinement
+        pass
+
+    sch, out, sys_prompt = schema(), {}, system_prompt()
+    enforced = None
+    for p, ev in pairs:
+        msgs = [{"role": "system", "content": sys_prompt},
+                {"role": "user", "content": USER.format(evidence=ev)
+                 + "\n\nReturn one JSON object matching the schema. No prose, no fence."}]
+        want = cfg["llm"].get("max_tokens", API_MAX_TOKENS)
+        if window:
+            # 3.2 chars per token is deliberately pessimistic for English prose, so the
+            # estimate errs toward reserving less and getting a truncation warning rather
+            # than toward a 400 that drops the paper entirely.
+            used = int(sum(len(m["content"]) for m in msgs) / 3.2) + 512
+            want = max(2048, min(want, window - used))
+        req = dict(model=model, messages=msgs, max_tokens=want,
+                   temperature=cfg["llm"].get("temperature", 0.2), seed=48)
+        rf = {"type": "json_schema",
+              "json_schema": {"name": "sidecar", "schema": decodable(sch),
+                              "strict": True}}
+        try:
+            r = client.chat.completions.create(**req, response_format=rf)
+            enforced = True if enforced is None else enforced
+        except Exception as e:                        # noqa: BLE001 -- any 4xx means no
+            if enforced:                              # it worked before, so this is real
+                print(f"  failed: {p['slug']} -- {type(e).__name__}", file=sys.stderr)
+                continue
+            enforced = False
+            try:
+                r = client.chat.completions.create(**req)
+            except Exception as e2:                   # noqa: BLE001
+                print(f"  failed: {p['slug']} -- {type(e2).__name__}: "
+                      f"{str(e2)[:160]}", file=sys.stderr)
+                continue
+        ch = r.choices[0]
+        text = ch.message.content or ""
+        if ch.finish_reason == "length":
+            print(f"  truncated at max_tokens: {p['slug']} -- raise llm.max_tokens "
+                  f"(now {req['max_tokens']})", file=sys.stderr)
+            continue
+        sc = _first_json(text)
+        if sc is None:
+            print(f"  no JSON object in the reply: {p['slug']} "
+                  f"({len(text)} chars)", file=sys.stderr)
+            continue
+        out[p["slug"]] = sc
+        print(f"  ok  {p['slug']}  ({len(sc.get('claims') or [])} claims, "
+              f"{len(sc.get('qa') or [])} question groups)")
+    how = "schema-enforced" if enforced else "unenforced, parsed from text"
+    return out, f"{model} via an OpenAI-compatible endpoint ({how})"
 
 
 HEADER = """<!-- DRAFT — not published, not read by anything that builds the site.
@@ -1225,6 +1390,8 @@ def main() -> None:
     ap.add_argument("--no-fulltext", action="store_true",
                     help="abstract only; no paper fetches")
     ap.add_argument("--slug", nargs="+", help="queue exactly these papers")
+    ap.add_argument("--mode", choices=("skill", "api", "openai"),
+                    help="override llm.mode for this run, without editing config.yaml")
     args = ap.parse_args()
 
     cfg = load_config()
@@ -1306,10 +1473,15 @@ def main() -> None:
         print(f"  ... and {len(pairs) - 8} more")
     print()
 
-    if cfg["llm"]["mode"] == "api":
-        answers = call_api(pairs, cfg)
+    mode = args.mode or cfg["llm"]["mode"]
+    if mode in ("api", "openai"):
+        if mode == "api":
+            answers = call_api(pairs, cfg)
+            how = f"the Anthropic API ({cfg['llm']['model']})"
+        else:
+            answers, how = call_openai(pairs, cfg)
         for slug, sc in answers.items():
-            write_draft(slug, sc, f"the Anthropic API ({cfg['llm']['model']})")
+            write_draft(slug, sc, how)
         print(f"\nwrote {len(answers)} draft(s) to data/sidecars/drafts/")
         print("Next: python scripts/draft_sidecars.py --review")
     else:
