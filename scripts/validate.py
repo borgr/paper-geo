@@ -1038,6 +1038,23 @@ def check_readability(entries: list[tuple[str, dict]]) -> list[str]:
             for name, fm in entries for kind, at, msg in readability(fm)]
 
 
+def outdated_live(entries: list[tuple[str, dict]]) -> dict[str, int]:
+    """Live sidecars today's accept-time checks would refuse: slug -> finding count.
+
+    The accept tier is fatal at `--accept` and never consulted again, which is right for
+    a draft and leaves a hole behind a published one. A sidecar accepted before a rule
+    existed keeps its old shape for good, and it is the shape the site publishes: both
+    live files predate the scope rules, and between them every one of their 30 scopes is
+    longer than the claim it bounds -- the one thing the `FAQPage` answer is built out of.
+
+    Reported and re-queued, not made fatal. The remedy is a re-draft and an accept, and a
+    gate that fails until those happen blocks every unrelated commit; `pending()` reads
+    this instead, so the papers come back round as drafts on their own.
+    """
+    return {name[:-3] if name.endswith(".md") else name: n
+            for name, fm in entries if (n := len(readability(fm)))}
+
+
 # --------------------------------------------------------------- accept-time tier
 
 _GROUPED = r"\d{1,3}(?:,\d{3})+"
@@ -1429,6 +1446,13 @@ def main() -> None:
               f"sidecars, so their numbers were not checked "
               f"({', '.join(n[:-3] for n in no_text[:3])}"
               f"{', ...' if len(no_text) > 3 else ''})")
+    if old := outdated_live(sidecars):
+        # Every run, next to the other note: this is drift in what is already published,
+        # so it should not need someone to go looking for it.
+        print(f"note: {len(old)} of {len(sidecars)} live sidecar(s) carry "
+              f"{sum(old.values())} finding(s) against accept-time rules written after "
+              f"they were accepted, so a re-draft is queued for them "
+              f"({', '.join(f'{k} ({v})' for k, v in sorted(old.items()))})")
     problems = errs + soft
     if problems:
         print(f"\n{len(problems)} problem(s):")

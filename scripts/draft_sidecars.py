@@ -388,8 +388,18 @@ def pending(papers: list[dict], do_all: bool, limit: int | None) -> list[dict]:
     draft. It was written to different rules, `--accept` refuses it, and until this
     check existed nothing in the pipeline noticed -- which is how 17 drafts came to sit
     in that directory, not one of them acceptable, with no run ever replacing them.
+
+    And a *live* sidecar that today's checks would refuse counts the same way, for the
+    same reason and with more at stake: it is the file the site builds from. Excluding
+    every paper with a live sidecar made acceptance permanent, so the two accepted before
+    the scope rules existed were the only two files in the repo that no run could reach
+    and no check would ever look at again. The draft that comes back is marked as
+    replacing the live one and needs `--accept --replace`, which is machinery that
+    already existed with nothing able to reach it.
     """
     live = {os.path.basename(f)[:-3] for f in glob.glob(os.path.join(SIDECARS, "*.md"))}
+    from validate import outdated_live, read_sidecars
+    live -= set(outdated_live(read_sidecars()[0]))
     keep = {} if do_all else held(spec_sha())
     out = [p for p in sorted(papers, key=lambda q: -(q.get("citations") or 0))
            if p["slug"] not in live and p["slug"] not in keep]

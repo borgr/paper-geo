@@ -1518,6 +1518,40 @@ class TestADeclinedSectionTakesItsPayloadWithIt(unittest.TestCase):
                              f"PAYLOAD does not match tasks/{name}")
 
 
+class TestAcceptanceIsNotPermanent(unittest.TestCase):
+    """A published sidecar the current rules would refuse comes back round as a draft.
+
+    Acceptance used to be terminal: `pending()` skipped every paper with a live sidecar,
+    and the accept-time checks are consulted only by `--accept`, so a file accepted before
+    a rule existed was the one thing in the repo that no run could reach and no check
+    would look at again -- while being the file the site builds from. Both live sidecars
+    were in that state.
+    """
+
+    def test_a_refused_live_sidecar_is_queued_again(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import validate
+        from draft_sidecars import pending
+        entries, _ = validate.read_sidecars()
+        stale = set(validate.outdated_live(entries))
+        if not stale:
+            self.skipTest("every live sidecar passes the current accept-time checks")
+        papers = [{"slug": s, "citations": 1} for s in stale]
+        self.assertEqual(stale, {p["slug"] for p in pending(papers, False, None)})
+
+    def test_a_passing_live_sidecar_stays_accepted(self):
+        """The other half, and the one that keeps this from re-drafting everything: a
+        live file the checks pass is done, and a run must not queue it."""
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import validate
+        from draft_sidecars import pending
+        entries, _ = validate.read_sidecars()
+        ok = {n[:-3] for n, _ in entries} - set(validate.outdated_live(entries))
+        if not ok:
+            self.skipTest("no live sidecar currently passes, so nothing to hold back")
+        self.assertEqual([], pending([{"slug": s, "citations": 1} for s in ok], False, None))
+
+
 class TestReviewPageShowsEachThingOnce(unittest.TestCase):
     """The review page pairs claims with questions, and pays for it exactly once.
 
