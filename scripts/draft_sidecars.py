@@ -62,6 +62,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -480,6 +481,49 @@ API_MAX_TOKENS = 32000
 # gateway turns out to reject `output_config.format`.
 JSON_ONLY = "\n\nReturn one JSON object matching the schema. No prose, no fence."
 
+# How many times a dropped connection is retried before the paper is given up on. Small
+# because a real outage should surface as a failure rather than as a run that appears to
+# hang: three tries spaced 5s, 10s, 15s covers a blip and nothing longer.
+TRANSIENT_TRIES = 3
+
+# The failures worth retrying: the connection died, the request timed out, or the endpoint
+# said "busy". Matched by type name because the transport errors arrive unwrapped from
+# httpx on a streamed request -- `RemoteProtocolError` is not an `anthropic` class -- and
+# by status code for the server-side ones, since a 400 must never be retried.
+_TRANSIENT_NAMES = {"APIConnectionError", "APITimeoutError", "RemoteProtocolError",
+                    "ReadError", "ReadTimeout", "WriteError", "ConnectError",
+                    "ConnectTimeout", "RemoteDisconnected", "IncompleteRead",
+                    "InternalServerError", "RateLimitError", "OverloadedError"}
+_TRANSIENT_STATUS = {408, 409, 429, 500, 502, 503, 504, 529}
+
+
+def _transient(e: Exception) -> bool:
+    if type(e).__name__ in _TRANSIENT_NAMES:
+        return True
+    if getattr(e, "status_code", None) in _TRANSIENT_STATUS:
+        return True
+    # httpx wraps the socket error in its own class; the cause is where the name lives.
+    return type(e.__cause__).__name__ in _TRANSIENT_NAMES if e.__cause__ else False
+
+
+def with_retries(call, label: str):
+    """Run one request, retrying only the failures that are the connection's fault.
+
+    Re-raises whatever the last attempt raised rather than returning None, so each
+    caller's own handling -- climbing the dialect ladder, dropping to an unenforced
+    request -- still runs on a failure that retrying cannot fix.
+    """
+    for tries in range(TRANSIENT_TRIES + 1):
+        try:
+            return call()
+        except Exception as e:                        # noqa: BLE001 -- re-raised below
+            if not _transient(e) or tries >= TRANSIENT_TRIES:
+                raise
+            wait = (tries + 1) * 5
+            print(f"  {label}: {type(e).__name__} -- retry {tries + 1} of "
+                  f"{TRANSIENT_TRIES} in {wait}s", file=sys.stderr)
+            time.sleep(wait)
+
 # How each rung of the Anthropic ladder gets its shape guarantee, in the words the draft
 # header and the retry line both use. "the model was told to" is the one that is not a
 # guarantee, and it says so.
@@ -565,10 +609,13 @@ def call_api(pairs: list[tuple[dict, str]], cfg,
                        messages=[{"role": "user", "content":
                                   user + (JSON_ONLY if how_out == "text" else "")}])
             try:
-                msg = send(req, extra)
+                msg = with_retries(lambda: send(req, extra), label)
                 worked = True
                 break
             except Exception as e:                    # noqa: BLE001 -- any 4xx means no
+                # Whatever reaches here either is not the connection's fault or has
+                # already been retried, so it is a real refusal.
+                #
                 # Only ever climb down before the first success. Once one request has gone
                 # through, the endpoint's dialect is settled and a failure is a failure --
                 # retrying it unenforced would quietly turn a rate limit into an
@@ -785,7 +832,8 @@ def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
         rf = {"type": "json_schema",
               "json_schema": {"name": "sidecar", "schema": decodable(sch), "strict": True}}
         try:
-            r = client.chat.completions.create(**req, response_format=rf)
+            r = with_retries(
+                lambda: client.chat.completions.create(**req, response_format=rf), label)
             enforced = True if enforced is None else enforced
         except Exception as e:                        # noqa: BLE001 -- any 4xx means no
             if enforced:                              # it worked before, so this is real
@@ -793,7 +841,7 @@ def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
                 return None
             enforced = False
             try:
-                r = client.chat.completions.create(**req)
+                r = with_retries(lambda: client.chat.completions.create(**req), label)
             except Exception as e2:                   # noqa: BLE001
                 print(f"  failed: {label} -- {type(e2).__name__}: "
                       f"{str(e2)[:160]}", file=sys.stderr)

@@ -2419,3 +2419,70 @@ class TestAQuoteLinksIntoThePaper(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestADroppedConnectionIsNotARefusal(unittest.TestCase):
+    """One `RemoteProtocolError` mid-stream used to spend a paper's whole repair budget."""
+
+    def setUp(self):
+        import draft_sidecars as D
+        self.D = D
+        # Named, not imported: `httpx` is not a CI requirement -- it arrives with the
+        # `anthropic` SDK, which only the api backend needs -- and the predicate matches on
+        # the type's *name* precisely so it need not import the transport library. Standing
+        # these up by hand tests the mechanism the drafter actually uses.
+        self.err = {n: type(n, (Exception,), {})
+                    for n in ("RemoteProtocolError", "ConnectError", "ConnectTimeout",
+                              "ReadError")}
+        self.slept = []
+        self._real = D.time.sleep
+        D.time.sleep = self.slept.append
+
+    def tearDown(self):
+        self.D.time.sleep = self._real
+
+    def test_a_transport_error_is_retried_and_then_succeeds(self):
+        calls = []
+
+        def flaky():
+            calls.append(1)
+            if len(calls) < 3:
+                raise self.err["RemoteProtocolError"]("incomplete chunked read")
+            return "a reply"
+
+        self.assertEqual(self.D.with_retries(flaky, "a-paper repair 1"), "a reply")
+        self.assertEqual(len(calls), 3)
+        self.assertEqual(self.slept, [5, 10])         # backs off, does not hammer
+
+    def test_a_refusal_is_not_retried(self):
+        calls = []
+
+        def refused():
+            calls.append(1)
+            raise ValueError("400: unknown field `output_config`")
+
+        with self.assertRaises(ValueError):
+            self.D.with_retries(refused, "a-paper")
+        self.assertEqual(len(calls), 1)               # the ladder gets to climb immediately
+        self.assertEqual(self.slept, [])
+
+    def test_a_permanent_outage_gives_up_and_re_raises(self):
+        calls = []
+
+        def dead():
+            calls.append(1)
+            raise self.err["ConnectError"]("no route to host")
+
+        with self.assertRaises(self.err["ConnectError"]):
+            self.D.with_retries(dead, "a-paper")
+        self.assertEqual(len(calls), self.D.TRANSIENT_TRIES + 1)
+
+    def test_which_failures_count_as_the_connections_fault(self):
+        wrapped = RuntimeError("stream died")
+        wrapped.__cause__ = self.err["ReadError"]("peer went away")
+        for e in (self.err["RemoteProtocolError"]("x"), self.err["ConnectTimeout"]("x"), wrapped,
+                  type("Busy", (Exception,), {"status_code": 529})()):
+            self.assertTrue(self.D._transient(e), f"{type(e).__name__} should be retried")
+        for e in (ValueError("bad schema"), KeyError("claims"),
+                  type("Bad", (Exception,), {"status_code": 400})()):
+            self.assertFalse(self.D._transient(e), f"{type(e).__name__} must not be retried")
