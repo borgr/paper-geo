@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call). Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced) + a targeted repair. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -17,241 +17,254 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept dora-the-explorer-directed-outreaching-reinforcement-action
 
-Stamp: spec=d57862840a90 checks=3 body=7cde4a1767d5
+Stamp: spec=8f05813a4658 checks=pass body=57be73a43b61
 -->
 ---
 key: DBLP:conf/iclr/FoxCL18
-coined: E-values (DORA)
-gloss: 'propagating exploration counters: a second value function, learned with zero reward
-  and optimistic initialization, whose logarithm acts as a visit counter that spreads over
-  trajectories'
-one_liner: DORA learns a second, reward-free value function called E-values alongside Q, initialized
-  to 1 and updated by SARSA, so that log of the E-value acts as a visit counter that propagates
-  exploratory value along whole trajectories instead of one step ahead — giving model-free
-  directed exploration.
+coined: DORA / E-values
+gloss: exploration values that propagate "missing knowledge" along trajectories, so a model-free
+  agent can prefer actions that lead toward unexplored regions rather than just unvisited
+  single steps
+one_liner: DORA learns a second value function, E-values, on a copy of the MDP with all rewards
+  set to zero and values initialized to 1, so that the logarithm of E acts as a visit counter
+  that propagates exploratory value along whole trajectories in model-free RL.
 claims:
 - id: e-values-generalize-counters
   kind: context
-  text: DORA introduces E-values, a model-free generalization of visit counters that propagates
-    exploratory value along state-action trajectories, filling a gap where earlier propagating-exploration
-    schemes were model-based.
-  scope: As of ICLR 2018; earlier propagation of exploration values (Storck et al. 1995, Meuleau
-    & Bourgine 1999, Little & Sommer 2014) required an estimated model of the MDP, and counter-based
-    model-free bonuses evaluated novelty only one step ahead.
-- id: log-e-is-a-counter
+  text: DORA introduces E-values, a model-free generalization of visit counters that requires
+    no learned model of the MDP. The generalized counter log_{1-alpha}(E) propagates exploratory
+    value along state-action trajectories instead of scoring only the immediate next step.
+  scope: Earlier propagating-exploration schemes (Storck et al. 1995, Meuleau & Bourgine 1999,
+    Little & Sommer 2014) were model-based; as of ICLR 2018. Requires running a second value-learning
+    process beside Q-learning.
+- id: log-e-equals-counter
   kind: result
-  text: With exploration discount gamma_E = 0, the E-value of a state-action pair visited
-    n times equals (1-alpha)^n, so log base (1-alpha) of E is exactly the visit counter; with
-    gamma_E > 0 it grows more slowly and each visit of an action with many possible outcomes
-    contributes less than one generalized count.
+  text: With exploration discount gamma_E = 0, an E-value initialized to 1 becomes (1-alpha)^n
+    after n visits, so log_{1-alpha}(E) equals the visit counter exactly; for gamma_E > 0
+    it grows more slowly and behaves as a generalized counter.
   evidence: Section 2.3 and Figure 1
-  scope: Tabular setting with learning rate alpha shared between Q and E; exact equality to
-    n requires gamma_E = 0 or a terminal state with a single action. The tree-MDP simulation
-    in Figure 1 varies the number of leaves k.
-- id: bonus-beats-standard-counters
+  scope: Exact equality holds for gamma_E = 0, and for any gamma_E at a terminal state with
+    one action. On the tree MDP with k leaves, one full cycle of k visits of the start action
+    contributes roughly 1 generalized visit.
+- id: bonus-bridge
   kind: result
-  text: 'Adding a 1/log_(1-alpha)E exploration bonus to the reward speeds up convergence of
-    an epsilon-greedy agent on the bridge MDP, and larger exploration discounts help more:
-    gamma_E = 0.9 learns faster than gamma_E = 0, which is equivalent to standard visit counters.'
+  text: Adding an exploration bonus of 1/log_{1-alpha}(E) to the reward speeds up convergence
+    of an epsilon-greedy agent on the bridge MDP. Larger exploration discounts learn faster,
+    with gamma_E = 0.9 beating gamma_E = 0, which is equivalent to standard visit counters.
   evidence: Figure 3
-  scope: Short bridge environment with k = 5, tabular Q-learning, epsilon fitted per agent
-    to optimize learning, stochastic agents averaged over 50 trials; convergence measured
-    as MSE between Q and Q* weighted by state-action visitation under the optimal policy.
-- id: lll-outperforms-counters-and-stochastic
+  scope: Short bridge environment with k = 5, tabular Q-learning, epsilon fitted separately
+    per agent; convergence measured as MSE between Q and Q* averaged over the optimal-policy
+    state-action distribution.
+- id: bridge-outperforms
   kind: result
   text: On the long bridge environment with k = 15, E-value LLL agents are the first to reach
-    low MSE between Q and Q*, while stochastic and counter-based epsilon-greedy agents and
-    the standard UCB-like agent fail to converge.
+    low Q-versus-Q* error. Stochastic and counter-based epsilon-greedy agents and the standard
+    UCB-like agent fail to converge at all.
   evidence: Figure 4
-  scope: Tabular bridge MDP, k = 15, gamma_E = 0.9 unless stated otherwise; epsilon and temperature
-    fitted separately per agent, stochastic agents averaged over 50 trials. Comparators are
-    epsilon-greedy, Softmax, their counter-based LLL determinizations, and a UCB-like rule
-    with sqrt(log t / C) bonus.
-- id: generalized-counters-track-missing-knowledge
+  scope: Tabular bridge MDP, k = 15, gamma_E = 0.9, epsilon and Softmax temperature fitted
+    per agent, stochastic agents averaged over 50 trials. Cliff gridworld results reported
+    but not shown.
+- id: missing-knowledge
   kind: result
-  text: Convergence level |(Q-Q*)/Q*| is a single common function of the generalized counter
-    log_(1-alpha)E across all state-action pairs, whereas against ordinary visit counters
-    the same quantity depends on which state-action is being counted.
+  text: Generalized counters track an agent's missing knowledge better than visit counters
+    on the bridge MDP. The normalized distance |(Q-Q*)/Q*| is a single function of log_{1-alpha}(E)
+    across all state-action pairs, whereas against the visit counter it depends on which state-action
+    is counted.
   evidence: Figure 5
-  scope: E-value LLL Softmax agent on the short bridge environment with k = 5, recorded at
-    the end of each episode; a qualitative pattern across state-action pairs rather than a
-    fitted functional form.
-- id: freeway-faster-convergence
+  scope: Measured for an E-value LLL Softmax agent on the short bridge environment with k
+    = 5, recording C, log_{1-alpha}(E) and the normalized error at the end of each episode.
+- id: freeway
   kind: result
-  text: On the Freeway Atari 2600 game, a two-stream network predicting Q and E with an exploration
-    bonus of beta/sqrt(-log E) and beta = 0.05 converges in roughly 2x10^6 steps, versus about
-    10x10^6 steps reported for the density-model counters of Bellemare et al. (2016).
+  text: On the Freeway Atari 2600 game, E-value exploration bonuses beat both a DQN baseline
+    and the density-model counters of Bellemare et al. (2016). Learning converges in approximately
+    2*10^6 steps instead of approximately 10*10^6 steps.
   evidence: Section 4.1 and Figure 6
-  scope: Single game (Freeway) with epsilon-greedy action selection; the DQN baseline here
-    lacks the Double DQN and Monte-Carlo return enhancements used in the density-model work,
-    so the step-count comparison is across papers rather than a matched ablation.
-- id: freeway-beats-density-counters
+  scope: Single game (Freeway), beta = 0.05, epsilon-greedy action selection in all conditions.
+    The DQN baseline lacks Double DQN and Monte-Carlo return, which the 10*10^6-step Bellemare
+    et al. result did use.
+- id: training-speed
   kind: result
-  text: E-value exploration bonuses outperform both a plain DQN baseline and density-model
-    counter bonuses on Freeway, and training with density-model counters was an order of magnitude
-    slower than training the two-streamed E-value network.
-  evidence: Figure 6
-  scope: Freeway only, all agents using epsilon-greedy action selection with the bonus added
-    to the reward, beta = 0.05, built on the atari-rl DQN implementation; the runtime comparison
-    is wall-clock for these implementations, not an asymptotic claim.
+  text: Training the two-stream network for E-values on Freeway was an order of magnitude
+    faster than training with density-model counters.
+  evidence: Section 4.1, footnote 2
+  scope: Wall-clock comparison for one implementation pair on Freeway, using the atari-rl
+    package for both DQN and density-model counters.
 - id: determinization-theorem
   kind: result
-  text: Any deterministic action-selection rule that never picks an action whose empirical
-    frequency exceeds its target probability by more than a sub-linear b(t) has action frequencies
-    converging to the stochastic rule f(a), which is what licenses replacing epsilon-greedy
-    or Softmax by a counter-based deterministic equivalent.
-  evidence: Theorem 3.1 in Section 3.2.1, proved in Appendix A
-  scope: An in-the-limit equivalence of action frequencies at fixed Q-values and a fixed state,
-    not a claim about finite-time behaviour or about learning speed; two concrete determinizations
-    are given, argmin_a C(a)/C - f(a) and the LLL rule argmax_a f(a)/C(a).
-- id: e-values-with-function-approximation
+  text: For any stochastic action-selection rule f, a deterministic policy can match f's action
+    frequencies in the limit. It suffices that the chosen action's empirical frequency C_T(a)/T
+    exceed f(a) by at most a sub-linear b(t).
+  evidence: Theorem 3.1, proved in Appendix A
+  scope: An in-the-limit statement about action frequencies at fixed Q-values and fixed state,
+    not a finite-time or regret bound. Two concrete determinizations are given, including
+    the LLL rule argmax_a f(a)/C(a).
+- id: lll-rule
+  kind: context
+  text: DORA turns any stochastic action-selection rule, such as epsilon-greedy or Softmax,
+    into a deterministic rule by replacing visit counters with generalized counters, selecting
+    argmax over log f(s,a) - log log_{1-alpha}(E(s,a)).
+  scope: Rules whose target action frequencies can be written as a distribution over actions
+    given the current Q-values; requires initializing E to 1 and 0 <= gamma_E < 1 so that
+    E stays in (0,1).
+- id: function-approximation
   kind: result
-  text: With linear tile-coding function approximation on MountainCar, the summed generalized
-    counter C_E(s) recovered from the learned E-value weights correlates strongly and positively
-    with the empirical visit histogram throughout training, using far fewer parameters than
-    a table of state-action counters at the same binning resolution.
+  text: E-values learned by linear function approximation with tile coding on MountainCar
+    correlate strongly, per state, with empirical visit histograms throughout training. The
+    E-value model uses far fewer parameters than a state-action count table at the same binning
+    resolution.
   evidence: Appendix C, Figures 8-12
-  scope: MountainCar with linear approximation, gamma_E = 0 for the correlation histogram
-    in Figure 12; Q and E were learned in parallel with actions chosen epsilon-greedily and
-    independently of E to dissociate the two. E-value weights initialized to 0 with a logistic
-    output non-linearity to keep E in (0,1).
-- id: mountaincar-sparse-reward
+  scope: gamma_E = 0 for the correlation histogram, snapshots each 10 episodes; actions chosen
+    by an epsilon-greedy agent independently of E-values to dissociate visits from the exploration
+    bonus.
+- id: mountaincar-sparse
   kind: result
-  text: On sparse-reward MountainCar, LLL Softmax agents using E-values with gamma_E = 0.99
-    quickly reach high probability of reaching the goal, while Softmax exploration fails to
-    solve the problem within 1000 episodes.
+  text: On sparse-reward MountainCar, LLL E-value agents with gamma_E = 0.99 quickly reach
+    high goal-reaching probability, while Softmax exploration fails to solve the problem within
+    1000 episodes.
   evidence: Appendix D and Figure 13
-  scope: Reward 0 everywhere except magnitude 1 at the goal, episodes capped at 1000 steps,
-    linear approximation with tile coding, temperature and epsilon fitted separately per agent,
-    probability averaged over 50 simulations per agent.
-- id: optimism-without-reward-priors
+  scope: Reward 0 except 1 at the goal, episodes capped at 1000 steps, linear tile-coding
+    approximation, probability averaged over 50 simulations per agent, temperature and epsilon
+    fitted per agent.
+- id: delayed-q
   kind: result
-  text: Because DORA keeps exploratory value in a separate E-value function, it can use optimistic
-    initialization for exploration without assuming known reward bounds, and still reaches
-    convergence competitive with Delayed Q-Learning on the normalized bridge environment.
+  text: E-value LLL is competitive with Delayed Q-Learning on the normalized bridge environment
+    with k = 15. That comparison required hand-setting Delayed Q-Learning's update threshold
+    to m = 10, an order of magnitude below the value its PAC guarantees require.
   evidence: Appendix B and Figure 7
-  scope: Normalized bridge environment with k = 15 and rewards in [0,1]; MSE normalized separately
-    per agent to make the curves comparable, and Delayed Q-Learning needed m = 10, an order
-    of magnitude below the value its PAC guarantees require, to perform this well.
-- id: no-extra-complexity
-  kind: result
-  text: Learning E-values leaves the asymptotic time and space complexity of the learning
-    algorithm unchanged, since it amounts to running the same value-update twice, once for
-    Q and once for E.
-  evidence: Section 2.2
-  scope: Tabular case with one E-value per state-action pair and alpha_E = alpha; in the function-approximation
-    case E is a second learned value function whose parameter count is set by the chosen architecture.
+  scope: MSE normalized separately per agent because Delayed Q-Learning initializes optimistically.
+    Delayed Q-Learning also assumes all rewards lie between 0 and 1, which the normalized
+    bridge environment provides.
 qa:
 - q:
-  - How can a reinforcement learning agent explore based on how much new knowledge a whole
-    trajectory would give, not just the next step?
-  - Is there a model-free way to propagate exploration bonuses over trajectories?
-  - What does DORA the Explorer propose for directed exploration?
+  - How can a model-free RL agent explore toward unvisited regions rather than just unvisited
+    single steps?
+  - Is there a way to make visit counters propagate along trajectories without learning a
+    model of the MDP?
+  - What does DORA's E-value do that a visit counter does not?
   answers:
   - e-values-generalize-counters
-  - log-e-is-a-counter
+  - log-e-equals-counter
 - q:
-  - What should I read about directed exploration in model-free reinforcement learning?
-  - Which paper introduced E-values as a generalization of visit counters?
-  - Where does the idea of propagating exploration counters without a world model come from?
+  - What should I read first about directed exploration in reinforcement learning?
+  - Which paper introduced propagating exploration values for model-free RL?
+  - Where does the idea of generalized visit counters for exploration come from?
   answers:
   - e-values-generalize-counters
+  - lll-rule
 - q:
-  - Why is the logarithm of an E-value called a generalized counter?
-  - How does an E-value relate to the number of times a state-action pair was visited?
-  - What does the exploration discount gamma_E change about counting visits?
+  - Why is the logarithm of the E-value called a generalized counter?
+  - What is the relationship between E-values and the number of visits to a state-action pair?
+  - Does log of E reduce to an ordinary visit count in any special case?
   answers:
-  - log-e-is-a-counter
+  - log-e-equals-counter
+  - missing-knowledge
 - q:
-  - Do propagating exploration counters actually beat plain visit counters?
-  - Does using gamma_E greater than 0 help compared with ordinary counting?
-  - How much does an E-value exploration bonus improve convergence on a bridge gridworld?
+  - Do E-values actually beat ordinary visit counters as an exploration bonus?
+  - Does the exploration discount factor gamma_E matter for learning speed?
+  - How much does adding an E-value bonus to the reward help on a bridge gridworld?
   answers:
-  - bonus-beats-standard-counters
-  - lll-outperforms-counters-and-stochastic
+  - bonus-bridge
+  - bridge-outperforms
 - q:
-  - Which exploration methods were compared on the bridge MDP and which won?
-  - Do epsilon-greedy and UCB converge on the long bridge environment?
-  - What baselines does the E-value LLL agent beat in the tabular experiments?
+  - How does DORA compare with epsilon-greedy, Softmax and UCB on tabular gridworlds?
+  - Which exploration methods fail to converge on the long bridge environment?
+  - Are counter-based exploration bonuses enough on a hard tabular exploration task?
   answers:
-  - lll-outperforms-counters-and-stochastic
+  - bridge-outperforms
+  - bonus-bridge
 - q:
-  - Is there evidence that generalized counters measure an agent's missing knowledge better
-    than visit counts?
-  - Why are visit counters a poor proxy for how well a state-action value has converged?
-  - What does the relation between log E and |Q-Q*|/Q* look like?
+  - Is there evidence that generalized counters measure how much an agent still has to learn?
+  - What quantity predicts convergence of Q to Q* better than visit counts?
+  - Do visit counters capture missing knowledge in RL?
   answers:
-  - generalized-counters-track-missing-knowledge
+  - missing-knowledge
 - q:
-  - How well do E-value exploration bonuses do on the Freeway Atari game?
+  - How well does E-value exploration do on the Freeway Atari game?
   - Does DORA beat pseudo-count density models on hard-exploration Atari games?
-  - How many steps does E-value exploration need to converge on Freeway?
+  - How many steps does an E-value DQN agent need to converge on Freeway?
   answers:
-  - freeway-faster-convergence
-  - freeway-beats-density-counters
+  - freeway
+  - training-speed
 - q:
-  - Can a stochastic action-selection rule like epsilon-greedy be replaced by a deterministic
-    counter-based rule?
-  - What does the DORA determinization theorem guarantee about action frequencies?
-  - Is the LLL action-selection rule equivalent to Softmax in the limit?
+  - Is E-value exploration cheaper to train than density-model pseudo-counts?
+  - What is the computational overhead of learning E-values alongside Q-values?
   answers:
+  - training-speed
+  - freeway
+- q:
+  - Can a stochastic exploration rule like Softmax be replaced by a deterministic one with
+    the same action frequencies?
+  - Is there a theorem about determinizing epsilon-greedy or Boltzmann action selection?
+  - What guarantee does the LLL determinization of a stochastic policy come with?
+  answers:
+  - determinization-theorem
+  - lll-rule
+- q:
+  - How do I convert an existing exploration rule into an E-value based one?
+  - What action-selection rule does DORA use in practice?
+  - Can generalized counters be dropped into a counter-based action-selection rule?
+  answers:
+  - lll-rule
   - determinization-theorem
 - q:
   - Do E-values work with function approximation and continuous state spaces?
-  - Can generalized visit counts be learned by a neural network or linear approximator instead
-    of a lookup table?
-  - How were E-values validated as visit counters on MountainCar?
+  - Can generalized counters be estimated in a continuous MDP where states are never revisited?
+  - How were E-values validated against real visit histograms on MountainCar?
   answers:
-  - e-values-with-function-approximation
-  - mountaincar-sparse-reward
+  - function-approximation
+  - mountaincar-sparse
 - q:
-  - Does DORA solve sparse-reward MountainCar where Softmax exploration fails?
-  - What happens to Softmax exploration on sparse-reward MountainCar within 1000 episodes?
+  - Does directed exploration help on sparse-reward MountainCar?
+  - Which exploration method solves MountainCar when the reward is only given at the goal?
+  - How does Softmax exploration do on sparse-reward MountainCar?
   answers:
-  - mountaincar-sparse-reward
+  - mountaincar-sparse
+  - function-approximation
 - q:
-  - How does DORA compare to Delayed Q-Learning?
-  - Can optimistic initialization be used for exploration without knowing the reward scale?
-  - Why separate exploratory value from reward value instead of initializing Q optimistically?
+  - How does DORA compare with Delayed Q-Learning and other PAC-MDP methods?
+  - Is a PAC-MDP exploration algorithm better than E-value exploration on the bridge task?
+  - Does E-value exploration need optimistic initialization of the reward values?
   answers:
-  - optimism-without-reward-priors
-- q:
-  - How expensive is it to learn E-values on top of Q-learning?
-  - Does maintaining a second exploration value function double the asymptotic cost?
-  answers:
-  - no-extra-complexity
+  - delayed-q
+  - e-values-generalize-counters
 misreadings:
-- 'E-values are not uncertainty estimates or a learned model of the environment: they are
-  the action-values of a copy of the MDP in which all rewards are zero, so their only signal
-  comes from optimistic initialization at 1 decaying with experience.'
-- The E-value update deliberately uses SARSA rather than the max over next actions; taking
-  the max would break the guarantee that exploration values decrease when the same trajectory
+- 'E-values are not uncertainty estimates or a Bayesian posterior: they are the action-values
+  of a copy of the MDP whose rewards are identically zero, initialized to 1, so their decay
+  measures how thoroughly trajectories have been exhausted rather than variance in the reward.'
+- 'The Freeway comparison is not a like-for-like ablation of Bellemare et al. (2016): the
+  DQN baseline in the paper omits Double DQN and Monte-Carlo return, and the roughly 2*10^6
+  versus 10*10^6 step figure compares against that published result rather than a matched
+  re-run.'
+- gamma_E is not the ordinary discount factor gamma of the task. Setting gamma_E = 0 removes
+  propagation entirely and recovers standard visit counters, which is the baseline DORA is
+  compared against.
+- E-values are learned by SARSA rather than by max-based Q-learning updates; using max over
+  next actions would break the guarantee that exploration values decrease when a trajectory
   is repeated.
-- gamma_E = 0 does not disable exploration — it reduces the generalized counter to an ordinary
-  visit counter, which is the baseline the propagating version is compared against.
-- 'The Freeway comparison is not a matched ablation of the density-model counter method: the
-  DQN baseline used lacks Double DQN and Monte-Carlo return, and the ~2x10^6 versus ~10x10^6
-  step figure compares against numbers reported in the density-model paper.'
-- The Atari result is a single hard-exploration game (Freeway), not a claim of state-of-the-art
-  across the Atari suite.
-- The determinization theorem guarantees only that action frequencies match the stochastic
-  rule asymptotically; it does not by itself prove that the deterministic variant learns faster,
-  which is an empirical finding.
-terminology: '{"E-value", "The action-value learned in a copy of an MDP where every reward
-  is identically zero, initialized to 1 and discounted by an exploration discount gamma_E,
-  so its decay measures how much of a state-action''s potential outcome space has already
-  been experienced.", "generalized counter", "The logarithm, base (1-alpha), of an E-value;
-  it equals the ordinary visit count when the exploration discount is 0 and grows more slowly
-  when exploratory value propagates from future states.", "LLL determinization", "A deterministic
-  action-selection rule that picks argmax over actions of log f(s,a) minus log log_(1-alpha)E(s,a),
-  the counter-based deterministic equivalent of a stochastic rule f with generalized counters
-  substituted for visit counters.", "exploration discount (gamma_E)", "The discount factor
-  of the reward-free parallel MDP, controlling how far exploratory value propagates backwards
-  along trajectories; 0 recovers local visit counting.", "DORA", "Directed Outreaching Reinforcement
-  Action-Selection: turning any stochastic or counter-based action-selection rule into a deterministic
-  rule driven by generalized counters derived from E-values."}'
+- The determinization result is an asymptotic statement about matching action frequencies
+  in the limit, not a sample-complexity or PAC-MDP guarantee for DORA.
+- DORA's tabular results are on small gridworlds -- bridge environments with k = 5 and k =
+  15 and the Cliff problem -- so they demonstrate faster convergence in these settings, not
+  across a broad benchmark suite.
+terminology:
+  E-values: action-values learned on a copy of the MDP in which all rewards are identically
+    zero and the discount is gamma_E, initialized to 1 so that positive initial conditions
+    create an optimistic bias; they decay toward 0 as trajectories are repeated
+  generalized counter: log_{1-alpha}(E(s,a)), which equals the number of visits when the exploration
+    discount is 0 and grows more slowly when it is positive, so state-actions leading to many
+    potential outcomes accumulate less credit per visit
+  LLL determinization: a deterministic action-selection rule that reproduces a stochastic
+    rule f in the limit by choosing argmax over log f(s,a) minus log log_{1-alpha}(E(s,a)),
+    the counter-based version being argmax of f(a)/C(a)
+  exploration discount factor gamma_E: the discount used when learning exploration values,
+    separate from the task's reward discount; 0 gives no propagation between states and values
+    approaching 1 give long-range propagation of exploratory value
+  bridge MDP: a gridworld of length k in which the optimal policy requires crossing a bridge
+    whose off-bridge actions are penalized, used as a hard directed-exploration test for tabular
+    agents
 links_extra:
-  OpenReview: https://openreview.net/forum?id=ry1arUgCW
   code: https://github.com/borgr/DORA
-  replication study fork: https://github.com/borgr/deep_exploration_with_E_network/tree/2349bc9027fee67cf59914476e62f20398a43ddd
+  openreview: https://openreview.net/forum?id=ry1arUgCW
+  replication_study_fork: https://github.com/borgr/deep_exploration_with_E_network/tree/2349bc9027fee67cf59914476e62f20398a43ddd
+  atari_implementation_fork: https://github.com/borgr/atari-rl/tree/53f0d898585de042e38d6eead81ea10ad0677750
 ---

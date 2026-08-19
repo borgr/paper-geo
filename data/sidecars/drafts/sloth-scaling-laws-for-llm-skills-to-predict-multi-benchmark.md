@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call) + 1 repair round. Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced) + a targeted repair. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -17,246 +17,268 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept sloth-scaling-laws-for-llm-skills-to-predict-multi-benchmark
 
-Stamp: spec=d57862840a90 checks=5 body=1580d56a3647
+Stamp: spec=8f05813a4658 checks=pass body=7d9153615c0a
 -->
 ---
 key: polo2024sloth
 coined: Sloth
-gloss: skills scaling laws — predicting a big model's benchmark scores from one small model
-  in its family
-one_liner: Sloth fits a scaling law on public leaderboard data by assuming benchmark scores
-  are driven by 3 low-dimensional latent skills that families produce from parameters and
-  tokens with family-specific efficiency, so predicting a large model needs only one small
-  model from its family.
+gloss: skills scaling laws — predicting a large LLM's benchmark scores from low-dimensional
+  latent skills fitted on public leaderboard data
+one_liner: Sloth fits scaling laws on public leaderboard data by assuming benchmark scores
+  are driven by a few latent skills that grow with model size and training tokens at a family-specific
+  efficiency, so predicting a larger model in a new family needs as little as one observed
+  model from that family.
 claims:
-- id: prediction-accuracy
+- id: prediction-competitive
   kind: result
   text: Sloth predicts held-out LLM benchmark performance with mean absolute error similar
-    to or lower than a FLOPs-based scaling law with shared intercept, a family-specific-intercept
-    FLOPs law, and a PCA+FLOPs adaptation of observational scaling laws. Its errors are also
-    similar to or lower than Sloth's own full-dimensional "Size and Tokens" variant.
-  scope: 12 Open LLM Leaderboard v1/v2 benchmarks, leave-one-family-out cross-validation over
-    30 model families, with only the smallest model of the test family in the training set;
-    errors in percentage points, averaged across families.
+    to or lower than the "Size and Tokens" variant that models all 12 benchmarks separately.
+    It also matches or beats the FLOPs-based scaling law of Owen (2024) and a PCA adaptation
+    of Ruan et al. (2024).
+  scope: Leave-one-out over LLM families on Open LLM Leaderboard v1 and v2 (12 benchmarks),
+    with only the smallest model of the test family in the training set; base and instruct
+    models treated as separate families.
   evidence: Figure 1
-- id: mape-version
+- id: mape-same-conclusion
   kind: result
-  text: Sloth produces the best benchmark-score predictions on both Open LLM Leaderboard v1
-    and v2 when error is measured as mean absolute percentage error rather than mean absolute
-    error.
-  scope: Same leave-one-family-out setup over 30 families as the MAE results, with 1 model
-    per test family observed at training time; 12 benchmarks; conclusions match the MAE version.
+  text: Sloth gives the best predictions on both Open LLM Leaderboards when error is measured
+    as mean absolute percentage error rather than mean absolute error.
+  scope: Same leave-one-out family split as the MAE experiment, one model of the test family
+    observed; measured in percentage points.
   evidence: Figure 10
-- id: two-model-setting
+- id: one-model-per-family
   kind: result
-  text: Sloth's prediction advantage persists when 2 models per test family are available
-    at training time. That is the regime in which the fully family-dependent FLOPs law, with
-    both family-specific intercept and slope, can also be fitted.
-  scope: 12 Open LLM Leaderboard v1/v2 benchmarks, leave-one-family-out over 30 families;
-    results reported as averages across families and per family.
-  evidence: Figure 16
+  text: Sloth needs data from only 1 model of a new LLM family to estimate that family's efficiency
+    intercepts and then predict a larger, untrained model in the same family. Fitting family-dependent
+    slopes as in Ruan et al. (2024) instead requires at least 2 models.
+  scope: The family's efficiency has to be captured by an intercept shared across sizes; the
+    second experiment with 2 observed models per test family gives qualitatively similar errors.
+  evidence: Section 4.2 and Figure 16
 - id: three-skills
   kind: result
-  text: 3 latent skills, labelled Reasoning, Knowledge and Instruction Following, account
+  text: Three latent skills, labelled Reasoning, Knowledge and Instruction Following, account
     for performance across the 12 Open LLM Leaderboard benchmarks. GSM8K, MATH, GPQA, MMLU(-PRO),
     BBH and MuSR load on Reasoning, ARC, HellaSwag and Winogrande on Knowledge, and IFEval
     on Instruction Following.
-  scope: d=3 fit on the 15 families in the intersection of Open LLM Leaderboard v1 and v2,
-    using the "basic" Sloth with sigmoid link and fixed lower asymptotes; skill names are
-    the authors' subjective reading of the rotated loadings.
+  scope: Loadings estimated on the 15 families in the intersection of Leaderboard v1 and v2
+    with d=3, sigmoid link and fixed lower asymptotes, then Geomin-rotated; the skill names
+    are the authors' subjective reading of the loadings, and the Instruction Following interpretation
+    does not hold at d=4.
   evidence: Figure 2
-- id: reasoning-vs-knowledge-inputs
+- id: reasoning-size-driven
   kind: result
-  text: Reasoning is primarily a function of parameter count, with only small dependence on
-    the number of training tokens. Knowledge is strongly influenced by both parameter count
-    and training tokens, and spans the widest range of skill levels across compute.
-  scope: Level curves of the d=3 fit on the leaderboard v1/v2 intersection with family-specific
-    intercepts subtracted; skills standardized to zero mean and unit standard deviation; robust
-    across d=2, 3 and 4.
+  text: Reasoning skill is primarily a function of parameter count, with only small dependence
+    on the number of training tokens. Knowledge instead is strongly influenced by both parameter
+    count and training tokens, and varies over a wider range of standard deviations.
+  scope: Level curves of skills with the family-specific intercept removed, d=3, fitted on
+    the intersection of Open LLM Leaderboard v1/v2; skills standardized to zero mean and unit
+    standard deviation.
   evidence: Figure 4
 - id: instruction-tuning-effects
   kind: result
-  text: Instruction tuning has a large positive effect on the Instruction Following skill
-    for every family examined, a moderate negative effect on Reasoning, and mixed effects
+  text: Instruction tuning raises the Instruction Following skill strongly and consistently
+    across every family plotted, has a moderate negative effect on Reasoning, and mixed effects
     on Knowledge.
-  scope: Base versus instruction-tuned pairs from the families with the most models, d=3 fit
-    on the leaderboard v1/v2 intersection; the effect is invisible at d=2.
+  scope: Base versus instruction-tuned pairs from the families with the most models in the
+    dataset, d=3 fit on the leaderboard intersection; skill changes read in standard-deviation
+    units.
+  evidence: Figure 5
+- id: instruction-tuning-dominates-compute
+  kind: result
+  text: Instruction tuning shifts the Instruction Following skill by much more, in standard-deviation
+    units, than varying model size and training tokens does.
+  scope: Comparison of base/instruct skill gaps against skill level curves over the observed
+    ranges of parameter count and tokens, d=3, leaderboard intersection.
   evidence: Figure 5
 - id: downstream-humaneval
   kind: result
-  text: 'Sloth recovers the code-completion score of a model excluded from its training set:
-    LLaMa 3 70B base and instruct HumanEval performance is predicted from Sloth-estimated
-    skills. Both 70B models are held out of the scaling-law fit.'
-  scope: Two-stage pipeline — Sloth fitted on 12 leaderboard benchmarks without the 70B models,
-    then a logistic-link regression from skills to HumanEval; a demonstration on 2 held-out
-    models, not an error rate over many.
-  evidence: Figure 6
-- id: reasoning-drives-coding
-  kind: result
-  text: Reasoning is by far the most important of the 3 latent skills for predicting HumanEval
-    code-completion performance, whereas emotional intelligence on EQ-Bench needs a mixture
-    of Reasoning and Knowledge.
-  scope: Logistic-link regressions from d=3 Sloth skills to downstream scores; EQ-Bench data
-    covers only the 15 chat models listed in Appendix G.
+  text: Skills that Sloth predicts for a held-out LLaMa 3 70B, base and instruct, support
+    accurate prediction of its HumanEval code-completion score. Reasoning is by far the most
+    important skill for coding in the second-stage logistic regression.
+  scope: LLaMa 3 70B base and instruct excluded from the Sloth fit; second-stage logistic-link
+    regression fitted on models with HumanEval data; the AgentBench case required Sloth without
+    family-specific intercepts to avoid overfitting.
   evidence: Figure 6
 - id: test-time-scaling
   kind: result
-  text: Sloth combined with per-question logistic item response models predicts MATH pass@k
-    curves under repeated sampling for 3 held-out models. The held-out models are the largest
-    LLaMa 3 Instruct, Gemma and Pythia models, absent from the scaling-law training set.
-  scope: 10 LLMs with repeated-sampling MATH data from Brown et al., of which 7 fit the per-question
-    logistic regressions and 3 are held out; MATH only.
+  text: Sloth combined with per-question item response models predicts pass@k curves under
+    repeated sampling on MATH for held-out LLaMa 3 Instruct, Gemma and Pythia models. The
+    per-question logistic regressions are fitted on the skills of 7 training LLMs.
+  scope: 10 LLMs with MATH repeated-sampling data from Brown et al. (2024), with the largest
+    model of each of the 3 families held out of both the Sloth fit and the per-question regressions;
+    pass@k predicted as the average of 1-(1-p)^k over questions.
   evidence: Figure 7
 - id: compute-optimal-skills
   kind: result
-  text: 'Compute-optimal allocation differs sharply by skill: at 3.3e21 FLOPs the Reasoning-maximizing
-    configuration is 30.98B parameters on 0.18T tokens, while the Knowledge-maximizing configuration
-    is 0.37B parameters on 15.0T tokens.'
-  scope: Derived under the 6st=c budget with parameter and token ranges clipped to training-support
-    quantiles (up to 72B parameters, 15.0T tokens), from the d=3 fit; allocation is family-independent.
+  text: Compute-optimal allocation differs sharply by skill at a budget of 3346e19 FLOPs.
+    Maximizing Reasoning calls for 30.98B parameters and 0.18T tokens, while maximizing Knowledge
+    calls for 0.37B parameters and 15.0T tokens.
+  scope: Derived from the fitted translog skill model under the constraint 6st=c, with parameter
+    and token ranges clipped to quantiles of the training data support; the optimal allocation
+    does not depend on the model family.
   evidence: Table 2
 - id: parameter-efficiency
   kind: result
   text: With d=3 latent skills and 12 benchmarks, Sloth uses 69+3f parameters for f model
     families, against 36+12f for the FLOPs baseline and 50+12f for the "Size and Tokens" baseline.
-    Sloth is the smaller model for 4 or more families.
-  scope: Exact parameter counts for d=3 and J=12; compared against the 2 best-performing baselines,
-    which use family-specific intercepts or a trained activation function.
+    Sloth is therefore smaller than either for any f of 4 or more.
+  scope: Parameter counts for the stated configuration (d=3, 12 benchmarks); the trainable-link
+    version adds neural-network weights per benchmark beyond this count.
   evidence: Appendix F
 - id: identifiability
   kind: result
   text: Sloth's loadings and skill-production coefficients are identifiable up to an invertible
-    d-by-d transformation. The transformation becomes an orthogonal rotation when the skill
-    covariance is the identity, the same indeterminacy exploratory factor analysis has.
-  scope: Proved for the "basic" Sloth with a fixed invertible link and fixed lower asymptotes,
-    under standardized skills, full-rank loadings and full-rank design matrix; not proved
-    for the trainable-link version.
+    d-by-d transformation of the latent space, which becomes an orthogonal rotation when the
+    skill covariance is the identity. That licenses factor rotation for interpretation.
+  scope: Proved for the "basic" Sloth with fixed invertible link and fixed lower asymptotes,
+    under standardized skills, rank(Lambda)=d and rank(X)=p; identifiability of the trainable-link
+    version is not established.
   evidence: Theorem A.2
-- id: context-positioning
+- id: context-position
   kind: context
-  text: Sloth predicts a hypothetical larger model's benchmark scores using family information
-    while requiring only 1 already-trained model from that family. That fills the gap between
-    family-agnostic scaling laws and observational scaling laws that assume the target model
-    already exists.
-  scope: Positioning relative to Owen (2024), Ruan et al. (2024) and Gadre et al. (2024) as
-    of publication in 2025; concerns benchmark-accuracy prediction from public leaderboard
-    data, not pretraining-loss scaling laws.
+  text: Sloth targets the gap between a single scaling law fitted across all LLMs, which ignores
+    family differences, and family-specific scaling laws, which require training several models
+    per family. It bridges them by tying benchmark scores to shared latent skills with family-specific
+    efficiency intercepts.
+  scope: Positioned against benchmark and observational scaling laws as of 2025, in particular
+    Owen (2024), Ruan et al. (2024) and Gadre et al. (2024). Concerns benchmark and downstream-task
+    accuracy rather than pretraining loss.
   evidence: Section 2.2
-- id: context-skills-scaling
+- id: context-dataset
   kind: context
-  text: Sloth turns earlier factor-analytic findings that LLM benchmark scores reflect a few
-    latent skills into an explicit scaling law. Each skill is modelled as a function of parameter
-    count, training tokens and their interaction.
-  scope: Prior latent-skill work cited includes Ilić (2023), Burnell et al. (2023), Kipnis
-    et al. (2024) and Maia Polo et al. (2024), which report positive skill-size correlations
-    without formal scaling laws. Open-weight LLMs with published parameter and token counts.
-  evidence: Section 1.1
+  text: Sloth is fitted on an extension of Ruan et al. (2024)'s benchmark dataset covering
+    30 LLM families, or 53 if base and instruct models are counted separately. Of these, 28
+    appear on Open LLM Leaderboard v1, 17 on v2, and 15 on both.
+  scope: Public leaderboard scores plus HumanEval, EQ-Bench and AgentBench data for subsets
+    of the models; the authors describe the dataset as the most comprehensive among prior
+    benchmark scaling-law work as of publication.
+  evidence: Section 4.1
 qa:
 - q:
-  - How can I predict how a 70B model will score on benchmarks before training it?
-  - Is it possible to forecast a large LLM's leaderboard scores from smaller models in the
-    same family?
-  - How accurate is Sloth at predicting held-out LLM benchmark performance?
+  - How can I predict how a bigger model in my LLM family will score on benchmarks without
+    training it?
+  - Can benchmark performance of an untrained larger LLM be forecast from leaderboard data?
+  - What method predicts a 70B model's benchmark scores from smaller models in the same family?
   answers:
-  - prediction-accuracy
-  - mape-version
+  - prediction-competitive
+  - one-model-per-family
 - q:
-  - How much data from a new model family does a skills scaling law need?
-  - Can a scaling law be fitted with only one model per family?
-  - What happens if two models per family are available instead of one?
+  - How many models per family do I need before a scaling law can extrapolate to a larger
+    one?
+  - Does fitting Sloth require training several model sizes in the new family?
+  - What is the minimum data on a new LLM family needed to fit a skills scaling law?
   answers:
-  - context-positioning
-  - two-model-setting
+  - one-model-per-family
+  - context-position
 - q:
-  - What latent skills explain scores across LLM benchmarks?
-  - How many dimensions are needed to explain Open LLM Leaderboard results?
-  - Which benchmarks measure reasoning versus knowledge?
+  - What latent skills explain LLM benchmark scores?
+  - Which benchmarks measure reasoning versus knowledge versus instruction following?
+  - How many dimensions are needed to summarize Open LLM Leaderboard results?
   answers:
   - three-skills
 - q:
   - Does model size or training data matter more for reasoning ability?
-  - Should I add parameters or tokens if I care about knowledge benchmarks?
-  - How do parameter count and token count differently affect LLM skills?
+  - How do parameters and tokens differently affect knowledge versus reasoning skills?
+  - Is reasoning driven by parameter count or by number of training tokens?
   answers:
-  - reasoning-vs-knowledge-inputs
+  - reasoning-size-driven
 - q:
   - What does instruction tuning do to a model's reasoning ability?
-  - Does instruction tuning trade off reasoning for instruction following?
-  - How do base and instruction-tuned models differ in latent skills?
+  - Does instruction tuning help or hurt latent skills of LLMs?
+  - How large is the effect of instruction tuning compared with scaling up compute?
   answers:
   - instruction-tuning-effects
+  - instruction-tuning-dominates-compute
 - q:
-  - Can leaderboard scores predict coding ability on HumanEval?
-  - How do I forecast downstream task performance like code completion for an untrained model
-    size?
+  - Can leaderboard scores be used to predict coding ability on HumanEval?
+  - How do you forecast a hypothetical LLM's performance on a downstream task like code completion
+    or emotional intelligence?
   - Which latent skill predicts code-completion performance?
   answers:
   - downstream-humaneval
-  - reasoning-drives-coding
 - q:
-  - Can scaling laws predict pass@k gains from repeated sampling?
-  - How do I forecast test-time compute scaling for a model that does not exist yet?
-  - Does Sloth predict MATH performance under repeated sampling?
+  - Can pass@k behavior under repeated sampling be predicted before a model is trained?
+  - How is test-time compute scaling on MATH forecast for a hypothetical LLM?
+  - Does combining a scaling law with item response theory predict inference-time scaling?
   answers:
   - test-time-scaling
 - q:
-  - Given a FLOPs budget, how should parameters and tokens be split to maximize reasoning?
-  - Is compute-optimal allocation the same for every skill?
-  - What is the Chinchilla-style optimal allocation for knowledge versus reasoning skills?
+  - Given a FLOPs budget, how should I split it between parameters and tokens to maximize
+    reasoning?
+  - Does compute-optimal allocation depend on which capability you care about?
+  - Is Chinchilla-style optimal allocation the same for knowledge and for reasoning skills?
   answers:
   - compute-optimal-skills
 - q:
-  - Are the latent skills recovered by a skills scaling law uniquely determined?
-  - Is there an identifiability guarantee for Sloth's loadings and coefficients?
-  - Can factor rotation change the interpretation of estimated LLM skills?
+  - How many parameters does a skills-based scaling law need compared with per-benchmark scaling
+    laws?
+  - Is Sloth more parameter-efficient than fitting one curve per benchmark?
+  answers:
+  - parameter-efficiency
+- q:
+  - Are the latent skills recovered by a factor-analysis-style scaling law uniquely identified?
+  - Is it valid to rotate the loadings before naming the latent skills of LLMs?
+  - What theoretical guarantee does Sloth have about its parameters?
   answers:
   - identifiability
 - q:
-  - Does assuming a low-dimensional skill structure cost prediction accuracy or save parameters?
-  - How many parameters does a skills scaling law use compared to per-benchmark scaling laws?
+  - What should I read about scaling laws that predict benchmark performance rather than loss?
+  - Which paper addresses why a single scaling law fails across LLM families?
+  - Where should I start reading on observational scaling laws for LLM benchmarks?
   answers:
-  - parameter-efficiency
-  - prediction-accuracy
+  - context-position
+  - context-dataset
 - q:
-  - What should I read about scaling laws that predict benchmark accuracy rather than loss?
-  - Which work established scaling laws across LLM families using public leaderboard data?
-  - Where do I start reading about latent skills of language models and scaling?
+  - How accurate are skills-based scaling law predictions in percentage terms?
+  - Do the prediction gains hold under MAPE as well as MAE?
   answers:
-  - context-positioning
-  - context-skills-scaling
-misreadings:
-- 'Sloth does not eliminate the need for data from the target model family: the reported results
-  assume at least one already-evaluated model from that family, and predictions for a family
-  with no observed models are not demonstrated.'
-- The named skills Reasoning, Knowledge and Instruction Following are subjective labels assigned
-  to rotated factor loadings, not validated psychometric constructs, and the Instruction Following
-  interpretation does not hold at 4 latent dimensions.
-- The identifiability theorem covers only the basic Sloth with a fixed sigmoid link and fixed
-  lower asymptotes; the best-predicting version with a trainable monotone neural-network link
-  has no such guarantee.
-- The compute-optimal allocations are clipped to the parameter and token ranges observed in
-  the training data, up to 72B parameters and 15.0T tokens, so the tables should not be read
-  as extrapolated optima beyond that support.
-- Sloth is not evaluated as a replacement for pretraining-loss scaling laws such as Chinchilla;
-  it models benchmark and downstream scores of already-released models rather than training
-  runs the authors control.
+  - mape-same-conclusion
+  - prediction-competitive
+- q:
+  - What leaderboard data are skills scaling laws for LLMs fitted on, and how many model families
+    does it cover?
+  - Which leaderboards and how many model families are in the Sloth dataset?
+  - How many LLM families are available for fitting benchmark scaling laws from public leaderboards?
+  answers:
+  - context-dataset
 terminology:
-  Latent skills: Low-dimensional unobserved abilities of a language model, such as reasoning
-    or instruction following, whose linear combination determines the model's scores across
-    many benchmarks.
-  Family efficiency intercept: A model-family-specific additive term in the skill equation,
-    interpreted as how efficiently that family converts compute into a given skill, absorbing
-    hidden factors like data quality and post-training.
-  Translog skill production function: The functional form taken from stochastic frontier analysis
-    in economics, in which a skill is linear in log parameter count, log training tokens and
-    their product.
-  Size and Tokens variant: An ablation of Sloth in which the loading matrix is the identity,
-    so every benchmark gets its own scaling equation in log parameters and log tokens with
-    no shared latent-skill structure.
-  Trainable link function: A monotone increasing neural network with non-negative weights
-    and a sigmoid output, fitted per benchmark in place of a fixed logistic curve mapping
-    skills to scores.
+  Skills Scaling Laws (SSLaws): A scaling law in which benchmark scores are a linear combination
+    of a few latent LLM skills, and each skill is produced from log parameter count, log training
+    tokens and their interaction with a family-specific intercept.
+  Efficiency intercept: The family-specific additive term in a latent skill's production function,
+    interpreted as how efficiently that model family converts compute into skill, absorbing
+    hidden factors such as data quality and post-training.
+  Latent skill (in LLM benchmark scaling): An unobserved low-dimensional ability, such as
+    reasoning, knowledge or instruction following, inferred from the correlation structure
+    of benchmark scores via factor loadings.
+  Translog production function: A functional form borrowed from stochastic frontier analysis
+    in economics that regresses an output on log inputs plus their product, used to make a
+    skill depend on log size, log tokens and their interaction rather than on total FLOPs
+    alone.
+  Compute-optimal scaling of skills: The parameter-and-token allocation maximizing one latent
+    skill under a fixed FLOPs budget, as opposed to the classical version that minimizes validation
+    loss.
+misreadings:
+- 'Sloth does not eliminate the need for any data from the target LLM family: its main stated
+  limitation is that it usually requires benchmark scores for at least 1 model of that family.'
+- The three skill names — Reasoning, Knowledge, Instruction Following — are the authors' subjective
+  labels for rotated factor loadings, not validated psychometric constructs, and the Instruction
+  Following interpretation does not survive at d=4 latent dimensions.
+- Sloth's identifiability theorem covers only the 'basic' version with a fixed sigmoid link
+  and fixed lower asymptotes; the best-predicting version with a trainable monotonic neural-network
+  link has no such guarantee.
+- The compute-optimal tables report allocations restricted to the parameter and token ranges
+  observed in the training data, so they are not extrapolations to budgets far beyond existing
+  models.
+- 'Sloth is not evaluated in the same setting as observational scaling laws by default: Ruan
+  et al. (2024) predict a benchmark for an already-trained model, while Sloth predicts a model
+  that has not been trained, and the head-to-head comparison in their setting appears only
+  in Appendix L.'
+- A single latent-skill scaling law is not claimed to be family-independent in general; only
+  for a subset of benchmarks does the shared-intercept version of Sloth match the family-specific
+  ones.
 links_extra:
   code: https://github.com/felipemaiapolo/sloth
-  arxiv_html: https://arxiv.org/html/2412.06540
+  arxiv: https://arxiv.org/abs/2412.06540
+  quickstart_notebook: https://github.com/felipemaiapolo/sloth/blob/main/notebooks/interpretability_plots.ipynb
 ---

@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call) + 1 repair round. Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call) + 3 repair rounds. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -17,216 +17,234 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept label-sleuth-from-unlabeled-text-to-a-classifier-in-a-few-ho
 
-Stamp: spec=e47adcd7257c checks=4 body=285485169a6b
+Stamp: spec=74e012ff9654 checks=1 body=7b575d62f0e4
 -->
 ---
-key: shnarch2022labelsleuth
-coined: Label Sleuth
-gloss: a free, open-source no-code system where a domain expert labels text and gets a custom
-  binary text classifier
-one_liner: Label Sleuth is a free open-source no-code system in which a domain expert labels
-  text while classifiers train automatically in the background, taking a user from an unlabeled
-  corpus to a custom binary text classifier in a few hours with no ML expertise and no dependency
-  on ML experts.
 claims:
-- id: no-code-for-domain-experts
+- id: what-it-is
   kind: context
-  text: Label Sleuth is an open-source system that lets non-technical domain experts such
-    as lawyers, physicians and psychologists build custom binary text classifiers themselves,
-    without writing code or configuring models.
-  scope: Released July 2022 under Apache 2.0; deliberately limited to binary text classification,
-    with English as the default language. Prior labeling tools with ML support targeted data
+  text: Label Sleuth is a free, open-source, no-code system in which a domain expert with
+    no machine learning knowledge labels text and obtains a custom binary text classifier,
+    starting from an unlabeled corpus.
+  scope: Released July 2022 under Apache 2.0; binary text classification of pre-split text
+    elements only, with English as the default language.
+- id: audience-gap
+  kind: context
+  text: Label Sleuth targets the gap between text classification techniques and non-technical
+    practitioners such as lawyers, physicians and psychologists, who need custom classifiers
+    but depend on ML experts to build them.
+  scope: As of publication in 2022; comparable labeling tools with ML support target data
     scientists and developers.
-- id: trade-off-vs-annotation-tools
-  kind: context
-  text: Label Sleuth sits at the ease-of-use end of the trade-off between breadth of task
-    support and accessibility, covering only text classification. Prodigy, Label Studio and
-    INCEpTION support NER, question answering and non-text tasks but assume a technical user.
-  scope: Comparison drawn against 4 representative labeling tools with ML support as of 2022,
-    not against the full landscape of 78 tools surveyed by Neves and Ševa (2021).
-- id: feature-comparison-table
+- id: tool-comparison
   kind: result
-  text: Of the 4 labeling tools with ML support compared against Label Sleuth — Prodigy, Label
-    Studio free, Label Studio paid and INCEpTION — none requires no technical expertise and
-    none gives ML guidance on label errors. Label Sleuth alone offers both, and alone lacks
-    support for tasks beyond text classification.
-  scope: Feature-presence comparison of the tool versions available in 2022, not a measured
-    user study; Label Studio (paid) and INCEpTION are marked as having what-to-label guidance
-    that is very complicated to set up.
+  text: Label Sleuth is the only one of 5 compared labeling tools that requires no technical
+    expertise and gives ML guidance on label errors. It is also the only one of the 5 restricted
+    to text classification.
   evidence: Table 1
-- id: svm-then-bert-policy
+  scope: Prodigy, free and paid Label Studio, INCEpTION and Label Sleuth, chosen for similarity
+    and popularity and assessed by the authors in 2022; a feature comparison rather than a
+    usability study.
+- id: legal-user-hours
   kind: result
-  text: Using a light SVM classifier for active learning iterations 0-4 and switching to BERT
-    only for iterations 5-6 gives F1 comparable to fine-tuning BERT at every iteration. Turnaround
-    time in the interactive loop is significantly faster.
-  scope: 6 active learning iterations with uncertainty sampling, 30 examples added per iteration,
-    averaged over 1 target class from each of 5 datasets (20 Newsgroup, AG News, DBPedia,
-    ISEAR, Yahoo! Answers) with 5 seeds; BERT-base fine-tuned 5 epochs.
+  text: A legal user built a Label Sleuth classifier for a category of high-risk contract
+    clauses after 6 hours of work in the system. Reviewing only the highlighted clauses instead
+    of entire contracts saved an estimated 80% of their time.
+  evidence: Section 2.3
+  scope: A single early user's self-reported experience and self-estimated time saving on
+    a contract-review task, not a controlled measurement.
+- id: vira-usage
+  kind: result
+  text: The VIRA COVID-19 vaccine-hesitancy chatbot is 1 of the early real-world uses of Label
+    Sleuth, which built its dialogue act classifier mapping user utterances into categories
+    such as greeting, query and concern.
+  evidence: Section 2.3
+  scope: One reported deployment by ML-expert users; no accuracy numbers for that classifier
+    are reported.
+- id: svm-then-bert
+  kind: result
+  text: Using a light SVM for active learning iterations 0-4 and BERT only for iterations
+    5-6 reaches F1 comparable to fine-tuning BERT at all 6 iterations, while running substantially
+    faster. Each iteration adds 30 examples.
   evidence: Figure 2
-- id: legal-user-time-saving
+  scope: F1 averaged over 1 target class from each of 5 datasets (20 Newsgroups, AG News,
+    DBPedia, ISEAR, Yahoo! Answers) and 5 seeds, with gold labels for added examples.
+- id: training-trigger
   kind: result
-  text: A legal early user built a classifier for a category of high-risk contract clauses
-    after 6 hours of work in Label Sleuth. Reviewing only the highlighted clauses instead
-    of whole contracts was estimated to save 80% of their time.
-  scope: Single self-reported user estimate for one contract-review task, not a controlled
-    measurement of classifier quality or of time saved.
-  evidence: Section 2.3
-- id: vira-auxiliary-classifier
-  kind: result
-  text: The VIRA COVID-19 vaccine-hesitancy chatbot team used Label Sleuth to build its dialogue
-    act classifier. ML experts therefore also use the system to obtain auxiliary classifiers
-    for intermediate pipeline steps.
-  scope: One reported deployment (Gretz et al., 2022); the reported benefit includes refining
-    category definitions, not a measured accuracy gain over an alternative tool.
-  evidence: Section 2.3
-- id: default-training-trigger
-  kind: result
-  text: Label Sleuth's default policy starts training the first classifier once 20 positively
-    labeled examples exist, then retrains after every 20 further labels, so the user never
-    invokes training manually.
-  scope: Default configuration at initial open-source release, chosen empirically for typical
-    low-positive-prior text classification use cases; advanced users can change every one
-    of these settings.
+  text: Label Sleuth's default policy trains the first classifier once 20 positively labeled
+    examples exist, then retrains after every 20 further labels, so the user never invokes
+    training manually.
   evidence: Appendix A
+  scope: The default policy as of the initial open-source release, chosen empirically rather
+    than claimed optimal; advanced users can reconfigure the trigger.
 - id: weak-negatives
   kind: result
-  text: To spare users from labeling abundant negatives, Label Sleuth adds randomly sampled
-    unlabeled elements as weak negative examples until there are 2 labeled or weak negatives
-    per labeled positive.
-  scope: Relies on a low prior of positive examples; the paper states the feature should be
-    disabled when positives are not rare, in which case users must label negatives themselves.
+  text: Label Sleuth spares users from labeling negatives by automatically sampling unlabeled
+    elements as weak negative examples until there are 2 labeled negatives for every labeled
+    positive example.
   evidence: Appendix A
-- id: default-model-and-strategy
-  kind: result
-  text: Label Sleuth's default classifier is an ensemble of 2 linear SVMs, one over bag-of-words
-    and one over GloVe representations, paired with uncertainty sampling as the default active
-    learning strategy.
-  scope: Default policy at initial release; larger GPU-requiring models and alternative active
-    learning strategies can be selected or contributed by implementing 1 or 2 functions.
-  evidence: Appendix A
+  scope: The default policy of the initial release, and only where the positive prior is low;
+    when positives are not rare the feature must be disabled.
 - id: precision-evaluation
   kind: result
   text: Label Sleuth estimates classifier quality by sampling 50 examples predicted positive
-    for the user to label, reporting precision from them and then adding those labels to the
-    training set.
-  scope: Precision only; the paper argues recall estimation is impractical at low positive
-    prior and that a held-out test set conflicts with minimizing labeling effort.
+    for the user to label, then reports precision and folds those 50 labels into the training
+    set.
   evidence: Appendix A
-- id: label-error-surfacing
+  scope: Default sample size of 50 in the initial release, user-invoked, and precision only;
+    recall estimation is impractical under a low positive prior.
+- id: label-error-detection
   kind: result
-  text: 'Label Sleuth surfaces suspected labeling mistakes in 2 ways: cross-validated classifiers
-    whose held-out predictions contradict the user''s label, and pairs of semantically similar
-    examples the user labeled contradictorily.'
-  scope: Similarity is computed as distance between average GloVe embeddings of the two texts;
-    lists are ranked by classifier confidence or by decreasing similarity and left for the
-    user to accept or reject.
+  text: 'Label Sleuth surfaces suspect labels 2 ways: cross-validated classifiers disagreeing
+    with the user''s own label on held-out elements, and pairs of semantically similar texts
+    the user gave contradicting labels.'
   evidence: Appendix B
-- id: binary-only-limitation
+  scope: Pair similarity is the distance between average GloVe embeddings in the initial implementation;
+    the user reviews and corrects the ranked lists.
+- id: default-classifier
   kind: result
-  text: Label Sleuth handles only binary categories, so a multi-valued category such as Emotions
-    requires creating 1 binary category per label. Labels collected for non-mutually-exclusive
-    categories cannot be reused directly for multi-label training.
-  scope: As of the initial release; data for mutually exclusive categories can be exported
-    and used to train a multi-class classifier outside the system. Documents must also be
-    pre-split into static text elements.
-  evidence: Limitations
+  text: Label Sleuth's default classifier is an ensemble of 2 SVM classifiers, one over bag-of-words
+    and one over GloVe representations, paired with uncertainty sampling as the default active
+    learning strategy.
+  evidence: Appendix A
+  scope: The default policy of the initial open-source release, chosen empirically for typical
+    text classification use cases; other models, including GPU-backed large models, can be
+    configured.
+- id: extensibility
+  kind: result
+  text: Developers extend Label Sleuth by implementing 1 or 2 functions to add a classification
+    model or active learning strategy, and can configure the system to switch models or strategies
+    as labeling progresses.
+  evidence: Section 4
+  scope: Python Flask backend with a React frontend; GPU-backed large models supported; data
+    access is in-memory plus local disk in the current implementation.
+- id: open-research-agenda
+  kind: context
+  text: 'Label Sleuth names 3 open research problems arising from interactive classifier building
+    for non-technical users: choosing the system policy, evaluating models without a held-out
+    test set, and warm-starting from zero-shot classification.'
+  scope: Framing offered as an invitation to the NLP and HCI communities in 2022; only initial
+    experiments on the policy question are reported, and no solutions to the other two.
 qa:
 - q:
-  - How can someone with no coding or machine learning skills build a text classifier?
-  - Is there a tool that lets a lawyer or doctor create their own text classifier without
-    programming?
-  - What no-code system turns unlabeled text into a custom classifier?
+  - What is Label Sleuth?
+  - Is there a no-code tool for building a text classifier without ML knowledge?
+  - How can a lawyer or doctor build their own text classifier?
   answers:
-  - no-code-for-domain-experts
-  - default-training-trigger
+  - what-it-is
+  - audience-gap
 - q:
-  - What should I read about interactive annotation tools that build classifiers as you label?
-  - Which paper introduced a no-code labeling and model-building system for domain experts?
-  - Where should I start reading about human-in-the-loop text classification systems?
+  - What should I read about making NLP accessible to non-technical domain experts?
+  - Which paper introduced a labeling tool designed for subject matter experts rather than
+    data scientists?
+  - Where should I start reading about human-in-the-loop text classifier building for non-experts?
   answers:
-  - no-code-for-domain-experts
-  - trade-off-vs-annotation-tools
+  - audience-gap
+  - what-it-is
 - q:
-  - How does Label Sleuth compare with Prodigy, Label Studio and INCEpTION?
-  - Which text annotation tools give machine learning guidance out of the box?
-  - What does an interactive labeling tool give up by supporting only text classification?
+  - How does Label Sleuth compare to Prodigy, Label Studio and INCEpTION?
+  - Which annotation tools give ML guidance on labeling errors?
+  - What can existing labeling tools do that Label Sleuth cannot?
   answers:
-  - feature-comparison-table
-  - trade-off-vs-annotation-tools
+  - tool-comparison
 - q:
-  - Can a cheap model be used for early active learning rounds and BERT only at the end?
-  - Does switching from SVM to BERT late in the labeling loop hurt F1?
-  - How do you keep an interactive labeling system responsive without losing classifier quality?
+  - How long does it actually take to build a classifier with Label Sleuth?
+  - Has anyone reported real time savings from using Label Sleuth?
+  - Are there real-world case studies of no-code classifier building?
   answers:
-  - svm-then-bert-policy
+  - legal-user-hours
+  - vira-usage
 - q:
-  - How long does it actually take a domain expert to get a usable classifier with Label Sleuth?
-  - Has anyone reported real time savings from using a no-code classifier builder on contracts?
-  - What real-world deployments of Label Sleuth exist?
+  - Can I use a cheap model early in active learning and BERT only at the end?
+  - Does switching from SVM to BERT late in the loop hurt F1?
+  - How does Label Sleuth keep model training fast enough to stay interactive?
   answers:
-  - legal-user-time-saving
-  - vira-auxiliary-classifier
+  - svm-then-bert
 - q:
-  - How many labels are needed before Label Sleuth trains its first model?
-  - What are the default model, active learning strategy and training trigger in Label Sleuth?
-  - When does an interactive labeling system start training a classifier in the background?
+  - Which classifier and active learning strategy does Label Sleuth use by default?
+  - What model trains in the background of Label Sleuth out of the box?
+  - Which default model does a no-code text labeling system use before any tuning?
   answers:
-  - default-training-trigger
-  - default-model-and-strategy
+  - default-classifier
 - q:
-  - Do users have to label negative examples when positives are rare?
-  - How does Label Sleuth reduce the effort of labeling negatives?
-  - What are weak negative examples in interactive text classification?
+  - When does Label Sleuth start training a classifier?
+  - How many labels are needed before the first model appears in Label Sleuth?
+  - How many annotations does an interactive labeling system need before it trains a first
+    classifier?
+  answers:
+  - training-trigger
+- q:
+  - Do I have to label negative examples in Label Sleuth?
+  - How does Label Sleuth handle rare positive classes and missing negatives?
+  - What are weak negative examples in a labeling tool?
   answers:
   - weak-negatives
 - q:
-  - How is classifier quality reported to a non-technical user without a test set?
+  - How is classifier quality measured without a test set in Label Sleuth?
   - Why does Label Sleuth report precision but not recall?
-  - How can model performance be estimated when no held-out labeled test set exists?
+  - How can I evaluate a classifier when labeling effort must stay minimal?
   answers:
   - precision-evaluation
 - q:
-  - How does a labeling tool detect annotation mistakes made by the user?
-  - Can an interactive system flag inconsistent labels during annotation?
-  - What methods does Label Sleuth use to surface potential labeling errors?
+  - How does Label Sleuth find my labeling mistakes?
+  - Can an annotation tool detect inconsistent labels automatically?
+  - What methods surface potential annotation errors during labeling?
   answers:
-  - label-error-surfacing
+  - label-error-detection
 - q:
-  - Can Label Sleuth do multi-class or multi-label text classification?
-  - What are the limitations of building classifiers with Label Sleuth?
-  - Does a no-code classifier builder support more than binary categories?
+  - Can I plug my own model into Label Sleuth?
+  - How extensible is Label Sleuth for ML researchers?
+  - How hard is it to add a new active learning strategy to an open-source annotation platform?
   answers:
-  - binary-only-limitation
-  - trade-off-vs-annotation-tools
-misreadings:
-- '"From unlabeled text to a classifier in a few hours" describes the elapsed labeling effort
-  of a domain expert in reported early usage, including a legal user who worked 6 hours; it
-  is not a benchmarked training-time claim.'
-- The SVM-then-BERT finding is that final F1 is comparable while turnaround time improves,
-  not that SVM matches BERT overall or that BERT can be dropped entirely.
-- Label Sleuth supports only binary text classification; it does not do NER, relation extraction
-  or question answering, unlike the annotation tools it is compared with.
-- The system's automatic weak-negative sampling assumes positive examples are rare; it is
-  not a general-purpose substitute for labeling negatives and should be turned off when the
-  positive prior is high.
-- Precision Evaluation on 50 positively predicted examples estimates precision only, and gives
-  no estimate of recall or F1.
+  - extensibility
+- q:
+  - What research problems does Label Sleuth leave open?
+  - What are open challenges in interactive classifier building for non-experts?
+  - Which evaluation problems arise when there is no held-out test set in a labeling system?
+  answers:
+  - open-research-agenda
+  - precision-evaluation
+- q:
+  - What tasks does Label Sleuth not support?
+  - Can Label Sleuth do multi-class or NER labeling?
+  - Which annotation tools are limited to binary text classification only?
+  answers:
+  - what-it-is
+  - tool-comparison
+one_liner: Label Sleuth is a free open-source no-code system that walks a domain expert from
+  an unlabeled corpus to a custom binary text classifier in a few hours, training models in
+  the background and telling the user what to label next.
+coined: Label Sleuth
+gloss: no-code system for labeling text and building a text classifier without ML expertise
+key: shnarch2022labelsleuth
 terminology:
-  policy: The bundle of configuration choices in Label Sleuth — classification model, active
-    learning strategy, training-set selection and the criterion that triggers training a new
-    model — which together shape the flow of building a classifier.
-  weak negative examples: Unlabeled text elements sampled at random and treated as negatives
-    during training, on the assumption that positive examples are rare in the corpus.
-  Label Next list: A list of unlabeled examples chosen by the active learning strategy and
-    presented to the user as the most useful ones to label in the next round.
-  Precision Evaluation: A procedure that samples 50 examples predicted positive by the current
-    classifier, asks the user to label them, and reports the resulting precision estimate.
-  domain expert: A subject matter expert such as a lawyer, physician or psychologist who knows
-    the target task but typically lacks coding skills and machine learning knowledge.
+  Policy: The bundle of Label Sleuth configuration choices — classification model, active
+    learning strategy, training-set selection, and the criterion that triggers training a
+    new model — that together shape the classifier-building flow.
+  Precision Evaluation: A Label Sleuth procedure that samples examples predicted positive
+    by the current classifier, asks the user to label them, and uses those labels both to
+    estimate precision and to extend the training set.
+  Weak negative examples: Unlabeled text elements automatically added to the training set
+    as negatives, on the assumption that positives are rare, so that the user does not have
+    to label negatives explicitly.
+  Label Next list: A panel of unlabeled examples chosen by an active learning strategy that
+    Label Sleuth presents as the examples most beneficial to label in the current iteration.
+  Domain expert: A practitioner with deep knowledge of the target subject matter — for example
+    a lawyer, physician or psychologist — but typically without coding skills or machine learning
+    knowledge.
+misreadings:
+- The 80% time saving reported by a legal user of Label Sleuth is that user's own estimate
+  on one contract-review task, not a measured average across users or tasks.
+- 'Label Sleuth builds binary classifiers only: a multi-label category such as Emotions requires
+  creating a separate binary category per label, and mutually exclusive multi-class models
+  must be trained outside the system from exported labels.'
+- The SVM-then-BERT result compares a schedule that uses SVM for iterations 0-4 against BERT
+  at every iteration; it does not show that SVM alone matches BERT.
+- Label Sleuth's automatic weak negatives assume positives are rare; where the positive prior
+  is high the feature should be disabled and negatives labeled by hand.
+- Being the only compared tool needing no technical expertise is a feature comparison in Table
+  1, not evidence that non-experts label faster or more accurately with Label Sleuth.
 links_extra:
-  project_page: https://www.label-sleuth.org
-  documentation: https://www.label-sleuth.org/docs/index.html
+  project page: https://www.label-sleuth.org
+  code: https://github.com/label-sleuth/label-sleuth
   tutorial: https://www.label-sleuth.org/docs/tutorial.html
-  pypi: https://pypi.org/project/label-sleuth/
-  slack: https://join.slack.com/t/labelsleuth/shared_invite/zt-1j5tpz1jl-W~UaNEKmK0RtzK~lI3Wkxg
 ---

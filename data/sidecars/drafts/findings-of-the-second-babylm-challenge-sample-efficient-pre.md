@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept findings-of-the-second-babylm-challenge-sample-efficient-pre
 
-Stamp: spec=74e012ff9654 checks=pass body=85f10b289333
+Stamp: spec=8f05813a4658 checks=pass body=85f10b289333
 -->
 ---
 key: hu2024babylm2

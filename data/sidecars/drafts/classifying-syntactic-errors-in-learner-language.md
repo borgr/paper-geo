@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call) + 1 repair round. Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced) + a targeted repair. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept classifying-syntactic-errors-in-learner-language
 
-Stamp: spec=74e012ff9654 checks=pass body=b41cfdda3359
+Stamp: spec=8f05813a4658 checks=pass body=a53514727171
 -->
 ---
 key: choshen2020serclclassifying
@@ -91,8 +91,8 @@ claims:
   evidence: Table 7
 - id: proficiency-monotone
   kind: result
-  text: The share of words whose POS tag survives correction rises monotonically with learner
-    proficiency for every POS tag in W&I, from level A through level C. Native writers generally
+  text: In the W&I corpus, the share of words whose POS tag survives correction rises with
+    learner proficiency from level A to level C for every POS tag. Native writers generally
     change fewer tags than advanced learners, but the trend is mixed.
   scope: W&I training set, proficiency levels A-C plus LOCNESS native text, automatic UD parses;
     native counts are smaller, so borderline native-vs-C differences should not be read as

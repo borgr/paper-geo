@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call) + 2 repair rounds. Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced) + a targeted repair. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept reference-less-measure-of-faithfulness-for-grammatical-error
 
-Stamp: spec=74e012ff9654 checks=pass body=751c7351f298
+Stamp: spec=8f05813a4658 checks=pass body=d3940969b886
 -->
 ---
 claims:
@@ -82,8 +82,8 @@ claims:
 - id: context-faithfulness-gap
   kind: context
   text: USim fills the meaning-preservation gap in reference-less evaluation of grammatical
-    error correction, which until then had reference-less measures for grammaticality but,
-    as Asano et al. (2017) noted, no measure of faithfulness to the source.
+    error correction. Earlier reference-less measures scored the output's grammaticality,
+    and Asano et al. (2017) noted that a faithfulness measure for the task was lacking.
   scope: As of publication in 2018, for English grammatical error correction; USim is intended
     to be used alongside grammaticality-based reference-less measures and reference-based
     measures, not to replace them.

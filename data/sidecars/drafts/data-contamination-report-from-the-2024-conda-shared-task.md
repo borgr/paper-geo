@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept data-contamination-report-from-the-2024-conda-shared-task
 
-Stamp: spec=74e012ff9654 checks=pass body=d870cef6f43a
+Stamp: spec=8f05813a4658 checks=pass body=d870cef6f43a
 -->
 ---
 key: sainz2024conda

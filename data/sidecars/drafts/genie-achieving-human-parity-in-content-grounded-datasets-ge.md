@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept genie-achieving-human-parity-in-content-grounded-datasets-ge
 
-Stamp: spec=74e012ff9654 checks=pass body=fbb0184b93b4
+Stamp: spec=8f05813a4658 checks=pass body=fbb0184b93b4
 -->
 ---
 key: yehudai2024genie

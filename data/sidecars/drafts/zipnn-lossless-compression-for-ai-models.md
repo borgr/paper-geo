@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept zipnn-lossless-compression-for-ai-models
 
-Stamp: spec=74e012ff9654 checks=pass body=30f41e05edf2
+Stamp: spec=8f05813a4658 checks=pass body=30f41e05edf2
 -->
 ---
 key: hershcovitch2025zipnn

@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept will-it-blend-blending-weak-and-strong-labeled-data-in-a-neu
 
-Stamp: spec=74e012ff9654 checks=pass body=05e80a509fdb
+Stamp: spec=8f05813a4658 checks=pass body=05e80a509fdb
 -->
 ---
 one_liner: BlendNet trains a neural network on an exponentially decaying mixture of abundant

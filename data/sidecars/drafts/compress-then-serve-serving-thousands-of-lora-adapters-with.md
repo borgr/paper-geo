@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call) + 3 repair rounds. Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced) + a targeted repair. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -17,263 +17,233 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept compress-then-serve-serving-thousands-of-lora-adapters-with
 
-Stamp: spec=d57862840a90 checks=2 body=834e91c813a7
+Stamp: spec=8f05813a4658 checks=pass body=6cfc9ce4c650
 -->
 ---
-key: bruelgabrielsson2025compress
-coined: JD-Full / JD-Diag (joint diagonalization LoRA compression)
+key: gabrielsson2025compress
+coined: JD-Full / JD-Diag (joint diagonalization of LoRAs)
 gloss: compressing many LoRA adapters into one shared basis plus a small per-adapter matrix,
-  so thousands can be served from GPU memory at once
-one_liner: Compress then Serve factorizes a collection of LoRA adapters into one shared pair
-  of basis matrices plus small LoRA-specific matrices — optionally clustering the adapters
-  first — so a serving engine can keep thousands of adapters resident on the GPU instead of
-  swapping them in and out.
+  so thousands can be served from one GPU
+one_liner: Compress then Serve jointly compresses a collection of LoRA adapters into a shared
+  basis U, V plus small LoRA-specific matrices, found by joint diagonalization and clustering,
+  so that thousands of adapters fit in GPU memory and can be served with little throughput
+  loss.
 claims:
-- id: throughput-1000-loras
+- id: throughput-1000
   kind: result
   text: Serving over 1000 jointly compressed LoRAs with vLLM increases throughput 1.6x over
-    vLLM multi-LoRA at a matched GPU memory footprint. Compression retains 80% of the throughput
-    of serving a single LoRA merged into the base model.
-  scope: Mistral-7B-Instruct-v0.2, rank-16 LoRAs, 25 clusters of rank-16 JD-Full, one H100
-    80GB capped at 40% memory; Shakespeare-sonnet prompts arriving asynchronously, 10 generated
-    tokens per request, LoRAs assigned at random.
+    vLLM multi-LoRA at a matched GPU memory footprint. The compressed collection retains 80%
+    of the throughput of serving the base LLM or a single merged LoRA.
+  scope: Mistral-7B-Instruct-v0.2, rank-16 LoRAs, 25 clusters at compression rank 16, asynchronous
+    requests generating 10 tokens each on a Shakespeare-sonnet input set, one H100 80GB GPU
+    capped at 40% memory.
   evidence: Figure 1
-- id: throughput-depends-on-collection-size
+- id: throughput-crossover
   kind: result
-  text: Joint diagonalization improves vLLM multi-LoRA throughput for LoRA collections of
-    every size from 4 to 1024, but only when the compression setting is matched to the collection
-    size. Rank-16 JD-Full helps with 4 and 8 LoRAs, while 25 clusters of rank 15 JD-Full does
-    not help at 32 or fewer LoRAs.
-  scope: Throughput ratios measured against vLLM multi-LoRA restricted to the number of adapters
-    that fits the same GPU memory (for example max-gpu-lora=6 at 64 unique LoRAs); rank-16
-    Mistral-7B-Instruct-v0.2 adapters on one H100 capped at 40% memory.
+  text: Compression settings for LoRA serving must be matched to collection size. Rank-16
+    JD-Full improves vLLM multi-LoRA throughput at 4 and 8 LoRAs but not beyond, while 25
+    clusters at rank 15 helps only from well above 32 LoRAs, with large gains at 1000+.
+  scope: vLLM multi-LoRA baseline given the same GPU memory footprint (max-gpu-lora set per
+    collection size), Mistral-7B-Instruct, rank-16 LoRAs, collections between 4 and 1024.
   evidence: Figure 4
-- id: performance-preserved
+- id: recon-threshold
   kind: result
-  text: Compressed LoRAs match or slightly exceed the Rouge-L of the uncompressed LoRAs they
-    were built from, and the JD variants sometimes outperform the original adapters despite
-    large parameter savings.
-  scope: 10 manually selected natural-instruction tasks, in-distribution, 10 to 1000 rank-16
-    Mistral-7B-Instruct-v0.2 LoRAs, 3 seeds; adapters normalized to unit Frobenius norm first.
-  evidence: Figure 2
-- id: recon-error-06-threshold
-  kind: result
-  text: Compression settings whose mean relative reconstruction error stays below 0.6 reliably
-    preserve 99% or more of the uncompressed LoRA Rouge-L performance. Rank and cluster count
-    can therefore be chosen on CPU without running any LLM evaluation.
-  scope: Rank and cluster count read off the reconstruction error of one LoRA module from
-    the middle of the network, then applied to all modules; Mistral-7B-Instruct-v0.2 rank-16
-    adapters, up to 1000 LoRAs, 10 in-distribution tasks.
+  text: LoRA compression settings whose mean relative reconstruction error stays below 0.6
+    reliably preserve 99% or more of the uncompressed LoRAs' Rouge-L performance. Compression
+    rank and cluster count can therefore be tuned on CPU without any LLM evaluation.
+  scope: Frobenius reconstruction error of BA measured on one LoRA module from the middle
+    of the network; 10 in-distribution natural-instruction tasks with Mistral-7B-Instruct;
+    adapters normalized to unit Frobenius norm before compression.
   evidence: Section 6.5
-- id: lossy-can-help
+- id: lossy-helps
   kind: result
-  text: 'Minimizing reconstruction error does not maximize downstream performance: mild lossy
-    reconstruction, at a relative reconstruction error around 60%, matches or slightly beats
-    the zero-error setting on Rouge-L. At equal reconstruction error, clustered compression
-    beats unclustered.'
-  scope: Rouge-L relative to uncompressed LoRA on 10 in-distribution natural-instruction tasks;
-    the overall trend is decreasing and roughly exponential, so large reconstruction error
-    still degrades performance sharply.
+  text: 'Minimizing reconstruction error does not maximize downstream performance for compressed
+    LoRAs: moderate reconstruction error around 60% matches or slightly exceeds the zero-error
+    setting on Rouge-L. At equal reconstruction error, clustering beats non-clustered joint
+    diagonalization.'
+  scope: Rouge-L relative to uncompressed LoRA on 10 in-distribution natural-instruction tasks,
+    Mistral-7B-Instruct, rank-16 LoRAs, collections of 10 to 1000; at large reconstruction
+    error performance falls off sharply.
   evidence: Figure 3
-- id: clustering-needed-above-100
+- id: clustering-needed
   kind: result
-  text: JD-Full alone suffices up to about 100 LoRAs, with a rank of roughly (number of LoRAs
-    / 2) + 7. Beyond 100 LoRAs clustering becomes critical and is what makes 500-1000 LoRA
-    collections preserve performance.
-  scope: Recommendation derived from experiments on rank-16 Mistral-7B-Instruct-v0.2 adapters
-    over 10 in-distribution tasks, collections of 10 to 1000; JD-Diag and JD-Full differ negligibly
-    below 100 LoRAs.
+  text: Joint diagonalization of LoRAs alone suffices up to about 100 adapters, using a rank
+    of roughly (number of LoRAs / 2) + 7. Clustering becomes essential at 500-1000 LoRAs,
+    where JD-Full with clustering preserves performance.
+  scope: Mistral-7B-Instruct with rank-16 LoRAs on natural-instruction tasks; JD-Full is preferred
+    over JD-Diag, though below 100 LoRAs the difference between them is negligible.
   evidence: Section 6.5
-- id: trained-vs-random-recon
+- id: recon-bound
   kind: result
-  text: Reconstruction error from joint diagonalization is consistently lower on trained LoRA
-    matrices than on random untrained matrices of the same shape. Training therefore gives
-    LoRAs a shared structure that the shared basis exploits.
-  scope: JD-Full at ranks 16, 32 and 64 on collections of 10, 50, 100 and 500 LoRAs, compared
-    against the trained-LoRA errors on the same 10 evaluation tasks in Table 14.
-  evidence: Table 15
-- id: theory-recon-bound
+  text: For n LoRAs stacked as columns of a matrix L, JD-Full's reconstructed Frobenius energy
+    is bounded above by the sum of L's top min(r^2, n) squared singular values. Reconstruction
+    error is thus unavoidable unless L's spectrum concentrates in the top r^2 directions.
+  scope: JD-Full with orthogonal U, V of r columns; the bound is on Frobenius reconstruction
+    error, not on downstream LLM accuracy, and the proof notes the Von Neumann upper bound
+    is generous because vec(BA) has Kronecker structure.
+  evidence: Theorem 1, Section 4
+- id: orthogonal-corollary
   kind: result
-  text: JD-Full's reconstruction error is bounded below by how far the singular values of
-    the stacked vectorized LoRA matrices spread past the top min(r^2, n) entries. Error is
-    thus unavoidable unless the LoRAs are similar or well-clustered.
-  scope: The full-Sigma formulation with orthogonal shared bases U and V; the bound is on
-    Frobenius reconstruction error, not downstream accuracy, and the upper bound is described
-    as generous.
-  evidence: Section 4
-- id: memory-vs-forward-pass
+  text: When LoRAs are mutually orthogonal and normalized to unit Frobenius norm, JD-Full's
+    relative reconstruction error is at least 1 - min(r^2/n, 1). For r^2 much smaller than
+    n the reconstruction therefore retains little of the original adapters.
+  scope: Idealized case of exactly orthogonal, unit-norm LoRAs; real trained LoRAs share structure
+    and do considerably better, and clustering with k growing in n can keep error bounded
+    at fixed r.
+  evidence: Corollary 1, Section 4
+- id: trained-vs-random
   kind: result
-  text: Joint diagonalization greatly reduces LoRA memory load and CPU-to-GPU transfer time
-    but leaves forward-pass latency essentially unchanged. The throughput gains come from
-    fitting more adapters on the GPU rather than from faster math.
-  scope: Memory measured over all 96 LoRA modules of Mistral-7B-Instruct-v0.2; transfer time
-    and forward pass measured on a single LoRA module, across several cluster counts and rank
-    settings.
-  evidence: Figure 5
+  text: Reconstruction error of joint diagonalization is consistently higher on random untrained
+    LoRA matrices than on trained ones, indicating that training gives LoRAs a shared component
+    that joint diagonalization exploits.
+  scope: JD-Full at ranks 16, 32 and 64 on collections of 10, 50, 100 and 500 rank-16 Mistral-7B-Instruct
+    LoRAs, compared against the trained-LoRA errors in Table 14.
+  evidence: Table 15, Appendix H.11
 - id: ood-lorahub
   kind: result
-  text: Under the LoRA-hub out-of-distribution protocol with 100 sampled adapters, rank-64
-    JD-Full averages 47.66 against 48.32 for uncompressed LoRAs and 32.28 for the base model,
-    and rank-8 JD-Full still reaches 43.88.
-  scope: 100 adapters sampled independently of the evaluation task, so each task score averages
-    over all 100; run without the Frobenius-norm normalization step later identified as beneficial.
+  text: Under the LoRA-hub out-of-distribution protocol with 100 sampled adapters, JD-Full
+    at rank 64 averages 47.66 versus 48.32 for uncompressed LoRAs and 32.28 for the base model.
+    JD-Diag at rank 64 averages 47.43.
+  scope: 100 LoRAs sampled independently of the evaluation task, averaged over 10 BIG-Bench-style
+    tasks; these runs were done without the Frobenius normalization of adapters that the paper
+    later found beneficial.
   evidence: Table 18
-- id: no-cross-task-leakage
+- id: lora-quality
   kind: result
-  text: Jointly compressing an adapter for task A alongside an adapter for task B produces
-    no performance gain for adapter A on task B. That is a preliminary indication that joint
-    compression does not leak information between adapters.
-  scope: A single preliminary privacy ablation on Mistral-7B-Instruct-v0.2 natural-instruction
-    adapters; absence of a measurable gain is not a formal privacy guarantee.
-  evidence: Appendix H.2
-- id: context-serving-bottleneck
-  kind: context
-  text: Compress then Serve reframes multi-LoRA serving as a joint compression problem rather
-    than only a systems-scheduling problem. Its argument is that system optimizations still
-    degrade once adapters must be swapped in and out of GPU memory.
-  scope: As of the 2025 ICML publication; the argument is made against vLLM multi-LoRA and
-    S-LoRA as the compared serving stacks, and the method is complementary to their kernel-level
-    optimizations such as Punica's SGMV.
-  evidence: Section 2
-- id: context-lora-release
-  kind: context
-  text: Compress then Serve trains and releases a collection of more than 1000 rank-16 LoRA
-    adapters for Mistral-7B-Instruct-v0.2 on 1000 natural-instruction tasks, together with
-    the compression code, as a resource for multi-LoRA research.
-  scope: English-only Natural Instructions tasks; adapters target q_proj, k_proj and v_proj
-    at rank 16 over a 4-bit quantized base model, so other target modules or ranks are outside
-    the released set.
-  evidence: Appendix C
-- id: loras-beat-base
-  kind: result
-  text: The 1000 released task LoRAs raise average Rouge-L on their held-out test sets from
-    20.62 for the base Mistral-7B-Instruct-v0.2 to 67.80, and cut average loss from 4.14 to
-    0.56.
-  scope: 1000 Natural Instructions tasks with 80-10-10 splits, early stopping on validation
-    loss over 5 epochs; Rouge-L standard deviation across tasks is 30.15.
+  text: The 1000 released LoRAs for Mistral-7B-Instruct-v0.2 raise mean Rouge-L from 20.62
+    to 67.80 over the base model. Mean exact match rises from 1.81 to 51.38 and mean test
+    loss falls from 4.14 to 0.56.
+  scope: Rank-16 LoRAs on q_proj, k_proj and v_proj of a 4-bit quantized base model, one adapter
+    per task across 1000 English natural-instruction tasks, early stopping on validation loss.
   evidence: Table 1
+- id: no-leakage
+  kind: result
+  text: Compressing an adapter for one task jointly with an adapter for a second task gave
+    no performance gain on the second task. This is preliminary evidence that joint compression
+    does not leak task information between adapters.
+  scope: A single ablation on pairs of natural-instruction tasks with Mistral-7B-Instruct;
+    a negative result at this scale, not a privacy guarantee, and the paper flags a fuller
+    privacy study as future work.
+  evidence: Appendix H.2
+- id: context-problem
+  kind: context
+  text: Compress then Serve frames multi-LoRA serving as a compression problem rather than
+    only a systems problem. Scheduling and memory-management optimizations such as S-LoRA
+    and vLLM multi-LoRA still degrade when thousands of adapters must be swapped in and out
+    of GPU memory.
+  scope: Positioning as of the 2025 ICML publication, for LLM inference servers holding one
+    base model plus many per-user LoRAs; complementary to rather than a replacement for kernel-level
+    work, and the paper's own experiments use vLLM with the Punica kernel.
+  evidence: Section 2
+- id: context-artifact
+  kind: context
+  text: Compress then Serve releases a collection of over 1000 LoRA adapters trained on 1000
+    natural-instruction tasks for Mistral-7B-Instruct-v0.2. The collection is intended as
+    a testbed for work on serving, merging and compressing large adapter collections.
+  scope: All tasks are English-language natural instructions with input and output in English;
+    all adapters are rank 16 on q_proj, k_proj and v_proj of one base model, so the collection
+    does not cover varied ranks, architectures or languages.
+  evidence: Section 1, Table 3
 qa:
 - q:
-  - how can I serve thousands of LoRA adapters without constantly swapping them in and out
-    of GPU memory?
-  - does compressing LoRA adapters actually improve serving throughput?
-  - what throughput do you get when serving 1000+ LoRAs with vLLM?
+  - How can a server host thousands of fine-tuned adapters for one base model without running
+    out of GPU memory?
+  - What throughput can I expect when serving 1000+ LoRA adapters at once?
+  - Does compressing LoRA adapters actually make multi-adapter serving faster?
   answers:
-  - throughput-1000-loras
-  - throughput-depends-on-collection-size
-  - memory-vs-forward-pass
+  - throughput-1000
+  - throughput-crossover
 - q:
-  - does compressing a collection of LoRAs hurt task accuracy?
-  - how much performance is lost when many LoRA adapters share one basis?
-  - can compressed LoRA adapters match their uncompressed versions?
+  - Does compressing LoRA adapters hurt task accuracy?
+  - How much performance is lost when many LoRAs share one basis?
+  - Can lossy compression of adapters ever improve results?
   answers:
-  - performance-preserved
-  - lossy-can-help
+  - lossy-helps
+  - recon-threshold
 - q:
-  - how do I pick the compression rank and number of clusters for a LoRA collection?
-  - is there a cheap way to choose LoRA compression settings without evaluating the LLM?
-  - what reconstruction error is safe when compressing many LoRA adapters?
+  - How do I choose the compression rank and number of clusters for a large adapter collection?
+  - Can LoRA compression hyperparameters be tuned without expensive LLM evaluation?
+  - What reconstruction error is safe when compressing LoRAs?
   answers:
-  - recon-error-06-threshold
-  - clustering-needed-above-100
+  - recon-threshold
+  - clustering-needed
 - q:
-  - when is clustering needed before jointly compressing LoRA adapters?
-  - does joint diagonalization of LoRAs scale to 500 or 1000 adapters?
-  - at what number of adapters does a single shared basis stop working?
+  - When is clustering adapters necessary instead of a single shared basis?
+  - Is JD-Full or JD-Diag the better choice for compressing LoRAs?
+  - Does the shared-basis approach scale from tens to a thousand adapters?
   answers:
-  - clustering-needed-above-100
-  - throughput-depends-on-collection-size
+  - clustering-needed
+  - throughput-crossover
 - q:
-  - is lower reconstruction error always better for compressed adapters?
-  - does minimizing Frobenius reconstruction error maximize downstream Rouge-L?
-  - can lossy LoRA reconstruction improve generalization?
+  - Is there a theoretical limit on how well many low-rank adapters can share one basis?
+  - What guarantee bounds reconstruction error for joint diagonalization of LoRAs?
+  - When is joint compression of adapters provably lossy?
   answers:
-  - lossy-can-help
-  - theory-recon-bound
+  - recon-bound
+  - orthogonal-corollary
 - q:
-  - are there theoretical guarantees on how well many LoRAs can share one low-rank basis?
-  - when is reconstruction error unavoidable in joint LoRA compression?
-  - what does the theory say about compressing unrelated versus similar adapters?
+  - Do fine-tuned LoRA adapters share structure with each other?
+  - Is joint compression of LoRAs exploiting real shared structure or just low-rank noise?
+  - How does reconstruction error on trained adapters compare to random ones?
   answers:
-  - theory-recon-bound
-  - trained-vs-random-recon
+  - trained-vs-random
+  - orthogonal-corollary
 - q:
-  - do trained LoRA adapters share structure that random matrices do not?
-  - is there evidence that fine-tuned LoRAs live in a common subspace?
-  - how does reconstruction error compare between trained and untrained LoRA matrices?
-  answers:
-  - trained-vs-random-recon
-- q:
-  - where do the speedups from LoRA compression actually come from?
-  - does compressing LoRAs make the forward pass faster?
-  - does joint diagonalization reduce transfer time from CPU to GPU?
-  answers:
-  - memory-vs-forward-pass
-  - throughput-1000-loras
-- q:
-  - does joint LoRA compression still work when the adapters are unrelated to the evaluation
+  - Does joint LoRA compression still work when the adapter does not match the evaluation
     task?
-  - what happens under the LoRA-hub out-of-distribution protocol after compression?
-  - how well do compressed adapters generalize to tasks they were not trained for?
+  - How do compressed adapters do under the LoRA-hub out-of-distribution protocol?
+  - What happens to accuracy on unseen tasks after compressing 100 adapters?
   answers:
   - ood-lorahub
 - q:
-  - can jointly compressing LoRA adapters leak information between users?
-  - is there a privacy risk in sharing a basis across different users' adapters?
-  - does an adapter gain skill on another adapter's task after joint compression?
+  - Where can I get a large public collection of LoRA adapters for research?
+  - Are the 1000 adapters used in the joint-compression experiments any good?
+  - How were 1000 task-specific adapters trained for Mistral-7B-Instruct?
   answers:
-  - no-cross-task-leakage
+  - context-artifact
+  - lora-quality
 - q:
-  - what should I read about serving many fine-tuned LLM adapters efficiently?
-  - which paper argues that multi-LoRA serving needs compression and not just better scheduling?
-  - where should I start reading about the LoRA serving bottleneck?
+  - Could compressing several users' adapters together leak information between them?
+  - Is joint compression of per-user adapters private?
+  - Does an adapter gain ability on another adapter's task after joint compression?
   answers:
-  - context-serving-bottleneck
-  - throughput-1000-loras
+  - no-leakage
 - q:
-  - is there a public collection of many task-specific LoRA adapters for research?
-  - where can I find 1000 LoRA adapters trained on Natural Instructions?
-  - what collection of adapters exists for studying LoRA merging and compression?
+  - What should I read about serving many LoRA adapters efficiently?
+  - Which paper treats multi-adapter serving as a compression problem instead of a systems
+    problem?
+  - Where should I start reading about the memory bottleneck in multi-LoRA inference?
   answers:
-  - context-lora-release
-  - loras-beat-base
-- q:
-  - how much do rank-16 LoRAs improve over base Mistral-7B-Instruct on Natural Instructions
-    tasks?
-  - what Rouge-L do the released task adapters reach compared to the base model?
-  answers:
-  - loras-beat-base
+  - context-problem
+  - context-artifact
 terminology:
-  JD-Full: Joint diagonalization of a LoRA collection in which the shared basis matrices U
-    and V are constrained orthogonal and each adapter keeps an unconstrained r-by-r matrix,
-    costing r^2 parameters per adapter.
-  JD-Diag: Joint diagonalization of a LoRA collection in which the shared basis matrices are
-    unconstrained and each adapter's own matrix is constrained diagonal, costing only r parameters
-    per adapter.
-  agreement: The fraction of generated outputs on which the compressed-LoRA model exactly
-    matches the uncompressed-LoRA model, measured against the other model's generations rather
-    than against ground truth.
-  performance relative to LoRA: A method's task metric divided by the uncompressed LoRA model's
-    metric on the same task, so 1.0 means the compressed adapter matches its uncompressed
-    source.
-  Total Parameter Saved Ratio: One minus the ratio of parameter count after compression to
-    parameter count before compression, computed for a system serving a large number of distinct
-    adapters.
+  JD-Full: Joint diagonalization of a collection of LoRA products BA into a shared orthogonal
+    basis U, V of r columns plus an unconstrained r-by-r matrix per adapter.
+  JD-Diag: Joint diagonalization of a collection of LoRA products BA into a shared basis U,
+    V plus a diagonal r-parameter scaling per adapter, cheaper per adapter than a full r-by-r
+    matrix.
+  Agreement: The fraction of generations on which a compressed adapter's output exactly matches
+    the uncompressed adapter's output, compared model-to-model rather than against ground
+    truth.
+  Performance relative to LoRA: A method's task metric divided by the uncompressed LoRA's
+    metric on the same task, so 1.0 means parity with the original adapter.
+  Total Parameter Saved Ratio: One minus the number of parameters after compression divided
+    by the number before, computed for a system serving a large number of distinct adapters.
 misreadings:
-- 'Compression does not speed up the LoRA forward pass: memory load and CPU-to-GPU transfer
-  time drop sharply while forward-pass latency is essentially unchanged, so the throughput
-  gain comes from keeping more adapters resident on the GPU.'
-- 'Aggressive compression is not free at every collection size: a large rank or many clusters
-  can be slower than the vLLM multi-LoRA baseline when only a few dozen adapters are served,
-  so the setting must be matched to the collection size.'
-- 'Joint diagonalization is not model merging: the shared basis is common to all adapters
-  but each adapter keeps its own scaling matrix, so the result is a set of per-task adapters
-  rather than one general multi-task model.'
-- The finding that mild lossy reconstruction can slightly outperform exact reconstruction
-  does not mean more compression is always better; the relation between reconstruction error
-  and Rouge-L is decreasing overall and large errors degrade performance sharply.
-- The privacy ablation showing no gain for one adapter on another's task is a preliminary
-  check, not a formal guarantee that jointly compressed adapters cannot leak information.
-- The 80% figure is throughput relative to serving a single LoRA merged into the base model,
-  not accuracy retained after compression.
+- 'Joint diagonalization is not model merging: it shares only the subspaces U and V across
+  adapters while each adapter keeps its own Sigma, so the result is a set of per-task models
+  rather than one general model.'
+- Reducing the parameter count of LoRA adapters does not by itself speed up inference; compression
+  reduces memory load and CPU-to-GPU transfer time but leaves forward-pass latency unchanged,
+  and the throughput gains come from fitting more adapters on the GPU.
+- 'Lower reconstruction error is not the goal in itself: settings with near-zero Frobenius
+  error do not give the best Rouge-L, and moderately lossy reconstruction can match or slightly
+  beat them.'
+- The 1.6x throughput gain is not universal across collection sizes; an aggressive setting
+  such as 25 clusters at rank 15 underperforms the vLLM multi-LoRA baseline when only 32 or
+  fewer adapters are served.
+- The privacy ablation showing no gain on a co-compressed adapter's task is a single preliminary
+  experiment, not a proof that joint compression is leakage-free.
+links_extra:
+  arxiv: https://arxiv.org/abs/2407.00066
 ---

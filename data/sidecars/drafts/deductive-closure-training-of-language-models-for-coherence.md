@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept deductive-closure-training-of-language-models-for-coherence
 
-Stamp: spec=74e012ff9654 checks=pass body=c0f321ba8110
+Stamp: spec=8f05813a4658 checks=pass body=c0f321ba8110
 -->
 ---
 claims:

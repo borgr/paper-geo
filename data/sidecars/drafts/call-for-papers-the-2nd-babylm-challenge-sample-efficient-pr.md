@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept call-for-papers-the-2nd-babylm-challenge-sample-efficient-pr
 
-Stamp: spec=74e012ff9654 checks=pass body=10ec48e77301
+Stamp: spec=8f05813a4658 checks=pass body=10ec48e77301
 -->
 ---
 one_liner: 'The 2nd BabyLM Challenge (2024/2025) asks participants to pretrain language models

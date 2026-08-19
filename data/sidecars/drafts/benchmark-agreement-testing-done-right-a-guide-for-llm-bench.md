@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept benchmark-agreement-testing-done-right-a-guide-for-llm-bench
 
-Stamp: spec=e47adcd7257c checks=pass body=078ba66b37c5
+Stamp: spec=8f05813a4658 checks=pass body=078ba66b37c5
 -->
 ---
 key: perlitz2024bat

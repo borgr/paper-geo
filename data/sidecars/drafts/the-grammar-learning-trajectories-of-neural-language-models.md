@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept the-grammar-learning-trajectories-of-neural-language-models
 
-Stamp: spec=74e012ff9654 checks=pass body=ae9a1246a733
+Stamp: spec=8f05813a4658 checks=pass body=ae9a1246a733
 -->
 ---
 key: choshen2022grammar

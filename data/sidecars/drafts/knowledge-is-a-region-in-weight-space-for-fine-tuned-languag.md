@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept knowledge-is-a-region-in-weight-space-for-fine-tuned-languag
 
-Stamp: spec=74e012ff9654 checks=pass body=aa9c799c89aa
+Stamp: spec=8f05813a4658 checks=pass body=aa9c799c89aa
 -->
 ---
 key: gueta2023knowledge

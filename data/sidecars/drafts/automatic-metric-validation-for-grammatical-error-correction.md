@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept automatic-metric-validation-for-grammatical-error-correction
 
-Stamp: spec=74e012ff9654 checks=pass body=424e9de53c10
+Stamp: spec=8f05813a4658 checks=pass body=424e9de53c10
 -->
 ---
 claims:

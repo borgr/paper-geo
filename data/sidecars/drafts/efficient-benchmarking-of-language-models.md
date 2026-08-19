@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept efficient-benchmarking-of-language-models
 
-Stamp: spec=74e012ff9654 checks=pass body=980980a90761
+Stamp: spec=8f05813a4658 checks=pass body=980980a90761
 -->
 ---
 key: perlitz2024efficient

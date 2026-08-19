@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept a-hitchhiker-s-guide-to-scaling-law-estimation
 
-Stamp: spec=74e012ff9654 checks=pass body=8ae296b180f6
+Stamp: spec=8f05813a4658 checks=pass body=8ae296b180f6
 -->
 ---
 key: choshen2025hitchhiker

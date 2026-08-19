@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept dove-a-large-scale-multi-dimensional-predictions-dataset-tow
 
-Stamp: spec=74e012ff9654 checks=pass body=52b81eac5f3d
+Stamp: spec=8f05813a4658 checks=pass body=52b81eac5f3d
 -->
 ---
 claims:

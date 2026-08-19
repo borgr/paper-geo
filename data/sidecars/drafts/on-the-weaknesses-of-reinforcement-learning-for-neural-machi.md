@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call) + 2 repair rounds. Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced) + a targeted repair. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept on-the-weaknesses-of-reinforcement-learning-for-neural-machi
 
-Stamp: spec=d57862840a90 checks=1 body=6226f949dccc
+Stamp: spec=8f05813a4658 checks=pass body=c1b3de47e041
 -->
 ---
 key: choshen2020weaknesses
@@ -122,8 +122,8 @@ claims:
   kind: result
   text: Gradient clipping should be avoided when fine-tuning a translation model with Reinforce,
     because it violates Reinforce's assumptions and is expected to slow convergence further.
-  scope: Reinforce fine-tuning of NMT, argued analytically rather than by ablation; the paper's
-    own Transformer used gradient clipping of size 5 during pretraining only.
+  scope: Reinforce fine-tuning of a pretrained NMT model; in the paper's own Transformer setup
+    gradient clipping of size 5 was applied during pretraining but not during RL training.
   evidence: Section 7, Appendix C
 - id: baseline-disallows-learning
   kind: result

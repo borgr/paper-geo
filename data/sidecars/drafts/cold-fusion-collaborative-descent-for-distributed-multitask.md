@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept cold-fusion-collaborative-descent-for-distributed-multitask
 
-Stamp: spec=74e012ff9654 checks=pass body=92e6f45e445b
+Stamp: spec=8f05813a4658 checks=pass body=92e6f45e445b
 -->
 ---
 key: donyehiya2023coldfusion

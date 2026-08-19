@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept numerologic-number-encoding-for-enhanced-llms-numerical-reas
 
-Stamp: spec=74e012ff9654 checks=pass body=5e233fcfc84e
+Stamp: spec=8f05813a4658 checks=pass body=5e233fcfc84e
 -->
 ---
 key: schwartz2024numerologic

@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept elements-of-world-knowledge-ewok-a-cognition-inspired-framew
 
-Stamp: spec=74e012ff9654 checks=pass body=79eeaf7c92e8
+Stamp: spec=8f05813a4658 checks=pass body=79eeaf7c92e8
 -->
 ---
 claims:

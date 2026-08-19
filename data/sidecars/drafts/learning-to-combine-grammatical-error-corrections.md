@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept learning-to-combine-grammatical-error-corrections
 
-Stamp: spec=74e012ff9654 checks=pass body=73d1aaeed1f7
+Stamp: spec=8f05813a4658 checks=pass body=73d1aaeed1f7
 -->
 ---
 one_liner: A black-box combination method for Grammatical Error Correction that splits two

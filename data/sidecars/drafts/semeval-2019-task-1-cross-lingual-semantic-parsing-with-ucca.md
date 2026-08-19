@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept semeval-2019-task-1-cross-lingual-semantic-parsing-with-ucca
 
-Stamp: spec=74e012ff9654 checks=pass body=52c06780dd79
+Stamp: spec=8f05813a4658 checks=pass body=52c06780dd79
 -->
 ---
 key: hershcovich2019semeval

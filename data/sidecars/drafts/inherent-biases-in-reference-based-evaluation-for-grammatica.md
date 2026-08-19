@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call) + 2 repair rounds. Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call) + 3 repair rounds. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -17,272 +17,273 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept inherent-biases-in-reference-based-evaluation-for-grammatica
 
-Stamp: spec=d57862840a90 checks=4 body=8bdb7673514c
+Stamp: spec=74e012ff9654 checks=1 body=067f5643559d
 -->
 ---
-one_liner: Because the distribution of valid corrections for a sentence is long-tailed, reference-based
-  GEC evaluation cannot be fixed by re-scaling or by adding references, and it rewards systems
-  that under-correct.
+one_liner: Because the valid corrections of a sentence follow a long-tailed distribution,
+  reference-based GEC and simplification measures systematically under-score correct output,
+  and this Low Coverage Bias rewards systems that under-correct rather than being fixable
+  by re-scaling or by adding references.
+coined: LCB (Low Coverage Bias)
+gloss: the systematic under-scoring of valid text-to-text output caused by evaluating against
+  too few reference corrections
 key: choshen2018inherent
-coined: LCB
-gloss: low coverage bias — the systematic under-estimation of text-to-text system quality
-  caused by evaluating against too few reference outputs
-terminology:
-  Low Coverage Bias (LCB): The gap between a text-to-text system's score against the full
-    set of valid outputs and its score against a small reference set, arising because most
-    valid corrections of a sentence are absent from the references.
-  Coverage of a reference set: For an input sentence, the probability that a correction sampled
-    from the human correction distribution for that sentence appears in the set of M references
-    given for it.
-  Under-correction: A system's tendency to leave a source substring unchanged even when it
-    could generate a valid correction, because keeping the source is more likely to match
-    a small reference set than any single valid correction is.
-  Exact Index Match: A relaxed sentence-level accuracy for grammatical error correction that
-    counts a system output as matching a reference when the two change the same source word
-    positions, regardless of what those words were changed to.
-  MAX-SARI: A variant of the SARI text-simplification metric defined as the maximum single-reference
-    SARI score over the available references, equal to SARI when there is 1 reference.
-  UNSEENEST: A non-parametric algorithm, originally built for estimating how many unseen variants
-    a gene has, that fits a discrete distribution's histogram — including its unobserved atoms
-    — by minimizing earthmover distance.
 claims:
 - id: long-tail-corrections
   kind: result
-  text: Short English learner sentences of 15 words or fewer have on average 1351.24 distinct
-    valid corrections. Just 74.34 corrections, each occurring at least 0.1% of the time, already
-    account for 75% of the probability mass.
-  scope: 52 short sentences (≤15 words) sampled from the NUCLE test set, with corrections
-    crowdsourced under instructions to correct grammaticality only and not style; distributions
-    estimated with UNSEENEST.
+  text: Short learner-English sentences of 15 words or fewer have 1351.24 distinct valid corrections
+    on average, with 74.34 corrections of frequency at least 0.001 accounting for 75% of the
+    probability mass.
+  scope: Estimated with UNSEENEST from crowdsourced corrections of 52 randomly sampled short
+    sentences (15 words or less) from the NUCLE test set; longer sentences were excluded to
+    keep the estimate reliable.
   evidence: Table 1
 - id: rare-corrections-valid
   kind: result
-  text: 'The many rare corrections of a learner sentence are not annotation noise: even the
-    rarest crowdsourced corrections were judged valid 78% of the time. Correction frequency
-    had little effect on judged validity.'
-  scope: 3 annotators judging validity of corrections collected in the earlier crowdsourcing
-    round, on the same 52 short NUCLE sentences; details in Appendix C.
-  evidence: Section 2.1 (details in Appendix C)
-- id: perfect-system-low-score
+  text: The rare corrections forming the long tail of valid GEC corrections are not annotation
+    noise. Even the rarest crowdsourced corrections were judged valid 78% of the time, and
+    frequency had little effect on judged validity.
+  scope: A second crowdsourcing round with 3 validity annotators per correction, on the same
+    52 short NUCLE sentences of 15 words or less.
+  evidence: Section 2.1 and Appendix C
+- id: perfect-system-f05
   kind: result
-  text: A perfect grammatical error correction system, sampling its output from the human
-    correction distribution, scores only about 0.42 F0.5 with 2 references. Its sentence-level
-    accuracy is only around 0.5 even with 20 references.
-  scope: Bootstrapped over NUCLE test statistics (N = 1312 sentences, 136 needing no correction),
-    M = 1 to 20, M2 scorer with heuristically produced reference edits.
-  evidence: Figure 1a and Figure 1b
-- id: diminishing-returns-references
+  text: A perfect GEC system scores only 0.42 F0.5 under the M2 scorer with 2 references,
+    so reference-based scores drastically under-estimate correct output.
+  scope: Accelerated bootstrap with 1000 iterations, N = 1312 and Ncor = 136 to match NUCLE
+    test-set statistics.
+  evidence: Figure 1b
+- id: more-references-saturate
   kind: result
-  text: 'Adding references to grammatical error correction evaluation shows sharply diminishing
-    returns: the expected accuracy of a perfect system gains only 0.004 per extra reference
-    at M = 20. GLEU saturates the same way, running about 2% above M2.'
-  scope: Sampling references with replacement from UNSEENEST-estimated per-sentence correction
-    distributions on 52 short NUCLE sentences; sampling without replacement gives faster growth,
-    above 0.47 accuracy at M = 10.
-  evidence: Figure 1a and Figure 1b
-- id: systems-beat-perfect-system
+  text: Adding reference corrections gives sharply diminishing returns in GEC evaluation.
+    The expected sentence-level accuracy of a perfect system is only about 0.5 even at 20
+    references, with a slope of 0.004 per added reference at M = 20.
+  scope: Sampling 1000 reference sets per sentence for M = 1..20 over the estimated correction
+    distributions of 52 short NUCLE sentences; sampling without replacement gives a faster
+    increase, above 0.47 at M = 10.
+  evidence: Figure 1a
+- id: gleu-same-saturation
   kind: result
-  text: Two CoNLL-2014-era GEC systems, RoRo and JMGR, surpass the F0.5 score of a perfect
-    system evaluated with 2 references on the NUCLE test set. Comparable or superior scores
-    to humans also appear under GLEU.
-  scope: NUCLE test set with M = 2, as in the systems' own reported results; confidence intervals
-    from accelerated bootstrap with 1000 iterations.
+  text: GLEU shows the same low-coverage saturation as M2 in GEC, scoring a perfect system
+    only about 2% higher than M2 does across reference-set sizes.
+  scope: Mean GLEU sentence score, bootstrapped on 52 short NUCLE sentences; I-measure untested,
+    its runtime being prohibitive.
+  evidence: Figure 1b
+- id: systems-beat-humans
+  kind: result
+  text: The GEC systems RoRo and JMGR surpass the F0.5 score of a perfect system evaluated
+    with 2 references on the NUCLE test set. Both also obtain comparable or superior scores
+    to humans under GLEU.
+  scope: CoNLL 2014 shared-task systems plus three stronger later systems, evaluated on the
+    NUCLE test set with M = 2 as in their reported results; confidence intervals at p = .95.
   evidence: Figure 2 and Section 2.3
+- id: rescaling-fails
+  kind: result
+  text: Re-scaling reference-based GEC scores by inter-annotator agreement cannot remove Low
+    Coverage Bias, because the bias is not a constant factor. Systems that only correct closed-class
+    errors can exceed the score of a perfect system.
+  scope: Argument grounded in the NUCLE M = 2 comparison of CoNLL 2014 systems against a perfect
+    system; directed at the Ratio Scoring proposal of Bryant and Ng (2015).
+  evidence: Section 2.4
 - id: systems-undercorrect
   kind: result
-  text: GEC systems change the source far less than human annotators do, often by an order
-    of magnitude. 36 NUCLE reference sentences contain 6 word changes, whereas the largest
-    number of sentences with 6 word changes by any system is 5.
-  scope: All CoNLL 2014 shared task systems plus RoRo, JMGR and Xie et al. on the NUCLE test
-    references, with non-alphanumeric characters excluded; word changes measured by bipartite
-    word alignment.
+  text: GEC systems change the source far less than human annotators do, sometimes by an order
+    of magnitude. 36 NUCLE reference sentences contain 6 word changes, while no system produces
+    more than 5 sentences with 6 word changes.
+  scope: CoNLL 2014 system outputs versus NUCLE references, non-alphanumeric characters excluded;
+    measured by WORDCHANGE, word-order Spearman rho, and splits/concatenations.
   evidence: Figure 3
-- id: more-references-more-correction
-  kind: result
-  text: 'Tuning against more references reduces under-correction: oracle re-ranking of the
-    RoRo system''s 100-best list makes more word changes as the number of references grows,
-    while word order shows no significant difference.'
-  scope: RoRo with k = 100 on the NUCLE test corpus, F-score as the re-ranking objective,
-    averaging over 1312 samples of M references drawn from the 10 references of Bryant and
-    Ng (2015).
-  evidence: Figure 4
 - id: open-class-undercorrected
   kind: result
-  text: 'Open-class selection errors are the most under-corrected error types in GEC: verb,
-    noun, particle/preposition and pronoun selection all fall in the bottom quarter of system-to-reference
-    correction ratios.'
+  text: Open-class GEC error types are the most under-corrected. Verb, noun, preposition and
+    pronoun selection fall in the bottom quarter of correction ratios, while orthography,
+    noun plurality, adjective inflection and determiner selection fall in the top quarter.
   scope: Automatic edit typing of all CoNLL 2014 system outputs on the NUCLE test set using
-    Bryant et al. (2017); ratio of mean system corrections to mean reference corrections per
-    type, ignoring whether a correction is valid. Closed-class punctuation selection is also
-    in the bottom quarter.
-  evidence: Section 3.4 (details in Appendix E)
-- id: type-frequency-not-explanation
+    the data of Bryant et al. (2017), counting attempted rather than valid corrections; punctuation
+    selection is a closed-class exception in the bottom quarter.
+  evidence: Section 3.4 and Appendix E
+- id: more-refs-reduce-undercorrection
   kind: result
-  text: The pattern of which GEC error types get corrected is not explained by how common
-    the types are. Error type frequency correlates slightly negatively with the under-correction
-    ratio (ρ = -0.29, p = 0.16).
-  scope: Edit types automatically assigned to CoNLL 2014 system outputs on the NUCLE test
-    set; the correlation is not statistically significant.
-  evidence: Section 3.4
+  text: Tuning against more references reduces under-correction in GEC. Oracle re-ranking
+    of the RoRo system's 100-best lists on the NUCLE test set produces more word changes as
+    the number of references grows, with no significant change in word order.
+  scope: Oracle re-ranking with the M2 F-score over 1312 samples of M references drawn from
+    the ten NUCLE references of Bryant and Ng (2015); a simulation of retraining, since no
+    multi-reference corpus is large enough to retrain a system.
+  evidence: Figure 4
+- id: sari-coverage-flat
+  kind: result
+  text: SARI gives a perfect text-simplification system a coverage of about 0.45 that is largely
+    independent of the number of references. The score of a system that outputs one of the
+    given references drops as references are added.
+  scope: 2500 crowdsourced simplifications for 47 sentences using the corpus and protocol
+    of Xu et al. (2016), UNSEENEST-estimated distributions, and the same bootstrapping protocol
+    as the GEC experiments.
+  evidence: Figure 1c
 - id: simplification-long-tail
   kind: result
-  text: 'Text simplification has an even heavier tail of valid outputs than GEC: sentences
-    have on average 2636.29 distinct valid simplifications. Simplifications occurring at least
-    0.1% of the time cover only 0.42 of the probability mass.'
-  scope: 2500 crowdsourced reference simplifications for 47 sentences, using the corpus and
-    annotation protocol of Xu et al. (2016), with distributions estimated by UNSEENEST.
+  text: Valid simplifications are even more numerous than valid corrections. A sentence has
+    2636.29 distinct valid simplifications on average, and the 111.19 simplifications of frequency
+    at least 0.001 cover only 0.42 of the probability mass.
+  scope: UNSEENEST estimates from 2500 crowdsourced simplifications of 47 sentences from the
+    corpus of Xu et al. (2016).
   evidence: Table 4
-- id: sari-flat-in-m
+- id: ts-oracle-reranking
   kind: result
-  text: SARI gives a perfect text simplification system a coverage of only about 0.45, largely
-    independently of the number of references. A system that outputs one of the given references
-    scores lower as references are added.
-  scope: Bootstrapping on 47 sentences with crowdsourced simplification distributions; MAX-SARI
-    reported alongside SARI because multi-reference SARI is not a maximum over single-reference
-    scores.
-  evidence: Figure 1c
-- id: simplification-reranking
-  kind: result
-  text: 'Under-prediction in text simplification also decreases with more references: the
-    least under-predicting model, a neural one, left 50 sentences unchanged with 1 reference
+  text: 'Under-prediction in text simplification also eases with more references: under MAX-SARI
+    oracle re-ranking, a neural simplification model left 50 sentences unchanged with 1 reference
     but only 29 unchanged with 8 references.'
-  scope: Oracle re-ranking against MAX-SARI on k-best lists from Moses (k = 100) and the neural
-    model of Nisioi et al. (2017) (k = 12); details in Appendix G.
-  evidence: Section 4 (details in Appendix G)
-- id: context-lcb-argument
+  scope: Oracle re-ranking on k-best lists from Moses (k = 100) and a neural model (Nisioi
+    et al., 2017, k = 12); MAX-SARI only, since multi-reference SARI does not reward matching
+    a single reference.
+  evidence: Section 4 and Appendix G
+- id: methodology-contribution
   kind: context
-  text: Choshen and Abend (2018) established that low reference coverage in grammatical error
-    correction and text simplification is not a constant-factor under-estimation but an incentive
-    structure that rewards systems for not correcting.
-  scope: Argued for GEC on NUCLE and for text simplification with SARI, as of ACL 2018; earlier
-    work on low coverage (Bryant and Ng 2015; Sakaguchi et al. 2016) proposed re-scaling or
-    more references as the remedy.
+  text: Choshen and Abend (2018) contribute two reusable methodologies to monolingual translation
+    evaluation. The first bootstraps the score a hypothetical perfect system would receive,
+    in order to audit an evaluation measure; the second estimates the distribution of valid
+    outputs per source sentence from crowdsourced samples.
+  scope: Demonstrated for GEC and text simplification only; the authors suggest applicability
+    to style conversion and automatic post-editing without testing those tasks.
   evidence: Section 5
-- id: context-methodology
+- id: field-entry-point
   kind: context
-  text: Choshen and Abend (2018) contribute two reusable methods to monolingual translation
-    evaluation. The first scores a hypothetical perfect system by bootstrapping to expose
-    a measure's bias; the second estimates per-sentence distributions of valid outputs.
-  scope: Demonstrated on GEC (M2, GLEU, sentence accuracy) and text simplification (SARI);
-    the distribution estimate relies on UNSEENEST and, in the paper's own experiments, on
-    short sentences of at most 15 words to keep estimation reliable.
-  evidence: Section 5
-- id: context-correlation-blindspot
-  kind: context
-  text: Choshen and Abend (2018) argue that metric validation by correlation with human rankings
-    of system outputs cannot detect a metric's tendency to reward under-correction, because
-    all ranked systems under-correct similarly.
-  scope: An argument about GEC metric validation studies of the Grundkiewicz et al. (2015)
-    type, presented in discussion rather than tested by an experiment.
-  evidence: Section 5
+  text: Inherent Biases in Reference-based Evaluation for Grammatical Error Correction and
+    Text Simplification is a standard reference for the argument that reference-based GEC
+    evaluation rewards under-correction and cannot be repaired by adding references.
+  scope: As of its ACL 2018 publication; concerns English learner-essay GEC on NUCLE and English
+    text simplification, and addresses M2, GLEU, sentence accuracy and SARI rather than reference-less
+    or semantic measures.
 qa:
 - q:
-  - Why doesn't adding more reference corrections fix GEC evaluation?
-  - Does increasing the number of references solve low coverage bias in grammatical error
-    correction?
-  - How many references would GEC evaluation need to be reliable?
+  - Why do GEC systems make so few corrections?
+  - What causes grammatical error correction systems to under-correct?
+  - Do automatic evaluation measures discourage GEC systems from correcting errors?
   answers:
-  - long-tail-corrections
-  - diminishing-returns-references
-  - perfect-system-low-score
+  - systems-undercorrect
+  - open-class-undercorrected
+  - more-refs-reduce-undercorrection
 - q:
-  - How many valid ways are there to correct an ungrammatical English sentence?
-  - What does the distribution of valid grammatical corrections per sentence look like?
-  - Are rare crowdsourced corrections of learner sentences just noise?
+  - Does adding more references fix the problem of too few references in GEC evaluation?
+  - How many references does reliable reference-based GEC evaluation need?
+  - Is increasing the number of reference corrections enough to remove low coverage bias?
+  answers:
+  - more-references-saturate
+  - long-tail-corrections
+  - gleu-same-saturation
+- q:
+  - How many valid corrections does an ungrammatical sentence have?
+  - What does the distribution of valid grammatical corrections for a sentence look like?
+  - Are rare corrections produced by crowdworkers just noise?
   answers:
   - long-tail-corrections
   - rare-corrections-valid
 - q:
-  - What score does a perfect grammatical error correction system get under M2 with 2 references?
-  - How much does M2 or GLEU under-estimate a system that always produces a valid correction?
-  - Can a GEC system score higher than a human corrector on standard metrics?
+  - What F-score would a perfect grammatical error correction system get?
+  - How much do M2 and GLEU under-estimate a correct GEC output?
+  - Can a flawless corrector still score badly on the M2 scorer?
   answers:
-  - perfect-system-low-score
-  - systems-beat-perfect-system
+  - perfect-system-f05
+  - gleu-same-saturation
 - q:
-  - Can low coverage bias be removed by re-scaling scores by inter-annotator agreement?
-  - Is Ratio Scoring enough to correct for too few GEC references?
-  - Why is rescaling GEC scores by a human upper bound not a valid fix?
+  - Do GEC systems really outperform human correctors?
+  - Have automatic GEC systems surpassed human performance on M2 and GLEU?
+  - Why do some grammatical error correction systems score above humans?
   answers:
-  - systems-beat-perfect-system
-  - context-lcb-argument
+  - systems-beat-humans
+  - rescaling-fails
 - q:
-  - Why do grammatical error correction systems make so few edits?
-  - Do GEC systems change the input less than human annotators do?
-  - What evidence is there that GEC systems under-correct?
+  - Does re-scaling GEC scores by inter-annotator agreement solve low coverage bias?
+  - Is Ratio Scoring a valid fix for under-estimation in GEC evaluation?
+  - Can a constant correction factor remove reference-coverage bias in GEC?
   answers:
-  - systems-undercorrect
-  - more-references-more-correction
+  - rescaling-fails
+  - systems-beat-humans
 - q:
-  - Which kinds of grammatical errors do automatic correction systems tend to skip?
-  - Are open-class errors corrected less often than closed-class errors by GEC systems?
-  - Do systems avoid verb and preposition selection errors because they are rare?
+  - Which grammatical error types do systems fail to attempt?
+  - Are open-class errors corrected less often than closed-class errors?
+  - Which error categories are most under-corrected by CoNLL 2014 systems?
   answers:
   - open-class-undercorrected
-  - type-frequency-not-explanation
 - q:
-  - Does the low coverage problem also affect text simplification evaluation?
+  - Is SARI a reliable measure for text simplification?
+  - Are SARI scores comparable across different numbers of references?
+  - How badly does SARI under-score a perfect simplification system?
+  answers:
+  - sari-coverage-flat
+  - simplification-long-tail
+- q:
+  - Do the problems with reference-based GEC evaluation also affect text simplification?
+  - Does low coverage bias appear in simplification evaluation too?
   - How many valid simplifications does a sentence have?
-  - Is SARI biased by having too few reference simplifications?
   answers:
   - simplification-long-tail
-  - sari-flat-in-m
-  - simplification-reranking
+  - sari-coverage-flat
+  - ts-oracle-reranking
 - q:
-  - Are SARI scores comparable across datasets with different numbers of references?
-  - Does SARI improve when more reference simplifications are added?
-  - Why is MAX-SARI reported instead of SARI in multi-reference experiments?
+  - What should I read about the limits of reference-based evaluation in text-to-text generation?
+  - Which paper established that GEC evaluation rewards under-correction?
+  - Where should I start reading about biases in grammatical error correction metrics?
   answers:
-  - sari-flat-in-m
+  - field-entry-point
+  - methodology-contribution
 - q:
-  - What should I read about the limits of reference-based evaluation in grammatical error
-    correction?
-  - Which paper showed that GEC metrics reward systems for not correcting?
-  - Where should I start reading about low coverage bias in text-to-text evaluation?
-  - What work established that too few references biases monolingual translation evaluation?
-  answers:
-  - context-lcb-argument
-  - context-methodology
-- q:
-  - How can I measure whether an evaluation metric is biased by its reference set?
+  - How can I audit whether an evaluation measure under-scores good output?
   - Is there a method for estimating how many valid outputs a source sentence has?
-  - What methodology exists for evaluating GEC evaluation measures themselves?
+  - What methodology exists for evaluating evaluation measures in monolingual translation?
   answers:
-  - context-methodology
+  - methodology-contribution
   - long-tail-corrections
 - q:
-  - Is correlation with human judgments enough to validate a GEC metric?
-  - Why can metric validation studies miss a metric's bias toward under-correction?
-  - Do human-correlation experiments detect that a GEC measure rewards leaving the source
-    unchanged?
+  - Would training GEC systems on more references make them correct more?
+  - Does oracle re-ranking against more references increase the number of edits?
+  - Is there evidence that reference coverage drives conservative GEC output?
   answers:
-  - context-correlation-blindspot
-- q:
-  - Does training or tuning against more references make a corrector edit more?
-  - What happens to under-correction when oracle re-ranking uses more references?
-  - Is there experimental evidence that low reference coverage causes under-correction?
-  answers:
-  - more-references-more-correction
-  - simplification-reranking
+  - more-refs-reduce-undercorrection
+  - ts-oracle-reranking
 misreadings:
-- Reporting that some systems outperform a perfect system with 2 references is not a claim
-  that those systems are better than human correctors; it is evidence that the metric is broken,
-  since a perfect system by construction always produces a valid correction.
-- The finding is not that GEC references are noisy or badly annotated. Even the rarest crowdsourced
-  corrections were judged valid 78% of the time, so the long tail is genuine variation among
-  valid corrections, not annotation error.
-- 'Showing that more references reduce under-correction is not an endorsement of collecting
-  more references as the remedy: expected accuracy gains only 0.004 per extra reference at
-  M = 20, so no feasible number of references removes the bias.'
-- The result does not say GLEU is immune to low coverage bias. GLEU runs only about 2% above
-  M2 and saturates with the number of references in the same way.
-- Choshen and Abend (2018) propose no replacement metric for M2, GLEU or SARI; the contribution
-  is a diagnosis, a bootstrapping methodology for scoring perfect systems, and a method for
-  estimating the distribution of valid outputs.
-- Preferring fluency-oriented references does not mitigate the problem — emphasising fluency
-  over grammaticality enlarges the set of valid corrections and so compounds low coverage.
+- 'Low Coverage Bias is not a uniform scaling of scores that can be divided out: some correction
+  policies, in particular correcting only closed-class errors, are penalised much less than
+  others, which is why re-scaling by human agreement does not fix it.'
+- Systems scoring above the F0.5 of a perfect system on NUCLE does not mean those systems
+  correct better than humans; it means the 2-reference measure rewards making few but targeted
+  changes.
+- 'The finding that more references reduce under-correction is not an endorsement of collecting
+  more references as the solution: the returns diminish sharply and the number needed for
+  reliable evaluation remains infeasible.'
+- The 1351.24 corrections per sentence figure applies to sentences of 15 words or fewer; longer
+  sentences with multiple independent errors were deliberately excluded and would have more
+  variants, not fewer.
+- 'The long tail of rare corrections is not an artefact of sloppy crowdsourcing: even the
+  rarest corrections were judged valid 78% of the time.'
+- Correlation studies between human judgments and reference-based measures do not certify
+  those measures against Low Coverage Bias, because if all evaluated outputs under-correct
+  similarly, the correlation cannot detect insensitivity to under-correction.
+terminology:
+  Low Coverage Bias (LCB): The under-estimation of text-to-text system quality that arises
+    when a reference set covers only a small share of the valid outputs for a source sentence.
+  Coverage: For a source sentence and a reference set of size M, the probability that a correction
+    sampled from the human correction distribution for that sentence appears in the reference
+    set.
+  True measure: The value an evaluation measure would return if the reference set for each
+    source sentence contained every valid output rather than a small sample.
+  WORDCHANGE: The number of words altered, deleted or added between a source sentence and
+    a correction, counted after word-aligning the two as a weighted bipartite matching with
+    token edit distances as edge weights.
+  Exact Index Match: A relaxed sentence-level accuracy for grammatical error correction that
+    requires the corrected output to change exactly the same source word positions as a reference,
+    without requiring the replacements themselves to match.
+  MAX-SARI: The maximum single-reference SARI score over a reference set, used because multi-reference
+    SARI is a combination of references rather than a maximum and therefore does not award
+    a perfect score to output identical to one reference.
+  Lucky perfect system: A hypothetical simplification system whose output is one of the references
+    actually given to the evaluation measure, used to test whether a measure rewards exactly
+    matching a reference.
+  UNSEENEST: A non-parametric algorithm, originally developed for estimating the histogram
+    of gene variants including undiscovered ones, that estimates the histogram of a discrete
+    distribution by minimising earthmover distance and can therefore estimate how many valid
+    corrections a sentence has.
 links_extra:
   code: https://github.com/borgr/IBGEC
-  anthology: https://aclanthology.org/P18-1059/
   pdf: https://aclanthology.org/P18-1059.pdf
 ---

@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept beyond-binary-rewards-training-lms-to-reason-about-their-unc
 
-Stamp: spec=74e012ff9654 checks=pass body=396fcffbb3fe
+Stamp: spec=8f05813a4658 checks=pass body=396fcffbb3fe
 -->
 ---
 key: damani2026rlcr

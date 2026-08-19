@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call) + 2 repair rounds. Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced) + a targeted repair. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -17,259 +17,227 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept q2-evaluating-factual-consistency-in-knowledge-grounded-dial
 
-Stamp: spec=d57862840a90 checks=2 body=6d6fcabf3811
+Stamp: spec=8f05813a4658 checks=pass body=8149dc000617
 -->
 ---
+key: honovich2021q2
+coined: Q²
+gloss: a reference-free metric that scores whether a dialogue response is factually consistent
+  with its grounding knowledge, by generating questions from the response and answering them
+  against the knowledge
+one_liner: 'Q² scores factual consistency in knowledge-grounded dialogue without reference
+  responses: it generates questions from the model''s response, answers them against the grounding
+  knowledge, and compares the two answer spans with an NLI model instead of token overlap.'
 claims:
-- id: wow-annotated-dataset
-  kind: result
-  text: Q² releases a dataset of Wizard-of-Wikipedia dialogue responses from the MemNet and
-    dodecaDialogue systems, hand-annotated for factual consistency. The release covers 544
-    dialogue contexts and 1,088 annotated responses, with Fleiss' kappa of 0.853 on a 100-response
-    agreement sample.
-  scope: English Wizard-of-Wikipedia validation set only; annotated by 3 of the paper's authors,
-    who deliberately skipped pure chit-chat responses and picked clear, coherent inconsistent
-    examples rather than sampling uniformly.
-  evidence: Section 4
 - id: wow-separation
   kind: result
-  text: On the annotated Wizard-of-Wikipedia data, Q² scores 0.238 for inconsistent versus
-    0.696 for consistent dodecaDialogue responses, and 0.135 versus 0.756 for MemNet. The
-    token-overlap baseline separates the same responses far less (0.299 vs 0.426 and 0.270
-    vs 0.526).
-  scope: 150 consistent and 150 inconsistent responses per system, plus 150 random responses
-    per system; scores computed with T5-base QG, Albert-Xlarge QA and RoBERTa-SNLI answer
-    comparison, with no reference response used.
+  text: On manually annotated Wizard-of-Wikipedia responses, Q² averages 0.696 on consistent
+    and 0.238 on inconsistent dodeca Dialogue outputs, and 0.756 versus 0.135 on MemNet outputs.
+    Random samples fall in between, at 0.496 and 0.448.
+  scope: 150 consistent and 150 inconsistent responses per system, annotated by 3 of the paper's
+    authors on the WoW validation set; inconsistent examples were deliberately chosen to be
+    clear and coherent.
+  evidence: Table 2
+- id: nli-vs-token
+  kind: result
+  text: An NLI-based answer-span comparison widens Q²'s gap between consistent and inconsistent
+    Wizard-of-Wikipedia responses. For dodeca Dialogue outputs the scores are 0.696 versus
+    0.238 with NLI, against 0.516 versus 0.159 with token-level F1 matching.
+  scope: WoW annotated responses; the NLI model is RoBERTa fine-tuned on SNLI, applied only
+    to answer pairs that do not match exactly at the token level, with the question prepended
+    to both premise and hypothesis.
   evidence: Table 2
 - id: response-level-accuracy
   kind: result
-  text: At an untuned decision threshold of 0.5 on Wizard-of-Wikipedia responses, Q² classifies
-    consistent versus inconsistent responses with 77.3% accuracy. Q² without the NLI answer
-    comparison reaches 73.1% and end-to-end NLI 65.3%.
-  scope: Threshold of 0.5 chosen arbitrarily rather than tuned on a development split; measured
-    on the paper's annotated dodecaDialogue and MemNet consistent/inconsistent responses.
-  evidence: Section 5.1
+  text: Using an untuned response-level threshold of 0.5, Q² classifies Wizard-of-Wikipedia
+    responses as consistent or inconsistent with 77.3% accuracy, against 73.1% for Q² without
+    the NLI comparison and 65.3% for end-to-end NLI.
+  scope: The 0.5 threshold was selected arbitrarily rather than tuned on a development split;
+    measured on the annotated dodeca Dialogue and MemNet consistent/inconsistent examples.
+  evidence: Section 5.1 and Table 3
 - id: system-level-correlation
   kind: result
-  text: In a bootstrapped system-level evaluation on Wizard-of-Wikipedia, Q² reaches an average
-    Spearman correlation of 0.9798 with human consistency judgments, above end-to-end NLI
-    (0.9216), knowledge overlap (0.878), BERTScore (0.8467) and BLEU (0.3051).
-  scope: Simulated systems built by bootstrapping 350 contexts sampled with repetition from
-    244 dialogue contexts, repeated 1000 times; confidence intervals are wide (Q² lower CI
-    0.9, BLEU lower CI -0.7).
+  text: In a bootstrapped system-level meta-evaluation on WoW, Q² reaches an average Spearman
+    correlation of 0.9798 with human judgments, above end-to-end NLI (0.9216), knowledge overlap
+    (0.878), BERTScore (0.8467) and BLEU (0.3051).
+  scope: Simulated systems built by sampling 350 contexts with repetition from 244 dialogue
+    contexts having both a consistent and an inconsistent response, with inconsistent proportions
+    of 0.05 to 0.25, repeated 1000 times.
   evidence: Table 4
 - id: topical-chat
   kind: result
-  text: On Topical-Chat's "Uses Knowledge" human ratings, Q² attains Spearman 0.4579 and Pearson
-    0.4698, above the best USR result (0.4468 Spearman, 0.3175 Pearson) and METEOR (0.3909
-    Spearman, 0.3328 Pearson).
-  scope: 52 knowledge-grounded dialogue contexts and 260 responses from the USR annotation
-    collection; grounding text includes Washington Post articles and Reddit fun-facts, not
-    only Wikipedia.
+  text: On Topical-Chat's "Uses Knowledge" human judgments, Q² obtains 0.4579 Spearman and
+    0.4698 Pearson correlation, above the best USR result (0.4468 Spearman, 0.3175 Pearson)
+    and METEOR (0.3909, 0.3328).
+  scope: 52 of the 60 annotated dialogue contexts, excluding the 8 where no knowledge was
+    used, and 260 responses following the USR setting that drops the original human response.
   evidence: Table 5
-- id: dnli-accuracy
+- id: dnli
   kind: result
-  text: On the Dialogue NLI Test Gold split, Q² reaches 74.49% accuracy in a zero-shot setting.
-    The same NLI model applied end-to-end reaches 67.42%, InferSent hypothesis-only 51.52%
-    and InferSent trained on SNLI 47.03%.
-  scope: Binary entailment-versus-contradiction decision with a 0.1 threshold tuned on the
-    DNLI development set, treating neutral pairs as inconsistent; pronoun-based question filtering
-    is disabled for this persona task.
+  text: Q² reaches 74.49% accuracy on the Dialogue NLI Test Gold split, above the end-to-end
+    NLI baseline (67.42%) and the zero-shot InferSent baselines (47.03% for InferSent SNLI,
+    51.52% for hypothesis-only).
+  scope: Zero-shot use of Q² with a 0.1 decision threshold tuned on the DNLI development set,
+    neutral pairs treated as inconsistent, and no filtering of questions containing personal
+    or possessive pronouns.
   evidence: Table 6
-- id: nli-vs-token-matching
+- id: robust-to-components
   kind: result
-  text: Replacing token-level F1 answer matching with NLI-based answer comparison raises Q²'s
-    consistent-response scores on Wizard-of-Wikipedia from 0.516 to 0.696 (dodecaDialogue)
-    and 0.661 to 0.756 (MemNet), widening the gap from inconsistent responses.
-  scope: 150 consistent and 150 inconsistent annotated WoW responses per system; RoBERTa fine-tuned
-    on SNLI with the question prepended to both answer spans, applied only to span pairs that
-    do not match exactly at the token level.
-  evidence: Table 2
-- id: small-model-robustness
-  kind: result
-  text: 'Swapping Q²''s question generator for T5-small or its QA model for Albert-base barely
-    changes system-level correlation with human judgments: 0.9722 and 0.9797 versus 0.9798
-    for the original. Question coverage stays above 88%.'
-  scope: Measured on the WoW annotated data; absolute Q² scores do shift — lower with T5-small
-    and higher with Albert-base — so thresholds are not transferable across component sizes.
+  text: 'Swapping Q²''s T5-base question generator for T5-small, or its Albert-Xlarge QA model
+    for Albert-base, barely changes the system-level correlation with human judgments: 0.9722
+    and 0.9797 respectively, against 0.9798 for the original pipeline.'
+  scope: WoW system-level bootstrap setting; question coverage drops slightly with smaller
+    models (from about 92-95% to 88.67-92.67%), and the smaller QG model lowers absolute Q²
+    scores while the smaller QA model raises them.
   evidence: Table 7 and Table 8
-- id: chitchat-no-questions
-  kind: result
-  text: Q² generates no valid question for roughly 6–8% of the annotated consistent and inconsistent
-    Wizard-of-Wikipedia responses, but for about 20% of randomly sampled responses. Question
-    generation therefore fails mainly on general chit-chat rather than on knowledge-bearing
-    content.
-  scope: WoW responses from MemNet and dodecaDialogue; such cases fall back to an end-to-end
-    NLI score, and unresolved pronouns referring to the dialogue history are a further cause
-    of discarded questions.
-  evidence: Section 5.4
 - id: random-knowledge
   kind: result
-  text: When the grounding knowledge is replaced by a random passage, Q² collapses as intended,
-    to 0.02 for knowledge taken from another turn of the same dialogue and 0 for knowledge
-    from a different dialogue. Over 91% and 99.61% of generated questions respectively have
-    no answer in that knowledge.
-  scope: Adversarial check on the WoW annotated data only; measures sensitivity to mismatched
-    knowledge, not correctness on genuinely grounded responses.
+  text: Replacing the grounding knowledge with knowledge from another turn of the same dialogue
+    drops Q² to 0.02, with 91.02% of generated questions unanswerable. With knowledge from
+    a different dialogue Q² drops to 0, with 99.61% unanswerable.
+  scope: Adversarial check on WoW responses only, using randomly selected knowledge passages
+    rather than model-generated hallucinations.
   evidence: Table 10
-- id: length-not-a-cue
+- id: wow-dataset
   kind: result
-  text: 'Response length does not distinguish factually consistent from inconsistent dialogue
-    responses in the annotated Wizard-of-Wikipedia data: inconsistent responses average 15.79
-    tokens and consistent ones 15.13, with random samples at 15.86.'
-  scope: dodecaDialogue outputs, with similar results reported for MemNet; the annotation
-    protocol selected clear and coherent examples, which may itself flatten length differences.
-  evidence: Table 11
+  text: The Q² paper releases 1,088 Wizard-of-Wikipedia dialogue responses over 544 contexts,
+    annotated for factual consistency against the grounding sentence, with Fleiss' kappa of
+    0.853 on a 100-response agreement sample.
+  scope: Outputs of 2 systems (MemNet and dodeca Dialogue) on the WoW validation set, generated
+    with beam size 10; the sample is not a random draw, and 34.2% of contexts were inconsistent
+    for dodeca and 50.36% for MemNet.
+  evidence: Section 4
+- id: chit-chat-coverage
+  kind: result
+  text: Q² produces no valid questions for about 20% of randomly sampled Wizard-of-Wikipedia
+    responses, versus around 6-8% of the annotated consistent and inconsistent responses,
+    because general chit-chat yields fewer answerable factual questions.
+  scope: WoW responses from MemNet and dodeca Dialogue; such cases fall back to an end-to-end
+    NLI prediction, and unresolved pronouns referring to the dialogue history are a further
+    cause of discarded questions.
+  evidence: Section 5.4
 - id: context-first-qgqa-dialogue
   kind: context
-  text: Q² brought the question-generation/question-answering approach to factual-consistency
-    evaluation for knowledge-grounded dialogue. Dialogue responses mix knowledge with opinions,
-    questions to the user and chit-chat that should not be scored against the knowledge.
-  scope: As of EMNLP 2021; QG/QA consistency metrics existed for abstractive summarization
-    (Durmus et al. 2020, Wang et al. 2020, QuestEval), and the concurrent BEGIN benchmark
-    framed grounded-dialogue evaluation as NLI instead.
+  text: Q² carries the question-generation/question-answering approach to factual-consistency
+    evaluation over from abstractive summarization to knowledge-grounded dialogue. Dialogue
+    responses mix grounded knowledge with chit-chat, opinions and questions to the user, which
+    the summarization metrics of Durmus et al. and Wang et al. did not have to handle.
+  scope: As of publication at EMNLP 2021, and to the authors' knowledge the first QG-QA metric
+    applied to dialogue generation; concurrent work on grounded-dialogue evaluation includes
+    the BEGIN benchmark of Dziri et al. (2021), which frames groundedness as NLI.
   evidence: Section 6
-- id: context-reference-free
+- id: context-interpretable
   kind: context
-  text: Q² is a reference-free metric for grounded dialogue, scoring a response against its
-    grounding knowledge alone without a gold human response. That matters because dialogue
-    is open-ended, and reference-based metrics such as BLEU correlate weakly with human judgments
-    on it.
-  scope: Requires an explicit textual knowledge source per turn, as in Wizard-of-Wikipedia
-    or Topical-Chat; it does not check claims against the open world and so is not a fact-checking
-    system.
-  evidence: Section 1
-- id: interpretability
-  kind: context
-  text: 'Q² is interpretable by construction: alongside the score it emits the generated questions,
-    the answer spans taken from the response and the answers the QA model found in the knowledge.
-    Those outputs can be used to highlight the potentially inconsistent spans.'
-  scope: Explanations are as good as the underlying QG and QA models; the paper reports errors
-    where questions are generated for chit-chat spans such as "purple is my favorite color".
-  evidence: Section 5.4
+  text: Q² is a reference-free dialogue metric whose intermediate output is itself the explanation.
+    Alongside the score it emits the generated questions, the response answer spans and the
+    knowledge-based answers, which can highlight potentially inconsistent spans.
+  scope: Interpretability is argued from qualitative examples rather than a human study of
+    explanation quality; the pipeline is slow, at roughly 1.5-2 hours on 4 CPUs per 150-response
+    split.
+  evidence: Section 5.4 and Appendix B
 qa:
 - q:
   - How can I automatically tell whether a chatbot's answer contradicts the document it was
     given?
-  - What metric detects hallucination in knowledge-grounded dialogue responses?
-  - Is there an automatic way to measure factual consistency of dialogue systems without a
-    gold reference?
+  - Is there a metric for hallucination in knowledge-grounded dialogue that does not need
+    a gold reference response?
+  - How does Q² score factual consistency of a dialogue response?
   answers:
-  - context-reference-free
+  - context-interpretable
   - wow-separation
+- q:
+  - Does using NLI instead of token overlap to compare answer spans actually help?
+  - How much does the NLI-based span comparison add over token-level F1 matching?
+  - What is the difference between Q² and Q² without NLI?
+  answers:
+  - nli-vs-token
   - response-level-accuracy
 - q:
-  - What should I read first about evaluating factual consistency in dialogue?
-  - Which paper introduced QA-based consistency evaluation for grounded dialogue?
-  - Where did the question-generation/question-answering evaluation idea move from summarization
-    to dialogue?
-  answers:
-  - context-first-qgqa-dialogue
-  - context-reference-free
-- q:
-  - Does comparing answer spans with NLI beat token overlap for consistency scoring?
-  - How much does the NLI answer comparison in Q² actually help?
-  - Why not just use token-level F1 to compare the response answer and the knowledge answer?
-  answers:
-  - nli-vs-token-matching
-  - response-level-accuracy
-- q:
-  - How well does Q² correlate with human judgments compared with BLEU and BERTScore?
-  - Which automatic metric correlates best with human factual-consistency ratings for dialogue
-    systems?
-  - Does BLEU work for ranking dialogue systems by faithfulness to knowledge?
+  - How well do automatic consistency metrics correlate with human judgments on Wizard of
+    Wikipedia?
+  - Does Q² correlate better with human ratings than BLEU, BERTScore or knowledge overlap?
+  - Which factual-consistency metric ranks dialogue systems most like humans do?
   answers:
   - system-level-correlation
   - topical-chat
 - q:
+  - Can Q² be used to classify a single dialogue response as consistent or inconsistent?
+  - What accuracy does a 0.5 threshold on Q² give for detecting inconsistent responses?
+  - How good is response-level inconsistency detection with a question-generation metric?
+  answers:
+  - response-level-accuracy
+- q:
+  - Does Q² transfer to persona consistency and Dialogue NLI?
+  - How does a QG-QA consistency metric do on the DNLI benchmark zero-shot?
+  - Can question-generation-based evaluation detect persona contradictions in Persona-Chat?
+  answers:
+  - dnli
+- q:
+  - Do I need large question generation and question answering models for QG-QA based dialogue
+    evaluation?
+  - Is the Q² metric sensitive to the size of its underlying QG and QA models?
+  - What happens if I substitute T5-small or Albert-base into the Q² pipeline?
+  answers:
+  - robust-to-components
+- q:
   - Is there an annotated dataset of dialogue responses labelled for factual consistency?
-  - What data was released with the Q² paper for Wizard of Wikipedia?
-  - How reliable were the factual-consistency annotations on Wizard-of-Wikipedia system outputs?
+  - What data does the Q² paper release for evaluating groundedness in Wizard of Wikipedia?
+  - How large is the Wizard-of-Wikipedia factual consistency annotation set, and how reliable
+    are the labels?
   answers:
-  - wow-annotated-dataset
-  - length-not-a-cue
+  - wow-dataset
 - q:
-  - Can a QG/QA consistency metric also measure persona consistency in Persona-Chat?
-  - How does Q² do on the Dialogue NLI benchmark?
-  - Does a QG/QA consistency metric work when the "knowledge" is a persona sentence or an
-    earlier dialogue turn?
+  - Where should I start reading about evaluating factual consistency in grounded dialogue?
+  - What work brought QA-based summarization faithfulness metrics to dialogue?
+  - Which paper established question-generation-based groundedness evaluation for dialogue
+    systems?
   answers:
-  - dnli-accuracy
+  - context-first-qgqa-dialogue
+  - context-interpretable
 - q:
-  - Do I need large question generation and question answering models to run Q²?
-  - How sensitive is a QG/QA consistency metric to the size of its underlying QG and QA models?
-  - Can I substitute T5-small and Albert-base in a QG/QA consistency pipeline?
-  answers:
-  - small-model-robustness
-- q:
-  - What happens when a dialogue response is pure chit-chat and no question can be generated?
-  - How often does Q² fail to produce a valid question for a response?
-  - What are the failure modes of QG/QA-based dialogue consistency evaluation?
-  answers:
-  - chitchat-no-questions
-  - interpretability
-- q:
-  - Does a consistency metric behave correctly when given the wrong grounding passage?
-  - How does Q² score responses against randomly selected knowledge?
-  - Is a QG/QA faithfulness metric fooled by mismatched grounding knowledge?
+  - What happens to a question-generation consistency metric when the grounding knowledge
+    is completely irrelevant to the dialogue response?
+  - How does Q² behave on adversarial cases with mismatched knowledge passages?
+  - Does swapping in knowledge from a different Wizard-of-Wikipedia dialogue drive the consistency
+    score to zero?
   answers:
   - random-knowledge
 - q:
-  - Can an automatic faithfulness metric explain why it gave a low score?
-  - Does Q² show which span of a dialogue response is unsupported?
-  - Is QG/QA-based evaluation interpretable?
+  - Why does a question-generation consistency metric fail on chit-chat responses?
+  - How often does Q² generate no valid questions for a dialogue response?
+  - What are the known failure modes of question-generation-based dialogue evaluation?
   answers:
-  - interpretability
-- q:
-  - Are longer dialogue responses more likely to be factually inconsistent?
-  - Do surface features like response length predict hallucination in grounded dialogue?
-  answers:
-  - length-not-a-cue
-- q:
-  - How does Q² compare with USR on Topical-Chat?
-  - What correlation does a QA-based metric get on the "Uses Knowledge" human ratings?
-  answers:
-  - topical-chat
-coined: Q²
-gloss: a reference-free metric that scores a dialogue response's faithfulness to its grounding
-  knowledge by generating questions from the response and answering them from the knowledge
-one_liner: Q² scores the factual consistency of a knowledge-grounded dialogue response by
-  generating questions from its informative spans, answering them against the grounding knowledge,
-  and comparing the two answer spans with an NLI model instead of token overlap.
-key: honovich2021q2
+  - chit-chat-coverage
+  - context-interpretable
+misreadings:
+- 'A low Q² score does not always mean the response is unfaithful: questions generated for
+  chit-chat or opinion spans, such as "What is purple?" answered by "my favorite color", get
+  penalised even when the knowledge was used correctly.'
+- The 0.5 response-level threshold that gives 77.3% accuracy on Wizard of Wikipedia was picked
+  arbitrarily for demonstration, not tuned, and is not a recommended operating point.
+- 'The released Wizard-of-Wikipedia annotations are not an unbiased sample of system outputs:
+  annotators kept collecting until 150 consistent and 150 inconsistent responses per system
+  were found, skipped incoherent responses, and skipped consistent responses that were pure
+  chit-chat.'
+- Q² does not classify NLI-style entailment labels end-to-end; the NLI model is used only
+  to compare short answer spans, with the question prepended for context, and end-to-end NLI
+  serves solely as a fallback when no valid question survives filtering.
+- Q²'s reported gains over end-to-end NLI, overlap, BLEU and BERTScore are measured against
+  those specific reference-free baselines on WoW, Topical-Chat and DNLI, not against the full
+  space of later groundedness metrics.
+terminology:
+  Question coverage: The percentage of dialogue responses for which at least one generated
+    question survives filtering, so that the metric is computed from question answering rather
+    than from the end-to-end NLI fallback.
+  Informative span: A named entity or noun phrase inside a generated dialogue response, marked
+    with spaCy, that serves as the target answer for automatic question generation.
+  Question filtering: Discarding a generated question if answering it with the response as
+    the input paragraph does not return the original answer span, or if it asks about personal
+    statements via the pronouns "I", "you", "my" or "your".
+  End-to-end NLI baseline: Scoring a dialogue response by running an NLI model directly with
+    the whole grounding knowledge as premise and the whole response as hypothesis, scoring
+    1 for entailment, 0 for contradiction and 0.5 for neutral.
 links_extra:
   code: https://github.com/orhonovich/q-squared
-  arxiv: https://arxiv.org/abs/2104.08202
-  data: https://github.com/orhonovich/q-squared/tree/main/third_party/data
-misreadings:
-- Q² does not check whether a dialogue response is true of the world; it checks only whether
-  the response is consistent with the specific knowledge passage the model was conditioned
-  on, so a response repeating a false grounding sentence scores high.
-- The 0.5 response-level threshold that yields 77.3% accuracy on Wizard-of-Wikipedia was chosen
-  arbitrarily for illustration, not tuned; treating 0.5 as a calibrated cut-off for other
-  datasets or other QG/QA components is unwarranted, since absolute Q² scores shift when components
-  are swapped.
-- 'The annotated Wizard-of-Wikipedia dataset is not a random sample of system outputs: annotators
-  skipped chit-chat-only consistent responses and selected clear, coherent inconsistent ones,
-  so class proportions in it do not estimate how often the systems hallucinate.'
-- Robustness to smaller QG and QA models means correlations with human judgments hold, not
-  that scores are comparable across configurations — T5-small lowers and Albert-base raises
-  absolute Q² scores.
-- 'Low Q² on a response is not always evidence of hallucination: questions generated for chit-chat
-  or opinion spans, and unresolved pronouns referring to earlier turns, produce spurious mismatches.'
-terminology:
-  Q² w/o NLI: An ablated variant of Q² in which the NLI-based answer-span comparison is dropped
-    and answer spans are compared by token-level F1 only, as in earlier QG/QA summarization
-    metrics.
-  informative span: A named entity or noun phrase extracted from a generated dialogue response
-    with spaCy, used as the target answer for automatic question generation.
-  question coverage: The percentage of dialogue responses for which at least one generated
-    question survives filtering, so the score is computed from question answering rather than
-    from the end-to-end NLI fallback.
-  question filtering: Discarding a generated question if the QA model, reading the response
-    itself, does not return the exact span the question was generated from, or if the question
-    is about personal statements (subject "I"/"you", possessive "my"/"your").
-  end-to-end NLI fallback: 'The score assigned when no valid question survives filtering:
-    an NLI model is run with the knowledge as premise and the response as hypothesis, giving
-    1 for entailment, 0 for contradiction and 0.5 for neutral.'
+  dataset: https://github.com/orhonovich/q-squared/tree/main/third_party/data
 ---
