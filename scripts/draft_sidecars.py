@@ -569,17 +569,24 @@ def call_api(pairs: list[tuple[dict, str]], cfg,
     # just its `format`, so losing effort costs the tool call rather than the other way
     # round. The last rung asks in the prompt and parses, which is a real result and is
     # labelled as one in the draft header.
-    TOOL = {"tools": [{"name": "sidecar", "description": "The sidecar for this paper.",
-                       "input_schema": sch}],
-            "tool_choice": {"type": "tool", "name": "sidecar"}}
+    def rungs_for(want: dict, name: str, what: str) -> list:
+        """The same four rungs around whichever shape this call asks for.
+
+        A factory rather than one list built at the top, because `--mend` asks the same
+        endpoint for a patch -- a handful of rewritten strings -- and enforcing the sidecar
+        schema on that reply would reject every valid answer.
+        """
+        tool = {"tools": [{"name": name, "description": what, "input_schema": want}],
+                "tool_choice": {"type": "tool", "name": name}}
+        return [({"output_config": {"effort": eff,
+                                    "format": {"type": "json_schema", "schema": want}}},
+                 "schema", "structured output"),
+                ({"output_config": {"effort": eff}, **tool},
+                 "tool", f"a forced tool call at {eff} effort"),
+                (tool, "tool", "a forced tool call"),
+                ({}, "text", "a plain request")]
     # (what the request adds, how the reply is read, what to call it when refused).
-    RUNGS = [({"output_config": {"effort": eff,
-                                 "format": {"type": "json_schema", "schema": sch}}},
-              "schema", "structured output"),
-             ({"output_config": {"effort": eff}, **TOOL},
-              "tool", f"a forced tool call at {eff} effort"),
-             (TOOL, "tool", "a forced tool call"),
-             ({}, "text", "a plain request")]
+    RUNGS = rungs_for(sch, "sidecar", "The sidecar for this paper.")
     rung, worked = 0, False
 
     def send(req: dict, extra: dict):
@@ -598,11 +605,18 @@ def call_api(pairs: list[tuple[dict, str]], cfg,
             with client.messages.stream(**req, extra_body=extra) as run:
                 return run.get_final_message()
 
-    def ask(user: str, label: str) -> dict | None:
-        """One completion, or None with the reason printed. `label` is for the reader."""
+    def ask(user: str, label: str, want: dict | None = None) -> dict | None:
+        """One completion, or None with the reason printed. `label` is for the reader.
+
+        `want` overrides the shape the reply is held to, for a caller that is not asking
+        for a whole sidecar. The rung stays where the run found it -- the dialect the
+        endpoint speaks is a property of the endpoint, not of what is being asked for.
+        """
         nonlocal rung, worked
+        ladder = RUNGS if want is None else rungs_for(want, "patch",
+                                                      "The rewritten fields.")
         while True:
-            extra, how_out, _ = RUNGS[rung]
+            extra, how_out, _ = ladder[rung]
             req = dict(model=cfg["llm"]["model"],
                        max_tokens=cfg["llm"].get("max_tokens", API_MAX_TOKENS),
                        system=sys_prompt,
@@ -620,13 +634,13 @@ def call_api(pairs: list[tuple[dict, str]], cfg,
                 # through, the endpoint's dialect is settled and a failure is a failure --
                 # retrying it unenforced would quietly turn a rate limit into an
                 # undecoded draft.
-                if worked or rung + 1 >= len(RUNGS):
+                if worked or rung + 1 >= len(ladder):
                     print(f"  failed: {label} -- {type(e).__name__}: {str(e)[:200]}",
                           file=sys.stderr)
                     return None
                 rung += 1
-                print(f"  {label}: the endpoint refused {RUNGS[rung - 1][2]}; "
-                      f"retrying with {RUNGS[rung][2]}", file=sys.stderr)
+                print(f"  {label}: the endpoint refused {ladder[rung - 1][2]}; "
+                      f"retrying with {ladder[rung][2]}", file=sys.stderr)
         if msg.stop_reason == "refusal":
             print(f"  refused: {label}", file=sys.stderr)
             return None
@@ -656,6 +670,7 @@ def call_api(pairs: list[tuple[dict, str]], cfg,
     # sum with the prompt, and the input window is an order of magnitude larger than any
     # paper plus its sidecar -- so a repair round gets the whole text, tables included.
     ask.window = 0
+    ask.wants_schema = True
 
     def provenance() -> str:
         """Where this draft came from, as of the rung currently working.
@@ -811,12 +826,15 @@ def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
     sch, out, sys_prompt = schema(), {}, system_prompt()
     enforced = None
 
-    def ask(user: str, label: str) -> dict | None:
+    def ask(user: str, label: str, want_schema: dict | None = None) -> dict | None:
         """One completion, or None with the reason printed. `label` is for the reader.
 
         Extracted so the repair round below reuses the request exactly -- same schema,
         same window arithmetic, same fallback when the gateway will not enforce. A repair
         that quietly ran unguided while the draft was guided would compare two things.
+
+        `want_schema` replaces the shape the reply is held to, for `--mend`, which asks for
+        a patch rather than a whole sidecar.
         """
         nonlocal enforced
         msgs = [{"role": "system", "content": sys_prompt}, {"role": "user", "content": user}]
@@ -829,8 +847,10 @@ def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
             want = max(2048, min(want, window - used))
         req = dict(model=model, messages=msgs, max_tokens=want,
                    temperature=cfg["llm"].get("temperature", 0.2), seed=48)
+        shape_of = sch if want_schema is None else want_schema
         rf = {"type": "json_schema",
-              "json_schema": {"name": "sidecar", "schema": decodable(sch), "strict": True}}
+              "json_schema": {"name": "sidecar" if want_schema is None else "patch",
+                              "schema": decodable(shape_of), "strict": True}}
         try:
             r = with_retries(
                 lambda: client.chat.completions.create(**req, response_format=rf), label)
@@ -876,6 +896,7 @@ def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
     # left of it and has no other way to know how big it is. An attribute rather than a
     # third return value: every caller wants the request, one wants its budget.
     ask.window = window or 0
+    ask.wants_schema = True
     return out, provenance(), ask
 
 
@@ -1030,6 +1051,229 @@ def repair(slug: str, rounds: int, again, evidence: str = "",
             break
         print(f"    round {r + 1}: {n} finding(s) -> {after}")
     return sum(len(x) for x in validate_draft(path, note=False))
+
+
+MEND = """Below are individual fields from one paper's sidecar, each with the checker's
+complaint about it. Rewrite only the fields listed, and only as much of each as the
+complaint requires.
+
+{evidence}
+
+FIELDS TO FIX (JSON):
+{pieces}
+
+Rules for your answer:
+- Return one entry per field you fixed, with `at` copied exactly as given and `new` holding
+  the complete rewritten value of that field -- not a diff, not a fragment.
+- Keep the meaning. A shorter sentence that drops the paper's magnitude is not a fix.
+- Never give two fields the same text. If a scope is too long, shorten that scope; do not
+  replace it with wording you used elsewhere.
+- Leave out any field you cannot fix without inventing something the paper does not say.
+"""
+
+# Every value a locus can name is a plain string, so the patch schema needs no `oneOf` --
+# which matters because the enforcing rungs run in strict mode and reject a union.
+PATCH_SCHEMA = {
+    "type": "object", "additionalProperties": False, "required": ["fixes"],
+    "properties": {"fixes": {
+        "type": "array", "items": {
+            "type": "object", "additionalProperties": False, "required": ["at", "new"],
+            "properties": {
+                "at": {"type": "string",
+                       "description": "The locus, copied exactly from the field given."},
+                "new": {"type": "string",
+                        "description": "The whole rewritten value of that field."}}}}},
+}
+
+
+def where(finding: str, fm: dict | None = None) -> str | None:
+    """The single field a finding is about, as a locus, or None if it is about no one field.
+
+    A locus is `claim/<id>/text`, `claim/<id>/scope`, `qa/<i>/q/<j>`, `misreadings/<i>` or
+    `term/<name>` -- a path whose leaf is always a string, which is what lets the patch
+    schema stay a flat list of replacements with no union in it.
+
+    Two kinds of finding are addressable, and they say so differently. Most name their
+    field: `claim 'x': ...`, `term 'y': ...`. The self-containment checks instead open with
+    the offending string itself, followed by ` -- ` and the complaint, so those are located
+    by looking the string up in the draft -- which needs `fm`, and without it they come back
+    None rather than guessed at.
+
+    None is the useful half of this function. "only 3 of 9 result claims state a figure" is
+    a property of the whole set of claims, and handing a model one claim to fix it invites a
+    number invented into whichever claim it was handed; those findings stay with the
+    whole-sidecar repair, which can see the set.
+    """
+    m = re.match(r"^claim '([^']+)': (.*)", finding)
+    if m:
+        cid, rest = m.groups()
+        if rest.startswith("scope"):
+            return f"claim/{cid}/scope"
+        if re.match(r"^(a \d+-word sentence|text is \d+ sentences|states )", rest):
+            return f"claim/{cid}/text"
+        return None
+    m = re.match(r"^qa\[(\d+)\]: every phrasing contains", finding)
+    if m:
+        return f"qa/{m.group(1)}/q/0"
+    m = re.match(r"^term '([^']+)': ", finding)
+    if m:
+        return f"term/{m.group(1)}"
+    if fm is not None and " -- " in finding:
+        return _quoting(fm, finding.split(" -- ")[0].strip())
+    return None
+
+
+def _quoting(fm: dict, value: str) -> str | None:
+    """The locus of a question phrasing or misreading bullet whose text is exactly `value`.
+
+    None when two fields hold the same string: a fix aimed at one of them would be spliced
+    into whichever was found first, and a duplicate is its own finding anyway.
+    """
+    hits = [f"qa/{i}/q/{j}"
+            for i, group in enumerate(fm.get("qa") or [])
+            if isinstance(group, dict)
+            for j, phrasing in enumerate(group.get("q") or [])
+            if phrasing == value]
+    hits += [f"misreadings/{i}" for i, bullet in enumerate(fm.get("misreadings") or [])
+             if bullet == value]
+    return hits[0] if len(hits) == 1 else None
+
+
+def _walk(fm: dict, locus: str):
+    """(container, key) for a locus, or None if the draft no longer has that field.
+
+    Findings are read off the draft on disk a moment before this runs, so a miss means the
+    locus was parsed wrong rather than that the draft moved -- either way the caller drops
+    that field instead of guessing where it went.
+    """
+    part = locus.split("/")
+    if part[0] == "claim" and len(part) == 3:
+        for c in fm.get("claims") or []:
+            if isinstance(c, dict) and str(c.get("id")) == part[1] and part[2] in c:
+                return c, part[2]
+        return None
+    if part[0] == "qa" and len(part) == 4:
+        groups = fm.get("qa") or []
+        try:
+            group, j = groups[int(part[1])], int(part[3])
+            phrasings = group.get("q")
+            if isinstance(phrasings, list) and isinstance(phrasings[j], str):
+                return phrasings, j
+        except (ValueError, IndexError, KeyError, AttributeError, TypeError):
+            return None
+    if part[0] == "misreadings" and len(part) == 2:
+        bullets = fm.get("misreadings")
+        try:
+            i = int(part[1])
+            if isinstance(bullets, list) and isinstance(bullets[i], str):
+                return bullets, i
+        except (ValueError, IndexError, TypeError):
+            return None
+    if part[0] == "term":
+        # Split once from the left, so a term containing a slash still resolves.
+        name = locus.split("/", 1)[1]
+        terms = fm.get("terminology")
+        if isinstance(terms, dict) and isinstance(terms.get(name), str):
+            return terms, name
+    return None
+
+
+def at(fm: dict, locus: str) -> str | None:
+    """The string a locus points at, or None."""
+    spot = _walk(fm, locus)
+    if not spot:
+        return None
+    box, key = spot
+    value = box[key]
+    return value if isinstance(value, str) else None
+
+
+def put(fm: dict, locus: str, value: str) -> bool:
+    """Write one string back where it came from. False if the locus does not resolve."""
+    spot = _walk(fm, locus)
+    if not spot:
+        return False
+    box, key = spot
+    box[key] = value
+    return True
+
+
+def mend(slug: str, again, evidence: str = "", source: str = "a model") -> int:
+    """Fix what is fixable one field at a time, and keep the result only if it helped.
+
+    The difference from `repair` is what the model is shown and what it is allowed to
+    return. `repair` hands over the whole sidecar and takes a whole sidecar back, so a round
+    can regress a claim it was not asked about while fixing the one it was -- measured as
+    the plateau this loop stops on, where the count stops falling because each round trades
+    one finding for another. Here the model sees only the offending strings, and the reply
+    is a list of `(locus, new value)` pairs that are spliced back into the draft the rest of
+    which cannot move.
+
+    Returns the finding count the draft is left with, mended or not.
+    """
+    path = os.path.join(DRAFTS, f"{slug}.md")
+    errs, qual = validate_draft(path, note=False)
+    before = len(errs) + len(qual)
+    if not before:
+        return 0
+    fm = front_matter(path) or {}
+    jobs: dict[str, list[str]] = {}
+    for finding in (str(x).split(".md: ")[-1] for x in errs + qual):
+        locus = where(finding, fm)
+        if locus and at(fm, locus) is not None:
+            jobs.setdefault(locus, []).append(finding)
+    if not jobs:
+        print(f"    mend: none of the {before} finding(s) is about a single field")
+        return before
+    fields = [{"at": locus, "now": at(fm, locus), "wrong": found}
+              for locus, found in jobs.items()]
+    pieces = json.dumps(fields, ensure_ascii=False, indent=1)
+    ev = fits(evidence, pieces, getattr(again, "window", 0))
+    got = again(MEND.format(evidence=("THE PAPER:\n" + ev) if ev
+                            else "(the paper's text is not available on this run)",
+                            pieces=pieces), f"{slug} mend", PATCH_SCHEMA)
+    fixes = (got or {}).get("fixes")
+    if not isinstance(fixes, list):
+        print(f"    mend: no usable reply, keeping the draft as it stands")
+        return before
+    new: dict[str, str] = {}
+    for fix in fixes:
+        locus = (fix or {}).get("at") if isinstance(fix, dict) else None
+        value = fix.get("new") if isinstance(fix, dict) else None
+        if locus in jobs and isinstance(value, str) and value.strip() \
+                and value.strip() != at(fm, locus):
+            new[locus] = value.strip()
+    # One replacement text landing at two loci is the pathology `validate.py`'s shared-scope
+    # check was added for: told several scopes are too long, a model can answer with one
+    # wording that clears the rules and paste it into all of them. Drop the whole group
+    # rather than pick a winner -- there is no way to tell which one it was written for.
+    seen: dict[str, list[str]] = {}
+    for locus, value in new.items():
+        seen.setdefault(value, []).append(locus)
+    for value, loci in seen.items():
+        if len(loci) > 1:
+            print(f"    mend: dropped {len(loci)} field(s) given identical text "
+                  f"({', '.join(loci)})")
+            for locus in loci:
+                del new[locus]
+    if not new:
+        print(f"    mend: nothing usable came back, keeping the {before}-finding draft")
+        return before
+    was = open(path, encoding="utf-8").read()
+    for locus, value in new.items():
+        put(fm, locus, value)
+    write_draft(slug, fm, f"{source} + a targeted repair")
+    after = sum(len(x) for x in validate_draft(path, note=False))
+    if after >= before:
+        # Splicing cannot regress a field nobody touched, but it can trade one finding for
+        # another inside the field it did touch -- a sentence cut under the length floor.
+        open(path, "w", encoding="utf-8").write(was)
+        print(f"    mend: {before} -> {after}, no better -- kept the "
+              f"{before}-finding draft")
+        return before
+    print(f"    mend: {before} finding(s) -> {after} "
+          f"({len(new)} of {len(jobs)} field(s) rewritten)")
+    return after
 
 
 def unstructure(value, spec: dict):
@@ -1996,6 +2240,12 @@ def main() -> None:
     # published under the author's name is worth more thinking than a single spot-check.
     ap.add_argument("--effort", choices=("low", "medium", "high"),
                     help="override llm.effort for this run (api mode)")
+    ap.add_argument("--mend", nargs="*", metavar="SLUG",
+                    help="fix existing drafts one field at a time: send the model only the "
+                         "claims and phrasings the checker complained about, splice its "
+                         "rewrites back, and keep them only if the count dropped. No slugs "
+                         "means every draft that still carries a finding. api and openai "
+                         "modes")
     ap.add_argument("--repair", type=int, default=0, metavar="N",
                     help="after drafting, show the model its own findings and ask it to "
                          "fix them, up to N times. Stops early when a round stops "
@@ -2040,6 +2290,45 @@ def main() -> None:
         # Regenerated here rather than left for the next full run: a draft that exists
         # and a review page that does not know about it is the one state where reading
         # the page would silently miss work.
+        print(f"Read them: file://{write_review_page(papers)}")
+        return
+
+    if args.mend is not None:
+        mode = args.mode or cfg["llm"]["mode"]
+        if mode not in ("api", "openai"):
+            sys.exit("--mend needs a model it can call: --mode api or --mode openai")
+        if args.effort:
+            cfg["llm"]["effort"] = args.effort
+        drafts = [os.path.basename(f)[:-3]
+                  for f in sorted(glob.glob(os.path.join(DRAFTS, "*.md")))]
+        want = args.mend or drafts
+        unknown = [s for s in want if s not in drafts]
+        if unknown:
+            print(f"no draft for: {', '.join(unknown)}", file=sys.stderr)
+        # Checked before any paper is fetched: a clean draft needs neither its text nor a
+        # call, and over a whole corpus that is most of them.
+        todo = [s for s in want if s in drafts
+                and sum(len(x) for x in
+                        validate_draft(os.path.join(DRAFTS, f"{s}.md"), note=False))]
+        if not todo:
+            print("Nothing to mend: every draft asked for is clean.")
+            return
+        by_slug = {p["slug"]: p for p in papers}
+        print(f"mending {len(todo)} draft(s); resolving each paper's text first...")
+        pairs, _ = with_evidence([by_slug[s] for s in todo if s in by_slug],
+                                 cfg, args.no_fulltext, None)
+        ev = {p["slug"]: e for p, e in pairs}
+        caller = call_api if mode == "api" else call_openai
+        # An empty batch: this is how a backend is asked for its request function without
+        # drafting anything, and the provenance it returns names the rung it settled on.
+        _, how, asker = caller([], cfg)
+        before = after = 0
+        for slug in todo:
+            print(f"  {slug}")
+            errs, qual = validate_draft(os.path.join(DRAFTS, f"{slug}.md"), note=False)
+            before += len(errs) + len(qual)
+            after += mend(slug, asker, ev.get(slug, ""), how)
+        print(f"\n{before} finding(s) -> {after} across {len(todo)} draft(s)")
         print(f"Read them: file://{write_review_page(papers)}")
         return
 

@@ -153,10 +153,21 @@ keeps happening.
 python scripts/draft_sidecars.py                      # queue the most-cited
 python scripts/draft_sidecars.py --ingest             # fold the answers into drafts/
 python scripts/draft_sidecars.py --review             # what is drafted vs live
+python scripts/draft_sidecars.py --mend               # fix what the checks still flag
 python scripts/draft_sidecars.py --show <slug>        # every claim beside its evidence
 $EDITOR data/sidecars/drafts/<slug>.md                # correct it
 python scripts/draft_sidecars.py --accept <slug>      # promote it, checked
 ```
+
+`--mend` is the step before you read anything: it takes each draft that still carries a
+finding, sends the model *only* the claims, scopes and question phrasings the checker
+complained about, and splices the rewrites back into a draft whose other fields cannot
+move. It keeps a rewrite only if the finding count actually dropped. That is a different
+bargain from re-drafting the whole sidecar, which is free to break one claim while fixing
+another -- measured over 35 papers, half kept a residue and most of those stopped because
+the count stopped falling, not because nothing was left to fix. 83% of the residue is a
+single field the checker can name, so that is the part worth handing back one field at a
+time; the rest is about the set of claims as a whole and stays yours.
 
 `--show` is the review itself, and it is the reason this takes minutes rather than an
 hour: each claim printed with its scope, whether the paper really has the table or

@@ -30,6 +30,7 @@ import ast
 import importlib
 import json
 import contextlib
+import copy
 import io
 import os
 import re
@@ -737,6 +738,196 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
         }]}
         self.assertEqual([f for f in check_readability([("ok.md", ok)])
                           if "describes how" in f], [])
+
+
+class TestATargetedRepairTouchesOnlyWhatBroke(unittest.TestCase):
+    """`--mend` sends the model the offending fields and splices its rewrites back.
+
+    Whole-sidecar repair plateaus, and the plateau has a mechanism: the model is handed the
+    entire draft and returns an entire draft, so a round can break a claim it was not asked
+    about while fixing the one it was, and the loop then stops because the count stopped
+    falling. Measured over 35 papers: 18 kept a residue, and 9 of those stopped on exactly
+    that plateau. Here the reply cannot reach a field that was not complained about -- so
+    the invariants worth testing are that the locus map keeps pointing at the right strings,
+    that a splice leaves every other byte alone, and that a patch which does not help is
+    thrown away rather than written.
+    """
+
+    SIDECAR = {
+        "one_liner": "A trimming rule and a sign vote let several fine-tuned models be "
+                     "averaged without the largest updates cancelling each other out.",
+        "claims": [{
+            "id": "too-long",
+            # 37 words in one sentence: the single most common finding in the corpus.
+            "text": "The method raises exact-match accuracy by 4.6 points over the "
+                    "fine-tuned baseline on the WMT16 English-German test set, and the "
+                    "gain holds at every model scale tested, being largest at 7B and "
+                    "absent below 125M parameters everywhere.",
+            "scope": "Encoder-decoder models above 125M parameters; no effect measured "
+                     "below that, and only the WMT16 English-German pair was tested.",
+        }, {
+            "id": "clean",
+            "text": "Trimming the smallest parameter changes leaves merged accuracy "
+                    "unchanged. The eleven-task suite shows no drop of 0.2 points or more.",
+            "scope": "LoRA adapters over eight vision datasets, merged without any "
+                     "held-out data to tune the merge on.",
+        }],
+        "qa": [{"q": ["How much data does it take to fit a model like this?",
+                      "Was this validated on more than one dataset?"],
+                "answers": ["clean"]}],
+        "misreadings": ["Low agreement here is not weak annotation."],
+        "terminology": {"normalized accuracy": "The metric for every merging table here."},
+    }
+    SPLIT = ("The method raises exact-match accuracy by 4.6 points over the fine-tuned "
+             "baseline on the WMT16 English-German test set. The gain is largest at 7B "
+             "and absent below 125M parameters.")
+
+    def setUp(self):
+        import draft_sidecars as D
+        self.D = D
+        self.tmp = tempfile.mkdtemp()
+        self._drafts = D.DRAFTS
+        D.DRAFTS = self.tmp
+        self.addCleanup(lambda: setattr(D, "DRAFTS", self._drafts))
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+        self.path = D.write_draft("a-paper", copy.deepcopy(self.SIDECAR), "a fake model")
+
+    def _findings(self):
+        return [str(x).split(".md: ")[-1]
+                for x in sum(self.D.validate_draft(self.path, note=False), [])]
+
+    def _asker(self, fixes):
+        """A backend's request function, as `mend` uses it: called, and read for .window."""
+        calls = []
+
+        def again(prompt, label, want=None):
+            calls.append((prompt, label, want))
+            return {"fixes": fixes}
+
+        again.window = 0
+        return again, calls
+
+    def test_the_locus_map_points_at_the_strings_the_checks_complain_about(self):
+        """Both finding dialects, and the page-level one that must stay unaddressed."""
+        fm = self.D.front_matter(self.path)
+        for finding, want in [
+            # Names its field.
+            ("claim 'x': a 33-word sentence (max 32) -- split it", "claim/x/text"),
+            ("claim 'x': text is 5 sentences (max 2)", "claim/x/text"),
+            ("claim 'x': states 29, which is not in the paper's own text",
+             "claim/x/text"),
+            ("claim 'x': scope is longer than the claim it bounds (205 vs 200 chars)",
+             "claim/x/scope"),
+            ("claim 'x': scope is 4 sentences (max 3)", "claim/x/scope"),
+            ("qa[1]: every phrasing contains 'BabyLM Interaction track'", "qa/1/q/0"),
+            ("term 'normalized accuracy': definition says 'here'",
+             "term/normalized accuracy"),
+            # Opens with the offending string, so it is found by looking it up.
+            ("Was this validated on more than one dataset? -- 'Was this' has no "
+             "antecedent in the question", "qa/0/q/1"),
+            ("Low agreement here is not weak annotation. -- 'here' has nothing to point "
+             "at once this bullet is extracted on its own", "misreadings/0"),
+            # About the set, not a field: fixing it needs the other claims in view.
+            ("only 3 of 9 result claims state a figure (want 50%)", None),
+            ("2 claims, outside the 5-15 band", None),
+            ("no `kind: context` claim", None),
+            ("1 claim(s) no question points at: too-long", None),
+        ]:
+            with self.subTest(finding=finding[:48]):
+                self.assertEqual(want, self.D.where(finding, fm))
+
+    def test_a_quoting_finding_is_not_guessed_at_without_the_draft(self):
+        """`where` has no way to place one from the string alone, and does not try."""
+        self.assertIsNone(self.D.where("Was this validated? -- 'Was this' has no "
+                                       "antecedent in the question"))
+
+    def test_a_string_in_two_places_is_left_for_the_whole_sidecar_repair(self):
+        fm = {"qa": [{"q": ["What is it?"]}, {"q": ["What is it?"]}]}
+        self.assertIsNone(self.D._quoting(fm, "What is it?"))
+
+    def test_a_locus_round_trips_and_a_stale_one_refuses(self):
+        fm = self.D.front_matter(self.path)
+        for locus in ("claim/too-long/text", "claim/clean/scope", "qa/0/q/1",
+                      "misreadings/0", "term/normalized accuracy"):
+            with self.subTest(locus=locus):
+                self.assertIsInstance(self.D.at(fm, locus), str)
+                self.assertTrue(self.D.put(fm, locus, "rewritten"))
+                self.assertEqual("rewritten", self.D.at(fm, locus))
+        for gone in ("claim/nope/text", "claim/clean/kind", "qa/9/q/0", "qa/0/q/9",
+                     "misreadings/9", "term/nope", "one_liner"):
+            with self.subTest(locus=gone):
+                self.assertIsNone(self.D.at(fm, gone))
+                self.assertFalse(self.D.put(fm, gone, "rewritten"))
+
+    def test_a_fix_that_helps_is_spliced_in_and_nothing_else_moves(self):
+        before = self._findings()
+        long_one = [f for f in before if "37-word sentence" in f]
+        self.assertTrue(long_one, "the fixture is meant to carry the length finding")
+        again, calls = self._asker([{"at": "claim/too-long/text", "new": self.SPLIT}])
+        left = self.D.mend("a-paper", again, "the paper's text", "a fake model")
+
+        self.assertEqual(len(before) - 1, left, "one finding fixed, none introduced")
+        fm = self.D.front_matter(self.path)
+        self.assertEqual(self.SPLIT, self.D.at(fm, "claim/too-long/text"))
+        # The point of the whole exercise: every other field still holds what it held.
+        was = self.D.front_matter(self.D.write_draft("untouched",
+                                                     copy.deepcopy(self.SIDECAR), "x"))
+        for locus in ("claim/too-long/scope", "claim/clean/text", "claim/clean/scope",
+                      "qa/0/q/0", "qa/0/q/1", "misreadings/0", "term/normalized accuracy"):
+            with self.subTest(locus=locus):
+                self.assertEqual(self.D.at(was, locus), self.D.at(fm, locus))
+        self.assertEqual(self.SIDECAR["one_liner"], fm["one_liner"])
+        self.assertEqual(self.SIDECAR["claims"][1], fm["claims"][1])
+
+        prompt, label, want = calls[0]
+        self.assertEqual(1, len(calls), "one call per draft, not one per field")
+        self.assertIn("claim/too-long/text", prompt, "the locus is what comes back in `at`")
+        self.assertIn("the paper's text", prompt, "a finding asking for a magnitude needs "
+                      "the paper, exactly as in whole-sidecar repair")
+        self.assertNotIn("clean", prompt, "a field nobody complained about is not sent")
+        self.assertEqual(self.D.PATCH_SCHEMA, want,
+                         "the reply is held to the patch shape, not the sidecar's")
+
+    def test_a_fix_that_does_not_help_is_thrown_away(self):
+        """Splicing cannot regress an untouched field, but it can trade one finding for
+        another inside the field it touches -- a sentence cut under the length floor."""
+        was = open(self.path, encoding="utf-8").read()
+        before = self._findings()
+        again, _ = self._asker([{"at": "claim/too-long/text",
+                                 "new": "It works well and the gain holds at every model "
+                                        "scale tested, being largest at 7B and absent "
+                                        "below 125M parameters, which the authors put "
+                                        "down to capacity rather than to data volume."}])
+        left = self.D.mend("a-paper", again, "", "a fake model")
+        self.assertEqual(len(before), left)
+        self.assertEqual(was, open(self.path, encoding="utf-8").read(),
+                         "a patch that did not reduce the count leaves the draft alone")
+
+    def test_one_wording_pasted_across_two_fields_is_refused(self):
+        """The pathology `validate.py`'s shared-scope check was added for, caught earlier."""
+        was = open(self.path, encoding="utf-8").read()
+        same = "Encoder-decoder models above 125M parameters only."
+        again, _ = self._asker([{"at": "claim/too-long/scope", "new": same},
+                                {"at": "claim/clean/scope", "new": same}])
+        self.D.mend("a-paper", again, "", "a fake model")
+        self.assertEqual(was, open(self.path, encoding="utf-8").read())
+
+    def test_a_locus_nobody_complained_about_is_ignored(self):
+        was = open(self.path, encoding="utf-8").read()
+        again, _ = self._asker([{"at": "claim/clean/text", "new": "Anything at all."},
+                                {"at": "one_liner", "new": "Anything at all."}])
+        self.D.mend("a-paper", again, "", "a fake model")
+        self.assertEqual(was, open(self.path, encoding="utf-8").read(),
+                         "the reply can only reach fields the checker named")
+
+    def test_a_clean_draft_costs_nothing(self):
+        def refuse(*a, **k):                       # pragma: no cover -- must not be called
+            raise AssertionError("a clean draft must not be sent to a model")
+
+        refuse.window = 0
+        self.D.write_draft("a-paper", copy.deepcopy(self.SIDECAR), "a fake model")
+        if not self._findings():
+            self.assertEqual(0, self.D.mend("a-paper", refuse))
 
 
 class TestEveryBackendCanBeRepaired(unittest.TestCase):
