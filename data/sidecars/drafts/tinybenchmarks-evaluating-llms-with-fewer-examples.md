@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept tinybenchmarks-evaluating-llms-with-fewer-examples
 
-Stamp: spec=eeb6a4e83e57 checks=pass body=6590df293e77
+Stamp: spec=611955fa7d32 checks=pass body=6590df293e77
 -->
 ---
 one_liner: 'A benchmark''s headline number does not need the whole benchmark: fit item response

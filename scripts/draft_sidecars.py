@@ -562,7 +562,7 @@ def decodable(node):
     return node
 
 
-def call_openai(pairs: list[tuple[dict, str]], cfg) -> tuple[dict, str]:
+def call_openai(pairs, cfg) -> tuple[dict, str, "object"]:
     """One chat completion per paper against an OpenAI-compatible endpoint.
 
     Returns (answers, provenance). The same prompt and the same schema as the Anthropic
@@ -604,10 +604,16 @@ def call_openai(pairs: list[tuple[dict, str]], cfg) -> tuple[dict, str]:
 
     sch, out, sys_prompt = schema(), {}, system_prompt()
     enforced = None
-    for p, ev in pairs:
-        msgs = [{"role": "system", "content": sys_prompt},
-                {"role": "user", "content": USER.format(evidence=ev)
-                 + "\n\nReturn one JSON object matching the schema. No prose, no fence."}]
+
+    def ask(user: str, label: str) -> dict | None:
+        """One completion, or None with the reason printed. `label` is for the reader.
+
+        Extracted so the repair round below reuses the request exactly -- same schema,
+        same window arithmetic, same fallback when the gateway will not enforce. A repair
+        that quietly ran unguided while the draft was guided would compare two things.
+        """
+        nonlocal enforced
+        msgs = [{"role": "system", "content": sys_prompt}, {"role": "user", "content": user}]
         want = cfg["llm"].get("max_tokens", API_MAX_TOKENS)
         if window:
             # 3.2 chars per token is deliberately pessimistic for English prose, so the
@@ -618,38 +624,44 @@ def call_openai(pairs: list[tuple[dict, str]], cfg) -> tuple[dict, str]:
         req = dict(model=model, messages=msgs, max_tokens=want,
                    temperature=cfg["llm"].get("temperature", 0.2), seed=48)
         rf = {"type": "json_schema",
-              "json_schema": {"name": "sidecar", "schema": decodable(sch),
-                              "strict": True}}
+              "json_schema": {"name": "sidecar", "schema": decodable(sch), "strict": True}}
         try:
             r = client.chat.completions.create(**req, response_format=rf)
             enforced = True if enforced is None else enforced
         except Exception as e:                        # noqa: BLE001 -- any 4xx means no
             if enforced:                              # it worked before, so this is real
-                print(f"  failed: {p['slug']} -- {type(e).__name__}", file=sys.stderr)
-                continue
+                print(f"  failed: {label} -- {type(e).__name__}", file=sys.stderr)
+                return None
             enforced = False
             try:
                 r = client.chat.completions.create(**req)
             except Exception as e2:                   # noqa: BLE001
-                print(f"  failed: {p['slug']} -- {type(e2).__name__}: "
+                print(f"  failed: {label} -- {type(e2).__name__}: "
                       f"{str(e2)[:160]}", file=sys.stderr)
-                continue
+                return None
         ch = r.choices[0]
-        text = ch.message.content or ""
         if ch.finish_reason == "length":
-            print(f"  truncated at max_tokens: {p['slug']} -- raise llm.max_tokens "
+            print(f"  truncated at max_tokens: {label} -- raise llm.max_tokens "
                   f"(now {req['max_tokens']})", file=sys.stderr)
-            continue
+            return None
+        text = ch.message.content or ""
         sc = _first_json(text)
         if sc is None:
-            print(f"  no JSON object in the reply: {p['slug']} "
-                  f"({len(text)} chars)", file=sys.stderr)
+            print(f"  no JSON object in the reply: {label} ({len(text)} chars)",
+                  file=sys.stderr)
+        return sc
+
+    for p, ev in pairs:
+        sc = ask(USER.format(evidence=ev)
+                 + "\n\nReturn one JSON object matching the schema. No prose, no fence.",
+                 p["slug"])
+        if sc is None:
             continue
         out[p["slug"]] = sc
         print(f"  ok  {p['slug']}  ({len(sc.get('claims') or [])} claims, "
               f"{len(sc.get('qa') or [])} question groups)")
     how = "schema-enforced" if enforced else "unenforced, parsed from text"
-    return out, f"{model} via an OpenAI-compatible endpoint ({how})"
+    return out, f"{model} via an OpenAI-compatible endpoint ({how})", ask
 
 
 HEADER = """<!-- DRAFT — not published, not read by anything that builds the site.
@@ -690,6 +702,58 @@ same point, so read that diff before the checklist below.
 """
 _PROMOTE_REPLACE = ("Then, if the replacement is the one you want:\n\n"
                     "  python scripts/draft_sidecars.py --accept {slug} --replace\n")
+
+
+REPAIR = ("Here is a sidecar you drafted, and the findings an automated checker raised "
+          "against it. Fix exactly what the findings name and change nothing else: keep "
+          "every claim id, keep the evidence strings, keep the questions pointing where "
+          "they point. If a finding asks for a figure the paper does not give you, leave "
+          "that claim alone rather than inventing one -- an unfixed finding is a smaller "
+          "problem than a wrong number.\n\nSIDECAR:\n{sidecar}\n\nFINDINGS:\n{findings}"
+          "\n\nReturn one JSON object matching the schema. No prose, no fence.")
+
+
+def repair(slug: str, rounds: int, again) -> int:
+    """Re-ask the model to fix what the checker found, up to `rounds` times.
+
+    This is the answer to "can a smaller model do this if the job is broken up". It can,
+    and the split that pays is not nine calls for nine fields -- it is one draft plus a
+    critique it did not write. Measured on Qwen 2.5 72B, one paper: 20 findings, then 5,
+    then 2 after two rounds, with no rule reworded. The remaining two are the honest ones,
+    where the fix is a magnitude from a table the model will not invent.
+
+    `again(prompt_extra)` is the caller's own one-paper call, so this function knows
+    nothing about which backend it is driving.
+
+    Stops early when a round stops helping, because a round that does not reduce the count
+    is a round spending tokens to reword: the loop optimises against proxies, and past the
+    point where it is still fixing things, what it does instead is satisfy them. The
+    shared-scope check in `validate.py` exists because this loop found that edge -- it
+    converged on one scope that cleared the wording rules and pasted it across eight
+    claims, which is a fix to the checker's eye and a regression to a reader's.
+    """
+    path = os.path.join(DRAFTS, f"{slug}.md")
+    best = None
+    for r in range(rounds):
+        errs, qual = validate_draft(path, note=False)
+        n = len(errs) + len(qual)
+        if best is not None and n >= best:
+            print(f"    round {r + 1}: {n} finding(s), no better than {best} -- stopping")
+            break
+        best = n
+        if not n:
+            break
+        fm = front_matter(path) or {}
+        found = "\n".join(f"- {str(x).split('.md: ')[-1]}" for x in errs + qual)
+        sc = again(REPAIR.format(sidecar=json.dumps(fm, ensure_ascii=False, indent=1),
+                                 findings=found), f"{slug} repair {r + 1}")
+        if sc is None:
+            print(f"    round {r + 1}: no usable reply, keeping the draft as it stands")
+            break
+        write_draft(slug, sc, f"{fm.get('_source', 'a model')} + {r + 1} repair round(s)")
+        after = sum(len(x) for x in validate_draft(path, note=False))
+        print(f"    round {r + 1}: {n} finding(s) -> {after}")
+    return sum(len(x) for x in validate_draft(path, note=False))
 
 
 def write_draft(slug: str, sidecar: dict, source: str) -> str:
@@ -893,7 +957,21 @@ def checked(slug: str) -> dict | str:
     have, vals = (figures_in(text), values_in(text)) if text else (set(), [])
     flat = re.sub(r"\s+", " ", text)
 
-    answered = {a for g in (fm.get("qa") or []) for a in (g.get("answers") or [])}
+    # Which questions retrieve each claim, joined this way round on purpose. A published
+    # answer is a question followed by claim text and scope, so the reader's instinct is
+    # to review it grouped by question -- but 212 of 318 claims across the live sidecars
+    # and drafts answer more than one, so that page renders two thirds of them twice and
+    # invites accepting a claim in one place while flagging the same words in another.
+    # Claim-major with its questions attached shows the same pairing, once per claim.
+    #
+    # Only each question's first phrasing, which is the canonical one: the paraphrase set
+    # is its own check and stays in the questions section, where the axes are comparable.
+    asks: dict = {}
+    for gi, g in enumerate(fm.get("qa") or []):
+        first = ((g.get("q") or [None])[0])
+        for a in g.get("answers") or []:
+            asks.setdefault(a, []).append((gi, oneline(first)))
+    answered = set(asks)
     claims = []
     for c in fm.get("claims") or []:
         kind = c.get("kind") or "result"
@@ -901,6 +979,7 @@ def checked(slug: str) -> dict | str:
                "evidence": c.get("evidence") or ("--" if kind == "context" else "MISSING"),
                "text": oneline(c.get("text")), "scope": oneline(c.get("scope")),
                "orphan": c.get("id") not in answered, "pointers": [], "figures": [],
+               "asked": [q for _, q in asks.get(c.get("id"), [])],
                "prose": prose.get(("claim", str(c.get("id") or "?")), [])}
         if text:
             row["pointers"] = [(label, bool(pat.search(text)))
@@ -912,7 +991,14 @@ def checked(slug: str) -> dict | str:
                 # number against the sentence it came from, not against a page number.
                 row["figures"].append((n, quote(flat, n)
                                        if (n in have or rounds_to(n, vals)) else None))
+        row["_at"] = min((gi for gi, _ in asks.get(c.get("id"), [])), default=10**6)
         claims.append(row)
+
+    # Sorted by the first question that asks for it, so claims sharing a question sit
+    # together and the page reads in the order a visitor's questions arrive rather than
+    # in the order the model happened to emit. Stable, so ties keep the drafted order,
+    # and orphans sink to the end -- where "no question points here" is the finding.
+    claims.sort(key=lambda r: r.pop("_at"))
 
     return {"slug": slug, "path": os.path.relpath(path, ROOT), "has_text": bool(text),
             "live": path.startswith(SIDECARS), "one_liner": oneline(fm.get("one_liner")),
@@ -944,6 +1030,8 @@ def show(slug: str) -> None:
     for c in d["claims"]:
         orphan = "   (no question points here)" if c["orphan"] else ""
         print(f"\n  [{c['kind']}] {c['id']}   evidence: {c['evidence']}{orphan}")
+        for q in c["asked"]:
+            print("    asked as: " + q)
         print("    " + c["text"])
         print("    Holds for: " + c["scope"])
         for m in c["prose"]:
@@ -1008,6 +1096,7 @@ a { color:inherit } code,kbd { font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,m
      color:var(--fg) }
 .bad { color:var(--bad); background:var(--badbg); padding:.1rem .3rem; border-radius:3px }
 .ok { color:var(--ok) } .warn { color:var(--warn) } .dim { color:var(--dim) }
+.asked { color:var(--dim); font-size:.9rem; margin:0 0 .4rem; font-style:italic }
 .q { margin:.5rem 0 1rem } .q li { color:var(--dim) }
 .q b { color:var(--fg); font-weight:600 }
 table { border-collapse:collapse; width:100%; font-size:.9rem }
@@ -1130,7 +1219,15 @@ def review_page(papers: list[dict]) -> str:
         out.append("<div class=cmd>python scripts/draft_sidecars.py --accept "
                    + e(slug) + (" --replace" if p.get("has_sidecar") else "") + "</div>")
 
-        out.append(f"<h3>Claims ({len(d['claims'])})</h3>")
+        out += [f"<h3>Claims ({len(d['claims'])})</h3>",
+                "<p class=sub>In question order — each claim under the question it is "
+                "published as the answer to. Two things to check per claim, and they "
+                "fail differently: the <b>text</b> must be true and carry its own "
+                "subject, since it is quoted with no title beside it; and <b>Holds for</b> "
+                "must name the condition that would make it false if changed — the "
+                "models, the languages, the sizes, the year. A scope that is a hedge "
+                "(\u201cfurther work is needed\u201d), a restatement of the claim, or a "
+                "judgement about the claim\u2019s reliability is the one to rewrite.</p>"]
         for c in d["claims"]:
             bad_here = (any(s is None for _, s in c["figures"])
                         or any(not ok for _, ok in c["pointers"]) or c["prose"])
@@ -1140,11 +1237,15 @@ def review_page(papers: list[dict]) -> str:
                     f"<div class=id>[{c['kind']}] {e(str(c['id']))} · cites "
                     f"{e(str(c['evidence']))}"
                     + ("  · no question points here" if c["orphan"] else "") + "</div>",
+                    "".join(f"<p class=asked>{e(q)}</p>" for q in c["asked"]),
                     f"<div>{e(c['text'])}</div>",
                     f"<p class=scope><b>Holds for.</b> {e(c['scope'])}</p>"]
-            # The wording above is the site's, verbatim: scope is published after
-            # "Holds for:", and a scope that does not complete that sentence is only
-            # visible when the review shows it the way a reader will meet it.
+            # The three lines above are one published answer, in publication order: the
+            # question a visitor asked, the claim's text verbatim, then the scope after
+            # the words "Holds for:". Reviewing a claim with no question above it was
+            # reviewing a sentence with its subject removed -- the claims read as
+            # context-free assertions because the context is the question, and that was
+            # in a separate section further down.
             if c["prose"]:
                 out.append("<ul class=checks>")
                 out += [f"<li><span class=bad>reads badly</span> "
@@ -1177,7 +1278,12 @@ def review_page(papers: list[dict]) -> str:
             out.append("</div>")
 
         if d["qa"]:
-            out.append(f"<h3>Questions this answers ({len(d['qa'])})</h3>")
+            out += [f"<h3>Question phrasings ({len(d['qa'])})</h3>",
+                    "<p class=sub>Each answer is shown above, under its claims — this is "
+                    "the paraphrase check: whether the 2\u20134 phrasings of one question "
+                    "vary the way real queries do (wording, specificity, the terms "
+                    "someone who has not read the paper would use) rather than "
+                    "restating each other.</p>"]
             for g in d["qa"]:
                 out.append("<ul class=q>")
                 for i, q in enumerate(g.get("q") or []):
@@ -1392,6 +1498,10 @@ def main() -> None:
     ap.add_argument("--slug", nargs="+", help="queue exactly these papers")
     ap.add_argument("--mode", choices=("skill", "api", "openai"),
                     help="override llm.mode for this run, without editing config.yaml")
+    ap.add_argument("--repair", type=int, default=0, metavar="N",
+                    help="after drafting, show the model its own findings and ask it to "
+                         "fix them, up to N times. Stops early when a round stops "
+                         "reducing the count. openai mode only")
     args = ap.parse_args()
 
     cfg = load_config()
@@ -1475,14 +1585,23 @@ def main() -> None:
 
     mode = args.mode or cfg["llm"]["mode"]
     if mode in ("api", "openai"):
+        asker = None
         if mode == "api":
             answers = call_api(pairs, cfg)
             how = f"the Anthropic API ({cfg['llm']['model']})"
         else:
-            answers, how = call_openai(pairs, cfg)
+            answers, how, asker = call_openai(pairs, cfg)
         for slug, sc in answers.items():
             write_draft(slug, sc, how)
         print(f"\nwrote {len(answers)} draft(s) to data/sidecars/drafts/")
+        if args.repair and asker:
+            print(f"\nrepairing against the checks, up to {args.repair} round(s):")
+            for slug in answers:
+                left = repair(slug, args.repair, asker)
+                print(f"  {slug}: {left} finding(s) left for you")
+        elif args.repair:
+            print("  --repair needs --mode openai; the Anthropic path drafts in one call",
+                  file=sys.stderr)
         print("Next: python scripts/draft_sidecars.py --review")
     else:
         path = emit_tasks(pairs, cfg)

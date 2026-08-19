@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept a-statistical-framework-for-game-based-ai-evaluation
 
-Stamp: spec=eeb6a4e83e57 checks=pass body=cd2eabcb12b9
+Stamp: spec=611955fa7d32 checks=pass body=cd2eabcb12b9
 -->
 ---
 one_liner: 'A statistical framework for game-based AI evaluation models each match twice:

@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept findings-of-the-babylm-challenge-sample-efficient-pretrainin
 
-Stamp: spec=eeb6a4e83e57 checks=pass body=b12abb7e1c08
+Stamp: spec=611955fa7d32 checks=pass body=b12abb7e1c08
 -->
 ---
 one_liner: The first BabyLM Challenge capped pretraining at 10M or 100M words -- roughly a

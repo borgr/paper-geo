@@ -965,6 +965,23 @@ def readability(fm: dict) -> list[tuple[str, str, str]]:
                                  'published after the words "Holds for:" -- give the '
                                  f"condition instead: {head}"))
 
+    # One scope reused word for word across claims, which means it is not a scope: the
+    # field bounds *this* finding, and a bound that is true of every claim on the page is
+    # the paper's setting, which the page states once already. Cheap to check and it was
+    # never going to fire on a careful draft -- zero repeats across all 20 live sidecars
+    # and drafts. It fires on the thing that produces it: a model rewriting scopes to
+    # satisfy a finding lands on one phrasing that clears the check and pastes it
+    # everywhere, so this is the check that catches a fix from being cosmetic.
+    seen: dict = {}
+    for c in (fm.get("claims") or []):
+        if isinstance(c, dict) and (sc := re.sub(r"\s+", " ", str(c.get("scope") or "")).strip()):
+            seen.setdefault(sc.lower(), []).append(str(c.get("id")))
+    for sc, who in seen.items():
+        if len(who) > 1:
+            out.append(("page", "", f"{len(who)} claims share one scope verbatim "
+                        f"({', '.join(who)}) -- a condition true of every claim is the "
+                        f"paper's setting, not this claim's bound: “{sc[:60]}...”"))
+
     # Page-level, so it has no single locus. Counted over `result` claims only: a
     # `context` claim asserts where the work sits and usually has no number to carry.
     res = [c for c in (fm.get("claims") or [])
