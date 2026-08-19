@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call). Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call) + 2 repair rounds. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept a-hitchhiker-s-guide-to-scaling-law-estimation
 
-Stamp: spec=e47adcd7257c checks=19 body=950e2b7d0a69
+Stamp: spec=74e012ff9654 checks=pass body=8ae296b180f6
 -->
 ---
 key: choshen2025hitchhiker
@@ -28,27 +28,24 @@ claims:
 - id: dataset
   kind: context
   text: A Hitchhiker's Guide to Scaling Law Estimation releases a public dataset of pretraining
-    losses and downstream evaluations covering 485 published pretrained models and more than
-    40 scaled model families, spanning 1.9M recorded training steps.
-  scope: Language models where the largest family member exceeds 3B parameters and data was
-    public or shared privately; families include Pythia, OPT, OLMo, Amber, K2, Mamba, RedPajama,
-    Bloom, T5-Pile, Gopher and GPT-3; some losses were manually extracted from published figures.
+    losses and downstream evaluations for 485 published pretrained models. The dataset covers
+    more than 40 scaled model families and 1.9M recorded training steps.
+  scope: Language models whose largest family member exceeds 3B parameters and whose data
+    was public or privately shared; some losses were manually extracted from published figures.
   evidence: Section 3.1
 - id: guide-context
   kind: context
-  text: A Hitchhiker's Guide to Scaling Law Estimation is a practical guide to how many, how
-    large and how fully trained the preliminary models used to fit a language-model scaling
-    law should be, rather than a new scaling law for one model family.
-  scope: Covers loss-based scaling laws in the Hoffmann et al. (2022) functional form fit
-    with square loss (replicated with Huber loss); prior work largely fixed a model family
-    and fit one law, leaving estimation practice comparatively unexamined as of publication
-    in 2025.
+  text: A Hitchhiker's Guide to Scaling Law Estimation is a practical guide to choosing the
+    preliminary models used to fit a language-model scaling law. It asks how many, how large
+    and how fully trained they should be, rather than proposing a law for one family.
+  scope: Loss-based scaling laws in the Hoffmann et al. (2022) functional form, fit with square
+    loss and replicated with Huber loss; as of publication in 2025.
   evidence: Section 1
 - id: target-accuracy
   kind: result
-  text: A scaling law needs about 4% absolute relative error to be useful, because no widely
-    adopted pretraining change surveyed was motivated by less than a 4% relative loss difference,
-    and seed-to-seed variation alone reaches 3.5%.
+  text: A scaling law needs about 4% absolute relative error to be useful for comparing pretraining
+    decisions. No widely adopted pretraining change surveyed was motivated by less than a
+    4% relative loss difference, and seed-to-seed variation alone reaches 3.5%.
   scope: Based on a survey of published A/B tests on pretraining decisions, where reported
     effects run from 4% up to 50%; errors up to 20% still separate many modeling choices.
   evidence: Section 4
@@ -57,9 +54,9 @@ claims:
   text: Fitting scaling laws to full training curves rather than to final losses alone substantially
     lowers prediction error, and relying only on the end of training produces significantly
     worse fits across model families.
-  scope: Shown for OPT, GPT-3 and Pythia families using subsets of checkpoints defined by
-    the fraction of training tokens retained; assumes the learning-rate schedule's effect
-    on intermediate losses is negligible, which the paper flags as untested.
+  scope: OPT, GPT-3 and Pythia families, using checkpoint subsets defined by the fraction
+    of training tokens retained; assumes the learning-rate schedule's effect on intermediate
+    losses is negligible.
   evidence: Figure 4
 - id: drop-early
   kind: result
@@ -71,81 +68,77 @@ claims:
   evidence: Figure 5
 - id: one-model
   kind: result
-  text: 'With the model-size scaling parameters fixed to values from earlier published work,
-    a single partially trained model in a new family can suffice: OLMo''s 7B loss is predicted
-    from 1B checkpoints with under 1% error.'
-  scope: Holds for transformer families with borrowed model-size parameters from Muennighoff
-    et al. (2024); fails for the encoder-decoder T5-Pile, and errors grow with extrapolation
-    distance, reaching 37%, 25% and 15% for OPT predictions to 175B from 8.7B, 13B and 30B.
+  text: With the model-size scaling parameters fixed to values from earlier published work,
+    a single partially trained model in a new family can suffice. OLMo's 7B loss is predicted
+    from 1B checkpoints with under 1% error.
+  scope: Transformer families with model-size parameters borrowed from Muennighoff et al.
+    (2024); fails for the encoder-decoder T5-Pile, and errors reach 37%, 25% and 15% for OPT
+    predictions to 175B from 8.7B, 13B and 30B.
   evidence: Figure 6 (Appendix A)
 - id: family-params-differ
   kind: result
   text: Estimated scaling-law parameters E, A, alpha, B and beta differ dramatically across
     model families, so the rate at which extra data or parameters help depends on architectural
     details.
-  scope: Across the more than 40 scaled families in the released dataset, all fit with the
-    Hoffmann et al. (2022) form; the differences are in the fitted parameters, not in whether
-    the functional form fits.
+  scope: The more than 40 scaled families in the released dataset, all fit with the Hoffmann
+    et al. (2022) form; the differences are in fitted parameters, not the form.
   evidence: Figure 3
 - id: partial-target
   kind: result
   text: Training the target model itself part-way is a viable substitute for training many
     small models, but reliable loss estimates require training it on roughly 30% of the full
     run.
-  scope: Applies when predicting within a single parameter-count family, so only the token
-    term must be extrapolated; demonstrated on OPT, GPT-2, OLMo, Pythia variants and T5-Pile.
+  scope: Predicting within a single parameter-count family, so only the token term is extrapolated;
+    shown on OPT, GPT-2, OLMo, Pythia variants and T5-Pile.
   evidence: Section 5.1
 - id: baselines
   kind: result
   text: Simple no-fitting baselines that assume the target model is no better than the best
-    small model incur more than 15% error, mostly above 10%, and average 18% absolute relative
-    error across all scaled families studied.
+    small model incur more than 15% error and mostly above 10%. Across all scaled families
+    studied they average 18% absolute relative error.
   scope: Two baselines, the best loss in the training set and the loss of the most-compute
-    model, evaluated using the full available family; the baselines are pessimistic by construction
-    because the target outperforms every model fit on.
+    model, each given the full available family.
   evidence: Section 5.2
 - id: more-small-models
   kind: result
   text: Increasing the number of preliminary models lowers scaling-law error even when the
     added models are not larger, and 5 models is a reasonable minimum for reliable predictions.
-  scope: Observed on GPT-3, Gopher, OPT and Pythia families; the trend is not monotonic, since
-    a single badly behaved model can dominate the fit, so more models improves robustness
-    rather than guaranteeing lower error.
+  scope: GPT-3, Gopher, OPT and Pythia families; the trend is not monotonic, since a single
+    badly behaved model can dominate the fit.
   evidence: Figure 2(b), Figure 2(c)
 - id: model-size
   kind: result
-  text: 'Preliminary models closer in parameter count to the target give better fits, but
-    the effect is neither strong nor monotonic: the 4 smallest models available already reach
-    under 10% error for GPT-3, Gopher and OPT.'
+  text: Preliminary models closer in parameter count to the target give better fits, but the
+    effect is neither strong nor monotonic. The 4 smallest models available already reach
+    under 10% error for GPT-3, Gopher and OPT.
   scope: Predicting the largest model in each family; Pythia's smallest models are not predictive,
     and extrapolating 34x up in Pythia is still reliable when other factors are accounted
     for.
   evidence: Figure 2(a), Figure 2(c)
 - id: cv-fails
   kind: result
-  text: 'Cross-validation does not identify which preliminary models will corrupt a scaling-law
-    fit: in 58% of cases, removing the model flagged as hard to predict produced the worst
-    possible error on the actual target.'
+  text: Cross-validation does not identify which preliminary models will corrupt a scaling-law
+    fit. In 58% of cases, removing the model flagged as hard to predict produced the worst
+    possible error on the actual target.
   scope: Leave-one-out over parameter-count families within each scaled family, using the
     highest-token models as targets; tested on the paper's collected families only.
   evidence: Appendix D
 - id: degrees-of-freedom
   kind: result
-  text: 'Scaling laws appear to have fewer degrees of freedom than their 5 fitted parameters
-    suggest: 3 principal components explain 99.49% of the variance across fitted parameters,
-    with A linearly related to alpha and B to beta.'
+  text: Scaling laws appear to have fewer degrees of freedom than their 5 fitted parameters
+    suggest, with 3 principal components explaining 99.49% of the variance across fitted parameters.
+    A is linearly related to alpha, and B to beta.
   scope: Across the fitted families in the released dataset; exceptions are the encoder-decoder
     T5-Pile and 4 families trained with multiple passes over one training set, which show
     a different B-beta relationship.
   evidence: Section 9, Figure 3
 - id: scale-down
   kind: result
-  text: 'Scaling laws also predict downward: the loss of the smallest model in a family can
-    be fit from the largest models, provided at least 30-40% of training is used and enough
-    models are included.'
+  text: Scaling laws also predict downward, fitting the loss of the smallest model in a family
+    from the largest models. Good fits need at least 30-40% of training and enough models
+    in the fitting set.
   scope: OPT, Pythia variants and T5-Pile; the percentage of training used for the fitting
-    models is not reversed, and downward prediction is mainly useful for observational scaling
-    laws or as a baseline.
+    models is not reversed.
   evidence: Figure 8 (Appendix C)
 qa:
 - q:
@@ -251,5 +244,13 @@ terminology:
   scale-up factor: The ratio between the parameter count of the target model and that of the
     largest model used to fit the scaling law.
 misreadings:
-- placeholder
+- 'Intermediate checkpoints improving scaling-law fits does not mean every checkpoint helps:
+  checkpoints from the first 10B tokens are sometimes harmful and should be dropped.'
+- Predicting a new family's target model from a single run works only because the model-size
+  scaling parameters are borrowed from another family's published fit, not because one run
+  identifies a full scaling law.
+- 'Training a larger preliminary model does not reliably improve a scaling law: added large
+  models can increase variance, and error across model sizes is not monotonic.'
+- The recommendation of about 4% absolute relative error is a target set by what pretraining
+  A/B tests report, not an accuracy the surveyed scaling laws routinely achieve.
 ---

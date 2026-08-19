@@ -52,6 +52,7 @@ equivalent, because the second pass there is the agent session reading `--review
 from __future__ import annotations
 
 import argparse
+import collections
 import glob
 import hashlib
 import inspect
@@ -1807,6 +1808,7 @@ def review(papers: list[dict]) -> None:
         print(f"\nRead all {len(yours)} in a browser, already checked against each paper:"
               f"\n  file://{write_review_page(papers)}")
         print("\nDrafts, most cited first — read, edit, then --accept:")
+        counts = collections.Counter()
         rows = sorted(yours, key=lambda f: -(
             (by_slug.get(os.path.basename(f)[:-3]) or {}).get("citations") or 0))
         for f in rows:
@@ -1822,6 +1824,34 @@ def review(papers: list[dict]) -> None:
             if slug in live:
                 flag += "  [REPLACES the live sidecar -- needs --replace]"
             print(f"  {(p.get('citations') or 0):>5} cites  {slug}{flag}")
+            for e in errs + quality:
+                counts[rule_of(e)] += 1
+        if counts:
+            # Per-paper counts say which evening to spend; this says which rule the
+            # drafting keeps losing, which is the only one of the two that can be acted
+            # on in the rules block every draft is written against. Derived on the way
+            # past, printed, never stored -- it is a fact about this run.
+            print("\nRules the open findings hit, most often first:")
+            for rule, n in counts.most_common(6):
+                print(f"  {n:>4}  {rule}")
+            print("  A rule near the top of that list is a rules-block problem, not a "
+                  "per-paper one:\n  docs/SIDECAR.md \u00a72 is what every draft was "
+                  "written against.")
+
+
+def rule_of(finding: str) -> str:
+    """Collapse a finding down to the rule it broke, so findings can be counted.
+
+    A finding names its locus and its magnitude -- claim id, character counts, the
+    offending phrase -- and all three are what make two instances of one rule look like
+    two rules. Dropping them is what turns 86 findings into the six rules behind them.
+    """
+    msg = re.sub(r"^.*?\.md: ", "", finding)            # the draft's path
+    msg = re.sub(r"^(claim|term|misreading|qa\[\d+\]|page|\$\.[\w.\[\]]+)"
+                 r"(?: '[^']*'| \d+)?: ", "", msg)      # the locus inside it
+    msg = re.split(r" -- ", msg)[0]                     # the fix, which names the instance
+    msg = re.sub(r"'[^']*'", "'...'", msg)              # claim ids, quoted phrases
+    return re.sub(r"\b\d+(?:\.\d+)?%?\b", "N", msg)[:72]
 
 
 def main() -> None:

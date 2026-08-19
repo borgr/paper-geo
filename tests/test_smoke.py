@@ -404,6 +404,37 @@ class TestPromptsCarryTheirRules(unittest.TestCase):
                          f"§2's prompt has steps {steps} and its index lists {rows}")
 
 
+class TestFindingsCollapseToTheRuleTheyBroke(unittest.TestCase):
+    """`--review` counts findings by rule, and the counting is only useful if two
+    instances of one rule collapse to one line. Every part of a finding that names the
+    instance -- the draft's path, the claim id, the character counts, the ids listed after
+    the fix -- has to come off, and an earlier version that split on the first colons left
+    a row that was nothing but a list of claim ids."""
+
+    SAME = [
+        ["a.md: claim 'one': a 43-word sentence (max 32) -- split it, the front of a claim",
+         "b.md: claim 'two': a 51-word sentence (max 32) -- split it, the front of a claim"],
+        ["a.md: page: only 4 of 11 result claims state a figure (want 50%) -- go back to "
+         "the tables. Number-free: alpha, beta, gamma",
+         "b.md: page: only 2 of 9 result claims state a figure (want 50%) -- go back to "
+         "the tables. Number-free: delta"],
+        ["a.md: claim 'x': scope is longer than the claim it bounds (410 vs 300 chars) -- cut",
+         "b.md: claim 'y': scope is longer than the claim it bounds (900 vs 120 chars) -- cut"],
+    ]
+
+    def test_one_rule_is_one_row(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        from draft_sidecars import rule_of
+        for group in self.SAME:
+            got = {rule_of(f) for f in group}
+            self.assertEqual(len(got), 1, f"one rule split into {got}")
+            rule = got.pop()
+            self.assertNotIn(".md", rule, f"the draft path survived into {rule!r}")
+            self.assertTrue(rule.strip(), "the rule collapsed to nothing")
+        self.assertNotEqual(rule_of(self.SAME[0][0]), rule_of(self.SAME[2][0]),
+                            "two different rules collapsed into one row")
+
+
 class TestEveryCheckSurvivesAnOffSchemaDraft(unittest.TestCase):
     """No accept-time check may raise on a draft whose fields are the wrong type.
 
