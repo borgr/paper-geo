@@ -979,7 +979,7 @@ def checked(slug: str) -> dict | str:
                "evidence": c.get("evidence") or ("--" if kind == "context" else "MISSING"),
                "text": oneline(c.get("text")), "scope": oneline(c.get("scope")),
                "orphan": c.get("id") not in answered, "pointers": [], "figures": [],
-               "asked": [q for _, q in asks.get(c.get("id"), [])],
+               "asked": asks.get(c.get("id"), []),
                "prose": prose.get(("claim", str(c.get("id") or "?")), [])}
         if text:
             row["pointers"] = [(label, bool(pat.search(text)))
@@ -991,15 +991,11 @@ def checked(slug: str) -> dict | str:
                 # number against the sentence it came from, not against a page number.
                 row["figures"].append((n, quote(flat, n)
                                        if (n in have or rounds_to(n, vals)) else None))
-        row["_at"] = min((gi for gi, _ in asks.get(c.get("id"), [])), default=10**6)
         claims.append(row)
 
-    # Sorted by the first question that asks for it, so claims sharing a question sit
-    # together and the page reads in the order a visitor's questions arrive rather than
-    # in the order the model happened to emit. Stable, so ties keep the drafted order,
-    # and orphans sink to the end -- where "no question points here" is the finding.
-    claims.sort(key=lambda r: r.pop("_at"))
-
+    # Left in the drafted order, which is the order the sidecar file has and therefore the
+    # order the site publishes: both renderers walk the questions instead, so a sort here
+    # would only reorder the orphan list while looking like it decided the page.
     return {"slug": slug, "path": os.path.relpath(path, ROOT), "has_text": bool(text),
             "live": path.startswith(SIDECARS), "one_liner": oneline(fm.get("one_liner")),
             "claims": claims, "qa": fm.get("qa") or [],
@@ -1027,13 +1023,14 @@ def show(slug: str) -> None:
     for m in d["prose_page"]:
         print(f"  WHOLE PAGE  {m}")
 
-    for c in d["claims"]:
+    def one_claim(c) -> None:
         orphan = "   (no question points here)" if c["orphan"] else ""
-        print(f"\n  [{c['kind']}] {c['id']}   evidence: {c['evidence']}{orphan}")
-        for q in c["asked"]:
-            print("    asked as: " + q)
+        print(f"\n    [{c['kind']}] {c['id']}   evidence: {c['evidence']}{orphan}")
         print("    " + c["text"])
         print("    Holds for: " + c["scope"])
+        if also := [q for gi, q in c["asked"] if gi != c["asked"][0][0]]:
+            for q in also:
+                print(f"    also answers: {q}")
         for m in c["prose"]:
             print(f"    READS BADLY  {m}")
         for label, ok in c["pointers"]:
@@ -1043,12 +1040,41 @@ def show(slug: str) -> None:
             note = sentence or "NOT IN THE PAPER -- correct it or drop the figure"
             print(f"    {n:>9}  {note}")
 
+    # Question, then the claim published as its answer -- same order as the review page,
+    # and for the same reason: a claim read without the question it answers is read
+    # without its subject. Each claim printed once, since two thirds of them answer more
+    # than one question.
+    by_id, drawn = {str(c["id"]): c for c in d["claims"]}, set()
     for i, g in enumerate(d["qa"]):
-        print(f"\n  q{i + 1} -> {', '.join(g.get('answers') or []) or '(nothing)'}")
-        for q in g.get("q") or []:
-            print(f"      {q}")
-            for m in d["prose_q"].get(str(q)) or []:
-                print(f"        UNANSWERABLE ALONE  {m}")
+        qs = [q for q in (g.get("q") or []) if q]
+        print(f"\n  Q{i + 1}. {qs[0] if qs else '(no question text)'}"
+              + (f"   (+{len(qs) - 1} more phrasing(s))" if len(qs) > 1 else ""))
+        for m in (qs and d["prose_q"].get(str(qs[0])) or []):
+            print(f"      UNANSWERABLE ALONE  {m}")
+        if not (g.get("answers") or []):
+            print("      nothing answers this -- point it at a claim or drop it")
+        for a in g.get("answers") or []:
+            c = by_id.get(str(a))
+            if c is None:
+                print(f"      points at {a}, which is not a claim id")
+            elif str(a) in drawn:
+                print(f"      ^ {a} -- shown above, under its first question")
+            else:
+                drawn.add(str(a))
+                one_claim(c)
+
+    if orphans := [c for c in d["claims"] if str(c["id"]) not in drawn]:
+        print(f"\n  NO QUESTION POINTS AT THESE ({len(orphans)})")
+        for c in orphans:
+            one_claim(c)
+
+    for i, g in enumerate(d["qa"]):
+        if len(g.get("q") or []) > 1:
+            print(f"\n  Q{i + 1} phrasings:")
+            for q in g["q"]:
+                print(f"      {q}")
+                for m in d["prose_q"].get(str(q)) or []:
+                    print(f"        UNANSWERABLE ALONE  {m}")
 
     # Printed only when something is wrong with them: a correct misreading or definition
     # is already in the draft the author is reading beside this output.
@@ -1096,7 +1122,11 @@ a { color:inherit } code,kbd { font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,m
      color:var(--fg) }
 .bad { color:var(--bad); background:var(--badbg); padding:.1rem .3rem; border-radius:3px }
 .ok { color:var(--ok) } .warn { color:var(--warn) } .dim { color:var(--dim) }
-.asked { color:var(--dim); font-size:.9rem; margin:0 0 .4rem; font-style:italic }
+.ask { margin:2rem 0 .5rem; font-weight:600; font-size:1.02rem }
+.ask:first-of-type { margin-top:1rem }
+.again { margin:.6rem 0 .6rem 1rem; font-size:.9rem; color:var(--dim) }
+.again a { color:var(--fg) }
+.asked { color:var(--dim); font-size:.85rem; margin:.45rem 0 0 }
 .q { margin:.5rem 0 1rem } .q li { color:var(--dim) }
 .q b { color:var(--fg); font-weight:600 }
 table { border-collapse:collapse; width:100%; font-size:.9rem }
@@ -1219,72 +1249,114 @@ def review_page(papers: list[dict]) -> str:
         out.append("<div class=cmd>python scripts/draft_sidecars.py --accept "
                    + e(slug) + (" --replace" if p.get("has_sidecar") else "") + "</div>")
 
-        out += [f"<h3>Claims ({len(d['claims'])})</h3>",
-                "<p class=sub>In question order — each claim under the question it is "
-                "published as the answer to. Two things to check per claim, and they "
-                "fail differently: the <b>text</b> must be true and carry its own "
-                "subject, since it is quoted with no title beside it; and <b>Holds for</b> "
-                "must name the condition that would make it false if changed — the "
-                "models, the languages, the sizes, the year. A scope that is a hedge "
-                "(\u201cfurther work is needed\u201d), a restatement of the claim, or a "
-                "judgement about the claim\u2019s reliability is the one to rewrite.</p>"]
-        for c in d["claims"]:
-            bad_here = (any(s is None for _, s in c["figures"])
+        # One question, then the claims published as its answer, then the next question.
+        # Each claim is rendered once: a claim answering three questions used to print its
+        # three question lines above itself, and with two thirds of claims shared that
+        # made a page of near-identical blocks differing by one line -- and the same
+        # question reappeared above claims far apart, since sorting by a claim's *first*
+        # question cannot group its second. Under a later question a claim already shown
+        # is a one-line link to it, which is the fact the reader needs there (this answer
+        # is also carrying that question) at the size that fact deserves.
+        def claim_html(c) -> list[str]:
+            bad_here = (any(sn is None for _, sn in c["figures"])
                         or any(not ok for _, ok in c["pointers"]) or c["prose"])
             cls = "claim" + (" context" if c["kind"] == "context" else "") \
                           + (" flagged" if bad_here else "")
-            out += [f"<div class='{cls}'>",
-                    f"<div class=id>[{c['kind']}] {e(str(c['id']))} · cites "
-                    f"{e(str(c['evidence']))}"
-                    + ("  · no question points here" if c["orphan"] else "") + "</div>",
-                    "".join(f"<p class=asked>{e(q)}</p>" for q in c["asked"]),
-                    f"<div>{e(c['text'])}</div>",
-                    f"<p class=scope><b>Holds for.</b> {e(c['scope'])}</p>"]
-            # The three lines above are one published answer, in publication order: the
-            # question a visitor asked, the claim's text verbatim, then the scope after
-            # the words "Holds for:". Reviewing a claim with no question above it was
-            # reviewing a sentence with its subject removed -- the claims read as
-            # context-free assertions because the context is the question, and that was
-            # in a separate section further down.
+            also = [f"<a href='#{e(slug)}-q{gi}'>{e(q)}</a>"
+                    for gi, q in c["asked"] if gi != c["asked"][0][0]]
+            block = [f"<div class='{cls}' id='{e(slug)}-{e(str(c['id']))}'>",
+                     f"<div class=id>[{c['kind']}] {e(str(c['id']))} · cites "
+                     f"{e(str(c['evidence']))}"
+                     + ("  · no question points here" if c["orphan"] else "") + "</div>",
+                     f"<div>{e(c['text'])}</div>",
+                     f"<p class=scope><b>Holds for.</b> {e(c['scope'])}</p>"]
+            if also:
+                block.append("<p class=asked>also answers: " + " · ".join(also) + "</p>")
             if c["prose"]:
-                out.append("<ul class=checks>")
-                out += [f"<li><span class=bad>reads badly</span> "
-                        f"<span class=dim>{e(m)}</span></li>" for m in c["prose"]]
-                out.append("</ul>")
+                block.append("<ul class=checks>")
+                block += [f"<li><span class=bad>reads badly</span> "
+                          f"<span class=dim>{e(m)}</span></li>" for m in c["prose"]]
+                block.append("</ul>")
             if c["pointers"] or c["figures"]:
-                out.append("<ul class=checks>")
+                block.append("<ul class=checks>")
                 links = p.get("links") or {}
                 for label, ok in c["pointers"]:
                     href = at_sentence(links, label) if ok else ""
                     shown = f"<a href='{e(href)}'>{e(label)}</a>" if href else e(label)
-                    out.append(f"<li><span class={'ok' if ok else 'bad'}>"
-                               f"{'the paper mentions' if ok else 'THE PAPER NEVER MENTIONS'}"
-                               f"</span> {shown}</li>")
+                    block.append(f"<li><span class={'ok' if ok else 'bad'}>"
+                                 f"{'the paper mentions' if ok else 'THE PAPER NEVER MENTIONS'}"
+                                 f"</span> {shown}</li>")
                 for n, sentence in c["figures"]:
                     if sentence is None:
-                        out.append(f"<li><span class=n>{e(n)}</span> "
-                                   f"<span class=bad>not in the paper — correct it or "
-                                   f"drop the figure</span></li>")
+                        block.append(f"<li><span class=n>{e(n)}</span> "
+                                     f"<span class=bad>not in the paper — correct it or "
+                                     f"drop the figure</span></li>")
                     else:
                         # The quote itself is the link, so checking a figure against the
                         # paper's sentence and then against the paper costs one click
                         # rather than a search in another window.
                         href = at_sentence(links, sentence)
                         body = f"<span class=dim>{e(sentence)}</span>"
-                        out.append(f"<li><span class=n>{e(n)}</span> "
-                                   + (f"<a href='{e(href)}'>{body}</a>" if href else body)
-                                   + "</li>")
-                out.append("</ul>")
-            out.append("</div>")
+                        block.append(f"<li><span class=n>{e(n)}</span> "
+                                     + (f"<a href='{e(href)}'>{body}</a>" if href else body)
+                                     + "</li>")
+                block.append("</ul>")
+            block.append("</div>")
+            return block
+
+        by_id = {str(c["id"]): c for c in d["claims"]}
+        out += [f"<h3>Answers ({len(d['qa'])} questions, {len(d['claims'])} claims)</h3>",
+                "<p class=sub>One question, then the claim published as its answer — the "
+                "shape a reader meets it in. Two things to check per claim, and they fail "
+                "differently: the <b>text</b> must be true and carry its own subject, "
+                "since it is quoted with no title beside it; and <b>Holds for</b> must "
+                "name the condition that would make it false if changed — the models, the "
+                "languages, the sizes, the year. A scope that is a hedge "
+                "(\u201cfurther work is needed\u201d), a restatement of the claim, or a "
+                "judgement about the claim\u2019s reliability is the one to rewrite.</p>"]
+        drawn: set = set()
+        for gi, g in enumerate(d["qa"]):
+            qs = [x for x in (g.get("q") or []) if x]
+            extra = (f" <span class=dim>+{len(qs) - 1} phrasing"
+                     f"{'s' if len(qs) > 2 else ''}</span>") if len(qs) > 1 else ""
+            why = "".join(f"<br><span class=bad>unanswerable alone</span> "
+                          f"<span class=dim>{e(m)}</span>"
+                          for m in (d["prose_q"].get(str(qs[0])) or []) if qs)
+            head = e(qs[0]) if qs else "(no question text)"
+            out.append(f"<p class=ask id='{e(slug)}-q{gi}'>{head}{extra}{why}</p>")
+            answers = [a for a in (g.get("answers") or [])]
+            if not answers:
+                out.append("<p class=note>Nothing answers this — either point it at a "
+                           "claim or drop the question.</p>")
+            for a in answers:
+                c = by_id.get(str(a))
+                if c is None:
+                    out.append(f"<p class=note>points at <code>{e(str(a))}</code>, "
+                               "which is not a claim id.</p>")
+                elif str(a) in drawn:
+                    out.append(f"<p class=again>↑ <a href='#{e(slug)}-{e(str(a))}'>"
+                               f"{e(oneline(c['text'])[:90])}…</a> "
+                               f"<span class=dim>shown above, under its first question"
+                               f"</span></p>")
+                else:
+                    drawn.add(str(a))
+                    out += claim_html(c)
+
+        if orphans := [c for c in d["claims"] if str(c["id"]) not in drawn]:
+            out += [f"<h3>No question points at these ({len(orphans)})</h3>",
+                    "<p class=sub>Published in the claim list and reachable by nothing a "
+                    "visitor would type. Give each one a question, fold it into a claim "
+                    "that has one, or drop it.</p>"]
+            for c in orphans:
+                out += claim_html(c)
 
         if d["qa"]:
-            out += [f"<h3>Question phrasings ({len(d['qa'])})</h3>",
-                    "<p class=sub>Each answer is shown above, under its claims — this is "
-                    "the paraphrase check: whether the 2\u20134 phrasings of one question "
-                    "vary the way real queries do (wording, specificity, the terms "
-                    "someone who has not read the paper would use) rather than "
-                    "restating each other.</p>"]
-            for g in d["qa"]:
+            out += ["<h3>Paraphrase check</h3>",
+                    "<p class=sub>The answers are above. What is left to read here is "
+                    "whether the 2\u20134 phrasings of one question vary the way real "
+                    "queries do — wording, specificity, the terms someone who has not "
+                    "read the paper would use — rather than restating each other.</p>"]
+            for gi, g in enumerate(d["qa"]):
                 out.append("<ul class=q>")
                 for i, q in enumerate(g.get("q") or []):
                     why = d["prose_q"].get(str(q)) or []
@@ -1293,8 +1365,7 @@ def review_page(papers: list[dict]) -> str:
                                + "".join(f"<br><span class=bad>unanswerable alone</span> "
                                          f"<span class=dim>{e(m)}</span>" for m in why)
                                + "</li>")
-                out.append(f"<li class=id>answered by {e(', '.join(g.get('answers') or []))}"
-                           f"</li></ul>")
+                out.append("</ul>")
 
         # Both blocks below are published as standalone fragments -- a misreading as its
         # own list item, a term as a `DefinedTerm` with nothing beside it -- so the note

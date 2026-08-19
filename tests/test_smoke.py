@@ -1518,6 +1518,61 @@ class TestADeclinedSectionTakesItsPayloadWithIt(unittest.TestCase):
                              f"PAYLOAD does not match tasks/{name}")
 
 
+class TestReviewPageShowsEachThingOnce(unittest.TestCase):
+    """The review page pairs claims with questions, and pays for it exactly once.
+
+    Reviewing is the only job on the worklist that is reading, so what the page costs a
+    reader is the thing to protect. It went out once printing each claim's questions above
+    it, which put 2-4 near-identical blocks on the page for every claim that answers more
+    than one question -- 212 of 318 of them -- and the same question above claims far
+    apart, because ordering claims by their *first* question cannot group the second. The
+    fix was to walk the questions and render each claim under the first one that asks for
+    it, with a one-line link under the rest. That property is invisible in the code and
+    obvious on the page, which is the kind that regresses, so it is asserted here.
+
+    A build artifact, so it is checked when present and skipped otherwise: the gates run
+    after `update.py`, and CI builds before it tests.
+    """
+
+    def test_no_question_or_claim_is_rendered_twice(self):
+        page = os.path.join(ROOT, "build", "sidecar_review.html")
+        if not os.path.exists(page):
+            self.skipTest("build/sidecar_review.html not built")
+        with open(page, encoding="utf-8") as fh:
+            html = fh.read()
+        sections = html.split("<div class=paper ")[1:]
+        self.assertTrue(sections, "no paper sections on the review page")
+        for sec in sections:
+            slug = sec.split("'")[1]
+            qs = re.findall(r"<p class=ask id[^>]*>(.*?)</p>", sec, re.S)
+            ids = re.findall(r"<div class=id>\[[a-z]+\] ([^ <·]+)", sec)
+            for label, got in (("question", qs), ("claim", ids)):
+                dupes = {x for x in got if got.count(x) > 1}
+                self.assertFalse(dupes, f"{slug}: {label} rendered more than once: "
+                                        f"{[re.sub('<.*?>', '', d)[:60] for d in dupes]}")
+
+    def test_every_claim_appears_somewhere(self):
+        """Grouping by question can drop a claim no question points at. That claim is
+        still published in the claim list, so a page that silently omits it hides the
+        one thing the author has to decide about it."""
+        page = os.path.join(ROOT, "build", "sidecar_review.html")
+        if not os.path.exists(page):
+            self.skipTest("build/sidecar_review.html not built")
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        from draft_sidecars import checked
+        with open(page, encoding="utf-8") as fh:
+            html = fh.read()
+        for sec in html.split("<div class=paper ")[1:]:
+            slug = sec.split("'")[1]
+            d = checked(slug)
+            if not isinstance(d, dict):
+                continue
+            shown = set(re.findall(r"<div class=id>\[[a-z]+\] ([^ <·]+)", sec))
+            for c in d["claims"]:
+                self.assertIn(str(c["id"]), shown,
+                              f"{slug}: claim {c['id']} is on no surface of the page")
+
+
 class TestGeneratedFilesRenderTitles(unittest.TestCase):
     """No generated file may print a title's raw BibTeX form.
 
@@ -2049,7 +2104,11 @@ class TestAQuoteLinksIntoThePaper(unittest.TestCase):
     def test_only_the_review_page_links_quotes(self):
         with open(os.path.join(ROOT, "scripts", "draft_sidecars.py"), encoding="utf-8") as fh:
             tree = ast.parse(fh.read())
-        callers = {fn.name for fn in ast.walk(tree)
+        # Module-level functions only, so a call inside a nested helper is attributed to
+        # the function that owns it. The property being protected is which *surface* links
+        # -- `review_page` builds a helper per claim block, and walking every def counted
+        # that helper as a second caller and failed on a refactor that changed no surface.
+        callers = {fn.name for fn in tree.body
                    if isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef))
                    for n in ast.walk(fn)
                    if isinstance(n, ast.Call) and getattr(n.func, "id", "") == "at_sentence"}
