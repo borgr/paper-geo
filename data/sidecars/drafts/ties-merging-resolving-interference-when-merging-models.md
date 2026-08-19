@@ -26,7 +26,7 @@ Then, if the replacement is the one you want:
 
   python scripts/draft_sidecars.py --accept ties-merging-resolving-interference-when-merging-models --replace
 
-Stamp: spec=5bb5776e5054 checks=pass body=b181eacae4a3
+Stamp: spec=d57862840a90 checks=pass body=b181eacae4a3
 -->
 ---
 one_liner: TIES-Merging resolves the two kinds of interference between task vectors -- redundant

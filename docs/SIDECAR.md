@@ -97,6 +97,13 @@ claim — stated without a magnitude — but it never gets an invented one. This
 only rule here with no exceptions, because a wrong number is the one error a reader
 cannot detect and the author is publicly answerable for.
 
+**And check it against the pointer you are about to cite, not merely against the
+paper.** The accept-time check asks only whether the number appears somewhere in the
+text, so a real magnitude filed under the wrong table passes it and is still wrong: one
+redraft put a same-task-checkpoint result under "Table 3" when that experiment is
+Figure 7, and nothing but reading caught it. Find the number inside the thing you name
+in `evidence`.
+
 **Then get those numbers onto the page: at least half of the `result` claims must
 carry one.** A figure is the single strongest thing a claim can contain — it is what
 makes a passage worth quoting rather than paraphrasing, and a paraphrase is a citation
@@ -194,6 +201,24 @@ A `result` claim without a magnitude is weak but honest. "Improves accuracy" is
 worthless; "raises exact-match by 4.6 points over the fine-tuned baseline on the
 WMT16 en-de test set" is a claim.
 
+**Name what the number beats.** 37 of 343 claims say a method "outperforms other
+methods" or "outperforms existing methods", which is a comparative with no comparator:
+the reader cannot tell whether the 2.3% is over simple averaging or over the previous
+best, so the claim is unquotable exactly where it is strongest. Write the baseline the
+paper measured against -- "outperforms task arithmetic", "beats averaging, Fisher
+merging and ensembling". This is not scenario class 5 in [§6](#the-question-list),
+which stays ruled out: reporting the baseline a paper measured against is that paper's
+own result, whereas characterising the baseline as bad work is ours to avoid.
+
+**When a sweep is not clean, the exception is part of the claim.** A merged model that
+wins on two of three tasks is not one that "outperforms other methods", and the honest
+sentence is barely longer: *"beats averaging, Fisher merging and ensembling on all
+three tasks, and beats task vectors on two of the three"*. Two claims in one redraft
+were clean sweeps in the draft and had WNLI as the exception in the paper -- the same
+exception both times, which is what an overstated sweep looks like when the model is
+generalising from a table's bottom row. Stating the exception in the claim also keeps
+it out of `scope`, where it would read as a caveat rather than as the result.
+
 **Write at least one `context` claim, and treat it as load-bearing rather than as
 filler.** The highest-volume questions an answer engine receives about any paper are
 not about its Table 2. They are *"what is a good paper on evaluating language
@@ -251,6 +276,13 @@ says under what conditions it is. For the same reason, **do not open a `result` 
 scope with "the analysis of…" or "the experiment on…"**: that names where the result came
 from, which is `evidence`'s field, and it bounds the claim by nothing. The bound is the
 sweep — which models, which datasets, which values of the hyperparameter.
+The bound also includes **what the method was allowed to use**, whenever the paper's
+setup grants it something. A merging result obtained with a validation set available to
+tune the trimming threshold is a different claim from one obtained with no held-out
+data, and that condition is the thing a practitioner reading the page most needs and
+most often does not get. A validation set, a shared pre-trained initialization, a
+coefficient tuned per task: if the paper states an enabling condition, it belongs in
+`scope` beside the models and the datasets.
 
 **It is published after the literal words `Holds for:`** — in the page's claim list,
 in each `FAQPage` answer, and in `llms.txt`. So write it to complete that sentence,
@@ -533,6 +565,22 @@ Three findings, which are not the same problem:
 
 Separately: `build_site.py` emits `ScholarlyArticle` JSON-LD but no `FAQPage` /
 `mainEntity`, so the Q&A block is visible HTML only.
+
+### Measured and left to prose
+
+A hypothesis that failed is worth recording here at the same weight as one that
+shipped, because without the count each of these gets re-proposed as an obvious check
+the next time somebody rereads a draft.
+
+| Class | Measured | Why no check |
+|---|---|---|
+| unnamed comparator — "outperforms other methods" | 37 of 343 claims | The phrase is a real sentence when what follows it *is* the paper's baseline set. Telling those apart needs the paper |
+| circular `scope` — the claim's own subject as its condition | 19 of 343 | Mostly "ViT-B/32 models", a genuine bound that happens to repeat the claim's noun. No regex separates those |
+| a magnitude filed under the wrong pointer | 1 of 343, found by hand | Needs the number located inside the specific figure. The cached full text does not preserve which table a number sat in |
+| `qa` phrasings that are only syntactic rewrites | 0 of 308 groups | Nothing to catch. Q2 above is still open as a decision, but no draft violates it |
+| near-duplicate claim `text` by character similarity | fires only on claims that should exist | Two claims measuring the same thing on ViT-B/32 and on ViT-L/14 score 0.8 similar and both belong |
+| entity-first claim `text` | 39 of 343 open with a subordinate or prepositional clause | Proposed as a rule and refuted by the measurement: those 39 are the strongest claims in the corpus, and a uniform "X outperforms Y" opener is the weaker pattern, not the better one |
+| two claims asserting one finding in different words | — | Semantic, so it stays agent or human judgement; §2's one-proposition rule is the guidance |
 
 ## 6. The open decisions
 

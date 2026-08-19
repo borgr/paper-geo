@@ -26,7 +26,7 @@ Then, if the replacement is the one you want:
 
   python scripts/draft_sidecars.py --accept model-merging-with-svd-to-tie-the-knots --replace
 
-Stamp: spec=5bb5776e5054 checks=pass body=d53607f3b5c1
+Stamp: spec=d57862840a90 checks=pass body=d53607f3b5c1
 -->
 ---
 one_liner: KnOTS takes a joint SVD over the LoRA updates of separately finetuned models so
