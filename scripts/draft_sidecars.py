@@ -1135,7 +1135,12 @@ def restamp(slugs: list[str] | None = None) -> tuple[list[str], list[tuple[str, 
             continue
         n = sum(len(x) for x in validate_draft(f, note=False))
         if n:
-            refused.append((slug, f"{n} finding(s) against the current checks"))
+            # "left stale" was wrong for most of these: a draft can carry findings and
+            # still be stamped against the current spec, and 24 of 43 refusals were that
+            # -- current drafts with open findings, which is the ordinary state of a draft
+            # waiting to be read, not something a re-draft would fix.
+            why = f"{n} finding(s) against the current checks"
+            refused.append((slug, why if stale(f, spec) else f"{why} -- not stale, yours"))
             continue
         text = open(f).read()
         want = f"Stamp: spec={spec} checks=pass body={sha(body_of(f))}"
@@ -1884,8 +1889,11 @@ def review(papers: list[dict]) -> None:
     stale_note = f"   ({len(obsolete)} stale, see below)" if obsolete else ""
     print(f"live sidecars        {len(live)}")
     print(f"drafts awaiting you  {len(drafted) - len(obsolete)}{stale_note}")
+    # Subtracting the draft count printed -2, because the two re-drafts of live sidecars
+    # are counted in both sets. Count the papers with neither instead.
+    have = live | {os.path.basename(f)[:-3] for f in drafted}
     print(f"no sidecar, no draft "
-          f"{len([p for p in papers if p['slug'] not in live]) - len(drafted)}")
+          f"{len([p for p in papers if p['slug'] not in have])}")
     if obsolete:
         print(f"\n{len(obsolete)} draft(s) written against rules that have since changed. "
               f"Do not read these;\nthe next run replaces them:\n  "
