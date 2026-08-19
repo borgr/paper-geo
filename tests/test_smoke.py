@@ -651,10 +651,18 @@ class TestEveryBackendCanBeRepaired(unittest.TestCase):
     REPLY = '{"one_liner": "x", "claims": [], "qa": []}'
 
     def test_the_anthropic_path_hands_back_a_repairable_asker(self):
-        import types
+        import contextlib, types
         block = types.SimpleNamespace(type="text", text=self.REPLY)
         msg = types.SimpleNamespace(stop_reason="end_turn", content=[block])
-        messages = types.SimpleNamespace(create=lambda **kw: msg)
+
+        # A context manager, because the request is streamed: the SDK refuses a
+        # non-streaming call whose max_tokens implies over ten minutes of generation,
+        # which is every drafting call at the configured 32k.
+        @contextlib.contextmanager
+        def stream(**kw):
+            yield types.SimpleNamespace(get_final_message=lambda: msg)
+
+        messages = types.SimpleNamespace(stream=stream)
         mod = types.SimpleNamespace(
             Anthropic=lambda *a, **k: types.SimpleNamespace(messages=messages))
         self._fake("anthropic", mod)

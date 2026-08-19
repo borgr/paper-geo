@@ -473,6 +473,24 @@ def emit_tasks(pairs: list[tuple[dict, str]], cfg) -> str:
 # something malformed" when it wrote something correct and got cut off.
 API_MAX_TOKENS = 32000
 
+# Appended to the user message on any endpoint that would not decode against the schema
+# for us. One copy because three call sites need the identical sentence: a drafting call
+# and a repair call on the OpenAI-compatible path, and both on the Anthropic path once a
+# gateway turns out to reject `output_config.format`.
+JSON_ONLY = "\n\nReturn one JSON object matching the schema. No prose, no fence."
+
+# How each rung of the Anthropic ladder gets its shape guarantee, in the words the draft
+# header and the retry line both use. "the model was told to" is the one that is not a
+# guarantee, and it says so.
+ENFORCED = {"schema": "schema-enforced", "tool": "schema-enforced via a forced tool call",
+            "text": "unenforced, parsed from text"}
+
+# The same three rungs named by how the request is *made*, for the line printed when an
+# endpoint turns one down. "refused structured output, retrying with a forced tool call"
+# is a sentence; "refused schema-enforced" is not.
+ASKED_AS = {"schema": "structured output", "tool": "a forced tool call",
+            "text": "a plain request"}
+
 
 def call_api(pairs: list[tuple[dict, str]], cfg) -> tuple[dict, str, "Callable"]:
     """One Messages API call per paper, validated against the sidecar schema.
@@ -490,19 +508,68 @@ def call_api(pairs: list[tuple[dict, str]], cfg) -> tuple[dict, str, "Callable"]
         sys.exit("pip install anthropic, or set llm.mode: skill in config.yaml")
     client = anthropic.Anthropic()
     sch, out, sys_prompt = schema(), {}, system_prompt()
+    eff = cfg["llm"].get("effort", "medium")
+    # What the request adds, and how the sidecar comes back out of the reply. Tried in
+    # order; the rung that works is remembered for the rest of the run.
+    #
+    # api.anthropic.com accepts the first. A gateway in front of the same model may not:
+    # `ANTHROPIC_BASE_URL` pointed at a proxy answered `output_config.format: Extra inputs
+    # are not permitted` with a 400. The second rung is why this is a ladder and not a
+    # single fallback -- a forced tool call is schema enforcement by another route, it
+    # predates structured output by two years, and proxies pass it through, so a
+    # researcher whose access runs through one still gets a decoded sidecar rather than
+    # whatever the model felt like emitting. The last rung asks in the prompt and parses,
+    # which is a real result and is labelled as one in the draft header.
+    RUNGS = [({"output_config": {"effort": eff,
+                                 "format": {"type": "json_schema", "schema": sch}}}, "schema"),
+             ({"tools": [{"name": "sidecar", "description": "The sidecar for this paper.",
+                          "input_schema": sch}],
+               "tool_choice": {"type": "tool", "name": "sidecar"}}, "tool"),
+             ({}, "text")]
+    rung, worked = 0, False
+
+    def send(req: dict, extra: dict):
+        """The request, streamed and accumulated back into one message.
+
+        Streamed rather than `create()` because the SDK refuses any non-streaming call
+        whose `max_tokens` implies more than ten minutes of generation -- at 32k it
+        raises before sending anything. The alternative was capping the reply near 21k
+        tokens, which is a limit on how long a sidecar may be, set by a client-side
+        timeout heuristic.
+        """
+        try:
+            with client.messages.stream(**req, **extra) as run:
+                return run.get_final_message()
+        except TypeError:                             # an SDK too old for the kwarg
+            with client.messages.stream(**req, extra_body=extra) as run:
+                return run.get_final_message()
 
     def ask(user: str, label: str) -> dict | None:
         """One completion, or None with the reason printed. `label` is for the reader."""
-        req = dict(model=cfg["llm"]["model"],
-                   max_tokens=cfg["llm"].get("max_tokens", API_MAX_TOKENS),
-                   system=sys_prompt,
-                   messages=[{"role": "user", "content": user}])
-        oc = {"effort": cfg["llm"].get("effort", "medium"),
-              "format": {"type": "json_schema", "schema": sch}}
-        try:
-            msg = client.messages.create(**req, output_config=oc)
-        except TypeError:
-            msg = client.messages.create(**req, extra_body={"output_config": oc})
+        nonlocal rung, worked
+        while True:
+            extra, how_out = RUNGS[rung]
+            req = dict(model=cfg["llm"]["model"],
+                       max_tokens=cfg["llm"].get("max_tokens", API_MAX_TOKENS),
+                       system=sys_prompt,
+                       messages=[{"role": "user", "content":
+                                  user + (JSON_ONLY if how_out == "text" else "")}])
+            try:
+                msg = send(req, extra)
+                worked = True
+                break
+            except Exception as e:                    # noqa: BLE001 -- any 4xx means no
+                # Only ever climb down before the first success. Once one request has gone
+                # through, the endpoint's dialect is settled and a failure is a failure --
+                # retrying it unenforced would quietly turn a rate limit into an
+                # undecoded draft.
+                if worked or rung + 1 >= len(RUNGS):
+                    print(f"  failed: {label} -- {type(e).__name__}: {str(e)[:200]}",
+                          file=sys.stderr)
+                    return None
+                rung += 1
+                print(f"  {label}: the endpoint refused {ASKED_AS[how_out]}; "
+                      f"retrying with {ASKED_AS[RUNGS[rung][1]]}", file=sys.stderr)
         if msg.stop_reason == "refusal":
             print(f"  refused: {label}", file=sys.stderr)
             return None
@@ -512,12 +579,20 @@ def call_api(pairs: list[tuple[dict, str]], cfg) -> tuple[dict, str, "Callable"]
             print(f"  truncated at max_tokens: {label} -- raise llm.max_tokens "
                   f"(now {req['max_tokens']})", file=sys.stderr)
             return None
+        if how_out == "tool":
+            sc = next((b.input for b in msg.content if b.type == "tool_use"), None)
+            if sc is None:
+                print(f"  the forced tool call came back as prose: {label}",
+                      file=sys.stderr)
+            return sc
         text = next((b.text for b in msg.content if b.type == "text"), "")
-        try:
-            return json.loads(text)
-        except json.JSONDecodeError:
-            print(f"  unparseable: {label}", file=sys.stderr)
-            return None
+        # `_first_json` rather than `json.loads` even on the enforced rung: it reads a bare
+        # object identically, and on an unenforced one the object arrives inside a fence.
+        sc = _first_json(text)
+        if sc is None:
+            print(f"  no JSON object in the reply: {label} ({len(text)} chars)",
+                  file=sys.stderr)
+        return sc
 
     # Left at 0, which `fits` reads as "do not truncate the paper". Unlike the
     # OpenAI-compatible path, `max_tokens` here is a reply budget rather than part of a
@@ -532,7 +607,8 @@ def call_api(pairs: list[tuple[dict, str]], cfg) -> tuple[dict, str, "Callable"]
         out[p["slug"]] = sc
         print(f"  ok  {p['slug']}  ({len(sc.get('claims') or [])} claims, "
               f"{len(sc.get('qa') or [])} question groups)")
-    return out, f"the Anthropic API ({cfg['llm']['model']})", ask
+    return out, (f"{cfg['llm']['model']} via the Anthropic API "
+                 f"({ENFORCED[RUNGS[rung][1]]})"), ask
 
 
 # An OpenAI-compatible backend, for gateways and open-weight models. Three env vars
@@ -693,7 +769,7 @@ def call_openai(pairs, cfg) -> tuple[dict, str, "object"]:
 
     for p, ev in pairs:
         sc = ask(USER.format(evidence=ev)
-                 + "\n\nReturn one JSON object matching the schema. No prose, no fence.",
+                 + JSON_ONLY,
                  p["slug"])
         if sc is None:
             continue
@@ -758,7 +834,7 @@ REPAIR = ("Here is the paper, a sidecar you drafted from it, and the findings an
           "genuinely not there, leave that claim alone rather than inventing one -- an "
           "unfixed finding is a smaller problem than a wrong number."
           "\n\nPAPER:\n{evidence}\n\nSIDECAR:\n{sidecar}\n\nFINDINGS:\n{findings}"
-          "\n\nReturn one JSON object matching the schema. No prose, no fence.")
+          + JSON_ONLY)
 
 
 REPAIR_REPLY_TOKENS = 8000       # room a rewritten sidecar needs, measured on a 16-claim one
@@ -790,7 +866,8 @@ def fits(evidence: str, sidecar: str, window: int) -> str:
             "your answer; the tables are below ...]\n\n" + evidence[-(room - head):])
 
 
-def repair(slug: str, rounds: int, again, evidence: str = "") -> int:
+def repair(slug: str, rounds: int, again, evidence: str = "",
+           source: str = "a model") -> int:
     """Re-ask the model to fix what the checker found, up to `rounds` times.
 
     This is the answer to "can a smaller model do this if the job is broken up". It can,
@@ -838,7 +915,12 @@ def repair(slug: str, rounds: int, again, evidence: str = "") -> int:
             print(f"    round {r + 1}: no usable reply, keeping the draft as it stands")
             break
         was = open(path, encoding="utf-8").read()
-        write_draft(slug, sc, f"{fm.get('_source', 'a model')} + {r + 1} repair round(s)")
+        # `source` is threaded in rather than read back off the draft: the model's name
+        # lives in the header comment, not in the front matter, so the old
+        # `fm.get('_source')` never found anything and every repaired draft recorded
+        # "a model" -- losing the one fact the header exists to keep.
+        rnd = "round" if r == 0 else "rounds"
+        write_draft(slug, sc, f"{source} + {r + 1} repair {rnd}")
         after = sum(len(x) for x in validate_draft(path, note=False))
         if after > n:
             # Keep the better draft. The early stop above only skips the *next* round, so
@@ -962,7 +1044,7 @@ def validate_draft(path: str, note: bool = True) -> tuple[list[str], list[str]]:
         fm = yaml.safe_load(m.group(1)) or {}
     except yaml.YAMLError as e:
         return [f"{path}: unparseable front matter: {e}"], []
-    errs = []
+    errs, typed = [], True
     try:
         import jsonschema
         jsonschema.validate(fm, schema())
@@ -971,6 +1053,11 @@ def validate_draft(path: str, note: bool = True) -> tuple[list[str], list[str]]:
             if not fm.get(k):
                 errs.append(f"{path}: missing required `{k}` (install jsonschema "
                             f"for the full check)")
+    except jsonschema.ValidationError as e:
+        # `json_path` because the message alone ("is not of type 'object'") does not say
+        # which field, and the first thing the reader needs is where to look.
+        errs.append(f"{path}: {e.json_path}: {e.message.splitlines()[0]}")
+        typed = False
     except Exception as e:
         errs.append(f"{path}: {str(e).splitlines()[0]}")
     ids = {c.get("id") for c in (fm.get("claims") or [])}
@@ -978,6 +1065,17 @@ def validate_draft(path: str, note: bool = True) -> tuple[list[str], list[str]]:
         for a in qa.get("answers") or []:
             if a not in ids:
                 errs.append(f"{path}: qa answer `{a}` is not a claim id")
+
+    if not typed:
+        # The quality tier reads a sidecar's fields at their declared types -- terminology
+        # as a mapping, claims as a list of objects -- and a document the schema just
+        # rejected may not have those types at all. An endpoint that would not decode
+        # against the schema returned `terminology` as a list, and the readability rules
+        # raised AttributeError halfway through the run: a check that crashes reports
+        # nothing, including about the fields that were fine. The schema finding above
+        # already names the field and the expected type, and it is fatal here, so there is
+        # nothing the quality tier could add that the author would act on first.
+        return errs, []
 
     from validate import (check_claim_evidence, check_claim_numbers, check_readability,
                           check_sidecar_shape)
@@ -1764,7 +1862,7 @@ def main() -> None:
             print(f"\nrepairing against the checks, up to {args.repair} round(s):")
             ev = {p["slug"]: e for p, e in pairs}
             for slug in answers:
-                left = repair(slug, args.repair, asker, ev.get(slug, ""))
+                left = repair(slug, args.repair, asker, ev.get(slug, ""), how)
                 print(f"  {slug}: {left} finding(s) left for you")
         print("Next: python scripts/draft_sidecars.py --review")
     else:
