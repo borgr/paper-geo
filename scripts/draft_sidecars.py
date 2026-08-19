@@ -485,11 +485,6 @@ JSON_ONLY = "\n\nReturn one JSON object matching the schema. No prose, no fence.
 ENFORCED = {"schema": "schema-enforced", "tool": "schema-enforced via a forced tool call",
             "text": "unenforced, parsed from text"}
 
-# The same three rungs named by how the request is *made*, for the line printed when an
-# endpoint turns one down. "refused structured output, retrying with a forced tool call"
-# is a sentence; "refused schema-enforced" is not.
-ASKED_AS = {"schema": "structured output", "tool": "a forced tool call",
-            "text": "a plain request"}
 
 
 def call_api(pairs: list[tuple[dict, str]], cfg) -> tuple[dict, str, "Callable"]:
@@ -514,18 +509,31 @@ def call_api(pairs: list[tuple[dict, str]], cfg) -> tuple[dict, str, "Callable"]
     #
     # api.anthropic.com accepts the first. A gateway in front of the same model may not:
     # `ANTHROPIC_BASE_URL` pointed at a proxy answered `output_config.format: Extra inputs
-    # are not permitted` with a 400. The second rung is why this is a ladder and not a
-    # single fallback -- a forced tool call is schema enforcement by another route, it
-    # predates structured output by two years, and proxies pass it through, so a
-    # researcher whose access runs through one still gets a decoded sidecar rather than
-    # whatever the model felt like emitting. The last rung asks in the prompt and parses,
-    # which is a real result and is labelled as one in the draft header.
+    # are not permitted` with a 400. Hence a ladder rather than one fallback -- a forced
+    # tool call is schema enforcement by another route, it predates structured output by
+    # two years, and proxies pass it through, so a researcher whose access runs through one
+    # still gets a decoded sidecar rather than whatever the model felt like emitting.
+    #
+    # `effort` rides along on every rung that will take it, because it is orthogonal to how
+    # the shape is guaranteed and it is the setting that decides how hard the model thinks
+    # about nine coupled fields. It was on the first rung only, which meant the rung that
+    # actually carried the first live run silently dropped it and drafted at whatever the
+    # endpoint defaults to -- the configured value applying on the one path that did not
+    # work. Rung 3 exists for an endpoint that rejects `output_config` outright rather than
+    # just its `format`, so losing effort costs the tool call rather than the other way
+    # round. The last rung asks in the prompt and parses, which is a real result and is
+    # labelled as one in the draft header.
+    TOOL = {"tools": [{"name": "sidecar", "description": "The sidecar for this paper.",
+                       "input_schema": sch}],
+            "tool_choice": {"type": "tool", "name": "sidecar"}}
+    # (what the request adds, how the reply is read, what to call it when refused).
     RUNGS = [({"output_config": {"effort": eff,
-                                 "format": {"type": "json_schema", "schema": sch}}}, "schema"),
-             ({"tools": [{"name": "sidecar", "description": "The sidecar for this paper.",
-                          "input_schema": sch}],
-               "tool_choice": {"type": "tool", "name": "sidecar"}}, "tool"),
-             ({}, "text")]
+                                 "format": {"type": "json_schema", "schema": sch}}},
+              "schema", "structured output"),
+             ({"output_config": {"effort": eff}, **TOOL},
+              "tool", f"a forced tool call at {eff} effort"),
+             (TOOL, "tool", "a forced tool call"),
+             ({}, "text", "a plain request")]
     rung, worked = 0, False
 
     def send(req: dict, extra: dict):
@@ -548,7 +556,7 @@ def call_api(pairs: list[tuple[dict, str]], cfg) -> tuple[dict, str, "Callable"]
         """One completion, or None with the reason printed. `label` is for the reader."""
         nonlocal rung, worked
         while True:
-            extra, how_out = RUNGS[rung]
+            extra, how_out, _ = RUNGS[rung]
             req = dict(model=cfg["llm"]["model"],
                        max_tokens=cfg["llm"].get("max_tokens", API_MAX_TOKENS),
                        system=sys_prompt,
@@ -568,8 +576,8 @@ def call_api(pairs: list[tuple[dict, str]], cfg) -> tuple[dict, str, "Callable"]
                           file=sys.stderr)
                     return None
                 rung += 1
-                print(f"  {label}: the endpoint refused {ASKED_AS[how_out]}; "
-                      f"retrying with {ASKED_AS[RUNGS[rung][1]]}", file=sys.stderr)
+                print(f"  {label}: the endpoint refused {RUNGS[rung - 1][2]}; "
+                      f"retrying with {RUNGS[rung][2]}", file=sys.stderr)
         if msg.stop_reason == "refusal":
             print(f"  refused: {label}", file=sys.stderr)
             return None
@@ -607,7 +615,7 @@ def call_api(pairs: list[tuple[dict, str]], cfg) -> tuple[dict, str, "Callable"]
         out[p["slug"]] = sc
         print(f"  ok  {p['slug']}  ({len(sc.get('claims') or [])} claims, "
               f"{len(sc.get('qa') or [])} question groups)")
-    return out, (f"{cfg['llm']['model']} via the Anthropic API "
+    return out, (f"{cfg['llm']['model']} via the Anthropic API, {eff} effort "
                  f"({ENFORCED[RUNGS[rung][1]]})"), ask
 
 
@@ -1766,6 +1774,11 @@ def main() -> None:
     ap.add_argument("--slug", nargs="+", help="queue exactly these papers")
     ap.add_argument("--mode", choices=("skill", "api", "openai"),
                     help="override llm.mode for this run, without editing config.yaml")
+    # Per-run rather than per-repo: the committed default is what a fork inherits, and
+    # `medium` is the right one to inherit, but a corpus-wide pass whose drafts will be
+    # published under the author's name is worth more thinking than a single spot-check.
+    ap.add_argument("--effort", choices=("low", "medium", "high"),
+                    help="override llm.effort for this run (api mode)")
     ap.add_argument("--repair", type=int, default=0, metavar="N",
                     help="after drafting, show the model its own findings and ask it to "
                          "fix them, up to N times. Stops early when a round stops "
@@ -1852,6 +1865,8 @@ def main() -> None:
     print()
 
     mode = args.mode or cfg["llm"]["mode"]
+    if args.effort:
+        cfg["llm"]["effort"] = args.effort
     if mode in ("api", "openai"):
         caller = call_api if mode == "api" else call_openai
         answers, how, asker = caller(pairs, cfg)
