@@ -147,6 +147,12 @@ calibration term to the correctness reward"* is what the paper did. And a `conte
 claim's job is to say what the work *is*, so it names the contribution by design. Both
 still have to say what the reader gets, not walk through how the thing is assembled.
 
+The `one_liner` is not one of the claims. Both are published -- the one-liner as the
+page's description and every claim in its own list -- so a one-liner copied from a claim
+makes the page state one sentence twice and spends a claim slot saying nothing new. Give
+the one-liner the paper's point, usually the mechanism, and let the claims carry the
+measurements.
+
 Each claim:
 
 - **is self-contained.** It will be retrieved alone, with no title and no
@@ -159,6 +165,11 @@ Each claim:
   LoRA merging as an alignment problem" is the same sentence with a subject. This
   holds for `context` claims too: a claim about what the work contributes still names
   the work.
+- **never enumerates.** A claim whose text runs *"the key contributions are: (1) a
+  method to align task updates, and (2) a new benchmark"* is two claims sharing one id,
+  and each half is retrieved alone and answers its question badly. It is usually the
+  abstract's contributions bullet pasted in. Split it, and give each half its own scope
+  and evidence.
 - **carries one proposition,** and is as long as that takes. Not a paragraph
   covering three findings — a passage about three things embeds as their average
   and is retrieved weakly for each. Not one sentence with three findings stacked
@@ -489,7 +500,9 @@ he retract a page over a long sentence. `--anyway` overrides the whole tier.
 | 30 | a `result` claim does not describe construction without asserting a finding | accept-time | `readability`, partial by construction — a small allowlist of frames ("works by", "consists of", "is clustered"), suppressed when the claim also does a claim's job. Prose [§2 rule 2](#2-the-rules) carries the rest, because whether a sentence says something a reader wanted is not a regex |
 | 31 | no clause of `scope` comments on what the result shows | accept-time | `readability` — [§2 rule 3](#2-the-rules) has always said a restatement of the finding does not belong in `scope`; this is the shape it takes, a trailing participial comment ("merging 2 to 11 tasks, showing consistent performance improvements") that bounds the claim in its first half and asserts it again in the second. 18 of 344 scopes, all from one model. Reporting verbs in the -ing form only, because the same verbs in a finite or past form are real conditions |
 | 32 | a `result` claim's `scope` does not open by naming the analysis it came from | accept-time | `readability` — "the analysis of sign conflicts and their impact on merging" is falsifiable by nothing, and where a result lives in the paper is what `evidence` is for. 5 of 344 scopes. `context` claims are exempt: they have no measurement to state conditions on, and §2 names the publication date as their bound |
-| 33 | canonical key order | — | **nothing — open, D1** |
+| 33 | a claim's `text` does not enumerate `(1) ... (2)` | accept-time | `readability` — two claims sharing one id, and the sentence-count rule misses it because the enumeration is one sentence. 1 of 343 claims, and it was the abstract's contributions bullet pasted in. Checked because the check is two lines and a numbered list is never the shortest way to say one thing |
+| 34 | `one_liner` is not a claim restated | accept-time | `readability`, page-level — both are published, so the page said one sentence twice and spent a claim slot on it. 1 of 343, at ratio 1.00; the threshold is 0.9 on content words because sharing a subject and verb with a claim is expected and only near-identity is the defect |
+| 35 | canonical key order | — | **nothing — open, D1** |
 
 ## 5. What the drift actually looks like
 

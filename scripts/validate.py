@@ -811,6 +811,20 @@ _BARE_DEFINITE = re.compile(
 _NAMES_SOMETHING = re.compile(r"\S+\s+.*?\b[A-Z][A-Za-z0-9]*[A-Z0-9][A-Za-z0-9-]*\b"
                               r"|\S+\s+.*?\b[A-Z][a-z]{2,}\b|\d")
 
+# A claim that enumerates its parts. Matches "(1) ... (2)", "(i) ... (ii)" and
+# "(a) ... (b)" only: a bare "1." never appears mid-sentence in the corpus, and a lone
+# "(1)" with no second item is a citation or a footnote marker rather than a list.
+_ENUMERATES = re.compile(r"(\(\s*(?:1|i|a)\s*\)).{5,}?(\(\s*(?:2|ii|b)\s*\))", re.I | re.S)
+
+# How close two published sentences may be before they are the same sentence, compared on
+# content words so that punctuation and casing cannot hide identity.
+_SAME_TEXT = 0.9
+
+
+def _words(s) -> list[str]:
+    return re.sub(r"[^a-z0-9 ]", " ", str(s or "").lower()).split()
+
+
 # A scope opening by saying what kind of claim it qualifies. It is published after the
 # literal words "Holds for:", so this is the one thing there that cannot parse.
 # `holds` is the failure mode of telling a drafter to complete "Holds for:" -- it writes
@@ -1052,6 +1066,40 @@ def readability(fm: dict) -> list[tuple[str, str, str]]:
             out.append(("page", "", f"{len(who)} claims share one scope verbatim "
                         f"({', '.join(who)}) -- a condition true of every claim is the "
                         f"paper's setting, not this claim's bound: “{sc[:60]}...”"))
+
+    # A claim that enumerates. One of 343 claims in the corpus does this -- the pure-Qwen
+    # KnOTS draft's context claim, "The key contributions are: (1) a method to align task
+    # updates ... and (2) a new benchmark for measuring generality" -- and it is the
+    # abstract's contributions bullet pasted into a field that publishes one assertion.
+    # Two claims wearing one id: retrieved alone it answers neither question well, and the
+    # sentence-count rule misses it because the enumeration is a single sentence. Rare
+    # enough to be worth a check only because the check costs two lines and the signal has
+    # no legitimate case -- a numbered list is never the shortest way to say one thing.
+    for c in (fm.get("claims") or []):
+        if isinstance(c, dict) and (m := _ENUMERATES.search(str(c.get("text") or ""))):
+            out.append(("claim", str(c.get("id") or "?"),
+                        f"text enumerates ({m.group(1).strip()} ... {m.group(2).strip()}) "
+                        "-- that is two claims sharing one id, and each is retrieved alone. "
+                        "Split it, and give each half its own scope and evidence"))
+
+    # The one-liner repeating a claim. Also one case, also the pure-Qwen draft, where
+    # `one_liner` and the first claim were the same 126 characters. Both are published --
+    # the one-liner as the page's description, the claim in the claim list and in an
+    # `acceptedAnswer` -- so the page states one sentence three times, and the duplicate
+    # spends one of the 5-15 claim slots saying nothing new. The threshold is high on
+    # purpose: a one-liner sharing a claim's subject and verb is expected, and only
+    # near-identity is the defect.
+    ol = " ".join(_words(fm.get("one_liner")))
+    for c in (fm.get("claims") or []):
+        if not isinstance(c, dict) or not ol:
+            continue
+        same = difflib.SequenceMatcher(None, ol, " ".join(_words(c.get("text")))).ratio()
+        if same > _SAME_TEXT:
+            out.append(("page", "", f"`one_liner` is claim {c.get('id')!r} again, and both "
+                        "are published -- the one-liner as the page's description and the "
+                        "claim in its own list. Say the paper's point in the one-liner and "
+                        "let the claim carry the measurement, or drop the claim and spend "
+                        "the slot on one the page does not have"))
 
     # Page-level, so it has no single locus. Counted over `result` claims only: a
     # `context` claim asserts where the work sits and usually has no number to carry.

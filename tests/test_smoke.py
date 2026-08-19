@@ -450,7 +450,21 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
             "text": "Trimming the smallest parameter changes leaves merged accuracy "
                     "unchanged on the eleven-task suite.",
             "scope": "the analysis of redundant parameters and their impact on merging.",
+        }, {
+            "id": "enumerates",
+            # Rule 33, and the shape it actually arrives in: the abstract's contributions
+            # bullet, which is one sentence and so slips past the sentence-count cap.
+            "text": "The key contributions are: (1) a method that aligns task updates "
+                    "from separately finetuned models, and (2) a benchmark that measures "
+                    "whether the merged model is general.",
+            "scope": "LoRA adapters over eight vision datasets, merged without any "
+                     "held-out data to tune the merge on.",
         }],
+        # Rule 34: the same sentence published twice, once as the page's description and
+        # once as a claim. Copied off `enumerates` so one fixture claim carries both.
+        "one_liner": "The key contributions are: (1) a method that aligns task updates "
+                     "from separately finetuned models, and (2) a benchmark that measures "
+                     "whether the merged model is general.",
         # One of three result claims carries a figure, so the page-level rule fires too.
         "qa": [{"q": ["How much data does it take to fit a model like this?",
                       "Was this validated on more than one dataset?",
@@ -460,6 +474,8 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
         "terminology": {"normalized accuracy": "The metric for every merging table here."},
     }
     GOOD = {
+        "one_liner": "A trimming rule and a sign vote let several fine-tuned models be "
+                     "averaged without the largest updates cancelling each other out.",
         "claims": [{
             "id": "clean",
             "text": "The method raises exact-match accuracy by 4.6 points over the "
@@ -488,6 +504,8 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
                            ("comments on what the result shows", "the scope-restatement rule"),
                            ("names the analysis the claim came from",
                             "the scope-names-the-analysis rule"),
+                           ("text enumerates", "the enumerated-claim rule"),
+                           ("`one_liner` is claim", "the one-liner-is-not-a-claim rule"),
                            ("result claims state a figure", "the page-level figure rule"),
                            ("define what the word means", "the terminology deixis rule"),
                            ("nothing to point at", "the misreading deixis rule")):

@@ -26,7 +26,7 @@ Then, if the replacement is the one you want:
 
   python scripts/draft_sidecars.py --accept ties-merging-resolving-interference-when-merging-models --replace
 
-Stamp: spec=551e6f04bf75 checks=pass body=32ee779912c2
+Stamp: spec=5bb5776e5054 checks=pass body=b181eacae4a3
 -->
 ---
 one_liner: TIES-Merging resolves the two kinds of interference between task vectors -- redundant
@@ -35,13 +35,13 @@ one_liner: TIES-Merging resolves the two kinds of interference between task vect
 qa:
 - q:
   - What is TIES-Merging?
-  - What method does TIES-Merging use to merge models?
   - How does TIES-Merging resolve parameter interference?
   answers:
   - context-claim
 - q:
   - What are the main steps in TIES-Merging?
   - What are the three steps of TIES-Merging?
+  - What method does TIES-Merging use to merge models?
   answers:
   - ties-merging-steps
 - q:
