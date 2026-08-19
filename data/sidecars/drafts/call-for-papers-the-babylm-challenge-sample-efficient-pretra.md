@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept call-for-papers-the-babylm-challenge-sample-efficient-pretra
 
-Stamp: spec=d57862840a90 checks=pass body=ba8dd07b2eba
+Stamp: spec=74e012ff9654 checks=pass body=ba8dd07b2eba
 -->
 ---
 key: warstadt2023babylm

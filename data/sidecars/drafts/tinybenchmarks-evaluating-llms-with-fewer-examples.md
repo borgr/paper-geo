@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept tinybenchmarks-evaluating-llms-with-fewer-examples
 
-Stamp: spec=d57862840a90 checks=pass body=524791c5efba
+Stamp: spec=74e012ff9654 checks=pass body=524791c5efba
 -->
 ---
 key: polo2024tinybenchmarks

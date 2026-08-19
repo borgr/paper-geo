@@ -1118,7 +1118,14 @@ def readability(fm: dict) -> list[tuple[str, str, str]]:
                     f"the measured claim they are both circling. Never invent one. "
                     f"Number-free: {bare}"))
 
-    for term, definition in (fm.get("terminology") or {}).items():
+    # `or {}` covers a missing field but not a wrong-typed one, and a model that hands back
+    # `terminology` as a string -- one live draft came back with the whole mapping flattened
+    # into `{"term", "definition", "term", ...}` -- made this line raise AttributeError.
+    # A check that raises tells the reader nothing, and it took the review page down with
+    # it. The wrong type is already reported by `check_sidecar_shape`, so there is nothing
+    # to add here beyond not crashing.
+    terms = fm.get("terminology")
+    for term, definition in (terms.items() if isinstance(terms, dict) else ()):
         m = _DEIXIS_TERM.search(str(definition))
         if m:
             out.append(("term", str(term), f"definition says {m.group(0).strip()!r} -- it is "

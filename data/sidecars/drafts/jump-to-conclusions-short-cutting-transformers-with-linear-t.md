@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept jump-to-conclusions-short-cutting-transformers-with-linear-t
 
-Stamp: spec=d57862840a90 checks=pass body=f4d950efbb9c
+Stamp: spec=74e012ff9654 checks=pass body=f4d950efbb9c
 -->
 ---
 claims:

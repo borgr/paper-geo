@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept active-learning-for-bert-an-empirical-study
 
-Stamp: spec=d57862840a90 checks=pass body=1519ca57231e
+Stamp: spec=74e012ff9654 checks=pass body=1519ca57231e
 -->
 ---
 key: eindor2020active

@@ -1370,9 +1370,17 @@ REVIEW_PAGE = os.path.join(BUILD, "sidecar_review.html")
 _CSS = """
 :root { --bg:#fff; --fg:#1a1a1a; --dim:#5c5c5c; --line:#e3e3e3; --card:#fafafa;
         --bad:#a3122a; --badbg:#fdeef1; --ok:#1c6b3c; --warn:#8a5a00; --warnbg:#fdf6e7; }
+/* Three states, not two: an explicit choice stamps data-theme on the root, and the
+   default "system" setting stamps nothing. The media query is guarded so a chosen light
+   theme beats a dark OS, and repeated under the stamp so a chosen dark theme beats a
+   light one -- which matters wherever this page is viewed inside a host that themes it. */
 @media (prefers-color-scheme: dark) {
-  :root { --bg:#16181c; --fg:#e8e8e8; --dim:#a0a0a0; --line:#2e3238; --card:#1d2025;
+  :root:not([data-theme="light"]) { --dark: 1;
+          --bg:#16181c; --fg:#e8e8e8; --dim:#a0a0a0; --line:#2e3238; --card:#1d2025;
           --bad:#ff8fa3; --badbg:#3a1520; --ok:#7ddaa0; --warn:#e8c07a; --warnbg:#3a2f14; } }
+:root[data-theme="dark"] { --dark: 1;
+        --bg:#16181c; --fg:#e8e8e8; --dim:#a0a0a0; --line:#2e3238; --card:#1d2025;
+        --bad:#ff8fa3; --badbg:#3a1520; --ok:#7ddaa0; --warn:#e8c07a; --warnbg:#3a2f14; }
 * { box-sizing:border-box }
 body { background:var(--bg); color:var(--fg); margin:0 auto; padding:2rem 1.25rem 6rem;
        max-width:52rem; font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif }
@@ -1703,9 +1711,14 @@ def review_page(papers: list[dict]) -> str:
 
 
 def write_review_page(papers: list[dict]) -> str:
+    # Build first, write second. `open(..., "w")` truncates on the way in, so building the
+    # page inside the `with` meant one draft that made a check raise left a zero-byte
+    # review page behind -- the previous good page destroyed by the run that failed to
+    # replace it.
+    html = review_page(papers)
     os.makedirs(BUILD, exist_ok=True)
     with open(REVIEW_PAGE, "w") as fh:
-        fh.write(review_page(papers))
+        fh.write(html)
     return REVIEW_PAGE
 
 

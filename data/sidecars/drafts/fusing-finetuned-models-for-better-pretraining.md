@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept fusing-finetuned-models-for-better-pretraining
 
-Stamp: spec=d57862840a90 checks=pass body=a962dcfc3b2e
+Stamp: spec=74e012ff9654 checks=pass body=a962dcfc3b2e
 -->
 ---
 claims:
