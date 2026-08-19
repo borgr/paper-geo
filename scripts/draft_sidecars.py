@@ -624,11 +624,34 @@ def call_api(pairs: list[tuple[dict, str]], cfg,
         if sc is None:
             continue
         out[p["slug"]] = sc
-        print(f"  ok  {p['slug']}  ({len(sc.get('claims') or [])} claims, "
-              f"{len(sc.get('qa') or [])} question groups)")
-        if on_draft:
-            on_draft(p["slug"], sc, provenance(), ask)
+        print(f"  ok  {p['slug']}  ({shape(sc, 'claims')} claims, "
+              f"{shape(sc, 'qa')} question groups)")
+        handed(on_draft, p["slug"], sc, provenance(), ask)
     return out, provenance(), ask
+
+
+def handed(on_draft, slug: str, sc: dict, how: str, ask) -> None:
+    """Hand one finished paper to the caller, and survive a paper that cannot be handed.
+
+    Both backends give each draft away the moment it parses, so the run's work is durable
+    per paper rather than per batch. That guarantee only holds if one bad paper cannot end
+    the run: a reply with `claims` as a JSON string reached `validate_draft`, raised
+    AttributeError, and killed a 96-paper pass 55 papers in -- every finished draft was
+    already on disk, but the 41 that had not been asked for yet were simply not drafted.
+    """
+    if not on_draft:
+        return
+    try:
+        on_draft(slug, sc, how, ask)
+    except Exception as e:                              # noqa: BLE001 -- one paper, not the run
+        print(f"      {slug} could not be written or checked ({type(e).__name__}: {e})"
+              f" -- re-draft it with --slug {slug}")
+
+
+def shape(sc: dict, field: str) -> str:
+    """How many of `field` there are, or what came back instead of a list of them."""
+    v = sc.get(field)
+    return str(len(v)) if isinstance(v, list) else f"{type(v).__name__}, not a list of"
 
 
 # An OpenAI-compatible backend, for gateways and open-weight models. Three env vars
@@ -798,10 +821,9 @@ def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
         if sc is None:
             continue
         out[p["slug"]] = sc
-        print(f"  ok  {p['slug']}  ({len(sc.get('claims') or [])} claims, "
-              f"{len(sc.get('qa') or [])} question groups)")
-        if on_draft:
-            on_draft(p["slug"], sc, provenance(), ask)
+        print(f"  ok  {p['slug']}  ({shape(sc, 'claims')} claims, "
+              f"{shape(sc, 'qa')} question groups)")
+        handed(on_draft, p["slug"], sc, provenance(), ask)
     # The window travels with the closure because `repair` has to fit a paper into what is
     # left of it and has no other way to know how big it is. An attribute rather than a
     # third return value: every caller wants the request, one wants its budget.
@@ -991,6 +1013,19 @@ def unstructure(value, spec: dict):
         if isinstance(text, str):
             return text
         return value
+    if kind in ("array", "object") and isinstance(value, str):
+        # A whole array handed back as a JSON string. One live reply returned `claims` as
+        # 7618 characters of JSON text, which read as 7618 claims and then raised on the
+        # first character. `json.loads` either produces exactly the type the schema asked
+        # for -- in which case nothing was guessed -- or it does not and the string stays
+        # put as a finding.
+        try:
+            got = json.loads(value)
+        except (ValueError, TypeError):
+            return value
+        if isinstance(got, list if kind == "array" else dict):
+            return unstructure(got, spec)
+        return value
     if kind == "array" and isinstance(value, list):
         return [unstructure(v, spec.get("items") or {}) for v in value]
     if kind == "object" and isinstance(value, dict):
@@ -1129,9 +1164,20 @@ def validate_draft(path: str, note: bool = True) -> tuple[list[str], list[str]]:
         errs.append(f"{path}: {e.json_path}: {e.message.splitlines()[0]}")
     except Exception as e:
         errs.append(f"{path}: {str(e).splitlines()[0]}")
-    ids = {c.get("id") for c in (fm.get("claims") or [])}
-    for qa in fm.get("qa") or []:
-        for a in qa.get("answers") or []:
+    # isinstance on every element, because this reads a document the schema has only just
+    # rejected: one draft came back with `claims` as a string, `c.get` raised on the first
+    # character, and the exception escaped validate_draft and killed a 96-paper run 55
+    # papers in. The wrong type is already the schema finding above; here it only has to
+    # not crash.
+    claims = fm.get("claims")
+    ids = {c.get("id") for c in (claims if isinstance(claims, list) else [])
+           if isinstance(c, dict)}
+    groups = fm.get("qa")
+    for qa in (groups if isinstance(groups, list) else []):
+        if not isinstance(qa, dict):
+            continue
+        answers = qa.get("answers")
+        for a in (answers if isinstance(answers, list) else []):
             if a not in ids:
                 errs.append(f"{path}: qa answer `{a}` is not a claim id")
 

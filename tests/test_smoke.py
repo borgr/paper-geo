@@ -29,6 +29,8 @@ from __future__ import annotations
 import ast
 import importlib
 import json
+import contextlib
+import io
 import os
 import re
 import shutil
@@ -402,6 +404,42 @@ class TestPromptsCarryTheirRules(unittest.TestCase):
         rows = re.findall(r"^\| (\d+) \|", head, re.M)
         self.assertEqual(steps, rows,
                          f"§2's prompt has steps {steps} and its index lists {rows}")
+
+
+class TestOneBadPaperCannotEndTheRun(unittest.TestCase):
+    """A drafting run is durable per paper, and that only means something if the paper
+    that cannot be written is the only casualty. A reply with `claims` as a JSON string
+    raised inside validate_draft and ended a 96-paper pass 55 papers in."""
+
+    def test_handed_survives_a_failing_draft(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import draft_sidecars as D
+        seen = []
+
+        def on_draft(slug, sc, how, ask):
+            seen.append(slug)
+            if slug == "bad":
+                raise AttributeError("'str' object has no attribute 'get'")
+
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            for slug in ("first", "bad", "third"):
+                D.handed(on_draft, slug, {}, "a model", None)
+        self.assertEqual(seen, ["first", "bad", "third"], "the run stopped at the bad paper")
+        self.assertIn("--slug bad", buf.getvalue(),
+                      "a paper that could not be written has to say how to re-draft it")
+
+    def test_a_json_string_array_is_recovered(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import draft_sidecars as D
+        claims = [{"id": "a", "kind": "result", "text": "x", "scope": "y",
+                   "evidence": "Table 1"}]
+        got = D.unstructure({"claims": json.dumps(claims)}, D.schema())
+        self.assertEqual(got["claims"], claims)
+        # Not recoverable is not the same as recovered wrongly: it stays put and stays a
+        # finding rather than becoming a guess.
+        self.assertEqual(D.unstructure({"claims": "prose, not JSON"},
+                                       D.schema())["claims"], "prose, not JSON")
 
 
 class TestFindingsCollapseToTheRuleTheyBroke(unittest.TestCase):
