@@ -439,7 +439,17 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
         }, {
             "id": "first-person",
             "text": "We find that merged models trail multitask training.",
-            "scope": "Vision encoders only.",
+            # The trailing clause is the whole of rule 31: a condition, then the claim
+            # said a second time in the field that exists to bound it.
+            "scope": "Vision encoders only, demonstrating the benefits of merging.",
+        }, {
+            "id": "names-the-analysis",
+            # Rule 32: where the result lives is `evidence`, and this bounds nothing.
+            # No figure in the text, so the page-level coverage rule still fires: three of
+            # the four result claims here are meant to be missing their magnitude.
+            "text": "Trimming the smallest parameter changes leaves merged accuracy "
+                    "unchanged on the eleven-task suite.",
+            "scope": "the analysis of redundant parameters and their impact on merging.",
         }],
         # One of three result claims carries a figure, so the page-level rule fires too.
         "qa": [{"q": ["How much data does it take to fit a model like this?",
@@ -475,6 +485,9 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
                            ("leans on 'We'", "the same rule on first person"),
                            ("scope is 4 sentences", "the scope condition cap"),
                            ("longer than the claim it bounds", "the scope proportion rule"),
+                           ("comments on what the result shows", "the scope-restatement rule"),
+                           ("names the analysis the claim came from",
+                            "the scope-names-the-analysis rule"),
                            ("result claims state a figure", "the page-level figure rule"),
                            ("define what the word means", "the terminology deixis rule"),
                            ("nothing to point at", "the misreading deixis rule")):
@@ -514,6 +527,21 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
         from validate import check_readability
         ok = {"misreadings": ["The dataset contains matches involving human players, and "
                               "the paper does not state whether they were used."]}
+        self.assertEqual(check_readability([("ok.md", ok)]), [])
+
+    def test_a_scope_may_say_what_a_result_shows_about_a_condition(self):
+        """Why rule 31's noun list is closed, in a test.
+
+        "shows no effect below 1B" is the shape the rule exists to get instead of a
+        restatement, and it opens with the same verb -- so a catch-all after any showing
+        verb would flag the model answer as the pathology.
+        """
+        from validate import check_readability
+        ok = {"claims": [{"id": "c", "kind": "result",
+                          "text": "Merging raises accuracy by 4.6 points on WMT16 "
+                                  "English-German over the fine-tuned baseline.",
+                          "scope": "Encoder-decoder models at 7B, which shows no effect "
+                                   "below 125M parameters and was tested on one pair."}]}
         self.assertEqual(check_readability([("ok.md", ok)]), [])
 
     def test_a_bare_definite_is_caught_and_a_named_subject_is_not(self):
@@ -1531,13 +1559,23 @@ class TestAcceptanceIsNotPermanent(unittest.TestCase):
     def test_a_refused_live_sidecar_is_queued_again(self):
         sys.path.insert(0, os.path.join(ROOT, "scripts"))
         import validate
-        from draft_sidecars import pending
+        from draft_sidecars import held, pending, spec_sha
         entries, _ = validate.read_sidecars()
         stale = set(validate.outdated_live(entries))
         if not stale:
             self.skipTest("every live sidecar passes the current accept-time checks")
         papers = [{"slug": s, "citations": 1} for s in stale]
-        self.assertEqual(stale, {p["slug"] for p in pending(papers, False, None)})
+        # `do_all=True` is what isolates the rule under test: it drops the current-draft
+        # exemption and leaves only the live-sidecar exclusion, which is the thing that
+        # used to make acceptance permanent. Asserted unconditionally, because once a
+        # replacement draft exists for every refused sidecar -- the good state -- the
+        # default path legitimately queues nothing and would assert nothing.
+        self.assertEqual(stale, {p["slug"] for p in pending(papers, True, None)})
+        # And the other half of the same rule: a refused sidecar whose replacement draft
+        # is already written and waiting is not queued again, because re-queueing it
+        # would overwrite a current draft with a fresh call to the model.
+        self.assertEqual(stale - set(held(spec_sha())),
+                         {p["slug"] for p in pending(papers, False, None)})
 
     def test_a_passing_live_sidecar_stays_accepted(self):
         """The other half, and the one that keeps this from re-drafting everything: a

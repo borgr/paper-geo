@@ -579,7 +579,17 @@ def check_sidecars(entries: list[tuple[str, dict]]) -> list[str]:
 
 CLAIMS = (5, 15)
 CLAIM_TEXT = (60, 450)
-CLAIM_SCOPE = (80, 800)
+# The scope floor was 80, and rule 31 is what showed 80 to be wrong. It was set from a
+# corpus whose scopes all carried a trailing "..., demonstrating robust performance"; with
+# that clause deleted as the rule asks, 18 scopes in the corpus fall between 47 and 74
+# chars and every one of them is a real single-clause condition -- "Llama3-8B models
+# finetuned with LoRA on NLI tasks", "LoRA ranks ranging from 4 to 768 on the per-task
+# vision benchmark". So the two rules together demanded the padding back, which is
+# exactly the failure decision C2 in docs/SIDECAR.md rejected a scope *template* to
+# avoid. 40 is under the shortest honest scope in the corpus and above the vacuous ones
+# the floor was for ("Further research is needed", "Vision encoders only"), and the
+# content of a bad scope is caught by rule 22 and rule 31 rather than by its length.
+CLAIM_SCOPE = (40, 800)
 # Deliberately generous: a question group is query surface, and more real phrasings of a
 # real question is the whole point. The ceiling only catches a run of invented questions.
 QA_GROUPS = (4, 20)
@@ -737,6 +747,17 @@ CLAIM_SEPARATORS = 1
 # 348-character claim. Three conditions is the ceiling because a fourth means the claim
 # was stated more broadly than it holds, and narrowing the claim is the better fix.
 SCOPE_SENTENCES = 3
+# Below this a scope cannot be the thing the ratio rule guards against. The rule is that a
+# scope must not be longer than its claim, because the published `FAQPage` answer is the
+# claim then "Holds for:" then all of the scope, and the measured pathology was scopes of
+# 426-798 chars at a median 1.5x their claim -- an answer that is mostly caveat. Read
+# without a floor it also fires on 103 chars against 91, which is not that pathology, and
+# combined with the 80-char band floor it leaves an 11-character target on a short claim:
+# unhittable, so a model told to shorten oscillates between the two rules and a reviewer
+# reads "scope too short" and "scope too long" about the same field on consecutive runs.
+# Measured across all 344 claims in the live sidecars and drafts, the floor excuses 6 and
+# still flags 237 of 243 -- every one of the 30 in the two published files included.
+SCOPE_RATIO_FLOOR = 160
 
 # Half of a page's `result` claims must state a figure. A number is what makes a passage
 # worth quoting rather than paraphrasing, and a paraphrase is a citation lost. Measured
@@ -802,6 +823,45 @@ _CLASSIFIES = re.compile(
     r"design|property|consequence|restatement|algebraic|entry|observation|"
     r"characterisation|characterization|judgement|judgment)\b"
     r"|the\s+(?:paper's|claim|point)\s+)", re.I)
+
+# A scope clause that restates what the result shows instead of bounding it. Rule 3 has
+# always ruled this out in prose -- "a restatement of the finding does not belong here" --
+# and nothing enforced it, so the class survived every check: "merging 2 to 11 tasks,
+# showing consistent performance improvements" bounds the claim in its first half and then
+# asserts it again in the second, published after "Holds for:" as if it were a condition.
+#
+# Two shapes, measured across the 344 live and drafted scopes. The trailing participial
+# comment (", demonstrating ...") is 18 of them, all in drafts from one model, which is
+# why it reads as a habit rather than as English a scope needs. The participles are
+# restricted to *reporting* verbs and to the -ing form on purpose: three near misses in
+# the corpus are real conditions using the same verbs in a finite or past form -- "which
+# was pretrained with decay, showed less of the adverse effect", "shown as two heatmaps
+# per model rather than a table", "established before any merging happens". The second
+# shape is a showing verb plus an upshot noun anywhere in the field, for the same clause
+# written without the comma; its noun list is closed so that "shows no effect below 1B",
+# which is the condition the rule is asking for, cannot match.
+_UPSHOT_PARTICIPLE = (r"showing|demonstrating|highlighting|illustrating|underscoring"
+                      r"|confirming|indicating|proving|emphasi[sz]ing|reflecting"
+                      r"|suggesting|validating|establishing|revealing")
+_UPSHOT_NOUN = (r"benefits?|effectiveness|importance|advantages?|superiority|impact|value"
+                r"|utility|necessity|robustness|generality|strength")
+_SHOWS_UPSHOT = re.compile(
+    rf"[,;]\s*(?:and\s+|thus\s+|thereby\s+|so\s+)?(?:{_UPSHOT_PARTICIPLE})\b"
+    rf"|\b(?:show\w*|demonstrat\w+|highlight\w+|illustrat\w+)\s+"
+    rf"(?:the\s+|that\s+|its\s+|their\s+)?(?:{_UPSHOT_NOUN})\b", re.I)
+
+# A `result` claim's scope naming the analysis instead of its conditions: "the analysis of
+# sign conflicts and their impact on merging" as the bound on "resolving sign conflicts is
+# crucial". It parses after "Holds for:" and it is falsifiable by nothing -- and what it
+# does say is already in `evidence`, which is the field for where in the paper the result
+# lives. The real bound for that claim is the sweep: which models, which values of k.
+# 8 of 344 scopes open this way, 5 of them on `result` claims; the other 3 are `context`
+# claims reading "the context of merging LoRA models, as of publication in 2025", which is
+# left alone because a `context` claim has no measurement to state conditions on and §2
+# names the publication date as its honest bound.
+_NAMES_THE_ANALYSIS = re.compile(
+    r"^\s*(?:the\s+)?(?:analys[ei]s|study|experiments?|evaluation|investigation|discussion"
+    r"|examination|ablation)\s+(?:of|in|on)\b", re.I)
 
 # The subset of the above that is the renderer's own prefix, written into the field. A
 # separate pattern rather than a branch on the match text, because "Holds for models
@@ -939,11 +999,22 @@ def readability(fm: dict) -> list[tuple[str, str, str]]:
                             "the published answer is the claim then \"Holds for:\" then "
                             "all of this, so a fourth condition means the claim was "
                             "stated more broadly than it holds: narrow the claim"))
-        if scope and len(scope) > len(text):
+        if scope and len(scope) > len(text) and len(scope) >= SCOPE_RATIO_FLOOR:
             out.append((*at, f"scope is longer than the claim it bounds ({len(scope)} vs "
                             f"{len(text)} chars) -- that makes the published answer "
                             "mostly caveat, and the caveat is the half a summariser "
                             "drops anyway"))
+        if (c.get("kind") or "result") == "result" and _NAMES_THE_ANALYSIS.match(scope):
+            out.append((*at, "scope names the analysis the claim came from rather than what "
+                             "bounds it -- where it lives in the paper is `evidence`'s job. "
+                             "Give the conditions the measurement ran under: which models, "
+                             "which datasets, which values swept"))
+        if m := _SHOWS_UPSHOT.search(scope):
+            tail = scope[m.start():].lstrip(",; ")
+            out.append((*at, f"scope comments on what the result shows -- \u201c{tail}\u201d "
+                             "is the claim again, not a condition on it. Ask what would "
+                             "have to change for the claim to be false; if the rest of the "
+                             "scope already says that, delete this clause"))
         for i, s in enumerate(conds):
             if not _CLASSIFIES.match(s):
                 continue
@@ -988,10 +1059,16 @@ def readability(fm: dict) -> list[tuple[str, str, str]]:
            if isinstance(c, dict) and (c.get("kind") or "result") == "result"]
     withnum = [c for c in res if figures(c.get("text"))]
     if res and len(withnum) < RESULT_FIGURES * len(res):
+        # Names the claims, because a page-level finding with no locus is a finding the
+        # repair round cannot act on: the model was told half its claims want a magnitude
+        # and had to guess which half, so it changed none of them. The ids are the whole
+        # difference between "raise your coverage" and "these seven claims dropped a number".
+        bare = ", ".join(str(c.get("id")) for c in res if not figures(c.get("text")))
         out.append(("page", "", f"only {len(withnum)} of {len(res)} result claims state a "
                     f"figure (want {RESULT_FIGURES:.0%}) -- go back to the tables for the "
                     "magnitudes these claims dropped, or fold two number-free claims into "
-                    "the measured claim they are both circling. Never invent one"))
+                    f"the measured claim they are both circling. Never invent one. "
+                    f"Number-free: {bare}"))
 
     for term, definition in (fm.get("terminology") or {}).items():
         m = _DEIXIS_TERM.search(str(definition))

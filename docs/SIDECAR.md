@@ -210,7 +210,11 @@ the 125M model shows no effect" is scope. It is a separate, adjacent field becau
 summarisers drop scope far more often than they drop findings, which is the most
 common way a paper ends up misrepresented.
 
-**It is shorter than the claim it bounds, and at most three sentences.** This is the
+**Once it passes 160 characters it must be shorter than the claim it bounds, and it is
+at most three sentences either way.** The floor is there because the two rules meet the
+80-character band floor and, on a short claim, leave a target a few characters wide that
+nothing can hit; below 160 the whole published answer is two short sentences and no part
+of it is drowning the other. This is the
 rule current drafts break hardest: the published answer in a `FAQPage` is literally
 the claim, then the words "Holds for:", then the whole scope — and 290 of 325 scopes
 are longer than the claim they qualify, at a median of 1.5×, up to one that is 14
@@ -227,6 +231,15 @@ about what it actually covers needs fewer caveats than one stated broadly and th
 walked back. Two things also do not belong here and account for much of the length: a
 restatement of the finding, and anything a reader could only misread *if* they read
 past the page — that second one is `misreadings`, which exists for it.
+The restatement has one recurring shape, so it is worth naming: **a trailing
+participle commenting on the result** — "merging 2 to 11 tasks, showing consistent
+performance improvements", "on eight vision tasks, demonstrating significant gains".
+The first half is the condition and the second half is the claim again, so the clause
+is deleted rather than rewritten. Whether the result is good is the claim's job; scope
+says under what conditions it is. For the same reason, **do not open a `result` claim's
+scope with "the analysis of…" or "the experiment on…"**: that names where the result came
+from, which is `evidence`'s field, and it bounds the claim by nothing. The bound is the
+sweep — which models, which datasets, which values of the hyperparameter.
 
 **It is published after the literal words `Holds for:`** — in the page's claim list,
 in each `FAQPage` answer, and in `llms.txt`. So write it to complete that sentence,
@@ -337,7 +350,7 @@ out. Write fewer, better ones and stop.
 |---|---|---|
 | `claims` | **5–15**, of which **≥1 `context`** and **more `result` than `context`** | a paper has a handful of real findings; twenty claims means one finding split five ways, which is paraphrasing under another name. The `result` majority is what keeps a page a record of work rather than a page about its own importance |
 | claim `text` | **60–450 chars**, **≤2 sentences**, **≤32 words each**, **≤1** colon/semicolon/dash | one proposition, quotable verbatim. Aim near `one_liner`'s 320. The char band alone let a 79-word single sentence pass, which is why the sentence caps exist: each extra separator is where a second finding got bolted on instead of becoming its own claim |
-| `scope` | **80–800 chars** | a condition list, and the longest field on purpose — it is the one summarisers drop, so brevity here buys nothing. The ceiling is where it stops being a list of conditions and becomes an essay that dilutes the claim it qualifies |
+| `scope` | **40–800 chars** | a condition list, and usually the longest field — it is the one summarisers drop, so brevity here buys nothing. The ceiling is where it stops being a list of conditions and becomes an essay that dilutes the claim it qualifies. The floor was 80 and is 40 because rule 31 made it wrong: strip the trailing "…, demonstrating robust performance" that 18 scopes carried and what is left — "Llama3-8B models finetuned with LoRA on NLI tasks" — is a real condition of 50 chars, so the two rules together were demanding the padding back |
 | `qa` | **4–20 groups**, ≥1 answered by a `context` claim | question groups are query surface, so the ceiling is loose: it exists to catch a run of invented questions, not to ration real ones |
 | `q` per group | **2–4 phrasings** | |
 | `misreadings` | **0–14**, each stated as a correction and never as a question | only ones the paper gives you a reason to expect |
@@ -456,7 +469,7 @@ he retract a page over a long sentence. `--anyway` overrides the whole tier.
 | 10 | the rules block in §2 exists and is non-trivial | schema-tier | `validate.py`, and `rules_block()` raises rather than sending an empty prompt |
 | 11 | a draft can never reach a page | file layout | the site globs `data/sidecars/*.md`; drafts sit one level down |
 | 12 | 5–15 claims, ≥1 `context`, and more `result` than `context` | shape | `validate.py check_sidecar_shape` |
-| 13 | `text` 60–450 chars, `scope` 80–800 chars | shape | `check_sidecar_shape` |
+| 13 | `text` 60–450 chars, `scope` 40–800 chars | shape | `check_sidecar_shape` |
 | 14 | 4–20 `qa` groups, 2–4 phrasings each | shape | `check_sidecar_shape` |
 | 15 | ≥1 `qa` group answered by a `context` claim | shape | `check_sidecar_shape` |
 | 16 | every claim is pointed at by some `qa` entry | shape | `check_sidecar_shape` (was D3) |
@@ -467,14 +480,16 @@ he retract a page over a long sentence. `--anyway` overrides the whole tier.
 | 21 | claim `text` is ≤2 sentences of ≤32 words, with ≤1 colon/semicolon/dash | accept-time | `validate.py readability` — [§2 rule 2](#2-the-rules) |
 | 22 | no sentence of `scope` classifies the claim | accept-time | `readability` — it is published after "Holds for:", so every sentence has to complete that phrase |
 | 23 | no `qa` phrasing leans on a reference with no antecedent in it | accept-time | `readability` — bare `this`/`these`, `this paper`, `the authors`, trailing `here`, opening `it`/`they` |
-| 24 | `scope` is ≤3 sentences and no longer than its own claim | accept-time | `readability` — the `FAQPage` answer is claim + "Holds for:" + scope, so a scope longer than the claim makes the published answer mostly caveat |
+| 24 | `scope` is ≤3 sentences, and no longer than its own claim once it passes 160 chars | accept-time | `readability` — the `FAQPage` answer is claim + "Holds for:" + scope, so a long scope makes the published answer mostly caveat. The 160 floor keeps the rule off the case it was never about, where it collides with the 80-char band floor and leaves nothing a scope can be |
 | 25 | claim `text` does not open with "the paper"/"the contribution" | accept-time | `readability` — [§2 rule 2](#2-the-rules)'s self-containment bullet, which until now nothing enforced |
 | 26 | no `terminology` definition and no misreading says "here"/"we"/"this paper" | accept-time | `readability` — a `DefinedTerm` travels alone, so a definition of its role on the page defines nothing |
 | 27 | ≥half of a page's `result` claims carry a number | accept-time | `readability`, page-level — [§2 rule 1](#2-the-rules). Never satisfied by inventing one; rule 20 would catch that |
 | 28 | **every section, figure and table a claim's `evidence` cites exists in the paper** | accept-time | `validate.py check_claim_evidence` against the cached text, and `--accept` refuses. Only existence, never support: no check here can tell whether Figure 4 shows what the claim says it shows |
 | 29 | no `qa` phrasing leans on a bare `the` + role noun | accept-time | `readability` — rule 23's subtler form. Yields to any question that names something, so a qualifier or a name is the fix |
 | 30 | a `result` claim does not describe construction without asserting a finding | accept-time | `readability`, partial by construction — a small allowlist of frames ("works by", "consists of", "is clustered"), suppressed when the claim also does a claim's job. Prose [§2 rule 2](#2-the-rules) carries the rest, because whether a sentence says something a reader wanted is not a regex |
-| 31 | canonical key order | — | **nothing — open, D1** |
+| 31 | no clause of `scope` comments on what the result shows | accept-time | `readability` — [§2 rule 3](#2-the-rules) has always said a restatement of the finding does not belong in `scope`; this is the shape it takes, a trailing participial comment ("merging 2 to 11 tasks, showing consistent performance improvements") that bounds the claim in its first half and asserts it again in the second. 18 of 344 scopes, all from one model. Reporting verbs in the -ing form only, because the same verbs in a finite or past form are real conditions |
+| 32 | a `result` claim's `scope` does not open by naming the analysis it came from | accept-time | `readability` — "the analysis of sign conflicts and their impact on merging" is falsifiable by nothing, and where a result lives in the paper is what `evidence` is for. 5 of 344 scopes. `context` claims are exempt: they have no measurement to state conditions on, and §2 names the publication date as their bound |
+| 33 | canonical key order | — | **nothing — open, D1** |
 
 ## 5. What the drift actually looks like
 
@@ -522,7 +537,7 @@ decision with no record of having been made gets re-litigated.
 | Q4 | may a question have an answer that is not a claim | no — promote it to a claim. Which is what `kind: context` is for: the answer to *"what should I read about X"* is a claim like any other, it just has nothing to cite |
 | Q6 | which scenario classes the question set must cover | classes 1 and 2 are required (bottom lines, and one general question of the field answered by a `context` claim); 6 and 8 stay in `scope` and `terminology`; 5 and 7 are ruled out — 5 characterises someone else's work, 7 is the identity track. Cap comes from the 4–20 band |
 | C1 | granularity of one claim | one finding, bounded by the 5–15 band. Splitting a finding to reach a count is paraphrasing, which is separately forbidden |
-| C2 | `scope` shape | prose with an 80–800 band. A template was rejected: a paper whose scope is genuinely one clause would be padded to fit it |
+| C2 | `scope` shape | prose with a 40–800 band. A template was rejected: a paper whose scope is genuinely one clause would be padded to fit it — and the floor was lowered from 80 for the same reason, once rule 31 stopped the padding that was hiding it |
 | C3 | is `evidence` required | on `kind: result`, yes. On `kind: context`, no — and that asymmetry *is* the answer to "can we ship useful unverified claims" |
 | A2 | minimum viable sidecar | 5 claims, from the band |
 | C6 | how many `context` claims before a page reads as self-promotion | ≥1 required, and `result` must outnumber `context`. A page whose majority is unverifiable standing claims is an advert; the majority rule is the cheapest expression of that. §4 row 12 |

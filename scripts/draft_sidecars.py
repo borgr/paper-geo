@@ -671,6 +671,10 @@ def call_openai(pairs, cfg) -> tuple[dict, str, "object"]:
         print(f"  ok  {p['slug']}  ({len(sc.get('claims') or [])} claims, "
               f"{len(sc.get('qa') or [])} question groups)")
     how = "schema-enforced" if enforced else "unenforced, parsed from text"
+    # The window travels with the closure because `repair` has to fit a paper into what is
+    # left of it and has no other way to know how big it is. An attribute rather than a
+    # third return value: every caller wants the request, one wants its budget.
+    ask.window = window or 0
     return out, f"{model} via an OpenAI-compatible endpoint ({how})", ask
 
 
@@ -714,16 +718,49 @@ _PROMOTE_REPLACE = ("Then, if the replacement is the one you want:\n\n"
                     "  python scripts/draft_sidecars.py --accept {slug} --replace\n")
 
 
-REPAIR = ("Here is a sidecar you drafted, and the findings an automated checker raised "
-          "against it. Fix exactly what the findings name and change nothing else: keep "
-          "every claim id, keep the evidence strings, keep the questions pointing where "
-          "they point. If a finding asks for a figure the paper does not give you, leave "
-          "that claim alone rather than inventing one -- an unfixed finding is a smaller "
-          "problem than a wrong number.\n\nSIDECAR:\n{sidecar}\n\nFINDINGS:\n{findings}"
+REPAIR = ("Here is the paper, a sidecar you drafted from it, and the findings an "
+          "automated checker raised against the sidecar. Fix exactly what the findings "
+          "name and change nothing else: keep every claim id, keep the questions pointing "
+          "where they point. Go back to the paper for anything a finding asks you to add "
+          "-- a magnitude belongs to a table you can re-read, and a scope below the length "
+          "floor is short because the real conditions were dropped, not because the paper "
+          "has none. Every number you write must appear in the paper's own text; if it is "
+          "genuinely not there, leave that claim alone rather than inventing one -- an "
+          "unfixed finding is a smaller problem than a wrong number."
+          "\n\nPAPER:\n{evidence}\n\nSIDECAR:\n{sidecar}\n\nFINDINGS:\n{findings}"
           "\n\nReturn one JSON object matching the schema. No prose, no fence.")
 
 
-def repair(slug: str, rounds: int, again) -> int:
+REPAIR_REPLY_TOKENS = 8000       # room a rewritten sidecar needs, measured on a 16-claim one
+
+
+def fits(evidence: str, sidecar: str, window: int) -> str:
+    """As much of the paper as leaves the model room to answer, head and tail.
+
+    A repair prompt is the only one here that carries the paper *and* a full sidecar, and
+    on a 32k window those two do not both fit: TIES-Merging's text is 74k chars, which
+    left 2048 tokens for a reply that needs about four thousand, so round one came back
+    truncated and the loop dutifully kept the draft it had been asked to fix. Silent, and
+    it looked like a model that had nothing to add.
+
+    Head and tail rather than the first N chars, because the findings that need the paper
+    are the ones asking for a magnitude, and magnitudes are in the tables -- which are at
+    the end, exactly where a front-truncation cuts. The middle is the related work and the
+    method prose, which the claims are already written from.
+    """
+    if not evidence or not window:
+        return evidence
+    room = int((window - len(sidecar) / 3.2 - REPAIR_REPLY_TOKENS - 4000) * 3.2)
+    if room >= len(evidence):
+        return evidence
+    if room < 4000:                      # nothing useful survives; answer from the sidecar
+        return ""
+    head = int(room * 0.45)
+    return (evidence[:head] + "\n\n[... middle of the paper omitted to leave room for "
+            "your answer; the tables are below ...]\n\n" + evidence[-(room - head):])
+
+
+def repair(slug: str, rounds: int, again, evidence: str = "") -> int:
     """Re-ask the model to fix what the checker found, up to `rounds` times.
 
     This is the answer to "can a smaller model do this if the job is broken up". It can,
@@ -734,6 +771,14 @@ def repair(slug: str, rounds: int, again) -> int:
 
     `again(prompt_extra)` is the caller's own one-paper call, so this function knows
     nothing about which backend it is driving.
+
+    `evidence` is the same paper text the draft was written from, and it is what decides
+    which findings are fixable. Without it the loop can only re-word what it already
+    wrote, so every finding that asks for a fact -- a magnitude a claim dropped, the real
+    conditions behind a scope that came out under the length floor -- was unfixable by
+    construction, and the loop's honest answer was to leave it. Measured on the two
+    published sidecars: the residue after three blind rounds was 3 and 5 findings, and
+    all of it was of that kind.
 
     Stops early when a round stops helping, because a round that does not reduce the count
     is a round spending tokens to reword: the loop optimises against proxies, and past the
@@ -755,13 +800,27 @@ def repair(slug: str, rounds: int, again) -> int:
             break
         fm = front_matter(path) or {}
         found = "\n".join(f"- {str(x).split('.md: ')[-1]}" for x in errs + qual)
-        sc = again(REPAIR.format(sidecar=json.dumps(fm, ensure_ascii=False, indent=1),
+        ev = fits(evidence, json.dumps(fm), getattr(again, "window", 0))
+        sc = again(REPAIR.format(evidence=ev or "(not available on this run)",
+                                 sidecar=json.dumps(fm, ensure_ascii=False, indent=1),
                                  findings=found), f"{slug} repair {r + 1}")
         if sc is None:
             print(f"    round {r + 1}: no usable reply, keeping the draft as it stands")
             break
+        was = open(path, encoding="utf-8").read()
         write_draft(slug, sc, f"{fm.get('_source', 'a model')} + {r + 1} repair round(s)")
         after = sum(len(x) for x in validate_draft(path, note=False))
+        if after > n:
+            # Keep the better draft. The early stop above only skips the *next* round, so
+            # a final round that overshoots still landed on disk and replaced the draft it
+            # was meant to improve -- live case: 15 -> 7 -> 4 -> 6, and the 6 was what was
+            # left for the reviewer. The overshoot is the loop's characteristic failure
+            # rather than bad luck: told a scope is too long it cuts, and cutting past the
+            # floor trades one finding for another, so the round both fixes and breaks.
+            open(path, "w", encoding="utf-8").write(was)
+            print(f"    round {r + 1}: {n} finding(s) -> {after}, worse -- kept the "
+                  f"{n}-finding draft")
+            break
         print(f"    round {r + 1}: {n} finding(s) -> {after}")
     return sum(len(x) for x in validate_draft(path, note=False))
 
@@ -1677,8 +1736,9 @@ def main() -> None:
         print(f"\nwrote {len(answers)} draft(s) to data/sidecars/drafts/")
         if args.repair and asker:
             print(f"\nrepairing against the checks, up to {args.repair} round(s):")
+            ev = {p["slug"]: e for p, e in pairs}
             for slug in answers:
-                left = repair(slug, args.repair, asker)
+                left = repair(slug, args.repair, asker, ev.get(slug, ""))
                 print(f"  {slug}: {left} finding(s) left for you")
         elif args.repair:
             print("  --repair needs --mode openai; the Anthropic path drafts in one call",

@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept active-learning-for-bert-an-empirical-study
 
-Stamp: spec=611955fa7d32 checks=pass body=3978c77cbfb4
+Stamp: spec=551e6f04bf75 checks=pass body=3978c77cbfb4
 -->
 ---
 one_liner: Active learning on top of BERT raises F1 by 4-8 points over random sampling for
