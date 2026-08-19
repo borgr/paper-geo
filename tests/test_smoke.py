@@ -740,6 +740,44 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
                           if "describes how" in f], [])
 
 
+class TestEveryFindingNamesSomethingFixable(unittest.TestCase):
+    """A finding a rewrite cannot clear costs a repair round and gets reverted.
+
+    Both cases below were found by `--mend`, which reverts a rewrite that does not clear
+    its own complaint and so surfaces the complaints that nothing can clear. They are
+    checker bugs, not model failures: one counted a name's initial as a sentence boundary,
+    the other told the model to remove a string the field did not contain.
+    """
+
+    def test_an_initial_is_not_the_end_of_a_sentence(self):
+        import validate as V
+        two = ("Project Debater's public debut on 11 February 2019 debated debate champion "
+               "H. Natarajan on whether preschool should be subsidized. The pre-debate "
+               "audience vote was 79% in favour.")
+        self.assertEqual(2, len(V.sentences(two)),
+                         "a two-sentence claim reported as three is unfixable: the only "
+                         "rewrite that clears it drops the person's initial")
+        self.assertEqual(2, len(V.sentences("Merging helps, see Fig. 3 for the per-task "
+                                            "breakdown. It does not help below 125M.")))
+        # Still splits where a reader pauses, which is the whole point of the cap.
+        self.assertEqual(3, len(V.sentences("One thing. Then another! And a third?")))
+
+    def test_the_coined_name_check_names_the_string_that_has_to_go(self):
+        import validate as V
+        fm = {"coined": "Global-MMLU", "gloss": "A multilingual MMLU with cultural "
+                                                "sensitivity labels.",
+              "claims": [], "qa": [{"q": ["What fraction of MMLU questions need "
+                                          "cultural knowledge?",
+                                          "Is MMLU culturally biased?"]}]}
+        found = [f for f in V.check_sidecar_shape([("d.md", fm)])
+                 if "every phrasing" in f]
+        self.assertTrue(found)
+        # It matched the acronym part, so that is what it must name -- and it must be
+        # readable, not the check's own lowercased tokens.
+        self.assertIn("'MMLU' (part of 'Global-MMLU')", found[0])
+        self.assertNotIn("m m l u", found[0])
+
+
 class TestATargetedRepairTouchesOnlyWhatBroke(unittest.TestCase):
     """`--mend` sends the model the offending fields and splices its rewrites back.
 
@@ -911,6 +949,28 @@ class TestATargetedRepairTouchesOnlyWhatBroke(unittest.TestCase):
                                 {"at": "claim/clean/scope", "new": same}])
         self.D.mend("a-paper", again, "", "a fake model")
         self.assertEqual(was, open(self.path, encoding="utf-8").read())
+
+    def test_one_useless_rewrite_does_not_cost_the_others(self):
+        """A patch is accepted field by field, not all-or-nothing.
+
+        Live case: 6 fields rewritten, 1 finding cleared -- so 5 rewrites were churn a
+        human would have had to re-read, and under all-or-nothing acceptance a single bad
+        field would instead have thrown away every good one.
+        """
+        before = self._findings()
+        again, _ = self._asker([
+            {"at": "claim/too-long/text", "new": self.SPLIT},
+            # Rewords the misreading without giving 'here' an antecedent, so its own
+            # finding survives and the rewrite has bought nothing.
+            {"at": "misreadings/0", "new": "Low agreement here is not weak annotation "
+                                          "of the data."}])
+        left = self.D.mend("a-paper", again, "", "a fake model")
+        self.assertEqual(len(before) - 1, left)
+        fm = self.D.front_matter(self.path)
+        self.assertEqual(self.SPLIT, self.D.at(fm, "claim/too-long/text"),
+                         "the fix that worked is kept")
+        self.assertEqual(self.SIDECAR["misreadings"][0], self.D.at(fm, "misreadings/0"),
+                         "the rewrite that did not clear its own finding is reverted")
 
     def test_a_locus_nobody_complained_about_is_ignored(self):
         was = open(self.path, encoding="utf-8").read()

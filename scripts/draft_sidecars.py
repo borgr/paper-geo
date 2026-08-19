@@ -1068,6 +1068,8 @@ Rules for your answer:
 - Keep the meaning. A shorter sentence that drops the paper's magnitude is not a fix.
 - Never give two fields the same text. If a scope is too long, shorten that scope; do not
   replace it with wording you used elsewhere.
+- Where the complaint is that a name or a phrase must not appear, the rewritten value must
+  not contain it -- say what the thing is instead of naming it.
 - Leave out any field you cannot fix without inventing something the paper does not say.
 """
 
@@ -1259,21 +1261,39 @@ def mend(slug: str, again, evidence: str = "", source: str = "a model") -> int:
     if not new:
         print(f"    mend: nothing usable came back, keeping the {before}-finding draft")
         return before
-    was = open(path, encoding="utf-8").read()
+    # Each field's rewrite stands or falls on its own, spliced and checked one at a time.
+    # Accepting or rejecting the patch as a whole loses both ways: it threw away five good
+    # fixes because a sixth traded one finding for another, and it kept five rewrites that
+    # changed nothing because a sixth happened to help. Live case: 6 fields rewritten, 1
+    # finding cleared, 5 of the rewrites pointless churn in a draft a human then has to
+    # re-read.
+    kept, undone, count = [], [], before
     for locus, value in new.items():
+        snapshot, held = open(path, encoding="utf-8").read(), at(fm, locus)
         put(fm, locus, value)
-    write_draft(slug, fm, f"{source} + a targeted repair")
-    after = sum(len(x) for x in validate_draft(path, note=False))
-    if after >= before:
-        # Splicing cannot regress a field nobody touched, but it can trade one finding for
-        # another inside the field it did touch -- a sentence cut under the length floor.
-        open(path, "w", encoding="utf-8").write(was)
-        print(f"    mend: {before} -> {after}, no better -- kept the "
-              f"{before}-finding draft")
+        write_draft(slug, fm, f"{source} + a targeted repair")
+        errs, qual = validate_draft(path, note=False)
+        found = [str(x).split(".md: ")[-1] for x in errs + qual]
+        mine = [f for f in found if where(f, fm) == locus]
+        # Cleared its own complaint, and cost nothing anywhere else. The second half is
+        # what catches a fix that reads as an improvement and breaks a rule next door --
+        # a scope cut under the length floor, a claim whose figure went with the sentence.
+        if not mine and len(found) < count:
+            kept.append(locus)
+            count = len(found)
+        else:
+            put(fm, locus, held)
+            open(path, "w", encoding="utf-8").write(snapshot)
+            undone.append(locus)
+    if undone:
+        print(f"    mend: {len(undone)} rewrite(s) did not fix what was asked, reverted "
+              f"({', '.join(undone)})")
+    if not kept:
+        print(f"    mend: nothing usable came back, keeping the {before}-finding draft")
         return before
-    print(f"    mend: {before} finding(s) -> {after} "
-          f"({len(new)} of {len(jobs)} field(s) rewritten)")
-    return after
+    print(f"    mend: {before} finding(s) -> {count} "
+          f"({len(kept)} of {len(jobs)} field(s) rewritten)")
+    return count
 
 
 def unstructure(value, spec: dict):

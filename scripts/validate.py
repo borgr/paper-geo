@@ -694,8 +694,24 @@ def check_sidecar_shape(entries: list[tuple[str, dict]]) -> list[str]:
             forms = coined_forms(fm["coined"])
             for i, g in enumerate(qa):
                 qs = g.get("q") or []
-                if qs and all(says(q, forms) for q in qs):
-                    bad(f"qa[{i}]: every phrasing contains {fm['coined']!r} -- at "
+                shared = [f for f in forms if all(says(q, [f]) for q in qs)]
+                if qs and shared:
+                    # The matched form, not the whole coinage: `coined_forms` also matches
+                    # an acronym-shaped part, so "Global-MMLU" flagged phrasings whose only
+                    # offence was the word `MMLU` -- and a model told to remove
+                    # "Global-MMLU" from a phrasing that never contained it rewrote the
+                    # question, changed nothing the check reads, and had the rewrite
+                    # reverted. Name the string that has to go.
+                    # Rendered from the coinage as written, not from its tokens: the
+                    # tokens are lowercased and space-joined, so `MMLU` printed as
+                    # 'm m l u' and named nothing anyone could search for or remove.
+                    labels = {tuple(tokens(fm["coined"])): str(fm["coined"])}
+                    for part in re.split(r"[\s/-]+", str(fm["coined"])):
+                        labels.setdefault(tuple(tokens(part)), part)
+                    said = labels.get(tuple(shared[0]), " ".join(shared[0]))
+                    also = "" if said == str(fm["coined"]) \
+                        else f" (part of {fm['coined']!r})"
+                    bad(f"qa[{i}]: every phrasing contains {said!r}{also} -- at "
                         "least one has to be answerable by someone who has never "
                         "heard the name")
 
@@ -950,14 +966,31 @@ _DEIXIS_TERM = re.compile(
 _DEIXIS_MISREADING = re.compile(r"\bhere\b|\b(?:we|our)\b", re.I)
 
 
-def sentences(s) -> list[str]:
-    """A field split where a reader would pause. Approximate on purpose.
+# A period that ends one of these ends a word, not a sentence. Initials are handled by
+# shape (`H.` in "H. Natarajan") rather than listed, since the set of names is open.
+_ABBREV = ("et al.", "e.g.", "i.e.", "cf.", "vs.", "approx.", "ca.", "resp.", "Fig.",
+           "Tab.", "Eq.", "Sec.", "App.", "No.", "Dr.", "Prof.", "St.", "Mr.", "Ms.")
 
-    An abbreviation or a decimal splits wrongly, and that is tolerable: the caps below
-    are about a sentence a reader has to hold in their head, so over-splitting only
-    ever makes the check kinder.
+
+def sentences(s) -> list[str]:
+    """A field split where a reader would pause.
+
+    Over-splitting is not the harmless direction it looks like. The word cap it feeds is
+    kinder for a wrong split, but the *sentence-count* cap is stricter -- and unfixably so:
+    "Project Debater debated debate champion H. Natarajan" counted as two sentences, so a
+    two-sentence claim was reported as three and no rewording short of dropping the man's
+    initial could clear it. A drafting model asked to fix that spends a round and reverts.
     """
-    return [x for x in re.split(r"(?<=[.;!?])\s+", str(s or "").strip()) if x]
+    parts = [x for x in re.split(r"(?<=[.;!?])\s+", str(s or "").strip()) if x]
+    out: list[str] = []
+    for part in parts:
+        joined = out and (out[-1].endswith(_ABBREV)
+                          or re.search(r"(?:^|[\s(\[])[A-Z]\.$", out[-1]))
+        if joined:
+            out[-1] = f"{out[-1]} {part}"
+        else:
+            out.append(part)
+    return out
 
 
 def readability(fm: dict) -> list[tuple[str, str, str]]:
