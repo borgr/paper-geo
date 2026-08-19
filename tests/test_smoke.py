@@ -740,6 +740,48 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
                           if "describes how" in f], [])
 
 
+class TestARepairRoundCannotAnswerWithAnEmptySidecar(unittest.TestCase):
+    """Deleting the claims satisfies almost every check, and used to score as a fix.
+
+    Live case, `on-the-weaknesses-of-reinforcement-learning-for-neural-machi`: round 1 was
+    shown 17 findings and replied with a sidecar holding none of the paper's 12 claims and
+    none of its 8 question groups. That scores 2 -- 'claims' is required, and there are no
+    question groups -- so the loop kept it and stopped, and a finished draft became an
+    empty one nobody would have noticed until they opened it.
+    """
+
+    def test_a_collapsed_reply_is_named_and_refused(self):
+        import draft_sidecars as D
+        full = {"claims": [{"id": str(i)} for i in range(12)],
+                "qa": [{"q": ["a", "b"]} for _ in range(8)]}
+        self.assertIsNone(D.shrunk(full, full))
+        # Merging two overlapping claims is a legitimate fix, so it must still pass.
+        self.assertIsNone(D.shrunk(full, {**full, "claims": full["claims"][:9]}))
+        for gone, want in (({"claims": [], "qa": []}, "12 of 12 claims"),
+                           ({**full, "claims": full["claims"][:2]}, "10 of 12 claims"),
+                           ({**full, "qa": []}, "8 of 8 qa")):
+            with self.subTest(want=want):
+                self.assertEqual(want, D.shrunk(full, gone))
+
+    def test_the_loop_keeps_the_draft_it_was_given(self):
+        import draft_sidecars as D
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        old, D.DRAFTS = D.DRAFTS, tmp
+        self.addCleanup(lambda: setattr(D, "DRAFTS", old))
+        sidecar = copy.deepcopy(TestATargetedRepairTouchesOnlyWhatBroke.SIDECAR)
+        path = D.write_draft("a-paper", sidecar, "a fake model")
+        was = open(path, encoding="utf-8").read()
+
+        def again(prompt, label, want=None):
+            return {"one_liner": sidecar["one_liner"], "claims": [], "qa": []}
+
+        again.window = 0
+        D.repair("a-paper", 3, again, "", "a fake model")
+        self.assertEqual(was, open(path, encoding="utf-8").read(),
+                         "the collapsed reply must not reach the file at all")
+
+
 class TestEveryFindingNamesSomethingFixable(unittest.TestCase):
     """A finding a rewrite cannot clear costs a repair round and gets reverted.
 

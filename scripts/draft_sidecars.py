@@ -982,6 +982,21 @@ def fits(evidence: str, sidecar: str, window: int) -> str:
             "your answer; the tables are below ...]\n\n" + evidence[-(room - head):])
 
 
+# How much of a sidecar a repair round may drop and still be believed. A round that
+# genuinely merges two overlapping claims removes one; a round that has given up removes
+# most of them, and scores well for it.
+KEEPS = 0.6
+
+
+def shrunk(before: dict, after: dict) -> str | None:
+    """What a reply dropped wholesale, or None if it kept the sidecar it was given."""
+    for field in ("claims", "qa"):
+        was, now = len(before.get(field) or []), len(after.get(field) or [])
+        if was and now < max(1, int(was * KEEPS)):
+            return f"{was - now} of {was} {field}"
+    return None
+
+
 def repair(slug: str, rounds: int, again, evidence: str = "",
            source: str = "a model") -> int:
     """Re-ask the model to fix what the checker found, up to `rounds` times.
@@ -1029,6 +1044,17 @@ def repair(slug: str, rounds: int, again, evidence: str = "",
                                  findings=found), f"{slug} repair {r + 1}")
         if sc is None:
             print(f"    round {r + 1}: no usable reply, keeping the draft as it stands")
+            break
+        # Deleting the content is the cheapest way to satisfy a checker, and the loop had no
+        # defence against it: one round answered 17 findings with a sidecar holding none of
+        # the paper's 12 claims and none of its 8 question groups, scored 2, and was kept
+        # because 2 < 17. A round may merge or split claims; it may not drop the sidecar on
+        # the floor. Refused before it is written, so the draft on disk never passes through
+        # the collapsed state.
+        gone = shrunk(fm, sc)
+        if gone:
+            print(f"    round {r + 1}: the reply dropped {gone} -- refused, kept the "
+                  f"{n}-finding draft")
             break
         was = open(path, encoding="utf-8").read()
         # `source` is threaded in rather than read back off the draft: the model's name
