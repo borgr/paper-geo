@@ -487,7 +487,8 @@ ENFORCED = {"schema": "schema-enforced", "tool": "schema-enforced via a forced t
 
 
 
-def call_api(pairs: list[tuple[dict, str]], cfg) -> tuple[dict, str, "Callable"]:
+def call_api(pairs: list[tuple[dict, str]], cfg,
+             on_draft=None) -> tuple[dict, str, "Callable"]:
     """One Messages API call per paper, validated against the sidecar schema.
 
     Returns the same triple as `call_openai` -- drafts, a provenance line, and the
@@ -608,6 +609,15 @@ def call_api(pairs: list[tuple[dict, str]], cfg) -> tuple[dict, str, "Callable"]
     # paper plus its sidecar -- so a repair round gets the whole text, tables included.
     ask.window = 0
 
+    def provenance() -> str:
+        """Where this draft came from, as of the rung currently working.
+
+        A function rather than a string built at the end, because `on_draft` writes each
+        draft as it lands and the header has to name the rung that produced *it*.
+        """
+        return (f"{cfg['llm']['model']} via the Anthropic API, {eff} effort "
+                f"({ENFORCED[RUNGS[rung][1]]})")
+
     for p, ev in pairs:
         sc = ask(USER.format(evidence=ev), p["slug"])
         if sc is None:
@@ -615,8 +625,9 @@ def call_api(pairs: list[tuple[dict, str]], cfg) -> tuple[dict, str, "Callable"]
         out[p["slug"]] = sc
         print(f"  ok  {p['slug']}  ({len(sc.get('claims') or [])} claims, "
               f"{len(sc.get('qa') or [])} question groups)")
-    return out, (f"{cfg['llm']['model']} via the Anthropic API, {eff} effort "
-                 f"({ENFORCED[RUNGS[rung][1]]})"), ask
+        if on_draft:
+            on_draft(p["slug"], sc, provenance(), ask)
+    return out, provenance(), ask
 
 
 # An OpenAI-compatible backend, for gateways and open-weight models. Three env vars
@@ -686,7 +697,7 @@ def decodable(node):
     return node
 
 
-def call_openai(pairs, cfg) -> tuple[dict, str, "object"]:
+def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
     """One chat completion per paper against an OpenAI-compatible endpoint.
 
     Returns (answers, provenance). The same prompt and the same schema as the Anthropic
@@ -775,6 +786,10 @@ def call_openai(pairs, cfg) -> tuple[dict, str, "object"]:
                   file=sys.stderr)
         return sc
 
+    def provenance() -> str:
+        how = "schema-enforced" if enforced else "unenforced, parsed from text"
+        return f"{model} via an OpenAI-compatible endpoint ({how})"
+
     for p, ev in pairs:
         sc = ask(USER.format(evidence=ev)
                  + JSON_ONLY,
@@ -784,12 +799,13 @@ def call_openai(pairs, cfg) -> tuple[dict, str, "object"]:
         out[p["slug"]] = sc
         print(f"  ok  {p['slug']}  ({len(sc.get('claims') or [])} claims, "
               f"{len(sc.get('qa') or [])} question groups)")
-    how = "schema-enforced" if enforced else "unenforced, parsed from text"
+        if on_draft:
+            on_draft(p["slug"], sc, provenance(), ask)
     # The window travels with the closure because `repair` has to fit a paper into what is
     # left of it and has no other way to know how big it is. An attribute rather than a
     # third return value: every caller wants the request, one wants its budget.
     ask.window = window or 0
-    return out, f"{model} via an OpenAI-compatible endpoint ({how})", ask
+    return out, provenance(), ask
 
 
 HEADER = """<!-- DRAFT — not published, not read by anything that builds the site.
@@ -1869,16 +1885,27 @@ def main() -> None:
         cfg["llm"]["effort"] = args.effort
     if mode in ("api", "openai"):
         caller = call_api if mode == "api" else call_openai
-        answers, how, asker = caller(pairs, cfg)
-        for slug, sc in answers.items():
-            write_draft(slug, sc, how)
+        ev = {p["slug"]: e for p, e in pairs}
+
+        def landed(slug, sc, how_now, again):
+            """Write this draft, and repair it, before the next paper is asked for.
+
+            The batch used to be held in memory until the last paper came back, and only
+            then written and only then repaired. Over 111 papers that is hours during
+            which a crash, a Ctrl-C or a closed laptop throws away every finished draft
+            -- and the papers are drafted most-cited first, so the ones lost are the ones
+            that mattered most. Each paper is now durable the moment it exists.
+            """
+            write_draft(slug, sc, how_now)
+            if args.repair:
+                left = repair(slug, args.repair, again, ev.get(slug, ""), how_now)
+                print(f"      {left} finding(s) left for you")
+
+        if args.repair:
+            print(f"drafting, then repairing each against the checks, up to "
+                  f"{args.repair} round(s) per paper:")
+        answers, how, asker = caller(pairs, cfg, landed)
         print(f"\nwrote {len(answers)} draft(s) to data/sidecars/drafts/")
-        if args.repair and asker:
-            print(f"\nrepairing against the checks, up to {args.repair} round(s):")
-            ev = {p["slug"]: e for p, e in pairs}
-            for slug in answers:
-                left = repair(slug, args.repair, asker, ev.get(slug, ""), how)
-                print(f"  {slug}: {left} finding(s) left for you")
         print("Next: python scripts/draft_sidecars.py --review")
     else:
         path = emit_tasks(pairs, cfg)
