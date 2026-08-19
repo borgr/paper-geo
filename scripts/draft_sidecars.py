@@ -42,6 +42,12 @@ Three modes, and `--mode` overrides the configured one for a single run:
 The nine drafting steps are sections of one prompt, not nine turns: every mode above
 sends the same system prompt and the same schema and reads back one object. Nothing
 here needs tool use or a multi-turn agent, which is why `api` and `openai` exist.
+
+`--repair N` is available in both `api` and `openai` mode, and it is the difference
+between a draft and an acceptable one: the loop hands the model back what the checks
+found, with the paper, up to N times, stopping as soon as a round stops reducing the
+count. Measured on one paper: 20 findings, then 5, then 2. `skill` mode has no
+equivalent, because the second pass there is the agent session reading `--review`.
 """
 from __future__ import annotations
 
@@ -468,19 +474,29 @@ def emit_tasks(pairs: list[tuple[dict, str]], cfg) -> str:
 API_MAX_TOKENS = 32000
 
 
-def call_api(pairs: list[tuple[dict, str]], cfg) -> dict:
-    """One Messages API call per paper, validated against the sidecar schema."""
+def call_api(pairs: list[tuple[dict, str]], cfg) -> tuple[dict, str, "Callable"]:
+    """One Messages API call per paper, validated against the sidecar schema.
+
+    Returns the same triple as `call_openai` -- drafts, a provenance line, and the
+    one-paper request as a closure -- so `repair` drives either backend. It used to
+    return only the drafts, which quietly made `--repair` an open-weights-only feature:
+    the loop that takes a draft from 55 findings to 0 was unavailable on the strongest
+    model the config can name, and the researcher with the better model got the worse
+    draft. Nothing about the loop was ever backend-specific; only this signature was.
+    """
     try:
         import anthropic
     except ImportError:
         sys.exit("pip install anthropic, or set llm.mode: skill in config.yaml")
     client = anthropic.Anthropic()
     sch, out, sys_prompt = schema(), {}, system_prompt()
-    for p, ev in pairs:
+
+    def ask(user: str, label: str) -> dict | None:
+        """One completion, or None with the reason printed. `label` is for the reader."""
         req = dict(model=cfg["llm"]["model"],
                    max_tokens=cfg["llm"].get("max_tokens", API_MAX_TOKENS),
                    system=sys_prompt,
-                   messages=[{"role": "user", "content": USER.format(evidence=ev)}])
+                   messages=[{"role": "user", "content": user}])
         oc = {"effort": cfg["llm"].get("effort", "medium"),
               "format": {"type": "json_schema", "schema": sch}}
         try:
@@ -488,21 +504,35 @@ def call_api(pairs: list[tuple[dict, str]], cfg) -> dict:
         except TypeError:
             msg = client.messages.create(**req, extra_body={"output_config": oc})
         if msg.stop_reason == "refusal":
-            print(f"  refused: {p['slug']}", file=sys.stderr)
-            continue
+            print(f"  refused: {label}", file=sys.stderr)
+            return None
         if msg.stop_reason == "max_tokens":
             # Named separately from a parse failure because the fix is different: raise
             # `llm.max_tokens`, do not go looking for a malformed field.
-            print(f"  truncated at max_tokens: {p['slug']} -- raise llm.max_tokens "
+            print(f"  truncated at max_tokens: {label} -- raise llm.max_tokens "
                   f"(now {req['max_tokens']})", file=sys.stderr)
-            continue
+            return None
         text = next((b.text for b in msg.content if b.type == "text"), "")
         try:
-            out[p["slug"]] = json.loads(text)
-            print(f"  ok  {p['slug']}  ({len(out[p['slug']].get('claims') or [])} claims)")
+            return json.loads(text)
         except json.JSONDecodeError:
-            print(f"  unparseable: {p['slug']}", file=sys.stderr)
-    return out
+            print(f"  unparseable: {label}", file=sys.stderr)
+            return None
+
+    # Left at 0, which `fits` reads as "do not truncate the paper". Unlike the
+    # OpenAI-compatible path, `max_tokens` here is a reply budget rather than part of a
+    # sum with the prompt, and the input window is an order of magnitude larger than any
+    # paper plus its sidecar -- so a repair round gets the whole text, tables included.
+    ask.window = 0
+
+    for p, ev in pairs:
+        sc = ask(USER.format(evidence=ev), p["slug"])
+        if sc is None:
+            continue
+        out[p["slug"]] = sc
+        print(f"  ok  {p['slug']}  ({len(sc.get('claims') or [])} claims, "
+              f"{len(sc.get('qa') or [])} question groups)")
+    return out, f"the Anthropic API ({cfg['llm']['model']})", ask
 
 
 # An OpenAI-compatible backend, for gateways and open-weight models. Three env vars
@@ -1641,7 +1671,7 @@ def main() -> None:
     ap.add_argument("--repair", type=int, default=0, metavar="N",
                     help="after drafting, show the model its own findings and ask it to "
                          "fix them, up to N times. Stops early when a round stops "
-                         "reducing the count. openai mode only")
+                         "reducing the count. api and openai modes")
     args = ap.parse_args()
 
     cfg = load_config()
@@ -1725,12 +1755,8 @@ def main() -> None:
 
     mode = args.mode or cfg["llm"]["mode"]
     if mode in ("api", "openai"):
-        asker = None
-        if mode == "api":
-            answers = call_api(pairs, cfg)
-            how = f"the Anthropic API ({cfg['llm']['model']})"
-        else:
-            answers, how, asker = call_openai(pairs, cfg)
+        caller = call_api if mode == "api" else call_openai
+        answers, how, asker = caller(pairs, cfg)
         for slug, sc in answers.items():
             write_draft(slug, sc, how)
         print(f"\nwrote {len(answers)} draft(s) to data/sidecars/drafts/")
@@ -1740,9 +1766,6 @@ def main() -> None:
             for slug in answers:
                 left = repair(slug, args.repair, asker, ev.get(slug, ""))
                 print(f"  {slug}: {left} finding(s) left for you")
-        elif args.repair:
-            print("  --repair needs --mode openai; the Anthropic path drafts in one call",
-                  file=sys.stderr)
         print("Next: python scripts/draft_sidecars.py --review")
     else:
         path = emit_tasks(pairs, cfg)

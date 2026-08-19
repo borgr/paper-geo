@@ -627,6 +627,85 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
                           if "describes how" in f], [])
 
 
+class TestEveryBackendCanBeRepaired(unittest.TestCase):
+    """`--repair` must work on whichever model the researcher actually has.
+
+    The loop that takes a draft from 55 findings to zero is backend-agnostic by
+    construction -- `repair(slug, rounds, again, evidence)` only ever calls
+    `again(prompt, label)` and reads `again.window`. But it is reachable only if the
+    drafting call *returns* that closure, and for a while `call_api` returned the drafts
+    alone, so `--repair` printed "needs --mode openai" and the strongest model the config
+    can name produced the least finished draft. Nothing in the loop caused that; one
+    return signature did. So the invariant under test is the signature, on every backend
+    `main` can dispatch to.
+    """
+
+    def _fake(self, name, mod):
+        real = sys.modules.get(name)
+        sys.modules[name] = mod
+        self.addCleanup(lambda: sys.modules.__setitem__(name, real)
+                        if real is not None else sys.modules.pop(name, None))
+
+    CFG = {"llm": {"model": "claude-opus-5", "effort": "low", "max_tokens": 4096}}
+    PAIRS = [({"slug": "a-paper"}, "the paper's text")]
+    REPLY = '{"one_liner": "x", "claims": [], "qa": []}'
+
+    def test_the_anthropic_path_hands_back_a_repairable_asker(self):
+        import types
+        block = types.SimpleNamespace(type="text", text=self.REPLY)
+        msg = types.SimpleNamespace(stop_reason="end_turn", content=[block])
+        messages = types.SimpleNamespace(create=lambda **kw: msg)
+        mod = types.SimpleNamespace(
+            Anthropic=lambda *a, **k: types.SimpleNamespace(messages=messages))
+        self._fake("anthropic", mod)
+        import draft_sidecars as D
+        self._assert_triple(D.call_api(self.PAIRS, self.CFG))
+
+    def test_the_openai_path_hands_back_a_repairable_asker(self):
+        import types
+        choice = types.SimpleNamespace(finish_reason="stop",
+                                       message=types.SimpleNamespace(content=self.REPLY))
+        completions = types.SimpleNamespace(create=lambda **kw: types.SimpleNamespace(
+            choices=[choice]))
+        client = types.SimpleNamespace(
+            chat=types.SimpleNamespace(completions=completions),
+            models=types.SimpleNamespace(list=lambda: []))
+        import draft_sidecars as D
+        self._fake("openai", types.SimpleNamespace(OpenAI=lambda **k: client))
+        for var, val in ((D.ENV_BASE, "https://example.invalid/v1"),
+                         (D.ENV_MODEL, "some/model")):
+            old = os.environ.get(var)
+            os.environ[var] = val
+            self.addCleanup(lambda v=var, o=old: os.environ.__setitem__(v, o)
+                            if o is not None else os.environ.pop(v, None))
+        self._assert_triple(D.call_openai(self.PAIRS, self.CFG))
+
+    def _assert_triple(self, got):
+        self.assertEqual(3, len(got), "a drafting backend returns (drafts, how, asker); "
+                         "returning the drafts alone is what made --repair "
+                         "openai-only")
+        drafts, how, asker = got
+        self.assertEqual({"a-paper"}, set(drafts))
+        self.assertTrue(str(how).strip(), "provenance is written into every draft header")
+        # The two things `repair` uses, and nothing else.
+        self.assertTrue(callable(asker))
+        self.assertIsInstance(getattr(asker, "window", None), int,
+                              "`repair` reads .window to decide how much of the paper "
+                              "fits in a repair prompt")
+        self.assertEqual(json.loads(self.REPLY), asker("a prompt", "a label"))
+
+    def test_main_dispatches_both_modes_through_one_path(self):
+        """And the caller unpacks the triple once, rather than per backend.
+
+        Two call sites is how the signatures drifted apart in the first place.
+        """
+        import draft_sidecars as D
+        src = source(D.__file__)
+        self.assertNotIn("answers = call_api(", src,
+                         "call_api's result is unpacked as a triple like call_openai's")
+        self.assertIn("caller = call_api if mode == \"api\" else call_openai", src)
+
+
 class TestTheEvidencePackHandsOverThePapersNumbering(unittest.TestCase):
     """What the drafter is given before it writes, which is where `code > agent` lands.
 

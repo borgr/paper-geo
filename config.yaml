@@ -1,7 +1,13 @@
 # paper-geo configuration.
 #
-# Everything researcher-specific lives here. To reuse this tool, fork the repo,
-# replace this file and data/identity.yaml, and empty data/sidecars/.
+# Everything researcher-specific lives here, and it is the first of two things a fork
+# has to replace. The second is `data/`, which is not one file: `papers.yaml`,
+# `repos.yaml` and `data/fulltext/` are re-derived from public sources on the first run
+# and can simply be deleted, but `paper_code.yaml`, `overrides.yaml`, `declines.yaml`,
+# `followups.yaml`, `arxiv_submissions.yaml`, `slug_history.yaml`,
+# `wikidata_created.yaml` and `data/sidecars/` hold one researcher's decisions about
+# their own work and have to be emptied, not edited -- inheriting them would publish
+# someone else's judgement under your name.
 
 identity:
   name: Leshem Choshen
