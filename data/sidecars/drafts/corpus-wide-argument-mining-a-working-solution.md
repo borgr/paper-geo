@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from build/sidecar_tasks.json. Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call). Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -16,329 +16,247 @@ What to check, in the order it pays:
    the talk abstract. Make it yours.
 
 Then promote it:  python scripts/draft_sidecars.py --accept corpus-wide-argument-mining-a-working-solution
+
+Stamp: spec=d57862840a90 checks=16 body=544a387f10a8
 -->
 ---
-key: DBLP:conf/aaai/Ein-DorSDHSGAGC20
+one_liner: Corpus-wide argument mining over 400 million LexisNexis articles is made to work
+  by combining sentence-level retrieval queries with "retrospective labeling" — iteratively
+  hand-labeling a classifier's own top predictions — which fixes the label imbalance that
+  otherwise makes top-ranked precision unusable.
+key: eindor2020corpus
 coined: Retrospective Labeling
-gloss: building a training set by annotating a classifier's own top-ranked predictions, round
-  after round
-one_liner: An end-to-end evidence retrieval system that reaches 95% precision in the top 40
-  candidates per topic over 400 million news articles, by querying a sentence-level index
-  instead of shortlisting documents and by building its training set out of its own classifier's
-  top predictions.
+gloss: iteratively hand-labeling a classifier's own top-ranked predictions to build a balanced
+  training set when positive examples are rare
+terminology:
+  Retrospective Labeling: An annotation loop in which a classifier's own top-ranked predictions
+    are manually labeled and added to the training set, repeatedly, so that the labeled data
+    is enriched with positives and with the hard negatives that limit precision at the top
+    of the ranking.
+  Motion: A high-level claim implying a clearly positive or negative stance towards a debate
+    topic, optionally including a policy or action, e.g. "We should ban the sale of violent
+    video games".
+  Evidence (in argument mining): A single sentence that clearly supports or contests a motion
+    while providing an indication of whether a claim is true, rather than merely asserting
+    a belief; split into Study Evidence (quantitative analysis of data) and Expert Evidence
+    (testimony by a relevant expert or authority).
+  Sentence-Level (SL) retrieval: Indexing a corpus at the sentence level and retrieving candidate
+    argumentative sentences directly with queries, instead of first retrieving topic-relevant
+    documents and then mining arguments inside them.
+  VLC / VLD: VLC is a corpus of some 400 million LexisNexis newspaper and journal articles;
+    VLD (Very Large Dataset) is the 198,457 manually labeled sentence-motion pairs collected
+    from it by retrospective labeling.
 claims:
-- id: the-pipeline-is-query-then-rank-over-the-whole-corpus
-  text: 'The system retrieves argumentative content in two stages: a cascade of sentence-level
-    queries pulls candidates directly out of an index over some 400 million LexisNexis newspaper
-    and journal articles -- close to 10 billion sentences -- and a supervised classifier then
-    scores and ranks those candidates.'
-  scope: The contrast is with the document-based pipeline that retrieves topic-relevant documents
-    first and mines them second. Some filter is unavoidable because classifying every sentence
-    in the corpus is infeasible; the design choice is which filter, and here it is the queries
-    rather than a document shortlist.
-  evidence: Abstract; Sections 1 and 5; Figure 1
-- id: the-precision-reached
-  text: On 100 unseen motions the best model reaches over 90% precision in the top 20 candidates
-    per motion and 95% precision in the top 40, against an estimated positive rate of about
-    0.3 among the sentences the queries retrieve.
-  scope: Precision at k on the system's own top predictions, annotated after the fact -- there
-    is no fixed test set, because a fixed set would score an arbitrary sample rather than
-    what the ranker actually surfaces. The 0.3 prior comes from labelling 10 random retrieved
-    sentences per test motion. Recall is not measured and is not the target.
-  evidence: Sections 6 and 7.1; Figure 2
-- id: precision-is-the-metric-because-of-how-arguments-get-used
-  text: 'The system is built for precision rather than accuracy because making a case takes
-    several arguments at once: at precision 0.9, retrieving three arguments still carries
-    a 0.27 chance that at least one is wrong.'
-  scope: This is the paper's argument for why prior accuracy-oriented results -- one work
-    reporting precision 0.19 at top 50 against a 0.02 random baseline, another an F1 of 0.66
-    where an all-yes baseline scores 0.61 -- were not yet usable in a product, not a claim
-    that those systems were measured wrongly.
-  evidence: Sections 1 and 2
-- id: retrospective-labeling-fixes-the-imbalance-and-finds-hard-negatives
-  text: Rather than annotating a random sample, each round annotates the current classifier's
-    top 40 predictions per motion per evidence type and retrains on the result -- starting
-    from a small manually labelled set and a logistic-regression classifier, then moving to
-    a neural one once the data is large and balanced enough.
-  scope: 'The scheme buys two things at once: top predictions are enriched with positives,
-    which unskews the training set, and the errors among them are exactly the hard negatives
-    that limit precision at the top of the ranking. The set of motions can be widened between
-    rounds, so the dataset grows in both directions.'
-  evidence: Sections 1 and 4
-- id: this-is-active-learning-aimed-at-precision-instead-of-accuracy
-  text: 'The paper positions Retrospective Labeling as the first precision-oriented active
-    learning strategy for coping with class imbalance: standard active learning is known to
-    be disrupted by skewed class distributions and is usually evaluated on accuracy, and the
-    one prior method optimising average precision did not address skew.'
-  scope: A priority claim about the strategy, made to the best of the authors' knowledge.
-    It also differs from Label Propagation in that no similarity between arguments is defined
-    and nothing is pseudo-labelled -- every label added is a human label. Average precision
-    depends on the whole ranking, while here only the top predictions matter.
-  evidence: Sections 2 and 8
-- id: the-datasets-it-produced
-  text: 'The labelling process yielded two released datasets: 198,457 manually labelled sentences
-    with 33.5% positives over the newspaper corpus, and 29,429 sentences with 23% positives
-    over Wikipedia, both over 192 training and 47 development motions with 100 further motions
-    held out for evaluation.'
-  scope: Sentence-motion pairs labelled for one specific question -- is this Study or Expert
-    Evidence for this motion -- over the top-ranked candidates, so the negatives are hard
-    by construction and the distribution is not that of the corpus. The corresponding training
-    splits are about 154K and 22K pairs.
-  evidence: Sections 4 and 7.1
-- id: the-annotation-protocol
-  text: Every sentence-motion pair was labelled binary by 10 crowd annotators with the gold
-    label taken by majority, and annotators were filtered by their mean pairwise Cohen's kappa
-    against others weighted by shared items -- leaving an agreement of 0.47.
-  scope: '0.47 is in line with other datasets annotated for a specific argument type, and
-    below what type-independent argument annotation reaches: deciding whether a sentence is
-    Study or Expert Evidence is harder than deciding whether it is argumentative at all. Agreement
-    was only computed between annotators sharing at least 50 items.'
-  evidence: Section 4
-- id: the-queries-are-both-the-filter-and-the-ceiling
-  text: Queries specify ordered terms with gaps allowed -- a lexicon term, the connector 'that',
-    the topic, a sentiment term -- and every query requires the topic to appear literally
-    in the sentence, so any evidence phrased without the topic, or in a pattern no query covers,
-    cannot be retrieved at all.
-  scope: 'The paper states this limit plainly as the price of precision and names the two
-    ways out it did not take: resolving coreference at indexing time, or expanding the topic
-    to related terms before retrieval. Queries run in a cascade ordered by expected yield
-    and stop once 12,000 sentences per evidence type are collected.'
-  evidence: Sections 5 and 8
-- id: querying-sentences-at-this-scale-requires-a-different-index
-  text: Sentence-level retrieval over billions of sentences required indexing not just word
-    strings but semantic roles -- named entities, membership in sentiment or study lexicons
-    -- and wikifying every sentence so that topic mentions link to Wikipedia titles, using
-    a rule-based method driven mainly by Wikipedia redirects for speed.
-  scope: 'An engineering requirement that follows from the design rather than a finding: because
-    a motion''s topic is by definition a Wikipedia title, the index has to know which spans
-    refer to it. The rule-based wikifier is chosen over a better one to make billions of sentences
-    tractable.'
-  evidence: Section 5
-- id: the-results-really-do-span-the-corpus
-  text: 'Top-ranked sentences are not concentrated in a few argument-rich articles: the top
-    20 and top 40 candidates per motion come from an average of 18.03 and 36.07 distinct documents
-    respectively -- close to one document per result.'
-  scope: This is the check that sentence-level retrieval has not collapsed back into document
-    retrieval, and it is what the 'corpus-wide' in the title rests on. Section 7.1 attributes
-    these two numbers to the BA MaskS model while the figure reporting them is captioned as
-    BERT S+M.
-  evidence: Section 7.1; Figure 3
-- id: duplicate-evidence-is-a-corpus-scale-problem
-  text: At this corpus size the same evidence is retrieved in many paraphrases, so candidates
-    with at least 0.8 word overlap against a higher-ranked sentence, excluding stopwords and
-    the topic, are dropped -- about 10% of retrieved sentences.
-  scope: 'Applied to the newspaper-corpus benchmarks only, and deliberately not to the two
-    comparison benchmarks, where prior work did not filter. It is a property of the corpus
-    rather than of the method: Wikipedia does not need it nearly as much.'
-  evidence: Section 6
-- id: giving-the-model-the-motion-is-what-the-earlier-framing-missed
-  text: Feeding the motion text alongside the sentence improves both architectures on the
-    end-to-end benchmark, because without it the task is really 'is this evidence for some
-    unstated motion' rather than 'is this evidence for this motion'.
-  scope: The improvement is on the end-to-end retrieval benchmark. On the sentence-classification
-    benchmark taken from earlier work the picture is not uniform -- there the BiLSTM scores
-    0.78 on the masked sentence alone and 0.77 with the motion added, while for BERT the motion
-    helps.
-  evidence: Sections 6 and 7.1; Table 1
-- id: masking-the-topic-helps-the-bilstm-and-hurts-bert
-  text: Replacing the topic with a special token is the best input for the BiLSTM model but
-    degrades BERT, whose best variant is the unmasked sentence plus the motion.
-  scope: The proposed explanation is that masking supplies three things -- where the topic
-    is, one form for a topic's many surface forms, and one form across topics -- which a strong
-    pretrained language model can already infer, so for BERT the masked tokens are a net loss
-    of information. An explanation offered, not tested.
+- id: e2e-precision-vlc
+  kind: result
+  text: An end-to-end sentence-level evidence retrieval system over a 400-million-article
+    newspaper corpus reaches over 90% average precision for the top 20 candidates per motion,
+    and 95% precision over the top 40 for the best model, BERT S+M.
+  scope: 100 unseen test motions; retrieval restricted to sentences matching hand-built Expert/Study
+    Evidence queries containing the topic; near-duplicate candidates (word overlap ≥0.8) removed
+    before ranking, which dropped ~10% of retrieved sentences.
+  evidence: Figure 2
+- id: positive-prior
+  kind: result
+  text: Among sentences retrieved by the evidence queries from the 400-million-article corpus,
+    the estimated prior probability of being genuine evidence is 0.3, against which the trained
+    system's 95% top-40 precision is measured.
+  scope: Estimated by labeling 10 random retrieved sentences for each of 100 test motions;
+    applies to Study and Expert Evidence and to sentences already filtered by the queries,
+    not to the raw corpus.
   evidence: Section 7.1
-- id: a-bigger-out-of-domain-training-set-beat-a-matched-one
-  text: Models trained on the 154K newspaper-corpus pairs outperform models trained on the
-    22K Wikipedia pairs even when both are tested on Wikipedia, so at this ratio training-set
-    size outweighed matching the test domain.
-  scope: 'Precision on Wikipedia is nonetheless well below precision on the newspaper corpus.
-    The paper offers two reasons and separates them: the retrieved-sentence distributions
-    differ, and a smaller corpus means the top k candidates sit at a lower score percentile,
-    with top-k scores significantly lower on Wikipedia (p = 3.19e-9 at k = 20). The ranking
-    of model variants is identical on both.'
-  evidence: Section 7.1; Figure 4
-- id: the-gain-over-the-earlier-blending-system
-  text: On the sentence-classification benchmark from the earlier weak-and-strong-label blending
-    work, accuracy rises from 0.74 to 0.84, decomposing as 0.74 to 0.78 from training on the
-    larger dataset, 0.81 from switching to BERT, and 0.84 with the motion added.
-  scope: The paper describes this as nearly a 14% improvement, which is the relative figure
-    -- the absolute gain is 10 accuracy points. Notably the benchmark is built from Wikipedia
-    sentences and the winning model was trained on newspaper text, so the larger dataset more
-    than paid for the domain change.
-  evidence: Section 7.2; Table 1
-- id: on-the-argumentativeness-benchmark-it-ranks-by-argument-type
-  text: Applied to a benchmark labelled for argumentativeness rather than for evidence, the
-    evidence model scores precision 0.88 at recall 0.16 with a 0.5 threshold, and lowering
-    the threshold to 0.002 gives precision 0.66, recall 0.75 and F1 0.70 -- comparable to
-    the 0.65 / 0.67 / 0.67 of a classifier trained directly for that task.
-  scope: 'The low recall at 0.5 is the model doing its job: argumentative sentences that are
-    not Study or Expert Evidence are positives in the benchmark but should score low. Two
-    checks support that reading -- of 20 sampled argumentative sentences above the threshold,
-    14 are evidence of the right type, against 2 of 20 below it; and among below-threshold
-    sentences the argumentative ones average a score of 0.073 against 0.015 for the non-argumentative.'
-  evidence: Section 7.3; Figure 5
-- id: what-evidence-means-here
-  text: A motion is a high-level claim implying a stance toward a topic, optionally with a
-    proposed action, where the topic is always a Wikipedia article; evidence is a single sentence
-    that clearly supports or contests the motion without merely being a belief or claim, and
-    only two of its types are targeted -- Study Evidence, which reports a quantitative analysis,
-    and Expert Evidence, which reports testimony by an authority.
-  scope: Narrowing to specific evidence types makes the task harder, since the system must
-    also discern the type -- but it is also what the sentence-level design makes possible,
-    because a query can target a type while a document shortlist cannot. The authors report
-    applying the same method to Claims without giving details.
-  evidence: Sections 1, 3 and 8
+- id: retrospective-labeling-dataset
+  kind: result
+  text: Iterative retrospective labeling of a classifier's top 40 predictions per motion yielded
+    198,457 manually labeled sentence-motion pairs of which 33.5% are positive, a balance
+    unattainable by labeling query results at random where the positive rate is about 30%
+    only after query filtering.
+  scope: 192 train and 47 development motions over the LexisNexis corpus; bootstrapped from
+    an existing logistic-regression classifier trained on a small Wikipedia-labeled set; 10
+    crowd annotators per pair with low-agreement annotators filtered out.
+  evidence: Section 4
+- id: sl-not-document-retrieval
+  kind: result
+  text: 'Sentence-level retrieval does not collapse into document retrieval: the top 20 and
+    top 40 ranked evidence candidates per motion come from an average of 18.03 and 36.07 distinct
+    documents respectively, i.e. almost one document per candidate.'
+  scope: Measured on the LexisNexis corpus of some 400 million articles for the 100 test motions;
+    the document counts cited are for the BA MaskS model, with the documents-and-journals
+    curve reported for BERT S+M.
+  evidence: Figure 3
+- id: blendnet-accuracy
+  kind: result
+  text: On the BlendNet sentence-classification benchmark, BERT S+M reaches 0.84 accuracy
+    versus 0.74 for the previously reported best result, an improvement of nearly 14%.
+  scope: Wikipedia-sentence benchmark whose sentences are given rather than retrieved; models
+    trained on the LexisNexis-derived VLD; motions overlapping the benchmark test set were
+    excluded from training and development before evaluation.
+  evidence: Table 1
+- id: data-beats-domain
+  kind: result
+  text: Training the same BA MaskS architecture on the large out-of-domain newspaper dataset
+    instead of the original Wikipedia data raises BlendNet accuracy from 74% to 78%, and switching
+    to BERT MaskS raises it further to 81%.
+  scope: BlendNet benchmark consists of Wikipedia sentences, so the newspaper-trained models
+    are out of domain; architecture held fixed for the 74%-to-78% comparison, input variant
+    held fixed (masked sentence only) for the 78%-to-81% comparison.
+  evidence: Table 1
+- id: masking-bert-vs-lstm
+  kind: result
+  text: Masking the topic token helps the BiLSTM-with-attention model, whose best variant
+    is BA MaskS+M at 0.77 accuracy, but hurts BERT, where the unmasked BERT S+M at 0.84 beats
+    masked BERT MaskS+M at 0.82 and BERT MaskS at 0.81.
+  scope: BlendNet accuracy with all variants trained on the VLD; among BA variants the masked-plus-motion
+    input is best on the end-to-end VLD benchmark, while on BlendNet BA MaskS trained on VLD
+    scores 0.78 against BA MaskS+M's 0.77.
+  evidence: Table 1
+- id: ukp-transfer
+  kind: result
+  text: 'A model trained only to detect Study and Expert Evidence transfers to the broader
+    UKP-TUDA argumentativeness benchmark: at a 0.002 threshold BERT S+M reaches precision
+    0.66 and recall 0.75 (F1 0.70), against the previously reported average precision 0.65,
+    recall 0.67 and F1 0.67.'
+  scope: Sentences are given rather than retrieved, and differ in nature from the query-matched
+    training sentences; at the natural 0.5 threshold the same model gives precision 0.88 but
+    recall only 0.16, because argumentative sentences that are not evidence are rejected.
+  evidence: Figure 5
+- id: evidence-type-ordering
+  kind: result
+  text: 'Evidence-trained BERT S+M ranks UKP-TUDA sentences by argumentative strength it was
+    never trained on: of 20 argumentative sentences scored above 0.5, 14 are Study or Expert
+    Evidence, versus 2 of 20 scored below, and among below-threshold sentences the argumentative
+    ones average score 7.3e-2 against 1.5e-2 for non-argumentative ones.'
+  scope: Manual annotation of 40 sentences sampled uniformly at random from above and below
+    the 0.5 threshold, so the 14-versus-2 contrast rests on small samples; score-gap comparison
+    uses all below-threshold sentences.
+  evidence: Section 7.3
+- id: wiki-vs-vlc
+  kind: result
+  text: Models trained on the 154K-pair newspaper dataset outperform models trained on the
+    22K-pair Wikipedia dataset even when tested on the Wikipedia benchmark, and end-to-end
+    precision on Wikipedia is significantly lower than on the newspaper corpus (t-test p=3.19e-9
+    for the top-20 scores).
+  scope: Same 100 test motions and same query-based retrieval on both corpora; precision numbers
+    are not comparable across the two benchmarks because Wikipedia may simply not contain
+    k relevant sentences for a given k.
+  evidence: Figure 4
+- id: context-first-corpus-wide
+  kind: context
+  text: Corpus Wide Argument Mining - A Working Solution presents an end-to-end argument retrieval
+    system operated over a corpus of some 400 million newspaper and journal articles, whereas
+    earlier sentence-level argument mining work reported results only on Wikipedia, roughly
+    50 times smaller.
+  scope: As of publication at AAAI 2020; the system retrieves Expert and Study Evidence for
+    motions whose topic is a Wikipedia title, in English, and depends on hand-built retrieval
+    queries plus a semantically indexed and wikified corpus.
+  evidence: Section 1
+- id: context-precision-oriented-al
+  kind: context
+  text: Retrospective Labeling is put forward as a precision-oriented active learning strategy
+    for class-imbalanced retrieval tasks, where the quantity of interest is precision among
+    top-ranked predictions rather than overall accuracy or average precision.
+  scope: Prior active learning work is described by the authors as accuracy-oriented or, where
+    average-precision-oriented, not handling skewed class distributions; generality beyond
+    argument retrieval is argued rather than experimentally tested here.
+  evidence: Section 2
+- id: annotation-agreement
+  kind: result
+  text: 'Type-dependent evidence annotation is intrinsically hard: the crowd annotation behind
+    the 198,457-sentence dataset attains a Cohen''s Kappa of 0.47, described as on par with
+    previous type-dependent argumentation datasets and below what type-independent annotation
+    achieves.'
+  scope: 10 Figure-Eight annotators per sentence-motion pair, gold label by majority, agreement
+    computed pairwise only between annotators sharing at least 50 items, with low-agreement
+    annotators removed.
+  evidence: Section 4
 qa:
 - q:
-  - What is corpus-wide argument mining?
-  - How do you retrieve arguments from a whole corpus instead of a few documents?
-  - What does the Ein-Dor et al. 2020 system do?
+  - How precise can an automatic system be at retrieving arguments for a debate topic from
+    a huge news corpus?
+  - What top-k precision does corpus-wide evidence retrieval achieve?
+  - Can argument retrieval reach usable precision for the first few results?
   answers:
-  - the-pipeline-is-query-then-rank-over-the-whole-corpus
-  - the-precision-reached
-  - what-evidence-means-here
+  - e2e-precision-vlc
+  - positive-prior
 - q:
-  - How accurate is corpus-wide evidence retrieval?
-  - What precision does the system reach?
-  - How good are the top-ranked arguments?
+  - How do you get balanced training data when relevant arguments are extremely rare in a
+    corpus?
+  - What is retrospective labeling and what did it produce?
+  - How can annotation effort be spent so that a precision-oriented classifier improves?
   answers:
-  - the-precision-reached
-  - precision-is-the-metric-because-of-how-arguments-get-used
+  - retrospective-labeling-dataset
+  - context-precision-oriented-al
 - q:
-  - Why measure precision instead of accuracy or F1 for argument retrieval?
-  - Why isn't 90% precision good enough?
-  - What makes an argument retrieval system practical?
+  - Is retrieving candidate sentences directly just an indirect form of document retrieval?
+  - Do the top-ranked argument sentences all come from a handful of articles?
+  - How diverse are the sources of sentence-level argument retrieval results?
   answers:
-  - precision-is-the-metric-because-of-how-arguments-get-used
-  - the-precision-reached
+  - sl-not-document-retrieval
 - q:
-  - What is retrospective labeling?
-  - How do you build a balanced training set when positives are rare?
-  - How do you annotate data for a retrieval task with extreme class imbalance?
+  - What is a good paper to start with on argument retrieval at corpus scale?
+  - Which work moved argument mining beyond Wikipedia to a very large newspaper corpus?
+  - Where should I begin reading about end-to-end argument mining systems?
   answers:
-  - retrospective-labeling-fixes-the-imbalance-and-finds-hard-negatives
-  - this-is-active-learning-aimed-at-precision-instead-of-accuracy
+  - context-first-corpus-wide
+  - context-precision-oriented-al
 - q:
-  - How is retrospective labeling different from active learning?
-  - Is this label propagation or self-training?
-  - Does the method use pseudo-labels?
+  - Does BERT beat BiLSTM models on evidence detection benchmarks?
+  - What accuracy do evidence classifiers reach on the BlendNet benchmark?
+  - How much did corpus-wide argument mining improve over the previous best on evidence sentence
+    classification?
   answers:
-  - this-is-active-learning-aimed-at-precision-instead-of-accuracy
-  - retrospective-labeling-fixes-the-imbalance-and-finds-hard-negatives
+  - blendnet-accuracy
+  - data-beats-domain
 - q:
-  - What datasets does this paper release?
-  - How large is the evidence detection dataset?
-  - How many labelled sentences and what fraction are positive?
+  - Does masking the topic in a sentence help evidence classification?
+  - Should the topic token be replaced by a mask when fine-tuning BERT for argument detection?
+  - Does adding the motion text as input improve evidence detection models?
   answers:
-  - the-datasets-it-produced
-  - the-annotation-protocol
+  - masking-bert-vs-lstm
 - q:
-  - How was the evidence data annotated?
-  - What was the inter-annotator agreement?
-  - Why is agreement low on argument type annotation?
+  - Is more out-of-domain training data better than less in-domain data for evidence detection?
+  - Do newspaper-trained evidence models beat Wikipedia-trained ones on Wikipedia test sentences?
+  - How does corpus size affect the precision of argument retrieval?
   answers:
-  - the-annotation-protocol
-  - what-evidence-means-here
+  - data-beats-domain
+  - wiki-vs-vlc
 - q:
-  - What are the queries used to retrieve candidate sentences?
-  - What does the system miss?
-  - Why must the topic appear in the sentence?
+  - Does a model trained on Study and Expert Evidence generalise to general argument detection?
+  - How does an evidence detector perform on the UKP-TUDA argumentative sentence benchmark?
+  - Can an evidence-specific classifier be reused to rank argumentative sentences?
   answers:
-  - the-queries-are-both-the-filter-and-the-ceiling
-  - querying-sentences-at-this-scale-requires-a-different-index
+  - ukp-transfer
+  - evidence-type-ordering
 - q:
-  - What indexing is needed for sentence-level argument retrieval?
-  - How do you run these queries over billions of sentences?
-  - How is wikification done at scale?
+  - How reliable is crowd annotation of evidence sentences for a debate motion?
+  - What inter-annotator agreement should be expected when labeling evidence by type?
+  - Is labeling Study versus Expert Evidence harder than labeling generic argumentativeness?
   answers:
-  - querying-sentences-at-this-scale-requires-a-different-index
-  - the-queries-are-both-the-filter-and-the-ceiling
+  - annotation-agreement
 - q:
-  - Is sentence-level retrieval really different from document retrieval?
-  - Do the top results come from many documents or a few?
-  - How diverse are the retrieved arguments?
+  - Why is recall low when an evidence detector is applied to an argument-mining benchmark?
+  - Does high precision in argument retrieval come at the cost of coverage?
+  - What are the limits of query-based sentence retrieval for arguments?
   answers:
-  - the-results-really-do-span-the-corpus
-  - duplicate-evidence-is-a-corpus-scale-problem
-- q:
-  - Should the topic be masked in the input?
-  - Does masking the topic help BERT?
-  - Does giving the model the motion text help?
-  answers:
-  - masking-the-topic-helps-the-bilstm-and-hurts-bert
-  - giving-the-model-the-motion-is-what-the-earlier-framing-missed
-- q:
-  - Is a larger out-of-domain training set better than a smaller in-domain one?
-  - Why is precision lower on Wikipedia than on the news corpus?
-  - Does corpus size affect precision at k?
-  answers:
-  - a-bigger-out-of-domain-training-set-beat-a-matched-one
-  - the-precision-reached
-- q:
-  - How much better is this than earlier evidence detection work?
-  - What did switching to BERT contribute?
-  - Where does the improvement over the blending method come from?
-  answers:
-  - the-gain-over-the-earlier-blending-system
-  - giving-the-model-the-motion-is-what-the-earlier-framing-missed
-- q:
-  - Does an evidence detector work for general argument detection?
-  - Why is recall low on the argumentativeness benchmark?
-  - Does the model transfer to other argument types?
-  answers:
-  - on-the-argumentativeness-benchmark-it-ranks-by-argument-type
-  - what-evidence-means-here
-- q:
-  - What counts as evidence for a motion?
-  - What are Study Evidence and Expert Evidence?
-  - What is a motion in argument mining?
-  answers:
-  - what-evidence-means-here
+  - ukp-transfer
+  - e2e-precision-vlc
 misreadings:
-- 'The reported numbers are precision at k on the system''s own top predictions, annotated
-  afterwards. Recall is not measured, and by design cannot be: the queries cannot reach evidence
-  that does not mention the topic or fit a pattern, and the paper says so.'
-- Precision at k is not comparable across corpora. A smaller corpus may not contain k relevant
-  sentences at all, so the drop from the news corpus to Wikipedia is partly a property of
-  the corpus rather than of the model. Within one benchmark all variants rank the same candidate
-  set and are comparable.
-- There is no fixed held-out test set, and that is deliberate. A fixed set would score an
-  arbitrary sample accumulated during data collection instead of what the ranker actually
-  puts in front of a user.
-- Retrospective labeling adds no automatic labels. Every label is a human label; what the
-  classifier chooses is which sentences get shown to annotators. It is closer to active learning
-  than to self-training or label propagation.
-- The 33.5% positive rate is a property of the annotated top predictions, not of the corpus
-  or even of the query output -- the estimated positive rate among retrieved sentences is
-  about 0.3, and in the corpus at large it is far lower.
-- '''Nearly 14% improvement'' on the earlier benchmark is relative. In absolute terms accuracy
-  goes from 0.74 to 0.84, and roughly half of that comes from the bigger training set rather
-  than from BERT.'
-- Masking the topic is not a general improvement. It is the best input for the BiLSTM and
-  the worst for BERT, so a result about masking from one architecture does not carry to the
-  other.
-- The low recall on the argumentativeness benchmark is not a failure of the model. That benchmark
-  counts any argumentative sentence as positive, while the model was trained to find two specific
-  evidence types, and sampled inspection confirms that is what it accepts.
-- The task is Study and Expert Evidence specifically, not arguments in general. The authors
-  say the method carries over to Claims and other types, but the results here are for those
-  two types.
-terminology:
-  motion: A high-level claim implying a clear stance toward a topic, optionally with a proposed
-    action -- and here the topic is always a Wikipedia article title.
-  evidence: A single sentence that clearly supports or contests a motion and gives an indication
-    of whether a claim is true, rather than merely asserting a belief.
-  Study Evidence / Expert Evidence: 'The two evidence types the system targets: a reported
-    quantitative analysis of data, and reported testimony by a relevant expert or authority.'
-  sentence-level (SL) retrieval: Indexing and retrieving individual sentences across a whole
-    corpus, instead of shortlisting topic-relevant documents and mining inside them.
-  Retrospective Labeling: Annotating the current model's top-ranked predictions and retraining
-    on them, repeatedly -- which both unskews the training set and concentrates it on hard
-    negatives near the top of the ranking.
-  VLC / VLD: The Very Large Corpus of some 400 million LexisNexis articles, and the Very Large
-    Dataset of 198,457 labelled sentence-motion pairs collected from it.
-  masking: Replacing the topic mention in a sentence with a single special token, which marks
-    its position and collapses both a topic's surface forms and different topics into one
-    representation.
+- The 95% top-40 precision is precision among sentences that already matched hand-built evidence
+  queries containing the topic; it is not precision over the whole 400-million-article corpus,
+  and arguments in sentences that match no query are missed by design.
+- 'The 0.16 recall of BERT S+M on UKP-TUDA at a 0.5 threshold is not a failure of the model
+  but a consequence of the task mismatch: UKP-TUDA labels any sentence with a clear stance
+  as positive, while the model was trained to accept only Study and Expert Evidence.'
+- Precision curves on the newspaper corpus and on Wikipedia are not comparable to each other,
+  because Wikipedia may not contain k relevant sentences for a given motion at all; only within-benchmark
+  comparisons between models are meaningful.
+- 'Retrospective Labeling is not Label Propagation or another pseudo-labeling scheme: the
+  top predictions selected for labeling are annotated manually, and no similarity between
+  arguments is computed.'
+- Masking the topic is not a universally helpful trick — it improves the BiLSTM-with-attention
+  models but degrades BERT, whose unmasked sentence-plus-motion variant is the best model
+  reported.
+- The system retrieves Expert and Study Evidence rather than arguments in general; the authors
+  state the same approach was applied to Claims, but those results are not reported in the
+  paper.
 ---

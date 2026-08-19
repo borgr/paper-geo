@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from build/sidecar_tasks.json. Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call). Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -16,431 +16,1121 @@ What to check, in the order it pays:
    the talk abstract. Make it yours.
 
 Then promote it:  python scripts/draft_sidecars.py --accept disentqa-disentangling-parametric-and-contextual-knowledge-w
+
+Stamp: spec=d57862840a90 checks=1 body=c913a7a959ba
 -->
 ---
+key: neeman2023disentqa
 coined: DisentQA
-gloss: a question answering setup where one model emits two answers at once -- one grounded
-  in the passage it was given, one from its own weights -- so the source of an answer is visible
-one_liner: 'DisentQA trains one QA model to emit a contextual answer and a parametric answer
-  in a single output: counterfactual and answerability augmentation together lift accuracy
-  under knowledge conflict from 66.81% to 84.98% and leave the two answers identical on only
-  18.46% of counterfactual cases, while neither alone works.'
+gloss: a QA model trained to output two separate answers, one from the given passage and one
+  from what the model memorized
+one_liner: DisentQA trains a single generative QA model to emit two answers at once — a contextual
+  answer grounded in the given passage and a parametric answer from its own memorized knowledge
+  — using counterfactual and unanswerable-context data augmentation on Natural Questions.
 claims:
-- id: two-answers-in-one-output
-  text: 'DisentQA trains a single generative QA model to decode two answers to one question
-    in one output sequence, formatted "contextual: <contextual answer>, parametric: <parametric
-    answer>", so a reader can see whether an answer came from the supplied passage or from
-    the weights, and whether the two agree.'
-  scope: 'A property of the output format and the training data, not of the model''s internals
-    -- nothing inspects the weights, and a footnote concedes that calling a token predictor''s
-    stored regularities "knowledge" is anthropomorphic. The parametric answer is supervised
-    to be the original dataset answer in every example type, so "parametric" means "the answer
-    to give when the context is empty, irrelevant or altered", not a read-out of what the
-    weights contain. Implemented by fine-tuning T5 (770M and 11B) with T5X: greedy decoding,
-    50k steps, batch 32, constant learning rate 1e-4, best checkpoint chosen on the factual
-    validation set.'
-  evidence: Section 2.1, Section 3.4, Table 3, Appendix B, footnote 2
-- id: augmentations-are-complementary
-  text: 'The two augmentations are complementary rather than interchangeable: the model trained
-    on both is the only one that both abstains on irrelevant context (99.34% and 99.49%, against
-    27.69% and 35.60% for the answerability-only models) and keeps its two answers apart under
-    conflict (identical on 18.46% of counterfactual examples, against 99.71% for answerability-only
-    and 92.45% for counterfactual-only).'
-  scope: '"Complementary" is the authors'' reading of a pattern across Tables 4-6, not a measured
-    interaction term -- no ablation isolates why one augmentation makes the other work. The
-    mechanism the error analysis points to is copying: when the answerability-only model fails
-    to abstain it emits the same string as both answers, so it never learned two channels
-    at all, and in 176 of its 879 failures that string came from the irrelevant context. Reported
-    for T5-11B; the T5-Large models in Appendix C show the same ordering at lower absolute
-    values.'
-  evidence: Section 4.2, Section 4.3, Section 4.4, Tables 4-6, Section 5.3 (Error Analysis)
-- id: robustness-to-knowledge-conflicts
-  text: On counterfactual test examples, where the passage has been edited so that the grounded
-    answer contradicts the original one, contextual answer accuracy rises from 66.81% for
-    the vanilla single-answer model to 79.63% with counterfactual augmentation and 84.98%
-    with counterfactual plus answerability augmentation -- a further 5.35 points from data
-    that is not about knowledge conflict at all.
-  scope: 'Exact Match on 1,365 altered Natural Questions dev examples, scored against the
-    altered (expected) answer. The two-answer variant lands in the same place (84.91%), so
-    the gain comes from the training data rather than from emitting a parametric answer. One
-    configuration falls below the vanilla baseline: the two-answer answerability-only model
-    scores 64.62%. The paper''s own limitations section notes that part of the high counterfactual
-    accuracy may be the model detecting that substituted passages read unnaturally, rather
-    than following the context on its merits.'
-  evidence: Section 4.2, Table 4, Appendix A
-- id: answerability-needs-counterfactual-data
-  text: 'Abstaining on an empty context is trivial -- every model trained for it predicts
-    "unanswerable" 100% of the time -- but abstaining on a randomly substituted context is
-    not: the answerability-only models manage 27.69% and 35.60%, while adding counterfactual
-    data to the same recipe raises this to 99.34% and 99.49%.'
-  scope: Answerability here is accuracy at emitting the literal "unanswerable" token as the
-    contextual answer, so it measures an output convention, not a calibrated confidence. The
-    random contexts are sampled from elsewhere in the corpus and share neither topic nor entities
-    with the question; the authors call this simplistic and a proof of concept, and leave
-    plausible-looking distractors to future work. Section 4.3's prose says "more than 99%"
-    for the empty case where Table 5 reports 100.00 -- prefer the table.
-  evidence: Section 4.3, Table 5, Appendix A
-- id: answer-separation-on-counterfactual
-  text: 'The fully augmented model separates its two answers where it should and merges them
-    where it should: on counterfactual examples the contextual and parametric answers are
-    identical in only 18.46% of cases, on factual examples they are identical in 93.55%, and
-    on empty or random contexts in 0% and 0.29%.'
-  scope: Watch the direction. The metric is named Answer Separation and defined in Section
-    3.3 as the percentage of cases where the two answers differ, but Table 6 reports the complement
-    -- the percentage where they are identical -- so 18.46% means high separation, and lower
-    is better in the counterfactual, empty and random columns. String identity is the test,
-    so a paraphrase or a partial name counts as a difference. The 93.55% on factual data is
-    lower than the 99.9% of the two ablations, which the paper reads as better disentanglement
-    rather than worse agreement, since imitating the contextual answer is the easy path.
-  evidence: Section 3.3, Section 4.4, Table 6
-- id: parametric-answers-mostly-repeat-finetuning-answers
-  text: 'Most of the apparent parametric knowledge is answer overlap with the fine-tuning
-    data: restricted to dev examples whose answer never appears as an answer in training,
-    the fully augmented model''s parametric accuracy falls from 44.69% to 12.72% on counterfactual
-    contexts and from 31.14% to 7.40% on empty ones, while the closed-book baseline falls
-    from 27.69% to 9.76%.'
-  scope: 'The No Answer Overlap split follows Lewis et al. (2021) and is the harder half by
-    construction; every number stays non-zero, so pretraining does contribute something. A
-    second measurement agrees: on the counterfactual test set, 18% of the fully augmented
-    model''s parametric answers were never seen as an answer during fine-tuning (against 23%
-    for closed-book and 25% and 26% for the ablations), and 85% of that 18% differed from
-    the contextual answer. The paper''s own conclusion is that the models do surface parametric
-    answers from pretraining but have a strong tendency to repeat fine-tuning answers. Two
-    qualifiers on those unseen-answer percentages: for the counterfactual-only model most
-    of its 26% are identical to its own contextual answer, so the figure does not indicate
-    a separate channel at all; and manual inspection of the fully augmented model''s unseen
-    answers found some that are correct about the world while contradicting the supplied context,
-    which is the clearest evidence in the paper that anything is being recalled from pretraining.'
-  evidence: Section 5.1, Table 8, Section 5.4
-- id: contextual-quality-is-preserved
-  text: 'Adding a second answer costs almost nothing on the standard task: contextual answer
-    accuracy on unaltered Natural Questions stays between 78.10% and 80.81% across all seven
-    models, the single-to-multi answer change moves it by at most 0.6 points, and counterfactual
-    augmentation slightly improves on the vanilla model (80.73% against 79.34%).'
-  scope: 'Exact Match on the restricted test set of 1,365 examples, so not comparable to published
-    NQ numbers. Answerability augmentation is where the small cost sits -- 78.32% and 78.10%
-    for the two fully augmented models -- and the error analysis attributes 8 of 73 regressions
-    to the model predicting "unanswerable" when the context did contain the answer. The seven
-    models are single training runs: no repeated seeds, no hyperparameter search, with consistency
-    across the two model sizes offered as the substitute for significance testing.'
-  evidence: Section 4.1, Table 4, Section 5.3, Appendix A, Appendix B
-- id: parametric-answer-leaks-from-context
-  text: 'The parametric answer is not independent of the context it is supposed to ignore:
-    for the fully augmented model its accuracy is 74.87% given the factual passage, 44.69%
-    given a counterfactual one, 31.14% given an empty one and 30.18% given a random one, where
-    a genuinely separate channel would score the same everywhere.'
-  scope: 'Leakage runs both ways and the paper shows an example of each -- a substituted entity
-    appearing verbatim in the parametric answer, and a parametric answer overriding a substituted
-    context. The factual column is marked "?" rather than "up is better" in Table 7 because
-    scoring high there mostly means imitating the contextual answer: the two ablations that
-    copy score 80.37% and 80.22%, above the fully augmented model. Counterfactual contexts
-    scoring above empty or random ones is read as the model taking hints from the altered
-    passage.'
-  evidence: Section 4.5, Table 7, Table 9, Section 5.3 (Disentanglement)
-- id: beats-the-closed-book-baseline
-  text: 'Trained with all the augmentations, the two-answer model recalls the original answer
-    from an empty context better than a closed-book model trained for exactly that task: 31.14%
-    against 27.69%, an improvement of about 3.5 points.'
-  scope: 'The paper says plainly that it is not clear why a model trained to use both knowledge
-    sources should beat a dedicated closed-book model here, and offers no mechanism. The margin
-    is small and largely overlap-driven: on the No Answer Overlap split both drop sharply
-    and the ordering reverses (7.40% against 9.76%). Both are T5-11B; the T5-Large closed-book
-    baseline scores 10.26%, and excluding tabular contexts moves both down rather than up.'
-  evidence: Section 4.5, Table 7, Table 8, Table 10, Table 15
-- id: dataset-and-augmentation-construction
-  text: 'The training data is four parallel derivations of the same Natural Questions examples:
-    85,540 factual, 30,653 counterfactual, 85,540 empty-context and 85,540 random-context
-    training examples, with 1,365 test examples of each type, always using the gold passage
-    as the context.'
-  scope: Only the 35% of NQ examples that have both a gold passage and a short answer are
-    used, and an example qualifies if at least one of five annotators judged the passage suitable
-    for answering. Counterfactuals follow Longpre et al. (2021)'s corpus-substitution policy
-    -- every occurrence of the answer entity in the passage is replaced by another answer
-    of the same entity type sampled from the same corpus -- which is why there are far fewer
-    of them. No new questions are introduced; all four sets derive from questions already
-    in the split, and the test set is cut down to the examples that admitted a counterfactual
-    so the four conditions stay comparable. Always supplying the gold passage assumes an oracle
-    retriever.
-  evidence: Section 3.1, Section 3.2, Table 2, Appendix A
-- id: what-is-new-and-what-is-borrowed
-  text: 'The paper''s novelty claim is the combination, not any one part: it says it is the
-    first to put multiple answers, counterfactual augmentation and answerability augmentation
-    together to encourage and evaluate disentanglement, and to show those approaches are complementary.
-    Counterfactual substitution is Longpre et al. (2021)''s, who defined knowledge conflicts
-    and proposed substitution augmentation as the mitigation; the closed-book baseline is
-    Roberts et al. (2020)''s setup and the answer-overlap split is Lewis et al. (2021)''s.'
-  scope: Two pieces of the related work bear directly on the results rather than just crediting
-    them. Yatskar (2019) found SQuAD 2.0's unanswerable questions to be mostly cases of extreme
-    confusion and therefore easy to detect, and Sulem et al. (2021) built harder ones -- which
-    is the same weakness the authors concede in their own topically unrelated random contexts,
-    and they do not use the harder resource. Kim et al. (2021)'s unanswerable NQ subset, questions
-    with failed presuppositions, is stated not to overlap with this data. Li et al. (2022)
-    is named as concurrent work exploring similar ideas and is not compared against. The knowledge-editing
-    line (Zhu et al. 2020, De Cao et al. 2021, Verga et al. 2021) and the fact-localisation
-    line (Dai et al. 2022, Meng et al. 2022) attack the same problem from the other side,
-    by changing or locating what the weights store rather than making both sources visible
-    in the output; neither is a baseline here.
-  evidence: Section 6, Appendix A
-- id: named-entity-answers-only
-  text: 'The method''s reach is bounded by its augmentation: counterfactual examples can only
-    be generated for questions whose answer is a named entity, so knowledge conflicts in Boolean
-    questions, or in any answer that is not a substitutable entity, fall outside the framework
-    and would need a different augmentation.'
-  scope: The authors' own first stated limitation. It bounds the augmentation rather than
-    the two-answer output format, which needs no substitution and could in principle be trained
-    on any QA data that supplies a parametric target. Extending it to other question types
-    is named as required future work, not sketched.
-  evidence: Appendix A, Section 3.2
-- id: oracle-retrieval-and-easy-unanswerables
-  text: 'Two setup choices make this a controlled study rather than a deployment result: the
-    context is always the gold passage, so there is no retrieval error to survive, and the
-    unanswerable examples are empty or topically unrelated passages, which the authors themselves
-    call simplistic and a proof of concept.'
-  scope: 'Named as limitations by the authors, not inferred. They add a third: the strong
-    counterfactual results may partly reflect the model noticing that substituted passages
-    read unnaturally, though they judge this minor given the small gap between factual and
-    counterfactual accuracy. A fourth open question is what makes a case easy or hard to disentangle
-    -- possibly how often the fact appears in pretraining data -- which they leave to future
-    work.'
-  evidence: Appendix A
-- id: tabular-contexts-depress-every-number
-  text: '27% of the test contexts are tables rather than prose, and they carry much of the
-    residual contextual error: excluding them raises the fully augmented model''s contextual
-    accuracy from 78.10% to 86.19% on factual examples and from 84.91% to 96.37% on counterfactual
-    ones, while its parametric accuracy barely moves (44.69% to 44.86% on counterfactual contexts).'
-  scope: 'The 27% is the complement of the table caption''s statement that 73% of the data
-    did not include tables, and the split is by whether the context contains a table at all,
-    not by whether the answer sits in it. The lift is not uniform: the closed-book baseline''s
-    parametric accuracy on empty contexts falls from 27.69% to 25.40% and the fully augmented
-    model''s from 31.14% to 28.53% when tables are excluded, so this is a re-scoring on an
-    easier subset rather than a correction. The manual error analysis found that half of the
-    33 genuinely wrong context-derived answers involved a table, a numeric answer, or an unclear
-    question.'
-  evidence: Table 14, Table 15, Section 5.3 (Error Analysis)
-- id: bigger-model-more-parametric-knowledge
-  text: 'Model size is treated as the lever on how much parametric knowledge is available
-    at all: T5-11B beats T5-Large in every configuration with the same ordering between variants,
-    and the closed-book baseline''s accuracy from an empty context is 27.69% at 11B against
-    10.26% at 770M.'
-  scope: Two sizes, one run each, so this is a direction rather than a scaling curve; the
-    paper explicitly declines significance testing because of the model sizes involved and
-    offers agreement of trends across the two sizes instead. The T5-Large results do show
-    the augmentations mattering the same way -- 33.99% answer similarity on counterfactual
-    examples for the fully augmented model against 99.71% for answerability-only. Each 11B
-    run took 10 TPU hours, with no hyperparameter search.
-  evidence: Section 3.4, Section 5.2, Appendix B, Tables 10-13
-- id: error-analysis-of-the-factual-regression
-  text: 'The fully augmented model''s 1-2 point drop on unaltered examples is mostly not a
-    knowledge failure: of the 73 cases where it failed and the vanilla model succeeded, 14
-    were correct answers scored zero by Exact Match (for instance "Napoleon" against the reference
-    "Napoleon Bonaparte"), 8 were wrong abstentions, 6 had more than one valid answer, 12
-    answers came from outside the context, and 33 were wrong answers taken from the context.'
-  scope: 'A manual analysis of one model pair in one direction of disagreement, so it explains
-    the regression rather than measuring either model''s overall error composition. What it
-    does show is how much of the gap is a scoring artefact: about a third of these failures
-    -- the 14 correct-but-zero plus the 6 alternative-valid-answer cases -- are not errors
-    a reader would count. Half of the 33 context-derived wrong answers involve a tabular context,
-    a numeric answer or an unclear question.'
-  evidence: Section 5.3 (Error Analysis)
+- id: disentangled-output-paradigm
+  kind: context
+  text: DisentQA introduces a QA training paradigm in which one model outputs two answers
+    per question, a contextual answer grounded in the supplied passage and a parametric answer
+    from memorized pretraining knowledge, so that knowledge conflicts become visible instead
+    of silently resolved.
+  scope: Demonstrated on Natural Questions with T5-Large (770M) and T5-11B fine-tuned on gold
+    passages (oracle retrieval); counterfactual augmentation only applies to questions whose
+    answers are named entities.
+- id: robustness-counterfactual
+  text: On counterfactual Natural Questions contexts, the fully augmented DisentQA model reaches
+    84.91% contextual-answer accuracy versus 66.81% for the vanilla single-answer model trained
+    only on factual examples.
+  evidence: Table 4
+  scope: T5-11B, NQ dev-derived counterfactual test set of 1,365 examples, gold passages substituted
+    by corpus-substitution; exact-match accuracy.
+- id: augmentations-complementary
+  text: 'Combining counterfactual and answerability augmentation is complementary for robustness:
+    adding answerability on top of counterfactual data raises contextual accuracy on counterfactual
+    examples by 5.35 points to 84.98% for the single-answer model.'
+  evidence: Table 4
+  scope: T5-11B single-answer models on the 1,365-example counterfactual test set; the same
+    complementarity appears in the multi-answer models.
+- id: factual-accuracy-preserved
+  text: 'Adding a second, parametric answer costs little on standard Natural Questions: contextual-answer
+    accuracy on the factual test set stays between 78.10% and 80.81% across all DisentQA variants
+    and baselines, against 79.34% for the vanilla model.'
+  evidence: Table 4
+  scope: T5-11B, factual NQ test set with gold passages; the lowest values (78.10-78.32%)
+    belong to the variants trained with answerability augmentation.
+- id: answer-separation
+  text: 'Only the model trained with both counterfactual and answerability augmentation separates
+    its two answers: on counterfactual contexts its contextual and parametric answers are
+    identical in just 18.46% of cases, versus 92.45% for counterfactual-only and 99.71% for
+    answerability-only training.'
+  evidence: Table 6
+  scope: T5-11B multi-answer models on the counterfactual test set; on factual contexts the
+    same model keeps the two answers identical 93.55% of the time, which is the desired behaviour
+    there.
+- id: answerability-random-context
+  text: 'Detecting an irrelevant context requires counterfactual data too: with a randomly
+    sampled passage, the fully augmented models predict "unanswerable" 99.34% (single-answer)
+    and 99.49% (multi-answer) of the time, while answerability-only training reaches 27.69%
+    and 35.60%.'
+  evidence: Table 5
+  scope: T5-11B on the 1,365-example random-context test set; with an empty context all four
+    models score 100%, so only random contexts discriminate between them.
+- id: parametric-answer-quality
+  text: The fully augmented DisentQA model's parametric answer with an empty context is 31.14%
+    exact match, 3.5 points above the 27.69% closed-book T5-11B baseline trained only to answer
+    from parameters.
+  evidence: Table 7
+  scope: T5-11B, parametric answers compared against the original NQ answers; accuracy drifts
+    with the supplied context (30.18% with random, 44.69% with counterfactual contexts), so
+    the parametric answer is not fully context-independent.
+- id: answer-overlap-inflation
+  text: 'Much of the apparent parametric knowledge is fine-tuning memorization: on the No-Answer-Overlap
+    subset the fully augmented model''s parametric accuracy drops to 7.40% with empty context
+    and 7.10% with random context, 23.74 and 23.08 points below its accuracy on the full dev
+    set.'
+  evidence: Table 8
+  scope: T5-11B; NAO subsets contain only reference answers absent from the training data,
+    following Lewis et al. (2021); contextual-answer quality and robustness show much smaller
+    NAO gaps.
+- id: unseen-parametric-answers
+  text: 'DisentQA''s parametric answers mostly repeat answers seen during fine-tuning: for
+    the fully augmented model 18% of parametric answers on the counterfactual test set were
+    never seen as an answer in fine-tuning, and 85% of those are disentangled from the contextual
+    answer.'
+  evidence: Section 5.4
+  scope: T5-11B on the counterfactual test set; comparable unseen-answer rates are 25% for
+    the answerability-only model, 26% for the counterfactual-only model and 23% for the closed-book
+    baseline.
+- id: leakage-failure-mode
+  text: When the answerability-only multi-answer model fails to output "unanswerable" on a
+    random context, it invariably emits the same string as both contextual and parametric
+    answer, and in 176 of 879 error cases that string is copied from the unrelated random
+    passage.
+  evidence: Section 5.3
+  scope: T5-11B "(m) f+a" model, random-context test set, where it fails on 64.4% of cases;
+    the model trained with counterfactual data as well does not show this failure.
+- id: model-size-trend
+  text: 'DisentQA''s disentanglement behaviour holds at 770M parameters but is weaker: T5-Large''s
+    fully augmented model reaches 81.03% contextual accuracy on counterfactual data and 33.99%
+    answer similarity, against 84.91% and 18.46% for T5-11B.'
+  evidence: Tables 10-13
+  scope: T5-Large (770M) versus T5-11B on the same NQ-derived splits; T5-11B is better in
+    all reported cases, and the ordering of model variants is preserved across the two sizes.
 qa:
 - q:
-  - How can I tell whether a RAG answer came from the retrieved passage or from the model's
+  - How can a QA model tell me whether its answer came from the retrieved passage or from
     memory?
-  - How do I know if a generated answer is grounded in the context I supplied?
-  - Can a QA model show which knowledge source its answer came from?
-  - How do I make a QA model's answer attributable to its source?
+  - Is there a way to separate what a language model memorized from what it read in the provided
+    context?
+  - What work proposes outputting two answers, one grounded in the passage and one from the
+    model's own knowledge?
   answers:
-  - two-answers-in-one-output
-  - answer-separation-on-counterfactual
-  - parametric-answer-leaks-from-context
+  - disentangled-output-paradigm
+  - answer-separation
 - q:
-  - What is DisentQA?
-  - What does it mean to disentangle parametric and contextual knowledge?
-  - How does the DisentQA method work?
+  - What should I read about knowledge conflicts between retrieved context and model memory
+    in question answering?
+  - Where should I start reading about grounding generative QA answers in the provided passage
+    versus parametric knowledge?
+  - Which paper established the parametric-versus-contextual knowledge disentanglement framing
+    for QA?
   answers:
-  - two-answers-in-one-output
-  - augmentations-are-complementary
-  - dataset-and-augmentation-construction
+  - disentangled-output-paradigm
 - q:
-  - How do I stop a QA model from ignoring the retrieved passage in favour of its memorized
-    answer?
-  - How do you handle knowledge conflicts between a model's memory and its context?
-  - What fixes a model that answers from stale parametric knowledge instead of the given document?
-  - Does counterfactual data augmentation make QA models follow the context?
+  - Does counterfactual data augmentation make QA models follow the passage instead of their
+    memorized fact?
+  - How much does training on entity-substituted contexts improve robustness to knowledge
+    conflicts?
+  - What accuracy does DisentQA get on counterfactual Natural Questions contexts?
   answers:
-  - robustness-to-knowledge-conflicts
-  - augmentations-are-complementary
-  - contextual-quality-is-preserved
+  - robustness-counterfactual
+  - augmentations-complementary
 - q:
-  - How do I train a model to abstain when the retrieved context is irrelevant?
-  - How do you teach a QA model to say a question is unanswerable from the given passage?
-  - Why does my model still answer when the retrieved passage has nothing to do with the question?
+  - Does adding a second parametric answer hurt normal Natural Questions accuracy?
+  - What is the cost on standard QA accuracy of training a model to emit two answers?
+  - Does DisentQA lose exact-match performance on factual Natural Questions?
   answers:
-  - answerability-needs-counterfactual-data
-  - augmentations-are-complementary
-  - oracle-retrieval-and-easy-unanswerables
+  - factual-accuracy-preserved
 - q:
-  - Does adding counterfactual or answerability data hurt normal QA accuracy?
-  - What is the cost of training a QA model to produce two answers?
-  - Is there a tradeoff between robustness to knowledge conflict and standard accuracy?
+  - Can a QA model learn to say "unanswerable" when the passage is irrelevant?
+  - How well does abstention training work when the given context is a random unrelated passage?
+  - Why is answerability training alone not enough to detect irrelevant contexts?
   answers:
-  - contextual-quality-is-preserved
-  - error-analysis-of-the-factual-regression
-  - robustness-to-knowledge-conflicts
+  - answerability-random-context
+  - leakage-failure-mode
 - q:
-  - Do language models actually know facts, or are they repeating answers from fine-tuning?
-  - How much of closed-book QA accuracy is answer overlap with the training data?
-  - Is parametric knowledge in QA models real memorization from pretraining?
+  - Are counterfactual augmentation and answerability augmentation complementary or redundant?
+  - Do you need both entity substitution and unanswerable examples to get disentanglement?
+  - Which training augmentations are essential for a QA model to separate its two answers?
   answers:
-  - parametric-answers-mostly-repeat-finetuning-answers
-  - beats-the-closed-book-baseline
-  - bigger-model-more-parametric-knowledge
+  - augmentations-complementary
+  - answer-separation
+  - answerability-random-context
 - q:
-  - How do you measure whether a model separated its knowledge sources?
-  - What metric shows that two generated answers come from different sources?
-  - How is answer separation computed and which direction is better?
+  - How good is the memorized answer that a disentangled QA model reports?
+  - Does a model trained with context beat a closed-book model at answering from parameters
+    alone?
+  - What is DisentQA's parametric answer accuracy on Natural Questions with an empty context?
   answers:
-  - answer-separation-on-counterfactual
-  - parametric-answer-leaks-from-context
-  - parametric-answers-mostly-repeat-finetuning-answers
+  - parametric-answer-quality
 - q:
-  - How do I build counterfactual QA training data?
-  - How do you generate examples where the context contradicts the memorized answer?
-  - What is entity substitution for knowledge conflict data?
+  - Is the parametric answer really pretraining knowledge or just memorized fine-tuning answers?
+  - How much does train-test answer overlap inflate closed-book style accuracy on Natural
+    Questions?
+  - What happens to parametric-answer accuracy on questions whose answers never appear in
+    the training data?
   answers:
-  - dataset-and-augmentation-construction
-  - named-entity-answers-only
-  - robustness-to-knowledge-conflicts
+  - answer-overlap-inflation
+  - unseen-parametric-answers
 - q:
-  - What are the limitations of DisentQA?
-  - When does counterfactual augmentation for knowledge conflict not apply?
-  - What does this approach not cover?
+  - Does disentangling parametric and contextual knowledge need an 11B model?
+  - How does model size affect a QA model's ability to separate memorized and contextual answers?
+  - Do the DisentQA results replicate at T5-Large scale?
   answers:
-  - named-entity-answers-only
-  - oracle-retrieval-and-easy-unanswerables
-  - parametric-answers-mostly-repeat-finetuning-answers
+  - model-size-trend
 - q:
-  - Does model size matter for parametric knowledge in QA?
-  - Is an 11B model much better than a 770M one at closed-book QA?
-  - How does scale affect knowledge disentanglement?
+  - What are the limits of entity-substitution counterfactual training data for QA?
+  - Which question types can this counterfactual augmentation not cover?
+  - Does the disentanglement setup assume a perfect retriever?
   answers:
-  - bigger-model-more-parametric-knowledge
-  - beats-the-closed-book-baseline
-- q:
-  - Why do QA models do worse when the context is a table?
-  - How much of Natural Questions has tabular context?
-  - Do tables in the passage hurt extractive or generative QA accuracy?
-  answers:
-  - tabular-contexts-depress-every-number
-  - error-analysis-of-the-factual-regression
-- q:
-  - Is Exact Match a fair metric for generative QA?
-  - How much of a QA accuracy gap is just string matching artefacts?
-  - What kinds of errors does Exact Match miscount in question answering?
-  answers:
-  - error-analysis-of-the-factual-regression
-  - contextual-quality-is-preserved
-  - tabular-contexts-depress-every-number
-- q:
-  - Can one model give two different answers to the same question on purpose?
-  - How do you train a model to output both a grounded answer and a memory-based answer?
-  - What does a model that reports agreement or conflict between its sources look like?
-  answers:
-  - two-answers-in-one-output
-  - answer-separation-on-counterfactual
-  - augmentations-are-complementary
-- q:
-  - Has anyone else made a model output both a grounded and a memorized answer?
-  - How is this different from knowledge editing or model editing?
-  - Is counterfactual augmentation for knowledge conflict this paper's idea?
-  - What prior work does DisentQA build on?
-  answers:
-  - what-is-new-and-what-is-borrowed
-  - dataset-and-augmentation-construction
-  - two-answers-in-one-output
-misreadings:
-- The 18.46% is a similarity, not a separation. Section 3.3 defines Answer Separation as the
-  share of cases where the two answers differ, but Table 6 reports the share where they are
-  identical -- so on counterfactual data lower is better, and 18.46% is the paper's best result
-  rather than a weak one. The two ablations score 92.45% and 99.71% on the same cell.
-- This is not a claim that the model has two knowledge stores. The parametric answer is supervised
-  to be the original dataset answer, and it is measured against that answer -- not against
-  the world, and not against anything read out of the weights. When the parametric answer
-  changes with the context (74.87% factual, 44.69% counterfactual, 31.14% empty, 30.18% random),
-  that is the channel leaking, which the paper reports rather than hides.
-- The parametric answers are mostly remembered from fine-tuning, not from pretraining. On
-  the No Answer Overlap dev split the fully augmented model's parametric accuracy falls from
-  44.69% to 12.72% on counterfactual contexts and the closed-book baseline from 27.69% to
-  9.76%. Independently, only 18% of its parametric answers were never seen as an answer in
-  training. Non-zero, so pretraining contributes -- but the headline parametric numbers are
-  not a measure of memorized world knowledge.
-- Beating the closed-book baseline is a 3.5-point effect (31.14% against 27.69%), and the
-  paper says it is unclear why it should happen at all. On the harder No Answer Overlap split
-  the ordering reverses (7.40% against 9.76%), so this is not evidence that adding context
-  training improves recall from the weights.
-- Emitting a parametric answer is not what improves robustness. Going from one answer to two
-  barely moves any contextual number (80.73 to 80.37, 80.81 to 80.22, 78.32 to 78.10 on factual
-  data; 84.98 to 84.91 on counterfactual). The gains under knowledge conflict come from the
-  augmented training data; the second answer is what makes the source visible, not what makes
-  the answer better.
-- Answerability augmentation alone is not a partial version of the method -- in one configuration
-  it is worse than doing nothing. The two-answer answerability-only model scores 64.62% on
-  counterfactual data, below the 66.81% vanilla baseline, and it fails to abstain on 64.4%
-  of random contexts, emitting the same string as both answers when it does.
-- 'The value 27.69 appears in this paper as two unrelated quantities: the answerability-only
-  single-answer model''s accuracy at abstaining on random contexts (Table 5) and the closed-book
-  baseline''s parametric accuracy from an empty context (Table 7). Check which table a quoted
-  27.69 came from before comparing it to anything.'
-- The near-perfect abstention numbers (99.34% and 99.49%) are on easy negatives. The unanswerable
-  examples are either an empty context or a passage sampled from elsewhere that shares no
-  topic or entity with the question; the authors call the approach simplistic and a proof
-  of concept, and name distractors that look relevant but lack the answer as future work.
-- 'None of these accuracies are comparable to published Natural Questions numbers. Only the
-  35% of NQ with both a gold passage and a short answer is used, the gold passage is always
-  supplied (an oracle retriever), the test set is cut to the 1,365 examples that admitted
-  a counterfactual, and Exact Match miscounts: of 73 analysed regressions, 14 were correct
-  answers scored zero and 6 had a second valid answer.'
-- Counterfactual augmentation is not this paper's invention -- it is Longpre et al. (2021)'s
-  entity substitution, adopted unchanged, and they had already shown it mitigates over-reliance
-  on memorized answers. What is new here is the two-answer output format, the answerability
-  augmentation, and the finding that the two augmentations only work together. Attribute the
-  substitution procedure accordingly.
-- This is not knowledge editing. Methods that modify or locate the facts stored in the weights
-  (Zhu et al., De Cao et al., Verga et al., Dai et al., Meng et al.) are cited as related
-  work, not as baselines, and nothing here changes what the model has memorized. DisentQA
-  leaves the parametric answer intact and makes it visible alongside the grounded one, so
-  a reader can see the conflict rather than have it resolved for them.
+  - disentangled-output-paradigm
+  - answer-overlap-inflation
 terminology:
-  DisentQA: 'The paradigm introduced here, and the name of the resulting model family: one
-    generative QA model fine-tuned to emit a contextual answer and a parametric answer as
-    a single decoded string, trained on factual, counterfactual and unanswerable versions
-    of the same examples.'
-  parametric knowledge: Knowledge encoded in the model's weights during pretraining. Operationally
-    in this paper it is whatever the model produces as the second answer, supervised to be
-    the original dataset answer -- so the term names an intent, not a verified source. A footnote
-    acknowledges the word "knowledge" is anthropomorphic for a token predictor.
-  contextual knowledge: The passage handed to the model at inference time, here always the
-    Natural Questions gold passage. The contextual answer is the one the model should ground
-    in that passage, including "unanswerable" when the passage does not support any.
-  counterfactual data augmentation: 'Longpre et al. (2021)''s corpus-substitution procedure,
-    adopted unchanged: every occurrence of the answer entity in a passage is replaced by another
-    answer of the same entity type drawn from the same corpus, so the grounded answer now
-    contradicts the original one. Works only for named-entity answers.'
-  answerability augmentation: 'This paper''s addition: training examples whose context is
-    empty or randomly substituted, where the contextual answer must be the literal token "unanswerable"
-    while the parametric answer stays the original one. Its purpose is to stop the model from
-    hallucinating a contextual answer out of its weights.'
-  Answer Separation: The disentanglement metric. Defined in the text as the share of cases
-    where the two answers differ, but tabulated as the share where they are identical -- so
-    read Table 6 as similarity and remember that the counterfactual, empty and random columns
-    want low numbers and the factual column wants a high one.
-  answer overlap (AO / NAO): Lewis et al. (2021)'s split of a QA test set by whether the reference
-    answer also appears as an answer somewhere in training. The No Answer Overlap half is
-    where this paper's parametric-knowledge numbers collapse, which is why it is the honest
-    denominator for any claim about memorization.
-  (s) / (m) and f / cf / a: 'The model naming scheme: (s) emits one answer, (m) emits two;
-    f, cf and a name the example types in training (factual, counterfactual, answerability).
-    So "(m) f+cf+a" is the fully augmented two-answer model and "(s) f" is the vanilla baseline.'
+  parametric knowledge: Factual knowledge encoded in a language model's weights during pretraining
+    and fine-tuning, available without any external passage.
+  contextual knowledge: Factual knowledge supplied to a QA model at inference time as the
+    context of the question, such as a retrieved Wikipedia passage.
+  answer separation: The percentage of test cases in which a two-answer QA model's contextual
+    and parametric answers are identical; low values are desired on counterfactual contexts
+    and high values on factual ones.
+  counterfactual example: A QA example whose context has had every occurrence of the answer
+    entity replaced with a different entity of the same type, so the passage-grounded answer
+    contradicts the memorized one.
+  answerability augmentation: Training examples in which the context is empty or a randomly
+    sampled unrelated passage and the required contextual answer is the special token "unanswerable".
+  No Answer Overlap (NAO): The subset of a QA test set whose reference answers never appear
+    as answers anywhere in the training data, used to remove train-test answer memorization
+    artifacts.
+misreadings:
+- '0': D
+  '1': i
+  '2': s
+  '3': e
+  '4': n
+  '5': t
+  '6': Q
+  '7': A
+  '8': ''''
+  '9': s
+  '10': ' '
+  '11': p
+  '12': a
+  '13': r
+  '14': a
+  '15': m
+  '16': e
+  '17': t
+  '18': r
+  '19': i
+  '20': c
+  '21': ' '
+  '22': a
+  '23': n
+  '24': s
+  '25': w
+  '26': e
+  '27': r
+  '28': ' '
+  '29': i
+  '30': s
+  '31': ' '
+  '32': n
+  '33': o
+  '34': t
+  '35': ' '
+  '36': a
+  '37': ' '
+  '38': c
+  '39': l
+  '40': e
+  '41': a
+  '42': n
+  '43': ' '
+  '44': r
+  '45': e
+  '46': a
+  '47': d
+  '48': o
+  '49': u
+  '50': t
+  '51': ' '
+  '52': o
+  '53': f
+  '54': ' '
+  '55': p
+  '56': r
+  '57': e
+  '58': t
+  '59': r
+  '60': a
+  '61': i
+  '62': n
+  '63': i
+  '64': n
+  '65': g
+  '66': ' '
+  '67': m
+  '68': e
+  '69': m
+  '70': o
+  '71': r
+  '72': y
+  '73': ':'
+  '74': ' '
+  '75': i
+  '76': t
+  '77': ' '
+  '78': c
+  '79': h
+  '80': a
+  '81': n
+  '82': g
+  '83': e
+  '84': s
+  '85': ' '
+  '86': w
+  '87': i
+  '88': t
+  '89': h
+  '90': ' '
+  '91': t
+  '92': h
+  '93': e
+  '94': ' '
+  '95': s
+  '96': u
+  '97': p
+  '98': p
+  '99': l
+  '100': i
+  '101': e
+  '102': d
+  '103': ' '
+  '104': c
+  '105': o
+  '106': n
+  '107': t
+  '108': e
+  '109': x
+  '110': t
+  '111': ','
+  '112': ' '
+  '113': a
+  '114': n
+  '115': d
+  '116': ' '
+  '117': '8'
+  '118': '2'
+  '119': '%'
+  '120': ' '
+  '121': o
+  '122': f
+  '123': ' '
+  '124': p
+  '125': a
+  '126': r
+  '127': a
+  '128': m
+  '129': e
+  '130': t
+  '131': r
+  '132': i
+  '133': c
+  '134': ' '
+  '135': a
+  '136': n
+  '137': s
+  '138': w
+  '139': e
+  '140': r
+  '141': s
+  '142': ' '
+  '143': o
+  '144': n
+  '145': ' '
+  '146': t
+  '147': h
+  '148': e
+  '149': ' '
+  '150': c
+  '151': o
+  '152': u
+  '153': n
+  '154': t
+  '155': e
+  '156': r
+  '157': f
+  '158': a
+  '159': c
+  '160': t
+  '161': u
+  '162': a
+  '163': l
+  '164': ' '
+  '165': t
+  '166': e
+  '167': s
+  '168': t
+  '169': ' '
+  '170': s
+  '171': e
+  '172': t
+  '173': ' '
+  '174': w
+  '175': e
+  '176': r
+  '177': e
+  '178': ' '
+  '179': a
+  '180': l
+  '181': r
+  '182': e
+  '183': a
+  '184': d
+  '185': y
+  '186': ' '
+  '187': s
+  '188': e
+  '189': e
+  '190': n
+  '191': ' '
+  '192': a
+  '193': s
+  '194': ' '
+  '195': a
+  '196': n
+  '197': s
+  '198': w
+  '199': e
+  '200': r
+  '201': s
+  '202': ' '
+  '203': d
+  '204': u
+  '205': r
+  '206': i
+  '207': n
+  '208': g
+  '209': ' '
+  '210': f
+  '211': i
+  '212': n
+  '213': e
+  '214': '-'
+  '215': t
+  '216': u
+  '217': n
+  '218': i
+  '219': n
+  '220': g
+  '221': .
+- '0': H
+  '1': i
+  '2': g
+  '3': h
+  '4': ' '
+  '5': a
+  '6': c
+  '7': c
+  '8': u
+  '9': r
+  '10': a
+  '11': c
+  '12': y
+  '13': ' '
+  '14': o
+  '15': n
+  '16': ' '
+  '17': c
+  '18': o
+  '19': u
+  '20': n
+  '21': t
+  '22': e
+  '23': r
+  '24': f
+  '25': a
+  '26': c
+  '27': t
+  '28': u
+  '29': a
+  '30': l
+  '31': ' '
+  '32': c
+  '33': o
+  '34': n
+  '35': t
+  '36': e
+  '37': x
+  '38': t
+  '39': s
+  '40': ' '
+  '41': d
+  '42': o
+  '43': e
+  '44': s
+  '45': ' '
+  '46': n
+  '47': o
+  '48': t
+  '49': ' '
+  '50': m
+  '51': e
+  '52': a
+  '53': n
+  '54': ' '
+  '55': p
+  '56': e
+  '57': r
+  '58': f
+  '59': e
+  '60': c
+  '61': t
+  '62': ' '
+  '63': g
+  '64': r
+  '65': o
+  '66': u
+  '67': n
+  '68': d
+  '69': i
+  '70': n
+  '71': g
+  '72': ':'
+  '73': ' '
+  '74': e
+  '75': n
+  '76': t
+  '77': i
+  '78': t
+  '79': y
+  '80': '-'
+  '81': s
+  '82': u
+  '83': b
+  '84': s
+  '85': t
+  '86': i
+  '87': t
+  '88': u
+  '89': t
+  '90': e
+  '91': d
+  '92': ' '
+  '93': p
+  '94': a
+  '95': s
+  '96': s
+  '97': a
+  '98': g
+  '99': e
+  '100': s
+  '101': ' '
+  '102': r
+  '103': e
+  '104': a
+  '105': d
+  '106': ' '
+  '107': a
+  '108': s
+  '109': ' '
+  '110': s
+  '111': o
+  '112': m
+  '113': e
+  '114': w
+  '115': h
+  '116': a
+  '117': t
+  '118': ' '
+  '119': u
+  '120': n
+  '121': n
+  '122': a
+  '123': t
+  '124': u
+  '125': r
+  '126': a
+  '127': l
+  '128': ' '
+  '129': t
+  '130': e
+  '131': x
+  '132': t
+  '133': ','
+  '134': ' '
+  '135': w
+  '136': h
+  '137': i
+  '138': c
+  '139': h
+  '140': ' '
+  '141': t
+  '142': h
+  '143': e
+  '144': ' '
+  '145': m
+  '146': o
+  '147': d
+  '148': e
+  '149': l
+  '150': ' '
+  '151': m
+  '152': a
+  '153': y
+  '154': ' '
+  '155': e
+  '156': x
+  '157': p
+  '158': l
+  '159': o
+  '160': i
+  '161': t
+  '162': ' '
+  '163': a
+  '164': s
+  '165': ' '
+  '166': a
+  '167': ' '
+  '168': c
+  '169': u
+  '170': e
+  '171': .
+- '0': T
+  '1': h
+  '2': e
+  '3': ' '
+  '4': a
+  '5': n
+  '6': s
+  '7': w
+  '8': e
+  '9': r
+  '10': a
+  '11': b
+  '12': i
+  '13': l
+  '14': i
+  '15': t
+  '16': y
+  '17': ' '
+  '18': r
+  '19': e
+  '20': s
+  '21': u
+  '22': l
+  '23': t
+  '24': s
+  '25': ' '
+  '26': a
+  '27': r
+  '28': e
+  '29': ' '
+  '30': n
+  '31': o
+  '32': t
+  '33': ' '
+  '34': e
+  '35': v
+  '36': i
+  '37': d
+  '38': e
+  '39': n
+  '40': c
+  '41': e
+  '42': ' '
+  '43': o
+  '44': f
+  '45': ' '
+  '46': s
+  '47': o
+  '48': l
+  '49': v
+  '50': e
+  '51': d
+  '52': ' '
+  '53': a
+  '54': b
+  '55': s
+  '56': t
+  '57': e
+  '58': n
+  '59': t
+  '60': i
+  '61': o
+  '62': n
+  '63': ':'
+  '64': ' '
+  '65': t
+  '66': h
+  '67': e
+  '68': ' '
+  '69': u
+  '70': n
+  '71': a
+  '72': n
+  '73': s
+  '74': w
+  '75': e
+  '76': r
+  '77': a
+  '78': b
+  '79': l
+  '80': e
+  '81': ' '
+  '82': e
+  '83': x
+  '84': a
+  '85': m
+  '86': p
+  '87': l
+  '88': e
+  '89': s
+  '90': ' '
+  '91': a
+  '92': r
+  '93': e
+  '94': ' '
+  '95': e
+  '96': m
+  '97': p
+  '98': t
+  '99': y
+  '100': ' '
+  '101': o
+  '102': r
+  '103': ' '
+  '104': t
+  '105': o
+  '106': p
+  '107': i
+  '108': c
+  '109': a
+  '110': l
+  '111': l
+  '112': y
+  '113': ' '
+  '114': u
+  '115': n
+  '116': r
+  '117': e
+  '118': l
+  '119': a
+  '120': t
+  '121': e
+  '122': d
+  '123': ' '
+  '124': c
+  '125': o
+  '126': n
+  '127': t
+  '128': e
+  '129': x
+  '130': t
+  '131': s
+  '132': ','
+  '133': ' '
+  '134': a
+  '135': ' '
+  '136': p
+  '137': r
+  '138': o
+  '139': o
+  '140': f
+  '141': '-'
+  '142': o
+  '143': f
+  '144': '-'
+  '145': c
+  '146': o
+  '147': n
+  '148': c
+  '149': e
+  '150': p
+  '151': t
+  '152': ' '
+  '153': s
+  '154': e
+  '155': t
+  '156': u
+  '157': p
+  '158': ' '
+  '159': r
+  '160': a
+  '161': t
+  '162': h
+  '163': e
+  '164': r
+  '165': ' '
+  '166': t
+  '167': h
+  '168': a
+  '169': n
+  '170': ' '
+  '171': d
+  '172': i
+  '173': s
+  '174': t
+  '175': r
+  '176': a
+  '177': c
+  '178': t
+  '179': i
+  '180': n
+  '181': g
+  '182': ' '
+  '183': n
+  '184': e
+  '185': a
+  '186': r
+  '187': '-'
+  '188': m
+  '189': i
+  '190': s
+  '191': s
+  '192': ' '
+  '193': p
+  '194': a
+  '195': s
+  '196': s
+  '197': a
+  '198': g
+  '199': e
+  '200': s
+  '201': .
+- '0': D
+  '1': i
+  '2': s
+  '3': e
+  '4': n
+  '5': t
+  '6': Q
+  '7': A
+  '8': ' '
+  '9': i
+  '10': s
+  '11': ' '
+  '12': n
+  '13': o
+  '14': t
+  '15': ' '
+  '16': e
+  '17': v
+  '18': a
+  '19': l
+  '20': u
+  '21': a
+  '22': t
+  '23': e
+  '24': d
+  '25': ' '
+  '26': w
+  '27': i
+  '28': t
+  '29': h
+  '30': ' '
+  '31': a
+  '32': ' '
+  '33': r
+  '34': e
+  '35': t
+  '36': r
+  '37': i
+  '38': e
+  '39': v
+  '40': e
+  '41': r
+  '42': ':'
+  '43': ' '
+  '44': a
+  '45': l
+  '46': l
+  '47': ' '
+  '48': N
+  '49': a
+  '50': t
+  '51': u
+  '52': r
+  '53': a
+  '54': l
+  '55': ' '
+  '56': Q
+  '57': u
+  '58': e
+  '59': s
+  '60': t
+  '61': i
+  '62': o
+  '63': n
+  '64': s
+  '65': ' '
+  '66': e
+  '67': x
+  '68': p
+  '69': e
+  '70': r
+  '71': i
+  '72': m
+  '73': e
+  '74': n
+  '75': t
+  '76': s
+  '77': ' '
+  '78': u
+  '79': s
+  '80': e
+  '81': ' '
+  '82': t
+  '83': h
+  '84': e
+  '85': ' '
+  '86': g
+  '87': o
+  '88': l
+  '89': d
+  '90': ' '
+  '91': p
+  '92': a
+  '93': s
+  '94': s
+  '95': a
+  '96': g
+  '97': e
+  '98': ' '
+  '99': a
+  '100': s
+  '101': ' '
+  '102': c
+  '103': o
+  '104': n
+  '105': t
+  '106': e
+  '107': x
+  '108': t
+  '109': ','
+  '110': ' '
+  '111': a
+  '112': s
+  '113': s
+  '114': u
+  '115': m
+  '116': i
+  '117': n
+  '118': g
+  '119': ' '
+  '120': a
+  '121': n
+  '122': ' '
+  '123': o
+  '124': r
+  '125': a
+  '126': c
+  '127': l
+  '128': e
+  '129': ' '
+  '130': r
+  '131': e
+  '132': t
+  '133': r
+  '134': i
+  '135': e
+  '136': v
+  '137': a
+  '138': l
+  '139': ' '
+  '140': s
+  '141': y
+  '142': s
+  '143': t
+  '144': e
+  '145': m
+  '146': .
+- '0': C
+  '1': o
+  '2': u
+  '3': n
+  '4': t
+  '5': e
+  '6': r
+  '7': f
+  '8': a
+  '9': c
+  '10': t
+  '11': u
+  '12': a
+  '13': l
+  '14': ' '
+  '15': a
+  '16': u
+  '17': g
+  '18': m
+  '19': e
+  '20': n
+  '21': t
+  '22': a
+  '23': t
+  '24': i
+  '25': o
+  '26': n
+  '27': ' '
+  '28': a
+  '29': s
+  '30': ' '
+  '31': u
+  '32': s
+  '33': e
+  '34': d
+  '35': ' '
+  '36': i
+  '37': n
+  '38': ' '
+  '39': D
+  '40': i
+  '41': s
+  '42': e
+  '43': n
+  '44': t
+  '45': Q
+  '46': A
+  '47': ' '
+  '48': d
+  '49': o
+  '50': e
+  '51': s
+  '52': ' '
+  '53': n
+  '54': o
+  '55': t
+  '56': ' '
+  '57': a
+  '58': p
+  '59': p
+  '60': l
+  '61': y
+  '62': ' '
+  '63': t
+  '64': o
+  '65': ' '
+  '66': a
+  '67': l
+  '68': l
+  '69': ' '
+  '70': q
+  '71': u
+  '72': e
+  '73': s
+  '74': t
+  '75': i
+  '76': o
+  '77': n
+  '78': s
+  '79': ':'
+  '80': ' '
+  '81': i
+  '82': t
+  '83': ' '
+  '84': r
+  '85': e
+  '86': q
+  '87': u
+  '88': i
+  '89': r
+  '90': e
+  '91': s
+  '92': ' '
+  '93': n
+  '94': a
+  '95': m
+  '96': e
+  '97': d
+  '98': '-'
+  '99': e
+  '100': n
+  '101': t
+  '102': i
+  '103': t
+  '104': y
+  '105': ' '
+  '106': a
+  '107': n
+  '108': s
+  '109': w
+  '110': e
+  '111': r
+  '112': s
+  '113': ','
+  '114': ' '
+  '115': s
+  '116': o
+  '117': ' '
+  '118': q
+  '119': u
+  '120': e
+  '121': s
+  '122': t
+  '123': i
+  '124': o
+  '125': n
+  '126': ' '
+  '127': t
+  '128': y
+  '129': p
+  '130': e
+  '131': s
+  '132': ' '
+  '133': s
+  '134': u
+  '135': c
+  '136': h
+  '137': ' '
+  '138': a
+  '139': s
+  '140': ' '
+  '141': B
+  '142': o
+  '143': o
+  '144': l
+  '145': e
+  '146': a
+  '147': n
+  '148': ' '
+  '149': q
+  '150': u
+  '151': e
+  '152': s
+  '153': t
+  '154': i
+  '155': o
+  '156': n
+  '157': s
+  '158': ' '
+  '159': a
+  '160': r
+  '161': e
+  '162': ' '
+  '163': o
+  '164': u
+  '165': t
+  '166': ' '
+  '167': o
+  '168': f
+  '169': ' '
+  '170': s
+  '171': c
+  '172': o
+  '173': p
+  '174': e
+  '175': .
 links_extra:
   code: https://github.com/ellaneeman/disent_qa
 ---

@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from build/sidecar_tasks.json. Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call) + 2 repair rounds. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -16,385 +16,205 @@ What to check, in the order it pays:
    the talk abstract. Make it yours.
 
 Then promote it:  python scripts/draft_sidecars.py --accept fusing-finetuned-models-for-better-pretraining
+
+Stamp: spec=d57862840a90 checks=pass body=a962dcfc3b2e
 -->
 ---
-coined: fusing
-gloss: averaging the weights of several models finetuned from the same pretrained checkpoint,
-  to get a better starting point for finetuning on a new task
-one_liner: 'Fusing averages the weights of several models finetuned from the same pretrained
-  checkpoint and uses the result as the base model for a new task: it beat the pretrained
-  baseline on 6 of the 9 source-target combinations, and it survived the weight decay that
-  wiped out intertraining''s advantage (65.1 against 61.7).'
 claims:
-- id: fusing-by-weight-averaging
-  text: Fusing takes several models finetuned from the same pretrained checkpoint and averages
-    their weights element-wise, then uses that average as the base model for finetuning on
-    a new target task -- reversing the usual direction of transfer learning, in which a pretrained
-    model is reused to make better finetuned models rather than finetuned models being reused
-    to make a better pretrained one.
-  scope: 'The paper deliberately proposes the simplest possible fusion function: a plain mean
-    over each weight shared by all the models, with no weighting, no alignment and no training
-    step. It requires that all the models were finetuned from one common initialization, which
-    is what makes averaging meaningful at all, and it needs neither the source data of those
-    models nor the target data -- so its cost is essentially the download. The fused model
-    is a starting point, not a model: it need not perform any of the source tasks.'
-  evidence: Section 2, Section 1, Figure 1
-- id: fusing-generalizes-intertraining
-  text: 'Fusing generalizes intertraining: intertraining picks one existing finetuned model
-    as the initialization for the target task, which is the special case of fusing where only
-    a single model is combined.'
-  scope: A framing claim rather than a result -- it is what makes intertraining the natural
-    baseline and what lets the same experiment answer 'is one model or several better'. The
-    identification is exact for the averaging function used here, since the mean of one vector
-    is that vector.
-  evidence: Section 1, Figure 1
-- id: assumes-only-the-weights
-  text: 'What defines the setting is the access assumption: fusing needs only the published
-    weights -- not the source tasks'' training data, not the target data, and no training
-    compute beyond the target-task finetuning itself. The paper is explicit that this is why
-    it does not compete with massively multitask learning, which is known to improve consistently
-    as tasks are added but requires all the source data and the compute to train on it.'
-  scope: So 'fusing is better than intertraining' is a claim within that budget, and no experiment
-    here compares fusing against multitask or massively multitask training. The paper builds
-    its intuition on those results rather than testing against them. It also positions methods
-    that further pretrain on the target domain or task (Gururangan et al. 2020) and task-clustering
-    approaches (Shnarch et al. 2020) as complementary rather than competing, since they apply
-    to whatever base model you start from -- fusing composes with them, but that composition
-    is not measured either.
-  evidence: Section 5, Section 1, Section 3.2
-- id: beats-the-pretrained-baseline-except-on-twitter
-  text: Fusing all available finetuned models beat starting from the pretrained model on the
-    General and NLI target families -- 68.12, 68.96 and 64.17 accuracy against 63.81 on General,
-    and 67.95, 70.65 and 66.74 against 67.66 on NLI -- but not on the Twitter target family,
-    where all three fused models scored below the pretrained baseline (54.71, 54.54 and 52.86
-    against 55.73).
-  scope: 'The paper states this result more strongly than its own table supports: the abstract
-    says ''the fused model results surpass the pretrained model ones'' and Section 4 says
-    fusing is ''consistently better than pretraining'', while Table 1''s Twitter target column
-    is an exception in all three source families. Read it as holding in 6 of the 9 source-target
-    combinations, and as not yet shown for a target family of short social-media text. Rows
-    are source families and columns target families; every figure is a mean over the datasets
-    in the target family and over 5 random seeds, on T5v1.1-small, with the target task always
-    excluded from the set of source models.'
-  evidence: Table 1, Section 4, Abstract
-- id: carefully-chosen-intertraining-still-wins
-  text: 'Fusing everything available does not beat a well-chosen intertraining task: the best
-    intertraining configuration averaged 66.48 across the three target families against 64.72
-    for the best fusing configuration. The paper''s point is that this comparison flatters
-    intertraining, because most choices of intermediate task are worse than not intertraining
-    at all.'
-  scope: The intertraining baseline here is not an average over arbitrary choices -- it uses
-    the heuristic of taking the model finetuned on the largest training set, which for the
-    General family selects MNLI, previously reported as the best intermediate task for that
-    set. So the comparison is fusing-without-selection against intertraining-with-a-good-selection.
-    Which intermediate task serves a given target is a separate open research question, and
-    the paper does not measure how often the heuristic picks well. The same heuristic selects
-    ESNLI and MNLI for the NLI family and Sentiment Analysis and Emoji for Twitter, with SST2
-    substituting for MNLI when MNLI is itself the target.
-  evidence: Table 1, Section 3.3, Section 4
-- id: fusing-pairs-beats-intertraining
-  text: 'Choosing which models to fuse changes the result dramatically, and fusing two models
-    is often better than intertraining with either of them: across the pairs tested, fusing
-    beat the worse of the two models in all but one pair, beat their mean in most cases, and
-    frequently beat the better of the two. Fusing the models finetuned on MNLI and SST2 gave
-    the highest accuracy in the whole experiment.'
-  scope: Restricted to the GLUE datasets to keep the number of experiments manageable, and
-    reported as a colour-coded matrix of pairwise comparisons rather than a table of numbers
-    -- so the paper gives no aggregate figure for how much fusing two models beats intertraining
-    by. The models that fuse best are the ones that also intertrain well, so this does not
-    remove the need to choose source models; it changes what you get for choosing well.
-  evidence: Figure 2, Section 4
-- id: fusing-is-less-target-dependent
-  text: 'Intertraining is sensitive to which target task you are aiming at and fusing is much
-    less so: for intertraining the best source family is always the one most similar to the
-    target (72.76 for General source on General target, 71.11 for NLI on NLI, 57.18 for Twitter
-    on Twitter, each the best in its column), whereas for fusing a single source set -- the
-    NLI models -- was good across target families.'
-  scope: 'Three source families and three target families, so ''consistently'' rests on three
-    columns: the NLI source set was the best fusing source on the General and NLI targets
-    and second-best on Twitter. This is the paper''s central practical argument -- fusing
-    does not require a relation between source and target tasks while intertraining does --
-    and it is an observed pattern across nine cells, not a controlled test of task similarity.'
-  evidence: Table 1, Section 4, Section 5
-- id: weight-decay-nullifies-intertraining-not-fusing
-  text: 'Weight decay during finetuning erases intertraining''s advantage but not fusing''s:
-    with AdamW at decay 0.01, intertraining scored 61.7 against 61.6 for the pretrained baseline
-    -- no gain at all -- while fusing scored 65.1. Without decay the same three were 72.76,
-    63.87 and 68.12.'
-  scope: General target datasets only. Every score is lower with decay, so this is not an
-    argument for using it -- it is an argument that a default many practitioners leave on
-    (it is the default in HuggingFace's trainer) can silently remove the benefit intertraining
-    is chosen for. Preliminary trials with BERT, which was pretrained with decay, showed less
-    of the adverse effect, from which the paper infers that intertraining should match how
-    pretraining was done; that inference rests on initial trials rather than a reported experiment.
-    The pretrained baseline on General appears as 63.81 in Table 1 and 63.87 in Table 2.
-  evidence: Section 4.1, Table 2, footnote 1
-- id: both-are-more-stable-than-pretraining
-  text: 'Fusing and intertraining are both markedly more stable across random seeds than finetuning
-    from the pretrained model: the pretrained baseline''s standard deviation averaged 3.64
-    (and reached 5.75 on the Twitter target family), against 1.21 to 2.27 for the fused base
-    models and 1.61 to 2.24 for the intertrained ones.'
-  scope: Standard deviation over 5 random seeds of finetuning on the target task, so it measures
-    the stability the base model confers rather than any property of the base model itself.
-    Every configuration of both methods was more stable than the pretrained baseline, which
-    is the strongest form of this table's claim. The Twitter target family carries the largest
-    deviations throughout -- and is also where fusing loses on accuracy. The rendering of
-    the appendix table does not label its rows unambiguously, so the ranges are reliable where
-    a deviation attached to one specific source family is not.
-  evidence: Appendix C, Table 3, Section 3
+- id: fuse-beats-pretrain
+  kind: result
+  text: Averaging the weights of several finetuned T5v1.1-small models yields a better base
+    model for finetuning than the pretrained model itself. Average accuracy across 3 target
+    dataset families rises from 62.40 to 64.72 when the NLI models are fused.
+  scope: T5v1.1-small, AdamW without weight decay, 30 English text-classification datasets
+    in 3 families (GLUE/SuperGLUE, NLI, TweetEval); the target task is always excluded from
+    the source tasks; averaged over 5 seeds.
+  evidence: Table 1
+- id: intertrain-still-better-when-chosen
+  kind: result
+  text: Fusing all available finetuned models does not beat carefully chosen intertraining
+    on T5v1.1-small. Intertraining on the general dataset family averages 66.48 accuracy over
+    3 target families, against 64.72 for the best fused set and 62.40 for the pretrained baseline.
+  scope: Fusing all available models indiscriminately, with the intertraining baseline picking
+    the model finetuned on the largest source dataset (MNLI for the general family, a known
+    strong intertraining task); 5 seeds; no weight decay.
+  evidence: Table 1
+- id: fusing-target-insensitive
+  kind: result
+  text: Intertraining is sensitive to which target task it is applied to while fusing is not.
+    The best intertraining source family is the one most similar to the target, whereas the
+    NLI model set is the best set to fuse for all 3 target families.
+  scope: 3 dataset families as both sources and targets (general GLUE/SuperGLUE, NLI, Twitter),
+    T5v1.1-small, no weight decay, 5 seeds.
+  evidence: Table 1
+- id: pairs-beat-max-intertraining
+  kind: result
+  text: Fusing 2 finetuned models is often better than intertraining with the better of the
+    two. In all but 1 of the GLUE model pairs, fusing beats intertraining with the worse of
+    the two.
+  scope: Pairs of models finetuned on GLUE datasets, evaluated as base models on GLUE targets,
+    T5v1.1-small, no weight decay; improvement measured against the pretrained baseline.
+  evidence: Figure 2
+- id: best-pair-mnli-sst2
+  kind: result
+  text: Fusing the MNLI and SST2 finetuned models reaches the highest accuracy in the GLUE
+    fusing experiment, and the models most useful for intertraining are also the best models
+    to fuse.
+  scope: GLUE target datasets, T5v1.1-small, no weight decay; MNLI and SST2 are the 2 largest
+    general-family training sets and MNLI is a previously reported strong intertraining source.
+  evidence: Figure 2
+- id: weight-decay
+  kind: result
+  text: Weight decay of 0.01 in finetuning nullifies the benefit of intertraining but not
+    of fusing. On general target datasets intertraining drops from 72.76 to 61.7, level with
+    the pretrained baseline's 61.6, while fusing falls only from 68.12 to 65.1.
+  scope: T5v1.1-small finetuned with AdamW, decay 0.01 versus none, general (GLUE/SuperGLUE)
+    target datasets; absolute accuracies are lower with decay overall. Initial BERT trials,
+    pretrained with decay, showed less of the adverse effect.
+  evidence: Table 2
+- id: stability
+  kind: result
+  text: 'Fusing gives more stable finetuning than starting from the pretrained model: the
+    standard deviation of target accuracy averages 1.21 to 2.27 across fused source families
+    against 3.64 for the pretrained base model.'
+  scope: T5v1.1-small, 5 random seeds, 3 target dataset families; intertraining is comparably
+    stable (1.61 to 2.24), so the stability gain is over the pretrained baseline and not over
+    intertraining.
+  evidence: Table 3
 - id: source-data-size
-  text: More source training data produces better fused models. A second, noisier trend is
-    that fusing benefits from smaller amounts of source data than intertraining does, but
-    its improvement also plateaus sooner -- possibly because it draws on data from several
-    models at once.
-  scope: One figure, on a log scale, with the General datasets as targets; the paper labels
-    the second trend noisy and offers the several-models explanation as a possibility rather
-    than a test. No claim is made about how much source data is enough.
-  evidence: Section 4.2, Figure 3
-- id: no-theory-for-why-averaging-works
-  text: 'The paper is explicit that there is little theory to support weight averaging and
-    that in the general case it probably does not work: networks are non-linear in their weights,
-    so the average of two models'' weights does not compute the average of their functions,
-    and studies of model similarity do not find models similar weight-by-weight. Its best
-    account is that the shared pretrained initialization is what makes averaging meaningful,
-    and it leaves the mechanism to future work.'
-  scope: 'A stated limitation, not a result. The supporting intuitions it does offer are drawn
-    from other people''s work rather than tested here: monotonic linear interpolation (which
-    weakens under adaptive optimizers, and which the paper notes does not describe what it
-    actually does, since it starts from a pretrained rather than random initialization) and
-    linear mode connectivity (which is not a general property of neural networks). Models
-    are found to be similar in activations, classifications and generalizations even though
-    they are not similar per weight.'
-  evidence: Section 5, Appendix D
-- id: meta-learning-framing
-  text: 'Fusing moves initialization from transfer learning into meta-learning: where transfer
-    learning starts from a model that performs one task well, the fused model may perform
-    none of them, and is instead the point at roughly least Euclidean distance from each source
-    model, which the paper argues needs less finetuning than the original initialization.
-    In that sense it resembles a single step of REPTILE.'
-  scope: An interpretation offered to explain why fusing might work and why errors introduced
-    by averaging can be fixed later in training -- not a meta-learning algorithm, and not
-    compared against one. The 'least distance' description follows from averaging rather than
-    being optimized for. Iterating fusing and finetuning is named as future work; it is not
-    done here.
-  evidence: Section 5, Section 6
-- id: finetuned-models-are-abundant
-  text: 'The premise the method rests on is that finetuning is ubiquitous while pretraining
-    is rare, so finetuned models are an unused resource: of 20 arbitrarily chosen EMNLP 2021
-    papers, 14 finetuned a model and none pretrained one, which the paper extrapolates to
-    roughly 560 of that conference''s 800-plus papers and 2,261 of ACL 2021''s 3,230, and
-    T5-Small saw 3M downloads in a month against 30K for its most popular finetuned version.'
-  scope: 'Counts from 2022, when the Hugging Face hub hosted about 27K models; the extrapolation
-    is from a 20-paper sample and the download figures are proxies for finetuning runs rather
-    than measurements of them. The same appendix cuts against convenience as much as for it:
-    most finetuned models are never uploaded, and those that are get shared for reproducibility
-    rather than as starting points -- which the paper reads as evidence that nobody currently
-    treats them as reusable initializations.'
-  evidence: Appendix A, Section 1
-- id: experimental-design
-  text: 'The experiments span three families of English text-classification datasets, chosen
-    to separate different kinds of relatedness: a diverse benchmark family (the GLUE and SuperGLUE
-    classification tasks, excluding the regression and test-only ones), a same-task family
-    (natural language inference), and a same-domain family (TweetEval), with every combination
-    of source family and target family tested and the target task always excluded from the
-    set of source models.'
-  scope: 'Text classification only, chosen for ease of evaluation, with the assumption --
-    stated as an assumption -- that the tasks are diverse enough for the conclusions to extend
-    elsewhere. One pretrained model (T5v1.1-small), picked partly because it was not trained
-    on any task beyond its pretraining objective, which would otherwise contaminate the comparison;
-    the finetuning hyperparameters are cited to ''the original paper (Abnar et al., 2021)'',
-    a reference to check before reproducing. Early stopping evaluated every 50 batches with
-    patience 50 and minimum improvement 0.001, AdamW without weight decay except in Section
-    4.1. Counts: the paper says 30 datasets and 11 Twitter datasets, while Appendix B names
-    14 General (8 GLUE, 6 SuperGLUE), 6 NLI and 7 TweetEval tasks -- the 11 reconciles if
-    TweetEval''s stance task is counted as its separate targets, and the 30 depends on how
-    the four datasets that appear in both the General and NLI lists are counted, so treat
-    both figures as approximate. Because GLUE and SuperGLUE test sets are held out, test sets
-    were carved from the training data (1K examples or 10%, whichever is smaller), and for
-    MNLI the mismatched validation set is the test set and the matched one the validation
-    set -- so absolute accuracies are not comparable to published GLUE numbers.'
-  evidence: Section 3.1, Section 3.2, Section 3.4, Appendix B
-- id: concurrent-merging-work
-  text: Two concurrent papers proposed recycling finetuned models by combining weights --
-    model soups (Wortsman et al., 2022) and Fisher-weighted merging (Matena and Raffel, 2021)
-    -- but both use the merged model directly rather than as a base model to finetune further,
-    soups average models finetuned on the same target task and mostly in vision, and Fisher
-    merging weights each parameter by its estimated importance, which requires data this setting
-    does not have.
-  scope: 'Positioning, written in 2022 and describing those papers as parallel work rather
-    than baselines -- no experimental comparison against either is reported. The Fisher point
-    is the substantive distinction: choosing per-weight coefficients from data conflicts with
-    wanting a base model that is general, when neither the source data of the fused models
-    nor the target data is available.'
-  evidence: Section 5
+  kind: result
+  text: More source training data produces better fused base models, and fusing gains from
+    smaller amounts of source data than intertraining while its improvement also plateaus
+    earlier.
+  scope: General target datasets, T5v1.1-small, source data amounts swept on a log scale;
+    the earlier-plateau trend is described in the paper as noisier than the main monotone
+    trend.
+  evidence: Figure 3
+- id: context-reverse-transfer
+  kind: context
+  text: Fusing finetuned models for better pretraining proposes reversing the transfer-learning
+    pipeline. Rather than reusing a pretrained model to make finetuned models, it recycles
+    existing finetuned models by weight averaging into a better base model for new target
+    tasks.
+  scope: As of the 2022 arXiv preprint; demonstrated only on T5v1.1-small and English text
+    classification. Contemporaneous weight-averaging work (Model Soups, Fisher-weighted averaging)
+    fuses models for direct use on a task rather than as an initialization for new tasks.
+- id: context-generalizes-intertraining
+  kind: context
+  text: Fusing finetuned models for better pretraining frames intertraining as the special
+    case of fusing a single model. Choosing a base model becomes a question of which set of
+    finetuned models to average rather than which one to pick.
+  scope: 3 dataset families and 30 English classification datasets; all fused models share
+    one pretrained initialization, and no theory for why averaging helps is offered.
+- id: context-no-source-data
+  kind: context
+  text: Fusing finetuned models for better pretraining assumes access only to finetuned model
+    weights. Neither the source training data nor the compute for massively multitask pretraining
+    is required, which is what makes averaging rather than retraining the mechanism.
+  scope: As of the 2022 preprint; the assumption rules out data-dependent alternatives such
+    as Fisher-information weighting. Relevance depends on finetuned models being shared, estimated
+    only indirectly from HuggingFace hub counts and 20 sampled EMNLP 2021 papers.
 qa:
 - q:
-  - Can I average the weights of several finetuned models to get a better starting point?
-  - Does merging finetuned model weights help before finetuning on a new task?
-  - What is model fusing?
-  - How do I reuse existing finetuned models instead of pretraining my own?
+  - Can averaging the weights of several finetuned models give a better starting point than
+    the pretrained model?
+  - Does weight averaging of finetuned checkpoints improve initialization for a new task?
+  - Is a fused model a better base model than the original pretrained one?
   answers:
-  - fusing-by-weight-averaging
-  - beats-the-pretrained-baseline-except-on-twitter
-  - finetuned-models-are-abundant
+  - fuse-beats-pretrain
+  - stability
 - q:
-  - Is intermediate-task finetuning better than merging several models?
-  - Should I intertrain on one task or fuse several finetuned models?
-  - How does fusing compare to intertraining?
+  - Is fusing better than intermediate-task training?
+  - Does averaging several finetuned models beat picking one good intermediate task?
+  - How does fusing compare to intertraining on a well-chosen source task?
   answers:
-  - fusing-generalizes-intertraining
-  - carefully-chosen-intertraining-still-wins
-  - fusing-pairs-beats-intertraining
+  - intertrain-still-better-when-chosen
+  - pairs-beat-max-intertraining
 - q:
-  - Does intermediate-task training require a source task related to my target task?
-  - Do the models I merge have to be related to the task I care about?
-  - Why does intertraining sometimes hurt performance?
+  - Which finetuned models should I average to get a good base model?
+  - Does the choice of source models matter when fusing checkpoints?
+  - Which pair of GLUE finetuned models makes the best fused initialization?
   answers:
-  - fusing-is-less-target-dependent
-  - carefully-chosen-intertraining-still-wins
-  - beats-the-pretrained-baseline-except-on-twitter
+  - best-pair-mnli-sst2
+  - fusing-target-insensitive
 - q:
-  - Does weight decay interact with intermediate-task finetuning?
-  - Why did intertraining stop helping when I turned on weight decay?
-  - Is weight merging robust to optimizer settings?
+  - Does the benefit of averaging finetuned models depend on the target task?
+  - Do I need source tasks related to my target task for weight averaging to help?
+  - Is intermediate-task transfer more target-dependent than model fusing?
   answers:
-  - weight-decay-nullifies-intertraining-not-fusing
-  - both-are-more-stable-than-pretraining
+  - fusing-target-insensitive
 - q:
-  - How can I make finetuning less sensitive to the random seed?
-  - Does the choice of base model affect training stability?
-  - Why do my finetuning results vary so much between runs?
+  - Does weight decay during finetuning affect intermediate-task transfer?
+  - Why does intertraining stop helping when AdamW weight decay is used?
+  - Is model weight averaging robust to the finetuning optimizer's regularization?
   answers:
-  - both-are-more-stable-than-pretraining
-  - beats-the-pretrained-baseline-except-on-twitter
+  - weight-decay
 - q:
-  - Why would averaging neural network weights work at all?
-  - Is there theory behind model merging?
-  - When does weight averaging fail?
+  - Does starting from an averaged model make finetuning more stable across seeds?
+  - How much does seed variance drop when finetuning from a fused base model?
+  - Is training variance lower when initializing from averaged finetuned weights?
   answers:
-  - no-theory-for-why-averaging-works
-  - fusing-by-weight-averaging
-  - meta-learning-framing
+  - stability
 - q:
-  - Which models should I pick to merge?
-  - Does it matter which finetuned models go into a merge?
-  - What is the best pair of models to average for a new task?
+  - How much source training data is needed for weight averaging to pay off?
+  - Does the size of the source datasets change how good a fused base model is?
+  - Is fusing more data-efficient than intertraining in the source task?
   answers:
-  - fusing-pairs-beats-intertraining
-  - fusing-is-less-target-dependent
   - source-data-size
 - q:
-  - How much source data do the models I merge need?
-  - Does the size of the source task's training set matter for merging?
-  - Do bigger intermediate tasks make better base models?
+  - What early work established that averaging finetuned model weights makes a better pretrained
+    model?
+  - What should I read first about model merging as a way to build base models?
+  - Which paper proposed recycling existing finetuned checkpoints instead of pretraining from
+    scratch?
+  - What is a good paper on weight averaging for transfer learning?
   answers:
-  - source-data-size
-  - carefully-chosen-intertraining-still-wins
+  - context-reverse-transfer
+  - context-generalizes-intertraining
 - q:
-  - How is fusing different from model soups or Fisher-weighted merging?
-  - What is the difference between merging models and averaging a model soup?
-  - Can I merge models without access to any training data?
+  - How does model merging for initialization differ from Model Soups and Fisher-weighted
+    averaging?
+  - Can I merge models without access to their training data?
+  - What assumptions does recycling finetuned checkpoints as a base model require?
   answers:
-  - concurrent-merging-work
-  - fusing-by-weight-averaging
-  - meta-learning-framing
+  - context-no-source-data
+  - context-reverse-transfer
 - q:
-  - Is choosing a good initialization a meta-learning problem?
-  - How does weight merging relate to meta-learning like REPTILE?
-  - Can a base model be useful if it performs none of the tasks it came from?
+  - Is intermediate-task training a special case of model merging?
+  - How is picking one finetuned checkpoint related to averaging several of them?
+  - What is the relationship between intertraining and fusing model weights?
   answers:
-  - meta-learning-framing
-  - fusing-by-weight-averaging
-  - no-theory-for-why-averaging-works
-- q:
-  - How was model fusing evaluated?
-  - Which datasets were used to test weight merging for pretraining?
-  - Has fusing been tested outside text classification?
-  answers:
-  - experimental-design
-  - beats-the-pretrained-baseline-except-on-twitter
-  - fusing-is-less-target-dependent
-- q:
-  - Are there enough finetuned models around to make merging worthwhile?
-  - How common is finetuning compared to pretraining?
-  - Why are finetuned models an underused resource?
-  answers:
-  - finetuned-models-are-abundant
-  - fusing-by-weight-averaging
-- q:
-  - Is merging finetuned models better than multitask training?
-  - Do I need the original training data to merge models?
-  - Can I combine model merging with domain-adaptive pretraining?
-  answers:
-  - assumes-only-the-weights
-  - fusing-by-weight-averaging
-  - concurrent-merging-work
-misreadings:
-- '''Fusing always beats pretraining'' is stronger than the results. The paper''s own Table
-  1 has an exception: on the Twitter target family every fused base model scored below the
-  pretrained one (54.71, 54.54, 52.86 against 55.73), while intertraining beat it there. The
-  claim holds in 6 of the 9 source-target combinations tested, and the abstract''s phrasing
-  is broader than that.'
-- Fusing did not beat intertraining across the board. Fusing everything available lost to
-  a well-chosen intermediate task (64.72 against 66.48 on average). What beat intertraining
-  was fusing a carefully chosen pair -- and the pairs that fuse best are the ones that also
-  intertrain well, so choosing source models still matters. The claim is that fusing is more
-  forgiving, not that it removes the choice.
-- This is not the same thing as model soups or Fisher merging, which appeared in parallel.
-  Those merge models and use the result directly; here the merged model is a base model that
-  is then finetuned on a new task, and it may perform none of the source tasks. Soups also
-  average models finetuned on the same target task, mostly in vision, which is a different
-  setting entirely.
-- The weight-decay finding is not an argument for weight decay. Every score is lower with
-  decay (61.6, 61.7 and 65.1 against 63.87, 72.76 and 68.12). The point is that a default
-  many practitioners leave on can silently erase intertraining's benefit while leaving fusing's
-  intact -- and the BERT observation that pretraining with decay reduces the effect comes
-  from initial trials, not a reported experiment.
-- Nothing here explains why averaging weights works. The paper says plainly that there is
-  little theory for it, that averaging weights does not average the functions the networks
-  compute, and that in the general case it probably is not beneficial -- offering only that
-  the shared pretrained initialization is likely what makes it meaningful, and leaving the
-  mechanism open.
-- The results are one small model on English text classification. All the numbers come from
-  T5v1.1-small over 30 classification datasets, with test sets carved out of training data
-  because GLUE and SuperGLUE hold theirs back -- so absolute accuracies are not comparable
-  to published GLUE scores, and the extension to other model sizes, languages and task types
-  is an assumption the paper states rather than a result.
-- The stability result is about the target-task finetuning, not about the merged model. Standard
-  deviations of 1.21-2.27 for fusing against 3.64 for the pretrained baseline are across 5
-  random seeds of finetuning on the target task; they say the base model makes training more
-  reproducible, not that the fused weights are themselves better behaved.
-- Fusing was not shown to beat multitask learning. The paper says explicitly that it does
-  not compete with massively multitask training, because that needs the source data and the
-  compute to train on it while fusing needs only the published weights -- and it reports no
-  experiment against either multitask or massively multitask baselines. The comparison being
-  made is against other choices of base model at zero extra training cost.
-- The dataset counts are approximate. The text says 30 datasets and 11 Twitter datasets; Appendix
-  B names 14 General, 6 NLI and 7 TweetEval tasks, four of which appear in two families. The
-  11 reconciles if TweetEval's stance task is counted as its separate targets. Nothing in
-  the results depends on the totals, but do not quote '30 datasets' as 30 distinct ones.
+  - context-generalizes-intertraining
+coined: Fusing
+gloss: averaging the weights of several finetuned models to create a new base model for finetuning
+  on a fresh task
+one_liner: Fusing averages the weights of several existing finetuned models into a new base
+  model that finetunes better and more stably than the pretrained model it came from, at almost
+  no cost and without access to any source data.
 terminology:
-  fusing: 'This paper''s term: combining several models finetuned from a common pretrained
-    checkpoint into a single new base model, here by averaging their weights. A base model
-    to finetune from, not a model to use. Later work in this line calls the same operation
-    model merging.'
-  intertraining: Using a model already finetuned on some other task as the initialization
-    for a target task -- also called intermediate-task finetuning. This paper treats it as
-    fusing with n = 1, which is what makes it the natural baseline.
-  base model: Whatever weights finetuning on the target task starts from -- the pretrained
-    model, an intertrained model, or a fused one. The paper's whole subject is the choice
-    of base model, so 'better model' throughout means better starting point, not better task
-    performance.
-  source task / target task: Source tasks are the ones the available finetuned models were
-    trained on; the target task is the one being evaluated. In every experiment the target
-    task is excluded from the source set, so no fused model has seen the task it is tested
-    on.
-  dataset family: A group of target tasks sharing something specific -- a benchmark (GLUE
-    and SuperGLUE), a task (NLI), or a domain (TweetEval). The design uses these to ask whether
-    relatedness of task or of domain is what makes a source model useful.
-  monotonic linear interpolation / linear mode connectivity: 'Two prior findings the paper
-    cites as motivation for averaging being meaningful at all: that loss can decrease monotonically
-    along the line from an initialization to a trained model, and that linear combinations
-    of two models trained on one task can have similar loss. Neither is a general property
-    of neural networks, and the paper presents both as intuition rather than support.'
+  Fusing: Combining several models finetuned from the same pretrained initialization into
+    a single new base model by averaging each shared weight, and then finetuning that base
+    model on a target task.
+  Intertraining: Using a model already finetuned on some other source task as the initialization
+    for finetuning on a target task, rather than starting from the pretrained model.
+  Available finetuned models: The set of models assumed to already exist for reuse in an experiment,
+    simulated by finetuning the pretrained model on each source task, always excluding the
+    target task.
+misreadings:
+- 'Fusing all available finetuned models does not beat well-chosen intertraining: in the paper''s
+  main table the best intertraining setting averages 66.48 against 64.72 for the best fused
+  set, and fusing only wins over intertraining when the models to fuse are chosen carefully
+  or when weight decay is used.'
+- The fused model is not claimed to perform any of the source tasks. It is a meta-learning-style
+  starting point, evaluated only after further finetuning on the target task, unlike Model
+  Soups or Fisher-weighted averaging which use the merged model directly.
+- The results are not evidence that weight averaging works between arbitrary networks. All
+  fused models share the same pretrained initialization, and the paper states that in the
+  general case averaging weights probably is not beneficial and offers no theory for why it
+  helps.
+- Fusing does not reduce seed variance relative to intertraining; both are more stable than
+  finetuning from the pretrained model, whose average standard deviation is 3.64.
+- 'The evidence base is one small model and one modality: T5v1.1-small on 30 English text-classification
+  datasets, so the gains should not be read as established for large models or for generation
+  tasks.'
 ---

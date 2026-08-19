@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from build/sidecar_tasks.json. Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call) + 2 repair rounds. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -17,351 +17,271 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept findings-of-the-babylm-challenge-sample-efficient-pretrainin
 
-Stamp: spec=d57862840a90 checks=pass body=b12abb7e1c08
+Stamp: spec=d57862840a90 checks=pass body=b2c3bbfac2f8
 -->
 ---
-one_liner: The first BabyLM Challenge capped pretraining at 10M or 100M words -- roughly a
-  child's input -- and its winner outscored both Llama 2 70B and a full-data RoBERTa on the
-  challenge's own aggregate, but only by running over 450 epochs; curriculum learning, the
-  most-tried approach of 31 submissions, mostly did not help.
 claims:
-- id: winner-beat-trillion-word-skylines
-  text: In the first BabyLM Challenge the winning 100M-word model, ELC-BERT, scored 0.74 on
-    the challenge's own aggregate, against 0.71 for Llama 2 70B and 0.70 for a fully trained
-    RoBERTa-base. No submission reached human level, though the top model came within about
-    3% of human BLiMP accuracy.
-  scope: The aggregate weights BLiMP and its supplement at 50%, (Super)GLUE at 30% and MSGS
-    at 20%, over filtered task data. Llama 2 leads on (Super)GLUE, 0.84 to 0.78, and much
-    of ELC-BERT's margin comes from MSGS, where Llama 2 scores 0.26.
-  evidence: Table 2 and Section 7.1; Section 7.2 (Strict track); Section 5.3 for the weighting;
-    Figure 4 for the distance to human performance.
-- id: where-to-start-on-child-scale-pretraining
+- id: elc-bert-beats-skylines
+  text: ELC-BERT, trained on 100M words in the BabyLM Strict track, reached an aggregate score
+    of 0.74. That is above the Llama 2 skyline at 0.71, trained on 2T tokens, and above RoBERTa-base
+    at 0.70 trained on its full corpus.
+  kind: result
+  evidence: Table 2
+  scope: (Super)GLUE was the one task where ELC-BERT did not beat the skylines, at 0.78 against
+    Llama 2's 0.84; Llama 2 was evaluated on (Super)GLUE by in-context learning.
+- id: curriculum-learning-largely-unsuccessful
+  text: Curriculum learning was the most popular BabyLM 2023 approach, attempted by 13 of
+    31 teams (41.9%), and the majority of those attempts produced no consistent improvement
+    across the BabyLM evaluation tasks.
+  kind: result
+  evidence: Section 7.4
+  scope: Curricula ranking by surprisal, lexical frequency, length, syntactic complexity,
+    dataset difficulty, vocabulary size and objective difficulty, on the 10M-word and 100M-word
+    English BabyLM corpora.
+- id: ltg-bert-architecture-effective
+  text: The two top BabyLM Strict-track systems, ELC-BERT at 0.74 aggregate and Boot-BERT
+    at 0.70, both build on the LTG-BERT encoder architecture. The participants' own baselines
+    indicate the backbone rather than their added modifications drove most of the gain.
+  kind: result
+  evidence: Table 2
+  scope: Encoder-only masked language models on 100M-word and 10M-word English BabyLM corpora,
+    trained for hundreds to thousands of epochs; ELC-BERT used over 450 epochs in Strict and
+    over 2000 in Strict-Small.
+- id: strict-small-close-to-strict
+  text: BabyLM Strict-track models trained on 100M words did not outperform Strict-Small models
+    trained on 10M words by a large margin. Only 2 Strict-track models achieved higher GLUE
+    scores than the best Strict-Small model.
+  kind: result
+  evidence: Section 7.1
+  scope: 162 submitted models across the three 2023 tracks, evaluated on the vocabulary-filtered
+    BabyLM versions of BLiMP, BLiMP Supplement, (Super)GLUE and MSGS; the Strict corpus is
+    98.04M words and Strict-Small 9.96M.
+- id: loose-track-underperformed
+  text: BabyLM Loose-track models, which could add unlimited non-linguistic data to a 100M-word
+    text budget, tended to score lower in aggregate than Strict-Small models limited to 10M
+    words of text.
+  kind: result
+  evidence: Section 7.1
+  scope: 20 Loose-track models from 8 participants in 2023; few multimodal submissions were
+    received, and one text-and-audio system (WhisBERT) was reported undertrained.
+- id: blimp-near-human
+  text: The best BabyLM 2023 submission came within about 3% of reported human performance
+    on BLiMP, despite training on at most 100M words.
+  kind: result
+  evidence: Section 7.1
+  scope: Zero-shot minimal-pair accuracy on the vocabulary-filtered BLiMP used in the challenge;
+    human performance is the figure reported by Warstadt et al. (2020a).
+- id: msgs-negative-bias
+  text: MSGS Matthews correlations for BabyLM 2023 systems were largely negative, showing
+    that models trained on 10M-100M words prefer surface features over linguistic ones in
+    ambiguous contexts. ELC-BERT was the exception, at -0.01 in Strict-Small and -0.10 in
+    Strict against Llama 2's -0.24.
+  kind: result
+  evidence: Table 8
+  scope: Six ambiguous MSGS subtasks under finetuned evaluation; macro-average MCC for the
+    top systems per track plus baselines and skylines. Llama 2 was fully finetuned on MSGS.
+- id: hypernym-at-chance
+  text: On the Hypernym test suite of the BLiMP Supplement, every BabyLM 2023 system and both
+    skylines scored near chance, between 0.45 and 0.50 accuracy.
+  kind: result
+  evidence: Table 9
+  scope: Zero-shot minimal-pair scoring on 860 semi-automatically templated lexical-entailment
+    items phrased as logical statements.
+- id: turn-taking-discriminative
+  text: The Turn-Taking suite of the BLiMP Supplement separated BabyLM 2023 systems sharply,
+    with ELC-BERT (Strict) reaching 0.92 against RoBERTa's 0.73 and Llama 2's 0.83, while
+    some systems scored near chance.
+  kind: result
+  evidence: Table 9
+  scope: 280 templated dialogue minimal pairs on indexical pronoun choice across a speaker
+    change, scored zero-shot; transcribed dialogue is a large share of the BabyLM corpus.
+- id: aoa-no-submission-beats-baseline
+  text: On the optional age-of-acquisition prediction task, no BabyLM 2023 Strict-Small submission
+    beat the OPT-125M baseline's mean average deviation of 2.03 months, with the best submissions
+    at 2.05.
+  kind: result
+  evidence: Table 11
+  scope: 7 of 31 teams (22.6%) evaluated on AoA prediction, almost all in Strict-Small; MAD
+    in months across cross-validation folds.
+- id: short-sequences-and-distillation-work
+  text: Reducing context length or using single sentences as training examples, and distilling
+    a student from a teacher trained on the same corpus, were the BabyLM 2023 modifications
+    that most consistently improved scores.
+  kind: result
+  evidence: Section 7.4
+  scope: Based on hand-coding 162 submitted models into 9 approach categories and on participants'
+    own controlled comparisons, not on organizer-run ablations; English BabyLM corpora of
+    10M and 100M words.
+- id: shared-task-contribution
+  text: The BabyLM Challenge established a shared task and public leaderboard for pretraining
+    language models on developmentally plausible budgets of 10M or 100M words. It supplied
+    a fixed corpus of child-directed speech, dialogue and children's literature plus a common
+    evaluation pipeline.
   kind: context
-  text: For what happens when pretraining is capped at a child-scale text budget, this is
-    the results write-up of the first BabyLM Challenge. It covers 31 teams and 162 models
-    on one shared evaluation pipeline.
-  scope: True of one challenge round, on English, scored by the challenge's own aggregate
-    metric. Nothing in the paper certifies this positioning.
-  evidence: Section 1 and Section 6; Table 3 for the submission counts.
-- id: epochs-bought-the-headline
-  text: The winning submission trained for hundreds of epochs, over 450 on the 100M-word corpus
-    and over 2000 on the 10M-word one, so it saw about as many samples as BERT. Its training
-    set was about 3% the size of BERT's.
-  scope: The challenge budgeted words, not compute, and rereading data across epochs did not
-    count as seeing more text. The organizers call hundreds of epochs neither cognitively
-    plausible nor cheap to reproduce.
-  evidence: Section 8, Section 7.2 (Strict track), Section 3 (Tracks)
-- id: ten-times-the-data-bought-little
-  text: Ten times more pretraining text bought surprisingly little. Strict submissions at
-    100M words did not beat the 10M-word Strict-Small ones by a large margin, and only two
-    beat the best Strict-Small (Super)GLUE score.
-  scope: Two pools of independently designed submissions rather than a data-scaling experiment.
-    ELC-BERT took both tracks and did score higher on Strict, 0.74 against 0.66, and Strict-Small
-    drew a deeper pool of 118 models.
-  evidence: Section 7.1, Figure 4, Table 2, Table 3
-- id: curriculum-learning-largely-failed
-  text: Curriculum learning was the most popular approach in the challenge, tried in some
-    form by 13 of the 31 teams. Most of those attempts produced no consistent improvement
-    across the evaluation tasks, though a few showed modest gains.
-  scope: One data regime, one evaluation suite and these implementations, not a proof that
-    ordering training data cannot help. Several teams report losing to the same data shuffled
-    at random.
-  evidence: Section 7.4 (Curriculum learning), Figure 3, Section 7.3, Appendix F (CLIMB, Oba
-    et al., Opper et al.)
-- id: architecture-mattered-most
-  text: 'The strongest submissions changed the architecture rather than the data: LTG-BERT-based
-    models won both the Strict and Strict-Small tracks. The winner, ELC-BERT, feeds each layer
-    a weighted sum of all previous layers'' outputs.'
-  scope: An observational comparison across submissions that differ in many ways at once,
-    not an ablation. ELC-BERT's own paper reports no variant clearly beating the LTG-BERT
-    baseline, so the backbone carries most of the gain.
-  evidence: Section 7.2 (Strict track), Section 7.4, Figures 5 and 6, Appendix F (ELC-BERT)
-- id: shorter-inputs-and-sentence-level-examples-helped
-  text: 'The most transferable positive finding was about input format: a 32-token context
-    window instead of the baselines'' 128, sentences rather than documents as training examples,
-    and no sequence packing or truncation. Each improved results reliably.'
-  scope: Several submissions' controlled comparisons in the 10M-100M-word regime, on the challenge's
-    own evaluation suite. The same submission saw negligible impact from added part-of-speech
-    supervision, so the gain is credited to format.
-  evidence: Section 7.4 (Data preprocessing; Hyperparameter tuning and model scaling), Appendix
-    F (Edman and Bylinina; Cheng et al.; Govindarajan et al.)
-- id: distillation-beat-its-own-teachers
-  text: Baby Llama distilled a 300M-parameter Llama and a 700M-parameter GPT-2, both trained
-    on the 10M-word corpus, into a 58M-parameter model. It outperformed the challenge baselines,
-    both of its teachers, and an identical model trained from scratch.
-  scope: The teachers were themselves trained only on the BabyLM corpus, as the rules required,
-    so this is distillation inside a fixed data budget. Related setups also gained, while
-    one latent-target variant degraded BLiMP alone.
-  evidence: Appendix F (Baby Llama; Mean BERTS make erratic language teachers; Masked Latent
-    Semantic Modeling), Section 7.4 (Teacher-student or auxiliary model)
-- id: extra-modalities-did-not-help
-  text: Loose-track submissions, free to add unlimited non-linguistic data, tended to score
-    worse in aggregate than 10M-word Strict-Small ones, and the track was won by text augmentation
-    instead. Contextualizer recombined chunks of text 40 times each and scored 0.73.
-  scope: Only 8 teams entered, and the organizers read the weak aggregate as multimodal learning
-    being a hard problem of its own. The augmentation was compared against 40 epochs on the
-    same samples, never a real 4B-word corpus.
-  evidence: Section 7.1, Section 7.4 (Multimodal learning), Section 7.2 (Loose track), Tables
-    2 and 3.
-- id: the-bigger-skyline-was-not-the-better-one
-  text: 'Targeted evaluation inverted the ordering by scale: RoBERTa-base scored 0.87 on BLiMP
-    against Llama 2 70B''s 0.84. On the MSGS subtasks where a syntactic and a surface generalization
-    conflict, almost every model was negative, from -0.01 for ELC-BERT to -0.37 for RoBERTa-base.'
-  scope: The BLiMP ordering reverses on (Super)GLUE, where Llama 2 leads at 0.84, and encoders
-    and decoders are scored by different implementations. The MSGS figures are Appendix D.1's
-    ambiguous-subtask averages, not the headline table's 0.47 and 0.58.
-  evidence: Appendix D.2 and Table 2 for BLiMP; Appendix D.1 and Table 8 for the ambiguous
-    MSGS subtasks; Section 5.2.1 on zero-shot scoring.
-- id: turn-taking-rewarded-the-corpus-not-just-the-model
-  text: 'The five new BLiMP-supplement suites behaved unevenly: hypernymy left every system
-    near 0.50, both skylines included, while turn-taking ran from chance to over 90%. The
-    organizers credit part of the turn-taking spread to transcribed dialogue being a large
-    share of the training corpus.'
-  scope: A probe returning chance for a 70B model is evidence about the probe, and the organizers
-    decline to conclude that the models lack lexical entailment. On the adversarial tricky
-    items the RoBERTa skyline beat every submission.
-  evidence: Appendix D.3 and Table 9; Section 5.1.1 for how the suites were built.
-- id: age-of-acquisition-did-not-discriminate
-  text: No submission beat the OPT-125M baseline at predicting children's age of acquisition
-    of words. Mean average deviation ran from 2.03 months for the Strict-Small baseline to
-    2.07 for the widest submission, so the task barely separated the field.
-  scope: An optional task that 7 of the 31 teams reported, so the table covers 8 models rather
-    than the field. The organizers caution that optimizing it produces better alignment with
-    human learning, not a better language model.
-  evidence: Appendix E, Table 11, Section 5.1.1 (Age-of-acquisition Prediction) and its footnote
-- id: corpus-composition
-  text: The BabyLM pretraining corpus is 98.04M words, 9.96M in the Strict-Small version,
-    drawn from ten sources. About 56% is transcribed or scripted speech and about 40% is child-directed
-    or child-appropriate, with OpenSubtitles the largest source at 31% and CHILDES at 5%.
-  scope: 'Developmentally plausible in volume and domain mix, not a corpus of child input:
-    fewer than 10M words of transcribed child-directed speech exist at all. Preprocessing
-    is deliberately minimal, so newlines do not reliably delimit sentences or documents.'
-  evidence: Table 1, Section 4, Section 4.2, Appendix A
-- id: tracks-and-budget-rules
-  text: 'The first challenge drew 31 teams and 162 models across three tracks: Strict at 100M
-    words of provided English text, Strict-Small at 10M, and Loose at 100M plus unlimited
-    non-linguistic data. The word budget covered the whole pipeline, so an auxiliary model''s
-    training text counted too.'
-  scope: Rereading data across epochs did not count as seeing more text. Strict-Small was
-    by far the most popular at 118 models from 29 teams, which the organizers read as a compute
-    effect. All participants were academic or independent groups.
-  evidence: Section 3 (Tracks) and footnote 1; Table 3 and Figure 2 for the counts; Section
-    6 on who participated.
-- id: evaluation-suite
-  text: Submissions were scored on zero-shot grammaticality, finetuned (Super)GLUE and MSGS,
-    combined 50/30/20 into one aggregate on a Dynabench leaderboard. Every evaluation example
-    containing a word that appears fewer than twice in the 10M-word corpus was filtered out.
-  scope: So the (Super)GLUE and MSGS numbers are comparable only between models run through
-    this pipeline, never with published results. The grammaticality half is BLiMP plus a hidden
-    five-suite supplement released two weeks before the deadline.
-  evidence: Section 5.1 and Section 5.1.1; Section 5.3 for the weighting; Appendix B and Section
-    5.2 for the vocabulary filter.
+  scope: First iteration, 2023, English only, 31 papers and 162 models across the Strict,
+    Strict-Small and Loose tracks; earlier data-limited work existed (LTG-BERT, BabyBERTa,
+    MiniPile) but not as a community shared task with a common corpus and leaderboard.
+- id: compute-not-constrained
+  text: The BabyLM 2023 rules capped training data but not compute, and the winning Strict
+    submission consumed roughly as many training samples as BERT despite a training set only
+    about 3% as large.
+  kind: result
+  evidence: Section 8
+  scope: The 2023 iteration's rules, under which repeated epochs did not count against the
+    word budget; the organizers flag compute efficiency as a target for future iterations.
+- id: benchmark-vs-psycholinguistic
+  text: A BabyLM 2023 submission awarded for outstanding evaluation found that models scoring
+    better on the BabyLM benchmark tasks were not better at predicting human reading difficulty.
+  kind: result
+  evidence: Section 7.3
+  scope: Decoder-only GPT-style models trained by Steuer et al. (2023) on BabyLM data; a single
+    submission's finding, not an organizer-run meta-analysis across all 162 models.
 qa:
 - q:
-  - What did the first BabyLM Challenge find?
-  - Where should I start on sample-efficient language model pretraining?
-  - How well can a language model learn from a child-sized amount of text?
+  - What should I read first about training language models on small, child-scale amounts
+    of data?
+  - Is there a shared task for sample-efficient language model pretraining?
+  - Where did the BabyLM Challenge come from and what did it set up?
   answers:
-  - where-to-start-on-child-scale-pretraining
+  - shared-task-contribution
 - q:
-  - Can a language model trained on 100 million words compete with a large LLM?
-  - Did any BabyLM model beat Llama 2?
-  - How well do small models trained on child-sized data perform?
-  - Is a data-efficient small model competitive with models trained on trillions of tokens?
+  - Can a language model trained on 100 million words beat one trained on trillions?
+  - Did any BabyLM submission outperform Llama 2?
+  - Which model won the BabyLM Strict track and what did it score?
   answers:
-  - winner-beat-trillion-word-skylines
-  - epochs-bought-the-headline
-  - the-bigger-skyline-was-not-the-better-one
+  - elc-bert-beats-skylines
+  - ltg-bert-architecture-effective
 - q:
-  - Does curriculum learning help language model pretraining?
-  - What did the BabyLM Challenge find about curriculum learning?
-  - Is ordering training data by difficulty worth it for LM pretraining?
-  - Why do people say curriculum learning does not work for language models?
+  - Does curriculum learning help when pretraining data is limited?
+  - How well did curriculum learning work in the BabyLM Challenge?
+  - Is ordering training sentences from easy to hard worth trying for small-data language
+    models?
   answers:
-  - curriculum-learning-largely-failed
-  - architecture-mattered-most
-  - extra-modalities-did-not-help
+  - curriculum-learning-largely-unsuccessful
 - q:
-  - What actually worked in the BabyLM Challenge?
-  - Which methods won the BabyLM Challenge?
-  - What should I do to train a sample-efficient language model?
-  - What are the BabyLM Challenge's recommendations?
+  - Which architecture works best for pretraining on 10M-100M words?
+  - Was LTG-BERT effective on developmentally plausible data budgets?
+  - What backbone did the winning BabyLM models use?
   answers:
-  - architecture-mattered-most
-  - shorter-inputs-and-sentence-level-examples-helped
-  - distillation-beat-its-own-teachers
-  - extra-modalities-did-not-help
-  - curriculum-learning-largely-failed
+  - ltg-bert-architecture-effective
+  - elc-bert-beats-skylines
 - q:
-  - How much does extra pretraining data help at small scale?
-  - Was the 100M-word BabyLM track much better than the 10M-word track?
-  - Does going from 10M to 100M words improve language models a lot?
+  - How much does going from 10 million to 100 million words of pretraining data actually
+    buy you?
+  - Did BabyLM Strict-track models beat Strict-Small models by much?
+  - Is a 10x increase in pretraining data worth it at this scale?
   answers:
-  - ten-times-the-data-bought-little
-  - extra-modalities-did-not-help
-  - tracks-and-budget-rules
+  - strict-small-close-to-strict
 - q:
-  - Is a data-efficient model also compute-efficient?
+  - Did adding images or audio help language models trained on small data in BabyLM?
+  - How did multimodal submissions to the BabyLM Loose track perform?
+  - Does multimodal input improve sample efficiency for language modelling?
+  answers:
+  - loose-track-underperformed
+- q:
+  - How close are small-data language models to human grammar performance?
+  - What BLiMP accuracy did the best BabyLM model reach relative to humans?
+  - Can models trained on child-scale data pass minimal-pair grammar tests?
+  answers:
+  - blimp-near-human
+- q:
+  - Do language models trained on small corpora prefer syntactic or surface generalizations?
+  - What did MSGS reveal about the inductive bias of BabyLM models?
+  - Does linguistic inductive bias require billions of words of pretraining?
+  answers:
+  - msgs-negative-bias
+- q:
+  - Do language models understand hypernym and lexical entailment relations?
+  - How did BabyLM models do on the Hypernym test suite?
+  - Which BLiMP Supplement task defeated every model including the skylines?
+  answers:
+  - hypernym-at-chance
+- q:
+  - What new evaluation tasks did the BabyLM Challenge add beyond BLiMP and GLUE?
+  - Which BLiMP Supplement suite best separates strong from weak small-data models?
+  - Can language models track pronoun shifts across a change of speaker?
+  answers:
+  - turn-taking-discriminative
+  - hypernym-at-chance
+- q:
+  - Can small language models predict the age at which children acquire words?
+  - Did any BabyLM submission beat the baseline on age-of-acquisition prediction?
+  - How well do BabyLM models align with children's word learning?
+  answers:
+  - aoa-no-submission-beats-baseline
+- q:
+  - What practical tricks improved sample efficiency in the BabyLM Challenge?
+  - Does shortening context length or sentence-level batching help low-resource pretraining?
+  - Did knowledge distillation help models trained on 10 million words?
+  answers:
+  - short-sequences-and-distillation-work
+- q:
+  - Did the BabyLM Challenge limit compute as well as data?
   - How many epochs did the winning BabyLM model train for?
-  - Did the BabyLM winners save compute as well as data?
-  - What is the catch in beating Llama 2 on 100M words?
+  - Were data-limited pretraining winners actually cheap to train?
   answers:
-  - epochs-bought-the-headline
-  - architecture-mattered-most
-  - tracks-and-budget-rules
+  - compute-not-constrained
+  - ltg-bert-architecture-effective
 - q:
-  - Does multimodal input make language models more data-efficient?
-  - Did the BabyLM Loose track show that images and audio help?
-  - What happened to the multimodal BabyLM submissions?
+  - Do better BLiMP and GLUE scores mean a model is a better cognitive model of reading?
+  - Does BabyLM benchmark performance correlate with predicting human reading times?
+  - Which BabyLM paper won the award for outstanding evaluation and what did it find?
   answers:
-  - extra-modalities-did-not-help
-  - tracks-and-budget-rules
-- q:
-  - Do small language models learn syntactic or surface generalizations?
-  - What did BabyLM find about inductive bias?
-  - How did BabyLM models score on MSGS?
-  - Do models trained on little data prefer surface features?
-  answers:
-  - the-bigger-skyline-was-not-the-better-one
-  - extra-modalities-did-not-help
-  - evaluation-suite
-- q:
-  - Can language models predict children's age of acquisition of words?
-  - What did the BabyLM age-of-acquisition task show?
-  - Do better language models align better with child language acquisition?
-  answers:
-  - age-of-acquisition-did-not-discriminate
-  - evaluation-suite
-- q:
-  - Can I compare BabyLM GLUE scores to published GLUE scores?
-  - Why are BabyLM's benchmark numbers different from the originals?
-  - How was the BabyLM evaluation data filtered?
-  answers:
-  - evaluation-suite
-- q:
-  - Which BabyLM evaluation tasks actually separated the models?
-  - Did the BLiMP supplement work as a benchmark?
-  - What are the weakest parts of the BabyLM evaluation suite?
-  answers:
-  - turn-taking-rewarded-the-corpus-not-just-the-model
-  - the-bigger-skyline-was-not-the-better-one
-  - evaluation-suite
-- q:
-  - What data is in the BabyLM pretraining corpus?
-  - Is the BabyLM dataset child-directed speech?
-  - Where does the BabyLM 100M-word corpus come from?
-  - What makes a corpus developmentally plausible?
-  answers:
-  - corpus-composition
-  - tracks-and-budget-rules
-- q:
-  - What are the rules of the BabyLM Challenge?
-  - What is the difference between the Strict, Strict-Small and Loose tracks?
-  - How many words are BabyLM submissions allowed to train on?
-  answers:
-  - tracks-and-budget-rules
-  - evaluation-suite
-  - epochs-bought-the-headline
-- q:
-  - How are BabyLM models evaluated?
-  - What benchmarks does the BabyLM Challenge use?
-  - How is the BabyLM aggregate score computed?
-  answers:
-  - evaluation-suite
-  - tracks-and-budget-rules
-- q:
-  - How big was the first BabyLM Challenge?
-  - How many teams entered the BabyLM Challenge?
-  - Which BabyLM track was the most popular?
-  answers:
-  - tracks-and-budget-rules
-  - ten-times-the-data-bought-little
-misreadings:
-- It is not a claim that a 100M-word model is as good as Llama 2. The winning model beat the
-  Llama 2 70B and RoBERTa-base skylines on this challenge's weighted aggregate of BLiMP, (Super)GLUE
-  and MSGS, and lost clearly on (Super)GLUE (0.78 against 0.84). MSGS -- an inductive-bias
-  probe worth 20% of the aggregate, where Llama 2 scores 0.26 -- is a large part of the margin.
-- It is not a claim that the winner was cheap to train. It ran over 450 epochs on 100M words,
-  seeing about as many samples as BERT did on roughly thirty times more text. The challenge
-  capped words, not compute, and the organizers say plainly that this undercuts two of their
-  three goals -- cognitive plausibility and affordability.
-- It is not a general refutation of curriculum learning. The finding is that 13 of 31 teams
-  tried it in this data regime and most saw no consistent improvement on this evaluation suite,
-  with some modest gains; and the Loose track was won by a submission that reorders and recombines
-  training data, which is adjacent to the same idea.
-- 'The tracks are easy to invert: Strict is the 100M-word track and Strict-Small the 10M-word
-  one. Loose is not a larger text budget -- it is the same 100M words plus non-linguistic
-  data, and its rules changed mid-challenge to permit externally trained taggers and parsers.'
-- The corpus is not child-directed speech. Around 56% is transcribed or scripted speech and
-  around 40% is child-directed or child-appropriate, but the largest single source is OpenSubtitles
-  (31%) and CHILDES is 5%. The organizers say plainly that fewer than 10M words of transcribed
-  child-directed speech exist, far below the budget.
-- The Loose track's weak aggregate is not evidence that multimodality does not help sample
-  efficiency. The paper's reading is that using several input types is a hard problem of its
-  own and current architectures are not built for it; only 8 teams entered, and the track's
-  winner used no non-text modality.
-- '''Within about 3% of human performance'' is about BLiMP alone, and no submission reached
-  human level overall. The (Super)GLUE comparison is confounded by finetuning, and the numbers
-  are not comparable to published (Super)GLUE results at all, because every example containing
-  a word that occurs fewer than twice in the 10M-word corpus was removed.'
-- A positive MSGS number in the results table does not mean the model preferred the syntactic
-  generalization. On the six subtasks where a syntactic and a surface generalization actually
-  conflict, the appendix reports macro averages of -0.10 for the winner and -0.24 for Llama
-  2 -- almost everything is negative, the two tables are not reconciled, and Appendix D.1's
-  prose calls those scores high and positive when its own table does not.
-- The BLiMP supplement is not a uniformly working benchmark. Its hypernymy suite leaves every
-  model, including a 70B skyline, at chance, which the organizers read as a problem with the
-  items rather than with the models. Turn-taking discriminates well, but partly because transcribed
-  dialogue is a large share of the training corpus.
-- The age-of-acquisition task did not show that small models model children well or badly.
-  No submission beat the OPT-125M baseline, and every reported system falls inside 0.04 months
-  of every other, so the task did not separate them. The organizers add that doing better
-  on it is not the same as being a better language model.
-- Not every model in the findings qualified for a track. One submission used GPT-3.5-Turbo
-  to reformat the training corpus, which no track's word budget allows; the organizers discuss
-  it because it is informative, not because it competed.
-- '''Beat the skylines'' does not mean ''beat the bigger model everywhere''. The smaller skyline,
-  RoBERTa-base, is the stronger of the two on BLiMP (0.87 to 0.84), so on grammatical minimal
-  pairs the ordering by scale was already inverted before any submission was scored.'
-- 'The participant count is approximate: the paper says 16 countries, while the list it gives
-  names 14 distinct ones and repeats Norway.'
+  - benchmark-vs-psycholinguistic
+one_liner: The BabyLM Challenge is a shared task in which participants pretrain language models
+  on a fixed 10M- or 100M-word developmentally plausible corpus, and in its 2023 first iteration
+  the winning LTG-BERT-based submission outscored Llama 2 and RoBERTa-base in aggregate while
+  most curriculum-learning attempts failed.
+key: warstadt2023babylm
+coined: BabyLM Challenge
+gloss: shared task on pretraining language models with as little text as a child hears
 terminology:
-  BabyLM Challenge: A shared task, first run at CoNLL 2023, in which participants pretrain
-    a language model on a fixed budget of English text roughly the size of a child's input
-    (10M or 100M words) and are compared on one shared evaluation pipeline. Repeated annually
-    since.
-  Strict / Strict-Small / Loose: 'The three tracks of the first challenge: 100M words of the
-    provided text, 10M words of it, and 100M words plus unlimited non-linguistic data. The
-    budget covers the whole pipeline, so text used to train an auxiliary model counts against
-    it.'
-  developmentally plausible corpus: 'A corpus constrained in both volume and domain to resemble
-    a child''s language input: under 100M words, mostly transcribed speech, about 40% of it
-    child-directed or child-appropriate. Not a claim that its contents are what any particular
-    child hears.'
-  skyline: A reference model deliberately trained outside a challenge's limits, run through
-    the same evaluation pipeline to show what a much larger data budget buys -- in the first
-    BabyLM Challenge, Llama 2 70B and a fully trained RoBERTa-base. The opposite bookend to
-    a baseline. Llama 2 was scored in context on (Super)GLUE but finetuned on MSGS, so the
-    two skylines and the submissions are not all compared under identical conditions.
-  BLiMP supplement: 'Five minimal-pair test suites written for this challenge and released
-    two weeks before the deadline, covering dialogue and question phenomena BLiMP does not:
-    hypernymy, subject-auxiliary inversion, turn-taking, question-answer congruence, plus
-    the tricky-distractor cases.'
-  MSGS: 'The Mixed Signals Generalization Set, a finetuning probe of inductive bias: a model
-    is trained where a syntactic and a surface generalization are perfectly correlated, then
-    tested where they conflict. Scored by Matthews correlation, +1 for systematic linguistic
-    generalization and -1 for surface. Only its ambiguous subtasks measure that bias, and
-    the challenge''s headline MSGS column and the appendix''s ambiguous-subtask averages are
-    different numbers.'
-  LTG-BERT: 'The encoder architecture, from Samuel et al. 2023, behind both top Strict-track
-    submissions: a synthesis of extra layer normalization, GEGLU feed-forward modules, DeBERTa-style
-    disentangled attention and scaled weight initialization. Models built on it are also characteristically
-    trained for very many epochs.'
-  age-of-acquisition prediction: An optional BabyLM task that converts a model's average word
-    surprisals into a predicted age at which children acquire each word, scored by mean average
-    deviation in months against measured ages. A measure of alignment with human acquisition,
-    not of model quality.
-  sample efficiency: In this challenge, performance per word of training text -- the budgeted
-    quantity. It says nothing about performance per unit of compute, which is why a model
-    can be extremely sample-efficient and still expensive to train, as the winner was.
+  Strict track: BabyLM Challenge track requiring models to train exclusively on the released
+    100M-word English corpus of child-directed speech, dialogue and children's literature.
+  Strict-Small track: BabyLM Challenge track requiring models to train exclusively on a 10M-word
+    subsample of the released BabyLM corpus, roughly the linguistic input of a child's first
+    two to five years.
+  Loose track: BabyLM Challenge track allowing unlimited non-linguistic data (audio, images,
+    code, music) and expert annotations alongside a 100M-word text budget that covers all
+    language data used for any model in the pipeline.
+  skyline: In the BabyLM Challenge, a reference model trained on its full unrestricted corpus
+    — RoBERTa-base and Llama 2 70B — run through the same evaluation pipeline to bound what
+    large-scale pretraining achieves.
+  BLiMP Supplement: 'Five minimal-pair test suites released for the BabyLM Challenge covering
+    phenomena BLiMP omits: hypernymy, subject-auxiliary inversion, turn-taking, and easy and
+    tricky question-answer congruence.'
+  MSGS: 'Mixed Signals Generalization Set: a finetuning benchmark whose training labels are
+    ambiguous between a syntactic and a surface generalization, scored by Matthews correlation
+    with the syntactic generalization, so 1 means systematic linguistic bias and -1 systematic
+    surface bias.'
+  age-of-acquisition prediction: Task converting a language model's average word surprisals
+    into predicted ages at which children acquire those words, scored by mean average deviation
+    in months from measured child acquisition ages.
+misreadings:
+- 'ELC-BERT beating the Llama 2 and RoBERTa-base skylines on the BabyLM aggregate score is
+  not a win on every task: Llama 2 scored higher on (Super)GLUE (0.84 vs 0.78), and the aggregate
+  weights zero-shot grammar and MSGS at 70% combined.'
+- The BabyLM Challenge's data budget is not a compute budget. Repeated epochs cost nothing
+  under the 2023 rules, and the winning Strict submission trained for over 450 epochs, so
+  its results do not show that sample-efficient pretraining is cheap.
+- Curriculum learning being largely unsuccessful in BabyLM 2023 is a finding about the specific
+  curricula submitted — surprisal, frequency, length, syntactic complexity, vocabulary growth
+  — not a proof that no data ordering can help; the Loose-track winner used dataset-level
+  ordering and one linguistically motivated curriculum found improvements.
+- 'Near-chance Hypernym scores in the BLiMP Supplement do not establish that language models
+  lack knowledge of lexical entailment: the items are unnatural logical statements out of
+  domain for the models, and there is no a priori reason logically invalid statements should
+  be less probable.'
+- BabyLM (Super)GLUE and MSGS numbers are not comparable to published GLUE or MSGS results,
+  because evaluation examples containing words appearing fewer than twice in the Strict-Small
+  corpus were filtered out.
+- Loose-track models scoring below Strict-Small models is not evidence that multimodal training
+  hurts language learning in general; few multimodal submissions were received, and one text-and-audio
+  system was reported undertrained.
+links_extra:
+  anthology: http://aclanthology.org/2023.conll-babylm.1/
+  leaderboard: https://dynabench.org/babylm
+  data: https://github.com/babylm/babylm_data_preprocessing
+  evaluation_pipeline: https://github.com/babylm/evaluation-pipeline
+  submissions: https://github.com/babylm/submissions2023
 ---

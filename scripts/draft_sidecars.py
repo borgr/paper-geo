@@ -961,7 +961,52 @@ def repair(slug: str, rounds: int, again, evidence: str = "",
     return sum(len(x) for x in validate_draft(path, note=False))
 
 
+def unstructure(value, spec: dict):
+    """Put a reply back into the shape the schema asked for, where that is lossless.
+
+    A forced tool call over-structures. `misreadings` is declared as an array of plain
+    strings, and in one live pass three drafts came back with it as an array of objects:
+    `[{"text": "The 0.77 accuracy ..."}]` in one, and a string exploded character by
+    character into `{"0": "T", "1": "h", "2": "e", ...}` in two more. Every one of those is
+    a string wearing an object, every one converts back exactly, and left alone each costs
+    a schema error -- which, before the tier was isolated, silently suppressed nine other
+    findings on the same draft.
+
+    So this is deliberately narrow: it only ever turns an object into the string the schema
+    already required, and only when the object holds nothing the string does not. Anything
+    else is returned untouched, because a shape the schema rejects and code cannot
+    unambiguously recover is a finding for the author, not a guess for the code.
+    """
+    if not isinstance(spec, dict):
+        return value
+    kind = spec.get("type")
+    if kind == "string" and isinstance(value, dict) and value:
+        keys = list(value)
+        if all(str(k).isdigit() for k in keys) and all(isinstance(v, str) for v in value.values()):
+            return "".join(value[k] for k in sorted(keys, key=lambda k: int(k)))
+        if len(keys) == 1 and isinstance(value[keys[0]], str):
+            return value[keys[0]]
+        text = value.get("text")
+        if isinstance(text, str):
+            return text
+        return value
+    if kind == "array" and isinstance(value, list):
+        return [unstructure(v, spec.get("items") or {}) for v in value]
+    if kind == "object" and isinstance(value, dict):
+        props = spec.get("properties") or {}
+        extra = spec.get("additionalProperties")
+        out = {}
+        for k, v in value.items():
+            sub = props.get(k) or (extra if isinstance(extra, dict) else {})
+            out[k] = unstructure(v, sub or {})
+        return out
+    return value
+
+
 def write_draft(slug: str, sidecar: dict, source: str) -> str:
+    # Every path that writes a draft comes through here -- the drafting call, each repair
+    # round, --restamp -- so one call covers all of them.
+    sidecar = unstructure(sidecar, schema())
     os.makedirs(DRAFTS, exist_ok=True)
     path = os.path.join(DRAFTS, f"{slug}.md")
     body = yaml.safe_dump(sidecar, sort_keys=False, allow_unicode=True,
@@ -1068,7 +1113,7 @@ def validate_draft(path: str, note: bool = True) -> tuple[list[str], list[str]]:
         fm = yaml.safe_load(m.group(1)) or {}
     except yaml.YAMLError as e:
         return [f"{path}: unparseable front matter: {e}"], []
-    errs, typed = [], True
+    errs = []
     try:
         import jsonschema
         jsonschema.validate(fm, schema())
@@ -1081,7 +1126,6 @@ def validate_draft(path: str, note: bool = True) -> tuple[list[str], list[str]]:
         # `json_path` because the message alone ("is not of type 'object'") does not say
         # which field, and the first thing the reader needs is where to look.
         errs.append(f"{path}: {e.json_path}: {e.message.splitlines()[0]}")
-        typed = False
     except Exception as e:
         errs.append(f"{path}: {str(e).splitlines()[0]}")
     ids = {c.get("id") for c in (fm.get("claims") or [])}
@@ -1090,23 +1134,35 @@ def validate_draft(path: str, note: bool = True) -> tuple[list[str], list[str]]:
             if a not in ids:
                 errs.append(f"{path}: qa answer `{a}` is not a claim id")
 
-    if not typed:
-        # The quality tier reads a sidecar's fields at their declared types -- terminology
-        # as a mapping, claims as a list of objects -- and a document the schema just
-        # rejected may not have those types at all. An endpoint that would not decode
-        # against the schema returned `terminology` as a list, and the readability rules
-        # raised AttributeError halfway through the run: a check that crashes reports
-        # nothing, including about the fields that were fine. The schema finding above
-        # already names the field and the expected type, and it is fatal here, so there is
-        # nothing the quality tier could add that the author would act on first.
-        return errs, []
-
     from validate import (check_claim_evidence, check_claim_numbers, check_readability,
                           check_sidecar_shape)
     entry = [(os.path.basename(path), fm)]
-    quality = check_sidecar_shape(entry) + check_readability(entry)
-    numbers, no_text = check_claim_numbers(entry)
-    quality += numbers + check_claim_evidence(entry)[0]
+    # Each check runs inside its own guard, and a check that cannot read the draft becomes
+    # one finding instead of taking the tier down with it. Two failures got here the long
+    # way round. First, a draft with `terminology` as a list made `readability` raise
+    # AttributeError, and a check that crashes reports nothing at all. Then the fix for
+    # that -- skip the quality tier whenever the schema rejected the document -- turned out
+    # far worse than the crash: four drafts in a live run carried one schema error each and
+    # nine or ten readability findings, reported one finding, were repaired against that
+    # one, and got stamped `checks=1`. A tier that goes quiet is more dangerous than a tier
+    # that dies, because the count it reports is believable.
+    quality, no_text = [], False
+    for run in (lambda: check_sidecar_shape(entry),
+                lambda: check_readability(entry),
+                lambda: check_claim_numbers(entry),
+                lambda: check_claim_evidence(entry)):
+        try:
+            got = run()
+        except Exception as e:                        # noqa: BLE001 -- a check, not the run
+            quality.append(f"{path}: {getattr(run, '__name__', 'a check')} could not read "
+                           f"this draft ({type(e).__name__}: {e}) -- fix the schema "
+                           f"finding above and it will run")
+            continue
+        if isinstance(got, tuple):                    # (findings, papers with no text)
+            quality += got[0]
+            no_text = no_text or bool(got[1])
+        else:
+            quality += got
     if no_text and note:
         # Not a failure, and not silent either: the rule with no exceptions is the one
         # that must never quietly stop running.

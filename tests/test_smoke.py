@@ -1736,13 +1736,22 @@ class TestReviewPageShowsEachThingOnce(unittest.TestCase):
         if not os.path.exists(page):
             self.skipTest("build/sidecar_review.html not built")
         sys.path.insert(0, os.path.join(ROOT, "scripts"))
-        from draft_sidecars import checked
+        from draft_sidecars import DRAFTS, checked
         with open(page, encoding="utf-8") as fh:
             html = fh.read()
+        built = os.path.getmtime(page)
         for sec in html.split("<div class=paper ")[1:]:
             slug = sec.split("'")[1]
             d = checked(slug)
             if not isinstance(d, dict):
+                continue
+            # A claim can be missing from the page for two reasons, and only one of them
+            # is a bug: the renderer dropped it, or the draft was rewritten after the page
+            # was built. Comparing a fresh draft against a stale page reports the second as
+            # the first -- which it did, twice, during a re-drafting pass. Rebuild with
+            # `--review` to bring a skipped paper back under the check.
+            draft = os.path.join(DRAFTS, f"{slug}.md")
+            if os.path.exists(draft) and os.path.getmtime(draft) > built:
                 continue
             shown = set(re.findall(r"<div class=id>\[[a-z]+\] ([^ <·]+)", sec))
             for c in d["claims"]:
