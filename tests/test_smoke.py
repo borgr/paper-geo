@@ -3242,3 +3242,44 @@ class TestAPaperWithNoMeasurementsIsNotAskedForFigures(unittest.TestCase):
         from validate import paper_reports_figures
         self.assertTrue(paper_reports_figures("_t_no_such_slug_at_all"))
         self.assertTrue(paper_reports_figures(None))
+
+
+class TestAForkKeepsTheCommentsAndDropsTheDecisions(unittest.TestCase):
+    """The reset has to lose one researcher's judgement and keep the file's meaning.
+
+    Both halves are load-bearing. An emptied file that also loses its comment block
+    leaves the fork with a `declines.yaml` whose semantics nobody can recover; a file
+    that keeps its contents publishes someone else's decision to skip a paper.
+    """
+
+    def test_the_leading_comment_block_survives(self):
+        from bootstrap_fork import header
+        text = "# what this is\n# and why\n\nitems: [a]\n# not a header comment\n"
+        self.assertEqual(header(text), "# what this is\n# and why\n")
+
+    def test_documentation_strings_stay_and_data_goes(self):
+        import yaml
+        from bootstrap_fork import rewrite
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "declines.yaml")
+            open(p, "w").write("# why this file exists\nnote: read me\n"
+                               "sections: [worklist]\nitems: [one, two]\n")
+            rewrite(p, {"sections": [], "items": []})
+            out = open(p).read()
+            self.assertIn("# why this file exists", out)
+            got = yaml.safe_load(out)
+            self.assertEqual(got, {"note": "read me", "sections": [], "items": []})
+
+    def test_every_emptied_key_exists_in_the_real_file(self):
+        """A key renamed in `data/` and not here would be silently left populated."""
+        import yaml
+        from bootstrap_fork import EMPTY
+        for name, empties in EMPTY.items():
+            path = os.path.join(ROOT, "data", name)
+            if not os.path.exists(path):
+                continue
+            doc = yaml.safe_load(open(path)) or {}
+            for key, blank in empties.items():
+                self.assertIn(key, doc, f"data/{name}: {key} no longer exists")
+                self.assertIsInstance(doc[key], type(blank),
+                                      f"data/{name}: {key} is not a {type(blank).__name__}")

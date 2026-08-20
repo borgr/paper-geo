@@ -118,23 +118,29 @@ authored claims do not support."""
 # the report says which model played which role.
 
 
-def _client(model_env: str | None):
-    """An OpenAI-compatible client and the model id to send, or exit saying what is missing."""
+def _client(spec: str | None):
+    """An OpenAI-compatible client and the model id to send, or exit saying what is missing.
+
+    `spec` is `MODEL_ID` or `MODEL_ID@BASE_URL`. The second form is needed more often than
+    it looks: a per-model gateway carries the model in the URL path, and the path slug is
+    not derivable from the body id (`granite-3-3-8b-instruct` in the path,
+    `ibm-granite/granite-3.3-8b-instruct` in the body), so a second model means a second
+    base URL and guessing it would fail silently -- the worst outcome here, since the run
+    would then quietly grade with the wrong model.
+    """
     from draft_sidecars import ENV_BASE, ENV_MODEL, ENV_KEY, ENV_HEADER
     try:
         from openai import OpenAI
     except ImportError:
         sys.exit("pip install openai")
-    base, model = os.environ.get(ENV_BASE), model_env or os.environ.get(ENV_MODEL)
+    model, _, override = (spec or "").partition("@")
+    base = override or os.environ.get(ENV_BASE)
+    model = model or os.environ.get(ENV_MODEL)
     if not base or not model:
         sys.exit(f"--mode api needs ${ENV_BASE} and ${ENV_MODEL} in the environment "
                  f"(never committed -- see draft_sidecars.call_openai)")
     key = os.environ.get(ENV_KEY, "unused")
     headers = {os.environ[ENV_HEADER]: key} if os.environ.get(ENV_HEADER) else None
-    # A per-model gateway puts the model slug in the path, so a second model means a
-    # second base URL. Substituting the slug we were given keeps one env var enough.
-    if model_env and os.environ.get(ENV_MODEL):
-        base = base.replace(os.environ[ENV_MODEL].split("/")[-1], model_env.split("/")[-1])
     return OpenAI(base_url=base, api_key=key, default_headers=headers), model
 
 
@@ -201,10 +207,10 @@ def main() -> None:
     ap.add_argument("--mode", choices=["skill", "api"])
     ap.add_argument("--engine", default="model-knowledge",
                     help="label for where the answer came from")
-    ap.add_argument("--answer-model", help="model id to ask (--mode api); defaults to "
-                                          "$PAPER_GEO_LLM_MODEL")
-    ap.add_argument("--grade-model", help="model id to grade with (--mode api); defaults "
-                                         "to the answering model, which marks its own work")
+    ap.add_argument("--answer-model", help="MODEL_ID[@BASE_URL] to ask (--mode api); "
+                                          "defaults to $PAPER_GEO_LLM_MODEL")
+    ap.add_argument("--grade-model", help="MODEL_ID[@BASE_URL] to grade with (--mode api); "
+                                         "defaults to the answerer, which marks its own work")
     ap.add_argument("--limit", type=int, help="first N papers only, for a smoke run")
     args = ap.parse_args()
     cfg = load_config()
