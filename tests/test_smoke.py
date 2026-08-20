@@ -2836,6 +2836,48 @@ class TestNoLatexLeavesInACitationFile(unittest.TestCase):
         self.assertIn("A 'quoted' title", cff)
 
 
+class TestACitationFileIsWrittenOnlyWhenItWouldChange(unittest.TestCase):
+    """`write_citation_cff` says a file is wanted, not that the live one is wrong.
+
+    Announcing a change on the flag alone left `diff` permanently at one pending repo,
+    so a settled run and a run with real work in it printed the same thing, and every
+    apply rewrote bytes that already matched. And when a file does need replacing, the
+    Contents API rejects the PUT without the existing blob's sha (422, `"sha" wasn't
+    supplied`) -- which is how borgr/DORA kept a braced title through the run meant to
+    fix it, every write after the first having failed unnoticed.
+    """
+
+    def _changes_with_live(self, live_body):
+        import sweep_github
+        entry = {"repo": "a/b", "write_citation_cff": True, "paper_slug": "s"}
+        paper = {"slug": "s", "title_display": "T", "authors": ["Leshem Choshen"]}
+        with mock.patch.object(sweep_github, "read_yaml",
+                               side_effect=[{"repos": [entry]}, {"papers": [paper]}]), \
+             mock.patch.object(sweep_github, "list_repos",
+                               return_value=[{"full_name": "a/b", "name": "b",
+                                              "topics": [], "description": None,
+                                              "homepage": None}]), \
+             mock.patch.object(sweep_github, "live_cff", return_value=live_body):
+            return list(sweep_github._changes(
+                {"identity": {"name": "Leshem Choshen"},
+                 "site": {"base_url": "https://x", "papers_path": "/papers/"}}))
+
+    def test_a_matching_file_is_not_a_change(self):
+        import sweep_github
+        want = sweep_github.citation_cff(
+            {"slug": "s", "title_display": "T", "authors": ["Leshem Choshen"]},
+            {"full_name": "a/b", "name": "b"}, {"identity": {"name": "Leshem Choshen"}},
+            {"repo": "a/b", "write_citation_cff": True, "paper_slug": "s"})
+        self.assertEqual([], self._changes_with_live(want))
+
+    def test_a_stale_or_absent_file_is_a_change_and_carries_its_body(self):
+        got = self._changes_with_live('title: "{DORA}"\n')
+        self.assertEqual(1, len(got))
+        self.assertIn("CITATION.cff", got[0][2])
+        self.assertIn('title: "T"', got[0][0]["_cff_body"])
+        self.assertEqual(1, len(self._changes_with_live(None)))
+
+
 class TestALiveSidecarIsAskedOfTheDisk(unittest.TestCase):
     """`papers.yaml`'s has_sidecar is only rewritten by the online collect step.
 

@@ -18,6 +18,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
 import re
@@ -43,6 +44,12 @@ def gh(*args: str) -> str:
     if r.returncode:
         raise RuntimeError(r.stderr.strip() or f"gh {' '.join(args)} failed")
     return r.stdout
+
+
+def gh_or_none(*args: str) -> str | None:
+    """`gh` output, or None where a 404 is the answer rather than a failure."""
+    r = subprocess.run(["gh", *args], capture_output=True, text=True)
+    return r.stdout.strip() or None if not r.returncode else None
 
 
 def gh_topics_args(topics: list[str]) -> list[str]:
@@ -100,6 +107,12 @@ def link_papers(repos: list[dict], papers: list[dict]) -> dict[str, dict]:
         if p:
             out[r["full_name"]] = p
     return out
+
+
+def live_cff(name: str) -> str | None:
+    """The repo's CITATION.cff exactly as it stands now, or None if it has none."""
+    b = gh_or_none("api", f"repos/{name}/contents/CITATION.cff", "--jq", ".content")
+    return base64.b64decode(b).decode("utf-8", "replace") if b else None
 
 
 def _cff_str(v) -> str:
@@ -316,6 +329,8 @@ def _changes(cfg):
     """Yield (entry, live, changes) by comparing desired state to LIVE GitHub state."""
     prop = (read_yaml(os.path.join(DATA, "repos.yaml")) or {}).get("repos", [])
     live = {r["full_name"]: r for r in list_repos(cfg)}
+    papers = {p["slug"]: p for p in
+              (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers", [])}
     for r in prop:
         cur = live.get(r["repo"])
         if r.get("skip") or cur is None:
@@ -336,7 +351,17 @@ def _changes(cfg):
             else:
                 ch["homepage"] = home
         if r.get("write_citation_cff") and r.get("paper_slug"):
-            ch["CITATION.cff"] = r["paper_slug"]
+            # Rendered and compared, not announced: the flag says a file is wanted, not
+            # that the one on the repo is wrong. Announcing on the flag alone made the
+            # diff unable to ever reach zero -- so a run with nothing left to do looked
+            # identical to a run with work in it -- and made every apply rewrite bytes
+            # that already matched.
+            p = papers.get(r["paper_slug"])
+            if p:
+                body = citation_cff(p, cur, cfg, r)
+                if body != live_cff(r["repo"]):
+                    ch["CITATION.cff"] = r["paper_slug"]
+                    r["_cff_body"] = body
         if ch:
             yield r, cur, ch
 
@@ -395,9 +420,6 @@ def phase_diff(cfg) -> None:
 def phase_apply(cfg, yes: bool) -> None:
     if not yes:
         sys.exit("refusing to write to public repos without --yes")
-    papers = {p["slug"]: p for p in
-              (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers", [])}
-    repos = {r["full_name"]: r for r in list_repos(cfg)}
     for r, cur, ch in _changes(cfg):
         name = r["repo"]
         try:
@@ -408,17 +430,25 @@ def phase_apply(cfg, yes: bool) -> None:
             for k, v in patch.items():
                 gh("api", "-X", "PATCH", f"repos/{name}", "-f", f"{k}={v}")
             if "CITATION.cff" in ch:
-                p, repo = papers.get(r["paper_slug"]), repos.get(name)
-                if p and repo:
-                    body = citation_cff(p, repo, cfg, r)
+                body = r.get("_cff_body")
+                if body:
                     path = os.path.join(BUILDCFF := os.path.join(DATA, "..", "build",
                                                                  "citation_cff"), f"{r['paper_slug']}.cff")
                     os.makedirs(BUILDCFF, exist_ok=True)
                     with open(path, "w") as f:
                         f.write(body)
-                    gh("api", "-X", "PUT", f"repos/{name}/contents/CITATION.cff",
-                       "-f", "message=Add CITATION.cff (paper-geo)",
-                       "-f", f"content={__import__('base64').b64encode(body.encode()).decode()}")
+                    # The Contents API refuses a PUT over an existing file without its
+                    # blob sha ("\"sha\" wasn't supplied", 422). Every write after the
+                    # first one failed on that, which is how borgr/DORA kept a file with
+                    # LaTeX braces in the title through the run that was meant to fix it.
+                    sha = gh_or_none("api", f"repos/{name}/contents/CITATION.cff",
+                                     "--jq", ".sha")
+                    args = ["-f", f"message={'Update' if sha else 'Add'} CITATION.cff "
+                            f"(paper-geo)",
+                            "-f", f"content={base64.b64encode(body.encode()).decode()}"]
+                    if sha:
+                        args += ["-f", f"sha={sha}"]
+                    gh("api", "-X", "PUT", f"repos/{name}/contents/CITATION.cff", *args)
             print(f"  ok  {name}: {', '.join(ch)}")
         except RuntimeError as e:
             print(f"  FAIL {name}: {e}", file=sys.stderr)
