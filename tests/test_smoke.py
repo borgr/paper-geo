@@ -2836,6 +2836,35 @@ class TestNoLatexLeavesInACitationFile(unittest.TestCase):
         self.assertIn("A 'quoted' title", cff)
 
 
+class TestAPeriodBeforeASymbolIsNotASentenceEnd(unittest.TestCase):
+    """The sentence count is the one cap a rewording cannot always clear.
+
+    "One attainable order is Non-term. < Dep. < SRL < RC < NER < Co-ref. < SPR." is one
+    ordering of seven abbreviated task names. It split into four, so a two-sentence claim
+    was reported as five and nothing short of renaming the tasks would have fixed it. The
+    period is decided by what follows as well as what precedes -- but a lowercase opener
+    is a real sentence, since identifiers start them.
+    """
+
+    def test_an_abbreviated_enumeration_stays_one_sentence(self):
+        from validate import sentences
+        self.assertEqual(2, len(sentences(
+            "Probing BERT-base gives 196 rankings. One attainable order is "
+            "Non-term. < Dep. < SRL < RC < NER < Co-ref. < SPR.")))
+
+    def test_a_sentence_may_start_lowercase(self):
+        from validate import sentences
+        self.assertEqual(2, len(sentences(
+            "High scores partly reflect training overlap. pyFranc is trained on UDHR.")))
+        self.assertEqual(2, len(sentences(
+            "Same-class examples move closer together. t-SNE plots show it.")))
+
+    def test_an_initial_still_does_not_split(self):
+        from validate import sentences
+        self.assertEqual(1, len(sentences(
+            "Project Debater debated champion H. Natarajan and won.")))
+
+
 class TestARequeuedPaperIsRepairedNotRewritten(unittest.TestCase):
     """`--all` re-queues papers that already have text, and text is the reviewed part.
 

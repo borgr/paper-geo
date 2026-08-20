@@ -968,6 +968,11 @@ _DEIXIS_MISREADING = re.compile(r"\bhere\b|\b(?:we|our)\b", re.I)
 
 # A period that ends one of these ends a word, not a sentence. Initials are handled by
 # shape (`H.` in "H. Natarajan") rather than listed, since the set of names is open.
+# How a sentence may start: an optional quote or bracket, then a letter or a digit. A
+# lowercase opener is deliberate -- "t-SNE plots show..." and "pyFranc is trained on..."
+# are sentences, and requiring a capital swallowed them into the sentence before.
+_OPENS = re.compile(r'["\'(\[]*[A-Za-z0-9]')
+
 _ABBREV = ("et al.", "e.g.", "i.e.", "cf.", "vs.", "approx.", "ca.", "resp.", "Fig.",
            "Tab.", "Eq.", "Sec.", "App.", "No.", "Dr.", "Prof.", "St.", "Mr.", "Ms.")
 
@@ -984,7 +989,16 @@ def sentences(s) -> list[str]:
     parts = [x for x in re.split(r"(?<=[.;!?])\s+", str(s or "").strip()) if x]
     out: list[str] = []
     for part in parts:
-        joined = out and (out[-1].endswith(_ABBREV)
+        # What follows decides as much as what precedes. A period before something that
+        # cannot open a sentence is an abbreviation the list above has not heard of:
+        # "Non-term. < Dep. < SRL < RC < NER < Co-ref. < SPR." is one ordering of seven
+        # task names and it split into four, so a two-sentence claim was reported as five
+        # with no rewording available short of renaming the tasks. Only after a period --
+        # a semicolon genuinely separates the conditions a scope lists, and the scope
+        # checks are built on counting them.
+        after_dot = out and out[-1].endswith((".", "!", "?"))
+        joined = out and ((after_dot and not _OPENS.match(part))
+                          or out[-1].endswith(_ABBREV)
                           or re.search(r"(?:^|[\s(\[])[A-Z]\.$", out[-1]))
         if joined:
             out[-1] = f"{out[-1]} {part}"
