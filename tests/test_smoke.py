@@ -2864,6 +2864,23 @@ class TestAPeriodBeforeASymbolIsNotASentenceEnd(unittest.TestCase):
         self.assertEqual(1, len(sentences(
             "Project Debater debated champion H. Natarajan and won.")))
 
+    def test_an_abbreviation_needs_a_boundary_in_front_of_it(self):
+        from validate import sentences
+        # "fine-tuned LLMs." ends with the string "Ms.", so `endswith` read a real
+        # sentence break as an honorific and reported the two sentences after it as one
+        # 39-word sentence.
+        self.assertEqual(2, len(sentences(
+            "The report studies overfitting in fine-tuned LLMs. It pairs an open task "
+            "set with a closed one.")))
+        self.assertEqual(1, len(sentences("We follow Tenney et al. (2019a) here.")))
+
+    def test_a_matrix_named_a_is_not_somebodys_initial(self):
+        from validate import sentences
+        # The initials rule glued "...and tuning A." to "The guarantee holds...", and the
+        # pair was reported as a 36-word sentence that is really 27 and 9.
+        self.assertEqual(2, len(sentences(
+            "Freezing B and tuning A. The guarantee holds as d/r grows.")))
+
 
 class TestARequeuedPaperIsRepairedNotRewritten(unittest.TestCase):
     """`--all` re-queues papers that already have text, and text is the reviewed part.

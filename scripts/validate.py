@@ -973,8 +973,21 @@ _DEIXIS_MISREADING = re.compile(r"\bhere\b|\b(?:we|our)\b", re.I)
 # are sentences, and requiring a capital swallowed them into the sentence before.
 _OPENS = re.compile(r'["\'(\[]*[A-Za-z0-9]')
 
+# Words that open a sentence and cannot be a surname. The initials rule below joins
+# "H." to "Natarajan" so a person's initial does not end a sentence, and it read the
+# matrix in "freezing B and tuning A. The guarantee holds..." the same way -- gluing two
+# sentences into one and reporting the pair as a 36-word sentence that does not exist.
+_OPENER = re.compile(r"(?:The|This|These|That|Those|It|Its|They|We|There|An?|And|But|In|"
+                     r"On|For|At|By|With|When|Where|While|Both|All|Each|No|Not|Such)\b")
+
 _ABBREV = ("et al.", "e.g.", "i.e.", "cf.", "vs.", "approx.", "ca.", "resp.", "Fig.",
            "Tab.", "Eq.", "Sec.", "App.", "No.", "Dr.", "Prof.", "St.", "Mr.", "Ms.")
+
+# Matched with a boundary in front, never with `endswith`: "fine-tuned LLMs." ends
+# with "Ms." as a string, so a real sentence break was read as an honorific and the
+# two sentences after it were counted as one 39-word sentence.
+_ABBREV_RE = re.compile(r"(?:^|[\s(\[])(?:%s)$"
+                        % "|".join(re.escape(a) for a in _ABBREV))
 
 
 def sentences(s) -> list[str]:
@@ -998,8 +1011,9 @@ def sentences(s) -> list[str]:
         # checks are built on counting them.
         after_dot = out and out[-1].endswith((".", "!", "?"))
         joined = out and ((after_dot and not _OPENS.match(part))
-                          or out[-1].endswith(_ABBREV)
-                          or re.search(r"(?:^|[\s(\[])[A-Z]\.$", out[-1]))
+                          or _ABBREV_RE.search(out[-1])
+                          or (re.search(r"(?:^|[\s(\[])[A-Z]\.$", out[-1])
+                              and not _OPENER.match(part)))
         if joined:
             out[-1] = f"{out[-1]} {part}"
         else:
