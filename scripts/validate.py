@@ -782,6 +782,14 @@ SCOPE_RATIO_FLOOR = 160
 # one: `check_claim_numbers` would catch that, and it is fatal at `--accept`.
 RESULT_FIGURES = 0.5
 
+# A paper cannot be asked for magnitudes it never reported. SERRANT is an
+# annotation-scheme paper: one distinct figure in its entire text, against a median of
+# 154 across the corpus and 18 for the next-lowest paper. Its claims say what the tool
+# does to an edit -- demonstrated, so `result`, but with nothing measured -- and the
+# coverage rule was therefore unsatisfiable there by any honest means. Years are
+# excluded from the count because every paper's citation list carries dozens of them.
+PAPER_FIGURES_FLOOR = 10
+
 # A reference with no antecedent on screen. Both halves of a question's job fail on
 # one: nobody queries "a model like this", and a `FAQPage` answer is extracted with no
 # page around it, so the words have nothing to point at. Deliberately narrow -- a
@@ -1027,7 +1035,7 @@ def sentences(s) -> list[str]:
     return out
 
 
-def readability(fm: dict) -> list[tuple[str, str, str]]:
+def readability(fm: dict, slug: str | None = None) -> list[tuple[str, str, str]]:
     """Every readability finding on one sidecar, as (kind, locus, message).
 
     `kind` says which field the finding is about -- `claim`, `question`, `term`,
@@ -1172,13 +1180,13 @@ def readability(fm: dict) -> list[tuple[str, str, str]]:
     # `context` claim asserts where the work sits and usually has no number to carry.
     res = [c for c in (fm.get("claims") or [])
            if isinstance(c, dict) and (c.get("kind") or "result") == "result"]
-    withnum = [c for c in res if figures(c.get("text"))]
-    if res and len(withnum) < RESULT_FIGURES * len(res):
+    withnum = [c for c in res if quotable(c.get("text"))]
+    if res and len(withnum) < RESULT_FIGURES * len(res) and paper_reports_figures(slug):
         # Names the claims, because a page-level finding with no locus is a finding the
         # repair round cannot act on: the model was told half its claims want a magnitude
         # and had to guess which half, so it changed none of them. The ids are the whole
         # difference between "raise your coverage" and "these seven claims dropped a number".
-        bare = ", ".join(str(c.get("id")) for c in res if not figures(c.get("text")))
+        bare = ", ".join(str(c.get("id")) for c in res if not quotable(c.get("text")))
         out.append(("page", "", f"only {len(withnum)} of {len(res)} result claims state a "
                     f"figure (want {RESULT_FIGURES:.0%}) -- go back to the tables for the "
                     "magnitudes these claims dropped, or fold two number-free claims into "
@@ -1234,7 +1242,8 @@ def check_readability(entries: list[tuple[str, dict]]) -> list[str]:
         return f"{name}: {kind} {at!r}: {msg}"
 
     return [line(name, kind, at, msg)
-            for name, fm in entries for kind, at, msg in readability(fm)]
+            for name, fm in entries
+            for kind, at, msg in readability(fm, slug_of(name))]
 
 
 def outdated_live(entries: list[tuple[str, dict]]) -> dict[str, int]:
@@ -1250,8 +1259,8 @@ def outdated_live(entries: list[tuple[str, dict]]) -> dict[str, int]:
     gate that fails until those happen blocks every unrelated commit; `pending()` reads
     this instead, so the papers come back round as drafts on their own.
     """
-    return {name[:-3] if name.endswith(".md") else name: n
-            for name, fm in entries if (n := len(readability(fm)))}
+    return {slug_of(name): n
+            for name, fm in entries if (n := len(readability(fm, slug_of(name))))}
 
 
 # --------------------------------------------------------------- accept-time tier
@@ -1284,6 +1293,39 @@ def figures(s: str) -> list[str]:
     """
     return list(dict.fromkeys(canon(t) for t in _FIGURE.findall(str(s))
                               if not (len(t) == 1 and t.isdigit())))
+
+
+def quotable(s: str) -> list[str]:
+    """The figures a claim states, counting the bare single digits `figures` drops.
+
+    Two questions, two answers. `figures` feeds `check_claim_numbers`, which asks whether
+    a figure can be checked against the paper, and a bare digit cannot be -- every paper's
+    own text contains all ten. Coverage asks something else: whether the claim carries a
+    magnitude a reader would quote rather than paraphrase. `4 families`, `7
+    embedding-based routers` and `9 modal verbs` are exactly that, and on a survey or an
+    annotation-scheme paper they are the only kind of magnitude there is. One shared
+    definition reported 0 of 9 result claims on two pages whose every claim states a count.
+    """
+    return list(dict.fromkeys(canon(t) for t in _FIGURE.findall(str(s))))
+
+
+def slug_of(name: str) -> str:
+    """A sidecar's slug from its filename, which is how the fulltext cache is keyed."""
+    return name[:-3] if name.endswith(".md") else name
+
+
+def paper_reports_figures(slug: str | None) -> bool:
+    """Whether the paper reports enough figures for coverage to be a fair ask of it."""
+    if not slug:
+        return True
+    path = os.path.join(ROOT, "build", "fulltext", f"{slug}.txt")
+    if not os.path.exists(path):
+        # No text to judge by. The checks that need the fulltext already say so, and
+        # guessing here would either excuse every page or flag every page.
+        return True
+    have = {f for f in figures_in(open(path).read())
+            if len(f) > 1 and not re.fullmatch(r"(?:19|20)\d\d", f)}
+    return len(have) >= PAPER_FIGURES_FLOOR
 
 
 _KINDS = {"table": r"tab(?:le)?", "tab": r"tab(?:le)?",

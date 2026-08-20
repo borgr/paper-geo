@@ -3171,3 +3171,74 @@ class TestADroppedConnectionIsNotARefusal(unittest.TestCase):
         for e in (ValueError("bad schema"), KeyError("claims"),
                   type("Bad", (Exception,), {"status_code": 400})()):
             self.assertFalse(self.D._transient(e), f"{type(e).__name__} must not be retried")
+
+
+class TestACountIsAMagnitudeForCoverage(unittest.TestCase):
+    """A survey states its findings as counts, and the coverage rule could not see them.
+
+    `figures` drops bare single digits because `check_claim_numbers` cannot verify one --
+    every paper's own text contains all ten. Figure *coverage* asks a different question:
+    whether the claim carries a number a reader would quote. Sharing the one definition
+    reported "0 of 9 result claims state a figure" on a survey whose claims say 4 families,
+    7 embedding-based routers and 5 classifier-based ones, with no honest repair available.
+    """
+
+    def test_a_bare_digit_counts_for_coverage_and_not_for_verification(self):
+        from validate import figures, quotable
+        self.assertEqual(figures("MoErging methods fall into 4 families"), [])
+        self.assertEqual(quotable("MoErging methods fall into 4 families"), ["4"])
+
+    def test_a_page_whose_claims_all_state_counts_is_not_flagged(self):
+        from validate import check_readability
+        ok = {"claims": [{"id": f"c{i}", "kind": "result",
+                          "text": f"The taxonomy names {i} routing families.",
+                          "scope": "The methods catalogued in the survey."}
+                         for i in range(2, 6)]}
+        found = [f for f in check_readability([("ok.md", ok)])
+                 if "state a figure" in f]
+        self.assertEqual(found, [])
+
+    def test_a_multi_digit_number_is_still_required_to_be_checkable(self):
+        """The verification path must not inherit the looser definition."""
+        from validate import figures
+        self.assertEqual(figures("accuracy rose to 63.45%"), ["63.45"])
+
+
+class TestAPaperWithNoMeasurementsIsNotAskedForFigures(unittest.TestCase):
+    """SERRANT reports one distinct figure in its entire text.
+
+    It is an annotation-scheme paper: its claims say what the tool does to an edit, which
+    is demonstrated rather than measured, so they are `result` claims with nothing to
+    quote. The corpus median is 154 distinct figures and the next-lowest paper has 18, so
+    a floor separates that one paper from every other without excusing any of them.
+    """
+
+    def _fulltext(self, slug, text):
+        import validate as V
+        d = os.path.join(V.ROOT, "build", "fulltext")
+        os.makedirs(d, exist_ok=True)
+        path = os.path.join(d, f"{slug}.txt")
+        self.addCleanup(lambda: os.path.exists(path) and os.remove(path))
+        with open(path, "w") as f:
+            f.write(text)
+
+    def test_a_paper_that_reports_nothing_exempts_its_page(self):
+        from validate import paper_reports_figures
+        self._fulltext("_t_scheme", "A rule-based classifier (Bryant et al., 2017).")
+        self.assertFalse(paper_reports_figures("_t_scheme"))
+
+    def test_citation_years_are_not_reported_figures(self):
+        from validate import paper_reports_figures
+        self._fulltext("_t_years", " ".join(f"(Author et al., {y})"
+                                           for y in range(1995, 2025)))
+        self.assertFalse(paper_reports_figures("_t_years"))
+
+    def test_a_paper_with_results_is_still_asked(self):
+        from validate import paper_reports_figures
+        self._fulltext("_t_results", " ".join(f"{n}.5% accuracy" for n in range(30, 60)))
+        self.assertTrue(paper_reports_figures("_t_results"))
+
+    def test_an_uncached_paper_is_asked_rather_than_excused(self):
+        from validate import paper_reports_figures
+        self.assertTrue(paper_reports_figures("_t_no_such_slug_at_all"))
+        self.assertTrue(paper_reports_figures(None))
