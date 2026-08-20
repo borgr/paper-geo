@@ -13,44 +13,17 @@ what each item costs — the one thing a section cannot say about itself,
 because it does not know what else is open. Each line names the section that
 holds the instructions; nothing here repeats them.
 
-**One edit each, and each one closes a section outright.** This is where
-the page gets visibly shorter.
-
-1. **1 paper in the corpus that the bibliography does not have** — one paste into `orig.bib`. The pipeline's only real input is that file, and the override line standing in for it goes on the next run.
-
 **As much as you have patience for.** Per-paper clicking, because
 there is no write API behind either surface — and both are ordered so
 that stopping early still captures most of the value.
 
-2. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
-3. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section.
+1. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
+2. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section.
 
 ## Waiting on the outside world
 
 - **2026-10-04** — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.
 - **2026-11-04** — Crossref and DataCite auto-update only fire on newly deposited metadata that already carries your iD, so the proof is a work whose ORCID source is Crossref or DataCite rather than your own name -- which cannot appear until something you publish is deposited.
-
-## 1 paper in the corpus that the bibliography does not have
-
-Added by `extra_arxiv` or `extra_openreview` in
-[`data/overrides.yaml`](data/overrides.yaml), so each has a page and a canonical
-URL already — this is not about the site. It is that the bibliography is this
-pipeline's only real input, and every run these papers depend on a line in an
-override file instead. Paste the entry upstream and delete that line.
-
-Edit the bibliography here: <https://github.com/borgr/publications/edit/master/orig.bib>
-
-- [ ] **A Statistical Framework for Game-Based AI Evaluation** — `extra_openreview`, 0 cites
-
-  ```bibtex
-  @inproceedings{polo2025a,
-    author       = {Felipe Maia Polo and Leshem Choshen and Yuekai Sun and Kristjan Greenewald},
-    title        = {A Statistical Framework for Game-Based AI Evaluation},
-    year         = {2025},
-    booktitle    = {NeurIPS 2025 LLM Evaluation Workshop},
-    url          = {https://openreview.net/forum?id=1VWfIsRdZA}
-  }
-  ```
 
 ## Identity surfaces (1 open)
 
@@ -76,12 +49,12 @@ Highest-citation first, so stopping early still captures most of the loss.
 undo than an unclaimed one, and it makes the split look deliberate.
 
 - [ ] 46 cites — NumeroLogic: Number Encoding for Enhanced LLMs' Numerica — <https://www.semanticscholar.org/paper/268819308>
-- [ ] 26 cites — Sloth: scaling laws for LLM skills to predict multi-benc — <https://www.semanticscholar.org/paper/274597594>
+- [ ] 27 cites — Sloth: scaling laws for LLM skills to predict multi-benc — <https://www.semanticscholar.org/paper/274597594>
+- [ ] 22 cites — When AI Benchmarks Plateau: A Systematic Study of Benchm — <https://www.semanticscholar.org/paper/285787943>
 - [ ] 22 cites — A Hitchhiker's Guide to Scaling Law Estimation — <https://www.semanticscholar.org/paper/273350789>
+- [ ] 22 cites — Benchmark Agreement Testing Done Right: A Guide for LLM  — <https://www.semanticscholar.org/paper/287923131>
 - [ ] 21 cites — DOVE: A Large-Scale Multi-Dimensional Predictions Datase — <https://www.semanticscholar.org/paper/276774995>
-- [ ] 21 cites — Benchmark Agreement Testing Done Right: A Guide for LLM  — <https://www.semanticscholar.org/paper/287923131>
-- [ ] 20 cites — When AI Benchmarks Plateau: A Systematic Study of Benchm — <https://www.semanticscholar.org/paper/285787943>
-- [ ] 18 cites — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv P — <https://www.semanticscholar.org/paper/273345528>
+- [ ] 19 cites — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv P — <https://www.semanticscholar.org/paper/273345528>
 - [ ] 16 cites — Label-Efficient Model Selection for Text Generation — <https://www.semanticscholar.org/paper/267627835>
 - [ ] 13 cites — The Mighty ToRR: A Benchmark for Table Reasoning and Rob — <https://www.semanticscholar.org/paper/276617897>
 - [ ] 8 cites — NeurIPS 2023 LLM Efficiency Fine-tuning Competition — <https://www.semanticscholar.org/paper/277104779>
@@ -136,15 +109,15 @@ cannot take off you — but the typing is not: both field values are below,
 per paper, built from the publisher's own bibtex. The same for all
 64 is in [`tasks/arxiv_jref.md`](tasks/arxiv_jref.md).
 
-- [ ] **870 cites** — TIES-Merging: Resolving Interference When Merging Models
+- [ ] **893 cites** — TIES-Merging: Resolving Interference When Merging Models
       - the form: find `2306.01708` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2306.01708))
       - `Journal-ref:` `Advances in Neural Information Processing Systems 36: Annual Conference on Neural Information Processing Systems 2023`
       - `Journal version DOI:` `10.52202/075280-0310`
-- [ ] **284 cites** — tinyBenchmarks: evaluating LLMs with fewer examples
+- [ ] **292 cites** — tinyBenchmarks: evaluating LLMs with fewer examples
       - the form: find `2402.14992` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2402.14992))
       - `Journal-ref:` `Forty-first International Conference on Machine Learning, 2024`
       - `Journal version DOI:` — none minted, leave blank
-- [ ] **182 cites** — Global MMLU: Understanding and Addressing Cultural and Linguistic Biases in Multilingual Evaluation
+- [ ] **188 cites** — Global MMLU: Understanding and Addressing Cultural and Linguistic Biases in Multilingual Evaluation
       - the form: find `2412.03304` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2412.03304))
       - `Journal-ref:` `Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 18761-18799, 2025`
       - `Journal version DOI:` `10.18653/v1/2025.acl-long.919`
@@ -160,19 +133,19 @@ per paper, built from the publisher's own bibtex. The same for all
       - the form: find `2211.05655` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2211.05655))
       - `Journal-ref:` `Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 10056-10070, 2023`
       - `Journal version DOI:` `10.18653/v1/2023.acl-long.559`
-- [ ] **114 cites** — Model merging with SVD to tie the Knots
+- [ ] **116 cites** — Model merging with SVD to tie the Knots
       - the form: find `2410.19735` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2410.19735))
       - `Journal-ref:` `ICLR, 2025`
       - `Journal version DOI:` — none minted, leave blank
-- [ ] **99 cites** — Beyond Binary Rewards: Training LMs to Reason About Their Uncertainty
+- [ ] **100 cites** — Beyond Binary Rewards: Training LMs to Reason About Their Uncertainty
       - the form: find `2507.16806` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2507.16806))
       - `Journal-ref:` `The Fourteenth International Conference on Learning Representations, 2026`
       - `Journal version DOI:` — none minted, leave blank
-- [ ] **91 cites** — Asymmetry in Low-Rank Adapters of Foundation Models
+- [ ] **92 cites** — Asymmetry in Low-Rank Adapters of Foundation Models
       - the form: find `2402.16842` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2402.16842))
       - `Journal-ref:` `Forty-first International Conference on Machine Learning, 2024`
       - `Journal version DOI:` — none minted, leave blank
-- [ ] **83 cites** — Efficient multi-prompt evaluation of LLMs
+- [ ] **85 cites** — Efficient multi-prompt evaluation of LLMs
       - the form: find `2405.17202` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2405.17202))
       - `Journal-ref:` `The Thirty-eighth Annual Conference on Neural Information Processing Systems, 2024`
       - `Journal version DOI:` — none minted, leave blank
@@ -180,7 +153,7 @@ per paper, built from the publisher's own bibtex. The same for all
       - the form: find `1907.08971` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/1907.08971))
       - `Journal-ref:` `Proceedings of the 57th Conference of the Association for Computational Linguistics, Volume 1: Long Papers, pages 967-976, 2019`
       - `Journal version DOI:` `10.18653/v1/p19-1093`
-- [ ] **72 cites** — Knowledge is a Region in Weight Space for Fine-tuned Language Models
+- [ ] **73 cites** — Knowledge is a Region in Weight Space for Fine-tuned Language Models
       - the form: find `2302.04863` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2302.04863))
       - `Journal-ref:` `Findings of the Association for Computational Linguistics: EMNLP 2023, pages 1350-1370`
       - `Journal version DOI:` `10.18653/v1/2023.findings-emnlp.95`

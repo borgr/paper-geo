@@ -118,12 +118,11 @@ extra_arxiv: []
 # Same lifetime as the list above: it covers the interval until the entry lands upstream,
 # and WORKLIST.md counts what is still waiting. `python update.py --step collect` says
 # "the bibliography has ... now" once the paste lands, which is when the line goes.
-extra_openreview:
-  # A NeurIPS 2025 LLM Evaluation Workshop paper (openreview.net/forum?id=1VWfIsRdZA),
-  # yours with Felipe Maia Polo, Yuekai Sun and Kristjan Greenewald. It was sitting in
-  # tasks/bib_missing.md as an unresolvable stub, because a workshop paper is on nobody's
-  # arXiv and carries no DOI -- the blind spot that `from_openreview` now covers.
-  - "A Statistical Framework for Game-Based AI Evaluation"
+# Spent 2026-08-20: orig.bib has carried polo2025statistical since 2026-08-17, and the
+# collect run says so ("the bibliography has it now -- delete that line"). Kept as an
+# empty key rather than deleted, because the next workshop paper with no arXiv id and no
+# DOI has the same blind spot and this is where it goes.
+extra_openreview: []
 
 # Records to drop entirely: things in the bibliography that are not papers.
 #
