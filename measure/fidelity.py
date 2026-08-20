@@ -19,9 +19,10 @@ failure and the thing a sidecar exists to fix.
 The grader is the instrument, so hand-check a stratified 20% of its scores before
 trusting any of them.
 
-Two modes, like propose_topics.py:
-    skill (default)  writes build/fidelity_tasks.json for an agent session
-    api              calls the Anthropic API directly
+One mode. `--mode api` is refused rather than silently ignored: the answerer has to
+be a model that has never seen the sidecar, and the engines this project exists to
+influence (AI Overviews, AI Mode) have no API, so the answers arrive by hand or
+from a gateway and only the grading is automatable.
 
 Usage:
     python measure/fidelity.py                    # emit tasks (or call the API)
@@ -116,6 +117,12 @@ def main() -> None:
     ap.add_argument("--engine", default="model-knowledge",
                     help="label for where the answer came from")
     args = ap.parse_args()
+    if args.mode == "api":
+        sys.exit("--mode api is not implemented here. The answerer has to be a model "
+                 "that has never seen the sidecar, and the engines this project targets "
+                 "(AI Overviews, AI Mode) have no API at all -- so the answers arrive by "
+                 "hand or from a gateway, and only the grading is automatable. Run "
+                 "without --mode, fill `answer`, then --ingest.")
     cfg = load_config()
     papers = {p["slug"]: p for p in
               (read_yaml(os.path.join(DATA, "papers.yaml")) or {})["papers"]}
