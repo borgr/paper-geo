@@ -69,7 +69,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import yaml  # noqa: E402
 
-from common import BUILD, DATA, ROOT, get, load_config, read_yaml, rules_block  # noqa: E402
+from common import (BUILD, DATA, ROOT, get, has_live_sidecar,  # noqa: E402
+                    load_config, read_yaml, rules_block)
 from fulltext import LIMIT as FULLTEXT_LIMIT  # noqa: E402
 from fulltext import cut_chars  # noqa: E402
 from fulltext import resolve as resolve_fulltext  # noqa: E402
@@ -2026,7 +2027,7 @@ def review_page(papers: list[dict]) -> str:
             out.append("</ul>")
         out.append(f"<p class=one>{e(d['one_liner'])}</p>")
         out.append("<div class=cmd>python scripts/draft_sidecars.py --accept "
-                   + e(slug) + (" --replace" if p.get("has_sidecar") else "") + "</div>")
+                   + e(slug) + (" --replace" if has_live_sidecar(slug) else "") + "</div>")
 
         # One question, then the claims published as its answer, then the next question.
         # Each claim is rendered once: a claim answering three questions used to print its

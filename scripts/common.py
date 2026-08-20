@@ -1048,6 +1048,20 @@ def read_yaml(path: str, default=None):
         return yaml.safe_load(f)
 
 
+def has_live_sidecar(slug: str) -> bool:
+    """Whether `data/sidecars/<slug>.md` exists right now, asked of the disk.
+
+    `papers.yaml` carries a `has_sidecar` field, and it is only rewritten by `collect`,
+    which needs the network. So in the window between promoting a draft and the next
+    online run -- which is exactly the window in which somebody re-reads the worklist to
+    see what promoting did -- the field says the opposite of the truth. It said 111 of
+    113 papers still needed drafting on a corpus where all 113 were live, and offered
+    `--accept` lines without the `--replace` those files now require. The fact is a
+    filesystem fact and costs one stat call, so it is read, not remembered.
+    """
+    return os.path.exists(os.path.join(ROOT, "data", "sidecars", f"{slug}.md"))
+
+
 def declined(text: str | None) -> str | None:
     """The `data/declines.yaml` `items:` pattern this text was declined by, if any.
 

@@ -2806,6 +2806,25 @@ class TestAPersonWhoLandsHereIsSentOnward(unittest.TestCase):
         self.assertEqual("", build_site.human_note({"other_pages": []}, box=False))
 
 
+class TestALiveSidecarIsAskedOfTheDisk(unittest.TestCase):
+    """`papers.yaml`'s has_sidecar is only rewritten by the online collect step.
+
+    So between promoting a draft and the next network run -- exactly when somebody
+    re-reads the worklist to see what promoting did -- it says the opposite of the truth.
+    It claimed 111 of 113 papers still needed drafting on a corpus where all 113 were
+    live, and printed `--accept` lines without the `--replace` those files require.
+    """
+
+    def test_the_field_is_ignored_in_favour_of_the_file(self):
+        import common
+        with tempfile.TemporaryDirectory() as d:
+            os.makedirs(os.path.join(d, "data", "sidecars"))
+            open(os.path.join(d, "data", "sidecars", "here.md"), "w").close()
+            with mock.patch.object(common, "ROOT", d):
+                self.assertTrue(common.has_live_sidecar("here"))
+                self.assertFalse(common.has_live_sidecar("gone"))
+
+
 class TestTheHomePageListsEveryPaper(unittest.TestCase):
     """No top-ten, and no printed citation counts.
 
@@ -2846,8 +2865,10 @@ class TestTheHomePageListsEveryPaper(unittest.TestCase):
                 "on Neural Information Processing Systems 2023, NeurIPS 2023, New Orleans")
         self.assertEqual("NeurIPS 2023",
                          build_site.venue_of({"venue": long, "venue_display": "NeurIPS 2023"}))
-        # No short form: still truncated, but that is the fallback rather than the norm.
-        self.assertEqual(60, len(build_site.venue_of({"venue": long})))
+        # No short form on the record: short_venue recovers the acronym from the
+        # proceedings title rather than truncating it mid-word, which is what a blind
+        # 60-character cut used to publish ("...Systems 36: Annual C").
+        self.assertEqual("NeurIPS 2023", build_site.venue_of({"venue": long}))
         self.assertEqual("preprint", build_site.venue_of({}))
 
 

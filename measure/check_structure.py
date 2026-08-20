@@ -7,7 +7,7 @@ of failure that silently undoes the work: metadata reverted upstream, a link
 rotted, a page that renders only under JavaScript, a crawler quietly blocked.
 
 Usage:
-    python measure/check_structure.py [--links] [--live] [--json out.json]
+    python measure/check_structure.py [--links] [--json out.json]
 """
 from __future__ import annotations
 
@@ -20,7 +20,8 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "scripts"))
-from common import BUILD, DATA, get, load_config, read_yaml  # noqa: E402
+from common import (BUILD, DATA, get, has_live_sidecar,  # noqa: E402
+                    load_config, read_yaml)
 
 SITE = os.path.join(BUILD, "site")
 AI_BOTS = ("GPTBot", "OAI-SearchBot", "ClaudeBot", "PerplexityBot", "Google-Extended")
@@ -47,7 +48,7 @@ def coverage(papers, results) -> None:
          sum(1 for p in ax if p.get("arxiv_journal_ref")), len(ax)),
         ("HF paper page exists", sum(1 for p in ax if p.get("hf_indexed")), len(ax)),
         ("HF page claimed by us", sum(1 for p in ax if p.get("hf_claimed_by_me")), len(ax)),
-        ("sidecar written", sum(1 for p in papers if p.get("has_sidecar")), n),
+        ("sidecar written", sum(1 for p in papers if has_live_sidecar(p["slug"])), n),
     ]:
         # Coverage is reported, not pass/fail -- these are the work queue, and a
         # red line here is the worklist doing its job rather than a regression.

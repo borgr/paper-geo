@@ -41,7 +41,7 @@ import urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, is_preprint_venue,  # noqa: E402
                     load_config, norm_title, note_fetch, org_name, paper_doi,
-                    read_yaml, slugify, social_url, venue_is_conference)
+                    read_yaml, short_venue, slugify, social_url, venue_is_conference)
 from ownership import write_manifest  # noqa: E402
 
 OUT = os.path.join(BUILD, "site")
@@ -126,8 +126,12 @@ def venue_of(p: dict) -> str:
     Processing Systems 36: Annual Conference on ... December 10 - 16, 2023" -- which a
     60-character truncation turned into "Advances in Neural Information Processing Systems
     36: Annual C". `venue_display` is the same fact as a reader states it: "NeurIPS 2023".
+    Where there is no short form, short_venue trims on a word boundary rather than
+    mid-word, and recognizes an acronym the display field never got.
     """
-    return str(p.get("venue_display") or p.get("venue") or "preprint")[:60]
+    if p.get("venue_display"):
+        return str(p["venue_display"])
+    return short_venue(p.get("venue"), 60, p.get("year")) or "preprint"
 
 
 def human_note(ident: dict, *, box: bool) -> str:
