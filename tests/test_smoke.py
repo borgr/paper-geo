@@ -2874,6 +2874,15 @@ class TestAPeriodBeforeASymbolIsNotASentenceEnd(unittest.TestCase):
             "set with a closed one.")))
         self.assertEqual(1, len(sentences("We follow Tenney et al. (2019a) here.")))
 
+    def test_a_title_keeps_its_own_question_mark(self):
+        from validate import sentences
+        # A paper is named in a claim by its title, and "Will it Merge? On The Causes of
+        # Model Mergeability" split in the middle of its own name -- spending one of the
+        # two sentences a claim gets on half a title.
+        self.assertEqual(2, len(sentences(
+            '"Will it Merge? On The Causes of Model Mergeability" gives merging a '
+            'per-update notion. The question shifts to which updates merge at all.')))
+
     def test_a_matrix_named_a_is_not_somebodys_initial(self):
         from validate import sentences
         # The initials rule glued "...and tuning A." to "The guarantee holds...", and the

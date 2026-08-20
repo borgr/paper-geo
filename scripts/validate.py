@@ -1010,7 +1010,13 @@ def sentences(s) -> list[str]:
         # a semicolon genuinely separates the conditions a scope lists, and the scope
         # checks are built on counting them.
         after_dot = out and out[-1].endswith((".", "!", "?"))
-        joined = out and ((after_dot and not _OPENS.match(part))
+        # A quotation mark still open carries the punctuation inside it. Papers are named
+        # in a claim by their titles, and a title ending in a question mark -- "Will it
+        # Merge? On The Causes of Model Mergeability" -- split in the middle of its own
+        # name, which spent one of the two sentences a claim is allowed on half a title.
+        in_quote = out and out[-1].count('"') % 2
+        joined = out and (in_quote
+                          or (after_dot and not _OPENS.match(part))
                           or _ABBREV_RE.search(out[-1])
                           or (re.search(r"(?:^|[\s(\[])[A-Z]\.$", out[-1])
                               and not _OPENER.match(part)))
