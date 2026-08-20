@@ -250,8 +250,10 @@ site:
   # queries people actually used. Bing matters more than its market share suggests:
   # ChatGPT's search grounding leans on Bing's index.
   verification:
+    # Verified by file instead: static/googlea3fc3aa9969d1cda.html, which is live.
+    # A second method would be redundant, so this stays null on purpose.
     google: null    # Search Console > Add property > URL prefix > HTML tag
-    bing: null      # Bing Webmaster Tools > Add site > HTML Meta Tag
+    bing: BDFB36A22FA4329029CF327F8CB955AE   # msvalidate.01, from Add site > HTML Meta Tag
   # IndexNow: a push notification that a URL changed, honoured by Bing, Yandex,
   # Seznam and Naver (not Google). `--deploy` submits the whole sitemap after
   # pushing, and `build_site.py` writes the `<key>.txt` proof-of-ownership file the
