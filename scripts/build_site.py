@@ -33,6 +33,9 @@ import re
 import shutil
 import subprocess
 import sys
+import time
+import urllib.error
+import urllib.parse
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -896,15 +899,34 @@ def submit_indexnow(cfg) -> None:
         code = urllib.request.urlopen(req, timeout=30).status
         note_fetch("https://api.indexnow.org/IndexNow", True)
         print(f"indexnow: submitted {len(urls)} URLs (HTTP {code})")
-    except Exception as e:
-        # 403 means the key file is not reachable yet -- usually Pages has not
-        # finished publishing. Harmless once: the next deploy resubmits. Harmless
-        # for ever is a different thing, and only the ledger can tell which one this
-        # is -- a key file that never became reachable means no deploy has ever been
-        # submitted, and the message here reads the same on the first day as on the
-        # hundredth.
+    except urllib.error.HTTPError as e:
+        # 403 was read as "Pages has not published the key file yet, retry after the
+        # deploy". It never cleared, and it never will: the key file serves 200 and
+        # matches, and IndexNow still answers UserForbiddedToAccessSite, because the
+        # host is a github.io subdomain and github.io belongs to GitHub -- the single-URL
+        # endpoint refuses it too. So this is not a transient state to retry, and saying
+        # "retry" hid a permanent condition behind a message that looked temporary.
+        # The two real routes out are named here rather than in a doc nobody reads at
+        # this moment; the sitemap is submitted regardless, which is how Bing gets these
+        # URLs today.
+        body = ""
+        try:
+            body = json.loads(e.read() or b"{}").get("errorCode") or ""
+        except Exception:
+            pass
+        if e.code == 403 and body == "UserForbiddedToAccessSite":
+            note_fetch("https://api.indexnow.org/IndexNow", False)
+            print("indexnow: this host cannot be verified (github.io belongs to GitHub, "
+                  "not to you), so no push-notification of new URLs is possible. Bing, "
+                  "Yandex and Seznam still find them from the sitemap. To get IndexNow: "
+                  "a custom domain, or submit the sitemap by hand once in Bing Webmaster "
+                  "Tools.")
+            return
         note_fetch("https://api.indexnow.org/IndexNow", False)
-        print(f"indexnow: not submitted ({e}). Retry after the deploy is live.")
+        print(f"indexnow: not submitted ({e}).")
+    except Exception as e:
+        note_fetch("https://api.indexnow.org/IndexNow", False)
+        print(f"indexnow: not submitted ({e}).")
 
 
 def deploy(cfg) -> None:

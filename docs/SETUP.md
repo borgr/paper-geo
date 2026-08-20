@@ -590,8 +590,9 @@ Fifteen minutes, once.
       Worth more than Bing's search share suggests: **ChatGPT's search grounding leans
       on Bing's index**, so a page missing here is missing from an answer engine you
       actually care about — and this is the only place that will tell you.
-- [x] **IndexNow — nothing to do, it is already wired.** Listed here only so it is
-      not mistaken for an open task. IndexNow is a push in the other direction: rather
+- [x] **IndexNow — wired, and refused by this host.** Nothing for you to do, and
+      nothing that will work until the site has a custom domain (see below). IndexNow
+      is a push in the other direction: rather
       than waiting to be crawled, the deploy *tells* Bing, Yandex, Seznam and Naver
       (not Google — it does not participate) which URLs changed, and they fetch within
       minutes to days.
@@ -603,12 +604,13 @@ Fifteen minutes, once.
       is *meant* to be public, and the worst a stranger who copies it can do is ask
       Bing to recrawl pages that are already yours.
 
-      `--deploy` submits the whole sitemap after pushing, never before: the endpoint
-      checks the key file is live and rejects the batch otherwise. So the first
-      submission of a brand-new key can fail with a 403 while Pages is still
-      publishing. That is harmless and self-correcting — the next deploy resubmits, and
-      the failure prints rather than breaking the build. If you want to confirm it is
-      working, Bing Webmaster Tools → *IndexNow* lists what was submitted and when.
+      Except that proving control this way is exactly what a `*.github.io` subdomain
+      cannot do, because the domain is GitHub's. The key file serves 200 and matches the
+      configured key, and IndexNow answers `403 UserForbiddedToAccessSite` to the batch
+      endpoint and to the single-URL endpoint alike. `--deploy` says so in one line and
+      carries on; it is not a state to retry. Bing, Yandex and Seznam still reach these
+      URLs from the sitemap, which is slower and is what happens today. A custom domain
+      turns this on with no further work — the key file is already published.
 
       What it buys: a rebuild that adds thirty paper pages at once is precisely the
       case organic discovery handles worst, because a new sitemap entry on a
