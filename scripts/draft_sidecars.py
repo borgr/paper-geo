@@ -1091,11 +1091,17 @@ FIELDS TO FIX (JSON):
 Rules for your answer:
 - Return one entry per field you fixed, with `at` copied exactly as given and `new` holding
   the complete rewritten value of that field -- not a diff, not a fragment.
+- Each field carries the `limits` its rewritten value must satisfy. A rewrite that clears the
+  complaint and breaks one of those is thrown away, so read them before you write.
 - Keep the meaning. A shorter sentence that drops the paper's magnitude is not a fix.
 - Never give two fields the same text. If a scope is too long, shorten that scope; do not
   replace it with wording you used elsewhere.
 - Where the complaint is that a name or a phrase must not appear, the rewritten value must
   not contain it -- say what the thing is instead of naming it.
+- A complaint that a claim states no magnitude is fixed with a number the paper itself
+  reports, copied from the text above. Never round one, derive one, or supply one from
+  memory: a figure that is not in the paper is a worse finding than the one you were asked
+  to fix. Leave the field out if the paper gives none for that claim.
 - Leave out any field you cannot fix without inventing something the paper does not say.
 """
 
@@ -1122,22 +1128,25 @@ def where(finding: str, fm: dict | None = None) -> str | None:
     schema stay a flat list of replacements with no union in it.
 
     Two kinds of finding are addressable, and they say so differently. Most name their
-    field: `claim 'x': ...`, `term 'y': ...`. The self-containment checks instead open with
-    the offending string itself, followed by ` -- ` and the complaint, so those are located
-    by looking the string up in the draft -- which needs `fm`, and without it they come back
-    None rather than guessed at.
+    field: `claim 'x': ...`, `term 'y': ...` -- and one of them, the invented-figure check,
+    without the colon (`claim 'x' states 29`), which is why the separator is optional here;
+    while it was not, three drafts kept a finding a single rewrite would have cleared. The
+    self-containment checks instead open with the offending string itself, followed by ` -- `
+    and the complaint, so those are located by looking the string up in the draft -- which
+    needs `fm`, and without it they come back None rather than guessed at.
 
-    None is the useful half of this function. "only 3 of 9 result claims state a figure" is
-    a property of the whole set of claims, and handing a model one claim to fix it invites a
-    number invented into whichever claim it was handed; those findings stay with the
-    whole-sidecar repair, which can see the set.
+    None is the useful half of this function: a finding about the whole set of claims -- band
+    counts, an orphan claim -- must not be answered by rewriting whichever claim it was
+    handed. Where the set itself is computable, `spread` names it instead, and the caller
+    sends those fields over as one group.
     """
-    m = re.match(r"^claim '([^']+)': (.*)", finding)
+    m = re.match(r"^claim '([^']+)'(?:: | )(.*)", finding)
     if m:
         cid, rest = m.groups()
         if rest.startswith("scope"):
             return f"claim/{cid}/scope"
-        if re.match(r"^(a \d+-word sentence|text is \d+ sentences|states )", rest):
+        if re.match(r"^(a \d+-word sentence|text is \d+ sentences|text leans on"
+                    r"|states )", rest):
             return f"claim/{cid}/text"
         return None
     m = re.match(r"^qa\[(\d+)\]: every phrasing contains", finding)
@@ -1150,6 +1159,32 @@ def where(finding: str, fm: dict | None = None) -> str | None:
         return _quoting(fm, finding.split(" -- ")[0].strip())
     return None
 
+
+
+TOGETHER = ("this claim states no magnitude, and fewer than half of this page's result "
+            "claims do -- add the figure the paper reports for this claim, or leave this "
+            "field out")
+
+
+def spread(finding: str) -> list[str]:
+    """The fields a page-level finding is about, when the set of them is computable.
+
+    `where` returns None for the figure floor because no single claim is at fault, and that
+    was read as "not mendable" for too long: the *set* is exactly known -- every `result`
+    claim that states no figure -- and it is the largest family left in the corpus, 9 of the
+    18 drafts still carrying findings. Handing them over together is safe here for a reason
+    that does not generalise: a number invented to satisfy this is caught by
+    `check_claim_numbers` against the paper's own text, and mend reverts the whole group
+    when the count does not fall.
+    """
+    m = re.match(r"^only \d+ of \d+ result claims state a figure.*?Number-free: (.+)$",
+                 finding, re.S)
+    if m:
+        # Read off the finding rather than recomputed from `fm`: the check already names the
+        # claims that dropped a number, and a second implementation of "states a figure"
+        # here would drift from `figures` the first time either changes.
+        return [f"claim/{cid.strip()}/text" for cid in m.group(1).split(",") if cid.strip()]
+    return []
 
 def _quoting(fm: dict, value: str) -> str | None:
     """The locus of a question phrasing or misreading bullet whose text is exactly `value`.
@@ -1226,6 +1261,33 @@ def put(fm: dict, locus: str, value: str) -> bool:
     return True
 
 
+def limits(locus: str) -> str:
+    """The rules the rewritten value still has to pass, in the words of the checks.
+
+    Without this the most common finding in the corpus was also the least fixable. A claim
+    whose first sentence runs 36 words is already two sentences long, so splitting it makes
+    three and trades the length finding for a structure one; the rewrite gets reverted, and
+    the draft plateaus on a finding a five-word compression would have cleared. The model was
+    not failing to write -- it was not told which way was out.
+    """
+    from validate import (CLAIM_SENTENCE_WORDS, CLAIM_SENTENCES, CLAIM_SEPARATORS,
+                          SCOPE_RATIO_FLOOR, SCOPE_SENTENCES)
+    if locus.endswith("/text"):
+        return (f"at most {CLAIM_SENTENCES} sentences, no sentence over "
+                f"{CLAIM_SENTENCE_WORDS} words, at most {CLAIM_SEPARATORS} semicolon or "
+                f"dash. Compress rather than split if splitting would make a third "
+                f"sentence, and keep every figure.")
+    if locus.endswith("/scope"):
+        return (f"at most {SCOPE_SENTENCES} sentences, and no longer than the claim it "
+                f"bounds unless the claim is under {SCOPE_RATIO_FLOOR} characters. It is "
+                f"published after the words \"Holds for:\", so give the condition, not a "
+                f"description of the claim.")
+    if locus.startswith("qa/"):
+        return ("a question someone would type, answerable on its own with no paper title "
+                "beside it, so every reference in it has to name what it points at.")
+    return "keep it a single plain string, and keep the meaning."
+
+
 def mend(slug: str, again, evidence: str = "", source: str = "a model") -> int:
     """Fix what is fixable one field at a time, and keep the result only if it helped.
 
@@ -1246,15 +1308,23 @@ def mend(slug: str, again, evidence: str = "", source: str = "a model") -> int:
         return 0
     fm = front_matter(path) or {}
     jobs: dict[str, list[str]] = {}
+    crowd: dict[str, list[str]] = {}
     for finding in (str(x).split(".md: ")[-1] for x in errs + qual):
         locus = where(finding, fm)
         if locus and at(fm, locus) is not None:
             jobs.setdefault(locus, []).append(finding)
-    if not jobs:
+            continue
+        for locus in spread(finding):
+            if at(fm, locus) is not None:
+                crowd.setdefault(locus, []).append(TOGETHER)
+    # A field named by a finding of its own is fixed on its own terms; the group is only for
+    # the fields nothing else complained about.
+    crowd = {locus: found for locus, found in crowd.items() if locus not in jobs}
+    if not jobs and not crowd:
         print(f"    mend: none of the {before} finding(s) is about a single field")
         return before
-    fields = [{"at": locus, "now": at(fm, locus), "wrong": found}
-              for locus, found in jobs.items()]
+    fields = [{"at": locus, "now": at(fm, locus), "wrong": found, "limits": limits(locus)}
+              for locus, found in list(jobs.items()) + list(crowd.items())]
     pieces = json.dumps(fields, ensure_ascii=False, indent=1)
     ev = fits(evidence, pieces, getattr(again, "window", 0))
     got = again(MEND.format(evidence=("THE PAPER:\n" + ev) if ev
@@ -1268,7 +1338,7 @@ def mend(slug: str, again, evidence: str = "", source: str = "a model") -> int:
     for fix in fixes:
         locus = (fix or {}).get("at") if isinstance(fix, dict) else None
         value = fix.get("new") if isinstance(fix, dict) else None
-        if locus in jobs and isinstance(value, str) and value.strip() \
+        if (locus in jobs or locus in crowd) and isinstance(value, str) and value.strip() \
                 and value.strip() != at(fm, locus):
             new[locus] = value.strip()
     # One replacement text landing at two loci is the pathology `validate.py`'s shared-scope
@@ -1287,6 +1357,8 @@ def mend(slug: str, again, evidence: str = "", source: str = "a model") -> int:
     if not new:
         print(f"    mend: nothing usable came back, keeping the {before}-finding draft")
         return before
+    singles = {locus: value for locus, value in new.items() if locus in jobs}
+    bulk = {locus: value for locus, value in new.items() if locus in crowd}
     # Each field's rewrite stands or falls on its own, spliced and checked one at a time.
     # Accepting or rejecting the patch as a whole loses both ways: it threw away five good
     # fixes because a sixth traded one finding for another, and it kept five rewrites that
@@ -1294,7 +1366,7 @@ def mend(slug: str, again, evidence: str = "", source: str = "a model") -> int:
     # finding cleared, 5 of the rewrites pointless churn in a draft a human then has to
     # re-read.
     kept, undone, count = [], [], before
-    for locus, value in new.items():
+    for locus, value in singles.items():
         snapshot, held = open(path, encoding="utf-8").read(), at(fm, locus)
         put(fm, locus, value)
         write_draft(slug, fm, f"{source} + a targeted repair")
@@ -1311,6 +1383,28 @@ def mend(slug: str, again, evidence: str = "", source: str = "a model") -> int:
             put(fm, locus, held)
             open(path, "w", encoding="utf-8").write(snapshot)
             undone.append(locus)
+    # The group is the one exception, and it has to be: no single added magnitude clears a
+    # ratio finding, so field-by-field verification would revert every one of them and the
+    # largest family of findings in the corpus would stay untouched. So they stand or fall
+    # together, and the falling half matters -- a magnitude the paper does not contain shows
+    # up as its own finding, the count fails to drop, and the whole group goes back.
+    if bulk:
+        snapshot = open(path, encoding="utf-8").read()
+        held = {locus: at(fm, locus) for locus in bulk}
+        for locus, value in bulk.items():
+            put(fm, locus, value)
+        write_draft(slug, fm, f"{source} + a targeted repair")
+        errs, qual = validate_draft(path, note=False)
+        found = [str(x).split(".md: ")[-1] for x in errs + qual]
+        mine = [f for f in found if where(f, fm) in bulk]
+        if not mine and len(found) < count:
+            kept += list(bulk)
+            count = len(found)
+        else:
+            for locus, was in held.items():
+                put(fm, locus, was)
+            open(path, "w", encoding="utf-8").write(snapshot)
+            undone += list(bulk)
     if undone:
         print(f"    mend: {len(undone)} rewrite(s) did not fix what was asked, reverted "
               f"({', '.join(undone)})")
@@ -1318,7 +1412,7 @@ def mend(slug: str, again, evidence: str = "", source: str = "a model") -> int:
         print(f"    mend: nothing usable came back, keeping the {before}-finding draft")
         return before
     print(f"    mend: {before} finding(s) -> {count} "
-          f"({len(kept)} of {len(jobs)} field(s) rewritten)")
+          f"({len(kept)} of {len(jobs) + len(crowd)} field(s) rewritten)")
     return count
 
 
@@ -1810,6 +1904,8 @@ td:first-child { white-space:nowrap; color:var(--fg); font-weight:600; width:11r
 .note { background:var(--warnbg); border:1px solid var(--line); border-radius:6px;
         padding:.75rem .9rem; color:var(--fg); font-size:.9rem }
 .toc { padding-left:1.2rem } .toc li { margin:.2rem 0 }
+.sus { padding-left:1.2rem; margin:.35rem 0 .9rem; font-size:.9rem; color:var(--dim) }
+.sus li { margin:.15rem 0 }
 """
 
 
@@ -1920,6 +2016,14 @@ def review_page(papers: list[dict]) -> str:
         if bad := _flags(d):
             out.append("<p class=note><b>Before accepting:</b> "
                        + e("; ".join(bad)) + ".</p>")
+        # Nothing here refuses the draft, which is exactly why it belongs on the page: the
+        # checks have finished and a reader is about to put their name on prose no rule can
+        # judge. `--suspect` ranks the same signals across drafts; here they name the claim.
+        score, look = suspicion(d["path"])
+        if score:
+            out += ["<p class=note><b>Worth a second look:</b></p><ul class=sus>"]
+            out += [f"<li>{e(line)}</li>" for line in look]
+            out.append("</ul>")
         out.append(f"<p class=one>{e(d['one_liner'])}</p>")
         out.append("<div class=cmd>python scripts/draft_sidecars.py --accept "
                    + e(slug) + (" --replace" if p.get("has_sidecar") else "") + "</div>")
@@ -2166,6 +2270,125 @@ def accept(slugs: list[str], replace: bool = False, anyway: bool = False) -> int
     return n
 
 
+# A claim can only say these if the paper earned them: each asserts standing relative to
+# other work or a proof, neither of which any table can settle, and a model reaches for them
+# when it is summarising an abstract's ambition instead of a result.
+#
+# Deliberately narrow, after reading what a wider list caught. `always`, `never`, `any` and
+# `guarantee` were in it and every hit was ordinary English -- "essentially the 0.54 of always
+# picking the first candidate" describes a majority baseline, and a claim that calls a proved
+# theorem a guarantee is paraphrasing correctly. Words like those turn the ranking into a
+# list of every page, which is the same as no ranking.
+LOUD = re.compile(r"\b(first|best|state[- ]of[- ]the[- ]art|sota|novel|prove[nsd]?"
+                  r"|optimal|universal|unprecedented)\b", re.I)
+
+# Words long enough that finding them in the paper means something. Four letters and under
+# are function words and shared vocabulary, and counting them puts every claim near 100%.
+_LONG = re.compile(r"[a-z][a-z0-9-]{4,}")
+
+# Matched on a prefix, not whole: "saturated" against a paper that says "saturates" is the
+# same word, and whole-word matching charged 1,428 claims for English morphology. Measured
+# over all of them, the prefix lifts the median claim from 0.87 to 0.91 and the bottom decile
+# from 0.71 to 0.78 -- the floor below is that decile, so this ranks the tail rather than a
+# quarter of every page.
+_STEM = 6
+GROUNDED = 0.78
+
+
+def grounded(text: str, low: str) -> float:
+    """The share of a claim's longer words that occur in the paper's own text.
+
+    A blunt instrument on purpose. It cannot tell a legitimate paraphrase from an invention,
+    and it is not a check for that reason -- no draft is refused over it. What it does do is
+    rank, and ranking is the whole job here: a reviewer with an evening has to spend it on
+    the drafts most likely to be wrong, and a claim written in words the paper never uses is
+    the cheapest available signal of one.
+    """
+    words = set(_LONG.findall(text.lower()))
+    hit = [w for w in words if (w[:_STEM] if len(w) > _STEM else w) in low]
+    return len(hit) / len(words) if words else 1.0
+
+
+def suspicion(path: str) -> tuple[int, list[str]]:
+    """(score, reasons) -- how likely a passing draft is to say something the paper does not.
+
+    The checks answer "is this well-formed and are its numbers in the paper". Nothing answers
+    "is this true", and nothing code-only can. So this ranks instead of judging, and every
+    reason it gives names the field to read and what to read it against.
+    """
+    from validate import deline, figures, figures_in, rounds_to, values_in
+    fm = front_matter(path) or {}
+    slug = os.path.basename(path)[:-3]
+    cached = os.path.join(CACHE, f"{slug}.txt")
+    score, why = 0, []
+    if not os.path.exists(cached):
+        # The strongest signal available, and the one a reader would never guess: the figure
+        # rule is the one rule with no exceptions, and here it did not run at all.
+        return 4, ["no cached paper text, so not one figure in this draft was checked "
+                   f"(python scripts/fulltext.py --slug {slug})"]
+    with open(cached, errors="replace") as fh:
+        text = deline(fh.read())
+    low, have, vals = text.lower(), figures_in(text), values_in(text)
+    loud, round_only, thin = [], [], []
+    for c in (fm.get("claims") or []):
+        if not isinstance(c, dict):
+            continue
+        cid, body = c.get("id"), str(c.get("text") or "")
+        for word in sorted({m.group(0).lower() for m in LOUD.finditer(body)}):
+            if word not in low:
+                loud.append(f"claim '{cid}' says '{word}' and the paper's text never does")
+        for n in figures(body):
+            if n not in have and rounds_to(n, vals):
+                round_only.append(f"claim '{cid}': the paper does not state {n}, only a "
+                                  f"value that rounds to it")
+        share = grounded(body, low)
+        if share < GROUNDED:
+            thin.append((share, f"claim '{cid}': {share:.0%} of its words appear in the "
+                                f"paper -- read it against the paper's own sentence"))
+    # Capped per family, and ordered by what a reader can act on. Uncapped, a long page of
+    # thinly-worded claims outranks a short page that says the paper proved something it
+    # never claims -- and the second is the one that must not go out under a name. The
+    # families are also weighted apart for the same reason: an unearned "first" is a
+    # sentence to delete, a low word overlap is a sentence to read.
+    thin = [line for _, line in sorted(thin)]
+    for weight, cap, lines in ((2, 2, loud), (1, 2, round_only), (1, 3, thin)):
+        score += weight * min(cap, len(lines))
+        why += lines[:cap] if len(lines) <= cap else \
+            lines[:cap] + [f"... and {len(lines) - cap} more like the last one"]
+    head = open(path, encoding="utf-8").read()[:2000]
+    if "targeted repair" in head:
+        score += 1
+        why.append("some fields here are a machine's second wording, spliced in to clear a "
+                   "check and not read since")
+    return score, why
+
+
+def suspects(papers: list[dict], top: int) -> None:
+    """The drafts worth an evening, worst first. Only ones a reader can actually accept."""
+    spec = spec_sha()
+    keep = held(spec)
+    ranked = []
+    for f in sorted(glob.glob(os.path.join(DRAFTS, "*.md"))):
+        slug = os.path.basename(f)[:-3]
+        if slug not in keep or any(validate_draft(f, note=False)):
+            continue
+        score, why = suspicion(f)
+        if score:
+            ranked.append((score, slug, why))
+    ranked.sort(key=lambda r: (-r[0], r[1]))
+    cites = {p["slug"]: p.get("citations") or 0 for p in papers}
+    print(f"{len(ranked)} of the drafts that pass every check still have something a "
+          f"reader would want to see, worst first:\n")
+    for score, slug, why in ranked[:top]:
+        print(f"  {score:>3}  {slug}  ({cites.get(slug, 0)} cites)")
+        for line in why:
+            print(f"       - {line}")
+        print()
+    if len(ranked) > top:
+        print(f"  ... {len(ranked) - top} more, --suspect 0 for all of them")
+    print(f"  file://{os.path.join(BUILD, 'sidecar_review.html')}")
+
+
 def review(papers: list[dict]) -> None:
     live = {os.path.basename(f)[:-3] for f in glob.glob(os.path.join(SIDECARS, "*.md"))}
     drafted = sorted(glob.glob(os.path.join(DRAFTS, "*.md")))
@@ -2259,6 +2482,10 @@ def main() -> None:
     ap.add_argument("--show", nargs="+", metavar="SLUG",
                     help="print each claim beside the evidence it cites, and the "
                          "paper's own sentence for every figure it states")
+    ap.add_argument("--suspect", nargs="?", const=10, type=int, metavar="N",
+                    help="rank the drafts that pass every check by how likely they are to "
+                         "say something the paper does not, worst first, with the field to "
+                         "read and what to read it against. 0 means all of them")
     ap.add_argument("--page", action="store_true",
                     help="write build/sidecar_review.html -- every draft, checked, as "
                          "one page to read in a browser instead of one --show per paper")
@@ -2313,6 +2540,8 @@ def main() -> None:
         return
     if args.review:
         return review(papers)
+    if args.suspect is not None:
+        return suspects(papers, args.suspect or 10 ** 6)
     if args.show:
         for slug in args.show:
             show(slug)

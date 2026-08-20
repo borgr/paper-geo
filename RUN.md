@@ -154,6 +154,7 @@ python scripts/draft_sidecars.py                      # queue the most-cited
 python scripts/draft_sidecars.py --ingest             # fold the answers into drafts/
 python scripts/draft_sidecars.py --review             # what is drafted vs live
 python scripts/draft_sidecars.py --mend               # fix what the checks still flag
+python scripts/draft_sidecars.py --suspect            # which drafts to read first
 python scripts/draft_sidecars.py --show <slug>        # every claim beside its evidence
 $EDITOR data/sidecars/drafts/<slug>.md                # correct it
 python scripts/draft_sidecars.py --accept <slug>      # promote it, checked
@@ -168,6 +169,17 @@ another -- measured over 35 papers, half kept a residue and most of those stoppe
 the count stopped falling, not because nothing was left to fix. 83% of the residue is a
 single field the checker can name, so that is the part worth handing back one field at a
 time; the rest is about the set of claims as a whole and stays yours.
+
+`--mend` fixes findings; `--suspect` is for what no finding can catch. Once a draft
+passes every check, the remaining risk is prose that is well-formed and not quite what
+the paper says, and nothing in the repo can decide that. So it ranks instead of judging:
+how much of each claim's vocabulary occurs in the paper at all, whether a claim asserts
+standing ("first", "best", "novel", "proves") the paper's own text never asserts, whether
+a figure only matches after rounding, and whether the page has no cached full text at all
+-- which means the one rule with no exceptions did not run. Read from the top and stop
+when the reasons stop looking like reasons. The same lines appear on each draft's card in
+the review page, where they name the claim to read. Note what it is not: low word overlap
+is usually a legitimate paraphrase, so this orders your evening, it does not accuse.
 
 `--show` is the review itself, and it is the reason this takes minutes rather than an
 hour: each claim printed with its scope, whether the paper really has the table or

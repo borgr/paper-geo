@@ -896,6 +896,11 @@ class TestATargetedRepairTouchesOnlyWhatBroke(unittest.TestCase):
             ("claim 'x': text is 5 sentences (max 2)", "claim/x/text"),
             ("claim 'x': states 29, which is not in the paper's own text",
              "claim/x/text"),
+            # The same check, in the wording it actually emits: no colon after the id.
+            ("claim 'x' states 29, 30, which are not in the paper's own text",
+             "claim/x/text"),
+            ("claim 'x': text leans on 'The study' -- name the object instead",
+             "claim/x/text"),
             ("claim 'x': scope is longer than the claim it bounds (205 vs 200 chars)",
              "claim/x/scope"),
             ("claim 'x': scope is 4 sentences (max 3)", "claim/x/scope"),
@@ -915,6 +920,101 @@ class TestATargetedRepairTouchesOnlyWhatBroke(unittest.TestCase):
         ]:
             with self.subTest(finding=finding[:48]):
                 self.assertEqual(want, self.D.where(finding, fm))
+
+    def test_the_figure_floor_names_its_own_claims_and_spread_reads_them_off(self):
+        """The one page-level finding with a computable set of fields, taken from its text."""
+        finding = ("only 3 of 9 result claims state a figure (want 50%) -- go back to the "
+                   "tables for the magnitudes these claims dropped, or fold two number-free "
+                   "claims into the measured claim they are both circling. Never invent "
+                   "one. Number-free: too-long, clean, third-one")
+        self.assertEqual(["claim/too-long/text", "claim/clean/text",
+                          "claim/third-one/text"], self.D.spread(finding))
+        # Every other page-level finding stays a page-level finding.
+        for other in ("2 claims, outside the 5-15 band", "no `kind: context` claim",
+                      "1 claim(s) no question points at: too-long",
+                      "5 of 5 claims are `kind: context`"):
+            with self.subTest(finding=other):
+                self.assertEqual([], self.D.spread(other))
+
+    def test_added_magnitudes_are_kept_as_one_group_or_not_at_all(self):
+        """No single added figure clears a ratio, so the group is one transaction."""
+        fm = copy.deepcopy(self.SIDECAR)
+        # Four result claims, one with a figure: 25%, under the floor.
+        fm["claims"] = [{"id": "has-one",
+                         "text": "Merging eight adapters costs 3.1 points of accuracy.",
+                         "scope": "Vision adapters merged without held-out data."},
+                        {"id": "bare-a", "text": "Trimming small updates leaves accuracy "
+                                                 "unchanged across the suite.",
+                         "scope": "Encoder-decoder models, one language pair."},
+                        {"id": "bare-b", "text": "Sign agreement matters more than "
+                                                 "magnitude when updates conflict.",
+                         "scope": "Adapters trained from one shared checkpoint."},
+                        {"id": "bare-c", "text": "The merge needs no data to tune it.",
+                         "scope": "Held-out-free merging over eight vision datasets."}]
+        fm["qa"] = [{"q": ["How much accuracy does merging eight adapters cost?",
+                           "What does trimming small updates do to accuracy?"],
+                     "answers": ["has-one", "bare-a"]}]
+        self.path = self.D.write_draft("a-paper", fm, "a fake model")
+        before = self._findings()
+        floor = [f for f in before if "result claims state a figure" in f]
+        self.assertTrue(floor, "the fixture is meant to trip the figure floor")
+        self.assertEqual(["claim/bare-a/text", "claim/bare-b/text", "claim/bare-c/text"],
+                         self.D.spread(floor[0]))
+
+        again, calls = self._asker([
+            {"at": "claim/bare-a/text",
+             "new": "Trimming small updates leaves accuracy unchanged, within 0.2 points."},
+            {"at": "claim/bare-b/text",
+             "new": "Sign agreement recovers 2.4 of the 3.1 points magnitude alone loses."},
+            {"at": "claim/bare-c/text",
+             "new": "The merge needs 0 held-out examples to tune it."}])
+        left = self.D.mend("a-paper", again, "the paper's text", "a fake model")
+        got = self.D.front_matter(self.path)
+        self.assertEqual([], [f for f in self._findings()
+                              if "result claims state a figure" in f])
+        self.assertEqual(len(before) - 1, left, "the floor cleared, nothing else broke")
+        self.assertIn("0.2 points", self.D.at(got, "claim/bare-a/text"))
+        self.assertIn("0 held-out", self.D.at(got, "claim/bare-c/text"))
+        # The claim that already had a number was never in the group, so it never moved.
+        self.assertEqual(fm["claims"][0]["text"], self.D.at(got, "claim/has-one/text"))
+        self.assertEqual(1, len(calls), "one call for the draft, group included")
+        self.assertIn("claim/bare-b/text", calls[0][0])
+
+    def test_a_group_that_does_not_clear_the_floor_goes_back_whole(self):
+        """Two of three rewritten is still under the floor, so all three revert."""
+        fm = copy.deepcopy(self.SIDECAR)
+        fm["claims"] = [{"id": f"bare-{k}", "text": f"Claim {k} says something measured "
+                                                    f"without saying how much.",
+                         "scope": "Encoder-decoder models above 125M parameters, one pair."}
+                        for k in "abcd"]
+        fm["qa"] = [{"q": ["What does claim a say happens without a magnitude?",
+                           "Which claim reports no measured amount at all?"],
+                     "answers": ["bare-a", "bare-b"]}]
+        self.path = self.D.write_draft("a-paper", fm, "a fake model")
+        before = self._findings()
+        was = open(self.path, encoding="utf-8").read()
+        # One field answered, and it cannot move a 1-of-4 ratio past 50% on its own.
+        again, _ = self._asker([{"at": "claim/bare-a/text",
+                                 "new": "Claim a raises accuracy by 4.6 points."}])
+        left = self.D.mend("a-paper", again, "the paper's text", "a fake model")
+        self.assertEqual(len(before), left)
+        self.assertEqual(was, open(self.path, encoding="utf-8").read(),
+                         "a group that did not clear the floor leaves no trace")
+
+    def test_every_field_is_sent_the_rules_its_rewrite_has_to_pass(self):
+        """A fix that clears the complaint and breaks a neighbouring rule is wasted work."""
+        again, calls = self._asker([])
+        self.D.mend("a-paper", again, "the paper's text", "a fake model")
+        prompt = calls[0][0]
+        self.assertIn("at most 2 sentences", prompt)
+        self.assertIn("no sentence over 32 words", prompt)
+        self.assertIn("Compress rather than split", prompt)
+        # The limits are the checks' own numbers, not a second copy of them.
+        from validate import CLAIM_SENTENCE_WORDS, SCOPE_SENTENCES
+        self.assertIn(f"over {CLAIM_SENTENCE_WORDS} words",
+                      self.D.limits("claim/x/text"))
+        self.assertIn(f"most {SCOPE_SENTENCES} sentences", self.D.limits("claim/x/scope"))
+        self.assertIn("answerable on its own", self.D.limits("qa/0/q/0"))
 
     def test_a_quoting_finding_is_not_guessed_at_without_the_draft(self):
         """`where` has no way to place one from the string alone, and does not try."""

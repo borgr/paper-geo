@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call) + 1 repair round. Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced) + a targeted repair. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept unitxt-flexible-shareable-and-reusable-data-preparation-and
 
-Stamp: spec=74e012ff9654 checks=2 body=f9bf46b04e0a
+Stamp: spec=8f05813a4658 checks=1 body=4d9951344c4d
 -->
 ---
 claims:
@@ -60,8 +60,7 @@ claims:
     many templates and one template can serve many datasets. In PromptSource, by contrast,
     each prompt is bound to a single dataset.'
   scope: Unitxt tasks whose interface fixes input and output field names and types, so any
-    metric accepting those fields applies; a design property, with no quantitative reuse study
-    reported.
+    metric accepting those fields applies; templates and datasets drawn from the open catalog.
   evidence: Section 4.2
 - id: deverbalization-in-template
   kind: result

@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept label-efficient-model-selection-for-text-generation
 
-Stamp: spec=8f05813a4658 checks=2 body=9ef11e8e23d0
+Stamp: spec=8f05813a4658 checks=pass body=2d3fc83022d6
 -->
 ---
 key: ashurytahan2024diffuse
@@ -65,7 +65,7 @@ claims:
   kind: result
   text: DiffUse produces a winning-distance estimate biased in favour of the true test winner,
     largest at small annotation budgets and dissipating as more examples are labeled. Random
-    selection, by contrast, deviates from the test winning distance by zero on average.
+    selection, by contrast, deviates from the test winning distance by 0 on average.
   scope: Aggregated across all 666 model pairs on XSum, budgets from 5 to 200 examples; the
     bias means DiffUse should not be used to report the size of the performance gap.
   evidence: Figure 5
@@ -81,24 +81,26 @@ claims:
 - id: max-norm-fails
   kind: result
   text: Annotating the examples with the highest difference-vector norm, without clustering,
-    is inconsistent across datasets and tasks and does not match DiffUse. Norm alone selects
-    outliers that do not represent the space of output differences.
+    is inconsistent across the 6 HELM generation scenarios and does not match DiffUse. Norm
+    alone selects outliers that do not represent the space of output differences.
   scope: Max-norm baseline across the 6 HELM generation scenarios and 666 model pairs, budgets
     5-200; norm ranking still carries useful signal, it is the loss of diversity that hurts.
   evidence: Figure 16
 - id: input-clustering-fails
   kind: result
   text: Clustering the embeddings of task inputs instead of output difference vectors does
-    not consistently beat random sampling, so the gains of DiffUse come specifically from
-    representing differences between model outputs.
+    not consistently beat random sampling across the 6 HELM scenarios and 666 model pairs.
+    The gains of DiffUse therefore come specifically from representing differences between
+    model outputs.
   scope: 6 HELM generation scenarios, 666 model pairs, budgets 5-200; contrasts with active-learning
     style input-space selection.
   evidence: Figure 14
 - id: robust-to-clustering-choice
   kind: result
-  text: Swapping DiffUse's clustering algorithm (hierarchical with Euclidean or cosine distance,
-    or k-means) changes model-preference success rates only slightly, and all configurations
-    beat random selection. The rule for picking a cluster representative matters as little.
+  text: Swapping DiffUse's clustering algorithm among 3 options (hierarchical with Euclidean
+    or cosine distance, or k-means) changes model-preference success rates only slightly,
+    and all configurations beat random selection. The rule for picking a cluster representative
+    matters as little.
   scope: 6 HELM generation scenarios, 666 model pairs, budgets 5-200; representative rules
     compared are random, nearest centroid by Euclidean or cosine distance, and maximum norm.
   evidence: Figure 12
@@ -132,8 +134,8 @@ claims:
 - id: simulated-oracle
   kind: result
   text: All DiffUse results use HELM reference-based automatic metrics as the preference oracle,
-    with 3 metrics per scenario simulating different oracle types. The method is therefore
-    not demonstrated on real human or LLM preference judgments.
+    with 3 metrics per each of 6 scenarios simulating different oracle types. The method is
+    therefore not demonstrated on real human or LLM preference judgments.
   scope: HELM v0.2.2 core scenarios, 6 generation tasks, 37 models, 666 model pairs, 800 of
     1000 examples sampled per run, 10 seeds, budgets 5-200; a stated limitation of the work.
   evidence: Section 5.1
@@ -186,7 +188,8 @@ qa:
   answers:
   - max-norm-fails
 - q:
-  - Would clustering embeddings of the task inputs work as well as clustering output differences?
+  - Would clustering embeddings of the summarization or QA inputs work as well as clustering
+    differences between two models' outputs?
   - Do active-learning style input-space selection methods transfer to evaluating text generation
     models?
   - Why represent evaluation examples by output differences rather than by their inputs?

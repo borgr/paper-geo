@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call) + 2 repair rounds. Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced) + a targeted repair. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept position-agentic-systems-should-be-general
 
-Stamp: spec=74e012ff9654 checks=1 body=5b0902575b91
+Stamp: spec=8f05813a4658 checks=pass body=78fdb0afaa60
 -->
 ---
 key: bandel2026position
@@ -86,7 +86,9 @@ claims:
   kind: result
   text: CUGA supports multiple benchmarks only through manual benchmark-specific setup, including
     an AppWorld-specific authentication module that logs into applications for the agent and
-    a system prompt that assumes authenticated status.
+    a system prompt that assumes authenticated status. The HAL Generalist Agent shows the
+    same pattern, with more than 20 instances of conditional logic branching on the benchmark
+    name.
   evidence: Section 4.2
   scope: Code inspection of CUGA as of the paper's writing, on its AppWorld support; configurability
     of this kind still leaves the system constrained in novel domains it was not set up for.

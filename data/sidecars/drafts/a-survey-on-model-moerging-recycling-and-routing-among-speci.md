@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call) + 2 repair rounds. Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced) + a targeted repair. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept a-survey-on-model-moerging-recycling-and-routing-among-speci
 
-Stamp: spec=74e012ff9654 checks=2 body=743495f5bdf8
+Stamp: spec=8f05813a4658 checks=1 body=e5c56aa9eb34
 -->
 ---
 claims:
@@ -68,11 +68,10 @@ claims:
   evidence: Section 3.5
 - id: little-practical-use
   kind: result
-  text: Very few of the 29 MoErging methods catalogued in the survey are actually used in
-    practice, despite many demonstrating improved performance or generalization. The survey
-    attributes this to missing user-friendly implementations, unclear guidance on which method
-    suits which use case, and assumptions such as custom expert training or shared expert
-    data.
+  text: Very few of the MoErging methods catalogued in the survey are actually used in practice,
+    despite many demonstrating improved performance or generalization. The survey attributes
+    this to missing user-friendly implementations, unclear guidance on which method suits
+    which use case, and assumptions such as custom expert training or shared expert data.
   scope: An assessment as of publication; the attributed causes are the authors' speculation
     rather than a measured result, and the tools inventory in Section 6 shows supporting infrastructure
     does exist.

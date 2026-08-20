@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call) + 3 repair rounds. Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced) + a targeted repair. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept inherent-biases-in-reference-based-evaluation-for-grammatica
 
-Stamp: spec=74e012ff9654 checks=1 body=067f5643559d
+Stamp: spec=8f05813a4658 checks=pass body=8e38444edc6a
 -->
 ---
 one_liner: Because the valid corrections of a sentence follow a long-tailed distribution,
@@ -139,10 +139,10 @@ claims:
   evidence: Section 4 and Appendix G
 - id: methodology-contribution
   kind: context
-  text: Choshen and Abend (2018) contribute two reusable methodologies to monolingual translation
-    evaluation. The first bootstraps the score a hypothetical perfect system would receive,
-    in order to audit an evaluation measure; the second estimates the distribution of valid
-    outputs per source sentence from crowdsourced samples.
+  text: 'Choshen and Abend (2018) contribute two reusable methodologies to monolingual translation
+    evaluation: bootstrapping the score a hypothetical perfect system would receive, in order
+    to audit an evaluation measure. The second estimates the distribution of valid outputs
+    per source sentence from crowdsourced samples.'
   scope: Demonstrated for GEC and text simplification only; the authors suggest applicability
     to style conversion and automatic post-editing without testing those tasks.
   evidence: Section 5

@@ -1,6 +1,6 @@
 <!-- DRAFT — not published, not read by anything that builds the site.
 
-Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced via a forced tool call) + 2 repair rounds. Every claim, number
+Drafted by `python scripts/draft_sidecars.py` from claude-opus-5 via the Anthropic API, high effort (schema-enforced) + a targeted repair. Every claim, number
 and scope condition below is a machine's reading of the paper and needs your eyes.
 
 What to check, in the order it pays:
@@ -17,7 +17,7 @@ What to check, in the order it pays:
 
 Then promote it:  python scripts/draft_sidecars.py --accept a-statistical-framework-for-game-based-ai-evaluation
 
-Stamp: spec=74e012ff9654 checks=1 body=2dc9f05f3efa
+Stamp: spec=8f05813a4658 checks=pass body=5e3fee39f69d
 -->
 ---
 claims:
@@ -38,8 +38,8 @@ claims:
     outcomes as raw win rates or independent per-game ranks.
 - id: four-dimensions
   kind: result
-  text: Validation loss on a small held-out subset of the TextArena matches indicated that
-    d = 4 latent skill dimensions is the optimal choice for the game-outcome model.
+  text: Validation loss on a small held-out subset of the roughly 38k TextArena matches indicated
+    that d = 4 latent skill dimensions is the optimal choice for the game-outcome model.
   evidence: Section 4
   scope: TextArena traces after filtering to game modalities with at least 50 valid matches;
     a single held-out validation split, no dimension-selection sweep reported.
@@ -53,9 +53,9 @@ claims:
     than 50 valid matches are excluded from the fit.
 - id: skill-profile-similarity
   kind: result
-  text: Cosine similarity between fitted 4-dimensional latent skill profiles places deepseek-r1
-    closest to deepseek-r1-distill-llama-70b, deepseek-r1-distill-llama-8b and OpenAI's o1,
-    indicating these models behave most alike in play.
+  text: Cosine similarity between fitted 4-dimensional latent skill profiles, normalized so
+    the highest similarity is 1 and the lowest 0, places deepseek-r1 closest to deepseek-r1-distill-llama-70b,
+    deepseek-r1-distill-llama-8b and OpenAI's o1.
   evidence: Figure 1
   scope: Similarities are normalized across the 57 TextArena models so the highest is 1 and
     the lowest 0, so they are relative, not absolute; fit to the filtered TextArena matches.
@@ -78,9 +78,10 @@ claims:
     one in factor analysis and multidimensional IRT.
 - id: math-vs-ifeval
   kind: result
-  text: The TextArena complex instruction-following skill correlates more strongly (Pearson)
-    with a one-dimensional IRT skill fit to MATH than with one fit to IFEval. The games-based
-    skill therefore tracks mathematical reasoning more than narrow instruction following.
+  text: The TextArena complex instruction-following skill, estimated for 57 models, correlates
+    more strongly (Pearson) with a one-dimensional IRT skill fit to MATH than with one fit
+    to IFEval. The games-based skill therefore tracks mathematical reasoning more than narrow
+    instruction following.
   evidence: Figure 3
   scope: The same 57 models on all three fits; correlation signs are not meaningful because
     the model is translation-invariant, so only relative alignment is interpretable. MATH
