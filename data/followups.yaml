@@ -25,32 +25,6 @@
 # Delete an entry when it is done. Re-run `python update.py --step worklist` after.
 
 followups:
-  # `human`, and the only human part left is the decision. The clicking is gone: the
-  # paper items go in through the API now, on the bot password, so no browser tool and
-  # no autoconfirmed account are involved. What cannot be delegated is that these are
-  # about a hundred new permanent pages on a shared wiki, created under your name --
-  # a decision, and the one thing on this page that somebody else has to clean up if
-  # it is wrong.
-  - due: 2026-08-08
-    owner: human
-    what: >-
-      The paper items are the last Wikidata decision left. The author item Q140867203 is
-      already complete and stays that way by itself; around a hundred of your papers
-      have no Wikidata item at all, which is what keeps them out of every answer engine
-      that reads Wikidata rather than the web.
-    then: >-
-      Read it, then run it in batches. `--papers` with no `--apply` prints exactly what
-      it would create, one line per item: kind, year, identifier, how many authors. The
-      statements are the same ones tasks/wikidata_papers.qs holds, which is the
-      paste-it-yourself fallback and no longer the route. Do the first ten, open two of
-      them on the wiki, then keep going -- a batch of ten finds a wrong statement on item
-      3 rather than on item 103. Every item is recorded in data/wikidata_created.yaml as
-      it lands, so an interrupted run resumes without recreating anything, and once the
-      backlog is gone the monthly CI run keeps up with new papers on its own (it refuses
-      above four missing items, so it does nothing at all until you have drained this).
-      Read the "Is this legitimate?" section of tasks/wikidata_manual.md once first.
-    check: python scripts/wikidata_apply.py --papers --limit 10
-
   - due: 2026-10-04
     what: >-
       ORCID auto-update, and the ORCID-driven author re-clustering at Semantic

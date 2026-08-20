@@ -25,14 +25,6 @@ that stopping early still captures most of the value.
 2. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
 3. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section.
 
-## Due now (1)
-
-From `data/followups.yaml`. Each of these was waiting on something outside this repo that should have landed by now.
-
-- [ ] **2026-08-08** (12 days ago) — The paper items are the last Wikidata decision left. The author item Q140867203 is already complete and stays that way by itself; around a hundred of your papers have no Wikidata item at all, which is what keeps them out of every answer engine that reads Wikidata rather than the web.
-      → Read it, then run it in batches. `--papers` with no `--apply` prints exactly what it would create, one line per item: kind, year, identifier, how many authors. The statements are the same ones tasks/wikidata_papers.qs holds, which is the paste-it-yourself fallback and no longer the route. Do the first ten, open two of them on the wiki, then keep going -- a batch of ten finds a wrong statement on item 3 rather than on item 103. Every item is recorded in data/wikidata_created.yaml as it lands, so an interrupted run resumes without recreating anything, and once the backlog is gone the monthly CI run keeps up with new papers on its own (it refuses above four missing items, so it does nothing at all until you have drained this). Read the "Is this legitimate?" section of tasks/wikidata_manual.md once first.
-      `python scripts/wikidata_apply.py --papers --limit 10`
-
 ## Waiting on the outside world
 
 - **2026-10-04** — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.

@@ -2806,6 +2806,36 @@ class TestAPersonWhoLandsHereIsSentOnward(unittest.TestCase):
         self.assertEqual("", build_site.human_note({"other_pages": []}, box=False))
 
 
+class TestNoLatexLeavesInACitationFile(unittest.TestCase):
+    """CITATION.cff is written into a public repo and parsed by other people's tools.
+
+    The bibliography protects capitalization with braces -- `{DORA} The Explorer`,
+    `{ICLR} 2018` -- and this file was built from those raw fields, so the brace
+    convention would have travelled into GitHub's cite widget, Zenodo, and every
+    citation manager that reads it. The display fields are the de-LaTeXed ones.
+    """
+
+    def test_the_paper_title_and_venue_arrive_de_latexed(self):
+        import sweep_github
+        cff = sweep_github.citation_cff(
+            {"title": "{DORA} The Explorer", "title_display": "DORA The Explorer",
+             "venue": "6th International Conference on Learning Representations, {ICLR} 2018",
+             "venue_display": "ICLR 2018", "year": 2018, "type": "inproceedings",
+             "authors": ["Leshem Choshen"]},
+            {"full_name": "borgr/DORA", "name": "DORA"},
+            {"identity": {"name": "Leshem Choshen", "orcid": "0000-0002-0085-6496"}})
+        self.assertNotIn("{", cff)
+        self.assertIn('title: "DORA The Explorer"', cff)
+        self.assertIn('collection-title: "ICLR 2018"', cff)
+
+    def test_a_quote_cannot_end_the_scalar_it_sits_in(self):
+        import sweep_github
+        cff = sweep_github.citation_cff(
+            {"title_display": 'A "quoted" title', "authors": ["Leshem Choshen"]},
+            {"full_name": "a/b", "name": "b"}, {"identity": {"name": "Leshem Choshen"}})
+        self.assertIn("A 'quoted' title", cff)
+
+
 class TestALiveSidecarIsAskedOfTheDisk(unittest.TestCase):
     """`papers.yaml`'s has_sidecar is only rewritten by the online collect step.
 

@@ -25,8 +25,8 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, ROOT, load_config, norm_title, paper_doi,  # noqa: E402
-                    read_yaml, write_yaml)
+from common import (BUILD, DATA, ROOT, clean_latex, load_config,  # noqa: E402
+                    norm_title, paper_doi, read_yaml, write_yaml)
 
 # Topics and descriptions are decided in `propose_topics.py`, not here. A keyword
 # vocabulary used to live at this spot and matched substrings against name + description
@@ -102,6 +102,11 @@ def link_papers(repos: list[dict], papers: list[dict]) -> dict[str, dict]:
     return out
 
 
+def _cff_str(v) -> str:
+    """A YAML double-quoted scalar's contents: no LaTeX, no quote that would end it."""
+    return clean_latex(str(v or "")).replace('"', "'")
+
+
 def citation_cff(paper: dict, repo: dict, cfg, entry: dict | None = None) -> str:
     """CITATION.cff renders GitHub's 'Cite this repository' widget and is
     machine-readable, giving a bidirectional repo<->paper link.
@@ -131,7 +136,12 @@ def citation_cff(paper: dict, repo: dict, cfg, entry: dict | None = None) -> str
     lines += ["preferred-citation:",
               "  type: " + ("conference-paper" if paper.get("type") == "inproceedings"
                             else "article"),
-              f'  title: "{(paper.get("title") or "").replace(chr(34), chr(39))}"',
+              # `title_display` and `venue_display` are the de-LaTeXed forms the site
+              # publishes; `title`/`venue` are the bibliography's, braces and all. This
+              # file goes to a public repo and is parsed by GitHub, Zenodo and every
+              # citation manager, so "{DORA} The Explorer" and "{ICLR} 2018" would have
+              # shipped the brace convention into other people's bibliographies.
+              f'  title: "{_cff_str(paper.get("title_display") or paper.get("title"))}"',
               "  authors:"]
     for a in paper.get("authors") or [ident["name"]]:
         parts = a.split()
@@ -139,8 +149,9 @@ def citation_cff(paper: dict, repo: dict, cfg, entry: dict | None = None) -> str
         lines.append(f'      family-names: "{parts[-1]}"')
     if paper.get("year"):
         lines.append(f'  year: {paper["year"]}')
-    if paper.get("venue"):
-        lines.append(f'  collection-title: "{paper["venue"][:180].replace(chr(34), chr(39))}"')
+    if paper.get("venue") or paper.get("venue_display"):
+        venue = _cff_str(paper.get("venue_display") or paper.get("venue"))
+        lines.append(f'  collection-title: "{venue[:180]}"')
     if paper_doi(paper):
         lines.append(f'  doi: "{paper_doi(paper)}"')
     if paper.get("arxiv"):
