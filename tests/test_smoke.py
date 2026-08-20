@@ -2741,6 +2741,21 @@ class TestAGutterIsNotEvidence(unittest.TestCase):
         for n in ("12", "40", "33", "91"):
             self.assertIn(n, kept)
 
+    def test_latex_thousands_separators_fold_down(self):
+        from validate import deline, figures_in
+        # How nine of the cached papers actually write their numbers. Unfolded, a claim citing
+        # 25,000 was told the figure "is not in the paper" about a paper that states it twice.
+        text = deline(r"grew to 25{,}000 and 55{,}000 chars, or 1\,600 items")
+        for n in ("25000", "55000", "1600"):
+            self.assertIn(n, figures_in(text), n)
+        # `values_in` reads only the plain form, so the exact-match path above is what
+        # clears a grouped figure -- the rounding tolerance never sees 25,000 either way.
+
+    def test_a_brace_that_is_not_a_separator_is_left_alone(self):
+        from validate import deline
+        # Only a `{,}` sitting between a digit and exactly three digits is a separator.
+        self.assertEqual("set {,} of 12 items", deline("set {,} of 12 items"))
+
     def test_a_short_run_survives(self):
         from validate import deline
         # Four ascending integers are a sequence in a sentence, not a margin.

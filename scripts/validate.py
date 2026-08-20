@@ -1303,14 +1303,23 @@ _INT_RUN = re.compile(r"(?<![\w.])\d{1,4}(?:\s+\d{1,4}){4,}(?![\w.])")
 _GUTTER_RUN = 5
 
 
+# LaTeX's own thousands separators, as the extractor hands them over: `25{,}000`, and the
+# spacing macros `\,` and `\;` used the same way. Nine of the cached papers write their
+# numbers like this, and until they were folded down a claim's 25,000 was reported as "not in
+# the paper" about a paper that states it twice -- a false positive on the one rule with no
+# exceptions, which is the rule that can least afford them.
+_TEX_THOUSANDS = re.compile(r"(?<=\d)(?:\{,\}|\\[,;:]|\\ )(?=\d{3}\b)")
+
+
 def deline(text: str) -> str:
-    """The paper's text with line-number gutters dropped.
+    """The paper's text with line-number gutters dropped and its numbers written plainly.
 
     A gutter verifies almost any small integer -- `1 2 3 ... 36` contains 22, 30 and 36 --
     so leaving it in makes `check_claim_numbers` pass a figure the paper never states,
     and makes the review quote the gutter instead of the sentence. Both failures are
     silent, which is why this runs on the text rather than on the finding.
     """
+    text = _TEX_THOUSANDS.sub(",", text)
     def keep(m: re.Match) -> str:
         toks, out, run = m.group(0).split(), [], []
         for t in toks + ["x"]:
