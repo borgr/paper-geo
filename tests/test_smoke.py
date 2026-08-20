@@ -2806,6 +2806,51 @@ class TestAPersonWhoLandsHereIsSentOnward(unittest.TestCase):
         self.assertEqual("", build_site.human_note({"other_pages": []}, box=False))
 
 
+class TestTheHomePageListsEveryPaper(unittest.TestCase):
+    """No top-ten, and no printed citation counts.
+
+    The readers this site is built for fetch one URL far more often than they crawl, and
+    the URL they hold is this one -- it is the canonical anchor in ORCID, Scholar, arXiv
+    and every sameAs. A ten-item list left the rest of the corpus reachable only by a
+    second hop a single-fetch reader never takes. The count still orders the list; it is
+    not shown, because the Semantic Scholar number a reader would compare against Google
+    Scholar's is a fraction of it.
+    """
+
+    def _papers(self):
+        return [{"slug": "a", "title": "Old but cited", "year": 2019, "citations": 300,
+                 "venue_display": "ACL 2019"},
+                {"slug": "b", "title": "New and cited", "year": 2026, "citations": 4,
+                 "venue_display": "ICML 2026"},
+                {"slug": "c", "title": "New and not", "year": 2026,
+                 "venue_display": "arXiv"}]
+
+    def test_every_paper_is_on_it_newest_year_first(self):
+        import build_site
+        html = "\n".join(build_site.year_sections(self._papers()))
+        for t in ("Old but cited", "New and cited", "New and not"):
+            self.assertIn(t, html)
+        self.assertLess(html.index("2026"), html.index("2019"))
+        self.assertLess(html.index("New and cited"), html.index("New and not"),
+                        "within a year the count still decides the order")
+
+    def test_the_count_orders_the_list_but_is_never_printed(self):
+        import build_site
+        html = "\n".join(build_site.year_sections(self._papers()))
+        self.assertNotIn("citations", html)
+        self.assertNotIn("300", html)
+
+    def test_a_venue_is_named_the_way_a_reader_names_it(self):
+        import build_site
+        long = ("Advances in Neural Information Processing Systems 36: Annual Conference "
+                "on Neural Information Processing Systems 2023, NeurIPS 2023, New Orleans")
+        self.assertEqual("NeurIPS 2023",
+                         build_site.venue_of({"venue": long, "venue_display": "NeurIPS 2023"}))
+        # No short form: still truncated, but that is the fallback rather than the norm.
+        self.assertEqual(60, len(build_site.venue_of({"venue": long})))
+        self.assertEqual("preprint", build_site.venue_of({}))
+
+
 class TestAnArxivLandingPageIsNotAPaper(unittest.TestCase):
     """The abstract page has to be refused by what it says, not by how long it is.
 

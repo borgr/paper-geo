@@ -94,6 +94,39 @@ def verification_meta(cfg) -> str:
     return out
 
 
+def year_sections(papers: list) -> list:
+    """Every paper under its year, newest year first, most cited first within a year.
+
+    Two orderings of one complete list, rather than one ordering twice: an agent asking
+    what this author works on now reads the years, and one asking which work carries
+    weight reads /papers/. The citation count decides the order inside a year and is not
+    printed -- it comes from Semantic Scholar, is a fraction of the Google Scholar number
+    a reader would compare it against, and a number that invites that comparison and
+    loses it is worse than no number.
+    """
+    out = []
+    for year in sorted({p.get("year") or 0 for p in papers}, reverse=True):
+        of_year = [p for p in papers if (p.get("year") or 0) == year]
+        out.append(f"<h3>{year or 'Undated'}</h3><ul>")
+        for p in sorted(of_year, key=lambda q: -(q.get("citations") or 0)):
+            title = p.get("title_display") or p["title"]
+            href = p.get("canonical_page") or f"/papers/{p['slug']}/"
+            out.append(f'<li><a href="{E(href)}">{E(title)}</a> '
+                       f'<span class="meta">{E(venue_of(p))}</span></li>')
+        out.append("</ul>")
+    return out
+
+
+def venue_of(p: dict) -> str:
+    """How a paper's venue is named in a list: the short form, never the full proceedings
+    title. `venue` carries what the bibliography holds -- "Advances in Neural Information
+    Processing Systems 36: Annual Conference on ... December 10 - 16, 2023" -- which a
+    60-character truncation turned into "Advances in Neural Information Processing Systems
+    36: Annual C". `venue_display` is the same fact as a reader states it: "NeurIPS 2023".
+    """
+    return str(p.get("venue_display") or p.get("venue") or "preprint")[:60]
+
+
 def human_note(ident: dict, *, box: bool) -> str:
     """"You probably wanted the personal site" -- the one thing a person needs from here.
 
@@ -633,11 +666,9 @@ def build(cfg) -> dict:
             f.write(paper_llms_txt(p, sc, cfg))
         stats["pages"] += 1
         urls.append(f"{site}/papers/{slug}/")
-        cites = p.get("citations")
         index_rows.append(
             f'<li><a href="/papers/{E(slug)}/">{E(title)}</a> '
-            f'<span class="meta">{E(str(p.get("venue") or "preprint")[:60])}'
-            f'{f" · {cites} citations" if cites else ""}</span></li>')
+            f'<span class="meta">{E(venue_of(p))}</span></li>')
         llms.append(f"- [{title}]({site}/papers/{slug}/llms.txt)"
                     + (f" — {' '.join(sc['one_liner'].split())}" if sc.get("one_liner") else ""))
         # A question index, collected here so the root file can be matched on the words
@@ -664,7 +695,10 @@ def build(cfg) -> dict:
     # ---- paper index
     with open(os.path.join(OUT, "papers", "index.html"), "w") as f:
         f.write(page(f"Papers — {ident['name']}",
-                     f"<h1>Papers</h1>\n<ul>\n{chr(10).join(index_rows)}\n</ul>\n"
+                     f'<h1>Papers</h1>\n<p class="meta">All {stats["pages"] + stats["peer_owned"]} '
+                     f'papers, most cited first. <a href="/">The same list by year</a> · '
+                     f'<a href="/llms.txt">the same list with a one-line summary of each</a></p>\n'
+                     f"<ul>\n{chr(10).join(index_rows)}\n</ul>\n"
                      f'<footer><a href="/">{E(ident["name"])}</a><br>'
                      f'{human_note(ident, box=False)}</footer>',
                      canonical=f"{site}/papers/"))
@@ -691,7 +725,7 @@ def build(cfg) -> dict:
     # The canonical URL is the machine anchor, so it is the URL in every registry --
     # including the ones a human clicks, like Scholar's Homepage field. That decision
     # is only defensible if the first thing on this page sends a person onward, since
-    # otherwise the field that a human follows lands them on a list of citations.
+    # otherwise the field that a human follows lands them on a machine-facing index.
     # One link, above the fold, costs the machine anchor nothing and costs the visitor
     # one hop; rel="me" makes it an identity statement too, not just navigation.
     home.append(human_note(ident, box=True))
@@ -713,13 +747,17 @@ def build(cfg) -> dict:
         home.append('<p class="meta">'
                     + " · ".join(f'<a rel="me" href="{E(u)}">{E(_host(u))}</a>'
                                  for u in rel_me) + "</p>")
-    home.append("<h2>Most cited</h2><ul>")
-    for p in sorted(papers, key=lambda p: -(p.get("citations") or 0))[:10]:
-        ptitle = p.get("title_display") or p["title"]
-        href = p.get("canonical_page") or f"/papers/{p['slug']}/"
-        home.append(f'<li><a href="{E(href)}">{E(ptitle)}</a> '
-                    f'<span class="meta">{p.get("citations") or 0} citations</span></li>')
-    home.append("</ul>")
+    # Every paper, not a top ten. The readers this page is built for fetch exactly one
+    # URL far more often than they crawl: this one, because it is the canonical anchor in
+    # ORCID, Scholar, arXiv and every sameAs. A ten-item list left the other 103 papers
+    # reachable only by a second hop a single-fetch reader never takes -- and truncation
+    # is the one thing on a page this small that has a real cost, since the whole list is
+    # 12 KB. Ordered newest-first here and most-cited-first at /papers/, so the two
+    # complete lists answer two different questions instead of restating one.
+    home.append(f'<h2>Papers</h2><p class="meta">All {len(papers)} papers, newest first. '
+                f'<a href="/papers/">The same list by citation count</a> · '
+                f'<a href="/llms.txt">the same list with a one-line summary of each</a></p>')
+    home += year_sections(papers)
     with open(os.path.join(OUT, "index.html"), "w") as f:
         f.write(page(ident["name"], "\n".join(home),
                      head=jsonld(person_jsonld(cfg)) + verification_meta(cfg),
