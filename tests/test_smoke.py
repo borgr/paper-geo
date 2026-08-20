@@ -41,6 +41,7 @@ import tempfile
 import time
 import unittest
 import urllib.parse
+from unittest import mock
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -2780,6 +2781,33 @@ class TestAGutterIsNotEvidence(unittest.TestCase):
                 validate.ROOT = was
         self.assertFalse(skipped)
         self.assertTrue(any("30" in e for e in errs), errs)
+
+
+class TestAnArxivLandingPageIsNotAPaper(unittest.TestCase):
+    """The abstract page has to be refused by what it says, not by how long it is.
+
+    One paper's landing page came to 4,344 characters -- title, full abstract, author list,
+    site chrome -- and so cleared the 4,000-character stub floor, which sent a sidecar to be
+    drafted from an abstract. Every claim on it was `context`, because the text held no
+    result to state. Raising the floor would reject real two-page papers instead.
+    """
+
+    def test_the_landing_page_is_refused_so_the_chain_reaches_the_pdf(self):
+        import fulltext
+        html = ("<html><body>Title: A Paper. View a PDF of the paper titled A Paper, by "
+                "Someone. Abstract: " + "words " * 900 + "</body></html>").encode()
+        with mock.patch.object(fulltext, "get", return_value=html):
+            text, floor = fulltext._fetch("html", "https://arxiv.org/abs/2106.00745")
+        self.assertEqual("", text, "a landing page must not be accepted as a paper")
+        self.assertGreater(len(fulltext.html_to_text(html)), fulltext.MIN_CHARS,
+                           "and length alone would have accepted it")
+
+    def test_a_rendered_paper_is_still_accepted(self):
+        import fulltext
+        html = ("<html><body>1 Introduction " + "content " * 900 + "</body></html>").encode()
+        with mock.patch.object(fulltext, "get", return_value=html):
+            text, _ = fulltext._fetch("html", "https://arxiv.org/html/2106.00745")
+        self.assertIn("Introduction", text)
 
 
 class TestAQuoteLinksIntoThePaper(unittest.TestCase):

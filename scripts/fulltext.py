@@ -103,6 +103,14 @@ EXTRACTOR = 3
 # PDF is a title page or a scan that extracted nothing.
 MIN_PDF_CHARS = 1200
 
+# What arXiv's abstract landing page says and a rendered paper never does. Length alone
+# could not separate them: this page carries the title, the full abstract, the author list
+# and the site chrome, which for one paper in the corpus came to 4,344 characters and so
+# cleared MIN_CHARS by 344 -- and the sidecar drafted from it could state no result,
+# because there were none in it to state. Raising the threshold would start rejecting real
+# short papers, so the test is what the page *is*, not how long it is.
+_LANDING = "View a PDF of the paper titled"
+
 
 # --------------------------------------------------------------- text extraction
 
@@ -410,7 +418,9 @@ def _fetch(kind: str, url: str) -> tuple[str, int]:
         return "", MIN_CHARS
     if raw[:5] == b"%PDF-":
         return pdf_to_text(raw), MIN_PDF_CHARS
-    return html_to_text(raw), MIN_CHARS
+    text = html_to_text(raw)
+    # Refused outright rather than length-judged, so the chain falls through to the PDF rung.
+    return ("", MIN_CHARS) if _LANDING in text else (text, MIN_CHARS)
 
 
 # --------------------------------------------------------------- cache
