@@ -94,6 +94,29 @@ def verification_meta(cfg) -> str:
     return out
 
 
+def human_note(ident: dict, *, box: bool) -> str:
+    """"You probably wanted the personal site" -- the one thing a person needs from here.
+
+    This site exists to be read by machines: it is the canonical URL in ORCID, Scholar,
+    arXiv and every JSON-LD sameAs, which is exactly why a person following any of those
+    fields lands on it by accident. Answering that with a link styled like navigation was
+    not enough -- it read as one more entry in a list of profiles. So the home page says it
+    in a box, in the words the visitor is already thinking, and every other page repeats it
+    in one line of its footer, because search sends people to a paper page far more often
+    than to a home page.
+    """
+    pages = ident.get("other_pages") or []
+    if not pages:
+        return ""
+    links = " · ".join(f'<a rel="me" href="{E(u)}">{E(_host(u))}</a>' for u in pages)
+    if box:
+        return (f'<p class="human"><b>Human?</b> You probably wanted the personal site: '
+                f'{links}<br><span class="meta">These pages are written for search engines '
+                f'and answer engines -- one page per paper, with its claims, scope and '
+                f'sources in a form a machine can quote.</span></p>')
+    return f'<span class="meta">Human? You probably wanted {links}</span>'
+
+
 def page(title: str, body: str, *, head: str = "", canonical: str = "") -> str:
     """One minimal, no-JS document shell."""
     can = f'\n  <link rel="canonical" href="{E(canonical)}">' if canonical else ""
@@ -120,6 +143,9 @@ def page(title: str, body: str, *, head: str = "", canonical: str = "") -> str:
     ul.links li {{ display: inline-block; margin: 0 .8rem .3rem 0; }}
     footer {{ margin-top: 3rem; border-top: 1px solid #ddd; padding-top: .8rem;
               font-size: .85rem; color: #666; }}
+    .human {{ background: #fbf7e8; border: 1px solid #e4d9b0; border-radius: 4px;
+              padding: .7rem .9rem; margin: 1rem 0; font-size: 1.02rem; }}
+    .human b {{ font-family: -apple-system, system-ui, sans-serif; }}
   </style>
 </head>
 <body>
@@ -476,7 +502,7 @@ def paper_page(p: dict, sc: dict, cfg) -> str:
              f'<a href="{E(links.get("html") or links.get("arxiv") or url)}">paper</a>.</p>')
 
     b.append(f'<footer><a href="{E(cfg["site"]["base_url"])}">{E(ident["name"])}</a> · '
-             f'<a href="llms.txt">llms.txt</a></footer>')
+             f'<a href="llms.txt">llms.txt</a><br>{human_note(ident, box=False)}</footer>')
 
     head = highwire(p, cfg) + jsonld(article_jsonld(p, sc, cfg))
     for extra in (faq_jsonld(p, sc, cfg), terms_jsonld(p, sc, cfg)):
@@ -639,7 +665,8 @@ def build(cfg) -> dict:
     with open(os.path.join(OUT, "papers", "index.html"), "w") as f:
         f.write(page(f"Papers — {ident['name']}",
                      f"<h1>Papers</h1>\n<ul>\n{chr(10).join(index_rows)}\n</ul>\n"
-                     f'<footer><a href="/">{E(ident["name"])}</a></footer>',
+                     f'<footer><a href="/">{E(ident["name"])}</a><br>'
+                     f'{human_note(ident, box=False)}</footer>',
                      canonical=f"{site}/papers/"))
 
     # ---- guides: question-shaped content, its own page shape
@@ -650,7 +677,8 @@ def build(cfg) -> dict:
         u = r.get("homepage") or f"https://github.com/{r['repo']}"
         g.append(f'<li><a href="{E(u)}">{E(r["repo"].split("/")[-1])}</a> — '
                  f'{E(r.get("description") or "")}</li>')
-    g += ["</ul>", f'<footer><a href="/">{E(ident["name"])}</a></footer>']
+    g += ["</ul>", f'<footer><a href="/">{E(ident["name"])}</a><br>'
+                    f'{human_note(ident, box=False)}</footer>']
     os.makedirs(os.path.join(OUT, "guides"), exist_ok=True)
     with open(os.path.join(OUT, "guides", "index.html"), "w") as f:
         f.write(page(f"Guides — {ident['name']}", "\n".join(g),
@@ -666,12 +694,7 @@ def build(cfg) -> dict:
     # otherwise the field that a human follows lands them on a list of citations.
     # One link, above the fold, costs the machine anchor nothing and costs the visitor
     # one hop; rel="me" makes it an identity statement too, not just navigation.
-    if ident.get("other_pages"):
-        home.append(
-            f'<p class="lead">Personal site: '
-            + " · ".join(f'<a rel="me" href="{E(u)}">{E(_host(u))}</a>'
-                         for u in ident["other_pages"])
-            + "</p>")
+    home.append(human_note(ident, box=True))
     home += [f'<p class="meta">ORCID <a rel="me" href="https://orcid.org/{ident["orcid"]}">'
              f'{ident["orcid"]}</a> · <a href="mailto:{E(ident["email"])}">'
              f'{E(ident["email"])}</a></p>',

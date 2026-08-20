@@ -2783,6 +2783,29 @@ class TestAGutterIsNotEvidence(unittest.TestCase):
         self.assertTrue(any("30" in e for e in errs), errs)
 
 
+class TestAPersonWhoLandsHereIsSentOnward(unittest.TestCase):
+    """The canonical URL is the machine anchor, so people arrive here by mistake.
+
+    Every registry that a human clicks -- Scholar's Homepage field, ORCID, arXiv -- holds
+    this URL, because a machine anchor has to be one URL and never change. The cost is paid
+    by the visitor, so the note is on the home page as a box and in every other page's
+    footer, since search lands people on a paper far more often than on a home page.
+    """
+
+    def test_the_box_names_the_personal_site(self):
+        import build_site
+        out = build_site.human_note({"other_pages": ["https://example.wixsite.com/someone"]},
+                                    box=True)
+        self.assertIn("Human?", out)
+        self.assertIn("example.wixsite.com/someone", out)
+        self.assertIn('rel="me"', out, "it is an identity claim as well as navigation")
+
+    def test_no_second_page_means_no_note_rather_than_an_empty_one(self):
+        import build_site
+        self.assertEqual("", build_site.human_note({}, box=True))
+        self.assertEqual("", build_site.human_note({"other_pages": []}, box=False))
+
+
 class TestAnArxivLandingPageIsNotAPaper(unittest.TestCase):
     """The abstract page has to be refused by what it says, not by how long it is.
 
