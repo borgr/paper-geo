@@ -19,10 +19,13 @@ failure and the thing a sidecar exists to fix.
 The grader is the instrument, so hand-check a stratified 20% of its scores before
 trusting any of them.
 
-One mode. `--mode api` is refused rather than silently ignored: the answerer has to
-be a model that has never seen the sidecar, and the engines this project exists to
-influence (AI Overviews, AI Mode) have no API, so the answers arrive by hand or
-from a gateway and only the grading is automatable.
+Two modes:
+    skill (default)  writes build/fidelity_tasks.json to fill in by hand -- the only
+                     way to measure the engines this project exists to influence, since
+                     AI Overviews and AI Mode have no API
+    api              asks and grades through the gateway in $PAPER_GEO_LLM_*, unattended.
+                     Measures open-weight model knowledge rather than a search engine's
+                     answer, which is a weaker proxy for the target and a real baseline.
 
 Usage:
     python measure/fidelity.py                    # emit tasks (or call the API)
@@ -39,7 +42,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "scripts"))
-from common import BUILD, DATA, load_config, read_yaml  # noqa: E402
+from common import BUILD, DATA, ROOT, load_config, read_yaml  # noqa: E402
 
 TASKS = os.path.join(BUILD, "fidelity_tasks.json")
 REPORT = os.path.join(HERE, "fidelity_report.md")
@@ -98,6 +101,88 @@ not in them, and list anything the answer attributes to the paper that the \
 authored claims do not support."""
 
 
+# --------------------------------------------------------------------- the gateway
+#
+# The same env-only contract as `draft_sidecars.call_openai`, imported rather than
+# restated so there is one place a gateway is configured. `config.yaml` is committed and
+# public; an inference gateway's URL may not be, so none of it is ever a config key.
+#
+# Two calls per paper, and the separation between them is the whole measurement:
+#
+#   answer  the title and nothing else. The model must not see the sidecar, or it would
+#           be scored on reading comprehension instead of on what it knows.
+#   grade   the answer plus the authored claims, held to SCORE_SCHEMA.
+#
+# So `--answer-model` and `--grade-model` are separate flags. Pointing both at one model
+# lets it mark its own homework, which is worth knowing about rather than forbidding:
+# the report says which model played which role.
+
+
+def _client(model_env: str | None):
+    """An OpenAI-compatible client and the model id to send, or exit saying what is missing."""
+    from draft_sidecars import ENV_BASE, ENV_MODEL, ENV_KEY, ENV_HEADER
+    try:
+        from openai import OpenAI
+    except ImportError:
+        sys.exit("pip install openai")
+    base, model = os.environ.get(ENV_BASE), model_env or os.environ.get(ENV_MODEL)
+    if not base or not model:
+        sys.exit(f"--mode api needs ${ENV_BASE} and ${ENV_MODEL} in the environment "
+                 f"(never committed -- see draft_sidecars.call_openai)")
+    key = os.environ.get(ENV_KEY, "unused")
+    headers = {os.environ[ENV_HEADER]: key} if os.environ.get(ENV_HEADER) else None
+    # A per-model gateway puts the model slug in the path, so a second model means a
+    # second base URL. Substituting the slug we were given keeps one env var enough.
+    if model_env and os.environ.get(ENV_MODEL):
+        base = base.replace(os.environ[ENV_MODEL].split("/")[-1], model_env.split("/")[-1])
+    return OpenAI(base_url=base, api_key=key, default_headers=headers), model
+
+
+def _chat(client, model: str, msgs: list[dict], label: str, want: dict | None = None):
+    """One completion. Returns text, or the parsed object when `want` is a schema.
+
+    Schema enforcement is attempted and not required, for the same reason as the drafting
+    path: a gateway that rejects `response_format` would otherwise be unusable, and the
+    open models this exists to try are exactly the ones behind such gateways.
+    """
+    from draft_sidecars import _first_json, decodable, with_retries
+    req = dict(model=model, messages=msgs, max_tokens=2048, temperature=0.0, seed=48)
+    if want is not None:
+        rf = {"type": "json_schema",
+              "json_schema": {"name": "score", "schema": decodable(want), "strict": True}}
+        try:
+            r = with_retries(lambda: client.chat.completions.create(**req,
+                                                                   response_format=rf), label)
+        except Exception:                            # noqa: BLE001 -- any 4xx means no
+            r = with_retries(lambda: client.chat.completions.create(**req), label)
+    else:
+        r = with_retries(lambda: client.chat.completions.create(**req), label)
+    text = r.choices[0].message.content or ""
+    return _first_json(text) if want is not None else text
+
+
+def run_api(tasks: list[dict], answer_model: str | None, grade_model: str | None) -> None:
+    """Fill `answer` and `score` on every task in place, one paper at a time."""
+    ac, am = _client(answer_model)
+    gc, gm = _client(grade_model) if grade_model else (ac, am)
+    for t in tasks:
+        try:
+            t["answer"] = _chat(ac, am, [{"role": "user", "content": t["ask"]}], t["slug"])
+            t["engine"] = am
+            key = json.dumps(t["authored_claims"], indent=1)
+            t["score"] = _chat(gc, gm, [{"role": "system", "content": GRADE_SYSTEM},
+                                        {"role": "user",
+                                         "content": f"Answer to grade:\n{t['answer']}\n\n"
+                                                    f"Authored claims:\n{key}"}],
+                               f"grade:{t['slug']}", want=SCORE_SCHEMA)
+            t["graded_by"] = gm
+            n = len((t.get("score") or {}).get("per_claim") or [])
+            print(f"  ok  {t['slug'][:52]:52} {n} claim(s) scored")
+        except Exception as e:                       # noqa: BLE001 -- one paper, not the run
+            print(f"  --  {t['slug'][:52]:52} {type(e).__name__}: {str(e)[:80]}",
+                  file=sys.stderr)
+
+
 def sidecars() -> list[tuple[str, dict]]:
     import yaml
     out = []
@@ -116,13 +201,12 @@ def main() -> None:
     ap.add_argument("--mode", choices=["skill", "api"])
     ap.add_argument("--engine", default="model-knowledge",
                     help="label for where the answer came from")
+    ap.add_argument("--answer-model", help="model id to ask (--mode api); defaults to "
+                                          "$PAPER_GEO_LLM_MODEL")
+    ap.add_argument("--grade-model", help="model id to grade with (--mode api); defaults "
+                                         "to the answering model, which marks its own work")
+    ap.add_argument("--limit", type=int, help="first N papers only, for a smoke run")
     args = ap.parse_args()
-    if args.mode == "api":
-        sys.exit("--mode api is not implemented here. The answerer has to be a model "
-                 "that has never seen the sidecar, and the engines this project targets "
-                 "(AI Overviews, AI Mode) have no API at all -- so the answers arrive by "
-                 "hand or from a gateway, and only the grading is automatable. Run "
-                 "without --mode, fill `answer`, then --ingest.")
     cfg = load_config()
     papers = {p["slug"]: p for p in
               (read_yaml(os.path.join(DATA, "papers.yaml")) or {})["papers"]}
@@ -144,13 +228,20 @@ def main() -> None:
                 "answer": None,   # fill in: what the engine actually said
                 "score": None,    # fill in against SCORE_SCHEMA
             })
+        if args.limit:
+            tasks = tasks[:args.limit]
+        if args.mode == "api":
+            run_api(tasks, args.answer_model, args.grade_model)
         os.makedirs(BUILD, exist_ok=True)
         with open(TASKS, "w") as f:
             json.dump({"grade_system": GRADE_SYSTEM, "schema": SCORE_SCHEMA,
                        "tasks": tasks}, f, indent=1)
         print(f"wrote {TASKS}: {len(tasks)} paper(s)")
-        print("For each task: put the engine's answer in `answer`, grade it into "
-              "`score`, then run --ingest.")
+        if args.mode == "api":
+            print(f"Now: python {os.path.relpath(__file__, ROOT)} --ingest")
+        else:
+            print("For each task: put the engine's answer in `answer`, grade it into "
+                  "`score`, then run --ingest.")
         return
 
     if not os.path.exists(TASKS):
