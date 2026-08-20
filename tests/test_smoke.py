@@ -2836,6 +2836,39 @@ class TestNoLatexLeavesInACitationFile(unittest.TestCase):
         self.assertIn("A 'quoted' title", cff)
 
 
+class TestARequeuedPaperIsRepairedNotRewritten(unittest.TestCase):
+    """`--all` re-queues papers that already have text, and text is the reviewed part.
+
+    Thirteen live sidecars carry findings against rules written after they were accepted,
+    and eight of those are a single sentence over the word limit. Queued with an empty
+    `sidecar` field the only job on offer was writing the paper up again from scratch --
+    discarding ten claims a person had read to fix one phrase. The task now arrives
+    seeded with what stands and the findings against it.
+    """
+
+    def test_the_standing_text_and_its_findings_are_handed_over(self):
+        import draft_sidecars
+        with tempfile.TemporaryDirectory() as d:
+            os.makedirs(os.path.join(d, "drafts"))
+            with open(os.path.join(d, "p.md"), "w") as f:
+                f.write("---\none_liner: x\nclaims: []\n---\n")
+            with mock.patch.object(draft_sidecars, "SIDECARS", d), \
+                 mock.patch.object(draft_sidecars, "DRAFTS",
+                                   os.path.join(d, "drafts")), \
+                 mock.patch.object(draft_sidecars, "validate_draft",
+                                   return_value=(["p.md: broken"], ["p.md: too long"])):
+                fm, found = draft_sidecars.standing("p")
+        self.assertEqual("x", fm["one_liner"])
+        self.assertEqual(["broken", "too long"], found)
+
+    def test_a_paper_with_nothing_on_disk_is_drafted_from_scratch(self):
+        import draft_sidecars
+        with tempfile.TemporaryDirectory() as d:
+            with mock.patch.object(draft_sidecars, "SIDECARS", d), \
+                 mock.patch.object(draft_sidecars, "DRAFTS", d):
+                self.assertEqual((None, []), draft_sidecars.standing("absent"))
+
+
 class TestACitationFileIsWrittenOnlyWhenItWouldChange(unittest.TestCase):
     """`write_citation_cff` says a file is wanted, not that the live one is wrong.
 

@@ -454,14 +454,48 @@ CONTRACT = [
     "next run. Do not run --accept: an accepted sidecar is an assertion under the",
     "author's name. Do not write outward (--apply, --deploy): those are public records.",
     "If a task's evidence says the full text is NOT AVAILABLE, draft nothing for it.",
+    "A task whose `sidecar` is already filled carries `findings`: text that has been",
+    "reviewed, and what today's checks say is wrong with it. Fix exactly those and",
+    "change nothing else -- every other field is text a person has already read.",
 ]
+
+
+def standing(slug: str) -> tuple[dict | None, list[str]]:
+    """The text already written for this paper, and what today's checks say about it.
+
+    A paper re-queued by `--all` almost always has something on disk: a draft nobody has
+    accepted, or a live sidecar that a rule written after it was accepted now finds
+    fault with. Handed an empty `sidecar` field, the only job available is to write the
+    paper up again from scratch -- so a live file whose single finding is one sentence
+    leaning on "The study" would be replaced wholesale, throwing away ten claims a
+    person had already read and checked to fix a phrase. Seeded with the standing text
+    and the findings against it, the job is the repair the `api` path has always had
+    (`REPAIR`), and the review that has been done survives it.
+
+    The draft is preferred over the live file when both exist: the draft is the newer of
+    the two, and it is the one `--ingest` will overwrite.
+    """
+    for path in (os.path.join(DRAFTS, f"{slug}.md"),
+                 os.path.join(SIDECARS, f"{slug}.md")):
+        if os.path.exists(path):
+            fm = front_matter(path)
+            if fm:
+                errs, qual = validate_draft(path, note=False)
+                return fm, [str(x).split(".md: ")[-1] for x in errs + qual]
+    return None, []
 
 
 def emit_tasks(pairs: list[tuple[dict, str]], cfg) -> str:
     os.makedirs(BUILD, exist_ok=True)
-    tasks = [{"slug": p["slug"], "title": p.get("title_display") or p["title"],
-              "evidence": ev, "sidecar": None}
-             for p, ev in pairs]
+    tasks = []
+    for p, ev in pairs:
+        fm, found = standing(p["slug"])
+        t = {"slug": p["slug"], "title": p.get("title_display") or p["title"],
+             "evidence": ev, "sidecar": fm}
+        if fm is not None:
+            t["findings"] = found
+            t["job"] = ("repair" if found else "already clean -- leave it alone")
+        tasks.append(t)
     with open(TASKS, "w") as f:
         json.dump({"_contract": CONTRACT, "system": system_prompt(),
                    "user_template": USER, "schema": schema(), "tasks": tasks},
