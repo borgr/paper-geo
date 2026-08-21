@@ -19,6 +19,7 @@ Writes `handover/<slug>/`:
     config.yaml   the blocks to paste over the fork's own, every unknown left `null`
                   with a `# CONFIRM` comment naming who can answer it
     README.md     what to do with it, in order, with the two commands inline
+    MESSAGE.md    the note to send them with it, counts filled in from the lookup
     records.json  what was actually fetched, so a wrong guess in config.yaml can be
                   traced to the record it came from rather than re-litigated by hand
 
@@ -35,6 +36,7 @@ import json
 import os
 import re
 import sys
+import textwrap
 import urllib.parse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -324,6 +326,60 @@ def dry_run(bundle: str, name: str) -> str | None:
     return dst
 
 
+def message_text(name: str, found: dict) -> str:
+    """The note to actually send them, so the bundle is not a directory with no covering letter.
+
+    Generated for the same reason as everything else here: the counts in it are the
+    lookup's, so the message cannot claim a corpus size the bundle does not contain, and
+    re-running after a new paper appears updates the note along with the config.
+    """
+    first = (name.split() or [name])[0]
+    recs = found["semantic_scholar"]
+    # Wrapped here rather than in the template: the counts are interpolated, so the line
+    # lengths are not known until they are filled in, and a mail body with one 300-column
+    # paragraph in the middle reads as machine-written -- which is the one thing this note
+    # cannot afford to look like.
+    split = (" records, and the tooling merges the two rather than asking you to pick one"
+             if len(recs) == 2 else
+             f" records, which the tooling merges rather than asking you to pick one"
+             if len(recs) > 2 else " record")
+    looked_up = textwrap.fill(
+        f"Everything specific to you is already looked up -- "
+        f"{found['paper_count']} papers across {len(recs)} Semantic Scholar{split}, "
+        f"your DBLP pid, your ORCID. What it deliberately did not do is decide "
+        f"anything: every value only you can answer is left blank and marked CONFIRM.",
+        width=88)
+    return f"""\
+Subject: a re-runnable GEO/SEO setup for your papers, if you want it
+
+Hi {first},
+
+I built a thing for my own papers and it generalises, so here is a starter bundle set up
+for yours. The short version: it re-derives your bibliography from public records on every
+run, builds a small site where each paper has a page carrying structured data an answer
+engine can read, and then hands you a worklist of only the gaps no code can close.
+
+{looked_up}
+
+  https://github.com/borgr/paper-geo/tree/main/handover/{slugify(name)}
+
+Start with README.md in that folder; it is four commands, in order. The one to read twice
+is `python scripts/bootstrap_fork.py --yes`, which empties my judgement out of the fork --
+inheriting my decision files would publish my decisions, including decisions not to
+publish something, under your name.
+
+It touches no account of yours. Fetching and building are automatic; every outward write
+(deploy the site, edit Wikidata, accept an AI-drafted description) is a separate command
+you run on purpose. The single judgement call is which GitHub Pages repo the site deploys
+to, left blank because deploying over a repo that already serves your homepage replaces
+that homepage.
+
+Happy to run the first pass with you if that is easier than reading a README.
+
+Leshem
+"""
+
+
 def readme_text(name: str, found: dict) -> str:
     recs = found["semantic_scholar"]
     n_papers = found["paper_count"]
@@ -429,9 +485,12 @@ def main() -> None:
         f.write(config_text(args.name, found, args.github, args.homepage, extra))
     with open(os.path.join(d, "README.md"), "w") as f:
         f.write(readme_text(args.name, found))
+    with open(os.path.join(d, "MESSAGE.md"), "w") as f:
+        f.write(message_text(args.name, found))
     with open(os.path.join(d, "records.json"), "w") as f:
         json.dump(found, f, indent=1)
-    print(f"wrote {os.path.relpath(d, ROOT)}/ -- config.yaml, README.md, records.json")
+    print(f"wrote {os.path.relpath(d, ROOT)}/ -- config.yaml, README.md, "
+          f"MESSAGE.md, records.json")
     todo = sum(1 for line in open(os.path.join(d, "config.yaml")) if "CONFIRM" in line)
     print(f"  {len(recs)} S2 record(s), {found['arxiv_count']} arXiv papers, "
           f"{todo} value(s) left for them to confirm")
