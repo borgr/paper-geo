@@ -2,11 +2,10 @@
 claims:
 - id: confound-shallow
   kind: result
-  text: 'Strong neuron-level activation correlation between paraphrases in a Transformer en-de
-    encoder is largely reproduced by two shallow controls: correlating a sentence with a random
-    token sequence of the same length, or with the same sentence stripped of positional encoding.
-    Active-to-passive paraphrasing changes sentence length by only 2.0±0.4 tokens, so positional
-    encodings stay similar.'
+  text: 'Strong neuron-level activation correlation between paraphrases in a Transformer encoder
+    is largely reproduced by two shallow controls: a random token sequence of matched length,
+    or the same sentence stripped of positional encoding. Active-to-passive paraphrasing changes
+    sentence length by only 2.0±0.4 tokens, so positional encodings stay similar.'
   scope: fairseq Transformer trained on WMT19 en-de, embedding dimension 1024, sinusoidal
     positional encoding; neurons taken as the outputs of the 6 encoder layer blocks; active-passive
     minimal pairs from the WMT19 dev set, mean-pooled within sentences.

@@ -9,18 +9,17 @@ one_liner: ComPEFT compresses a PEFT module's fine-tuning residual by keeping on
 claims:
 - id: llama-65b-mmlu
   kind: result
-  text: ComPEFT-compressed QLoRA adapters on LLaMA-65B average 63.45% on the MMLU test set
-    versus 59.29% for the original QLoRA adapters, a 4.16-point gain while shrinking storage
-    26x from 1.49 GB to about 0.058 GB.
-  scope: 5-shot MMLU with QLoRA checkpoints released by the QLoRA authors for 8 instruction-tuning
-    datasets; density k and scaling alpha selected on a small held-out MMLU subset; storage
-    assumes Golomb coding against 16-bit uncompressed checkpoints.
+  text: ComPEFT-compressed QLoRA adapters on LLaMA-65B average 63.45% on the MMLU test set,
+    against 59.29% for the original QLoRA adapters. The 4.16-point gain comes with 26x smaller
+    storage, 1.49 GB down to about 0.058 GB.
+  scope: 5-shot MMLU on the QLoRA authors' released checkpoints for 8 instruction-tuning datasets;
+    density k and alpha selected on a small held-out MMLU subset; storage assumes Golomb coding.
   evidence: Table 1
 - id: scaling-trend
   kind: result
   text: 'The gain from ComPEFT over uncompressed QLoRA grows with base-model size: +0.54 points
-    on LLaMA-7B, +1.06 on 13B, +3.44 on 33B and +4.16 on 65B MMLU, with compression factors
-    of 16x, 20x, 16x and 26x respectively.'
+    on LLaMA-7B, +1.06 on 13B, +3.44 on 33B and +4.16 on 65B MMLU. Compression factors are
+    16x, 20x, 16x and 26x respectively.'
   scope: LLaMA 7B/13B/33B/65B with QLoRA adapters averaged over 8 instruction-tuning datasets,
     5-shot MMLU; alpha and k tuned per configuration on a small held-out MMLU subset.
   evidence: Table 1
@@ -29,14 +28,13 @@ claims:
   text: ComPEFT improves on the original QLoRA checkpoint in 28 of 32 dataset-by-model-size
     configurations while compressing the LoRA module 10x-50x in storage.
   scope: 8 instruction-tuning datasets crossed with LLaMA 7B/13B/33B/65B, 5-shot MMLU test;
-    the 4 losses are concentrated at 7B and 13B on Unnatural Instructions, Alpaca, HH-RLHF
-    and Guanaco.
+    the 4 losses sit at 7B and 13B.
   evidence: Table 1
 - id: small-models-peft
   kind: result
-  text: On T5-Base, T5-Large and T0-3B, ComPEFT compresses (IA)^3 and LoRA modules 12x-25x
-    while changing average performance over 7 GLUE tasks by at most 1.3 points, from -1.3
-    for (IA)^3 on T5-Base to +0.1 for LoRA on T5-Large.
+  text: On T5-Base, T5-Large and T0-3B, ComPEFT compresses (IA)^3 and LoRA modules 12x-25x.
+    Average performance over 7 GLUE tasks changes by at most 1.3 points, from -1.3 for (IA)^3
+    on T5-Base to +0.1 for LoRA on T5-Large.
   scope: 7 GLUE classification tasks (MNLI, RTE, QNLI, WNLI, SST2, MRPC, QQP), test set; alpha
     and k chosen on a validation set per task.
   evidence: Figure 4
@@ -46,23 +44,22 @@ claims:
     on BERT, RoBERTa, T5-v1.1 and T5 with changes from +1.7 points (T5v1.1-Base) to -4.7 points
     (T5-Base) on 7 GLUE tasks.
   scope: Base and Large sizes of 4 architectures, average test performance over 7 GLUE tasks;
-    the largest drops are T5-Base (-4.7) and RoBERTa-Base (-2.2), so full-finetuning compression
-    is not uniformly near-lossless.
+    the largest drops are T5-Base (-4.7) and RoBERTa-Base (-2.2).
   evidence: Figure 5
 - id: latency
   kind: result
   text: Downloading a ComPEFT-compressed LLaMA-65B QLoRA checkpoint from a simulated internet
-    server takes 2.59 s versus 83.17 s uncompressed (about 32x faster), and CPU-to-GPU loading
-    takes 18.60 ms versus 475.26 ms (about 25x faster).
-  scope: Wall-clock means over 10 repetitions per configuration, LLaMA 7B-65B QLoRA checkpoints,
-    simulated internet server and a single 48GB A6000 host; ternary-vector compute speedups
-    would need custom kernels not implemented in the paper.
+    server takes 2.59 s against 83.17 s uncompressed, about 32x faster. CPU-to-GPU loading
+    takes 18.60 ms against 475.26 ms, about 25x faster.
+  scope: Wall-clock means over 10 repetitions per configuration, LLaMA 7B-65B QLoRA checkpoints
+    on a single 48GB A6000 host; ternary-vector compute speedups would need kernels the paper
+    does not implement.
   evidence: Figure 6
 - id: pareto
   kind: result
   text: ComPEFT applied to (IA)^3 and LoRA is Pareto-optimal in performance versus storage
-    size against 10 PEFT methods including BitFit, Adapters, Compacter, Prompt Tuning, Prefix
-    Tuning and Intrinsic SAID, with Com(IA)^3 matching methods that use 1000x more storage.
+    against 10 PEFT methods, among them BitFit, Adapters, Compacter, Prompt Tuning, Prefix
+    Tuning and Intrinsic SAID. Com(IA)^3 matches methods that use 1000x more storage.
   scope: T0-3B base model, 11 held-out datasets from the T0 evaluation suite, first PromptSource
     template, 200 training examples used as validation per task.
   evidence: Figure 7
@@ -79,15 +76,14 @@ claims:
   text: ComPEFT-compressed LoRA experts retain compositional generalization under LoraHub,
     averaging 30.6 exact match across 27 Big-Bench-Hard tasks versus 30.5 for uncompressed
     experts.
-  scope: Flan-T5-Large with ~200 LoRA experts, N=20 modules composed per unseen task with
-    the gradient-free Shiwa optimizer, averaged over 5 seeds; best-seed results favour uncompressed
-    LoraHub (37.3 vs 36.4).
+  scope: Flan-T5-Large, ~200 LoRA experts, N=20 modules composed per task with the gradient-free
+    Shiwa optimizer, 5 seeds; best-seed results favour LoraHub.
   evidence: Table 8
 - id: ablation-stc
   kind: result
   text: ComPEFT beats Sparse Ternary Compression and a prune-only ablation at nearly all density
-    levels from 3B to 65B base models, and STC is far worse than the uncompressed model at
-    3B and 7B, showing the tuned scalar alpha is what recovers the performance lost to sparsification
+    levels from 3B to 65B base models, and STC falls far below the uncompressed model at 3B
+    and 7B. The tuned scalar alpha is what recovers the performance lost to sparsification
     and ternarization.
   scope: Average validation performance versus density k for LoRA modules on T0-3B and LLaMA
     7B/13B/33B/65B; at base sizes of 13B and above all variants match or beat the original
@@ -96,17 +92,16 @@ claims:
 - id: alpha-tuning
   kind: result
   text: For base models with 13B or more parameters and density k of 20% or less, performance
-    varies little with the scaling factor alpha, and the paper recommends simply setting alpha=1
-    rather than tuning it.
+    varies little with the scaling factor alpha. Setting alpha=1 is recommended rather than
+    tuning it.
   scope: Sweeps over k in {5,10,20,30,50} and alpha in {0.5,1,2,3,4,5,6,8,10} on T0-3B and
-    LLaMA 7B-65B; at 3B and 7B the optimal alpha still matters and shifts with k (about 5-8
-    at k=5 versus 2-3 at k=50 for T0-3B).
+    LLaMA 7B-65B; at 3B and 7B the optimal alpha shifts with k.
   evidence: Figure 11
 - id: baselines-70b
   kind: result
   text: On LLaMA2-70B, ComPEFT averages 67.53% MMLU at 56 MB, above STC (65.24%, 56 MB), BitDelta
-    without training (64.73%, 99 MB) and DAREx-q at 95% sparsity (64.68%, 395 MB), and matches
-    BitDelta with trained scale (67.46%) which requires backward passes.
+    without training (64.73%, 99 MB) and DAREx-q at 95% sparsity (64.68%, 395 MB). It matches
+    BitDelta with a trained scale (67.46%), which requires backward passes.
   scope: Rank-64 QLoRA on LLaMA2-70B over 5 instruction-tuning datasets; storage uses Golomb
     coding for ComPEFT and STC, bitmask for BitDelta and COO sparse matrices for DAREx; DAREx
     at 99% sparsity collapses to 45.86%.
@@ -114,8 +109,8 @@ claims:
 - id: entropy-bound
   kind: result
   text: At 95% sparsity the ternary ComPEFT update has entropy of about 0.34 bits per parameter
-    plus a 16-bit scalar, down from 16 bits per parameter for a bfloat16 task vector, a 47x
-    reduction in communication and storage cost under a perfect coding scheme.
+    plus a 16-bit scalar, down from 16 bits per parameter for a bfloat16 task vector. Under
+    a perfect coding scheme that is a 47x reduction in communication and storage cost.
   scope: Analytical entropy assuming signs of nonzero entries are uniformly distributed; realised
     sizes in the experiments use Golomb coding, and a two-binary-mask alternative costs 2
     bits per parameter but is cheaper to compute with.
@@ -123,11 +118,11 @@ claims:
 - id: context-motivation
   kind: context
   text: ComPEFT frames expert-adapter size as a communication and memory bottleneck for multi-expert
-    serving rather than as a training-cost problem, noting that a QLoRA adapter for LLaMA-65B
-    is 3.2 GB and must be swapped between disk, CPU and GPU per query.
-  scope: Framing as of the paper's 2023 arXiv release and 2025 TMLR version, aimed at PEFT-based
-    expert serving, model merging and MoErging pipelines; the paper measures download and
-    CPU-to-GPU transfer latency but does not build a full serving system.
+    serving rather than as a training-cost problem. A QLoRA adapter for LLaMA-65B is 3.2 GB
+    and must be swapped between disk, CPU and GPU per query.
+  scope: Framing stated for multi-expert serving of instruction-tuned LLaMA models in 2023;
+    the paper measures storage and transfer, not end-to-end serving throughput under real
+    query mixes.
   evidence: Section 1
 - id: context-position
   kind: context

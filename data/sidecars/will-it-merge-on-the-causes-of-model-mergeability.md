@@ -94,9 +94,9 @@ claims:
 - id: context-first-causes
   kind: context
   text: '"Will it Merge? On The Causes of Model Mergeability" gives model merging a per-update
-    notion of mergeability and identifies base model knowledge of the finetuning data as the
-    dominant correlate, shifting the question from which algorithm merges best to which updates
-    merge at all.'
+    notion of mergeability, and names base model knowledge of the finetuning data as the dominant
+    correlate. The question shifts from which algorithm merges best to which updates merge
+    at all.'
   scope: To the authors' knowledge the first study to directly link pre-training knowledge
     with mergeability; earlier work related merging success to base model size and strength,
     to shared knowledge between tasks, and to update norms.

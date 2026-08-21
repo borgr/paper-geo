@@ -85,9 +85,9 @@ claims:
     it concerns consistency of outputs, not factual correctness, safety or calibration, and
     was not validated on deployed applications.
 - id: study-scale
-  text: The study covers 9 open-weight models from 6 model families evaluated on 100 examples
-    from each of 6 datasets under 24 configurations, totalling 14,400 inferences per model
-    and 129,600 inferences overall.
+  text: Robustness is measured over 9 open-weight models from 6 model families, 100 examples
+    from each of 6 datasets and 24 inference configurations, totalling 14,400 inferences per
+    model and 129,600 overall.
   kind: result
   evidence: Appendix A.1
   scope: Open-weight models only; no closed-source models were evaluated because of cost,

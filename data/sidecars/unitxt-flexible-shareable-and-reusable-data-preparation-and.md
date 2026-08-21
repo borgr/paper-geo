@@ -3,8 +3,9 @@ claims:
 - id: recipe-single-spec
   kind: result
   text: A Unitxt recipe specifies a dataset card, template, system prompt, format and number
-    of in-context demonstrations in one declarative string. Loading it yields a dataset whose
-    every instance already holds fully prepared model-input text and a metric-ready target.
+    of in-context demonstrations in one declarative string, and the open catalog's ingredients
+    combine into more than 100K such recipes. Loading it yields a dataset whose every instance
+    already holds fully prepared model-input text and a metric-ready target.
   scope: Textual (multilingual) data for generative language models; loading is via unitxt.load_dataset,
     and the recipe covers loading, verbalization, formatting and metric configuration. As
     described in the January 2024 release.
@@ -28,8 +29,9 @@ claims:
 - id: hf-compatible-output
   kind: result
   text: The Unitxt data-preparation pipeline emits a HuggingFace dataset that can be saved
-    or pushed to the hub, so Unitxt can be dropped into existing HuggingFace-based codebases
-    without rewriting downstream code.
+    or pushed to the hub, so Unitxt drops into existing HuggingFace-based codebases without
+    rewriting downstream code. Integrating it into LM-eval-harness took about 30 lines of
+    code, with one line changed per recipe in a yaml.
   scope: The data-preparation pipeline output format; raw data and metrics arrive through
     Unitxt resource APIs covering HuggingFace Hub, local files and cloud storage.
   evidence: Section 4.4.1

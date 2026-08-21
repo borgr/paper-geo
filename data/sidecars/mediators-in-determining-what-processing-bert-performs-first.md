@@ -7,10 +7,10 @@ one_liner: 'Probing BERT''s layers with edge probing confounds task type with th
 claims:
 - id: rankings-196
   kind: result
-  text: Probing BERT-base with the 7 tasks used by Tenney et al. (2019a), 196 different rankings
-    of those tasks by expected layer can be obtained by choosing different context length
-    distributions for the probing datasets. One attainable order is Non-term. < Dep. < SRL
-    < RC < NER < Co-ref. < SPR.
+  text: With the 7 edge-probing tasks of Tenney et al. (2019a), 196 rankings of those tasks
+    by expected layer in BERT-base are attainable by choosing the context length distribution
+    of the probing datasets. One attainable order is Non-term. < Dep. < SRL < RC < NER < Co-ref.
+    < SPR.
   scope: BERT-base, edge probing with the Jiant defaults, 7 tasks (NER, non-terminals, SRL,
     co-reference, SPR, relation classification, Stanford dependencies); context length bins
     of width 3 up to a per-task maximal threshold.

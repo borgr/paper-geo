@@ -83,14 +83,12 @@ claims:
   evidence: Table 4
 - id: ood-vit
   kind: result
-  text: On DomainBed with an ImageNet-pretrained ViT, freezing a random A and tuning only
-    B gives the best out-of-domain accuracy on VLCS (75.81% at r=8 versus 56.43% for LoRA
-    r=8) and OfficeHome (77.85% at r=16 versus 74.46%). LoRA stays ahead out-of-domain on
-    PACS, at 75.58% versus 73.76%.
-  scope: ViT fine-tuned on the LabelMe, Cartoon and Clipart environments of VLCS, PACS and
-    Office-Home with the original 80/20 train/test split; out-of-domain numbers averaged across
-    held-out environments. On TerraIncognita low-rank adapters fit poorly and full fine-tuning
-    is strongest.
+  text: On DomainBed, freezing a random A and tuning only B gives the best out-of-domain accuracy
+    on VLCS (75.81% at r=8 versus 56.43% for LoRA) and OfficeHome (77.85% at r=16 versus 74.46%).
+    LoRA stays ahead out-of-domain on PACS, at 75.58% versus 73.76%.
+  scope: ImageNet-pretrained ViT fine-tuned on the LabelMe, Cartoon and Clipart environments
+    of VLCS, PACS and Office-Home, original 80/20 split; out-of-domain numbers averaged across
+    held-out environments. On TerraIncognita full fine-tuning is strongest.
   evidence: Table 5, with per-environment breakdown in Table 8 and TerraIncognita in Table
     9
 - id: train-test-gap

@@ -9,8 +9,8 @@ claims:
   kind: result
   text: Google Translate's mean sentence-level BLEU on English-Arabic sentences selected for
     POS/dependency divergences is about 0.70, below its 0.7495 mean over all 1000 Parallel
-    Universal Dependencies sentences, so the divergence-based selection did not produce a
-    harder-than-average challenge set.
+    Universal Dependencies sentences. The divergence-based selection did not produce a harder-than-average
+    challenge set.
   scope: English-to-Arabic Google Translate output scored with NLTK smoothed sentence_bleu
     against the corpus's professional Arabic translation as the single reference; 1000 PUD
     sentences from news and Wikipedia.
@@ -19,8 +19,8 @@ claims:
 - id: per-phenomenon-bleu
   kind: result
   text: The six divergence types tested give near-identical Google Translate BLEU means, from
-    0.6938 for amod -> nmod (113 sentences) to 0.7036 for xcomp -> obl (74 sentences), with
-    Verb -> Noun the largest set at 307 sentences.
+    0.6938 for amod -> nmod (113 sentences) to 0.7036 for xcomp -> obl (74 sentences). Verb
+    -> Noun is the largest set, at 307 sentences.
   scope: One reference translation per sentence, BLEU-4 with uniform weights; sentence counts
     are subsets of the 1000-sentence PUD corpus and overlap where a sentence contains several
     divergences.
@@ -34,10 +34,10 @@ claims:
   evidence: Mid-level results, paragraph on default BLEU-4 and n=5, n=6, n=3
 - id: divergences-selected
   kind: result
-  text: Six English-to-Arabic divergences were selected as candidate challenge-set rules from
-    the manual alignment — obl -> nmod, amod -> nmod, Aux -> verb, obj -> nmod, Verb -> Noun
-    and xcomp -> obl — using a threshold of over 8% of English words with a tag taking the
-    divergent Arabic tag and over 50 occurrences.
+  text: 'Six English-to-Arabic divergences were selected as candidate challenge-set rules
+    from the manual alignment: obl -> nmod, amod -> nmod, Aux -> verb, obj -> nmod, Verb ->
+    Noun and xcomp -> obl. The threshold was over 8% of English words with a given tag taking
+    the divergent Arabic tag, and over 50 occurrences.'
   scope: Thresholds applied to the POS percentage matrix and UD count matrix built from one
     annotator's content-word alignment of the English-Arabic PUD corpus; not validated against
     a second annotator.
@@ -45,9 +45,9 @@ claims:
     counts), with the orange-cell criterion described under Table 1
 - id: manual-alignment-coverage
   kind: result
-  text: Manual content-word matching between English and Arabic covered all but 2 of the
-    1000 Parallel Universal Dependencies sentences. Sentences 454 and 491 could not be fully
-    tagged, because the Arabic rendering diverges in meaning from the English.
+  text: Manual content-word matching between English and Arabic covered all but 2 of the 1000
+    Parallel Universal Dependencies sentences. Sentences 454 and 491 could not be fully tagged,
+    because the Arabic rendering diverges in meaning from the English.
   scope: Single annotator at ILR R-1+ reading proficiency in Modern Standard Arabic, matching
     content words rather than translating; annotation reliability is not independently measured.
   evidence: Manual Tagging section, including the sentence 454 and sentence 491 examples
@@ -60,11 +60,10 @@ claims:
   evidence: Noteworthy divergent constructions, AUX -> VERB subsection
 - id: arabic-only-phenomena-fail
   kind: result
-  text: Four Arabic constructions with no fixed English parallel — passive participle, dual
-    form, maf'ul mutlaq (cognate accusative) and verb-preposition distance — each yield a
-    hand-made Arabic sentence that Google Translate renders wrongly, for example ‫ ظفرت الجائزة
-    بتصفيق‬translated as "The award won applause" instead of "The award was received with
-    applause".
+  text: Four Arabic constructions with no fixed English parallel, namely passive participle,
+    dual form, maf'ul mutlaq and verb-preposition distance, each yield a hand-made Arabic
+    sentence that Google Translate renders wrongly. One such example, ظفرت الجائزة بتصفيق,
+    comes back as "The award won applause" instead of "The award was received with applause".
   scope: Single hand-constructed example per phenomenon, Arabic-to-English direction, Google
     Translate at time of writing in 2021; no BLEU scores or automatic extraction for these
     cases.
@@ -72,10 +71,10 @@ claims:
     distance subsections
 - id: ud-extraction-blockers
   kind: result
-  text: 'Two Arabic phenomena resist automatic extraction from Universal Dependencies annotation:
-    dual number is absent from the UD data examined, and maf''ul mutlaq needs word roots that
-    the Arabic UD parser leaves unfilled on the advmod, with off-the-shelf Arabic root extractors
-    reaching only around 75% accuracy.'
+  text: 'Two Arabic phenomena resist automatic extraction from Universal Dependencies: dual
+    number is absent from the UD data, and maf''ul mutlaq needs word roots the Arabic UD parser
+    leaves unfilled on the advmod. Off-the-shelf Arabic root extractors reach only around
+    75% accuracy.'
   scope: UD v2 annotation of the Arabic PUD treebank and publicly available Arabic root-extraction
     tools as of 2021; the 75% figure is quoted from those tools' reported accuracy, not measured
     in this work.
@@ -83,24 +82,24 @@ claims:
 - id: tag-presence-check-flawed
   kind: result
   text: Checking whether a translated Arabic sentence contains the expected divergent tag
-    is an unreliable substitute for BLEU, because the divergences occur well below 100% of
-    the time and such a check would penalise correct translations that keep the English construction.
+    is an unreliable substitute for BLEU. The divergences occur well below 100% of the time,
+    so such a check would penalise correct translations that keep the English construction.
   scope: Argument grounded in the divergence rates of the POS and UD correlation matrices
     for English-Arabic; the alternative check was reasoned about, not implemented or measured.
   evidence: Mid-level results, the two numbered objections following the BLEU discussion
 - id: contribution-rule-not-set
   kind: context
-  text: The paper's aim is a reusable rule for automatically extracting English-Arabic challenge
-    sets from a parallel treebank, rather than a fixed challenge set, so that others can generate
-    their own diverse test sentences with little human labour.
+  text: A reusable rule for automatically extracting English-Arabic challenge sets from a
+    parallel treebank is the target, rather than a fixed challenge set. Others could then
+    generate their own diverse test sentences with little human labour.
   scope: As stated by the author for the English-Arabic pair in 2021; the reported experiment
     tested the rule and did not confirm that it isolates hard sentences.
   evidence: Summary section
 - id: context-syntactic-divergence-challenge-sets
   kind: context
-  text: The study is an undergraduate-level case study in building syntax-divergence challenge
-    sets for machine translation, applying the challenge-set methodology of Choshen and Abend
-    (2019) to the English-Arabic pair via manual annotation of the Parallel Universal Dependencies
+  text: The work is an undergraduate-level case study in building syntax-divergence challenge
+    sets for machine translation. It applies the challenge-set methodology of Choshen and
+    Abend (2019) to English-Arabic, via manual annotation of the Parallel Universal Dependencies
     corpus.
   scope: One language pair, one 1000-sentence parallel corpus and one MT system (Google Translate)
     as of 2021; arXiv preprint, not peer-reviewed.
@@ -109,8 +108,8 @@ claims:
 - id: context-reproduction-requirements
   kind: context
   text: Replicating this style of manual cross-lingual content-word alignment requires reading
-    a newspaper or Wikipedia sentence in the target language without consulting a dictionary
-    for more than half the words, plus formal grammatical study of both languages.
+    a newspaper or Wikipedia sentence in the target language without a dictionary for more
+    than half the words. Formal grammatical study of both languages is also needed.
   scope: The author's own recommendation based on the English-Arabic annotation experience;
     a suggested minimum, not an empirically validated annotator qualification.
   evidence: Comments on the work process section
