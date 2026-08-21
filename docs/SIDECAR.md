@@ -154,6 +154,21 @@ calibration term to the correctness reward"* is what the paper did. And a `conte
 claim's job is to say what the work *is*, so it names the contribution by design. Both
 still have to say what the reader gets, not walk through how the thing is assembled.
 
+**A claim never states what is true of the field.** The highest-volume queries are
+topic-level — *"does merging fine-tuned models actually work"*, *"how few examples can
+evaluate a model"* — and this paper is one contributor to the answer. Answering one as a
+claim publishes a statement about other people's results under this author's name, with
+the paper's own evidence unable to support it; and getting it wrong misattributes work to
+the wrong group, which is the error a reader who knows the field spots immediately.
+
+So a topic question is answered from this side of it only: say what **this** work
+established, and refer to everything else generically and unnamed — *"one of several
+approaches to X"*, *"alongside other work on X"*. Never a named alternative, a named
+group, or a claim about what the field now believes. That is the line scenario class 5 is
+already ruled out on: characterising someone else's work inside our own claim. The
+`context` claim is where a general question lands, and its subject is the work, not the
+area.
+
 The `one_liner` is not one of the claims. Both are published -- the one-liner as the
 page's description and every claim in its own list -- so a one-liner copied from a claim
 makes the page state one sentence twice and spends a claim slot saying nothing new. Give
@@ -601,6 +616,7 @@ decision with no record of having been made gets re-litigated.
 | C2 | `scope` shape | prose with a 40–800 band. A template was rejected: a paper whose scope is genuinely one clause would be padded to fit it — and the floor was lowered from 80 for the same reason, once rule 31 stopped the padding that was hiding it |
 | C3 | is `evidence` required | on `kind: result`, yes. On `kind: context`, no — and that asymmetry *is* the answer to "can we ship useful unverified claims" |
 | A2 | minimum viable sidecar | 5 claims, from the band |
+| C7 | where a topic-level claim lives | nowhere new. A claim about the state of a field is not one this paper supports, and both candidate homes — a `kind: topic` claim, and per-line-of-work topic pages — needed a defensible account of who else established it, which is a literature review with no gate behind it. The general question stays a `context` claim about *this* work, with others referred to generically and unnamed. §2, and the same line as scenario class 5 |
 | C6 | how many `context` claims before a page reads as self-promotion | ≥1 required, and `result` must outnumber `context`. A page whose majority is unverifiable standing claims is an advert; the majority rule is the cheapest expression of that. §4 row 12 |
 
 ### Shape and enforcement

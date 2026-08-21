@@ -11,13 +11,22 @@ identity:
   name: Tamar Rott Shaham
   name_variants:
     - Tamar Rott Shaham
-    - Rott Shaham, Tamar
+    - "Rott Shaham, Tamar"
     - T. Rott Shaham
+    - Tamar Shaham
+    - Tamar Rott
   # CONFIRM, and leave empty unless sure. A string here is published to Wikidata as a
   # search alias, so it earns its place only if it already appears in a printed citation
-  # and belongs to nobody else. A surname-only or initials-only form always belongs to
-  # somebody -- never list one.
-  name_typos: []
+  # or is a standard alternative transliteration of the same name, and it resolves to
+  # nobody else. A surname-only or initials-only form always belongs to somebody --
+  # never list one.
+  name_typos:
+    - Tammar Rott Shaham
+    - Tamar Roth Shaham
+    - Tamar Rot Shaham
+    - Tamar Rott Shacham
+    - Tammar Rott Shacham
+    - Tamar Shacham
   orcid: 0000-0002-1455-2266    # CONFIRM it is yours -- matched on name only (Massachusetts Institute of Technology, Technion – Israel Institute of Technology)
   canonical_url: https://tamarott.github.io
   other_pages: []
@@ -31,33 +40,45 @@ identity:
   #   - human brain
   #   - variable binding
   #   - visual representations
-  email: null                    # CONFIRM
+  email: tamarott@mit.edu
   image: null                    # CONFIRM: a photo self-hosted under static/, not a CDN path
-  job_title: null                # CONFIRM
-  affiliations: []               # CONFIRM
-  education: []                  # CONFIRM
+  job_title: "Postdoctoral fellow, MIT CSAIL; incoming Assistant Professor, Weizmann Institute of Science"
+  affiliations:
+    - name: MIT Computer Science and Artificial Intelligence Laboratory
+      url: https://www.csail.mit.edu/
+      ror: 01e85r662
+      wikidata: Q1354917
+    - name: Weizmann Institute of Science
+      url: https://www.weizmann.ac.il/
+      ror: 0316ej306
+      wikidata: Q4182
+  education:
+    - institution: Technion -- Israel Institute of Technology
+      degree: PhD
+      ror: 03qryx823
+      wikidata: Q333705
 
 ids:
   # 2 records under this name, which is the same split this repo already
   # handles for its own author: 3459255 (28 papers), 2223799647 (1 papers). The largest is primary; the others are
   # merged by `audit_identity.py`, which needs all of them listed.
-  semantic_scholar: ["3459255", "2223799647"]
+  semantic_scholar: ["3459255", "2223799647", "153664997"]
   semantic_scholar_primary: "3459255"
   # Filled by the first `python scripts/audit_identity.py`, which reconciles OpenAlex
   # against the papers the collector found. Guessing them here would pin the wrong record.
   openalex: []
   openalex_duplicates: []
-  google_scholar: null           # CONFIRM: the ?user= value on your Scholar profile URL
+  google_scholar: YRJ-ePMAAAAJ
   dblp: Tamar Rott Shaham
   dblp_pid: 185/7904
   github: tamarott
-  huggingface: null              # CONFIRM
-  wikidata: null                 # created later by scripts/wikidata_apply.py
+  huggingface: tamarott
+  wikidata: Q125198037
   linkedin: null                 # CONFIRM
   openreview: null               # CONFIRM: the ~Name_Surname1 form on openreview.net
   bluesky: null                  # CONFIRM
   mastodon: null                 # CONFIRM
-  twitter: null                  # CONFIRM
+  twitter: TamarRottShaham
   scopus: null
   researcherid: null
 

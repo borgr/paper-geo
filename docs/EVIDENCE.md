@@ -462,7 +462,12 @@ separately checkable. Say that in public rather than implying a result nobody ha
   AI answers frequently are not clicked, so a rise is evidence and a flat line is
   uninformative. Set `site.analytics.provider` in `config.yaml` to one of `plausible`,
   `goatcounter`, `umami` or `ga4` and the snippet goes on every page; the first three
-  set no cookies, `ga4` does.
+  set no cookies, `ga4` does. **Deliberately left off.** It costs the GEO nothing — no
+  crawler executes the script, so no machine reader is affected either way — but it can
+  only see human visits, and the readers this project targets are exactly the ones it
+  structurally cannot see. The crawler-visible instruments are already in place and free:
+  Search Console's crawl stats and Bing Webmaster Tools. Turn it on to answer a specific
+  question, not to have a dashboard.
 - **Scholar / S2 / OpenAlex counters over time.** Already collected. Slow, heavily
   confounded, not attributable — useful as a tripwire that something broke, not as an
   outcome.

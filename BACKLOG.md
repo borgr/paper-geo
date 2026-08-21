@@ -44,21 +44,6 @@ gets copied to other people's installs — so drift here propagates.
       `check_sidecar_shape()` in `validate.py`; key order, list order, id casing and
       wrapping are not, and are the formatter question D1/D4. (`qa` pointing at ids
       that do not exist is an error in `check_sidecars`.)
-- [ ] **Decide where a topic-level claim lives.** The schema has two tiers — `result`
-      (what this paper measured) and `context` (what this paper *is*) — and both are
-      assertions *about one paper*. Neither answers the highest-volume query class,
-      which is about the topic and where this paper is one of several contributors:
-      "does merging fine-tuned models actually work", "how few examples can evaluate a
-      model". A `context` claim gets close by naming the paper's standing, but a claim
-      that states what is true *of the field* is not one the paper supports, and the
-      canonical page publishes claims as the author's own assertions in `about` and in
-      the `FAQPage` answers — so putting field-level claims there widens what he is
-      answerable for with no gate behind it. **Two candidate homes,** and the choice is
-      not obvious: a `kind: topic` with a mandatory citation of who else established
-      it, or a per-line-of-work topic page that cites several of his papers plus
-      others' — which [docs/EVIDENCE.md §2](docs/EVIDENCE.md#2-what-the-geo-literature-establishes)
-      independently argues for on recency grounds, since a paper's date is fixed and a
-      topic page's is not. The second keeps the paper pages honest and is more work.
 - [ ] **Reconcile the schema's `description` strings with the prompt.** The rules now
       have two homes, not three: `docs/SIDECAR.md` §2 is read verbatim by the drafter,
       but `schema/sidecar.schema.json` still states the reasoning per field in its own
@@ -101,6 +86,34 @@ Deferred with a release condition in [`data/declines.yaml`](data/declines.yaml),
       explicit go-ahead by design, not by accident.
 
 ## Decided against, with the measurement
+
+- [x] **Where a topic-level claim lives. Decided: nowhere new.** Both candidate homes
+      needed the same thing behind them — a defensible account of who *else* established
+      the topic — and that is a literature review with no gate in front of it, published
+      under the author's name as his own assertion. A misattribution there is the error a
+      reader who knows the field spots first, and the GEO gain over a well-scoped
+      `context` claim was never measured, only assumed.
+
+      So the general question stays where it already was: a `context` claim whose subject
+      is *this* work, with everyone else referred to generically and unnamed — "one of
+      several approaches to X", "alongside other work on X". That needs no lookup and can
+      be wrong about nobody. It is the same line scenario class 5 was already ruled out
+      on, so this closes a gap rather than adding a rule.
+      Enforced as prose in the drafter's own prompt block,
+      [docs/SIDECAR.md §2](docs/SIDECAR.md#2-the-rules), and recorded as C7 in
+      [§6](docs/SIDECAR.md#6-the-open-decisions). The rejected options, kept because the
+      reasoning is the useful half:
+
+      - **`kind: topic`, a third claim tier with a mandatory citation of who else
+        established the finding.** Rejected on the citation: it is exactly the
+        unbounded obligation above, and nothing could check it.
+      - **A page per line of work, citing several of his papers plus others'** —
+        which [docs/EVIDENCE.md §2](docs/EVIDENCE.md#2-what-the-geo-literature-establishes)
+        argues for independently on recency grounds, a paper's date being fixed where a
+        topic page's is not. Rejected for now on the same attribution problem plus real
+        cost; the recency argument survives and applies to a dated explainer post, which
+        is [EVIDENCE §7](docs/EVIDENCE.md#7-what-is-deliberately-not-built-and-the-honest-uncertainty) and is about
+        the author's own work rather than the field's state.
 
 - [x] **Splitting `scripts/audit_identity.py` by surface. Declined — it would decouple
       nothing.** The file is 1,595 lines and the obvious read is "five surfaces jammed

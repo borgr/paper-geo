@@ -1,0 +1,67 @@
+# Hand-found facts for the generated config.yaml in this directory.
+#
+# An INPUT to `python scripts/handover.py "Tamar Rott Shaham" ...`, not its output. Some of
+# these are on a homepage or a co-author's Scholar page and no API returns them, so they are
+# recorded here and merged over the lookup -- editing config.yaml directly would be reverted
+# by the next run.
+#
+# Every line below is either a published fact or a search string checked against Semantic
+# Scholar and ORCID for collisions. Nothing here is a decision she cannot reverse.
+
+identity:
+  # Asserted outward: ORCID also-known-as, schema.org alternateName, the Wikidata label.
+  # So each one has to be a form she has actually published under.
+  name_variants:
+    - Tamar Rott Shaham
+    - Rott Shaham, Tamar         # the citation order most bibliographies produce
+    - T. Rott Shaham
+    - Tamar Shaham               # her byline on at least 3 papers (NeurIPS 2021 x2, ICLR 2024)
+    - Tamar Rott                 # her pre-2015 byline (S2 153664997, Technion 2014)
+  # Matched and published only as Wikidata search aliases, never as a claim. Each was
+  # searched on Semantic Scholar and ORCID and returns zero authors, so none of them takes
+  # a reader to a different person. Two generators: one substitution at a time in any of
+  # the three name parts, plus any multi-error form actually observed in the wild.
+  #
+  # Rott/Rot and Shaham/Shacham are not really typos -- they are the two standard
+  # transliterations of the same Hebrew spelling, which is exactly what an alias is for.
+  name_typos:
+    - Tammar Rott Shaham         # doubled m, the commonest error on this given name
+    - Tamar Roth Shaham          # Rott -> Roth
+    - Tamar Rot Shaham           # Rott -> Rot, single t
+    - Tamar Rott Shacham         # Shaham -> Shacham (het transliterated with c)
+    - Tammar Rott Shacham        # observed in correspondence, both errors at once
+    - Tamar Shacham              # the dropped-Rott form, transliterated the other way
+  email: tamarott@mit.edu
+  job_title: Postdoctoral fellow, MIT CSAIL; incoming Assistant Professor, Weizmann Institute of Science
+  # ROR is the identifier Crossref, DataCite and OpenAlex use for institutions, so an
+  # affiliation carrying one can be joined on rather than string-matched.
+  affiliations:
+    - name: MIT Computer Science and Artificial Intelligence Laboratory
+      url: https://www.csail.mit.edu/
+      ror: 01e85r662
+      wikidata: Q1354917
+    # CONFIRM the timing: listed as a current affiliation, which is a claim about now.
+    # Dropping it until the move is done is the conservative choice and costs little.
+    - name: Weizmann Institute of Science
+      url: https://www.weizmann.ac.il/
+      ror: 0316ej306
+      wikidata: Q4182
+  education:
+    - institution: Technion -- Israel Institute of Technology
+      degree: PhD
+      ror: 03qryx823
+      wikidata: Q333705
+
+ids:
+  google_scholar: YRJ-ePMAAAAJ
+  # Confirmed by the account's own fullname field, not by the handle matching.
+  huggingface: tamarott
+  # An item already exists -- somebody else created it. Confirmed by its DBLP pid
+  # (185/7904) and its educated-at Technion statement, not by the label alone. It is
+  # missing its ORCID, which is the statement that lets other databases join to it.
+  wikidata: Q125198037
+  twitter: TamarRottShaham
+  # A record filed under her former name, which the name-exact lookup cannot see: one 2014
+  # Technion paper. Listing it is what lets audit_identity.py merge it instead of leaving a
+  # second author page with its own citation count.
+  semantic_scholar_extra: [153664997]

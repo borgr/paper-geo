@@ -139,6 +139,10 @@ def step_audit(cfg, args) -> None:
     run([sys.executable, "scripts/audit_identity.py"])
     run([sys.executable, "scripts/scholar_check.py"])
     run([sys.executable, "scripts/identity_tasks.py"])
+    # Wikipedia is read here for the same reason as the rest of this step: it is a surface we
+    # do not control, and the only actions available on it are proposals an editor may
+    # decline, so what is open has to be re-read rather than remembered.
+    run([sys.executable, "scripts/wikipedia_tasks.py"])
 
 
 def step_validate(cfg, args) -> None:
@@ -280,6 +284,13 @@ PLAN = (
      "save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` "
      "first: two minutes, once, and it turns every hunt-by-eye row into a one-click "
      "link. Then the top few and stop — that section argues its own case honestly"),
+    ("Wikipedia: propose", "minute",
+     "one talk-page paste per proposal, and then wait. It is the highest-value surface in "
+     "the project -- about 48% of the citations in ChatGPT answers -- and the only one "
+     "where you may not act directly, so the whole item is paste-and-leave-it"),
+    ("Wikipedia already mentions you", "minute",
+     "read the article and check it describes the work correctly. Only raise something on "
+     "the talk page if it is wrong; a correct mention needs nothing from you"),
     ("Semantic Scholar —", "afternoon",
      "one paste per paper into the Add Papers form, highest-citation first; every URL "
      "is in the section"),
@@ -1251,6 +1262,40 @@ def step_worklist(cfg, args) -> None:
         lines += ["## Identity surfaces", "",
                   "Nothing open. ORCID, Semantic Scholar, Wikidata and OpenAlex all match",
                   "`config.yaml` as of the last audit.", ""]
+
+    # Wikipedia: proposals only, never an edit. Read from build/wikipedia_state.json because
+    # the ~100 API calls behind it belong to the audit step, not to rendering the worklist.
+    try:
+        with open(os.path.join(ROOT, "build", "wikipedia_state.json")) as f:
+            wiki = json.load(f)
+    except (OSError, ValueError):
+        wiki = {}
+    for prop in wiki.get("proposals") or []:
+        host, term = prop["host"], prop["term"]
+        lines += [f"## Wikipedia: propose a mention of {term} on *{host}*", "",
+                  "Wikipedia is the single most-cited domain in AI answers, and the one place",
+                  "you may not act directly: WP:COI and WP:SELFCITE make an edit of your own",
+                  "into the thing that gets reverted. So this is a talk-page proposal an",
+                  "uninvolved editor is free to decline, and a decline is the system working.",
+                  "",
+                  f"[Open a new section on Talk:{host}]({prop['talk']}) — paste this whole",
+                  f"block, nothing else ({prop['citations']} citations is the only weight",
+                  "argument made, and it is left for the editor to weigh):", "",
+                  "```wikitext", prop["payload"], "```", "",
+                  f"Everything else Wikipedia-shaped, including the {wiki.get('below_bar', 0)} "
+                  f"coinages deliberately",
+                  "left alone, is in [`tasks/wikipedia.md`](tasks/wikipedia.md).", ""]
+    if wiki.get("already_mentions"):
+        lines += [f"## Wikipedia already mentions you in "
+                  f"{len(wiki['already_mentions'])} article(s) — check the facts", "",
+                  "The one COI case where speaking up is unambiguously helpful is a wrong",
+                  "summary of your own work — on the talk page, with the correction and the",
+                  "page or table it comes from, never in the article.", ""]
+        for t in wiki["already_mentions"]:
+            q = t.replace(" ", "_")
+            lines.append(f"- [ ] [{t}](https://en.wikipedia.org/wiki/{q}) — "
+                         f"[talk](https://en.wikipedia.org/wiki/Talk:{q})")
+        lines.append("")
 
     typos = state.get("arxiv_name_typos") or []
     if typos:

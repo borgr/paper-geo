@@ -286,6 +286,14 @@ site:
   # which are the earliest signal of all, weeks ahead of any answer. Those are server
   # side, github.io publishes no logs, and no script sees a bot that runs no JavaScript.
   # That needs a CDN in front of the site, which is a hosting decision, not a config key.
+  #
+  # DECIDED: left null. It costs the GEO nothing -- a crawler runs no JavaScript, so the
+  # tag is invisible to every reader this project is built for -- but it also measures
+  # only human visits, which are not the goal, and the audience that matters is the one
+  # audience it structurally cannot see. The instruments that *can* see crawlers are
+  # already set up and free: Search Console's crawl stats and Bing Webmaster Tools, both
+  # verified above. Turn this on only if a specific question comes up that needs referrer
+  # data, and then goatcounter -- free, cookieless, no consent banner, one value to paste.
   analytics:
     provider: null
     domain: null

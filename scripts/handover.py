@@ -10,6 +10,10 @@ only they can answer, is what the bundle asks for.
     python scripts/handover.py "Tamar Rott Shaham" --github tamarott \
         --homepage https://tamarott.github.io
 
+Reads `handover/<slug>/facts.yaml` if it exists, and merges it over what the lookup found.
+Some facts are only on a homepage or a co-author's Scholar page and no API returns them; put
+them there rather than editing the output, or the next run silently reverts them.
+
 Writes `handover/<slug>/`:
 
     config.yaml   the blocks to paste over the fork's own, every unknown left `null`
@@ -114,9 +118,48 @@ def slugify(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
 
 
-def config_text(name: str, found: dict, github: str | None, homepage: str | None) -> str:
+def facts(out_dir: str) -> dict:
+    """Hand-found values, keyed like config.yaml. An input to the generator, never output."""
+    import yaml
+    p = os.path.join(out_dir, "facts.yaml")
+    return (yaml.safe_load(open(p)) if os.path.exists(p) else None) or {}
+
+
+def yaml_value(v) -> str:
+    """Render a scalar or list the way the surrounding config.yaml renders them.
+
+    Includes its own leading space or newline so a list does not leave a trailing space
+    behind on the key's line.
+    """
+    def scalar(x) -> str:
+        # Quote anything a YAML reader would take apart -- a colon starts a mapping, a hash
+        # starts a comment, and a comma inside a flow context ends the item.
+        return json.dumps(x) if isinstance(x, str) and re.search(r"[:#,]|^[@\[{]", x) else str(x)
+
+    if isinstance(v, list):
+        if any(isinstance(x, dict) for x in v):
+            import yaml
+            body = yaml.safe_dump(v, sort_keys=False, allow_unicode=True).rstrip()
+            return "\n" + "\n".join("    " + ln for ln in body.splitlines())
+        return "".join(f"\n    - {scalar(x)}" for x in v) or " []"
+    return " " + scalar(v)
+
+
+def config_text(name: str, found: dict, github: str | None, homepage: str | None,
+                extra: dict | None = None) -> str:
+    extra = extra or {}
+    ex_id, ex_ident = (extra.get("ids") or {}), (extra.get("identity") or {})
     recs = found["semantic_scholar"]
-    ids = [r["authorId"] for r in recs]
+    # The lookup matches the current name exactly, so a record filed under a former name is
+    # invisible to it and has to be named by hand -- and it matters, because an unmerged old
+    # record is a second author page splitting the citation count.
+    ids = [str(r["authorId"]) for r in recs] + [str(i) for i in ex_id.get(
+        "semantic_scholar_extra") or []]
+
+    def field(block: dict, key: str, fallback: str) -> str:
+        """A hand-found value if there is one, else the CONFIRM line asking for it."""
+        return f"{key}:{yaml_value(block[key])}" if key in block else f"{key}: {fallback}"
+
     split = ("\n  # %d records under this name, which is the same split this repo already\n"
              "  # handles for its own author: %s. The largest is primary; the others are\n"
              "  # merged by `audit_identity.py`, which needs all of them listed.\n"
@@ -130,6 +173,22 @@ def config_text(name: str, found: dict, github: str | None, homepage: str | None
                    f"{', '.join(o['orcid'] for o in orc)}" if orc
                    else "no ORCID found under this name; register one at orcid.org"))
     kw = found["keyword_candidates"]
+    surname = " ".join(name.split()[1:])
+    variants = yaml_value(ex_ident.get("name_variants")
+                          or [name, f"{surname}, {name.split()[0]}", f"{name[0]}. {surname}"])
+    typos = yaml_value(ex_ident.get("name_typos") or [])
+    f_email = field(ex_ident, 'email', 'null                    # CONFIRM')
+    f_job_title = field(ex_ident, 'job_title', 'null                # CONFIRM')
+    f_affiliations = field(ex_ident, 'affiliations', '[]               # CONFIRM')
+    f_education = field(ex_ident, 'education', '[]                  # CONFIRM')
+    f_google_scholar = field(ex_id, 'google_scholar', 'null           # CONFIRM: the ?user= value on your Scholar profile URL')
+    f_huggingface = field(ex_id, 'huggingface', 'null              # CONFIRM')
+    f_linkedin = field(ex_id, 'linkedin', 'null                 # CONFIRM')
+    f_openreview = field(ex_id, 'openreview', 'null               # CONFIRM: the ~Name_Surname1 form on openreview.net')
+    f_bluesky = field(ex_id, 'bluesky', 'null                  # CONFIRM')
+    f_wikidata = field(ex_id, 'wikidata',
+                       "null                 # created later by scripts/wikidata_apply.py")
+    f_twitter = field(ex_id, 'twitter', 'null                  # CONFIRM')
     return f"""\
 # paper-geo starter identity: {name}
 #
@@ -142,15 +201,13 @@ def config_text(name: str, found: dict, github: str | None, homepage: str | None
 
 identity:
   name: {name}
-  name_variants:
-    - {name}
-    - {' '.join(name.split()[1:])}, {name.split()[0]}
-    - {name[0]}. {' '.join(name.split()[1:])}
+  name_variants:{variants}
   # CONFIRM, and leave empty unless sure. A string here is published to Wikidata as a
   # search alias, so it earns its place only if it already appears in a printed citation
-  # and belongs to nobody else. A surname-only or initials-only form always belongs to
-  # somebody -- never list one.
-  name_typos: []
+  # or is a standard alternative transliteration of the same name, and it resolves to
+  # nobody else. A surname-only or initials-only form always belongs to somebody --
+  # never list one.
+  name_typos:{typos}
   {orc_line}
   canonical_url: {homepage or 'null                 # CONFIRM: the one URL that goes everywhere'}
   other_pages: []
@@ -160,29 +217,29 @@ identity:
   # box; several of these will not be.
   keywords: []
 {chr(10).join('  #   - ' + k for k in kw)}
-  email: null                    # CONFIRM
+  {f_email}
   image: null                    # CONFIRM: a photo self-hosted under static/, not a CDN path
-  job_title: null                # CONFIRM
-  affiliations: []               # CONFIRM
-  education: []                  # CONFIRM
+  {f_job_title}
+  {f_affiliations}
+  {f_education}
 
-ids:{split}  semantic_scholar: {json.dumps([str(i) for i in ids])}
+ids:{split}  semantic_scholar: {json.dumps(ids)}
   semantic_scholar_primary: {json.dumps(str(ids[0])) if ids else 'null   # CONFIRM'}
   # Filled by the first `python scripts/audit_identity.py`, which reconciles OpenAlex
   # against the papers the collector found. Guessing them here would pin the wrong record.
   openalex: []
   openalex_duplicates: []
-  google_scholar: null           # CONFIRM: the ?user= value on your Scholar profile URL
+  {f_google_scholar}
   dblp: {found['dblp_name'] or 'null                     # CONFIRM'}
   dblp_pid: {found['dblp_pid'] or 'null                 # CONFIRM'}
   github: {github or 'null                   # CONFIRM'}
-  huggingface: null              # CONFIRM
-  wikidata: null                 # created later by scripts/wikidata_apply.py
-  linkedin: null                 # CONFIRM
-  openreview: null               # CONFIRM: the ~Name_Surname1 form on openreview.net
-  bluesky: null                  # CONFIRM
+  {f_huggingface}
+  {f_wikidata}
+  {f_linkedin}
+  {f_openreview}
+  {f_bluesky}
   mastodon: null                 # CONFIRM
-  twitter: null                  # CONFIRM
+  {f_twitter}
   scopus: null
   researcherid: null
 
@@ -211,6 +268,60 @@ github_sweep:
   base_topics: []
   exclude: []
 """
+
+
+def dry_run(bundle: str, name: str) -> str | None:
+    """Run the whole pipeline against their ids in a scratch tree; keep its worklist.
+
+    The bundle otherwise says what paper-geo *would* find. This runs it and shows what it
+    *does* find, which is the difference between an offer and a result: they open one file
+    and read their own gap list -- which arXiv submissions have no journal-ref, which
+    Hugging Face paper pages are unclaimed -- before deciding whether any of this is worth
+    their afternoon.
+
+    Everything happens under `build/`, which is gitignored and disposable. `bootstrap_fork`
+    empties the previous author's judgement out of the copy first, so nothing in the scratch
+    tree can leak one person's decisions into another person's worklist.
+    """
+    import shutil
+    import subprocess
+    import yaml
+    scratch = os.path.join(ROOT, "build", "handover-" + os.path.basename(bundle))
+    shutil.rmtree(scratch, ignore_errors=True)
+    shutil.copytree(ROOT, scratch, ignore=shutil.ignore_patterns(
+        ".git", "build", "handover", "__pycache__", ".venv", "*.pyc"))
+
+    def step(argv, label):
+        r = subprocess.call(argv, cwd=scratch)
+        if r != 0:
+            print(f"  dry run stopped at {label} (exit {r}); {scratch} left in place",
+                  file=sys.stderr)
+        return r == 0
+
+    if not step([sys.executable, "scripts/bootstrap_fork.py", "--yes"], "bootstrap"):
+        return None
+    cfg_path = os.path.join(scratch, "config.yaml")
+    cfg = yaml.safe_load(open(cfg_path))
+    for k, v in (yaml.safe_load(open(os.path.join(bundle, "config.yaml"))) or {}).items():
+        cfg.setdefault(k, {}).update(v) if isinstance(v, dict) else cfg.__setitem__(k, v)
+    # Not a real handle, and the collaboration step only uses it to tell their repos from
+    # everyone else's. A leftover value here would mine the wrong person's GitHub.
+    cfg["collaboration"]["me"] = cfg["ids"].get("github") or "unknown"
+    cfg["sources"]["publications_path"] = None
+    yaml.safe_dump(cfg, open(cfg_path, "w"), sort_keys=False, allow_unicode=True)
+
+    if not step([sys.executable, "update.py"], "update"):
+        return None
+    src = os.path.join(scratch, "WORKLIST.md")
+    if not os.path.exists(src):
+        return None
+    dst = os.path.join(bundle, "WORKLIST-preview.md")
+    head = (f"<!-- Generated by `python scripts/handover.py \"{name}\" --dry-run`. A "
+            f"preview: what one\n     `python update.py` finds for {name} from public "
+            f"records alone, with none of\n     the CONFIRM values in config.yaml filled "
+            f"in yet. Every count here is a floor. -->\n\n")
+    open(dst, "w").write(head + open(src).read())
+    return dst
 
 
 def readme_text(name: str, found: dict) -> str:
@@ -280,6 +391,9 @@ def main() -> None:
     ap.add_argument("name", help="the colleague's name, spelled as their papers spell it")
     ap.add_argument("--github", help="GitHub handle, if known")
     ap.add_argument("--homepage", help="their existing homepage URL, if any")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="also run the whole pipeline against their ids in a scratch "
+                         "tree under build/, and keep its worklist as WORKLIST-preview.md")
     ap.add_argument("--out", default=os.path.join(ROOT, "handover"),
                     help="directory to write <slug>/ into")
     args = ap.parse_args()
@@ -310,8 +424,9 @@ def main() -> None:
     }
     d = os.path.join(args.out, slugify(args.name))
     os.makedirs(d, exist_ok=True)
+    extra = facts(d)
     with open(os.path.join(d, "config.yaml"), "w") as f:
-        f.write(config_text(args.name, found, args.github, args.homepage))
+        f.write(config_text(args.name, found, args.github, args.homepage, extra))
     with open(os.path.join(d, "README.md"), "w") as f:
         f.write(readme_text(args.name, found))
     with open(os.path.join(d, "records.json"), "w") as f:
@@ -320,6 +435,14 @@ def main() -> None:
     todo = sum(1 for line in open(os.path.join(d, "config.yaml")) if "CONFIRM" in line)
     print(f"  {len(recs)} S2 record(s), {found['arxiv_count']} arXiv papers, "
           f"{todo} value(s) left for them to confirm")
+    if extra:
+        print(f"  merged {os.path.relpath(d, ROOT)}/facts.yaml over the lookup")
+    if args.dry_run:
+        preview = dry_run(d, args.name)
+        if preview:
+            n = sum(1 for line in open(preview) if line.startswith("- [ ]"))
+            print(f"  wrote {os.path.relpath(preview, ROOT)}: {n} open item(s) the "
+                  f"pipeline already found for them")
 
 
 if __name__ == "__main__":

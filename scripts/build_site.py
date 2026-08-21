@@ -296,18 +296,29 @@ def org_ld(a) -> dict:
 
 def person_jsonld(cfg) -> dict:
     ident, ids = cfg["identity"], cfg["ids"]
-    same = [f"https://orcid.org/{ident['orcid']}",
-            f"https://github.com/{ids['github']}",
-            f"https://huggingface.co/{ids['huggingface']}",
-            f"https://scholar.google.com/citations?user={ids['google_scholar']}",
-            f"https://www.semanticscholar.org/author/{ids['semantic_scholar_primary']}",
-            # The pid page, not a search URL: `sameAs` asserts "this URL is this
-            # person", and a search results page is not a person -- it is a query that
-            # can return two people tomorrow.
-            (f"https://dblp.org/pid/{ids['dblp_pid']}.html" if ids.get("dblp_pid")
-             else f"https://dblp.org/search?q={ids['dblp'].replace(' ', '+')}"),
-            f"https://openalex.org/{ids['openalex'][0].rsplit('/', 1)[-1]}",
-            f"https://aclanthology.org/people/{ident['name'].lower().replace(' ', '-')}/"]
+    # Every entry is skipped when its id is unset, and that is not defensive coding: an
+    # unset id used to interpolate as the string "None", so a fork with no Hugging Face
+    # account published `sameAs: https://huggingface.co/None` -- an assertion that a 404
+    # is this person, which is worse than saying nothing. An empty `openalex` crashed the
+    # build outright, on the first run of every fork, before `audit_identity.py` has run.
+    same = [u for u in [
+        f"https://orcid.org/{ident['orcid']}" if ident.get("orcid") else None,
+        f"https://github.com/{ids['github']}" if ids.get("github") else None,
+        f"https://huggingface.co/{ids['huggingface']}" if ids.get("huggingface") else None,
+        (f"https://scholar.google.com/citations?user={ids['google_scholar']}"
+         if ids.get("google_scholar") else None),
+        (f"https://www.semanticscholar.org/author/{ids['semantic_scholar_primary']}"
+         if ids.get("semantic_scholar_primary") else None),
+        # The pid page, not a search URL: `sameAs` asserts "this URL is this person", and
+        # a search results page is not a person -- it is a query that can return two
+        # people tomorrow.
+        (f"https://dblp.org/pid/{ids['dblp_pid']}.html" if ids.get("dblp_pid")
+         else f"https://dblp.org/search?q={ids['dblp'].replace(' ', '+')}"
+         if ids.get("dblp") else None),
+        (f"https://openalex.org/{ids['openalex'][0].rsplit('/', 1)[-1]}"
+         if ids.get("openalex") else None),
+        f"https://aclanthology.org/people/{ident['name'].lower().replace(' ', '-')}/",
+    ] if u]
     if ids.get("linkedin"):
         same.append(f"https://www.linkedin.com/in/{ids['linkedin']}/")
     if ids.get("wikidata"):
@@ -330,9 +341,10 @@ def person_jsonld(cfg) -> dict:
         "@id": ident["canonical_url"].rstrip("/") + "/#person",
         "name": ident["name"],
         "alternateName": ident["name_variants"],
-        "identifier": f"https://orcid.org/{ident['orcid']}",
+        **({"identifier": f"https://orcid.org/{ident['orcid']}"}
+           if ident.get("orcid") else {}),
         "url": ident["canonical_url"],
-        "email": f"mailto:{ident['email']}",
+        **({"email": f"mailto:{ident['email']}"} if ident.get("email") else {}),
         # Resolved against the site root so config can hold a repo-relative path: the
         # file lives in static/ precisely so it is not a third-party URL that can rot,
         # and schema.org wants an absolute one.

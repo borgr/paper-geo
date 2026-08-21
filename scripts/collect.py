@@ -273,6 +273,10 @@ def bibtex_source(cfg) -> tuple[str, str]:
     the one case it did not serve. Prefer the working tree, fall back to HTTP.
     """
     url = cfg["sources"]["bibtex_url"]
+    if not url:
+        # A fork whose author keeps no .bib is the ordinary case, not an error: merge_s2
+        # appends every paper on the S2 author record, so the corpus arrives anyway.
+        return "", ""
     path = cfg["sources"].get("publications_path")
     if path:
         local = os.path.join(os.path.expanduser(path), os.path.basename(url))
@@ -301,6 +305,10 @@ def bibtex_source(cfg) -> tuple[str, str]:
 
 def from_bibtex(cfg) -> list[dict]:
     raw, origin = bibtex_source(cfg)
+    if not raw and not origin:
+        print("  no sources.bibtex_url -- seeding the corpus from the Semantic Scholar "
+              "author record instead", file=sys.stderr)
+        return []
     if not raw:
         sys.exit(f"could not read bibliography from {origin}, and no cached copy in "
                  f"{os.path.relpath(BIB_CACHE, ROOT)}. Nothing downstream can run "
@@ -1211,6 +1219,15 @@ def main() -> None:
         p["has_sidecar"] = os.path.exists(os.path.join(sidecar_dir, f"{p['slug']}.md"))
 
     baseline = _committed_papers(out)
+    # A fresh fork commits the previous author's papers.yaml, so the first run here would
+    # "lose" a hundred papers it never had and refuse to write -- the guard firing on the
+    # one run that cannot possibly be an outage. Two corpora that share no slug at all are
+    # two different people, not a source failure.
+    if baseline and not ({p["slug"] for p in baseline} & {p["slug"] for p in papers}):
+        print(f"  the committed papers.yaml holds {len(baseline)} paper(s) with no slug in "
+              f"common with this run -- a different author's corpus, so it is not a "
+              f"baseline. Treating this as a first run.", file=sys.stderr)
+        baseline = []
     report, alarms = coverage_alarms(baseline, papers)
     if report:
         print("  coverage vs the last commit:", file=sys.stderr)
