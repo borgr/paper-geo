@@ -1390,13 +1390,6 @@ def main() -> None:
         wd_qs, _ = wikidata_papers_qs(wd_cov, cfg)
         if wd_gaps:
             wd_path = wikidata_followup_file(wd_gaps, cfg, wd_cov, wd_qs)
-        else:
-            # Same reason the QS batch is deleted rather than skipped: once the item
-            # is complete this file describes gaps that are closed, and nothing in it
-            # says which run it came from.
-            stale = os.path.join(TASKS, "wikidata_followup.md")
-            if os.path.exists(stale):
-                os.remove(stale)
     # --no-hf means "leave the HF artifacts alone", not "regenerate them from cache".
     # Writing the cached view here would silently overwrite a freshly-checked
     # worklist with older numbers, which is worse than not writing at all.
