@@ -92,62 +92,73 @@ claims:
     weight, and no full system comparison or metric numbers are given.
   evidence: Section 6
 qa:
-- q:
-  - Are all grammatical error types equally important to correct?
-  - Do readers care more about frequent grammatical errors?
-  - Which grammatical errors bother native English speakers most?
-  answers:
+- ask:
+    unsorted:
+    - Are all grammatical error types equally important to correct?
+    - Do readers care more about frequent grammatical errors?
+    - Which grammatical errors bother native English speakers most?
+  answered_by:
   - frequency-vs-importance
   - verb-orthography-top
   - low-importance-types
-- q:
-  - Which error types are least annoying to readers of learner English?
-  - What grammatical errors can be deprioritised in error correction?
-  answers:
+- ask:
+    unsorted:
+    - Which error types are least annoying to readers of learner English?
+    - What grammatical errors can be deprioritised in error correction?
+  answered_by:
   - low-importance-types
-- q:
-  - What should I read about weighting error types in grammatical error correction evaluation?
-  - Is there work arguing GEC metrics like M^2 treat all errors equally and shouldn't?
-  - What paper questions counting corrected errors as the GEC evaluation target?
-  answers:
+- ask:
+    practitioner: What should I read about weighting error types in grammatical error correction
+      evaluation?
+    unsorted:
+    - Is there work arguing GEC metrics like M^2 treat all errors equally and shouldn't?
+    - What paper questions counting corrected errors as the GEC evaluation target?
+  answered_by:
   - metrics-mismatch
   - frequency-vs-importance
-- q:
-  - How can importance weights be estimated for an error typology without new annotation?
-  - Can sentence-level human ratings be turned into per-error-type importance scores?
-  - How were importance weights computed for NUCLE, ERRANT and SErCl types?
-  answers:
+- ask:
+    unsorted:
+    - How can importance weights be estimated for an error typology without new annotation?
+    - Can sentence-level human ratings be turned into per-error-type importance scores?
+    - How were importance weights computed for NUCLE, ERRANT and SErCl types?
+  answered_by:
   - method-transfers-typologies
   - bother-not-grammaticality
-- q:
-  - How much crowd annotation was collected on NUCLE for error importance?
-  - How many sentences and annotators went into rating how much errors bother readers?
-  - What did the Mechanical Turk annotation of NUCLE cost and how long did it take?
-  answers:
+- ask:
+    unsorted:
+    - How much crowd annotation was collected on NUCLE for error importance?
+    - How many sentences and annotators went into rating how much errors bother readers?
+    - What did the Mechanical Turk annotation of NUCLE cost and how long did it take?
+  answered_by:
   - annotation-scale
   - bother-not-grammaticality
-- q:
-  - How were low-quality crowd annotators of grammatical error ratings filtered out?
-  - What quality controls were used in the NUCLE bother-rating annotation?
-  - How many crowdworkers were removed by the filtering procedure?
-  answers:
+- ask:
+    unsorted:
+    - How were low-quality crowd annotators of grammatical error ratings filtered out?
+    - What quality controls were used in the NUCLE bother-rating annotation?
+    - How many crowdworkers were removed by the filtering procedure?
+  answered_by:
   - filtering
   - robust-to-filtering
-- q:
-  - Are the error-importance rankings robust to how aggressively annotators are filtered?
-  - Do stricter annotator filters change which grammatical errors rank as important?
-  answers:
+- ask:
+    unsorted:
+    - Are the error-importance rankings robust to how aggressively annotators are filtered?
+    - Do stricter annotator filters change which grammatical errors rank as important?
+  answered_by:
   - robust-to-filtering
   - verb-orthography-top
-- q:
-  - Does training a GEC model with error-importance weights help?
-  - Has anyone tried weighting the GEC training loss by how much each error type bothers readers?
-  answers:
+- ask:
+    unsorted:
+    - Does training a GEC model with error-importance weights help?
+    - Has anyone tried weighting the GEC training loss by how much each error type bothers
+      readers?
+  answered_by:
   - weighted-training
-- q:
-  - Why ask annotators how much mistakes bother them instead of asking about grammaticality?
-  - What question wording was used to elicit grammatical error importance judgements?
-  answers:
+- ask:
+    unsorted:
+    - Why ask annotators how much mistakes bother them instead of asking about grammaticality?
+    - What question wording was used to elicit grammatical error importance judgements?
+  answered_by:
   - bother-not-grammaticality
 misreadings:
 - 'Importance ranks of grammatical error types are not difficulty ranks: orthography errors

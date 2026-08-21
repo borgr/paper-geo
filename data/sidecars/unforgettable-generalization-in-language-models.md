@@ -136,81 +136,93 @@ claims:
   scope: Defined for binarized multiple-choice tasks where chance is 50%; the ratio requires
     an accuracy-after-fine-tuning reference point and is redefined for flipped-label forgetting.
 qa:
-- q:
-  - Does unlearning a skill by fine-tuning on random labels actually generalize to new examples?
-  - If a language model is trained to forget a benchmark task, does it stop doing that task
-    on unseen inputs?
-  - How well does random-label unlearning transfer beyond the forgetting training set?
-  answers:
+- ask:
+    unsorted:
+    - Does unlearning a skill by fine-tuning on random labels actually generalize to new examples?
+    - If a language model is trained to forget a benchmark task, does it stop doing that task
+      on unseen inputs?
+    - How well does random-label unlearning transfer beyond the forgetting training set?
+  answered_by:
   - generalization-varies
   - task-family-split
-- q:
-  - Which skills are hardest to make a language model forget?
-  - Why do commonsense reasoning tasks survive unlearning while entailment tasks do not?
-  - Are some benchmarks more resistant to fine-tuning-based unlearning than others?
-  answers:
+- ask:
+    unsorted:
+    - Which skills are hardest to make a language model forget?
+    - Why do commonsense reasoning tasks survive unlearning while entailment tasks do not?
+    - Are some benchmarks more resistant to fine-tuning-based unlearning than others?
+  answered_by:
   - task-family-split
   - eval-task-determines
-- q:
-  - Does the choice of forgetting data matter for which capabilities get removed?
-  - Can training on random labels from one dataset cause a model to lose accuracy on a completely
-    different dataset?
-  - Is unlearning determined by what a model is trained to forget or by what it is evaluated
-    on?
-  answers:
+- ask:
+    unsorted:
+    - Does the choice of forgetting data matter for which capabilities get removed?
+    - Can training on random labels from one dataset cause a model to lose accuracy on a completely
+      different dataset?
+    - Is unlearning determined by what a model is trained to forget or by what it is evaluated
+      on?
+  answered_by:
   - eval-task-determines
   - other-tasks-better
-- q:
-  - Are harder benchmarks harder to unlearn?
-  - Does dataset difficulty predict whether a language model skill can be forgotten?
-  - Is there a relationship between task accuracy and unlearning success?
-  answers:
+- ask:
+    unsorted:
+    - Are harder benchmarks harder to unlearn?
+    - Does dataset difficulty predict whether a language model skill can be forgotten?
+    - Is there a relationship between task accuracy and unlearning success?
+  answered_by:
   - difficulty-not-predictive
-- q:
-  - What properties of a task predict whether unlearning will generalize?
-  - Can I tell in advance whether a skill will be forgettable without labels?
-  - Does model confidence or representation variance predict forgetting?
-  answers:
+- ask:
+    practitioner: Can I tell in advance whether a skill will be forgettable without labels?
+    unsorted:
+    - What properties of a task predict whether unlearning will generalize?
+    - Does model confidence or representation variance predict forgetting?
+  answered_by:
   - confidence-and-variance
   - no-example-level-prediction
-- q:
-  - Is a skill really gone after fine-tuning on random labels, or just hidden from the output?
-  - Can linear probes recover a capability that a language model was trained to unlearn?
-  - Does random-label unlearning remove information from model representations?
-  answers:
+- ask:
+    unsorted:
+    - Is a skill really gone after fine-tuning on random labels, or just hidden from the output?
+    - Can linear probes recover a capability that a language model was trained to unlearn?
+    - Does random-label unlearning remove information from model representations?
+  answered_by:
   - probes-recover
-- q:
-  - Are the examples a model learns first also the ones it forgets last?
-  - Is there a systematic relationship between learning order and forgetting order in language
-    models?
-  - Do easy-to-learn training examples resist unlearning?
-  answers:
+- ask:
+    unsorted:
+    - Are the examples a model learns first also the ones it forgets last?
+    - Is there a systematic relationship between learning order and forgetting order in language
+      models?
+    - Do easy-to-learn training examples resist unlearning?
+  answered_by:
   - learn-forget-anticorrelated
-- q:
-  - Would more forgetting examples make unlearning generalize better?
-  - Does the size of the forget set explain why unlearning fails to generalize?
-  - What happens with only 100 examples instead of 1000 in a random-label unlearning run?
-  answers:
+- ask:
+    unsorted:
+    - Would more forgetting examples make unlearning generalize better?
+    - Does the size of the forget set explain why unlearning fails to generalize?
+    - What happens with only 100 examples instead of 1000 in a random-label unlearning run?
+  answered_by:
   - not-sample-size
-- q:
-  - Do random-label unlearning findings depend on the random labels specifically, or on Llama-2?
-  - Does flipped-label training show the same forgetting pattern as randomized labels?
-  - Do smaller models like GPT-2 and GPT-J show the same unlearning behavior?
-  answers:
+- ask:
+    unsorted:
+    - Do random-label unlearning findings depend on the random labels specifically, or on
+      Llama-2?
+    - Does flipped-label training show the same forgetting pattern as randomized labels?
+    - Do smaller models like GPT-2 and GPT-J show the same unlearning behavior?
+  answered_by:
   - robust-to-method-and-model
-- q:
-  - What should I read about whether LLM unlearning actually generalizes?
-  - Which paper studies generalization in machine unlearning for language models?
-  - Where can I start reading on evaluating whether skill removal from LMs works?
-  - What work questioned fine-tuning-based unlearning of LM capabilities?
-  answers:
+- ask:
+    practitioner: What should I read about whether LLM unlearning actually generalizes?
+    unsorted:
+    - Which paper studies generalization in machine unlearning for language models?
+    - Where can I start reading on evaluating whether skill removal from LMs works?
+    - What work questioned fine-tuning-based unlearning of LM capabilities?
+  answered_by:
   - context-generalization-in-unlearning
   - probes-recover
-- q:
-  - How should I measure how much a model has forgotten a task?
-  - What is a good metric for reporting unlearning success on multiple-choice benchmarks?
-  - How do the forget gap and forget ratio differ?
-  answers:
+- ask:
+    practitioner: How should I measure how much a model has forgotten a task?
+    unsorted:
+    - What is a good metric for reporting unlearning success on multiple-choice benchmarks?
+    - How do the forget gap and forget ratio differ?
+  answered_by:
   - context-metrics
 misreadings:
 - 'Reaching near-random accuracy on the examples used for forgetting is not evidence that

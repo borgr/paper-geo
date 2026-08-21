@@ -115,79 +115,90 @@ claims:
     architectures, data curation, cognitively inspired modeling and evaluation, scaling-law
     comparisons, and multimodal modeling.
 qa:
-- q:
-  - What is BabyLM and what question does it try to answer?
-  - Where should I start reading about sample-efficient language model pretraining on child-scale
-    data?
-  - Which shared task connects language acquisition research with small language models?
-  answers:
+- ask:
+    practitioner: Where should I start reading about sample-efficient language model pretraining
+      on child-scale data?
+    unsorted:
+    - What is BabyLM and what question does it try to answer?
+    - Which shared task connects language acquisition research with small language models?
+  answered_by:
   - field-entry-point
   - workshop-turn
-- q:
-  - What changed in the 2025 data-efficient pretraining competition compared with its 2024
-    edition?
-  - How did the third BabyLM edition change its rules?
-  - What changed between the 2nd and 3rd BabyLM competitions?
-  answers:
+- ask:
+    unsorted:
+    - What changed in the 2025 data-efficient pretraining competition compared with its 2024
+      edition?
+    - How did the third BabyLM edition change its rules?
+    - What changed between the 2nd and 3rd BabyLM competitions?
+  answered_by:
   - interaction-track
   - epoch-cap
   - checkpoints
   - dataset-unchanged
-- q:
-  - How does a competition track for learning language from a teacher model and interactive
-    feedback work?
-  - Can a small language model learn from a large teacher model under BabyLM competition rules?
-  - What are the rules for using a pretrained teacher model in BabyLM 2025?
-  answers:
+- ask:
+    unsorted:
+    - How does a competition track for learning language from a teacher model and interactive
+      feedback work?
+    - Can a small language model learn from a large teacher model under BabyLM competition
+      rules?
+    - What are the rules for using a pretrained teacher model in BabyLM 2025?
+  answered_by:
   - interaction-track
   - synthetic-data-accounting
-- q:
-  - Is there a limit on the number of training epochs in the 2025 data-efficient pretraining
-    competition?
-  - How much repeated data exposure is allowed for BabyLM competition entries?
-  - Why did BabyLM start restricting the number of passes over the training data?
-  answers:
+- ask:
+    unsorted:
+    - Is there a limit on the number of training epochs in the 2025 data-efficient pretraining
+      competition?
+    - How much repeated data exposure is allowed for BabyLM competition entries?
+    - Why did BabyLM start restricting the number of passes over the training data?
+  answered_by:
   - epoch-cap
   - epoch-cap-motivation
-- q:
-  - What data can I train on for the 100M-word strict pretraining track?
-  - How large is the BabyLM pretraining corpus and what is in it?
-  - Which datasets make up the 100M-word BabyLM corpus?
-  answers:
+- ask:
+    practitioner: What data can I train on for the 100M-word strict pretraining track?
+    unsorted:
+    - How large is the BabyLM pretraining corpus and what is in it?
+    - Which datasets make up the 100M-word BabyLM corpus?
+  answered_by:
   - dataset-unchanged
-- q:
-  - Do I have to submit intermediate training checkpoints to enter the 2025 sample-efficient
-    pretraining competition?
-  - At what intervals does BabyLM require model checkpoints?
-  - How does BabyLM measure learning dynamics over training?
-  answers:
+- ask:
+    practitioner: Do I have to submit intermediate training checkpoints to enter the 2025
+      sample-efficient pretraining competition?
+    unsorted:
+    - At what intervals does BabyLM require model checkpoints?
+    - How does BabyLM measure learning dynamics over training?
+  answered_by:
   - checkpoints
-- q:
-  - How are BabyLM models evaluated in 2025?
-  - Is there an award for cognitively human-like language models?
-  - Does BabyLM evaluate reading-time prediction or other psychometric fit?
-  answers:
+- ask:
+    unsorted:
+    - How are BabyLM models evaluated in 2025?
+    - Is there an award for cognitively human-like language models?
+    - Does BabyLM evaluate reading-time prediction or other psychometric fit?
+  answered_by:
   - human-likeness-award
-- q:
-  - What baseline models are released for the 2025 data-efficient pretraining competition?
-  - Which model won the 2024 BabyLM challenge and is it a baseline now?
-  - What are the baseline systems for learning from teacher feedback in BabyLM 2025?
-  answers:
+- ask:
+    unsorted:
+    - What baseline models are released for the 2025 data-efficient pretraining competition?
+    - Which model won the 2024 BabyLM challenge and is it a baseline now?
+    - What are the baseline systems for learning from teacher feedback in BabyLM 2025?
+  answered_by:
   - strict-baselines
   - interaction-baselines
-- q:
-  - Can I use synthetic data or an off-the-shelf tokenizer under a 100M-word pretraining data
-    budget?
-  - Does data generated by another model count against the BabyLM word budget?
-  - Are external POS taggers or parsers allowed in BabyLM entries?
-  answers:
+- ask:
+    practitioner: Can I use synthetic data or an off-the-shelf tokenizer under a 100M-word
+      pretraining data budget?
+    unsorted:
+    - Does data generated by another model count against the BabyLM word budget?
+    - Are external POS taggers or parsers allowed in BabyLM entries?
+  answered_by:
   - synthetic-data-accounting
-- q:
-  - How hard is it to get a competition-entry paper accepted at a sample-efficient pretraining
-    workshop?
-  - What is the review process for BabyLM workshop submissions?
-  - Can I submit a paper to the BabyLM workshop without entering the competition?
-  answers:
+- ask:
+    practitioner: Can I submit a paper to the BabyLM workshop without entering the competition?
+    unsorted:
+    - How hard is it to get a competition-entry paper accepted at a sample-efficient pretraining
+      workshop?
+    - What is the review process for BabyLM workshop submissions?
+  answered_by:
   - lenient-review
   - workshop-turn
 misreadings:

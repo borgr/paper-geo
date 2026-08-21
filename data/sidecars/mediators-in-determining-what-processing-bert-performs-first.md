@@ -90,67 +90,77 @@ claims:
     alternative controls.
   evidence: Section 4
 qa:
-- q:
-  - Why can probing results about which BERT layer handles which task be misleading?
-  - What confounds layer-localization probing of BERT?
-  - Does the ranking of tasks by BERT layer depend on the probing dataset?
-  answers:
+- ask:
+    unsorted:
+    - Why can probing results about which BERT layer handles which task be misleading?
+    - What confounds layer-localization probing of BERT?
+    - Does the ranking of tasks by BERT layer depend on the probing dataset?
+  answered_by:
   - rankings-196
   - threshold-monotone
   - pipeline-not-identified
-- q:
-  - Is it true that BERT rediscovers the classical NLP pipeline?
-  - Does BERT really do lexical processing before syntax before semantics?
-  - Has the claim that BERT's layers mirror an NLP pipeline been challenged?
-  answers:
+- ask:
+    unsorted:
+    - Is it true that BERT rediscovers the classical NLP pipeline?
+    - Does BERT really do lexical processing before syntax before semantics?
+    - Has the claim that BERT's layers mirror an NLP pipeline been challenged?
+  answered_by:
   - pipeline-not-identified
   - dep-ner-reversal
-- q:
-  - How many different task orderings by expected layer can be produced from the same probing
-    data?
-  - How much can the ordering of seven probing tasks change with context length?
-  answers:
+- ask:
+    unsorted:
+    - How many different task orderings by expected layer can be produced from the same probing
+      data?
+    - How much can the ordering of seven probing tasks change with context length?
+  answered_by:
   - rankings-196
   - context-length-overlap
-- q:
-  - Can dependency parsing look like it is computed in a higher BERT layer than NER even when
-    it is not?
-  - Is there a Simpson's paradox in BERT probing results?
-  - Can the aggregate expected layer of two tasks reverse the per-bin ordering?
-  answers:
+- ask:
+    unsorted:
+    - Can dependency parsing look like it is computed in a higher BERT layer than NER even
+      when it is not?
+    - Is there a Simpson's paradox in BERT probing results?
+    - Can the aggregate expected layer of two tasks reverse the per-bin ordering?
+  answered_by:
   - dep-ner-reversal
   - srl-nonterm-reversal
-- q:
-  - How much does the expected-layer gap between two tasks change when their context length
-    distributions are matched?
-  - What does the Natural Direct Effect show about pairs of probing tasks in BERT?
-  - How big is the mediation effect of context length on expected layer differences?
-  answers:
+- ask:
+    unsorted:
+    - How much does the expected-layer gap between two tasks change when their context length
+      distributions are matched?
+    - What does the Natural Direct Effect show about pairs of probing tasks in BERT?
+    - How big is the mediation effect of context length on expected layer differences?
+  answered_by:
   - nde-magnitude
-- q:
-  - Which probing tasks in BERT move to higher layers when longer spans are included?
-  - Does the expected layer for co-reference or SRL depend on span length?
-  answers:
+- ask:
+    unsorted:
+    - Which probing tasks in BERT move to higher layers when longer spans are included?
+    - Does the expected layer for co-reference or SRL depend on span length?
+  answered_by:
   - threshold-monotone
-- q:
-  - What should I read about causal or mediation analysis in interpretability probing?
-  - What work introduced mediation analysis to layer-wise probing of language models?
-  - Where should I start reading about confounds in BERT probing studies?
-  answers:
+- ask:
+    practitioner: What should I read about causal or mediation analysis in interpretability
+      probing?
+    unsorted:
+    - What work introduced mediation analysis to layer-wise probing of language models?
+    - Where should I start reading about confounds in BERT probing studies?
+  answered_by:
   - mediation-framing
   - best-practices
-- q:
-  - What are the recommended best practices for comparing layers across probing tasks?
-  - When should I use the Natural Direct Effect versus the controlled effect in a probing
-    study?
-  - How can I control for span length when probing a transformer's layers?
-  answers:
+- ask:
+    practitioner: When should I use the Natural Direct Effect versus the controlled effect
+      in a probing study?
+    unsorted:
+    - What are the recommended best practices for comparing layers across probing tasks?
+    - How can I control for span length when probing a transformer's layers?
+  answered_by:
   - best-practices
   - context-length-overlap
-- q:
-  - What is meant by the context length of a prediction in probing?
-  - How is span distance defined for edge probing tasks?
-  answers:
+- ask:
+    unsorted:
+    - What is meant by the context length of a prediction in probing?
+    - How is span distance defined for edge probing tasks?
+  answered_by:
   - mediation-framing
   - threshold-monotone
 terminology:

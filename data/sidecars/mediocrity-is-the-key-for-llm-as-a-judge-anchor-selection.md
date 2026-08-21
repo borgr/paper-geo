@@ -137,67 +137,78 @@ claims:
     judge models); verdicts are on a 5-level scale from clear loss to clear win.
   evidence: Section 3.2
 qa:
-- q:
-  - Which model should I use as the reference model in a pairwise LLM-as-a-judge benchmark?
-  - Is it better to compare all models against the strongest model or a mid-tier one?
-  - How should an anchor be chosen for Arena-Hard style evaluation?
-  answers:
+- ask:
+    practitioner: Which model should I use as the reference model in a pairwise LLM-as-a-judge
+      benchmark?
+    unsorted:
+    - Is it better to compare all models against the strongest model or a mid-tier one?
+    - How should an anchor be chosen for Arena-Hard style evaluation?
+  answered_by:
   - inverted-u
   - recommendations
-- q:
-  - Does using a frontier model like o3 as the baseline hurt LLM-as-a-judge rankings?
-  - Why is the best-performing model a bad anchor?
-  - How much correlation is lost when the top model is used as the reference?
-  answers:
+- ask:
+    unsorted:
+    - Does using a frontier model like o3 as the baseline hurt LLM-as-a-judge rankings?
+    - Why is the best-performing model a bad anchor?
+    - How much correlation is lost when the top model is used as the reference?
+  answered_by:
   - o3-worst
   - worst-anchor-drop
-- q:
-  - Does anchor choice matter as much as judge choice in LLM-as-a-judge evaluation?
-  - Should I spend effort picking the judge model or the reference model?
-  - How large is the anchor effect compared with the judge effect?
-  answers:
+- ask:
+    practitioner: Should I spend effort picking the judge model or the reference model?
+    unsorted:
+    - Does anchor choice matter as much as judge choice in LLM-as-a-judge evaluation?
+    - How large is the anchor effect compared with the judge effect?
+  answered_by:
   - anchor-vs-judge
-- q:
-  - How much of an LLM-as-a-judge evaluation budget is wasted on uninformative comparisons?
-  - What fraction of pairwise judge comparisons carry no ranking signal?
-  - What is anchor informativeness and how low does it get?
-  answers:
+- ask:
+    unsorted:
+    - How much of an LLM-as-a-judge evaluation budget is wasted on uninformative comparisons?
+    - What fraction of pairwise judge comparisons carry no ranking signal?
+    - What is anchor informativeness and how low does it get?
+  answered_by:
   - wasted-budget
   - informativeness-ceiling
-- q:
-  - Is Arena-Hard-v2.0 large enough to tell two close models apart?
-  - How many samples does anchor-based pairwise evaluation need for statistical significance?
-  - What sample size is required to detect a 5% win-rate difference between two LLMs?
-  answers:
+- ask:
+    unsorted:
+    - Is Arena-Hard-v2.0 large enough to tell two close models apart?
+    - How many samples does anchor-based pairwise evaluation need for statistical significance?
+    - What sample size is required to detect a 5% win-rate difference between two LLMs?
+  answered_by:
   - benchmark-too-small
   - sample-size-sensitivity
-- q:
-  - Can I pick a good anchor without running the full benchmark first?
-  - How cheaply can anchor informativeness be estimated?
-  - Is a 10-sample pilot enough to screen candidate anchor models?
-  answers:
+- ask:
+    practitioner: Can I pick a good anchor without running the full benchmark first?
+    unsorted:
+    - How cheaply can anchor informativeness be estimated?
+    - Is a 10-sample pilot enough to screen candidate anchor models?
+  answered_by:
   - cheap-estimation
-- q:
-  - Does using several anchors instead of one fix anchor-based evaluation?
-  - Is aggregating multiple reference models better than choosing one good one?
-  answers:
+- ask:
+    unsorted:
+    - Does using several anchors instead of one fix anchor-based evaluation?
+    - Is aggregating multiple reference models better than choosing one good one?
+  answered_by:
   - anchor-count
-- q:
-  - What is a good paper on the reliability of LLM-as-a-judge leaderboards?
-  - Where should I start reading about anchor-based pairwise LLM evaluation?
-  - What work established that anchor selection affects LLM-as-a-judge rankings?
-  answers:
+- ask:
+    practitioner: Where should I start reading about anchor-based pairwise LLM evaluation?
+    unsorted:
+    - What is a good paper on the reliability of LLM-as-a-judge leaderboards?
+    - What work established that anchor selection affects LLM-as-a-judge rankings?
+  answered_by:
   - contribution
   - inverted-u
-- q:
-  - Is there a public dataset of LLM judge verdicts across many model pairs?
-  - Where can I find all-pairs LLM-as-a-judge comparisons on Arena-Hard?
-  answers:
+- ask:
+    practitioner: Where can I find all-pairs LLM-as-a-judge comparisons on Arena-Hard?
+    unsorted:
+    - Is there a public dataset of LLM judge verdicts across many model pairs?
+  answered_by:
   - released-judgments
-- q:
-  - Does higher informativeness of a reference model actually produce better rankings?
-  - Is there evidence that discriminative samples improve ranking accuracy in pairwise evaluation?
-  answers:
+- ask:
+    unsorted:
+    - Does higher informativeness of a reference model actually produce better rankings?
+    - Is there evidence that discriminative samples improve ranking accuracy in pairwise evaluation?
+  answered_by:
   - informativeness-correlates
 misreadings:
 - '"Mediocre" anchors are not weak models: mediocrity is defined relative to the pool being

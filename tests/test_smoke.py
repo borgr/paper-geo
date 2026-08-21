@@ -497,7 +497,7 @@ class TestEveryCheckSurvivesAnOffSchemaDraft(unittest.TestCase):
         {"one_liner": None, "claims": [None, "text", 7], "qa": ["a string"],
          "misreadings": [{"text": "an object"}], "terminology": ["a", "list"]},
         {"claims": [{"id": None, "text": None, "scope": 3, "evidence": []}],
-         "qa": [{"q": None, "phrasings": "not a list"}], "terminology": {"t": None}},
+         "qa": [{"ask": None, "answered_by": "not a list"}], "terminology": {"t": None}},
         {},
     ]
 
@@ -580,10 +580,10 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
                      "from separately finetuned models, and (2) a benchmark that measures "
                      "whether the merged model is general.",
         # One of three result claims carries a figure, so the page-level rule fires too.
-        "qa": [{"q": ["How much data does it take to fit a model like this?",
-                      "Was this validated on more than one dataset?",
-                      "What do the authors recommend?"],
-                "answers": ["overloaded"]}],
+        "qa": [{"ask": {"plain": "How much data does it take to fit a model like this?",
+                        "jargon": "Was this validated on more than one dataset?",
+                        "task": "What do the authors recommend?"},
+                "answered_by": ["overloaded"]}],
         "misreadings": ["Low agreement here is not weak annotation."],
         "terminology": {"normalized accuracy": "The metric for every merging table here."},
     }
@@ -598,10 +598,11 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
             "scope": "Encoder-decoder models above 125M parameters; no effect measured "
                      "below that, and only the WMT16 English-German pair was tested.",
         }],
-        "qa": [{"q": ["How much data does it take to fit a latent-skill model of arena "
-                      "outcomes?",
-                      "Was the WMT16 result replicated on another language pair?"],
-                "answers": ["clean"]}],
+        "qa": [{"ask": {"plain": "How much data does it take to fit a latent-skill "
+                                 "model of arena outcomes?",
+                        "jargon": "Was the WMT16 result replicated on another language "
+                                  "pair?"},
+                "answered_by": ["clean"]}],
     }
 
     def test_each_rule_catches_its_own_violation(self):
@@ -642,9 +643,10 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
         alone and banning it would push the drafter into stilted English for nothing.
         """
         from validate import check_readability
-        ok = {"qa": [{"q": ["How do you merge LoRA adapters without mixing up their "
-                            "factorizations?",
-                            "Can I compare two models by their skill profile?"]}]}
+        ok = {"qa": [{"ask": {"plain": "How do you merge LoRA adapters without mixing "
+                                       "up their factorizations?",
+                              "practitioner": "Can I compare two models by their skill "
+                                              "profile?"}}]}
         self.assertEqual(check_readability([("ok.md", ok)]), [])
 
     def test_a_misreading_may_still_say_what_the_paper_does_not_state(self):
@@ -687,16 +689,20 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
         ones.
         """
         from validate import check_readability
-        bad = {"qa": [{"q": ["Is there a guarantee that the estimator is correct?",
-                             "How are the model parameters estimated?"]}]}
+        bad = {"qa": [{"ask": {"plain": "Is there a guarantee that the estimator is "
+                                        "correct?",
+                               "jargon": "How are the model parameters estimated?"}}]}
         found = " ".join(check_readability([("bad.md", bad)]))
         for want in ("'the estimator' has no antecedent", "'the model' has no antecedent"):
             with self.subTest(want=want):
                 self.assertIn(want, found)
-        ok = {"qa": [{"q": ["Does the anchor-point method apply to prompt selection?",
-                            "Do the models I merge have to be related to my task?",
-                            "What do the authors of Global-MMLU recommend?",
-                            "Is it enough to train only the B matrix in LoRA?"]}]}
+        ok = {"qa": [{"ask": {"plain": "Does the anchor-point method apply to prompt "
+                                       "selection?",
+                              "practitioner": "Do the models I merge have to be related "
+                                              "to my task?",
+                              "jargon": "What do the authors of Global-MMLU recommend?",
+                              "task": "Is it enough to train only the B matrix in "
+                                      "LoRA?"}}]}
         self.assertEqual(check_readability([("ok.md", ok)]), [])
 
     def test_a_claim_that_only_describes_construction_is_caught(self):
@@ -754,7 +760,7 @@ class TestARepairRoundCannotAnswerWithAnEmptySidecar(unittest.TestCase):
     def test_a_collapsed_reply_is_named_and_refused(self):
         import draft_sidecars as D
         full = {"claims": [{"id": str(i)} for i in range(12)],
-                "qa": [{"q": ["a", "b"]} for _ in range(8)]}
+                "qa": [{"ask": {"plain": "a?", "jargon": "b?"}} for _ in range(8)]}
         self.assertIsNone(D.shrunk(full, full))
         # Merging two overlapping claims is a legitimate fix, so it must still pass.
         self.assertIsNone(D.shrunk(full, {**full, "claims": full["claims"][:9]}))
@@ -809,9 +815,10 @@ class TestEveryFindingNamesSomethingFixable(unittest.TestCase):
         import validate as V
         fm = {"coined": "Global-MMLU", "gloss": "A multilingual MMLU with cultural "
                                                 "sensitivity labels.",
-              "claims": [], "qa": [{"q": ["What fraction of MMLU questions need "
-                                          "cultural knowledge?",
-                                          "Is MMLU culturally biased?"]}]}
+              "claims": [],
+              "qa": [{"ask": {"plain": "What fraction of MMLU questions need cultural "
+                                       "knowledge?",
+                              "jargon": "Is MMLU culturally biased?"}}]}
         found = [f for f in V.check_sidecar_shape([("d.md", fm)])
                  if "every phrasing" in f]
         self.assertTrue(found)
@@ -853,9 +860,9 @@ class TestATargetedRepairTouchesOnlyWhatBroke(unittest.TestCase):
             "scope": "LoRA adapters over eight vision datasets, merged without any "
                      "held-out data to tune the merge on.",
         }],
-        "qa": [{"q": ["How much data does it take to fit a model like this?",
-                      "Was this validated on more than one dataset?"],
-                "answers": ["clean"]}],
+        "qa": [{"ask": {"plain": "How much data does it take to fit a model like this?",
+                        "jargon": "Was this validated on more than one dataset?"},
+                "answered_by": ["clean"]}],
         "misreadings": ["Low agreement here is not weak annotation."],
         "terminology": {"normalized accuracy": "The metric for every merging table here."},
     }
@@ -905,12 +912,17 @@ class TestATargetedRepairTouchesOnlyWhatBroke(unittest.TestCase):
             ("claim 'x': scope is longer than the claim it bounds (205 vs 200 chars)",
              "claim/x/scope"),
             ("claim 'x': scope is 4 sentences (max 3)", "claim/x/scope"),
-            ("qa[1]: every phrasing contains 'BabyLM Interaction track'", "qa/1/q/0"),
+            # A group-level finding aims at whichever route the group leads with, read
+            # off the draft -- so a finding about a group that is not there places
+            # nowhere rather than at a locus the patcher would then fail to find.
+            ("qa[0]: every phrasing contains 'BabyLM Interaction track'",
+             "qa/0/ask/plain"),
+            ("qa[7]: every phrasing contains 'BabyLM Interaction track'", None),
             ("term 'normalized accuracy': definition says 'here'",
              "term/normalized accuracy"),
             # Opens with the offending string, so it is found by looking it up.
             ("Was this validated on more than one dataset? -- 'Was this' has no "
-             "antecedent in the question", "qa/0/q/1"),
+             "antecedent in the question", "qa/0/ask/jargon"),
             ("Low agreement here is not weak annotation. -- 'here' has nothing to point "
              "at once this bullet is extracted on its own", "misreadings/0"),
             # About the set, not a field: fixing it needs the other claims in view.
@@ -952,9 +964,11 @@ class TestATargetedRepairTouchesOnlyWhatBroke(unittest.TestCase):
                          "scope": "Adapters trained from one shared checkpoint."},
                         {"id": "bare-c", "text": "The merge needs no data to tune it.",
                          "scope": "Held-out-free merging over eight vision datasets."}]
-        fm["qa"] = [{"q": ["How much accuracy does merging eight adapters cost?",
-                           "What does trimming small updates do to accuracy?"],
-                     "answers": ["has-one", "bare-a"]}]
+        fm["qa"] = [{"ask": {"plain": "How much accuracy does merging eight adapters "
+                                      "cost?",
+                             "jargon": "What does trimming small updates do to "
+                                       "accuracy?"},
+                     "answered_by": ["has-one", "bare-a"]}]
         self.path = self.D.write_draft("a-paper", fm, "a fake model")
         before = self._findings()
         floor = [f for f in before if "result claims state a figure" in f]
@@ -988,8 +1002,10 @@ class TestATargetedRepairTouchesOnlyWhatBroke(unittest.TestCase):
                                                     f"without saying how much.",
                          "scope": "Encoder-decoder models above 125M parameters, one pair."}
                         for k in "abcd"]
-        fm["qa"] = [{"q": ["What does claim a say happens without a magnitude?",
-                           "Which claim reports no measured amount at all?"],
+        fm["qa"] = [{"ask": {"plain": "What does claim a say happens without a "
+                                      "magnitude?",
+                             "jargon": "Which claim reports no measured amount at "
+                                       "all?"},
                      "answers": ["bare-a", "bare-b"]}]
         self.path = self.D.write_draft("a-paper", fm, "a fake model")
         before = self._findings()
@@ -1015,7 +1031,9 @@ class TestATargetedRepairTouchesOnlyWhatBroke(unittest.TestCase):
         self.assertIn(f"over {CLAIM_SENTENCE_WORDS} words",
                       self.D.limits("claim/x/text"))
         self.assertIn(f"most {SCOPE_SENTENCES} sentences", self.D.limits("claim/x/scope"))
-        self.assertIn("answerable on its own", self.D.limits("qa/0/q/0"))
+        self.assertIn("answerable on its own", self.D.limits("qa/0/ask/plain"))
+        # And the role is named back, so a one-field rewrite knows which route it is on.
+        self.assertIn("first person", self.D.limits("qa/0/ask/practitioner"))
 
     def test_a_quoting_finding_is_not_guessed_at_without_the_draft(self):
         """`where` has no way to place one from the string alone, and does not try."""
@@ -1023,18 +1041,20 @@ class TestATargetedRepairTouchesOnlyWhatBroke(unittest.TestCase):
                                        "antecedent in the question"))
 
     def test_a_string_in_two_places_is_left_for_the_whole_sidecar_repair(self):
-        fm = {"qa": [{"q": ["What is it?"]}, {"q": ["What is it?"]}]}
+        fm = {"qa": [{"ask": {"plain": "What is it?"}},
+                     {"ask": {"plain": "What is it?"}}]}
         self.assertIsNone(self.D._quoting(fm, "What is it?"))
 
     def test_a_locus_round_trips_and_a_stale_one_refuses(self):
         fm = self.D.front_matter(self.path)
-        for locus in ("claim/too-long/text", "claim/clean/scope", "qa/0/q/1",
+        for locus in ("claim/too-long/text", "claim/clean/scope", "qa/0/ask/jargon",
                       "misreadings/0", "term/normalized accuracy"):
             with self.subTest(locus=locus):
                 self.assertIsInstance(self.D.at(fm, locus), str)
                 self.assertTrue(self.D.put(fm, locus, "rewritten"))
                 self.assertEqual("rewritten", self.D.at(fm, locus))
-        for gone in ("claim/nope/text", "claim/clean/kind", "qa/9/q/0", "qa/0/q/9",
+        for gone in ("claim/nope/text", "claim/clean/kind", "qa/9/ask/plain",
+                     "qa/0/ask/task", "qa/0/ask/unsorted/9",
                      "misreadings/9", "term/nope", "one_liner"):
             with self.subTest(locus=gone):
                 self.assertIsNone(self.D.at(fm, gone))
@@ -1054,7 +1074,8 @@ class TestATargetedRepairTouchesOnlyWhatBroke(unittest.TestCase):
         was = self.D.front_matter(self.D.write_draft("untouched",
                                                      copy.deepcopy(self.SIDECAR), "x"))
         for locus in ("claim/too-long/scope", "claim/clean/text", "claim/clean/scope",
-                      "qa/0/q/0", "qa/0/q/1", "misreadings/0", "term/normalized accuracy"):
+                      "qa/0/ask/plain", "qa/0/ask/jargon", "misreadings/0",
+                      "term/normalized accuracy"):
             with self.subTest(locus=locus):
                 self.assertEqual(self.D.at(was, locus), self.D.at(fm, locus))
         self.assertEqual(self.SIDECAR["one_liner"], fm["one_liner"])
@@ -2363,7 +2384,9 @@ class TestAVisibleQuestionIsAlsoAMachineReadableOne(unittest.TestCase):
             "one_liner": "x",
             "claims": [{"id": "c1", "text": "The claim, stated plainly." * 3,
                         "scope": "Holds under these conditions." * 4}],
-            "qa": [{"q": ["Does it work?", "Is it known to work?"], "answers": ["c1"]}],
+            "qa": [{"ask": {"plain": "Does it work?",
+                            "jargon": "Is it known to work?"},
+                    "answered_by": ["c1"]}],
             "terminology": {"widget": "a thing"},
         }
 
@@ -3441,3 +3464,75 @@ class TestWikipediaAsksOnlyForCorrections(unittest.TestCase):
             self.assertNotIn(banned, text, f"{banned!r} is back in tasks/wikipedia.md")
         for banned in ("{{edit coi", "suggested addition"):
             self.assertNotIn(banned, open(os.path.join(ROOT, "WORKLIST.md")).read().lower())
+
+
+class TestAQuestionGroupIsAFormNotAList(unittest.TestCase):
+    """The `q: [a, b, c]` shape and what replaced it.
+
+    The old rule said "2-4 paraphrases, and vary them deliberately", which is a rule that
+    names what to cover and then leaves the drafter to decide whether it did. It produced
+    3692 phrasings, 90% third person and mostly rewordings of one sentence, every one of
+    them satisfying the letter of it. So a group is now four named routes -- and the
+    regression to guard is not a formatting one: it is a rule going back to describing a
+    thing nobody has to fill in.
+    """
+
+    def _shape(self, group: dict) -> str:
+        import validate as V
+        fm = {"claims": [{"id": "c1", "kind": "result", "text": "x", "scope": "y"}],
+              "qa": [dict(group, answered_by=["c1"])]}
+        errs = V.check_sidecar_shape([("d.md", fm)])
+        # Only the question-group complaints. A one-claim fixture also trips the claim
+        # bands, and asserting on the whole string would pass for the wrong reason.
+        return " ".join(e for e in errs if "qa[" in e)
+
+    def test_a_keyword_string_is_refused_and_a_question_is_not(self):
+        """Q1, as a check. A phrasing is published twice -- as page text and as a
+        `Question.name` -- and a keyword string is penalised in the first place and
+        unreadable in the second."""
+        bad = self._shape({"ask": {"plain": "ties merging retraining required",
+                                   "jargon": "task vector interference"}})
+        self.assertIn("not a question", bad)
+        self.assertEqual("", self._shape(
+            {"ask": {"plain": "why does averaging fine-tuned weights hurt performance?",
+                     "jargon": "what causes degradation when task vectors are added?"}}))
+
+    def test_one_route_is_not_enough_and_plain_is_the_one_required(self):
+        """Q2 and Q3 as structure: the floor is `plain` plus one other vocabulary."""
+        self.assertIn("only `plain` is filled", self._shape(
+            {"ask": {"plain": "what makes two fine-tuned models mergeable?"}}))
+        self.assertIn("no `plain` phrasing", self._shape(
+            {"ask": {"jargon": "what predicts task-vector interference?",
+                     "practitioner": "should I merge my own adapters?"}}))
+
+    def test_a_legacy_group_is_exempt_until_it_is_redrafted(self):
+        """D5's rule, applied to the roles: 1263 groups were migrated without guessing
+        which route each phrasing took, so asking them for `plain` would be asking the
+        author to re-review what they already accepted."""
+        self.assertEqual("", self._shape(
+            {"ask": {"unsorted": ["Why do some finetuned models merge well?",
+                                  "What determines whether merging succeeds?"]}}))
+
+    def test_no_live_sidecar_still_carries_the_old_shape(self):
+        import glob
+        import re
+
+        import yaml
+        for path in sorted(glob.glob(os.path.join(ROOT, "data", "sidecars", "*.md"))):
+            m = re.search(r"^---\n(.*?)^---\n", open(path).read(), re.S | re.M)
+            fm = yaml.safe_load(m.group(1)) or {}
+            for i, g in enumerate(fm.get("qa") or []):
+                where = f"{os.path.basename(path)} qa[{i}]"
+                self.assertNotIn("q", g, f"{where} still holds `q`")
+                self.assertNotIn("answers", g, f"{where} still holds `answers`")
+                self.assertIn("ask", g, where)
+
+    def test_the_drafter_is_told_the_form_rather_than_the_coverage(self):
+        """The prompt is read verbatim from docs/SIDECAR.md §2, so the rule lives there or
+        it does not bind the model at all."""
+        from common import QA_ROLES, rules_block
+        block = rules_block("docs/SIDECAR.md")
+        for role in QA_ROLES:
+            self.assertIn(f"`{role}`", block, f"the prompt never names the {role} route")
+        self.assertIn("Never emit `unsorted`", block)
+        self.assertNotIn("2–4 paraphrases", block)

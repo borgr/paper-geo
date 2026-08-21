@@ -101,71 +101,82 @@ claims:
   scope: A recommendation for GEC metric validation practice as of 2018, motivated by potential
     bias from non-uniform system performance across the test set.
 qa:
-- q:
-  - How can grammatical error correction metrics be validated without collecting human rankings?
-  - Is there an automatic way to check whether GEC evaluation metrics are any good?
-  - What does MAEGE do for GEC metric validation?
-  answers:
+- ask:
+    unsorted:
+    - How can grammatical error correction metrics be validated without collecting human rankings?
+    - Is there an automatic way to check whether GEC evaluation metrics are any good?
+    - What does MAEGE do for GEC metric validation?
+  answered_by:
   - maege-context
   - chr-maege-divergence
-- q:
-  - Is M2 a reliable metric for ranking grammatical error correction systems?
-  - How well does the M² scorer predict corpus-level GEC quality?
-  - Should I trust M2 for comparing whole GEC system outputs?
-  answers:
+- ask:
+    practitioner: Should I trust M2 for comparing whole GEC system outputs?
+    unsorted:
+    - Is M2 a reliable metric for ranking grammatical error correction systems?
+    - How well does the M² scorer predict corpus-level GEC quality?
+  answered_by:
   - m2-corpus-level-poor
   - gleu-vs-m2-inverse
-- q:
-  - Which grammatical error correction metric correlates best with correction quality?
-  - Is a reference-less grammaticality metric better than reference-based GEC metrics?
-  - How does LT compare to GLEU and M2 as a GEC metric?
-  answers:
+- ask:
+    unsorted:
+    - Which grammatical error correction metric correlates best with correction quality?
+    - Is a reference-less grammaticality metric better than reference-based GEC metrics?
+    - How does LT compare to GLEU and M2 as a GEC metric?
+  answered_by:
   - lt-best-corpus
   - sentence-level-low
-- q:
-  - Do GEC metrics punish some kinds of valid corrections?
-  - Are there error types that automatic grammatical error correction metrics score negatively?
-  - Which edit types get penalized by GLEU, M2 and SARI?
-  answers:
+- ask:
+    unsorted:
+    - Do GEC metrics punish some kinds of valid corrections?
+    - Are there error types that automatic grammatical error correction metrics score negatively?
+    - Which edit types get penalized by GLEU, M2 and SARI?
+  answered_by:
   - edit-types-penalized
   - gleu-penalizes-most
-- q:
-  - How reliable are human rankings for evaluating grammatical error correction?
-  - Do the two GEC human judgment sets agree with each other?
-  - Why is inter-rater agreement a problem in GEC metric validation?
-  answers:
+- ask:
+    unsorted:
+    - How reliable are human rankings for evaluating grammatical error correction?
+    - Do the two GEC human judgment sets agree with each other?
+    - Why is inter-rater agreement a problem in GEC metric validation?
+  answered_by:
   - human-ranking-disagreement
   - chr-protocol-proposal
-- q:
-  - Does evaluating metrics on conservative GEC system outputs change which metric looks best?
-  - What happens to SARI and M2 when the source is always the uncorrected original sentence?
-  - Are GEC metric validation results biased by systems that under-correct?
-  answers:
+- ask:
+    unsorted:
+    - Does evaluating metrics on conservative GEC system outputs change which metric looks
+      best?
+    - What happens to SARI and M2 when the source is always the uncorrected original sentence?
+    - Are GEC metric validation results biased by systems that under-correct?
+  answered_by:
   - precision-oriented-source
   - chr-maege-divergence
-- q:
-  - Why is I-Measure so slow to compute on GEC test sets?
-  - How many references does I-Measure generate per sentence on NUCLE?
-  - Is I-Measure practical for evaluating grammatical error correction with multiple references?
-  answers:
+- ask:
+    practitioner: Why is I-Measure so slow to compute on GEC test sets?
+    unsorted:
+    - How many references does I-Measure generate per sentence on NUCLE?
+    - Is I-Measure practical for evaluating grammatical error correction with multiple references?
+  answered_by:
   - imeasure-intractable
-- q:
-  - Where should I start reading about how grammatical error correction is evaluated?
-  - What work questioned the standard practice of validating GEC metrics against human rankings?
-  - What is a good paper on evaluation methodology for grammatical error correction?
-  answers:
+- ask:
+    practitioner: Where should I start reading about how grammatical error correction is evaluated?
+    unsorted:
+    - What work questioned the standard practice of validating GEC metrics against human rankings?
+    - What is a good paper on evaluation methodology for grammatical error correction?
+  answered_by:
   - maege-context
   - chr-protocol-proposal
-- q:
-  - Do GEC metrics agree with quality judgments at the sentence level?
-  - How good is sentence-level correlation for GEC metrics like iBLEU and GLEU?
-  answers:
+- ask:
+    unsorted:
+    - Do GEC metrics agree with quality judgments at the sentence level?
+    - How good is sentence-level correlation for GEC metrics like iBLEU and GLEU?
+  answered_by:
   - sentence-level-low
   - gleu-vs-m2-inverse
-- q:
-  - How should GEC metric validation with human rankings be reported in future work?
-  - What protocol fixes the sentence-subset mismatch in GEC correlation studies?
-  answers:
+- ask:
+    unsorted:
+    - How should GEC metric validation with human rankings be reported in future work?
+    - What protocol fixes the sentence-subset mismatch in GEC correlation studies?
+  answered_by:
   - chr-protocol-proposal
   - human-ranking-disagreement
 coined: MAEGE

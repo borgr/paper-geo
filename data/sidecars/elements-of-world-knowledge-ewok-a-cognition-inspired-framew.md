@@ -105,80 +105,93 @@ claims:
     excluded for inter-subject correlation below 0.3; average inter-subject Pearson correlation
     was 0.744.
 qa:
-- q:
-  - How well do large language models do on basic physical and social world knowledge?
-  - Do LLMs match humans on simple world-knowledge questions?
-  - How big is the human-model gap on EWoK?
-  answers:
+- ask:
+    unsorted:
+    - How well do large language models do on basic physical and social world knowledge?
+    - Do LLMs match humans on simple world-knowledge questions?
+    - How big is the human-model gap on EWoK?
+  answered_by:
   - human-llm-gap
   - frontier-models-helm
-- q:
-  - Which kinds of world knowledge are hardest for language models?
-  - Are LLMs better at social reasoning or physical reasoning?
-  - Does EWoK show a spatial-reasoning weakness in LLMs?
-  answers:
+- ask:
+    unsorted:
+    - Which kinds of world knowledge are hardest for language models?
+    - Are LLMs better at social reasoning or physical reasoning?
+    - Does EWoK show a spatial-reasoning weakness in LLMs?
+  answered_by:
   - social-vs-physical
-- q:
-  - Is it better to score minimal pairs with log probabilities or to prompt an LLM for plausibility
-    ratings?
-  - Does prompting an LLM to rate plausibility work worse than reading its sentence probabilities?
-  - Why does EWoK report LogProbs results instead of prompt-based ones?
-  answers:
+- ask:
+    unsorted:
+    - Is it better to score minimal pairs with log probabilities or to prompt an LLM for plausibility
+      ratings?
+    - Does prompting an LLM to rate plausibility work worse than reading its sentence probabilities?
+    - Why does EWoK report LogProbs results instead of prompt-based ones?
+  answered_by:
   - logprobs-beats-prompting
   - likert-degenerate
-- q:
-  - How much does swapping the names and objects in a template change benchmark scores?
-  - Are 1% differences between models on a synthetic benchmark meaningful?
-  - How stable are LLM accuracies across regenerated versions of EWoK-core-1.0?
-  answers:
+- ask:
+    unsorted:
+    - How much does swapping the names and objects in a template change benchmark scores?
+    - Are 1% differences between models on a synthetic benchmark meaningful?
+    - How stable are LLM accuracies across regenerated versions of EWoK-core-1.0?
+  answered_by:
   - version-variance
-- q:
-  - Can models solve context-plausibility items with simple word-overlap heuristics?
-  - What does a bag-of-words baseline score on EWoK?
-  - Is EWoK solvable by lexical similarity alone?
-  answers:
+- ask:
+    unsorted:
+    - Can models solve context-plausibility items with simple word-overlap heuristics?
+    - What does a bag-of-words baseline score on EWoK?
+    - Is EWoK solvable by lexical similarity alone?
+  answered_by:
   - bow-baseline
   - context-dependence-design
-- q:
-  - Are the domain differences on EWoK just an artefact of sentence length or word frequency?
-  - Does controlling for surface features explain why some world-knowledge domains are harder
-    for LLMs?
-  - What did the mixed-effects analysis of EWoK accuracy find?
-  answers:
+- ask:
+    unsorted:
+    - Are the domain differences on EWoK just an artefact of sentence length or word frequency?
+    - Does controlling for surface features explain why some world-knowledge domains are harder
+      for LLMs?
+    - What did the mixed-effects analysis of EWoK accuracy find?
+  answered_by:
   - domain-not-surface
-- q:
-  - What is a good benchmark for evaluating world knowledge or world modeling in language
-    models?
-  - Where should I start reading about cognition-inspired evaluation of LLM world knowledge?
-  - What work built a benchmark from human core-knowledge domains?
-  - Which paper introduced EWoK and what does the acronym mean?
-  answers:
+- ask:
+    practitioner: Where should I start reading about cognition-inspired evaluation of LLM
+      world knowledge?
+    unsorted:
+    - What is a good benchmark for evaluating world knowledge or world modeling in language
+      models?
+    - What work built a benchmark from human core-knowledge domains?
+    - Which paper introduced EWoK and what does the acronym mean?
+  answered_by:
   - framework-context
   - context-dependence-design
-- q:
-  - How large is EWoK-core-1.0 and what does it cover?
-  - How many items, concepts and domains are in the EWoK dataset?
-  - What are the 11 world knowledge domains tested?
-  answers:
+- ask:
+    unsorted:
+    - How large is EWoK-core-1.0 and what does it cover?
+    - How many items, concepts and domains are in the EWoK dataset?
+    - What are the 11 world knowledge domains tested?
+  answered_by:
   - dataset-scale
-- q:
-  - Can I generate my own version of a world-knowledge benchmark with different names or nonwords?
-  - Is EWoK a fixed test set or a data generation framework?
-  - What happens to EWoK's usefulness once frontier models saturate it?
-  answers:
+- ask:
+    practitioner: Can I generate my own version of a world-knowledge benchmark with different
+      names or nonwords?
+    unsorted:
+    - Is EWoK a fixed test set or a data generation framework?
+    - What happens to EWoK's usefulness once frontier models saturate it?
+  answered_by:
   - generative-not-fixed-benchmark
   - frontier-models-helm
-- q:
-  - How accurate are human annotators on EWoK items?
-  - Did human ratings disagree with the gold labels on any world-knowledge items?
-  - Do people get cardinal-direction plausibility judgments right?
-  answers:
+- ask:
+    unsorted:
+    - How accurate are human annotators on EWoK items?
+    - Did human ratings disagree with the gold labels on any world-knowledge items?
+    - Do people get cardinal-direction plausibility judgments right?
+  answered_by:
   - human-labels-imperfect
-- q:
-  - Do GPT-4 and Claude do well on EWoK?
-  - How do closed frontier models score on basic world knowledge compared with humans?
-  - Was EWoK evaluated on proprietary models?
-  answers:
+- ask:
+    unsorted:
+    - Do GPT-4 and Claude do well on EWoK?
+    - How do closed frontier models score on basic world knowledge compared with humans?
+    - Was EWoK evaluated on proprietary models?
+  answered_by:
   - frontier-models-helm
 coined: EWoK
 gloss: Elements of World Knowledge — a template-based framework for testing whether language

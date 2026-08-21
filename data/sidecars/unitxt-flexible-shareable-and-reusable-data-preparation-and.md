@@ -105,90 +105,106 @@ claims:
     or per-team detail; open-source community adoption was at an early stage.
   evidence: Section 2
 qa:
-- q:
-  - How do I keep prompt formatting and evaluation reproducible across datasets and models?
-  - Is there a library that standardizes LLM prompt construction and scoring?
-  - What tool lets me share a whole data-preparation and evaluation pipeline with someone
-    else?
-  answers:
+- ask:
+    practitioner: How do I keep prompt formatting and evaluation reproducible across datasets
+      and models?
+    unsorted:
+    - Is there a library that standardizes LLM prompt construction and scoring?
+    - What tool lets me share a whole data-preparation and evaluation pipeline with someone
+      else?
+  answered_by:
   - recipe-single-spec
   - context-modularity-gap
-- q:
-  - What should I read about standardized data preparation for evaluating language models?
-  - Which paper introduced a modular framework for prompt-level data processing in NLP?
-  - Where should I start reading about reproducible LLM evaluation pipelines?
-  answers:
+- ask:
+    practitioner: What should I read about standardized data preparation for evaluating language
+      models?
+    unsorted:
+    - Which paper introduced a modular framework for prompt-level data processing in NLP?
+    - Where should I start reading about reproducible LLM evaluation pipelines?
+  answered_by:
   - context-modularity-gap
   - context-standalone-vs-harness
-- q:
-  - What is a Unitxt recipe and what does loading one give me?
-  - How is a prompt configuration specified in Unitxt?
-  - Can I switch template, system prompt and number of shots without rewriting processing
-    code?
-  answers:
+- ask:
+    practitioner: What is a Unitxt recipe and what does loading one give me?
+    unsorted:
+    - How is a prompt configuration specified in Unitxt?
+    - Can I switch template, system prompt and number of shots without rewriting processing
+      code?
+  answered_by:
   - recipe-single-spec
   - template-decoupling
-- q:
-  - How many pipeline configurations does the Unitxt catalog support?
-  - How big is the Unitxt catalog?
-  - How many task, dataset and template combinations are available out of the box?
-  answers:
+- ask:
+    unsorted:
+    - How many pipeline configurations does the Unitxt catalog support?
+    - How big is the Unitxt catalog?
+    - How many task, dataset and template combinations are available out of the box?
+  answered_by:
   - hundred-k-configs
-- q:
-  - How hard is it to plug Unitxt into LM-eval-harness?
-  - How much code does it take to add new tasks and metrics to LM-eval-harness?
-  - Can I add new datasets and metrics to an existing evaluation harness without rewriting
-    it?
-  answers:
+- ask:
+    practitioner: Can I add new datasets and metrics to an existing evaluation harness without
+      rewriting it?
+    unsorted:
+    - How hard is it to plug Unitxt into LM-eval-harness?
+    - How much code does it take to add new tasks and metrics to LM-eval-harness?
+  answered_by:
   - lm-eval-30-lines
   - hf-compatible-output
-- q:
-  - Do I have to abandon HuggingFace datasets to use Unitxt?
-  - Does a Unitxt pipeline output something my existing training code can consume?
-  - Can a prepared prompt dataset be pushed to the HuggingFace hub?
-  answers:
+- ask:
+    practitioner: Do I have to abandon HuggingFace datasets to use Unitxt?
+    unsorted:
+    - Does a Unitxt pipeline output something my existing training code can consume?
+    - Can a prepared prompt dataset be pushed to the HuggingFace hub?
+  answered_by:
   - hf-compatible-output
-- q:
-  - Can one prompt template be reused across several datasets?
-  - How does Unitxt differ from PromptSource for prompt reuse?
-  - Are templates tied to a single dataset in Unitxt?
-  answers:
+- ask:
+    unsorted:
+    - Can one prompt template be reused across several datasets?
+    - How does Unitxt differ from PromptSource for prompt reuse?
+    - Are templates tied to a single dataset in Unitxt?
+  answered_by:
   - template-decoupling
-- q:
-  - How are free-text model outputs turned back into something a metric can score?
-  - Who handles post-processing of generative predictions in Unitxt?
-  - How does an answer like "two and a half" get scored for sentence similarity?
-  answers:
+- ask:
+    unsorted:
+    - How are free-text model outputs turned back into something a metric can score?
+    - Who handles post-processing of generative predictions in Unitxt?
+    - How does an answer like "two and a half" get scored for sentence similarity?
+  answered_by:
   - deverbalization-in-template
-- q:
-  - Does Unitxt report uncertainty on evaluation scores?
-  - Are confidence intervals available for Unitxt metrics?
-  - How do I get error bars on benchmark scores?
-  answers:
+- ask:
+    practitioner: How do I get error bars on benchmark scores?
+    unsorted:
+    - Does Unitxt report uncertainty on evaluation scores?
+    - Are confidence intervals available for Unitxt metrics?
+  answered_by:
   - bootstrap-ci
-- q:
-  - How can I test prompt robustness to noisy inputs?
-  - Does Unitxt support data augmentation and label noising for training data?
-  - Where in a Unitxt data-preparation pipeline can augmentations be inserted?
-  answers:
+- ask:
+    practitioner: How can I test prompt robustness to noisy inputs?
+    unsorted:
+    - Does Unitxt support data augmentation and label noising for training data?
+    - Where in a Unitxt data-preparation pipeline can augmentations be inserted?
+  answered_by:
   - augmentation-extensions
-- q:
-  - Is there a UI for previewing prompts before running an evaluation?
-  - How can I inspect what prompt a given task, template and format produce?
-  - Can I try a Unitxt configuration on a model without writing code first?
-  answers:
+- ask:
+    practitioner: How can I inspect what prompt a given task, template and format produce?
+    unsorted:
+    - Is there a UI for previewing prompts before running an evaluation?
+    - Can I try a Unitxt configuration on a model without writing code first?
+  answered_by:
   - explore-ui
-- q:
-  - Has Unitxt actually been used in production or only demonstrated?
-  - Who uses Unitxt for LLM training and evaluation?
-  - What evidence is there of real industrial adoption of a modular prompt-preparation library?
-  answers:
+- ask:
+    unsorted:
+    - Has Unitxt actually been used in production or only demonstrated?
+    - Who uses Unitxt for LLM training and evaluation?
+    - What evidence is there of real industrial adoption of a modular prompt-preparation library?
+  answered_by:
   - context-ibm-adoption
-- q:
-  - Is Unitxt a replacement for HELM, OpenCompass or LM-eval-harness?
-  - Does adopting a new data-preparation library mean giving up my current evaluation harness?
-  - How does Unitxt relate to existing LLM evaluation frameworks?
-  answers:
+- ask:
+    practitioner: Does adopting a new data-preparation library mean giving up my current evaluation
+      harness?
+    unsorted:
+    - Is Unitxt a replacement for HELM, OpenCompass or LM-eval-harness?
+    - How does Unitxt relate to existing LLM evaluation frameworks?
+  answered_by:
   - context-standalone-vs-harness
   - lm-eval-30-lines
 one_liner: Unitxt decomposes LLM data preparation and evaluation into shareable components

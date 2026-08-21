@@ -113,69 +113,80 @@ claims:
     an English POS tagger, NER, WordNet and an English sentiment lexicon, so a new language
     needs equivalents.
 qa:
-- q:
-  - How can I find out what categories are in a new unlabeled text corpus?
-  - What method discovers interpretable patterns in a corpus with no labeled data?
-  - Is there a tool for exploratory data analysis of text before annotation starts?
-  answers:
+- ask:
+    practitioner: How can I find out what categories are in a new unlabeled text corpus?
+    unsorted:
+    - What method discovers interpretable patterns in a corpus with no labeled data?
+    - Is there a tool for exploratory data analysis of text before annotation starts?
+  answered_by:
   - unsupervised-eda-for-nlp
   - cheap-language-agnostic
-- q:
-  - Can unsupervised pattern rules actually beat clustering baselines at finding target categories?
-  - How well do GrASP^lite rules identify categories compared to SIB and Naive Bayes?
-  - Do unsupervised expressive rules outperform bag-of-words clustering on category detection?
-  answers:
+- ask:
+    unsorted:
+    - Can unsupervised pattern rules actually beat clustering baselines at finding target
+      categories?
+    - How well do GrASP^lite rules identify categories compared to SIB and Naive Bayes?
+    - Do unsupervised expressive rules outperform bag-of-words clustering on category detection?
+  answered_by:
   - unsupervised-rules-beat-baselines
   - sms-spam-split
-- q:
-  - Should the background corpus be general news text or a split of the domain corpus itself?
-  - What difference does the choice of contrast corpus make to the discovered patterns?
-  - When does contrasting against general English fail for pattern mining?
-  answers:
+- ask:
+    unsorted:
+    - Should the background corpus be general news text or a split of the domain corpus itself?
+    - What difference does the choice of contrast corpus make to the discovered patterns?
+    - When does contrasting against general English fail for pattern mining?
+  answered_by:
   - background-choice-changes-rule-type
   - wiki-attack-split-lifts-sib
-- q:
-  - Do humans find rule-based explanations more understandable than indicative keywords?
-  - Did a user study compare pattern explanations against Naive Bayes word explanations?
-  - How often did annotators prefer GrASP^lite explanations over Naive Bayes ones?
-  answers:
+- ask:
+    unsorted:
+    - Do humans find rule-based explanations more understandable than indicative keywords?
+    - Did a user study compare pattern explanations against Naive Bayes word explanations?
+    - How often did annotators prefer GrASP^lite explanations over Naive Bayes ones?
+  answered_by:
   - user-study-explainability
-- q:
-  - Does an unsupervised rule method beat supervised domain adaptation for argument mining?
-  - How does GrASP^lite compare with BlendNet on ASRD and Essays?
-  - Can label-free patterns outperform a model trained on 200K labeled sentences?
-  answers:
+- ask:
+    unsorted:
+    - Does an unsupervised rule method beat supervised domain adaptation for argument mining?
+    - How does GrASP^lite compare with BlendNet on ASRD and Essays?
+    - Can label-free patterns outperform a model trained on 200K labeled sentences?
+  answered_by:
   - beats-domain-adaptation
-- q:
-  - Is BERT better than unsupervised rules when only 100-300 labeled sentences are available?
-  - How do supervised baselines compare with GrASP^lite in low-data settings?
-  - Where does fine-tuned BERT fail on these text classification tasks?
-  answers:
+- ask:
+    unsorted:
+    - Is BERT better than unsupervised rules when only 100-300 labeled sentences are available?
+    - How do supervised baselines compare with GrASP^lite in low-data settings?
+    - Where does fine-tuned BERT fail on these text classification tasks?
+  answered_by:
   - bert-still-better
-- q:
-  - Can automatically mined patterns rediscover the indicators in human annotation guidelines?
-  - Do discovered rules match known claim and premise cues in argumentation research?
-  - What does the first-half/second-half sentence split reveal in argument mining corpora?
-  answers:
+- ask:
+    unsorted:
+    - Can automatically mined patterns rediscover the indicators in human annotation guidelines?
+    - Do discovered rules match known claim and premise cues in argumentation research?
+    - What does the first-half/second-half sentence split reveal in argument mining corpora?
+  answered_by:
   - rules-recover-annotation-indicators
-- q:
-  - Does unsupervised rule mining work when the target category is rare in a legal corpus?
-  - Why is GrASP^lite performance on ToS unfair clauses modest?
-  - What happens when a target category has a low prior in the corpus being explored, such
-    as unfair clauses in Terms of Service documents?
-  answers:
+- ask:
+    unsorted:
+    - Does unsupervised rule mining work when the target category is rare in a legal corpus?
+    - Why is GrASP^lite performance on ToS unfair clauses modest?
+    - What happens when a target category has a low prior in the corpus being explored, such
+      as unfair clauses in Terms of Service documents?
+  answered_by:
   - tos-weak-on-rare-target
-- q:
-  - Can reading mined patterns help a person name categories nobody annotated?
-  - Did anyone discover new legal categories in a Terms-of-Service corpus from rules alone?
-  - What did a human learn from skimming GrASP^lite rule matches?
-  answers:
+- ask:
+    unsorted:
+    - Can reading mined patterns help a person name categories nobody annotated?
+    - Did anyone discover new legal categories in a Terms-of-Service corpus from rules alone?
+    - What did a human learn from skimming GrASP^lite rule matches?
+  answered_by:
   - categories-found-by-hand
-- q:
-  - What compute and resources does GrASP^lite need to run?
-  - Does the unsupervised rule discovery method work for languages other than English?
-  - Is labeled data or a category list required to mine these patterns?
-  answers:
+- ask:
+    practitioner: Is labeled data or a category list required to mine these patterns?
+    unsorted:
+    - What compute and resources does GrASP^lite need to run?
+    - Does the unsupervised rule discovery method work for languages other than English?
+  answered_by:
   - cheap-language-agnostic
 misreadings:
 - 'GrASP^lite is not proposed as a classifier: the reported precision, recall and F1 numbers

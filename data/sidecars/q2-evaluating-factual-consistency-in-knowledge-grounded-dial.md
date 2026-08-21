@@ -115,77 +115,88 @@ claims:
     split.
   evidence: Section 5.4 and Appendix B
 qa:
-- q:
-  - How can I automatically tell whether a chatbot's answer contradicts the document it was
-    given?
-  - Is there a metric for hallucination in knowledge-grounded dialogue that does not need
-    a gold reference response?
-  - How does Q² score factual consistency of a dialogue response?
-  answers:
+- ask:
+    practitioner: How can I automatically tell whether a chatbot's answer contradicts the
+      document it was given?
+    unsorted:
+    - Is there a metric for hallucination in knowledge-grounded dialogue that does not need
+      a gold reference response?
+    - How does Q² score factual consistency of a dialogue response?
+  answered_by:
   - context-interpretable
   - wow-separation
-- q:
-  - Does using NLI instead of token overlap to compare answer spans actually help?
-  - How much does the NLI-based span comparison add over token-level F1 matching?
-  - What is the difference between Q² and Q² without NLI?
-  answers:
+- ask:
+    unsorted:
+    - Does using NLI instead of token overlap to compare answer spans actually help?
+    - How much does the NLI-based span comparison add over token-level F1 matching?
+    - What is the difference between Q² and Q² without NLI?
+  answered_by:
   - nli-vs-token
   - response-level-accuracy
-- q:
-  - How well do automatic consistency metrics correlate with human judgments on Wizard of
-    Wikipedia?
-  - Does Q² correlate better with human ratings than BLEU, BERTScore or knowledge overlap?
-  - Which factual-consistency metric ranks dialogue systems most like humans do?
-  answers:
+- ask:
+    unsorted:
+    - How well do automatic consistency metrics correlate with human judgments on Wizard of
+      Wikipedia?
+    - Does Q² correlate better with human ratings than BLEU, BERTScore or knowledge overlap?
+    - Which factual-consistency metric ranks dialogue systems most like humans do?
+  answered_by:
   - system-level-correlation
   - topical-chat
-- q:
-  - Can Q² be used to classify a single dialogue response as consistent or inconsistent?
-  - What accuracy does a 0.5 threshold on Q² give for detecting inconsistent responses?
-  - How good is response-level inconsistency detection with a question-generation metric?
-  answers:
+- ask:
+    unsorted:
+    - Can Q² be used to classify a single dialogue response as consistent or inconsistent?
+    - What accuracy does a 0.5 threshold on Q² give for detecting inconsistent responses?
+    - How good is response-level inconsistency detection with a question-generation metric?
+  answered_by:
   - response-level-accuracy
-- q:
-  - Does Q² transfer to persona consistency and Dialogue NLI?
-  - How does a QG-QA consistency metric do on the DNLI benchmark zero-shot?
-  - Can question-generation-based evaluation detect persona contradictions in Persona-Chat?
-  answers:
+- ask:
+    unsorted:
+    - Does Q² transfer to persona consistency and Dialogue NLI?
+    - How does a QG-QA consistency metric do on the DNLI benchmark zero-shot?
+    - Can question-generation-based evaluation detect persona contradictions in Persona-Chat?
+  answered_by:
   - dnli
-- q:
-  - Do I need large question generation and question answering models for QG-QA based dialogue
-    evaluation?
-  - Is the Q² metric sensitive to the size of its underlying QG and QA models?
-  - What happens if I substitute T5-small or Albert-base into the Q² pipeline?
-  answers:
+- ask:
+    practitioner: Do I need large question generation and question answering models for QG-QA
+      based dialogue evaluation?
+    unsorted:
+    - Is the Q² metric sensitive to the size of its underlying QG and QA models?
+    - What happens if I substitute T5-small or Albert-base into the Q² pipeline?
+  answered_by:
   - robust-to-components
-- q:
-  - Is there an annotated dataset of dialogue responses labelled for factual consistency?
-  - What data does the Q² paper release for evaluating groundedness in Wizard of Wikipedia?
-  - How large is the Wizard-of-Wikipedia factual consistency annotation set, and how reliable
-    are the labels?
-  answers:
+- ask:
+    unsorted:
+    - Is there an annotated dataset of dialogue responses labelled for factual consistency?
+    - What data does the Q² paper release for evaluating groundedness in Wizard of Wikipedia?
+    - How large is the Wizard-of-Wikipedia factual consistency annotation set, and how reliable
+      are the labels?
+  answered_by:
   - wow-dataset
-- q:
-  - Where should I start reading about evaluating factual consistency in grounded dialogue?
-  - What work brought QA-based summarization faithfulness metrics to dialogue?
-  - Which paper established question-generation-based groundedness evaluation for dialogue
-    systems?
-  answers:
+- ask:
+    practitioner: Where should I start reading about evaluating factual consistency in grounded
+      dialogue?
+    unsorted:
+    - What work brought QA-based summarization faithfulness metrics to dialogue?
+    - Which paper established question-generation-based groundedness evaluation for dialogue
+      systems?
+  answered_by:
   - context-first-qgqa-dialogue
   - context-interpretable
-- q:
-  - What happens to a question-generation consistency metric when the grounding knowledge
-    is completely irrelevant to the dialogue response?
-  - How does Q² behave on adversarial cases with mismatched knowledge passages?
-  - Does swapping in knowledge from a different Wizard-of-Wikipedia dialogue drive the consistency
-    score to zero?
-  answers:
+- ask:
+    unsorted:
+    - What happens to a question-generation consistency metric when the grounding knowledge
+      is completely irrelevant to the dialogue response?
+    - How does Q² behave on adversarial cases with mismatched knowledge passages?
+    - Does swapping in knowledge from a different Wizard-of-Wikipedia dialogue drive the consistency
+      score to zero?
+  answered_by:
   - random-knowledge
-- q:
-  - Why does a question-generation consistency metric fail on chit-chat responses?
-  - How often does Q² generate no valid questions for a dialogue response?
-  - What are the known failure modes of question-generation-based dialogue evaluation?
-  answers:
+- ask:
+    unsorted:
+    - Why does a question-generation consistency metric fail on chit-chat responses?
+    - How often does Q² generate no valid questions for a dialogue response?
+    - What are the known failure modes of question-generation-based dialogue evaluation?
+  answered_by:
   - chit-chat-coverage
   - context-interpretable
 misreadings:

@@ -110,85 +110,98 @@ claims:
   scope: CoNLL 2023 iteration; participants could enter multiple tracks, so unique-participant
     counts per track are lower than the model count.
 qa:
-- q:
-  - Why is training language models on trillions of words a problem for cognitive science?
-  - What are the downsides of scaling for psycholinguistics?
-  - Why would anyone want a language model trained on less data?
-  answers:
+- ask:
+    unsorted:
+    - Why is training language models on trillions of words a problem for cognitive science?
+    - What are the downsides of scaling for psycholinguistics?
+    - Why would anyone want a language model trained on less data?
+  answered_by:
   - human-scale-argument
   - not-cognitively-plausible
-- q:
-  - What is the BabyLM Challenge?
-  - What was the data budget in the BabyLM shared task?
-  - Which shared task asked people to train language models on child-scale data?
-  answers:
+- ask:
+    unsorted:
+    - What is the BabyLM Challenge?
+    - What was the data budget in the BabyLM shared task?
+    - Which shared task asked people to train language models on child-scale data?
+  answered_by:
   - babylm-corpus-scale
   - participation
-- q:
-  - How good can a language model get on grammar tests with only 100 million words of training
-    data?
-  - Can small language models match large ones on BLiMP?
-  - Do human-scale language models come close to human grammatical performance?
-  answers:
+- ask:
+    unsorted:
+    - How good can a language model get on grammar tests with only 100 million words of training
+      data?
+    - Can small language models match large ones on BLiMP?
+    - Do human-scale language models come close to human grammatical performance?
+  answered_by:
   - near-human-blimp
   - strict-vs-strict-small
-- q:
-  - Does curriculum learning help when pretraining data is scarce?
-  - Did sorting training data from simple to complex improve BabyLM models?
-  - What training strategies actually worked in the BabyLM Challenge?
-  answers:
+- ask:
+    unsorted:
+    - Does curriculum learning help when pretraining data is scarce?
+    - Did sorting training data from simple to complex improve BabyLM models?
+    - What training strategies actually worked in the BabyLM Challenge?
+  answered_by:
   - curriculum-learning-negative
-- q:
-  - Which architecture should I use for small-scale language model pretraining?
-  - Is ELC-BERT better than LTG-BERT for 100M-word pretraining?
-  - What model do the BabyLM organizers recommend as a starting point?
-  answers:
+- ask:
+    practitioner: Which architecture should I use for small-scale language model pretraining?
+    unsorted:
+    - Is ELC-BERT better than LTG-BERT for 100M-word pretraining?
+    - What model do the BabyLM organizers recommend as a starting point?
+  answered_by:
   - ltg-bert-recommendation
-- q:
-  - How many epochs should a language model be trained for on a 100-million-word corpus?
-  - Did the winning BabyLM model win because of its architecture or because it trained longer?
-  - Do hundreds of training epochs help on small corpora?
-  answers:
+- ask:
+    unsorted:
+    - How many epochs should a language model be trained for on a 100-million-word corpus?
+    - Did the winning BabyLM model win because of its architecture or because it trained longer?
+    - Do hundreds of training epochs help on small corpora?
+  answered_by:
   - epochs-explain-win
   - diminishing-returns-epochs
-- q:
-  - Can neural networks learn island constraints and filler-gap dependencies from child-scale
-    data?
-  - What do BabyLM results say about poverty-of-the-stimulus arguments?
-  - Are hard-to-learn syntactic phenomena harder for models trained on 100 million words?
-  answers:
+- ask:
+    unsorted:
+    - Can neural networks learn island constraints and filler-gap dependencies from child-scale
+      data?
+    - What do BabyLM results say about poverty-of-the-stimulus arguments?
+    - Are hard-to-learn syntactic phenomena harder for models trained on 100 million words?
+  answered_by:
   - pos-relevant-tasks
   - near-human-blimp
-- q:
-  - Did adding images or audio help language models trained on limited data?
-  - Does multimodal input improve sample efficiency in BabyLM submissions?
-  - Were Loose-track BabyLM models better than text-only ones?
-  answers:
+- ask:
+    unsorted:
+    - Did adding images or audio help language models trained on limited data?
+    - Does multimodal input improve sample efficiency in BabyLM submissions?
+    - Were Loose-track BabyLM models better than text-only ones?
+  answered_by:
   - loose-track-worse
-- q:
-  - Do small language models generalize linguistically or just memorize surface cues?
-  - What did MSGS scores show about BabyLM models?
-  - How can you tell whether a model's benchmark score reflects real linguistic generalization?
-  answers:
+- ask:
+    unsorted:
+    - Do small language models generalize linguistically or just memorize surface cues?
+    - What did MSGS scores show about BabyLM models?
+    - How can you tell whether a model's benchmark score reflects real linguistic generalization?
+  answered_by:
   - msgs-linguistic-preference
-- q:
-  - What should I read about human-scale or data-efficient language modeling for psycholinguistics?
-  - Which paper argues that bigger language models are not better for cognitive modeling?
-  - Where should I start reading about developmentally plausible language model pretraining?
-  answers:
+- ask:
+    practitioner: What should I read about human-scale or data-efficient language modeling
+      for psycholinguistics?
+    unsorted:
+    - Which paper argues that bigger language models are not better for cognitive modeling?
+    - Where should I start reading about developmentally plausible language model pretraining?
+  answered_by:
   - human-scale-argument
   - babylm-corpus-scale
   - not-cognitively-plausible
-- q:
-  - Are BabyLM models cognitively plausible models of child language acquisition?
-  - Did the BabyLM Challenge identify how children learn language so efficiently?
-  - Do the winning small-scale models resemble human learners?
-  answers:
+- ask:
+    unsorted:
+    - Are BabyLM models cognitively plausible models of child language acquisition?
+    - Did the BabyLM Challenge identify how children learn language so efficiently?
+    - Do the winning small-scale models resemble human learners?
+  answered_by:
   - not-cognitively-plausible
-- q:
-  - How much worse is a 10-million-word language model than a 100-million-word one?
-  - Does going from 10M to 100M training words matter much for grammar benchmarks?
-  answers:
+- ask:
+    unsorted:
+    - How much worse is a 10-million-word language model than a 100-million-word one?
+    - Does going from 10M to 100M training words matter much for grammar benchmarks?
+  answered_by:
   - strict-vs-strict-small
 one_liner: 'Bigger is not always better: scaling language models to trillions of words weakens
   their value as cognitive models, and the first BabyLM Challenge shows that models trained

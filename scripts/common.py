@@ -1088,3 +1088,66 @@ def declined(text: str | None) -> str | None:
         if str(pat).lower() in low:
             return str(pat)
     return None
+
+
+# ------------------------------------------------------------------ question groups
+#
+# A question group is a form, not a list. `q: [a, b, c]` said "2-4 paraphrases, and vary
+# them" -- a rule that names what to cover and then leaves the drafter to decide whether it
+# did, which is how the corpus ended up with 3692 phrasings that are 90% third person and
+# mostly syntactic rewrites of one wording. Named roles ask for the thing directly: each
+# role is a different *lexical* route to the same answer, and a missing route is a visibly
+# empty field rather than a rule someone believes they satisfied.
+#
+#   plain         someone who has not read the paper, in their own words
+#   jargon        the field's vocabulary, the way a specialist would type it
+#   task          the thing they are trying to do ("how do I merge two adapters")
+#   practitioner  first person, deciding ("should I use this for my model")
+#
+# `unsorted` is the legacy bucket: phrasings written before the roles existed, migrated
+# without guessing which route each one took. A draft may not emit it, and a redraft of any
+# paper empties it -- so it shrinks and never grows.
+
+QA_ROLES = ("plain", "jargon", "task", "practitioner")
+
+
+def phrasings(group: dict) -> list[str]:
+    """Every phrasing in a question group, roles first in `QA_ROLES` order.
+
+    The first element is the canonical one -- the phrasing published as the group's heading
+    and the one a `FAQPage.name` would carry -- which is why `plain` leads: of the four
+    routes it is the one a reader who has not read the paper can follow.
+    """
+    if not isinstance(group, dict):
+        return []
+    ask = group.get("ask")
+    if not isinstance(ask, dict):
+        return []
+    out = [ask[r] for r in QA_ROLES if isinstance(ask.get(r), str) and ask[r].strip()]
+    out += [p for p in (ask.get("unsorted") or []) if isinstance(p, str) and p.strip()]
+    return out
+
+
+def answered_by(group: dict) -> list[str]:
+    """The claim ids a question group points at, or an empty list."""
+    if not isinstance(group, dict):
+        return []
+    ids = group.get("answered_by")
+    return [a for a in ids if isinstance(a, str)] if isinstance(ids, list) else []
+
+
+def qa_loci(group: dict) -> list[tuple[str, str]]:
+    """`(locus_suffix, phrasing)` for each phrasing, in the order `phrasings` returns them.
+
+    The suffix is what goes after `qa/<i>/`, so a caller that knows the group index can
+    build a patch locus without knowing whether the phrasing sits in a role or in the
+    legacy bucket.
+    """
+    if not isinstance(group, dict):
+        return []
+    ask = group.get("ask") if isinstance(group.get("ask"), dict) else {}
+    out = [(f"ask/{r}", ask[r]) for r in QA_ROLES
+           if isinstance(ask.get(r), str) and ask[r].strip()]
+    out += [(f"ask/unsorted/{j}", p) for j, p in enumerate(ask.get("unsorted") or [])
+            if isinstance(p, str) and p.strip()]
+    return out

@@ -133,77 +133,88 @@ claims:
   scope: As of the 2021 release; regeneration depends on the BigQuery GitHub schema, from
     which projects can disappear, so a regenerated dataset will not match the frozen one.
 qa:
-- q:
-  - Is there a large dataset for summarizing software commit messages?
-  - What data can I train a summarizer on for git commits?
-  - How big is ComSum and where does the data come from?
-  answers:
+- ask:
+    practitioner: What data can I train a summarizer on for git commits?
+    unsorted:
+    - Is there a large dataset for summarizing software commit messages?
+    - How big is ComSum and where does the data come from?
+  answered_by:
   - dataset-size
   - context-domain
-- q:
-  - Which summarization datasets are the most abstractive?
-  - Is commit message summarization more abstractive than news summarization?
-  - How does ComSum compare to XSum and CNN/DM on coverage and density?
-  answers:
+- ask:
+    unsorted:
+    - Which summarization datasets are the most abstractive?
+    - Is commit message summarization more abstractive than news summarization?
+    - How does ComSum compare to XSum and CNN/DM on coverage and density?
+  answered_by:
   - abstractiveness
   - vocabulary
-- q:
-  - How well do pretrained summarizers do on commit messages?
-  - What Rouge score does BART get on ComSum?
-  - Does fine-tuning help on commit message summarization?
-  answers:
+- ask:
+    unsorted:
+    - How well do pretrained summarizers do on commit messages?
+    - What Rouge score does BART get on ComSum?
+    - Does fine-tuning help on commit message summarization?
+  answered_by:
   - bart-baseline
   - still-challenging
-- q:
-  - Can you just copy the commit message as its summary?
-  - Do extractive heuristics work for commit summarization?
-  - How strong are trivial baselines on commit message summarization?
-  answers:
+- ask:
+    unsorted:
+    - Can you just copy the commit message as its summary?
+    - Do extractive heuristics work for commit summarization?
+    - How strong are trivial baselines on commit message summarization?
+  answered_by:
   - copying-insufficient
   - related-commit
-- q:
-  - Does splitting a summarization dataset by repository change results?
-  - Why is the ComSum test set harder than its train set?
-  - Is the train-test gap on ComSum memorization or domain shift?
-  answers:
+- ask:
+    unsorted:
+    - Does splitting a summarization dataset by repository change results?
+    - Why is the ComSum test set harder than its train set?
+    - Is the train-test gap on ComSum memorization or domain shift?
+  answered_by:
   - repo-split-gap
-- q:
-  - How often do neural summarizers change the meaning of what they summarize?
-  - Do summarization models preserve whether a commit is a bug fix or a refactor?
-  - How much does BART alter commit meaning on distractor cases?
-  answers:
+- ask:
+    unsorted:
+    - How often do neural summarizers change the meaning of what they summarize?
+    - Do summarization models preserve whether a commit is a bug fix or a refactor?
+    - How much does BART alter commit meaning on distractor cases?
+  answered_by:
   - meaning-not-preserved
   - bart-precision
-- q:
-  - How can I evaluate summaries beyond Rouge?
-  - What work proposes meaning preservation as a summarization metric?
-  - Where should I start reading about domain-grounded summarization evaluation?
-  answers:
+- ask:
+    practitioner: How can I evaluate summaries beyond Rouge?
+    unsorted:
+    - What work proposes meaning preservation as a summarization metric?
+    - Where should I start reading about domain-grounded summarization evaluation?
+  answered_by:
   - context-meaning-eval
   - bart-precision
-- q:
-  - Are git commit subjects actually summaries of their messages?
-  - How reliable is using the commit subject line as a reference summary?
-  - What fraction of commit subjects are genuine summaries?
-  answers:
+- ask:
+    unsorted:
+    - Are git commit subjects actually summaries of their messages?
+    - How reliable is using the commit subject line as a reference summary?
+    - What fraction of commit subjects are genuine summaries?
+  answered_by:
   - subject-is-summary
-- q:
-  - Do results on ComSum hold across commit types?
-  - Does summarization quality differ for bug fixes versus refactoring commits?
-  - What are the Rouge scores on the corrective and refactor subsets of ComSum?
-  answers:
+- ask:
+    unsorted:
+    - Do results on ComSum hold across commit types?
+    - Does summarization quality differ for bug fixes versus refactoring commits?
+    - What are the Rouge scores on the corrective and refactor subsets of ComSum?
+  answered_by:
   - typed-trends
-- q:
-  - Can a commit summarization dataset be regenerated with more recent data?
-  - Is ComSum reproducible and extensible?
-  - How do I build my own version of a commit summarization dataset?
-  answers:
+- ask:
+    practitioner: How do I build my own version of a commit summarization dataset?
+    unsorted:
+    - Can a commit summarization dataset be regenerated with more recent data?
+    - Is ComSum reproducible and extensible?
+  answered_by:
   - context-growable
-- q:
-  - What are good NLP datasets in the software engineering domain?
-  - Which paper introduced commit messages as a summarization task?
-  - Where should I start reading about NLP for programming artifacts?
-  answers:
+- ask:
+    practitioner: Where should I start reading about NLP for programming artifacts?
+    unsorted:
+    - What are good NLP datasets in the software engineering domain?
+    - Which paper introduced commit messages as a summarization task?
+  answered_by:
   - context-domain
   - context-meaning-eval
 misreadings:

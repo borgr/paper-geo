@@ -105,68 +105,83 @@ claims:
     latent space; the paper expects accuracy to degrade when a new benchmark tests a capability
     largely absent from the existing suite.
 qa:
-- q:
-  - How many questions do I need to run to estimate a model's full benchmark score?
-  - How accurate is IRT-based anchor-item prediction of full-evaluation accuracy?
-  - Can 100 anchor questions per dataset replace running a model on the whole benchmark suite?
-  answers:
+- ask:
+    practitioner: How many questions do I need to run to estimate a model's full benchmark
+      score?
+    unsorted:
+    - How accurate is IRT-based anchor-item prediction of full-evaluation accuracy?
+    - Can 100 anchor questions per dataset replace running a model on the whole benchmark
+      suite?
+  answered_by:
   - anchor-100-mae
   - anchor-coverage-fraction
-- q:
-  - Does prediction error build up as more datasets are added to an evaluation suite?
-  - Does IRT calibration degrade over long chains of benchmark additions?
-  - Is fixed parameter calibration as accurate as refitting all IRT parameters from scratch?
-  answers:
+- ask:
+    unsorted:
+    - Does prediction error build up as more datasets are added to an evaluation suite?
+    - Does IRT calibration degrade over long chains of benchmark additions?
+    - Is fixed parameter calibration as accurate as refitting all IRT parameters from scratch?
+  answered_by:
   - no-error-accumulation
-- q:
-  - How can I add a new benchmark to a leaderboard without re-evaluating every existing model?
-  - What is the cost of extending an evaluation suite with a new dataset?
-  - Why is joint re-calibration of all item parameters expensive when benchmarks keep arriving?
-  answers:
+- ask:
+    practitioner: How can I add a new benchmark to a leaderboard without re-evaluating every
+      existing model?
+    unsorted:
+    - What is the cost of extending an evaluation suite with a new dataset?
+    - Why is joint re-calibration of all item parameters expensive when benchmarks keep arriving?
+  answered_by:
   - constant-cost
   - retroactive-estimation
-- q:
-  - Are model rankings preserved when scores are predicted from a small item subset?
-  - What Spearman correlation does anchor-based prediction achieve with full-evaluation rankings?
-  - Does subsampling a benchmark change the leaderboard order?
-  answers:
+- ask:
+    unsorted:
+    - Are model rankings preserved when scores are predicted from a small item subset?
+    - What Spearman correlation does anchor-based prediction achieve with full-evaluation
+      rankings?
+    - Does subsampling a benchmark change the leaderboard order?
+  answered_by:
   - ranking-spearman
-- q:
-  - Is random subsampling of benchmark questions good enough, or do I need IRT?
-  - When does IRT-based item selection beat just averaging a random sample of questions?
-  - Does psychometric modelling of benchmark items still help at large sample sizes?
-  answers:
+- ask:
+    practitioner: Is random subsampling of benchmark questions good enough, or do I need IRT?
+    unsorted:
+    - When does IRT-based item selection beat just averaging a random sample of questions?
+    - Does psychometric modelling of benchmark items still help at large sample sizes?
+  answered_by:
   - random-baseline-crossover
-- q:
-  - How many models do I need to calibrate an IRT model for benchmark prediction?
-  - How large must the reference model pool be for reliable anchor calibration?
-  - Why does MMLU need fewer reference models than the Open LLM Leaderboard?
-  answers:
+- ask:
+    practitioner: How many models do I need to calibrate an IRT model for benchmark prediction?
+    unsorted:
+    - How large must the reference model pool be for reliable anchor calibration?
+    - Why does MMLU need fewer reference models than the Open LLM Leaderboard?
+  answered_by:
   - reference-pool-size
-- q:
-  - Should anchor questions be the most discriminative items in a benchmark?
-  - How should representative benchmark subsets be chosen for efficient evaluation?
-  - Does picking high-discrimination items beat clustering-based anchor selection?
-  answers:
+- ask:
+    unsorted:
+    - Should anchor questions be the most discriminative items in a benchmark?
+    - How should representative benchmark subsets be chosen for efficient evaluation?
+    - Does picking high-discrimination items beat clustering-based anchor selection?
+  answered_by:
   - clustering-beats-topk
-- q:
-  - What should I read about keeping LLM benchmark scores comparable as benchmarks change?
-  - Which paper connects psychometric test equating to LLM evaluation?
-  - Where can I start reading about efficient and extensible LLM benchmarking?
-  - What work frames benchmark growth as a scale-linking problem?
-  answers:
+- ask:
+    practitioner: What should I read about keeping LLM benchmark scores comparable as benchmarks
+      change?
+    unsorted:
+    - Which paper connects psychometric test equating to LLM evaluation?
+    - Where can I start reading about efficient and extensible LLM benchmarking?
+    - What work frames benchmark growth as a scale-linking problem?
+  answered_by:
   - scale-linking-framing
   - fpc-first-in-llm-eval
-- q:
-  - Can I estimate how older models would have scored on a benchmark released after they were
-    evaluated?
-  - Is retroactive scoring of historical models on new datasets possible without re-inference?
-  answers:
+- ask:
+    practitioner: Can I estimate how older models would have scored on a benchmark released
+      after they were evaluated?
+    unsorted:
+    - Is retroactive scoring of historical models on new datasets possible without re-inference?
+  answered_by:
   - retroactive-estimation
-- q:
-  - What fraction of a benchmark do 100 anchor items actually represent?
-  - How does anchor budget relate to dataset size in the Open LLM Leaderboard and MMLU?
-  answers:
+- ask:
+    unsorted:
+    - What fraction of a benchmark do 100 anchor items actually represent?
+    - How does anchor budget relate to dataset size in the Open LLM Leaderboard and MMLU?
+  answered_by:
   - anchor-coverage-fraction
 misreadings:
 - The 2-3 percentage point prediction error is validated on English knowledge and reasoning

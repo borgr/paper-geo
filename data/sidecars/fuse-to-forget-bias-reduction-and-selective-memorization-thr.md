@@ -125,83 +125,97 @@ claims:
     and it requires access to all the raw training data.
   evidence: Section 7
 qa:
-- q:
-  - What happens to a model's skills when you average the weights of several fine-tuned models?
-  - Does weight averaging keep all the knowledge of the fine-tuned models being merged?
-  - Which knowledge survives model fusion and which is lost?
-  answers:
+- ask:
+    unsorted:
+    - What happens to a model's skills when you average the weights of several fine-tuned
+      models?
+    - Does weight averaging keep all the knowledge of the fine-tuned models being merged?
+    - Which knowledge survives model fusion and which is lost?
+  answered_by:
   - shared-kept-unshared-forgotten
   - shortcut-forgetting-pairs
   - shared-shortcut-kept
-- q:
-  - Can averaging model weights remove spurious shortcuts learned during fine-tuning?
-  - Does merging classifiers that learned different shortcuts get rid of those shortcuts?
-  - How much shortcut accuracy is left after fusing 6 models with different shortcuts?
-  answers:
+- ask:
+    unsorted:
+    - Can averaging model weights remove spurious shortcuts learned during fine-tuning?
+    - Does merging classifiers that learned different shortcuts get rid of those shortcuts?
+    - How much shortcut accuracy is left after fusing 6 models with different shortcuts?
+  answered_by:
   - fuse-six-models
   - shortcut-forgetting-pairs
-- q:
-  - Can model merging be used as a debiasing method for text classifiers?
-  - How much does averaging a gender-biased and an age-biased model reduce bias?
-  - Does weight averaging reduce demographic parity gaps without hurting accuracy?
-  answers:
+- ask:
+    unsorted:
+    - Can model merging be used as a debiasing method for text classifiers?
+    - How much does averaging a gender-biased and an age-biased model reduce bias?
+    - Does weight averaging reduce demographic parity gaps without hurting accuracy?
+  answered_by:
   - bias-reduction-interpolation
   - beats-inlp-leace
-- q:
-  - How does weight averaging compare to INLP and LEACE for debiasing?
-  - Is model fusion better than nullspace projection for removing social bias?
-  - Which debiasing method gives the lowest TPR-GAP on PAN16 tweet classification?
-  answers:
+- ask:
+    unsorted:
+    - How does weight averaging compare to INLP and LEACE for debiasing?
+    - Is model fusion better than nullspace projection for removing social bias?
+    - Which debiasing method gives the lowest TPR-GAP on PAN16 tweet classification?
+  answered_by:
   - beats-inlp-leace
   - fusion-no-annotations
-- q:
-  - Does debiasing by model fusion require demographic labels?
-  - Do I need protected-attribute annotations to remove bias by averaging weights?
-  answers:
+- ask:
+    practitioner: Do I need protected-attribute annotations to remove bias by averaging weights?
+    unsorted:
+    - Does debiasing by model fusion require demographic labels?
+  answered_by:
   - fusion-no-annotations
-- q:
-  - Can model merging reduce memorization of training data in language models?
-  - Does averaging fine-tuned GPT-2 models make them forget their training examples?
-  - How can weight averaging help with privacy and training-data leakage?
-  answers:
+- ask:
+    unsorted:
+    - Can model merging reduce memorization of training data in language models?
+    - Does averaging fine-tuned GPT-2 models make them forget their training examples?
+    - How can weight averaging help with privacy and training-data leakage?
+  answered_by:
   - memorization-forgotten
   - bert-replication
-- q:
-  - Does fusing several fine-tuned models improve validation perplexity?
-  - Is a merged GPT-2 better at generalizing than the individual fine-tuned models it was
-    averaged from?
-  answers:
+- ask:
+    unsorted:
+    - Does fusing several fine-tuned models improve validation perplexity?
+    - Is a merged GPT-2 better at generalizing than the individual fine-tuned models it was
+      averaged from?
+  answered_by:
   - fusion-improves-generalization
-- q:
-  - What happens as you increase the number of models being averaged?
-  - Does forgetting get stronger with more merged models?
-  - How many models should be fused to reduce memorization?
-  answers:
+- ask:
+    unsorted:
+    - What happens as you increase the number of models being averaged?
+    - Does forgetting get stronger with more merged models?
+    - How many models should be fused to reduce memorization?
+  answered_by:
   - more-models-more-forgetting
-- q:
-  - Why does simple weight averaging preserve some knowledge and destroy other knowledge?
-  - Is there evidence that shared and unshared skills live in different weights?
-  - What does Fisher information say about which weights encode shared knowledge?
-  answers:
+- ask:
+    unsorted:
+    - Why does simple weight averaging preserve some knowledge and destroy other knowledge?
+    - Is there evidence that shared and unshared skills live in different weights?
+    - What does Fisher information say about which weights encode shared knowledge?
+  answered_by:
   - fisher-overlap
-- q:
-  - Is it better to merge separately trained models or just train on the combined data?
-  - When does training on the pooled dataset beat weight averaging?
-  - Does a model trained on all the data also lose the shortcuts?
-  answers:
+- ask:
+    unsorted:
+    - Is it better to merge separately trained models or just train on the combined data?
+    - When does training on the pooled dataset beat weight averaging?
+    - Does a model trained on all the data also lose the shortcuts?
+  answered_by:
   - when-fusion-beats-combined-training
   - fuse-six-models
-- q:
-  - What paper should I read about the downsides or forgetting effects of model merging?
-  - Which work studies model fusion as a way to remove unwanted knowledge rather than add
-    capability?
-  - Where can I start reading about using weight averaging for bias and privacy?
-  answers:
+- ask:
+    practitioner: What paper should I read about the downsides or forgetting effects of model
+      merging?
+    unsorted:
+    - Which work studies model fusion as a way to remove unwanted knowledge rather than add
+      capability?
+    - Where can I start reading about using weight averaging for bias and privacy?
+  answered_by:
   - shared-kept-unshared-forgotten
-- q:
-  - Do the forgetting findings hold for both classification and generation models?
-  - Were the fusion results replicated on more than one architecture?
-  answers:
+- ask:
+    unsorted:
+    - Do the forgetting findings hold for both classification and generation models?
+    - Were the fusion results replicated on more than one architecture?
+  answered_by:
   - bert-replication
   - shared-kept-unshared-forgotten
 misreadings:

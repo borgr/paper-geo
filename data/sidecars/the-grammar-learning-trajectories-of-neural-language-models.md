@@ -133,89 +133,102 @@ claims:
     with different inductive biases may differ.
   evidence: Section 3.7
 qa:
-- q:
-  - Do language models learn grammar in the same order regardless of random seed?
-  - Does initialization change which linguistic phenomena a language model learns first?
-  - How consistent is grammar acquisition order across differently seeded transformers?
-  answers:
+- ask:
+    unsorted:
+    - Do language models learn grammar in the same order regardless of random seed?
+    - Does initialization change which linguistic phenomena a language model learns first?
+    - How consistent is grammar acquisition order across differently seeded transformers?
+  answered_by:
   - order-across-seeds
   - example-level-agreement
-- q:
-  - Does architecture or model size change the order in which grammatical phenomena are acquired?
-  - Do bigger and smaller GPT2 models learn linguistic phenomena in the same order?
-  - How do you compare learning trajectories of models that train at different speeds?
-  answers:
+- ask:
+    unsorted:
+    - Does architecture or model size change the order in which grammatical phenomena are
+      acquired?
+    - Do bigger and smaller GPT2 models learn linguistic phenomena in the same order?
+    - How do you compare learning trajectories of models that train at different speeds?
+  answered_by:
   - cross-architecture
   - one-dimensional
-- q:
-  - Can you predict which grammatical generalizations a language model has made just from
-    its overall accuracy?
-  - Is the grammar-learning trajectory of neural language models one-dimensional?
-  - If two language models have the same benchmark score, do they make the same errors?
-  answers:
+- ask:
+    unsorted:
+    - Can you predict which grammatical generalizations a language model has made just from
+      its overall accuracy?
+    - Is the grammar-learning trajectory of neural language models one-dimensional?
+    - If two language models have the same benchmark score, do they make the same errors?
+  answered_by:
   - one-dimensional
   - off-the-shelf-similarity
-- q:
-  - Does training data determine what grammar a language model learns first?
-  - How much does the choice of corpus affect grammar-learning order in language models?
-  - Is the similarity between language models just an artifact of overlapping training corpora?
-  answers:
+- ask:
+    unsorted:
+    - Does training data determine what grammar a language model learns first?
+    - How much does the choice of corpus affect grammar-learning order in language models?
+    - Is the similarity between language models just an artifact of overlapping training corpora?
+  answered_by:
   - data-matters-less
   - off-the-shelf-similarity
-- q:
-  - Do n-gram models follow the same grammar-learning trajectory as neural language models?
-  - Does the equal-performance-implies-equal-generalization finding hold for non-neural language
-    models?
-  - Do 5-gram language models share the biases of transformers on BLiMP?
-  answers:
+- ask:
+    unsorted:
+    - Do n-gram models follow the same grammar-learning trajectory as neural language models?
+    - Does the equal-performance-implies-equal-generalization finding hold for non-neural
+      language models?
+    - Do 5-gram language models share the biases of transformers on BLiMP?
+  answered_by:
   - ngram-exception
-- q:
-  - Do language models use word order early in training or only later?
-  - When during training does a transformer stop behaving like a bag of words?
-  - What does a neural language model rely on in its earliest grammar learning?
-  answers:
+- ask:
+    unsorted:
+    - Do language models use word order early in training or only later?
+    - When during training does a transformer stop behaving like a bag of words?
+    - What does a neural language model rely on in its earliest grammar learning?
+  answered_by:
   - bow-then-order
   - unigram-heuristics
-- q:
-  - Can BLiMP challenges be solved without any context?
-  - Are some BLiMP minimal pairs solvable by frequency heuristics alone?
-  - How well does a unigram language model do on the BLiMP grammar benchmark?
-  answers:
+- ask:
+    unsorted:
+    - Can BLiMP challenges be solved without any context?
+    - Are some BLiMP minimal pairs solvable by frequency heuristics alone?
+    - How well does a unigram language model do on the BLiMP grammar benchmark?
+  answered_by:
   - unigram-heuristics
   - deteriorating-phenomena
-- q:
-  - Do neural language models find the same grammatical phenomena hard that humans do?
-  - How closely does model difficulty on BLiMP track human difficulty?
-  - Does a language model become more human-like in its grammatical errors as it trains?
-  answers:
+- ask:
+    unsorted:
+    - Do neural language models find the same grammatical phenomena hard that humans do?
+    - How closely does model difficulty on BLiMP track human difficulty?
+    - Does a language model become more human-like in its grammatical errors as it trains?
+  answered_by:
   - human-ceiling
-- q:
-  - Which categories of grammatical phenomena are learned together by language models?
-  - Are morphology phenomena acquired in unison by neural language models?
-  - Do linguistic categories in BLiMP match how models actually learn?
-  answers:
+- ask:
+    unsorted:
+    - Which categories of grammatical phenomena are learned together by language models?
+    - Are morphology phenomena acquired in unison by neural language models?
+    - Do linguistic categories in BLiMP match how models actually learn?
+  answered_by:
   - morphology-cluster
   - clusters-vs-linguistics
-- q:
-  - Can a language model get worse on a grammatical phenomenon as training continues?
-  - Why does accuracy on some BLiMP challenges drop during training?
-  - Are there phenomena where more training hurts grammatical judgments?
-  answers:
+- ask:
+    unsorted:
+    - Can a language model get worse on a grammatical phenomenon as training continues?
+    - Why does accuracy on some BLiMP challenges drop during training?
+    - Are there phenomena where more training hurts grammatical judgments?
+  answered_by:
   - deteriorating-phenomena
-- q:
-  - What should I read about how language models acquire grammar over training?
-  - Which paper connects psycholinguistic acquisition order to neural language model training
-    dynamics?
-  - Where does research on learning trajectories of linguistic phenomena in NLP start?
-  answers:
+- ask:
+    practitioner: What should I read about how language models acquire grammar over training?
+    unsorted:
+    - Which paper connects psycholinguistic acquisition order to neural language model training
+      dynamics?
+    - Where does research on learning trajectories of linguistic phenomena in NLP start?
+  answered_by:
   - context-program
   - context-reproducibility
-- q:
-  - Is it safe to run grammar-learning experiments on a small language model and expect them
-    to replicate on larger ones?
-  - Do results about linguistic generalization transfer from tiny models to bigger ones?
-  - Why would anyone study grammar acquisition using a 4-layer transformer?
-  answers:
+- ask:
+    unsorted:
+    - Is it safe to run grammar-learning experiments on a small language model and expect
+      them to replicate on larger ones?
+    - Do results about linguistic generalization transfer from tiny models to bigger ones?
+    - Why would anyone study grammar acquisition using a 4-layer transformer?
+  answered_by:
   - context-reproducibility
   - cross-architecture
 terminology:

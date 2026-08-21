@@ -119,97 +119,109 @@ claims:
     1000 examples sampled per run, 10 seeds, budgets 5-200; a stated limitation of the work.
   evidence: Section 5.1
 qa:
-- q:
-  - How can I cut the cost of human annotation when deciding which of two language models
-    is better?
-  - How do I choose between two text generation models without labeling the whole test set?
-  - What method reduces preference annotations needed for model selection in text generation?
-  answers:
+- ask:
+    practitioner: How can I cut the cost of human annotation when deciding which of two language
+      models is better?
+    unsorted:
+    - How do I choose between two text generation models without labeling the whole test set?
+    - What method reduces preference annotations needed for model selection in text generation?
+  answered_by:
   - problem-context
   - iterative-annotation-savings
   - no-annotations-needed
-- q:
-  - How many annotations does DiffUse actually save compared to random sampling?
-  - What is the measured reduction in labeling effort from clustering output differences?
-  - Does selecting examples by output-difference clustering need fewer oracle judgments than
-    random selection?
-  answers:
+- ask:
+    unsorted:
+    - How many annotations does DiffUse actually save compared to random sampling?
+    - What is the measured reduction in labeling effort from clustering output differences?
+    - Does selecting examples by output-difference clustering need fewer oracle judgments
+      than random selection?
+  answered_by:
   - iterative-annotation-savings
   - iterative-success-rate
-- q:
-  - How does DiffUse decide when it has enough annotations to stop?
-  - Is there a stopping rule for how many examples to annotate during a two-model comparison?
-  - How reliable is the iterative DiffUse selection algorithm at a 0.2 risk threshold?
-  answers:
+- ask:
+    unsorted:
+    - How does DiffUse decide when it has enough annotations to stop?
+    - Is there a stopping rule for how many examples to annotate during a two-model comparison?
+    - How reliable is the iterative DiffUse selection algorithm at a 0.2 risk threshold?
+  answered_by:
   - iterative-success-rate
   - failures-are-cheap
   - hard-case-limit
-- q:
-  - Does clustering output difference vectors give an unbiased estimate of how much better
-    one model is?
-  - Can DiffUse be used to measure the size of the performance gap between two models?
-  - Why does difference-vector clustering beat random sampling at picking the winner?
-  answers:
+- ask:
+    unsorted:
+    - Does clustering output difference vectors give an unbiased estimate of how much better
+      one model is?
+    - Can DiffUse be used to measure the size of the performance gap between two models?
+    - Why does difference-vector clustering beat random sampling at picking the winner?
+  answered_by:
   - winner-bias
   - high-norm-informative
-- q:
-  - Which examples turn out to be most informative for preference comparisons between generation
-    models?
-  - Do large semantic differences between two models' outputs predict which model wins overall?
-  - Why does the norm of an output difference vector matter for model selection?
-  answers:
+- ask:
+    unsorted:
+    - Which examples turn out to be most informative for preference comparisons between generation
+      models?
+    - Do large semantic differences between two models' outputs predict which model wins overall?
+    - Why does the norm of an output difference vector matter for model selection?
+  answered_by:
   - high-norm-informative
   - max-norm-fails
-- q:
-  - Is it enough to just annotate the examples where two models' outputs differ the most?
-  - Does a max-norm baseline work as well as clustering difference vectors?
-  - Can clustering be skipped in favor of ranking examples by difference magnitude?
-  answers:
+- ask:
+    unsorted:
+    - Is it enough to just annotate the examples where two models' outputs differ the most?
+    - Does a max-norm baseline work as well as clustering difference vectors?
+    - Can clustering be skipped in favor of ranking examples by difference magnitude?
+  answered_by:
   - max-norm-fails
-- q:
-  - Would clustering embeddings of the summarization or QA inputs work as well as clustering
-    differences between two models' outputs?
-  - Do active-learning style input-space selection methods transfer to evaluating text generation
-    models?
-  - Why represent evaluation examples by output differences rather than by their inputs?
-  answers:
+- ask:
+    unsorted:
+    - Would clustering embeddings of the summarization or QA inputs work as well as clustering
+      differences between two models' outputs?
+    - Do active-learning style input-space selection methods transfer to evaluating text generation
+      models?
+    - Why represent evaluation examples by output differences rather than by their inputs?
+  answered_by:
   - input-clustering-fails
   - high-norm-informative
-- q:
-  - How sensitive is DiffUse to the choice of clustering algorithm?
-  - Does k-means or hierarchical clustering matter when picking evaluation examples by output
-    difference?
-  - Which components of a difference-vector selection pipeline for model comparison actually
-    matter?
-  answers:
+- ask:
+    unsorted:
+    - How sensitive is DiffUse to the choice of clustering algorithm?
+    - Does k-means or hierarchical clustering matter when picking evaluation examples by output
+      difference?
+    - Which components of a difference-vector selection pipeline for model comparison actually
+      matter?
+  answered_by:
   - robust-to-clustering-choice
   - input-clustering-fails
-- q:
-  - Can label-efficient selection be used to compare prompts rather than models?
-  - Does DiffUse work for choosing between few-shot prompt variants of the same model?
-  - How do I pick the better prompt with few annotations?
-  answers:
+- ask:
+    practitioner: How do I pick the better prompt with few annotations?
+    unsorted:
+    - Can label-efficient selection be used to compare prompts rather than models?
+    - Does DiffUse work for choosing between few-shot prompt variants of the same model?
+  answered_by:
   - prompt-selection
-- q:
-  - Were the DiffUse experiments run with real human preference annotations?
-  - What oracle was used to validate label-efficient model selection for text generation?
-  - What are the limitations of the DiffUse evaluation setup?
-  answers:
+- ask:
+    unsorted:
+    - Were the DiffUse experiments run with real human preference annotations?
+    - What oracle was used to validate label-efficient model selection for text generation?
+    - What are the limitations of the DiffUse evaluation setup?
+  answered_by:
   - simulated-oracle
   - problem-context
-- q:
-  - When is label-efficient example selection for model comparison not worth using?
-  - Does DiffUse require existing labeled evaluation data?
-  - What does DiffUse assume about the models being compared?
-  answers:
+- ask:
+    unsorted:
+    - When is label-efficient example selection for model comparison not worth using?
+    - Does DiffUse require existing labeled evaluation data?
+    - What does DiffUse assume about the models being compared?
+  answered_by:
   - no-annotations-needed
   - hard-case-limit
-- q:
-  - What should I read on efficient evaluation and benchmark subset selection for generative
-    models?
-  - Which paper tackled label-efficient model selection specifically for text generation?
-  - Where should I start reading about reducing evaluation cost for LLM comparisons?
-  answers:
+- ask:
+    practitioner: What should I read on efficient evaluation and benchmark subset selection
+      for generative models?
+    unsorted:
+    - Which paper tackled label-efficient model selection specifically for text generation?
+    - Where should I start reading about reducing evaluation cost for LLM comparisons?
+  answered_by:
   - problem-context
   - no-annotations-needed
 misreadings:

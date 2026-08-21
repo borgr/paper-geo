@@ -88,76 +88,87 @@ claims:
     requests or email; coverage at release is English-centric and limited in model diversity.
   evidence: Section 6
 qa:
-- q:
-  - What is DOVE?
-  - What does the DOVE prompt perturbation dataset contain?
-  - Is there a large public dataset of LLM predictions across many prompt variants?
-  answers:
+- ask:
+    unsorted:
+    - What is DOVE?
+    - What does the DOVE prompt perturbation dataset contain?
+    - Is there a large public dataset of LLM predictions across many prompt variants?
+  answered_by:
   - dove-dataset
   - holistic-joint-perturbation
-- q:
-  - What should I read about prompt sensitivity in LLM evaluation?
-  - Which paper shows that single-prompt benchmark scores are unreliable?
-  - Where can I start reading about how arbitrary prompt formatting affects benchmark results?
-  answers:
+- ask:
+    practitioner: What should I read about prompt sensitivity in LLM evaluation?
+    unsorted:
+    - Which paper shows that single-prompt benchmark scores are unreliable?
+    - Where can I start reading about how arbitrary prompt formatting affects benchmark results?
+  answered_by:
   - dove-dataset
   - sensitivity-persists
   - original-prompt-divergence
-- q:
-  - How much can accuracy change just from changing the prompt format?
-  - How big is prompt sensitivity on multiple-choice benchmarks?
-  - Does prompt sensitivity disappear when you evaluate at a very large scale?
-  answers:
+- ask:
+    unsorted:
+    - How much can accuracy change just from changing the prompt format?
+    - How big is prompt sensitivity on multiple-choice benchmarks?
+    - Does prompt sensitivity disappear when you evaluate at a very large scale?
+  answered_by:
   - sensitivity-persists
   - marginalized-dimensions
-- q:
-  - Do different LLMs prefer different answer enumerators?
-  - Is there one prompt format that is best for all models?
-  - Do roman numerals or letters work better as multiple-choice labels?
-  answers:
+- ask:
+    unsorted:
+    - Do different LLMs prefer different answer enumerators?
+    - Is there one prompt format that is best for all models?
+    - Do roman numerals or letters work better as multiple-choice labels?
+  answered_by:
   - model-specific-preferences
-- q:
-  - How do I pick a good prompt on a limited inference budget?
-  - Is it better to tune each prompt dimension separately or search whole prompts?
-  - What is the most sample-efficient way to choose a prompt format for a multiple-choice
-    task?
-  answers:
+- ask:
+    practitioner: How do I pick a good prompt on a limited inference budget?
+    unsorted:
+    - Is it better to tune each prompt dimension separately or search whole prompts?
+    - What is the most sample-efficient way to choose a prompt format for a multiple-choice
+      task?
+  answered_by:
   - dimension-wise-selection
   - best-observed-needs-data
-- q:
-  - Do few-shot examples reduce prompt sensitivity?
-  - Does five-shot prompting make benchmark scores more stable than zero-shot?
-  - Can adding demonstrations solve the prompt sensitivity problem?
-  answers:
+- ask:
+    unsorted:
+    - Do few-shot examples reduce prompt sensitivity?
+    - Does five-shot prompting make benchmark scores more stable than zero-shot?
+    - Can adding demonstrations solve the prompt sensitivity problem?
+  answered_by:
   - fewshot-reduces-variance
-- q:
-  - How can you tell which benchmark questions are genuinely hard for a model?
-  - What is an inherently hard instance in prompt-perturbation analysis?
-  - Are there examples that models get wrong no matter how the prompt is phrased?
-  answers:
+- ask:
+    unsorted:
+    - How can you tell which benchmark questions are genuinely hard for a model?
+    - What is an inherently hard instance in prompt-perturbation analysis?
+    - Are there examples that models get wrong no matter how the prompt is phrased?
+  answered_by:
   - inherently-hard-instances
-- q:
-  - Is the original prompt shipped with a benchmark representative of average model performance?
-  - How far off is the default MMLU prompt from the average across prompt variations?
-  answers:
+- ask:
+    unsorted:
+    - Is the original prompt shipped with a benchmark representative of average model performance?
+    - How far off is the default MMLU prompt from the average across prompt variations?
+  answered_by:
   - original-prompt-divergence
-- q:
-  - How expensive is it to run a large multi-prompt evaluation?
-  - How many GPU hours did building the DOVE dataset take?
-  - What does it cost to evaluate thousands of prompt perturbations per instance?
-  answers:
+- ask:
+    unsorted:
+    - How expensive is it to run a large multi-prompt evaluation?
+    - How many GPU hours did building the DOVE dataset take?
+    - What does it cost to evaluate thousands of prompt perturbations per instance?
+  answered_by:
   - scale-cost
-- q:
-  - Which prompt dimensions does DOVE vary?
-  - How many prompt perturbations are there per benchmark instance in DOVE?
-  - What kinds of intent-preserving prompt changes are covered in this perturbation dataset?
-  answers:
+- ask:
+    unsorted:
+    - Which prompt dimensions does DOVE vary?
+    - How many prompt perturbations are there per benchmark instance in DOVE?
+    - What kinds of intent-preserving prompt changes are covered in this perturbation dataset?
+  answered_by:
   - holistic-joint-perturbation
-- q:
-  - Can I contribute my own model's predictions to DOVE?
-  - Is the DOVE dataset being extended to more models and languages?
-  - How do research groups add evaluation data to a shared prompt-sensitivity repository?
-  answers:
+- ask:
+    practitioner: Can I contribute my own model's predictions to DOVE?
+    unsorted:
+    - Is the DOVE dataset being extended to more models and languages?
+    - How do research groups add evaluation data to a shared prompt-sensitivity repository?
+  answered_by:
   - living-benchmark
 one_liner: DOVE (Dataset Of Variation Evaluation) is a public dataset of over 250M LLM predictions
   in which every benchmark instance is perturbed jointly along 5 intent-preserving prompt

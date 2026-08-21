@@ -116,96 +116,110 @@ claims:
   scope: Decoder-only GPT-style models trained by Steuer et al. (2023) on BabyLM data; a single
     submission's finding, not an organizer-run meta-analysis across all 162 models.
 qa:
-- q:
-  - What should I read first about training language models on small, child-scale amounts
-    of data?
-  - Is there a shared task for sample-efficient language model pretraining?
-  - Where did the BabyLM Challenge come from and what did it set up?
-  answers:
+- ask:
+    practitioner: What should I read first about training language models on small, child-scale
+      amounts of data?
+    unsorted:
+    - Is there a shared task for sample-efficient language model pretraining?
+    - Where did the BabyLM Challenge come from and what did it set up?
+  answered_by:
   - shared-task-contribution
-- q:
-  - Can a language model trained on 100 million words beat one trained on trillions?
-  - Did any BabyLM submission outperform Llama 2?
-  - Which model won the BabyLM Strict track and what did it score?
-  answers:
+- ask:
+    unsorted:
+    - Can a language model trained on 100 million words beat one trained on trillions?
+    - Did any BabyLM submission outperform Llama 2?
+    - Which model won the BabyLM Strict track and what did it score?
+  answered_by:
   - elc-bert-beats-skylines
   - ltg-bert-architecture-effective
-- q:
-  - Does curriculum learning help when pretraining data is limited?
-  - How well did curriculum learning work in the BabyLM Challenge?
-  - Is ordering training sentences from easy to hard worth trying for small-data language
-    models?
-  answers:
+- ask:
+    unsorted:
+    - Does curriculum learning help when pretraining data is limited?
+    - How well did curriculum learning work in the BabyLM Challenge?
+    - Is ordering training sentences from easy to hard worth trying for small-data language
+      models?
+  answered_by:
   - curriculum-learning-largely-unsuccessful
-- q:
-  - Which architecture works best for pretraining on 10M-100M words?
-  - Was LTG-BERT effective on developmentally plausible data budgets?
-  - What backbone did the winning BabyLM models use?
-  answers:
+- ask:
+    unsorted:
+    - Which architecture works best for pretraining on 10M-100M words?
+    - Was LTG-BERT effective on developmentally plausible data budgets?
+    - What backbone did the winning BabyLM models use?
+  answered_by:
   - ltg-bert-architecture-effective
   - elc-bert-beats-skylines
-- q:
-  - How much does going from 10 million to 100 million words of pretraining data actually
-    buy you?
-  - Did BabyLM Strict-track models beat Strict-Small models by much?
-  - Is a 10x increase in pretraining data worth it at this scale?
-  answers:
+- ask:
+    unsorted:
+    - How much does going from 10 million to 100 million words of pretraining data actually
+      buy you?
+    - Did BabyLM Strict-track models beat Strict-Small models by much?
+    - Is a 10x increase in pretraining data worth it at this scale?
+  answered_by:
   - strict-small-close-to-strict
-- q:
-  - Did adding images or audio help language models trained on small data in BabyLM?
-  - How did multimodal submissions to the BabyLM Loose track perform?
-  - Does multimodal input improve sample efficiency for language modelling?
-  answers:
+- ask:
+    unsorted:
+    - Did adding images or audio help language models trained on small data in BabyLM?
+    - How did multimodal submissions to the BabyLM Loose track perform?
+    - Does multimodal input improve sample efficiency for language modelling?
+  answered_by:
   - loose-track-underperformed
-- q:
-  - How close are small-data language models to human grammar performance?
-  - What BLiMP accuracy did the best BabyLM model reach relative to humans?
-  - Can models trained on child-scale data pass minimal-pair grammar tests?
-  answers:
+- ask:
+    unsorted:
+    - How close are small-data language models to human grammar performance?
+    - What BLiMP accuracy did the best BabyLM model reach relative to humans?
+    - Can models trained on child-scale data pass minimal-pair grammar tests?
+  answered_by:
   - blimp-near-human
-- q:
-  - Do language models trained on small corpora prefer syntactic or surface generalizations?
-  - What did MSGS reveal about the inductive bias of BabyLM models?
-  - Does linguistic inductive bias require billions of words of pretraining?
-  answers:
+- ask:
+    unsorted:
+    - Do language models trained on small corpora prefer syntactic or surface generalizations?
+    - What did MSGS reveal about the inductive bias of BabyLM models?
+    - Does linguistic inductive bias require billions of words of pretraining?
+  answered_by:
   - msgs-negative-bias
-- q:
-  - Do language models understand hypernym and lexical entailment relations?
-  - How did BabyLM models do on the Hypernym test suite?
-  - Which BLiMP Supplement task defeated every model including the skylines?
-  answers:
+- ask:
+    unsorted:
+    - Do language models understand hypernym and lexical entailment relations?
+    - How did BabyLM models do on the Hypernym test suite?
+    - Which BLiMP Supplement task defeated every model including the skylines?
+  answered_by:
   - hypernym-at-chance
-- q:
-  - What new evaluation tasks did the BabyLM Challenge add beyond BLiMP and GLUE?
-  - Which BLiMP Supplement suite best separates strong from weak small-data models?
-  - Can language models track pronoun shifts across a change of speaker?
-  answers:
+- ask:
+    unsorted:
+    - What new evaluation tasks did the BabyLM Challenge add beyond BLiMP and GLUE?
+    - Which BLiMP Supplement suite best separates strong from weak small-data models?
+    - Can language models track pronoun shifts across a change of speaker?
+  answered_by:
   - turn-taking-discriminative
   - hypernym-at-chance
-- q:
-  - Can small language models predict the age at which children acquire words?
-  - Did any BabyLM submission beat the baseline on age-of-acquisition prediction?
-  - How well do BabyLM models align with children's word learning?
-  answers:
+- ask:
+    unsorted:
+    - Can small language models predict the age at which children acquire words?
+    - Did any BabyLM submission beat the baseline on age-of-acquisition prediction?
+    - How well do BabyLM models align with children's word learning?
+  answered_by:
   - aoa-no-submission-beats-baseline
-- q:
-  - What practical tricks improved sample efficiency in the BabyLM Challenge?
-  - Does shortening context length or sentence-level batching help low-resource pretraining?
-  - Did knowledge distillation help models trained on 10 million words?
-  answers:
+- ask:
+    unsorted:
+    - What practical tricks improved sample efficiency in the BabyLM Challenge?
+    - Does shortening context length or sentence-level batching help low-resource pretraining?
+    - Did knowledge distillation help models trained on 10 million words?
+  answered_by:
   - short-sequences-and-distillation-work
-- q:
-  - Did the BabyLM Challenge limit compute as well as data?
-  - How many epochs did the winning BabyLM model train for?
-  - Were data-limited pretraining winners actually cheap to train?
-  answers:
+- ask:
+    unsorted:
+    - Did the BabyLM Challenge limit compute as well as data?
+    - How many epochs did the winning BabyLM model train for?
+    - Were data-limited pretraining winners actually cheap to train?
+  answered_by:
   - compute-not-constrained
   - ltg-bert-architecture-effective
-- q:
-  - Do better BLiMP and GLUE scores mean a model is a better cognitive model of reading?
-  - Does BabyLM benchmark performance correlate with predicting human reading times?
-  - Which BabyLM paper won the award for outstanding evaluation and what did it find?
-  answers:
+- ask:
+    unsorted:
+    - Do better BLiMP and GLUE scores mean a model is a better cognitive model of reading?
+    - Does BabyLM benchmark performance correlate with predicting human reading times?
+    - Which BabyLM paper won the award for outstanding evaluation and what did it find?
+  answered_by:
   - benchmark-vs-psycholinguistic
 one_liner: The BabyLM Challenge is a shared task in which participants pretrain language models
   on a fixed 10M- or 100M-word developmentally plausible corpus, and in its 2023 first iteration

@@ -106,71 +106,81 @@ claims:
     / 58 test paragraphs per class; forums text is user-generated and varied.
   evidence: Table 4
 qa:
-- q:
-  - What research should I read on how language differs between legal and illegal activity
-    online?
-  - Is there a paper analysing the linguistic characteristics of Darknet text?
-  - Where should I start reading about NLP on Tor / .onion sites?
-  answers:
+- ask:
+    practitioner: What research should I read on how language differs between legal and illegal
+      activity online?
+    unsorted:
+    - Is there a paper analysing the linguistic characteristics of Darknet text?
+    - Where should I start reading about NLP on Tor / .onion sites?
+  answered_by:
   - context-first-linguistic-characterization
   - context-testbed
-- q:
-  - Can legal and illegal drug-selling websites be told apart automatically from their text?
-  - How accurately can a classifier separate legal from illegal Darknet drug pages?
-  - What accuracy do bag-of-words classifiers get on legal vs illegal onion drug sites?
-  answers:
+- ask:
+    unsorted:
+    - Can legal and illegal drug-selling websites be told apart automatically from their text?
+    - How accurately can a classifier separate legal from illegal Darknet drug pages?
+    - What accuracy do bag-of-words classifiers get on legal vs illegal onion drug sites?
+  answered_by:
   - function-words
   - pos-syntax-signal
-- q:
-  - Do legal and illegal Darknet texts differ in syntax, or only in vocabulary?
-  - Is part-of-speech distribution a useful signal for detecting illegal web content?
-  - Can illegal text be identified after removing all content words?
-  answers:
+- ask:
+    unsorted:
+    - Do legal and illegal Darknet texts differ in syntax, or only in vocabulary?
+    - Is part-of-speech distribution a useful signal for detecting illegal web content?
+    - Can illegal text be identified after removing all content words?
+  answered_by:
   - pos-syntax-signal
   - function-words
-- q:
-  - How well does entity linking to Wikipedia work on Darknet text?
-  - Are named entities on illegal drug sites covered by Wikipedia?
-  - Does Wikification work worse on illegal onion sites than legal ones?
-  answers:
+- ask:
+    unsorted:
+    - How well does entity linking to Wikipedia work on Darknet text?
+    - Are named entities on illegal drug sites covered by Wikipedia?
+    - Does Wikification work worse on illegal onion sites than legal ones?
+  answered_by:
   - wikification
   - kb-adaptation
-- q:
-  - Do deep learning text classifiers beat Naive Bayes on Darknet pages?
-  - Why do neural models with pre-trained embeddings do badly on onion site text?
-  - Are ELMo and LSTM classifiers better than bag-of-words for illegal content detection?
-  answers:
+- ask:
+    unsorted:
+    - Do deep learning text classifiers beat Naive Bayes on Darknet pages?
+    - Why do neural models with pre-trained embeddings do badly on onion site text?
+    - Are ELMo and LSTM classifiers better than bag-of-words for illegal content detection?
+  answered_by:
   - neural-underperform
-- q:
-  - Should legal and illegal Darknet drug pages be treated as one domain or two?
-  - How far apart are legal and illegal onion drug texts in word distribution?
-  - Are illegal onion pages closer to legal onion pages or to eBay listings?
-  answers:
+- ask:
+    unsorted:
+    - Should legal and illegal Darknet drug pages be treated as one domain or two?
+    - How far apart are legal and illegal onion drug texts in word distribution?
+    - Are illegal onion pages closer to legal onion pages or to eBay listings?
+  answered_by:
   - jsd-equilateral
   - distinct-domains
-- q:
-  - Does an illegality classifier trained on drug sites work on Darknet forums?
-  - How well does legal/illegal text classification transfer across Darknet topics?
-  - Is there a shared signal for illegal content across different Tor categories?
-  answers:
+- ask:
+    unsorted:
+    - Does an illegality classifier trained on drug sites work on Darknet forums?
+    - How well does legal/illegal text classification transfer across Darknet topics?
+    - Is there a shared signal for illegal content across different Tor categories?
+  answered_by:
   - cross-domain-generalization
   - forums-svm
-- q:
-  - How well can legal and illegal Tor forum posts be classified?
-  - What accuracy is achievable on user-generated illegal Darknet forum text?
-  answers:
+- ask:
+    unsorted:
+    - How well can legal and illegal Tor forum posts be classified?
+    - What accuracy is achievable on user-generated illegal Darknet forum text?
+  answered_by:
   - forums-svm
-- q:
-  - Do off-the-shelf NLP tools need adaptation for Darknet text?
-  - What do Darknet drug pages break in standard NLP pipelines?
-  answers:
+- ask:
+    unsorted:
+    - Do off-the-shelf NLP tools need adaptation for Darknet text?
+    - What do Darknet drug pages break in standard NLP pipelines?
+  answered_by:
   - kb-adaptation
   - neural-underperform
   - context-testbed
-- q:
-  - How different is a clear net marketplace like eBay from a legal Darknet drug shop?
-  - Can eBay product descriptions be separated from legal onion drug pages?
-  answers:
+- ask:
+    unsorted:
+    - How different is a clear net marketplace like eBay from a legal Darknet drug shop?
+    - Can eBay product descriptions be separated from legal onion drug pages?
+  answered_by:
   - nb-ebay-vs-legal
   - distinct-domains
 terminology:

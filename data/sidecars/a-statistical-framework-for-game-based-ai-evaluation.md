@@ -94,69 +94,81 @@ one_liner: A statistical framework for game-based LLM evaluation that splits eac
   win/draw/loss, with both parts sharing one low-dimensional latent skill space for models
   and games.
 qa:
-- q:
-  - What should I read about turning game or arena outcomes into interpretable model skills?
-  - Is there work on statistical models of LLM performance in two-player games?
-  - How can invalid moves and timeouts be used in LLM evaluation instead of being thrown away?
-  answers:
+- ask:
+    practitioner: What should I read about turning game or arena outcomes into interpretable
+      model skills?
+    unsorted:
+    - Is there work on statistical models of LLM performance in two-player games?
+    - How can invalid moves and timeouts be used in LLM evaluation instead of being thrown
+      away?
+  answered_by:
   - reliability-vs-proficiency
   - invalid-moves-as-signal
-- q:
-  - How many latent dimensions are needed to model LLM game outcomes?
-  - How was the number of skill dimensions chosen in the TextArena skill model?
-  - What skill-space dimensionality did the game-based LLM evaluation framework select?
-  answers:
+- ask:
+    unsorted:
+    - How many latent dimensions are needed to model LLM game outcomes?
+    - How was the number of skill dimensions chosen in the TextArena skill model?
+    - What skill-space dimensionality did the game-based LLM evaluation framework select?
+  answered_by:
   - four-dimensions
-- q:
-  - How much data does it take to fit a latent-skill model of arena outcomes?
-  - How large is the TextArena dataset used for game-based LLM evaluation?
-  - How many models, games and matches are in the TextArena traces?
-  answers:
+- ask:
+    unsorted:
+    - How much data does it take to fit a latent-skill model of arena outcomes?
+    - How large is the TextArena dataset used for game-based LLM evaluation?
+    - How many models, games and matches are in the TextArena traces?
+  answered_by:
   - dataset-scale
-- q:
-  - Can I compare two LLMs by their skill profile?
-  - Which models are most similar to deepseek-r1 in game-playing behaviour?
-  - How do you measure similarity between LLMs' latent skills from match data?
-  answers:
+- ask:
+    practitioner: Can I compare two LLMs by their skill profile?
+    unsorted:
+    - Which models are most similar to deepseek-r1 in game-playing behaviour?
+    - How do you measure similarity between LLMs' latent skills from match data?
+  answered_by:
   - skill-profile-similarity
-- q:
-  - Do the latent skills learned from game outcomes mean anything interpretable?
-  - What do rotated skill dimensions in the TextArena model correspond to?
-  - Can a factor rotation separate avoiding timeouts from avoiding invalid moves?
-  answers:
+- ask:
+    unsorted:
+    - Do the latent skills learned from game outcomes mean anything interpretable?
+    - What do rotated skill dimensions in the TextArena model correspond to?
+    - Can a factor rotation separate avoiding timeouts from avoiding invalid moves?
+  answered_by:
   - geomin-interpretable-axes
   - rotation-invariance
-- q:
-  - Are the latent skills in a multidimensional game model uniquely identified?
-  - Does rotating the skill space change predictions or fit quality?
-  - What identifiability problems affect latent skill models of match outcomes?
-  answers:
+- ask:
+    unsorted:
+    - Are the latent skills in a multidimensional game model uniquely identified?
+    - Does rotating the skill space change predictions or fit quality?
+    - What identifiability problems affect latent skill models of match outcomes?
+  answered_by:
   - rotation-invariance
-- q:
-  - Does instruction-following skill in games predict math benchmark performance?
-  - How do TextArena-derived skills correlate with MATH and IFEval?
-  - Can game-based evaluation predict performance on mathematical problem solving?
-  answers:
+- ask:
+    unsorted:
+    - Does instruction-following skill in games predict math benchmark performance?
+    - How do TextArena-derived skills correlate with MATH and IFEval?
+    - Can game-based evaluation predict performance on mathematical problem solving?
+  answered_by:
   - math-vs-ifeval
-- q:
-  - Can a game-based evaluation framework rank LLMs by how well they follow complex instructions?
-  - How do you rank models by reliability rather than win rate?
-  - What does the instruction-following ranking from TextArena outcomes measure?
-  answers:
+- ask:
+    unsorted:
+    - Can a game-based evaluation framework rank LLMs by how well they follow complex instructions?
+    - How do you rank models by reliability rather than win rate?
+    - What does the instruction-following ranking from TextArena outcomes measure?
+  answered_by:
   - model-ranking
   - geomin-interpretable-axes
-- q:
-  - Does one skill explain LLM performance across all text games?
-  - Do different games depend on different latent skills?
-  - What do the per-game loadings in the TextArena game-outcome model show?
-  answers:
+- ask:
+    unsorted:
+    - Does one skill explain LLM performance across all text games?
+    - Do different games depend on different latent skills?
+    - What do the per-game loadings in the TextArena game-outcome model show?
+  answered_by:
   - game-loadings
-- q:
-  - Does the TextArena game-outcome model account for first-mover advantage in two-player
-    games?
-  - How are draws and position bias handled when modelling LLM matches?
-  - Is the advantage of moving first estimated in game-based LLM evaluation?
-  answers:
+- ask:
+    unsorted:
+    - Does the TextArena game-outcome model account for first-mover advantage in two-player
+      games?
+    - How are draws and position bias handled when modelling LLM matches?
+    - Is the advantage of moving first estimated in game-based LLM evaluation?
+  answered_by:
   - position-bias
 terminology:
   Two-strike rule: A match-ending condition in which a player forfeits after committing two

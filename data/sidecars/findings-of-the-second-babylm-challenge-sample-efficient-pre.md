@@ -119,70 +119,81 @@ claims:
     their own multimodal data with unlimited images; images must be downloaded via provided
     scripts and CC3M coverage is limited to URLs valid in January 2024.
 qa:
-- q:
-  - What should I read to get started on sample-efficient language model pretraining?
-  - Is there a shared task on training language models with limited data?
-  - Where can I find a benchmark for developmentally plausible language modeling?
-  answers:
+- ask:
+    practitioner: What should I read to get started on sample-efficient language model pretraining?
+    unsorted:
+    - Is there a shared task on training language models with limited data?
+    - Where can I find a benchmark for developmentally plausible language modeling?
+  answered_by:
   - shared-task-for-sample-efficiency
   - own-data-allowed
-- q:
-  - Which model won the 2024 BabyLM Challenge?
-  - What approach performed best on 100M-word pretraining in BabyLM 2024?
-  - How did GPT-BERT do in the BabyLM text tracks?
-  answers:
+- ask:
+    unsorted:
+    - Which model won the 2024 BabyLM Challenge?
+    - What approach performed best on 100M-word pretraining in BabyLM 2024?
+    - How did GPT-BERT do in the BabyLM text tracks?
+  answered_by:
   - gptbert-wins-both-text-tracks
   - effective-approach-categories
-- q:
-  - Did adding images help small-data language models in the BabyLM multimodal track?
-  - Why was no winner awarded in the BabyLM Multimodal track?
-  - How well did vision-language models do on 100M words of text?
-  answers:
+- ask:
+    unsorted:
+    - Did adding images help small-data language models in the BabyLM multimodal track?
+    - Why was no winner awarded in the BabyLM Multimodal track?
+    - How well did vision-language models do on 100M words of text?
+  answered_by:
   - multimodal-no-winner
   - multimodal-resources-released
-- q:
-  - Does more compute still help when pretraining data is capped at 100M words?
-  - What is the relationship between training FLOPs and BabyLM evaluation scores?
-  - Were the best BabyLM submissions just the ones with the biggest compute budgets?
-  answers:
+- ask:
+    unsorted:
+    - Does more compute still help when pretraining data is capped at 100M words?
+    - What is the relationship between training FLOPs and BabyLM evaluation scores?
+    - Were the best BabyLM submissions just the ones with the biggest compute budgets?
+  answered_by:
   - flops-effect
-- q:
-  - Does curriculum learning improve small-scale language model pretraining?
-  - Was curriculum learning effective in the BabyLM Challenge?
-  - Which training strategies actually improved scores under a small data budget?
-  answers:
+- ask:
+    unsorted:
+    - Does curriculum learning improve small-scale language model pretraining?
+    - Was curriculum learning effective in the BabyLM Challenge?
+    - Which training strategies actually improved scores under a small data budget?
+  answered_by:
   - curriculum-learning-not-effective
   - effective-approach-categories
-- q:
-  - Can language models learn world knowledge from 100 million words?
-  - How did small language models score on EWoK?
-  - What did the BabyLM hidden evaluation reveal about commonsense and world knowledge?
-  answers:
+- ask:
+    unsorted:
+    - Can language models learn world knowledge from 100 million words?
+    - How did small language models score on EWoK?
+    - What did the BabyLM hidden evaluation reveal about commonsense and world knowledge?
+  answered_by:
   - ewok-near-chance
-- q:
-  - Does the choice of backbone architecture matter for small-data language models?
-  - Is DeBERTa or LTG-BERT better as a BabyLM backbone?
-  - Do RNNs compete with Transformers when pretraining on 100M words?
-  answers:
+- ask:
+    unsorted:
+    - Does the choice of backbone architecture matter for small-data language models?
+    - Is DeBERTa or LTG-BERT better as a BabyLM backbone?
+    - Do RNNs compete with Transformers when pretraining on 100M words?
+  answered_by:
   - backbone-no-significant-effect
   - rnns-competitive
-- q:
-  - What data is in the 2024 BabyLM pretraining corpus?
-  - How much of the BabyLM corpus is child-directed speech?
-  - What changed in the BabyLM training corpus between 2023 and 2024?
-  answers:
+- ask:
+    unsorted:
+    - What data is in the 2024 BabyLM pretraining corpus?
+    - How much of the BabyLM corpus is child-directed speech?
+    - What changed in the BabyLM training corpus between 2023 and 2024?
+  answered_by:
   - corpus-more-child-oriented
   - own-data-allowed
-- q:
-  - How close are 100M-word language models to human grammatical judgments?
-  - What are the best BLiMP scores achievable with 10M or 100M words of training data?
-  answers:
+- ask:
+    unsorted:
+    - How close are 100M-word language models to human grammatical judgments?
+    - What are the best BLiMP scores achievable with 10M or 100M words of training data?
+  answered_by:
   - blimp-approaching-human
   - gptbert-wins-both-text-tracks
-- q:
-  - Where can I get an image-text corpus for cognitively plausible vision-language pretraining?
-  - What multimodal evaluation tasks does BabyLM use?
-  answers:
+- ask:
+    practitioner: Where can I get an image-text corpus for cognitively plausible vision-language
+      pretraining?
+    unsorted:
+    - What multimodal evaluation tasks does BabyLM use?
+  answered_by:
   - multimodal-resources-released
 misreadings:
 - 'The 2.5-percentage-point gap to human BLiMP performance is not measured on the full BLiMP

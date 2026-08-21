@@ -104,72 +104,85 @@ claims:
   scope: Qualitative examples only, with no multiword errors and no accuracy or agreement
     measurements; the model outputs the M2 format, rendered visually in the examples.
 qa:
-- q:
-  - How can I automatically label the error types of grammatical corrections in English text?
-  - Is there a tool that assigns error type categories to GEC edits?
-  - What does SERRANT do?
-  answers:
+- ask:
+    practitioner: How can I automatically label the error types of grammatical corrections
+      in English text?
+    unsorted:
+    - Is there a tool that assigns error type categories to GEC edits?
+    - What does SERRANT do?
+  answered_by:
   - what-serrant-is
   - default-errant
-- q:
-  - What is a good paper to read about grammatical error type taxonomies?
-  - Where should I start reading about classifying grammatical error types across datasets?
-  - What work combines the ERRANT and SErCl error taxonomies?
-  answers:
+- ask:
+    practitioner: Where should I start reading about classifying grammatical error types across
+      datasets?
+    unsorted:
+    - What is a good paper to read about grammatical error type taxonomies?
+    - What work combines the ERRANT and SErCl error taxonomies?
+  answered_by:
   - what-serrant-is
   - cross-dataset-motivation
-- q:
-  - Why not just use ERRANT for error type classification?
-  - What problems with ERRANT's categories motivated a new classifier?
-  - When does SERRANT depart from ERRANT's annotation?
-  answers:
+- ask:
+    unsorted:
+    - Why not just use ERRANT for error type classification?
+    - What problems with ERRANT's categories motivated a new classifier?
+    - When does SERRANT depart from ERRANT's annotation?
+  answered_by:
   - informativeness-goal
   - other-fallback
   - morph-replacement
-- q:
-  - How are edits handled when the part of speech changes between a learner sentence and its
-    corrected version?
-  - What type does a noun-to-verb correction get in SERRANT?
-  - Which classifier gives an explicit source-to-target tag for POS-changing grammatical errors?
-  answers:
+- ask:
+    unsorted:
+    - How are edits handled when the part of speech changes between a learner sentence and
+      its corrected version?
+    - What type does a noun-to-verb correction get in SERRANT?
+    - Which classifier gives an explicit source-to-target tag for POS-changing grammatical
+      errors?
+  answered_by:
   - pos-change-types
   - aux-verb
-- q:
-  - How are tense, aspect and mood errors distinguished in English error annotation?
-  - Does any error type classifier separate modal verb errors from tense errors?
-  - What replaces ERRANT's Verb:Tense category in SERRANT?
-  answers:
+- ask:
+    unsorted:
+    - How are tense, aspect and mood errors distinguished in English error annotation?
+    - Does any error type classifier separate modal verb errors from tense errors?
+    - What replaces ERRANT's Verb:Tense category in SERRANT?
+  answered_by:
   - tense-modal-split
-- q:
-  - How is ERRANT's Morph error category refined?
-  - What does a WC suffix mean in an English grammatical error type label?
-  - How is word-choice distinguished from morphosyntactic error in edit annotation?
-  answers:
+- ask:
+    unsorted:
+    - How is ERRANT's Morph error category refined?
+    - What does a WC suffix mean in an English grammatical error type label?
+    - How is word-choice distinguished from morphosyntactic error in edit annotation?
+  answered_by:
   - morph-replacement
-- q:
-  - How are capitalisation errors involving proper nouns annotated?
-  - Does SERRANT treat "apple → Apple" as an orthography error?
-  - What happens to ERRANT's Orth type in SERRANT?
-  answers:
+- ask:
+    unsorted:
+    - How are capitalisation errors involving proper nouns annotated?
+    - Does SERRANT treat "apple → Apple" as an orthography error?
+    - What happens to ERRANT's Orth type in SERRANT?
+  answered_by:
   - orth-propn
-- q:
-  - How are multi-word edits marked in SERRANT's error types?
-  - What does the MW suffix mean in an English grammatical error type label?
-  answers:
+- ask:
+    unsorted:
+    - How are multi-word edits marked in SERRANT's error types?
+    - What does the MW suffix mean in an English grammatical error type label?
+  answered_by:
   - mw-suffix
-- q:
-  - Does the SERRANT paper report accuracy numbers for its error type classifier?
-  - Was SERRANT evaluated quantitatively against ERRANT or SErCl?
-  - Is there any measured comparison between English grammatical error type classifiers, or
-    only worked examples?
-  answers:
+- ask:
+    unsorted:
+    - Does the SERRANT paper report accuracy numbers for its error type classifier?
+    - Was SERRANT evaluated quantitatively against ERRANT or SErCl?
+    - Is there any measured comparison between English grammatical error type classifiers,
+      or only worked examples?
+  answered_by:
   - worked-examples
   - informativeness-goal
-- q:
-  - Can SERRANT be used on languages other than English?
-  - Which languages does SERRANT support?
-  - Is the SErCl-based syntactic error taxonomy cross-lingual in the released tool?
-  answers:
+- ask:
+    unsorted:
+    - Can SERRANT be used on languages other than English?
+    - Which languages does SERRANT support?
+    - Is the SErCl-based syntactic error taxonomy cross-lingual in the released tool?
+  answered_by:
   - what-serrant-is
   - cross-dataset-motivation
 misreadings:

@@ -100,75 +100,87 @@ claims:
     to 6,000 documents per language, plus 4,000 per language from MADLAD-400; three of the
     selection models are also among the eight evaluated.
 qa:
-- q:
-  - What benchmark should I use to evaluate language identification on noisy web text?
-  - Is there a human-annotated LID evaluation set for web data?
-  - Where can I find an open language identification benchmark covering low-resource languages?
-  answers:
+- ask:
+    practitioner: What benchmark should I use to evaluate language identification on noisy
+      web text?
+    unsorted:
+    - Is there a human-annotated LID evaluation set for web data?
+    - Where can I find an open language identification benchmark covering low-resource languages?
+  answered_by:
   - web-lid-benchmark
   - dataset-size
-- q:
-  - How large is CommonLID and how many languages does it cover?
-  - How many lines and languages are in the CommonLID dataset?
-  - How big is the Common Crawl human-annotated language identification dataset?
-  answers:
+- ask:
+    unsorted:
+    - How large is CommonLID and how many languages does it cover?
+    - How many lines and languages are in the CommonLID dataset?
+    - How big is the Common Crawl human-annotated language identification dataset?
+  answered_by:
   - dataset-size
-- q:
-  - Do language identification models perform worse on web text than on FLORES?
-  - How much do LID accuracy numbers drop on web data?
-  - Are published LID accuracy scores overestimates?
-  answers:
+- ask:
+    unsorted:
+    - Do language identification models perform worse on web text than on FLORES?
+    - How much do LID accuracy numbers drop on web data?
+    - Are published LID accuracy scores overestimates?
+  answered_by:
   - harder-than-clean-sets
   - overestimation
-- q:
-  - Which language identification model is most accurate overall?
-  - Is GlotLID the best LID model?
-  - How do GlotLID, CLD2 and OpenLID compare on shared languages?
-  answers:
+- ask:
+    unsorted:
+    - Which language identification model is most accurate overall?
+    - Is GlotLID the best LID model?
+    - How do GlotLID, CLD2 and OpenLID compare on shared languages?
+  answered_by:
   - glotlid-best-shared-languages
   - no-model-above-75
-- q:
-  - Can GPT-4o or GPT-5 do language identification as well as a dedicated classifier?
-  - Are LLMs good at identifying the language of a text?
-  - How do OpenAI GPT models compare with GlotLID for LID?
-  answers:
+- ask:
+    unsorted:
+    - Can GPT-4o or GPT-5 do language identification as well as a dedicated classifier?
+    - Are LLMs good at identifying the language of a text?
+    - How do OpenAI GPT models compare with GlotLID for LID?
+  answered_by:
   - llms-lose
-- q:
-  - Which LID model is fastest, and what does the extra accuracy cost in throughput?
-  - How many samples per second can GlotLID and CLD2 classify?
-  - What is the speed versus accuracy tradeoff among language identification models?
-  answers:
+- ask:
+    unsorted:
+    - Which LID model is fastest, and what does the extra accuracy cost in throughput?
+    - How many samples per second can GlotLID and CLD2 classify?
+    - What is the speed versus accuracy tradeoff among language identification models?
+  answered_by:
   - speed-tradeoff
-- q:
-  - Is language identification a solved problem?
-  - What is the current state of the art in language identification?
-  - Which LID model works well across all domains?
-  answers:
+- ask:
+    unsorted:
+    - Is language identification a solved problem?
+    - What is the current state of the art in language identification?
+    - Which LID model works well across all domains?
+  answered_by:
   - no-model-above-75
   - coverage-comparison-problem
-- q:
-  - Why is it hard to compare language identification models fairly?
-  - How should LID models with different language coverage be scored against each other?
-  - Does higher language coverage make a LID model better?
-  answers:
+- ask:
+    unsorted:
+    - Why is it hard to compare language identification models fairly?
+    - How should LID models with different language coverage be scored against each other?
+    - Does higher language coverage make a LID model better?
+  answered_by:
   - coverage-comparison-problem
-- q:
-  - How much do native-speaker annotators disagree when labelling the language of web lines?
-  - What is the inter-annotator agreement in CommonLID?
-  - Which languages cause the most annotation disagreement in LID labelling?
-  answers:
+- ask:
+    unsorted:
+    - How much do native-speaker annotators disagree when labelling the language of web lines?
+    - What is the inter-annotator agreement in CommonLID?
+    - Which languages cause the most annotation disagreement in LID labelling?
+  answered_by:
   - annotator-disagreement
-- q:
-  - What are the limitations of building a LID benchmark by sampling Common Crawl?
-  - Does CommonLID inherit bias from the LID models used to pre-select data?
-  - How was the web text for CommonLID annotation chosen?
-  answers:
+- ask:
+    unsorted:
+    - What are the limitations of building a LID benchmark by sampling Common Crawl?
+    - Does CommonLID inherit bias from the LID models used to pre-select data?
+    - How was the web text for CommonLID annotation chosen?
+  answered_by:
   - selection-bias-limit
-- q:
-  - Why do LID models score so high on UDHR and Bible test sets?
-  - Is training and test data overlapping in long-tail language identification evaluation?
-  - What makes Bible-based LID evaluation misleading?
-  answers:
+- ask:
+    unsorted:
+    - Why do LID models score so high on UDHR and Bible test sets?
+    - Is training and test data overlapping in long-tail language identification evaluation?
+    - What makes Bible-based LID evaluation misleading?
+  answered_by:
   - overestimation
 misreadings:
 - 'GlotLID scoring highest in the head-to-head comparisons does not mean language identification

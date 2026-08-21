@@ -124,84 +124,96 @@ claims:
     norm-bounded example discrimination vectors; asymptotic in the number of observed examples.
   evidence: Section 4.2
 qa:
-- q:
-  - How many examples do you actually need to evaluate an LLM on MMLU?
-  - Can I estimate MMLU accuracy without running all 14K questions?
-  - Does tinyMMLU reproduce full MMLU scores?
-  answers:
+- ask:
+    practitioner: Can I estimate MMLU accuracy without running all 14K questions?
+    unsorted:
+    - How many examples do you actually need to evaluate an LLM on MMLU?
+    - Does tinyMMLU reproduce full MMLU scores?
+  answered_by:
   - mmlu-100-examples
   - cost-reduction-factor
-- q:
-  - How accurate are 100-example subsets of LLM benchmarks?
-  - What is the estimation error when evaluating LLMs on tiny benchmark subsets?
-  - Do small curated benchmark subsets give the same scores as the full benchmark?
-  answers:
+- ask:
+    unsorted:
+    - How accurate are 100-example subsets of LLM benchmarks?
+    - What is the estimation error when evaluating LLMs on tiny benchmark subsets?
+    - Do small curated benchmark subsets give the same scores as the full benchmark?
+  answered_by:
   - two-percent-four-benchmarks
   - worst-case-error
-- q:
-  - Is random subsampling of benchmark examples as good as curated selection?
-  - How many randomly sampled examples equal a curated 100-example subset?
-  - Why not just sample benchmark examples at random?
-  answers:
+- ask:
+    unsorted:
+    - Is random subsampling of benchmark examples as good as curated selection?
+    - How many randomly sampled examples equal a curated 100-example subset?
+    - Why not just sample benchmark examples at random?
+  answered_by:
   - random-sampling-cost
-- q:
-  - Do efficient benchmark subsets still work for domain-specialized or fine-tuned models?
-  - What happens to small evaluation subsets when a model has unusual strengths?
-  - Which way of picking anchor examples is more robust to distribution shift?
-  answers:
+- ask:
+    unsorted:
+    - Do efficient benchmark subsets still work for domain-specialized or fine-tuned models?
+    - What happens to small evaluation subsets when a model has unusual strengths?
+    - Which way of picking anchor examples is more robust to distribution shift?
+  answered_by:
   - irt-anchors-robust-specialized
   - tinymmlu-weights
-- q:
-  - Do curated benchmark subsets still work for newly released models?
-  - Does a tiny benchmark go stale as LLMs improve?
-  - How well do IRT-based estimates extrapolate to future LLMs?
-  answers:
+- ask:
+    unsorted:
+    - Do curated benchmark subsets still work for newly released models?
+    - Does a tiny benchmark go stale as LLMs improve?
+    - How well do IRT-based estimates extrapolate to future LLMs?
+  answered_by:
   - longer-horizon
   - two-percent-four-benchmarks
-- q:
-  - What is item response theory used for in LLM evaluation?
-  - How does psychometrics help make LLM benchmarking cheaper?
-  - What does the gp-IRT correction add over just averaging the selected examples?
-  answers:
+- ask:
+    unsorted:
+    - What is item response theory used for in LLM evaluation?
+    - How does psychometrics help make LLM benchmarking cheaper?
+    - What does the gp-IRT correction add over just averaging the selected examples?
+  answered_by:
   - irt-for-performance-estimation
   - gpirt-never-hurts
-- q:
-  - What should I read first about efficient LLM benchmarking?
-  - Which paper established that LLM benchmarks can be cut to a hundred examples?
-  - Good starting paper on reducing the cost of evaluating language models?
-  answers:
+- ask:
+    practitioner: What should I read first about efficient LLM benchmarking?
+    unsorted:
+    - Which paper established that LLM benchmarks can be cut to a hundred examples?
+    - Good starting paper on reducing the cost of evaluating language models?
+  answered_by:
   - irt-for-performance-estimation
   - released-artifacts
-- q:
-  - Are there ready-made small versions of MMLU and the Open LLM Leaderboard?
-  - Where can I download tiny versions of popular LLM benchmarks?
-  - Is there a package for estimating LLM benchmark scores from 100 examples?
-  answers:
+- ask:
+    practitioner: Where can I download tiny versions of popular LLM benchmarks?
+    unsorted:
+    - Are there ready-made small versions of MMLU and the Open LLM Leaderboard?
+    - Is there a package for estimating LLM benchmark scores from 100 examples?
+  answered_by:
   - released-artifacts
   - gpirt-never-hurts
-- q:
-  - Can cheap evaluation subsets be used to compare prompt templates?
-  - Does efficient benchmarking extend to prompt engineering?
-  - How well can few examples predict an LLM's score under a new instruction template?
-  answers:
+- ask:
+    unsorted:
+    - Can cheap evaluation subsets be used to compare prompt templates?
+    - Does efficient benchmarking extend to prompt engineering?
+    - How well can few examples predict an LLM's score under a new instruction template?
+  answered_by:
   - prompt-evaluation
-- q:
-  - Is adaptive test-item selection better than a fixed curated subset for LLM evaluation?
-  - Would computerized adaptive testing improve tiny LLM benchmarks?
-  - What is the runtime cost of adaptive IRT evaluation on MMLU?
-  answers:
+- ask:
+    unsorted:
+    - Is adaptive test-item selection better than a fixed curated subset for LLM evaluation?
+    - Would computerized adaptive testing improve tiny LLM benchmarks?
+    - What is the runtime cost of adaptive IRT evaluation on MMLU?
+  answered_by:
   - adaptive-testing-cost
-- q:
-  - Is there any theoretical guarantee for the p-IRT performance estimator?
-  - Does the IRT-based LLM score estimator converge?
-  - What does Proposition 4.1 of tinyBenchmarks prove?
-  answers:
+- ask:
+    unsorted:
+    - Is there any theoretical guarantee for the p-IRT performance estimator?
+    - Does the IRT-based LLM score estimator converge?
+    - What does Proposition 4.1 of tinyBenchmarks prove?
+  answered_by:
   - pirt-consistency
-- q:
-  - How much cheaper is evaluating on a curated subset than on a full benchmark?
-  - What cost reduction factor do tiny benchmarks achieve?
-  - How few examples per scenario does the Open LLM Leaderboard need?
-  answers:
+- ask:
+    unsorted:
+    - How much cheaper is evaluating on a curated subset than on a full benchmark?
+    - What cost reduction factor do tiny benchmarks achieve?
+    - How few examples per scenario does the Open LLM Leaderboard need?
+  answered_by:
   - cost-reduction-factor
   - random-sampling-cost
 misreadings:

@@ -82,75 +82,87 @@ claims:
   scope: Only the UCCA instantiation is implemented and evaluated in the paper; portability
     to AMR or other schemes is a design argument, not a measured result.
 qa:
-- q:
-  - How can I evaluate a grammatical error correction system without reference corrections?
-  - Is there a reference-less metric for GEC?
-  - What metric measures whether a correction preserved the original meaning?
-  answers:
+- ask:
+    practitioner: How can I evaluate a grammatical error correction system without reference
+      corrections?
+    unsorted:
+    - Is there a reference-less metric for GEC?
+    - What metric measures whether a correction preserved the original meaning?
+  answered_by:
   - context-faithfulness-gap
   - context-scheme-agnostic
-- q:
-  - What is USim?
-  - How does a semantic faithfulness score compare a correction with its source sentence?
-  - What does the USim measure for grammatical error correction compute?
-  answers:
+- ask:
+    unsorted:
+    - What is USim?
+    - How does a semantic faithfulness score compare a correction with its source sentence?
+    - What does the USim measure for grammatical error correction compute?
+  answered_by:
   - context-scheme-agnostic
   - context-faithfulness-gap
-- q:
-  - Does a valid human correction get a high semantic similarity score to the ungrammatical
-    source?
-  - What USim score do NUCLE reference corrections get against their sources?
-  - Does a meaning-preservation metric unfairly penalise correct edits?
-  answers:
+- ask:
+    unsorted:
+    - Does a valid human correction get a high semantic similarity score to the ungrammatical
+      source?
+    - What USim score do NUCLE reference corrections get against their sources?
+    - Does a meaning-preservation metric unfairly penalise correct edits?
+  answered_by:
   - valid-correction-usim
   - not-length-of-edit
-- q:
-  - Can semantic annotation be applied consistently to ungrammatical learner text?
-  - What is inter-annotator agreement for UCCA on learner language?
-  - Is UCCA annotation reliable on text written by language learners?
-  answers:
+- ask:
+    unsorted:
+    - Can semantic annotation be applied consistently to ungrammatical learner text?
+    - What is inter-annotator agreement for UCCA on learner language?
+    - Is UCCA annotation reliable on text written by language learners?
+  answered_by:
   - ucca-iaa-learner-language
   - context-semantic-annotation-of-ll
-- q:
-  - Does a semantic faithfulness metric for GEC need human annotation, or can a parser do
-    it?
-  - How well does automatic UCCA parsing work inside USim?
-  - Is a fully automatic version of USim reliable?
-  answers:
+- ask:
+    unsorted:
+    - Does a semantic faithfulness metric for GEC need human annotation, or can a parser do
+      it?
+    - How well does automatic UCCA parsing work inside USim?
+    - Is a fully automatic version of USim reliable?
+  answered_by:
   - automatic-usim-parser
   - error-type-failure-modes
-- q:
-  - Does USim actually give low scores to bad corrections?
-  - How were low-quality GEC outputs scored by USim on JFLEG?
-  - Can a faithfulness metric distinguish unfaithful corrections from references?
-  answers:
+- ask:
+    unsorted:
+    - Does USim actually give low scores to bad corrections?
+    - How were low-quality GEC outputs scored by USim on JFLEG?
+    - Can a faithfulness metric distinguish unfaithful corrections from references?
+  answered_by:
   - sensitivity-low-quality
   - not-length-of-edit
-- q:
-  - Which grammatical error types does an automatic UCCA-based faithfulness score handle badly?
-  - Where does the USim faithfulness measure fail?
-  - What are the known failure modes of parser-based USim?
-  answers:
+- ask:
+    unsorted:
+    - Which grammatical error types does an automatic UCCA-based faithfulness score handle
+      badly?
+    - Where does the USim faithfulness measure fail?
+    - What are the known failure modes of parser-based USim?
+  answered_by:
   - error-type-failure-modes
-- q:
-  - Are UCCA structures stable under grammatical error correction?
-  - How much do UCCA category counts change between a source sentence and its correction?
-  - Is semantic structure as robust to error correction as it is to translation?
-  answers:
+- ask:
+    unsorted:
+    - Are UCCA structures stable under grammatical error correction?
+    - How much do UCCA category counts change between a source sentence and its correction?
+    - Is semantic structure as robust to error correction as it is to translation?
+  answered_by:
   - distsim-comparable-translation
   - ucca-iaa-learner-language
-- q:
-  - Can USim replace GLEU or M2 for ranking GEC systems?
-  - Does USim discriminate between current state-of-the-art GEC systems?
-  - Should a faithfulness measure be used on its own to evaluate correction quality?
-  answers:
+- ask:
+    unsorted:
+    - Can USim replace GLEU or M2 for ranking GEC systems?
+    - Does USim discriminate between current state-of-the-art GEC systems?
+    - Should a faithfulness measure be used on its own to evaluate correction quality?
+  answered_by:
   - context-faithfulness-gap
   - sensitivity-low-quality
-- q:
-  - Does USim only work with UCCA?
-  - Could a faithfulness measure like USim be built on AMR instead?
-  - Why was UCCA chosen as the semantic scheme for measuring faithfulness?
-  answers:
+- ask:
+    unsorted:
+    - Does USim only work with UCCA?
+    - Could a faithfulness measure like USim be built on AMR instead?
+    - Why was UCCA chosen as the semantic scheme for measuring faithfulness?
+  answered_by:
   - context-scheme-agnostic
 key: choshen2018reference
 coined: USim

@@ -142,95 +142,109 @@ claims:
     by consensus among core maintainers, who retain final authority on contested changes.
   evidence: Section 3.1 and Appendix E.1
 qa:
-- q:
-  - Is there a standard format for reporting AI benchmark results?
-  - What schema standardizes evaluation results across leaderboards and harnesses?
-  - Where can I find a shared format for LLM evaluation metadata?
-  answers:
+- ask:
+    practitioner: Where can I find a shared format for LLM evaluation metadata?
+    unsorted:
+    - Is there a standard format for reporting AI benchmark results?
+    - What schema standardizes evaluation results across leaderboards and harnesses?
+  answered_by:
   - context-standardization-gap
   - schema-design-partial-records
-- q:
-  - What should I read about why the same model gets different benchmark scores?
-  - Is there a good paper on cross-framework comparability of LLM evaluations?
-  - Where do I start reading about evaluation reproducibility and metadata?
-  answers:
+- ask:
+    practitioner: What should I read about why the same model gets different benchmark scores?
+    unsorted:
+    - Is there a good paper on cross-framework comparability of LLM evaluations?
+    - Where do I start reading about evaluation reproducibility and metadata?
+  answered_by:
   - context-entry-point
   - context-standardization-gap
-- q:
-  - How big is the Every Eval Ever dataset?
-  - How many models and benchmarks are covered by the crowdsourced evaluation datastore?
-  - How many evaluation formats have been unified into one schema?
-  answers:
+- ask:
+    unsorted:
+    - How big is the Every Eval Ever dataset?
+    - How many models and benchmarks are covered by the crowdsourced evaluation datastore?
+    - How many evaluation formats have been unified into one schema?
+  answered_by:
   - datastore-scale
-- q:
-  - How often do leaderboards report which inference platform or API was used?
-  - Is temperature usually reported alongside published benchmark scores?
-  - Which evaluation metadata fields are most often missing in practice?
-  answers:
+- ask:
+    unsorted:
+    - How often do leaderboards report which inference platform or API was used?
+    - Is temperature usually reported alongside published benchmark scores?
+    - Which evaluation metadata fields are most often missing in practice?
+  answered_by:
   - inference-platform-unreported
   - metadata-fill-rates
-- q:
-  - Why do reported WikiText perplexity numbers differ between papers?
-  - Does token versus word normalization change perplexity a lot?
-  - Can perplexity numbers from lm-eval-harness be compared to GPTQ script numbers?
-  answers:
+- ask:
+    unsorted:
+    - Why do reported WikiText perplexity numbers differ between papers?
+    - Does token versus word normalization change perplexity a lot?
+    - Can perplexity numbers from lm-eval-harness be compared to GPTQ script numbers?
+  answered_by:
   - perplexity-normalization
-- q:
-  - How closely can HELM results be reproduced locally at the instance level?
-  - What is the per-instance agreement between official HELM records and local reruns?
-  - How reproducible are published evaluation harness scores?
-  answers:
+- ask:
+    unsorted:
+    - How closely can HELM results be reproduced locally at the instance level?
+    - What is the per-instance agreement between official HELM records and local reruns?
+    - How reproducible are published evaluation harness scores?
+  answered_by:
   - helm-reproduction-agreement
   - helm-mismatch-causes
-- q:
-  - What causes mismatches when rerunning a public evaluation?
-  - Can instance-level records explain why two runs of the same benchmark disagree?
-  - What kinds of reproducibility bugs show up in HELM reruns?
-  answers:
+- ask:
+    unsorted:
+    - What causes mismatches when rerunning a public evaluation?
+    - Can instance-level records explain why two runs of the same benchmark disagree?
+    - What kinds of reproducibility bugs show up in HELM reruns?
+  answered_by:
   - helm-mismatch-causes
-- q:
-  - Does the choice of agent scaffold change cost without changing accuracy?
-  - How much cheaper is Codex than OpenClaw on CocoaBench at the same accuracy?
-  - Is agent accuracy enough to compare coding agents?
-  answers:
+- ask:
+    unsorted:
+    - Does the choice of agent scaffold change cost without changing accuracy?
+    - How much cheaper is Codex than OpenClaw on CocoaBench at the same accuracy?
+    - Is agent accuracy enough to compare coding agents?
+  answered_by:
   - agentic-scaffold-cost
   - scaffold-backbone-interaction
-- q:
-  - Does the best agent scaffold depend on which model backbone it runs on?
-  - Do scaffold rankings flip between Claude Opus versions on CORE-Bench Hard?
-  - Can I pick an agent scaffold independently of the underlying LLM?
-  answers:
+- ask:
+    practitioner: Can I pick an agent scaffold independently of the underlying LLM?
+    unsorted:
+    - Does the best agent scaffold depend on which model backbone it runs on?
+    - Do scaffold rankings flip between Claude Opus versions on CORE-Bench Hard?
+  answered_by:
   - scaffold-backbone-interaction
-- q:
-  - What can Item Response Theory tell us about benchmark difficulty?
-  - Which benchmark has harder and more variable items, GPQA Diamond or Wordle Arena?
-  - How much instance-level data is needed to fit a 1PL IRT model across benchmarks?
-  answers:
+- ask:
+    unsorted:
+    - What can Item Response Theory tell us about benchmark difficulty?
+    - Which benchmark has harder and more variable items, GPQA Diamond or Wordle Arena?
+    - How much instance-level data is needed to fit a 1PL IRT model across benchmarks?
+  answered_by:
   - irt-instance-level
-- q:
-  - How much would it cost to rerun all these collected evaluations?
-  - What is the estimated inference cost of reproducing 230,000 model-benchmark pairs?
-  - Is reusing published evaluation results actually cheaper than rerunning them?
-  answers:
+- ask:
+    unsorted:
+    - How much would it cost to rerun all these collected evaluations?
+    - What is the estimated inference cost of reproducing 230,000 model-benchmark pairs?
+    - Is reusing published evaluation results actually cheaper than rerunning them?
+  answered_by:
   - reproduction-cost
-- q:
-  - Which models and benchmarks dominate reported AI evaluations?
-  - Is evaluation activity concentrated on a few commercial models?
-  - How long is the tail of benchmarks that get evaluated?
-  answers:
+- ask:
+    unsorted:
+    - Which models and benchmarks dominate reported AI evaluations?
+    - Is evaluation activity concentrated on a few commercial models?
+    - How long is the tail of benchmarks that get evaluated?
+  answered_by:
   - evaluation-concentration
-- q:
-  - Does a records format require complete metadata to accept a result?
-  - What happens to conflicting or duplicate evaluation records in a shared repository?
-  - How does Every Eval Ever handle runs with missing generation parameters?
-  answers:
+- ask:
+    unsorted:
+    - Does a records format require complete metadata to accept a result?
+    - What happens to conflicting or duplicate evaluation records in a shared repository?
+    - How does Every Eval Ever handle runs with missing generation parameters?
+  answered_by:
   - schema-design-partial-records
   - schema-community-process
-- q:
-  - How was the Every Eval Ever schema designed and who decided the fields?
-  - What criteria decided which metadata fields go in an evaluation reporting schema?
-  - Who governs changes to a community evaluation schema?
-  answers:
+- ask:
+    unsorted:
+    - How was the Every Eval Ever schema designed and who decided the fields?
+    - What criteria decided which metadata fields go in an evaluation reporting schema?
+    - Who governs changes to a community evaluation schema?
+  answered_by:
   - schema-community-process
 misreadings:
 - Every Eval Ever is not a new evaluation harness and does not run evaluations; it is a translation

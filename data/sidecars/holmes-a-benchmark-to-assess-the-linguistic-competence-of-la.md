@@ -147,79 +147,93 @@ claims:
     models, including Llama-2, Mixtral and Wizard.
   evidence: Ethical Considerations and Limitations, Dataset Contamination
 qa:
-- q:
-  - What benchmark should I read about first for evaluating what language models know about
-    grammar and linguistics?
-  - Is there a benchmark that tests linguistic knowledge of LLMs without prompting?
-  - Where can I find a large consolidated collection of probing datasets for language models?
-  - What work consolidated the probing literature into an evaluation suite?
-  answers:
+- ask:
+    practitioner: What benchmark should I read about first for evaluating what language models
+      know about grammar and linguistics?
+    unsorted:
+    - Is there a benchmark that tests linguistic knowledge of LLMs without prompting?
+    - Where can I find a large consolidated collection of probing datasets for language models?
+    - What work consolidated the probing literature into an evaluation suite?
+  answered_by:
   - holmes-benchmark
   - probing-fragmented
-- q:
-  - Does prompting a language model about syntax tell you the same thing as probing its representations?
-  - Can prompting-based benchmarks replace probing for measuring linguistic knowledge?
-  - How well do HELM's BLiMP prompting results agree with probing results?
-  answers:
+- ask:
+    unsorted:
+    - Does prompting a language model about syntax tell you the same thing as probing its
+      representations?
+    - Can prompting-based benchmarks replace probing for measuring linguistic knowledge?
+    - How well do HELM's BLiMP prompting results agree with probing results?
+  answered_by:
   - prompting-not-substitute
   - openllm-correlation
-- q:
-  - Do encoder models understand language better than decoder-only LLMs?
-  - Does architecture matter for how well a model encodes part-of-speech and agreement?
-  - Can a 70B decoder model match BERT on token-level linguistic probing?
-  answers:
+- ask:
+    unsorted:
+    - Do encoder models understand language better than decoder-only LLMs?
+    - Does architecture matter for how well a model encodes part-of-speech and agreement?
+    - Can a 70B decoder model match BERT on token-level linguistic probing?
+  answered_by:
   - encoder-beats-decoder
-- q:
-  - Does instruction tuning improve a model's internal grasp of linguistic phenomena?
-  - What effect does RLHF-style instruction tuning have on syntax and semantics probing scores?
-  - Is instruction tuning only a superficial alignment when it comes to linguistic competence?
-  answers:
+- ask:
+    unsorted:
+    - Does instruction tuning improve a model's internal grasp of linguistic phenomena?
+    - What effect does RLHF-style instruction tuning have on syntax and semantics probing
+      scores?
+    - Is instruction tuning only a superficial alignment when it comes to linguistic competence?
+  answered_by:
   - instruction-tuning-mixed
-- q:
-  - Does linguistic competence in language models scale with parameter count?
-  - At what model size do probing scores for morphology and syntax jump?
-  - How do T5 and Pythia compare as they get bigger on linguistic probing?
-  answers:
+- ask:
+    unsorted:
+    - Does linguistic competence in language models scale with parameter count?
+    - At what model size do probing scores for morphology and syntax jump?
+    - How do T5 and Pythia compare as they get bigger on linguistic probing?
+  answered_by:
   - scaling
-- q:
-  - Which linguistic phenomena are language models good and bad at internally?
-  - Are semantics and discourse harder for language models than syntax?
-  - What is the difference between formal and functional linguistic phenomena in model probing
-    results?
-  answers:
+- ask:
+    unsorted:
+    - Which linguistic phenomena are language models good and bad at internally?
+    - Are semantics and discourse harder for language models than syntax?
+    - What is the difference between formal and functional linguistic phenomena in model probing
+      results?
+  answered_by:
   - formal-vs-functional
   - phenomena-correlations
-- q:
-  - Are classifier-probing results stable enough to build a benchmark on?
-  - How much do probing scores vary across random seeds compared to prompt variation?
-  - What reliability checks did the Holmes benchmark run on its probes?
-  answers:
+- ask:
+    unsorted:
+    - Are classifier-probing results stable enough to build a benchmark on?
+    - How much do probing scores vary across random seeds compared to prompt variation?
+    - What reliability checks did the Holmes benchmark run on its probes?
+  answered_by:
   - probing-reliable
-- q:
-  - How expensive is it to evaluate a new large language model on a full probing benchmark?
-  - Is there a cheap version of Holmes for evaluating a new model?
-  - How much compute does FlashHolmes save and at what cost in ranking accuracy?
-  answers:
+- ask:
+    unsorted:
+    - How expensive is it to evaluate a new large language model on a full probing benchmark?
+    - Is there a cheap version of Holmes for evaluating a new model?
+    - How much compute does FlashHolmes save and at what cost in ranking accuracy?
+  answered_by:
   - flashholmes
-- q:
-  - How fragmented is existing probing research on language models?
-  - How many tasks and models does the probing literature actually cover jointly?
-  - Which probing method dominates the published literature?
-  answers:
+- ask:
+    unsorted:
+    - How fragmented is existing probing research on language models?
+    - How many tasks and models does the probing literature actually cover jointly?
+    - Which probing method dominates the published literature?
+  answered_by:
   - probing-fragmented
   - classifier-probing-dominant
-- q:
-  - Is a probing benchmark affected by benchmark contamination in pretraining data?
-  - Why would evaluating internal representations be more robust to data leakage?
-  - Does Holmes control for the possibility that OntoNotes was in a model's pretraining corpus?
-  answers:
+- ask:
+    unsorted:
+    - Is a probing benchmark affected by benchmark contamination in pretraining data?
+    - Why would evaluating internal representations be more robust to data leakage?
+    - Does Holmes control for the possibility that OntoNotes was in a model's pretraining
+      corpus?
+  answered_by:
   - contamination-robust
-- q:
-  - How many language models and datasets does a linguistic probing benchmark like Holmes
-    cover?
-  - What does the Holmes benchmark measure about language models?
-  - Which linguistic phenomena are covered by a large probing benchmark for language models?
-  answers:
+- ask:
+    unsorted:
+    - How many language models and datasets does a linguistic probing benchmark like Holmes
+      cover?
+    - What does the Holmes benchmark measure about language models?
+    - Which linguistic phenomena are covered by a large probing benchmark for language models?
+  answered_by:
   - holmes-benchmark
   - formal-vs-functional
 misreadings:

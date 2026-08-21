@@ -150,89 +150,105 @@ claims:
   scope: As of the 2026 call for papers; prior iterations are documented in Warstadt et al.
     (2023), Hu et al. (2024) and Charpentier et al. (2025).
 qa:
-- q:
-  - What is the BabyLM Challenge and why does it exist?
-  - Where should I start reading about cognitively plausible, data-efficient language model
-    pretraining?
-  - What shared task connects child language acquisition to LM pretraining?
-  answers:
+- ask:
+    practitioner: Where should I start reading about cognitively plausible, data-efficient
+      language model pretraining?
+    unsorted:
+    - What is the BabyLM Challenge and why does it exist?
+    - What shared task connects child language acquisition to LM pretraining?
+  answered_by:
   - venue-and-framing
   - workshop-scope
-- q:
-  - What is new in the 2026 BabyLM Challenge compared to earlier years?
-  - Which languages does BabyLM cover now that it is no longer English-only?
-  - Is there a multilingual shared task for pretraining on child-scale data?
-  answers:
+- ask:
+    unsorted:
+    - What is new in the 2026 BabyLM Challenge compared to earlier years?
+    - Which languages does BabyLM cover now that it is no longer English-only?
+    - Is there a multilingual shared task for pretraining on child-scale data?
+  answered_by:
   - multilingual-track
   - language-choice-rationale
-- q:
-  - How many words am I allowed to train on in the BabyLM multilingual track?
-  - How does BabyLM make word budgets comparable across English, Dutch and Chinese?
-  - What is the Byte Premium adjustment used for language data budgets?
-  answers:
+- ask:
+    practitioner: How many words am I allowed to train on in the BabyLM multilingual track?
+    unsorted:
+    - How does BabyLM make word budgets comparable across English, Dutch and Chinese?
+    - What is the Byte Premium adjustment used for language data budgets?
+  answered_by:
   - mixture-budget
-- q:
-  - Why were the BabyLM Multimodal and Interaction tracks discontinued?
-  - Can I still submit a multimodal or teacher-interaction model to BabyLM in 2026?
-  - Did image-text data or teacher feedback help in an earlier round of the child-scale pretraining
-    competition?
-  answers:
+- ask:
+    practitioner: Can I still submit a multimodal or teacher-interaction model to BabyLM in
+      2026?
+    unsorted:
+    - Why were the BabyLM Multimodal and Interaction tracks discontinued?
+    - Did image-text data or teacher feedback help in an earlier round of the child-scale
+      pretraining competition?
+  answered_by:
   - tracks-merged
   - interaction-word-budget
-- q:
-  - What are the rules for using a teacher or external model during BabyLM training?
-  - Is knowledge distillation allowed in the BabyLM Challenge?
-  - How are synthetic data and generated tokens counted against a 100M word pretraining budget?
-  answers:
+- ask:
+    unsorted:
+    - What are the rules for using a teacher or external model during BabyLM training?
+    - Is knowledge distillation allowed in the BabyLM Challenge?
+    - How are synthetic data and generated tokens counted against a 100M word pretraining
+      budget?
+  answered_by:
   - interaction-word-budget
-- q:
-  - Is there an epoch limit in the BabyLM Challenge?
-  - How much total data exposure does the 2026 BabyLM Challenge allow?
-  - How many passes over a 100M-word pretraining corpus does a child-scale competition permit?
-  answers:
+- ask:
+    unsorted:
+    - Is there an epoch limit in the BabyLM Challenge?
+    - How much total data exposure does the 2026 BabyLM Challenge allow?
+    - How many passes over a 100M-word pretraining corpus does a child-scale competition permit?
+  answered_by:
   - epoch-limit
-- q:
-  - Which intermediate checkpoints must a BabyLM submission upload?
-  - What is the BabyLM checkpoint submission schedule?
-  - Why would a pretraining competition ask participants for intermediate training checkpoints?
-  answers:
+- ask:
+    unsorted:
+    - Which intermediate checkpoints must a BabyLM submission upload?
+    - What is the BabyLM checkpoint submission schedule?
+    - Why would a pretraining competition ask participants for intermediate training checkpoints?
+  answered_by:
   - checkpoint-schedule
-- q:
-  - Why does BabyLM limit training data rather than compute or FLOPs?
-  - Is there a compute budget in the BabyLM Challenge?
-  - Why would a shared task cap words seen instead of capping FLOPs?
-  answers:
+- ask:
+    unsorted:
+    - Why does BabyLM limit training data rather than compute or FLOPs?
+    - Is there a compute budget in the BabyLM Challenge?
+    - Why would a shared task cap words seen instead of capping FLOPs?
+  answered_by:
   - compute-not-restricted
-- q:
-  - Is the BabyLM training corpus toxic, and was anything done about it?
-  - What changed in the 2026 BabyLM training dataset?
-  - Has a child-directed pretraining corpus been detoxified?
-  answers:
+- ask:
+    unsorted:
+    - Is the BabyLM training corpus toxic, and was anything done about it?
+    - What changed in the 2026 BabyLM training dataset?
+    - Has a child-directed pretraining corpus been detoxified?
+  answered_by:
   - detoxified-corpus
-- q:
-  - What data makes up the 100M-word BabyLM Strict corpus?
-  - How much CHILDES data is in the BabyLM pretraining dataset?
-  - Which corpora make up a 100M-word child-directed pretraining dataset?
-  answers:
+- ask:
+    unsorted:
+    - What data makes up the 100M-word BabyLM Strict corpus?
+    - How much CHILDES data is in the BabyLM pretraining dataset?
+    - Which corpora make up a 100M-word child-directed pretraining dataset?
+  answered_by:
   - corpus-composition
-- q:
-  - What baseline models does the 2026 BabyLM Challenge provide?
-  - Which model do I have to beat in the BabyLM Strict track?
-  - What are the baselines for a 100M-word multilingual pretraining competition?
-  answers:
+- ask:
+    practitioner: Which model do I have to beat in the BabyLM Strict track?
+    unsorted:
+    - What baseline models does the 2026 BabyLM Challenge provide?
+    - What are the baselines for a 100M-word multilingual pretraining competition?
+  answered_by:
   - baselines
-- q:
-  - How are BabyLM submissions evaluated in 2026?
-  - Are there hidden evaluation tasks in the BabyLM Challenge?
-  - Does evaluation of small pretrained models use zero-shot probability comparisons or finetuning?
-  answers:
+- ask:
+    unsorted:
+    - How are BabyLM submissions evaluated in 2026?
+    - Are there hidden evaluation tasks in the BabyLM Challenge?
+    - Does evaluation of small pretrained models use zero-shot probability comparisons or
+      finetuning?
+  answered_by:
   - hidden-tasks
-- q:
-  - What topics can I submit to the BabyLM workshop without entering the competition?
-  - Do I have to enter a BabyLM competition track to submit a paper?
-  - When and where is the 2026 workshop on data-efficient, cognitively inspired language modeling
-    held?
-  answers:
+- ask:
+    practitioner: What topics can I submit to the BabyLM workshop without entering the competition?
+    unsorted:
+    - Do I have to enter a BabyLM competition track to submit a paper?
+    - When and where is the 2026 workshop on data-efficient, cognitively inspired language
+      modeling held?
+  answered_by:
   - workshop-scope
 misreadings:
 - 'The 2026 BabyLM Multilingual track is not a 45-language task: BabyBabelLM supplies cognitively

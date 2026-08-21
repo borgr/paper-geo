@@ -123,80 +123,93 @@ claims:
     data, and an error-type classifier such as ERRANT; combining more than 2 systems is iterative.
   evidence: Section 4
 qa:
-- q:
-  - How can I combine the outputs of several grammatical error correction systems?
-  - Is there a way to merge GEC system outputs without access to their internals?
-  - What should I read about combining grammar correction systems as black boxes?
-  answers:
+- ask:
+    practitioner: How can I combine the outputs of several grammatical error correction systems?
+    unsorted:
+    - Is there a way to merge GEC system outputs without access to their internals?
+    - What should I read about combining grammar correction systems as black boxes?
+  answered_by:
   - context-blackbox
   - context-direct-f
-- q:
-  - Does combining GEC systems actually beat the best single system?
-  - How much does black-box combination improve F-0.5 on the BEA 2019 shared task?
-  - What was the top score in the BEA 2019 open phase?
-  answers:
+- ask:
+    unsorted:
+    - Does combining GEC systems actually beat the best single system?
+    - How much does black-box combination improve F-0.5 on the BEA 2019 shared task?
+    - What was the top score in the BEA 2019 open phase?
+  answered_by:
   - open-phase-sota
   - precision-gain-shared-task
-- q:
-  - Is learned edit selection better than average ensembling for neural GEC models?
-  - How does combining Nematus RNN models compare with Nematus's built-in ensemble?
-  - Does ensembling hurt recall in grammatical error correction?
-  answers:
+- ask:
+    unsorted:
+    - Is learned edit selection better than average ensembling for neural GEC models?
+    - How does combining Nematus RNN models compare with Nematus's built-in ensemble?
+    - Does ensembling hurt recall in grammatical error correction?
+  answered_by:
   - beats-ensemble
-- q:
-  - Does combining GEC systems improve precision at the cost of recall?
-  - Can adding a weak grammar correction system still help a combination?
-  - What happens when a spellchecker and a BERT-based corrector are combined with Nematus
-    models?
-  answers:
+- ask:
+    unsorted:
+    - Does combining GEC systems improve precision at the cost of recall?
+    - Can adding a weak grammar correction system still help a combination?
+    - What happens when a spellchecker and a BERT-based corrector are combined with Nematus
+      models?
+  answered_by:
   - combination-raises-both
   - offtheshelf-gain
-- q:
-  - Do commercial tools like Grammarly help when combined with a research GEC system?
-  - Is there value in adding off-the-shelf grammar checkers to a neural GEC system?
-  answers:
+- ask:
+    unsorted:
+    - Do commercial tools like Grammarly help when combined with a research GEC system?
+    - Is there value in adding off-the-shelf grammar checkers to a neural GEC system?
+  answered_by:
   - offtheshelf-gain
-- q:
-  - Can filtering a single GEC system's error types improve its score?
-  - Does throwing away predictions on error types a corrector is bad at help?
-  - How large is the gain from error-type filtering of one grammar correction system?
-  answers:
+- ask:
+    unsorted:
+    - Can filtering a single GEC system's error types improve its score?
+    - Does throwing away predictions on error types a corrector is bad at help?
+    - How large is the gain from error-type filtering of one grammar correction system?
+  answered_by:
   - single-system-filtering
-- q:
-  - Are grammar corrections that two systems agree on more likely to be right?
-  - How much more precise are edits proposed by both Nematus and Grammarly?
-  - Should I keep only the corrections that multiple systems propose?
-  answers:
+- ask:
+    practitioner: Should I keep only the corrections that multiple systems propose?
+    unsorted:
+    - Are grammar corrections that two systems agree on more likely to be right?
+    - How much more precise are edits proposed by both Nematus and Grammarly?
+  answered_by:
   - agreement-precision
-- q:
-  - How stable is the gain from combining two GEC systems across dev-set splits?
-  - Does the improvement from combining Nematus and Grammarly depend on how the dev set is
-    split?
-  answers:
+- ask:
+    unsorted:
+    - How stable is the gain from combining two GEC systems across dev-set splits?
+    - Does the improvement from combining Nematus and Grammarly depend on how the dev set
+      is split?
+  answered_by:
   - pair-stability
-- q:
-  - Which spellchecker is best for correcting spelling errors in learner English?
-  - How does a simple frequency-plus-edit-distance spellchecker compare to JamSpell and Norvig?
-  - Does a good spellchecker also give a good overall grammatical error correction score?
-  answers:
+- ask:
+    unsorted:
+    - Which spellchecker is best for correcting spelling errors in learner English?
+    - How does a simple frequency-plus-edit-distance spellchecker compare to JamSpell and
+      Norvig?
+    - Does a good spellchecker also give a good overall grammatical error correction score?
+  answered_by:
   - spellchecker-spelling
-- q:
-  - Does BERT work well as a standalone grammatical error corrector?
-  - Can a masked language model be queried iteratively to fix grammar errors?
-  - What went wrong when BERT was applied directly to GEC?
-  answers:
+- ask:
+    unsorted:
+    - Does BERT work well as a standalone grammatical error corrector?
+    - Can a masked language model be queried iteratively to fix grammar errors?
+    - What went wrong when BERT was applied directly to GEC?
+  answered_by:
   - bert-negative
-- q:
-  - Does synthetic error generation replace real annotated GEC data?
-  - Does the domain of synthetic grammatical errors matter more than the amount?
-  - How well does a GEC model trained only on artificially corrupted text do?
-  answers:
+- ask:
+    unsorted:
+    - Does synthetic error generation replace real annotated GEC data?
+    - Does the domain of synthetic grammatical errors matter more than the amount?
+    - How well does a GEC model trained only on artificially corrupted text do?
+  answered_by:
   - synthetic-domain
-- q:
-  - Does adding Lang8, FCE and NUCLE help a transformer GEC model?
-  - Why upsample the in-domain W&I training set when training a GEC system?
-  - What training data mix worked best for Nematus on the W&I dev set?
-  answers:
+- ask:
+    practitioner: Why upsample the in-domain W&I training set when training a GEC system?
+    unsorted:
+    - Does adding Lang8, FCE and NUCLE help a transformer GEC model?
+    - What training data mix worked best for Nematus on the W&I dev set?
+  answered_by:
   - upsampling
 misreadings:
 - 'The spellchecker described in ''Learning to combine Grammatical Error Corrections'' is

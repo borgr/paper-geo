@@ -31,7 +31,8 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import DATA, ROOT, load_config, norm_name, read_yaml, rules_block  # noqa: E402
+from common import (DATA, QA_ROLES, ROOT, answered_by, load_config,  # noqa: E402
+                    norm_name, phrasings, read_yaml, rules_block)
 
 SCHEMA_DIR = os.path.join(ROOT, "schema")
 
@@ -555,10 +556,10 @@ def check_sidecars(entries: list[tuple[str, dict]]) -> list[str]:
         # The check jsonschema cannot do: every qa answer must name a real claim.
         ids = {c.get("id") for c in (fm.get("claims") or []) if isinstance(c, dict)}
         for i, qa in enumerate(fm.get("qa") or []):
-            for a in (qa.get("answers") or []):
+            for a in answered_by(qa):
                 if a not in ids:
-                    errs.append(f"{name}: qa[{i}] answers unknown claim id {a!r}")
-            if not (qa.get("q") or []):
+                    errs.append(f"{name}: qa[{i}] answered_by unknown claim id {a!r}")
+            if not phrasings(qa):
                 errs.append(f"{name}: qa[{i}] has no question phrasings")
     return errs
 
@@ -570,7 +571,7 @@ def check_sidecars(entries: list[tuple[str, dict]]) -> list[str]:
 # types. Non-fatal on purpose -- a page with 22 claims renders correctly and is merely
 # worse, and the 19 existing drafts predate the bands. `--accept` is where it bites.
 #
-# Two kinds of number live here. `CLAIMS` and `PHRASINGS` are design decisions from §2,
+# Two kinds of number live here. `CLAIMS` and `ROLES_FILLED` are design decisions from §2,
 # and the current drafts are meant to violate them: a paper has a handful of findings, so
 # 17 claims is one finding split three ways and the fix is redrafting, not a wider band.
 # The length and count caps are the opposite -- each is the 90th percentile of what the
@@ -593,7 +594,12 @@ CLAIM_SCOPE = (40, 800)
 # Deliberately generous: a question group is query surface, and more real phrasings of a
 # real question is the whole point. The ceiling only catches a run of invented questions.
 QA_GROUPS = (4, 20)
-PHRASINGS = (2, 4)
+# How many of the four `QA_ROLES` a group has to fill. There is no upper band any more --
+# the roles are a closed set, so four is the ceiling by construction, and the old 2-4 count
+# could be satisfied by three rewordings of one sentence. `plain` is separately required:
+# it is the route a reader who has not read the paper can follow, and it is the phrasing
+# published as the group's heading.
+ROLES_FILLED = 2
 MISREADINGS_MAX = 14
 TERMINOLOGY_MAX = 13
 
@@ -669,16 +675,39 @@ def check_sidecar_shape(entries: list[tuple[str, dict]]) -> list[str]:
                 f"publishes, and the band is {lo}-{hi}")
         elif not lo <= len(qa) <= hi:
             bad(f"{len(qa)} qa groups, outside the {lo}-{hi} band")
-        lo, hi = PHRASINGS
         for i, g in enumerate(qa):
-            n = len(g.get("q") or [])
-            if n and not lo <= n <= hi:
-                bad(f"qa[{i}]: {n} phrasings, outside {lo}-{hi}")
+            ask = g.get("ask") if isinstance(g.get("ask"), dict) else {}
+            # A group still carrying `unsorted` predates the roles, and its phrasings were
+            # migrated without being classified -- see `common.phrasings`. Asking it for
+            # `plain` would be asking the author to re-review 1263 groups they already
+            # accepted, so the only thing checked here is that the bucket is not empty; the
+            # roles bite on the redraft, where a model fills them.
+            legacy = [x for x in (ask.get("unsorted") or []) if str(x).strip()]
+            filled = [r for r in QA_ROLES if str(ask.get(r) or "").strip()]
+            if legacy:
+                if not (filled or legacy):
+                    bad(f"qa[{i}]: no phrasings at all")
+                continue
+            if not filled:
+                bad(f"qa[{i}]: no phrasings at all")
+            elif "plain" not in filled:
+                bad(f"qa[{i}]: no `plain` phrasing -- the roles filled are "
+                    f"{', '.join(filled)}, and none of them is the wording someone who "
+                    f"has not read the paper would type")
+            elif len(filled) < ROLES_FILLED:
+                bad(f"qa[{i}]: only `plain` is filled -- one question needs at least "
+                    f"{ROLES_FILLED} of {len(QA_ROLES)} routes ("
+                    f"{', '.join(QA_ROLES)}), and they have to differ in vocabulary "
+                    f"rather than in word order")
+            for r in filled:
+                if not str(ask[r]).strip().endswith("?"):
+                    bad(f"qa[{i}]: `{r}` is not a question -- every role is a natural "
+                        f"question ending in `?`, never a keyword string")
 
         # Coverage. A claim nothing points at renders with no route to it, and a general
         # question with no `context` claim to answer it cannot be asked at all.
         ctx_ids = {c.get("id") for c, k in zip(claims, kinds) if k == "context"}
-        answered = {a for g in qa for a in (g.get("answers") or [])}
+        answered = {a for g in qa for a in answered_by(g)}
         if qa and ctx_ids and not (answered & ctx_ids):
             bad("no qa group is answered by a `context` claim -- the entry-point "
                 "question is the one required question class")
@@ -693,7 +722,7 @@ def check_sidecar_shape(entries: list[tuple[str, dict]]) -> list[str]:
                     "lexical route from what people actually type")
             forms = coined_forms(fm["coined"])
             for i, g in enumerate(qa):
-                qs = g.get("q") or []
+                qs = phrasings(g)
                 shared = [f for f in forms if all(says(q, [f]) for q in qs)]
                 if qs and shared:
                     # The matched form, not the whole coinage: `coined_forms` also matches
@@ -1216,7 +1245,7 @@ def readability(fm: dict, slug: str | None = None) -> list[tuple[str, str, str]]
     for g in (fm.get("qa") or []):
         if not isinstance(g, dict):
             continue
-        for q in (g.get("q") or []):
+        for q in phrasings(g):
             # The bare-definite rule yields to a question that names something, which
             # the demonstrative rules must not: "does this method beat MMLU baselines"
             # names a benchmark and is still unanswerable about *which* method.

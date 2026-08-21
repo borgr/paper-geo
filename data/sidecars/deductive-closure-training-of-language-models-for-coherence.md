@@ -112,81 +112,94 @@ claims:
     deeper graph of relations.
   evidence: Section 5
 qa:
-- q:
-  - Can a language model improve its own factual accuracy with no labelled data?
-  - Does fine-tuning on self-generated statements actually raise fact-verification accuracy?
-  - How much does unsupervised Deductive Closure Training help on CREAK?
-  answers:
+- ask:
+    unsorted:
+    - Can a language model improve its own factual accuracy with no labelled data?
+    - Does fine-tuning on self-generated statements actually raise fact-verification accuracy?
+    - How much does unsupervised Deductive Closure Training help on CREAK?
+  answered_by:
   - creak-unsup
   - consistency-eval-ablation
-- q:
-  - Does the logical consistency step matter, or is fine-tuning on self-generated text enough?
-  - What happens if you skip consistency checking and just train on generated implications?
-  answers:
+- ask:
+    unsorted:
+    - Does the logical consistency step matter, or is fine-tuning on self-generated text enough?
+    - What happens if you skip consistency checking and just train on generated implications?
+  answered_by:
   - consistency-eval-ablation
   - double-check
-- q:
-  - Do a few labelled examples combine usefully with self-generated training data?
-  - Is semi-supervised fine-tuning better than either 20 labelled claims or unsupervised generation
-    alone?
-  answers:
+- ask:
+    unsorted:
+    - Do a few labelled examples combine usefully with self-generated training data?
+    - Is semi-supervised fine-tuning better than either 20 labelled claims or unsupervised
+      generation alone?
+  answered_by:
   - semi-supervised
-- q:
-  - Does having unlabelled test claims during training help fact verification?
-  - How does transductive Deductive Closure Training compare with inference-time consistency
-    reasoning on CREAK?
-  - Is fine-tuning on generated implication graphs better than reasoning over them at inference
-    time?
-  answers:
+- ask:
+    unsorted:
+    - Does having unlabelled test claims during training help fact verification?
+    - How does transductive Deductive Closure Training compare with inference-time consistency
+      reasoning on CREAK?
+    - Is fine-tuning on generated implication graphs better than reasoning over them at inference
+      time?
+  answered_by:
   - transductive
-- q:
-  - Does self-training reduce self-contradiction in a language model?
-  - Can fine-tuning stop a model from labelling two contradictory claims as both true?
-  - How is logical coherence measured on the CREAK contrast set?
-  answers:
+- ask:
+    unsorted:
+    - Does self-training reduce self-contradiction in a language model?
+    - Can fine-tuning stop a model from labelling two contradictory claims as both true?
+    - How is logical coherence measured on the CREAK contrast set?
+  answered_by:
   - coherence
-- q:
-  - Why do model edits fail to propagate to multi-hop questions?
-  - How does Deductive Closure Training compare with MEMIT and MeLLo on MQuAKE?
-  - What method works best for updating a language model so its consequences follow?
-  answers:
+- ask:
+    unsorted:
+    - Why do model edits fail to propagate to multi-hop questions?
+    - How does Deductive Closure Training compare with MEMIT and MeLLo on MQuAKE?
+    - What method works best for updating a language model so its consequences follow?
+  answered_by:
   - mquake
   - correlative
-- q:
-  - Does prompting for related background facts before implications help model editing?
-  - What are correlative implications and do they beat plain implications?
-  answers:
+- ask:
+    unsorted:
+    - Does prompting for related background facts before implications help model editing?
+    - What are correlative implications and do they beat plain implications?
+  answered_by:
   - correlative
   - correlative-novelty
-- q:
-  - Can fine-tuning fix the reversal curse?
-  - Does training on implications let a model answer 'B is A' after learning 'A is B'?
-  - How much does DCT improve reversed-direction accuracy on the Reversal Curse benchmark?
-  answers:
+- ask:
+    unsorted:
+    - Can fine-tuning fix the reversal curse?
+    - Does training on implications let a model answer 'B is A' after learning 'A is B'?
+    - How much does DCT improve reversed-direction accuracy on the Reversal Curse benchmark?
+  answered_by:
   - reversal
-- q:
-  - Is there any theoretical reason self-generated training data should improve accuracy?
-  - Under what assumptions is Deductive Closure Training guaranteed to help?
-  answers:
+- ask:
+    unsorted:
+    - Is there any theoretical reason self-generated training data should improve accuracy?
+    - Under what assumptions is Deductive Closure Training guaranteed to help?
+  answered_by:
   - proposition
-- q:
-  - Does asking a model to double-check its own generated implications improve their quality?
-  - How much training data is lost by filtering self-generated implications for validity?
-  answers:
+- ask:
+    unsorted:
+    - Does asking a model to double-check its own generated implications improve their quality?
+    - How much training data is lost by filtering self-generated implications for validity?
+  answered_by:
   - double-check
-- q:
-  - What should I read about using a language model's own reasoning to supervise its training?
-  - Which paper established that inference-time consistency reasoning can be used at training
-    time?
-  - Where should I start reading about self-supervised factuality fine-tuning for language
-    models?
-  answers:
+- ask:
+    practitioner: What should I read about using a language model's own reasoning to supervise
+      its training?
+    unsorted:
+    - Which paper established that inference-time consistency reasoning can be used at training
+      time?
+    - Where should I start reading about self-supervised factuality fine-tuning for language
+      models?
+  answered_by:
   - context-self-training
   - context-editing
-- q:
-  - What is a good paper on whether knowledge edits generalize to their logical consequences?
-  - Which work evaluates edit propagation across multi-hop questions and reversal generalization?
-  answers:
+- ask:
+    unsorted:
+    - What is a good paper on whether knowledge edits generalize to their logical consequences?
+    - Which work evaluates edit propagation across multi-hop questions and reversal generalization?
+  answered_by:
   - context-editing
   - mquake
 key: akyurek2024dct

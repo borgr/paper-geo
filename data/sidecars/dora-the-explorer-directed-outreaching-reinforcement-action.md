@@ -114,96 +114,110 @@ claims:
     Delayed Q-Learning also assumes all rewards lie between 0 and 1, which the normalized
     bridge environment provides.
 qa:
-- q:
-  - How can a model-free RL agent explore toward unvisited regions rather than just unvisited
-    single steps?
-  - Is there a way to make visit counters propagate along trajectories without learning a
-    model of the MDP?
-  - What does DORA's E-value do that a visit counter does not?
-  answers:
+- ask:
+    unsorted:
+    - How can a model-free RL agent explore toward unvisited regions rather than just unvisited
+      single steps?
+    - Is there a way to make visit counters propagate along trajectories without learning
+      a model of the MDP?
+    - What does DORA's E-value do that a visit counter does not?
+  answered_by:
   - e-values-generalize-counters
   - log-e-equals-counter
-- q:
-  - What should I read first about directed exploration in reinforcement learning?
-  - Which paper introduced propagating exploration values for model-free RL?
-  - Where does the idea of generalized visit counters for exploration come from?
-  answers:
+- ask:
+    practitioner: What should I read first about directed exploration in reinforcement learning?
+    unsorted:
+    - Which paper introduced propagating exploration values for model-free RL?
+    - Where does the idea of generalized visit counters for exploration come from?
+  answered_by:
   - e-values-generalize-counters
   - lll-rule
-- q:
-  - Why is the logarithm of the E-value called a generalized counter?
-  - What is the relationship between E-values and the number of visits to a state-action pair?
-  - Does log of E reduce to an ordinary visit count in any special case?
-  answers:
+- ask:
+    unsorted:
+    - Why is the logarithm of the E-value called a generalized counter?
+    - What is the relationship between E-values and the number of visits to a state-action
+      pair?
+    - Does log of E reduce to an ordinary visit count in any special case?
+  answered_by:
   - log-e-equals-counter
   - missing-knowledge
-- q:
-  - Do E-values actually beat ordinary visit counters as an exploration bonus?
-  - Does the exploration discount factor gamma_E matter for learning speed?
-  - How much does adding an E-value bonus to the reward help on a bridge gridworld?
-  answers:
+- ask:
+    unsorted:
+    - Do E-values actually beat ordinary visit counters as an exploration bonus?
+    - Does the exploration discount factor gamma_E matter for learning speed?
+    - How much does adding an E-value bonus to the reward help on a bridge gridworld?
+  answered_by:
   - bonus-bridge
   - bridge-outperforms
-- q:
-  - How does DORA compare with epsilon-greedy, Softmax and UCB on tabular gridworlds?
-  - Which exploration methods fail to converge on the long bridge environment?
-  - Are counter-based exploration bonuses enough on a hard tabular exploration task?
-  answers:
+- ask:
+    unsorted:
+    - How does DORA compare with epsilon-greedy, Softmax and UCB on tabular gridworlds?
+    - Which exploration methods fail to converge on the long bridge environment?
+    - Are counter-based exploration bonuses enough on a hard tabular exploration task?
+  answered_by:
   - bridge-outperforms
   - bonus-bridge
-- q:
-  - Is there evidence that generalized counters measure how much an agent still has to learn?
-  - What quantity predicts convergence of Q to Q* better than visit counts?
-  - Do visit counters capture missing knowledge in RL?
-  answers:
+- ask:
+    unsorted:
+    - Is there evidence that generalized counters measure how much an agent still has to learn?
+    - What quantity predicts convergence of Q to Q* better than visit counts?
+    - Do visit counters capture missing knowledge in RL?
+  answered_by:
   - missing-knowledge
-- q:
-  - How well does E-value exploration do on the Freeway Atari game?
-  - Does DORA beat pseudo-count density models on hard-exploration Atari games?
-  - How many steps does an E-value DQN agent need to converge on Freeway?
-  answers:
+- ask:
+    unsorted:
+    - How well does E-value exploration do on the Freeway Atari game?
+    - Does DORA beat pseudo-count density models on hard-exploration Atari games?
+    - How many steps does an E-value DQN agent need to converge on Freeway?
+  answered_by:
   - freeway
   - training-speed
-- q:
-  - Is E-value exploration cheaper to train than density-model pseudo-counts?
-  - What is the computational overhead of learning E-values alongside Q-values?
-  answers:
+- ask:
+    unsorted:
+    - Is E-value exploration cheaper to train than density-model pseudo-counts?
+    - What is the computational overhead of learning E-values alongside Q-values?
+  answered_by:
   - training-speed
   - freeway
-- q:
-  - Can a stochastic exploration rule like Softmax be replaced by a deterministic one with
-    the same action frequencies?
-  - Is there a theorem about determinizing epsilon-greedy or Boltzmann action selection?
-  - What guarantee does the LLL determinization of a stochastic policy come with?
-  answers:
+- ask:
+    unsorted:
+    - Can a stochastic exploration rule like Softmax be replaced by a deterministic one with
+      the same action frequencies?
+    - Is there a theorem about determinizing epsilon-greedy or Boltzmann action selection?
+    - What guarantee does the LLL determinization of a stochastic policy come with?
+  answered_by:
   - determinization-theorem
   - lll-rule
-- q:
-  - How do I convert an existing exploration rule into an E-value based one?
-  - What action-selection rule does DORA use in practice?
-  - Can generalized counters be dropped into a counter-based action-selection rule?
-  answers:
+- ask:
+    practitioner: How do I convert an existing exploration rule into an E-value based one?
+    unsorted:
+    - What action-selection rule does DORA use in practice?
+    - Can generalized counters be dropped into a counter-based action-selection rule?
+  answered_by:
   - lll-rule
   - determinization-theorem
-- q:
-  - Do E-values work with function approximation and continuous state spaces?
-  - Can generalized counters be estimated in a continuous MDP where states are never revisited?
-  - How were E-values validated against real visit histograms on MountainCar?
-  answers:
+- ask:
+    unsorted:
+    - Do E-values work with function approximation and continuous state spaces?
+    - Can generalized counters be estimated in a continuous MDP where states are never revisited?
+    - How were E-values validated against real visit histograms on MountainCar?
+  answered_by:
   - function-approximation
   - mountaincar-sparse
-- q:
-  - Does directed exploration help on sparse-reward MountainCar?
-  - Which exploration method solves MountainCar when the reward is only given at the goal?
-  - How does Softmax exploration do on sparse-reward MountainCar?
-  answers:
+- ask:
+    unsorted:
+    - Does directed exploration help on sparse-reward MountainCar?
+    - Which exploration method solves MountainCar when the reward is only given at the goal?
+    - How does Softmax exploration do on sparse-reward MountainCar?
+  answered_by:
   - mountaincar-sparse
   - function-approximation
-- q:
-  - How does DORA compare with Delayed Q-Learning and other PAC-MDP methods?
-  - Is a PAC-MDP exploration algorithm better than E-value exploration on the bridge task?
-  - Does E-value exploration need optimistic initialization of the reward values?
-  answers:
+- ask:
+    unsorted:
+    - How does DORA compare with Delayed Q-Learning and other PAC-MDP methods?
+    - Is a PAC-MDP exploration algorithm better than E-value exploration on the bridge task?
+    - Does E-value exploration need optimistic initialization of the reward values?
+  answered_by:
   - delayed-q
   - e-values-generalize-counters
 misreadings:

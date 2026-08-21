@@ -96,78 +96,91 @@ claims:
     planned; per-model license terms bound what can be released.
   evidence: Section 3.2 and Section 8
 qa:
-- q:
-  - Where can I find a large open dataset of real conversations between people and language
-    models?
-  - What dataset should I read about first for human-LLM chat logs?
-  - Is there an openly licensed collection of human-chatbot conversations?
-  answers:
+- ask:
+    practitioner: Where can I find a large open dataset of real conversations between people
+      and language models?
+    unsorted:
+    - What dataset should I read about first for human-LLM chat logs?
+    - Is there an openly licensed collection of human-chatbot conversations?
+  answered_by:
   - collection-size
   - living-dataset-context
-- q:
-  - How many conversations are in the ShareLM collection and from how many models?
-  - How large is the biggest unified open collection of human-model chat datasets?
-  - What is the size of the ShareLM chat dataset?
-  answers:
+- ask:
+    unsorted:
+    - How many conversations are in the ShareLM collection and from how many models?
+    - How large is the biggest unified open collection of human-model chat datasets?
+    - What is the size of the ShareLM chat dataset?
+  answered_by:
   - collection-size
-- q:
-  - How can users donate their own chatbot conversations for open research?
-  - Is there a browser extension for sharing my LLM chats with the research community?
-  - How do I contribute my ChatGPT or Gradio demo conversations to an open dataset?
-  answers:
+- ask:
+    practitioner: Is there a browser extension for sharing my LLM chats with the research
+      community?
+    unsorted:
+    - How can users donate their own chatbot conversations for open research?
+    - How do I contribute my ChatGPT or Gradio demo conversations to an open dataset?
+  answered_by:
   - platform-coverage
   - open-license-release
-- q:
-  - What stops me from accidentally sharing a private conversation with a chat-donation plugin?
-  - How does the ShareLM plugin let users delete a chat before it is uploaded?
-  - What is delayed upload in conversation collection extensions?
-  answers:
+- ask:
+    practitioner: What stops me from accidentally sharing a private conversation with a chat-donation
+      plugin?
+    unsorted:
+    - How does the ShareLM plugin let users delete a chat before it is uploaded?
+    - What is delayed upload in conversation collection extensions?
+  answered_by:
   - delayed-upload
   - study-popup-use
-- q:
-  - Which chat platforms does the ShareLM plugin support?
-  - Can a chat-sharing extension record conversations from platforms other than ChatGPT?
-  - Does the plugin work with Gradio and ChatUI demos?
-  answers:
+- ask:
+    unsorted:
+    - Which chat platforms does the ShareLM plugin support?
+    - Can a chat-sharing extension record conversations from platforms other than ChatGPT?
+    - Does the plugin work with Gradio and ChatUI demos?
+  answered_by:
   - platform-coverage
-- q:
-  - How is human feedback collected on donated LLM conversations?
-  - Can users rate individual model responses as well as whole conversations?
-  - Does ShareLM collect thumbs-up/down preference signals?
-  answers:
+- ask:
+    unsorted:
+    - How is human feedback collected on donated LLM conversations?
+    - Can users rate individual model responses as well as whole conversations?
+    - Does ShareLM collect thumbs-up/down preference signals?
+  answered_by:
   - two-feedback-granularities
-- q:
-  - Was the ShareLM plugin evaluated with real users?
-  - How usable did participants find the chat-donation extension?
-  - What did the ShareLM user study find about installation and UI?
-  answers:
+- ask:
+    unsorted:
+    - Was the ShareLM plugin evaluated with real users?
+    - How usable did participants find the chat-donation extension?
+    - What did the ShareLM user study find about installation and UI?
+  answered_by:
   - user-study-install
   - study-popup-use
-- q:
-  - How is privacy handled when human-model chats are publicly released?
-  - Are donated conversations anonymized before publication?
-  - What metadata does the ShareLM plugin collect about me?
-  answers:
+- ask:
+    practitioner: What metadata does the ShareLM plugin collect about me?
+    unsorted:
+    - How is privacy handled when human-model chats are publicly released?
+    - Are donated conversations anonymized before publication?
+  answered_by:
   - anonymization
-- q:
-  - Why is a continuously growing chat dataset better than a one-time crowdsourced one?
-  - What is the argument for living rather than static human-model conversation datasets?
-  - How does ShareLM differ from ShareGPT and Chatbot Arena?
-  answers:
+- ask:
+    unsorted:
+    - Why is a continuously growing chat dataset better than a one-time crowdsourced one?
+    - What is the argument for living rather than static human-model conversation datasets?
+    - How does ShareLM differ from ShareGPT and Chatbot Arena?
+  answered_by:
   - living-dataset-context
   - platform-coverage
-- q:
-  - Who owns the data in a conversation-donation system?
-  - What design principles guide user control in chat data collection tools?
-  - Can I ask for my conversations to be removed from the ShareLM dataset?
-  answers:
+- ask:
+    practitioner: Can I ask for my conversations to be removed from the ShareLM dataset?
+    unsorted:
+    - Who owns the data in a conversation-donation system?
+    - What design principles guide user control in chat data collection tools?
+  answered_by:
   - user-ownership-context
   - delayed-upload
-- q:
-  - Under what license are ShareLM plugin conversations published?
-  - Where is the ShareLM data and plugin code available?
-  - Is the collected chat data openly licensed?
-  answers:
+- ask:
+    unsorted:
+    - Under what license are ShareLM plugin conversations published?
+    - Where is the ShareLM data and plugin code available?
+    - Is the collected chat data openly licensed?
+  answered_by:
   - open-license-release
 misreadings:
 - 'ShareLM is not a single newly crowdsourced dataset: most of its 2.3M conversations come

@@ -125,84 +125,96 @@ claims:
     only triplets labelled in at least 8 of these languages.
   evidence: Section 3.1
 qa:
-- q:
-  - Does a language model answering the same fact correctly in two languages mean it stores
-    the fact once?
-  - Is cross-lingual consistency evidence of shared knowledge representation in LLMs?
-  - Do consistent answers across languages imply a shared internal fact representation?
-  answers:
+- ask:
+    unsorted:
+    - Does a language model answering the same fact correctly in two languages mean it stores
+      the fact once?
+    - Is cross-lingual consistency evidence of shared knowledge representation in LLMs?
+    - Do consistent answers across languages imply a shared internal fact representation?
+  answered_by:
   - consistency-not-sharing
   - low-resource-diff-script-gap
   - cyrillic-latin-inversion
-- q:
-  - What determines whether an LLM shares a fact representation between two languages?
-  - How much does writing script matter for cross-lingual knowledge sharing in LLMs?
-  - Which language pairs share factual knowledge inside multilingual models?
-  answers:
+- ask:
+    unsorted:
+    - What determines whether an LLM shares a fact representation between two languages?
+    - How much does writing script matter for cross-lingual knowledge sharing in LLMs?
+    - Which language pairs share factual knowledge inside multilingual models?
+  answered_by:
   - script-dominant
   - cyrillic-latin-inversion
-- q:
-  - How can you measure whether an LLM stores a fact once for many languages?
-  - Can knowledge editing be used to test cross-lingual representation sharing?
-  - What method probes shared multilingual knowledge causally rather than by activation similarity?
-  - How does editing-based probing of cross-lingual knowledge work?
-  answers:
+- ask:
+    unsorted:
+    - How can you measure whether an LLM stores a fact once for many languages?
+    - Can knowledge editing be used to test cross-lingual representation sharing?
+    - What method probes shared multilingual knowledge causally rather than by activation
+      similarity?
+    - How does editing-based probing of cross-lingual knowledge work?
+  answered_by:
   - method-contribution
   - editing-method-robustness
-- q:
-  - How much factual knowledge do 7B LLMs know in some language but not in their best language?
-  - What is the accuracy gap between 'any language' and 'best language' factual retrieval?
-  - How much could multilingual LLM factual accuracy improve if knowledge were fully shared
-    across languages?
-  answers:
+- ask:
+    unsorted:
+    - How much factual knowledge do 7B LLMs know in some language but not in their best language?
+    - What is the accuracy gap between 'any language' and 'best language' factual retrieval?
+    - How much could multilingual LLM factual accuracy improve if knowledge were fully shared
+      across languages?
+  answered_by:
   - knowledge-variability-headroom
-- q:
-  - Is knowledge transfer between scripts symmetric in multilingual LLMs?
-  - Does knowing a fact in Russian predict knowing it in English more than the reverse?
-  - Is cross-lingual factual consistency direction-dependent?
-  answers:
+- ask:
+    unsorted:
+    - Is knowledge transfer between scripts symmetric in multilingual LLMs?
+    - Does knowing a fact in Russian predict knowing it in English more than the reverse?
+    - Is cross-lingual factual consistency direction-dependent?
+  answered_by:
   - asymmetric-transfer
-- q:
-  - Do English-only models like Mistral and Llama-2 share factual knowledge across languages
-    at all?
-  - Do monolingual English LLMs show cross-lingual knowledge sharing?
-  - How do monolingual, bilingual and multilingual 7B models differ in cross-lingual knowledge
-    sharing?
-  answers:
+- ask:
+    unsorted:
+    - Do English-only models like Mistral and Llama-2 share factual knowledge across languages
+      at all?
+    - Do monolingual English LLMs show cross-lingual knowledge sharing?
+    - How do monolingual, bilingual and multilingual 7B models differ in cross-lingual knowledge
+      sharing?
+  answered_by:
   - monolingual-latin-peak
   - bloom-cross-script
-- q:
-  - Does continued pretraining on a new language fix cross-lingual knowledge sharing?
-  - What happens to English knowledge when a model is extended to Chinese or Hebrew?
-  - Do language-extended LLMs bridge knowledge across different writing systems?
-  answers:
+- ask:
+    unsorted:
+    - Does continued pretraining on a new language fix cross-lingual knowledge sharing?
+    - What happens to English knowledge when a model is extended to Chinese or Hebrew?
+    - Do language-extended LLMs bridge knowledge across different writing systems?
+  answered_by:
   - language-extension-tradeoff
-- q:
-  - Which kinds of facts transfer best across languages in LLMs?
-  - Do relation types affect cross-lingual factual knowledge sharing?
-  - Are dates shared across languages more than person names in LLM factual knowledge?
-  answers:
+- ask:
+    unsorted:
+    - Which kinds of facts transfer best across languages in LLMs?
+    - Do relation types affect cross-lingual factual knowledge sharing?
+    - Are dates shared across languages more than person names in LLM factual knowledge?
+  answered_by:
   - relation-type-effect
-- q:
-  - Is there a multilingual dataset for factual knowledge editing across languages?
-  - What benchmark covers factual probing in 13 languages with multiple paraphrases?
-  - Where can I find a cross-lingual fill-in-the-blank factual knowledge dataset with several
-    scripts?
-  answers:
+- ask:
+    practitioner: Where can I find a cross-lingual fill-in-the-blank factual knowledge dataset
+      with several scripts?
+    unsorted:
+    - Is there a multilingual dataset for factual knowledge editing across languages?
+    - What benchmark covers factual probing in 13 languages with multiple paraphrases?
+  answered_by:
   - clike-dataset
-- q:
-  - What should I read about how multilingual LLMs represent factual knowledge?
-  - What work established that cross-lingual consistency and representation sharing are distinct
-    in LLMs?
-  - Where should I start reading about multilingual factual knowledge in language models?
-  answers:
+- ask:
+    practitioner: What should I read about how multilingual LLMs represent factual knowledge?
+    unsorted:
+    - What work established that cross-lingual consistency and representation sharing are
+      distinct in LLMs?
+    - Where should I start reading about multilingual factual knowledge in language models?
+  answered_by:
   - method-contribution
   - consistency-not-sharing
   - clike-dataset
-- q:
-  - Do ROME, MEMIT and finetuning give the same picture of cross-lingual knowledge transfer?
-  - Are editing-based measurements of multilingual knowledge sharing method-dependent?
-  - Did the multilingual edits damage unrelated knowledge?
-  answers:
+- ask:
+    unsorted:
+    - Do ROME, MEMIT and finetuning give the same picture of cross-lingual knowledge transfer?
+    - Are editing-based measurements of multilingual knowledge sharing method-dependent?
+    - Did the multilingual edits damage unrelated knowledge?
+  answered_by:
   - editing-method-robustness
 ---

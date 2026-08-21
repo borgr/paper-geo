@@ -172,83 +172,99 @@ claims:
   kind: result
   evidence: Table 4, Table 5 and Appendix E
 qa:
-- q:
-  - Does the source dataset have to be similar to my target task for intertraining to help?
-  - Is task alignment between source and target needed when picking a finetuned model as a
-    starting point?
-  - How much does source-target similarity matter for transfer gains?
-  answers:
+- ask:
+    practitioner: Does the source dataset have to be similar to my target task for intertraining
+      to help?
+    unsorted:
+    - Is task alignment between source and target needed when picking a finetuned model as
+      a starting point?
+    - How much does source-target similarity matter for transfer gains?
+  answered_by:
   - independence
   - same-task-domain-gain
   - asymmetry
   - regression-mse
-- q:
-  - How can I cheaply tell which finetuned checkpoint is a good starting point for finetuning?
-  - Is there an efficient way to rank HuggingFace models as base models without finetuning
-    all of them?
-  - Can linear probing predict how useful a finetuned model is as a starting point?
-  answers:
+- ask:
+    practitioner: How can I cheaply tell which finetuned checkpoint is a good starting point
+      for finetuning?
+    unsorted:
+    - Is there an efficient way to rank HuggingFace models as base models without finetuning
+      all of them?
+    - Can linear probing predict how useful a finetuned model is as a starting point?
+  answered_by:
   - linear-probe-rank
   - top3-lost-gain
-- q:
-  - Is starting from a finetuned model usually better than starting from the pretrained model?
-  - What fraction of finetuned checkpoints actually help as starting points?
-  - Does intertraining usually improve or hurt downstream accuracy?
-  answers:
+- ask:
+    unsorted:
+    - Is starting from a finetuned model usually better than starting from the pretrained
+      model?
+    - What fraction of finetuned checkpoints actually help as starting points?
+    - Does intertraining usually improve or hurt downstream accuracy?
+  answered_by:
   - most-models-hurt
-- q:
-  - How do I know whether my target dataset will benefit from intertraining at all?
-  - Which datasets are sensitive to the choice of base model?
-  - Can I predict the maximum available intertraining gain for a new task cheaply?
-  answers:
+- ask:
+    practitioner: How do I know whether my target dataset will benefit from intertraining
+      at all?
+    unsorted:
+    - Which datasets are sensitive to the choice of base model?
+    - Can I predict the maximum available intertraining gain for a new task cheaply?
+  answered_by:
   - target-sensitivity-mnli
   - target-size
-- q:
-  - Does the size of the source dataset affect how good a base model is?
-  - Does more finetuning data make a checkpoint a better starting point?
-  - How do source and target training set sizes change intertraining gains?
-  answers:
+- ask:
+    unsorted:
+    - Does the size of the source dataset affect how good a base model is?
+    - Does more finetuning data make a checkpoint a better starting point?
+    - How do source and target training set sizes change intertraining gains?
+  answered_by:
   - source-size-amplifies
   - target-size
-- q:
-  - Does a model's accuracy on its own finetuning task predict how useful it is as a base
-    model?
-  - Can I pick a starting checkpoint by looking at its reported source-task score?
-  - Do two checkpoints with the same source accuracy transfer equally well?
-  answers:
+- ask:
+    practitioner: Can I pick a starting checkpoint by looking at its reported source-task
+      score?
+    unsorted:
+    - Does a model's accuracy on its own finetuning task predict how useful it is as a base
+      model?
+    - Do two checkpoints with the same source accuracy transfer equally well?
+  answered_by:
   - source-score-no-signal
   - good-basin-models
-- q:
-  - Do good base models for RoBERTa also work for BERT or T5?
-  - Does the ranking of source datasets transfer between pretrained architectures?
-  - Is MNLI a good intermediate task across architectures?
-  answers:
+- ask:
+    unsorted:
+    - Do good base models for RoBERTa also work for BERT or T5?
+    - Does the ranking of source datasets transfer between pretrained architectures?
+    - Is MNLI a good intermediate task across architectures?
+  answered_by:
   - cross-architecture
-- q:
-  - Where can I find a ranked list of the best base models to finetune from?
-  - Is there a maintained leaderboard of HuggingFace checkpoints for model recycling?
-  - Which off-the-shelf checkpoints are the strongest starting points?
-  answers:
+- ask:
+    practitioner: Where can I find a ranked list of the best base models to finetune from?
+    unsorted:
+    - Is there a maintained leaderboard of HuggingFace checkpoints for model recycling?
+    - Which off-the-shelf checkpoints are the strongest starting points?
+  answered_by:
   - model-recycling-site
   - new-best-sources
-- q:
-  - What should I read about reusing finetuned models as starting points?
-  - Which paper systematically studies intermediate task training at scale?
-  - Where should I start reading about model recycling and intertraining?
-  answers:
+- ask:
+    practitioner: What should I read about reusing finetuned models as starting points?
+    unsorted:
+    - Which paper systematically studies intermediate task training at scale?
+    - Where should I start reading about model recycling and intertraining?
+  answered_by:
   - independence
   - model-recycling-site
-- q:
-  - How much accuracy do I lose by only trying the top few ranked base models?
-  - Is checking 3 candidate checkpoints enough instead of all of them?
-  - What is the cost of a target-independent base model ranking?
-  answers:
+- ask:
+    practitioner: How much accuracy do I lose by only trying the top few ranked base models?
+    unsorted:
+    - Is checking 3 candidate checkpoints enough instead of all of them?
+    - What is the cost of a target-independent base model ranking?
+  answered_by:
   - top3-lost-gain
-- q:
-  - Is MNLI still the best intermediate task for RoBERTa?
-  - Are there better intermediate tasks than MNLI?
-  - Did any dataset beat MNLI as a source for intertraining?
-  answers:
+- ask:
+    unsorted:
+    - Is MNLI still the best intermediate task for RoBERTa?
+    - Are there better intermediate tasks than MNLI?
+    - Did any dataset beat MNLI as a source for intertraining?
+  answered_by:
   - new-best-sources
   - cross-architecture
 ---

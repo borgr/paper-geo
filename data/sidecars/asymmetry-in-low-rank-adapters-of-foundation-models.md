@@ -117,86 +117,98 @@ claims:
     memory, storage and communication, not on the frozen pre-trained model.
   evidence: Section 4.2.1
 qa:
-- q:
-  - Which LoRA matrix matters more to fine-tune, the down-projection or the up-projection?
-  - Is it better to train B or A in a low-rank adapter?
-  - Can I freeze one of the two LoRA matrices without losing accuracy?
-  answers:
+- ask:
+    practitioner: Can I freeze one of the two LoRA matrices without losing accuracy?
+    unsorted:
+    - Which LoRA matrix matters more to fine-tune, the down-projection or the up-projection?
+    - Is it better to train B or A in a low-rank adapter?
+  answered_by:
   - asymmetry-roles
   - tune-b-beats-tune-a-theory
   - glue-b-vs-a
-- q:
-  - What do the A and B matrices in LoRA actually do?
-  - Why are the two factors of a low-rank adapter not interchangeable?
-  - What roles do the LoRA down- and up-projections play during fine-tuning?
-  answers:
+- ask:
+    unsorted:
+    - What do the A and B matrices in LoRA actually do?
+    - Why are the two factors of a low-rank adapter not interchangeable?
+    - What roles do the LoRA down- and up-projections play during fine-tuning?
+  answered_by:
   - asymmetry-roles
   - b-similarity-task-dependent
-- q:
-  - Is there a proof that freezing the LoRA input projection is better than freezing the output
-    projection?
-  - What theory supports training only the up-projection of a low-rank adapter?
-  - Does the LoRA asymmetry show up even in linear least-squares models?
-  answers:
+- ask:
+    unsorted:
+    - Is there a proof that freezing the LoRA input projection is better than freezing the
+      output projection?
+    - What theory supports training only the up-projection of a low-rank adapter?
+    - Does the LoRA asymmetry show up even in linear least-squares models?
+  answered_by:
   - tune-b-beats-tune-a-theory
   - asymmetry-gap-size
-- q:
-  - Does freezing one LoRA matrix improve generalization bounds?
-  - What generalization guarantee do you get from training half of a low-rank adapter?
-  - Can the rank be increased for free when only one adapter factor is trained?
-  answers:
+- ask:
+    unsorted:
+    - Does freezing one LoRA matrix improve generalization bounds?
+    - What generalization guarantee do you get from training half of a low-rank adapter?
+    - Can the rank be increased for free when only one adapter factor is trained?
+  answered_by:
   - generalization-bound-sqrt2
   - half-parameters
-- q:
-  - How much does a random frozen A cost on the GLUE benchmark with RoBERTa?
-  - What are the GLUE numbers for tuning only B versus only A?
-  - Does a LoRA variant with a frozen random projection match AdaLoRA on GLUE?
-  answers:
+- ask:
+    unsorted:
+    - How much does a random frozen A cost on the GLUE benchmark with RoBERTa?
+    - What are the GLUE numbers for tuning only B versus only A?
+    - Does a LoRA variant with a frozen random projection match AdaLoRA on GLUE?
+  answered_by:
   - glue-b-vs-a
   - glue-b-only-matches-adalora
-- q:
-  - Is LoRA's asymmetry just a consequence of initializing B to zero and A randomly?
-  - Does changing the initialization of the adapter matrices explain the asymmetry?
-  - What happens on GLUE when the zero and random initializations of A and B are swapped?
-  answers:
+- ask:
+    unsorted:
+    - Is LoRA's asymmetry just a consequence of initializing B to zero and A randomly?
+    - Does changing the initialization of the adapter matrices explain the asymmetry?
+    - What happens on GLUE when the zero and random initializations of A and B are swapped?
+  answered_by:
   - init-not-the-cause
-- q:
-  - Does the asymmetry between adapter matrices hold for summarization with BART?
-  - What ROUGE scores does tuning only B get on XSum and CNN/DailyMail?
-  - Does freezing the LoRA input projection work for text generation?
-  answers:
+- ask:
+    unsorted:
+    - Does the asymmetry between adapter matrices hold for summarization with BART?
+    - What ROUGE scores does tuning only B get on XSum and CNN/DailyMail?
+    - Does freezing the LoRA input projection work for text generation?
+  answered_by:
   - summarization-bart
-- q:
-  - Does the LoRA asymmetry hold for a 7B language model?
-  - What MMLU accuracy does Llama-2-7B get when only the B matrices are trained?
-  - Can halving LoRA's trainable parameters beat standard LoRA on MMLU?
-  answers:
+- ask:
+    unsorted:
+    - Does the LoRA asymmetry hold for a 7B language model?
+    - What MMLU accuracy does Llama-2-7B get when only the B matrices are trained?
+    - Can halving LoRA's trainable parameters beat standard LoRA on MMLU?
+  answered_by:
   - mmlu-llama2
-- q:
-  - Does freezing one LoRA factor help out-of-distribution accuracy on vision transformers?
-  - What are the DomainBed results for tuning only the B matrix of a ViT adapter?
-  - Which parameter-efficient fine-tuning choice generalizes best across domains for ViTs?
-  answers:
+- ask:
+    unsorted:
+    - Does freezing one LoRA factor help out-of-distribution accuracy on vision transformers?
+    - What are the DomainBed results for tuning only the B matrix of a ViT adapter?
+    - Which parameter-efficient fine-tuning choice generalizes best across domains for ViTs?
+  answered_by:
   - ood-vit
   - train-test-gap
-- q:
-  - How many fewer parameters does training only the up-projection of LoRA use?
-  - What is the parameter saving from freezing the LoRA down-projection?
-  answers:
+- ask:
+    unsorted:
+    - How many fewer parameters does training only the up-projection of LoRA use?
+    - What is the parameter saving from freezing the LoRA down-projection?
+  answered_by:
   - half-parameters
-- q:
-  - What should I read to understand how LoRA fine-tuning actually works?
-  - Which paper explains why methods like VeRA and LoRA-FA can freeze one adapter matrix?
-  - What work established the asymmetry between low-rank adapter matrices?
-  answers:
+- ask:
+    practitioner: What should I read to understand how LoRA fine-tuning actually works?
+    unsorted:
+    - Which paper explains why methods like VeRA and LoRA-FA can freeze one adapter matrix?
+    - What work established the asymmetry between low-rank adapter matrices?
+  answered_by:
   - asymmetry-roles
-- q:
-  - How were the learned LoRA adapter matrices compared across seeds and GLUE tasks in the
-    RoBERTa experiment?
-  - What evidence shows the LoRA B matrix encodes the fine-tuning task while A reflects only
-    its initialization?
-  - Are learned LoRA B matrices similar across random seeds on the same task?
-  answers:
+- ask:
+    unsorted:
+    - How were the learned LoRA adapter matrices compared across seeds and GLUE tasks in the
+      RoBERTa experiment?
+    - What evidence shows the LoRA B matrix encodes the fine-tuning task while A reflects
+      only its initialization?
+    - Are learned LoRA B matrices similar across random seeds on the same task?
+  answered_by:
   - b-similarity-task-dependent
 one_liner: LoRA's two factors have different jobs — A extracts features from the layer input,
   B maps them to the output — so freezing A to a random orthonormal matrix and tuning only

@@ -108,79 +108,90 @@ claims:
     by zero.
   evidence: Table 7 and Appendix G
 qa:
-- q:
-  - How can I find out which linguistic phenomena a machine translation system gets wrong,
-    instead of just its BLEU score?
-  - Is there a way to break a single BLEU or ROUGE number down by error type?
-  - What does MuLER do?
-  answers:
+- ask:
+    practitioner: How can I find out which linguistic phenomena a machine translation system
+      gets wrong, instead of just its BLEU score?
+    unsorted:
+    - Is there a way to break a single BLEU or ROUGE number down by error type?
+    - What does MuLER do?
+  answered_by:
   - what-muler-is
   - naturalistic-alternative
-- q:
-  - What should I read about fine-grained evaluation of text generation systems?
-  - Which papers move beyond bottom-line metrics like BLEU toward per-phenomenon analysis?
-  - Where does MuLER sit relative to challenge-set evaluation?
-  answers:
+- ask:
+    practitioner: What should I read about fine-grained evaluation of text generation systems?
+    unsorted:
+    - Which papers move beyond bottom-line metrics like BLEU toward per-phenomenon analysis?
+    - Where does MuLER sit relative to challenge-set evaluation?
+  answered_by:
   - naturalistic-alternative
   - what-muler-is
-- q:
-  - Which parts of speech are hardest for machine translation systems to get right?
-  - Are frequent words like nouns and verbs easy for MT systems to translate?
-  - What did analysing all WMT submissions from 2014 to 2020 reveal about POS tags?
-  answers:
+- ask:
+    unsorted:
+    - Which parts of speech are hardest for machine translation systems to get right?
+    - Are frequent words like nouns and verbs easy for MT systems to translate?
+    - What did analysing all WMT submissions from 2014 to 2020 reveal about POS tags?
+  answered_by:
   - nouns-verbs-hard
-- q:
-  - Does a higher BLEU score mean better named-entity translation?
-  - Do all linguistic phenomena improve as overall MT quality improves?
-  - Which features track overall metric gains and which do not?
-  answers:
+- ask:
+    unsorted:
+    - Does a higher BLEU score mean better named-entity translation?
+    - Do all linguistic phenomena improve as overall MT quality improves?
+    - Which features track overall metric gains and which do not?
+  answered_by:
   - ne-not-tracking-bleu
   - nouns-verbs-hard
-- q:
-  - Is there human validation that MuLER scores reflect real translation quality on a feature?
-  - How well does a fine-grained metric decomposition agree with human judgement of feature
-    translation quality?
-  - Was MuLER checked manually against annotated WMT outputs?
-  answers:
+- ask:
+    unsorted:
+    - Is there human validation that MuLER scores reflect real translation quality on a feature?
+    - How well does a fine-grained metric decomposition agree with human judgement of feature
+      translation quality?
+    - Was MuLER checked manually against annotated WMT outputs?
+  answered_by:
   - manual-agreement
-- q:
-  - Does a per-feature evaluation score get confounded by how often the feature occurs?
-  - How do I know a fine-grained metric is not just measuring feature frequency?
-  - Why does MuLER normalize by the oracle minus anti-oracle interval?
-  answers:
+- ask:
+    practitioner: How do I know a fine-grained metric is not just measuring feature frequency?
+    unsorted:
+    - Does a per-feature evaluation score get confounded by how often the feature occurs?
+    - Why does MuLER normalize by the oracle minus anti-oracle interval?
+  answered_by:
   - frequency-robust
   - monotonic-range
-- q:
-  - Would a feature-masking evaluation score fire on arbitrary random word sets too?
-  - How was MuLER shown to be specific to real linguistic phenomena?
-  - What synthetic experiments validate MuLER?
-  answers:
+- ask:
+    unsorted:
+    - Would a feature-masking evaluation score fire on arbitrary random word sets too?
+    - How was MuLER shown to be specific to real linguistic phenomena?
+    - What synthetic experiments validate MuLER?
+  answered_by:
   - specificity
   - monotonic-range
-- q:
-  - Can BLEU detect whether a system translates gender correctly?
-  - What do WinoGender pairs reveal about the blind spots of overlap metrics?
-  - How does MuLER expose gender errors that BLEU misses?
-  answers:
+- ask:
+    unsorted:
+    - Can BLEU detect whether a system translates gender correctly?
+    - What do WinoGender pairs reveal about the blind spots of overlap metrics?
+    - How does MuLER expose gender errors that BLEU misses?
+  answered_by:
   - gender-blind-bleu
-- q:
-  - Does MuLER work for summarization as well as translation?
-  - Can ROUGE be decomposed by feature to compare summarization models?
-  - What did MuLER find when comparing T5 and DistilBART summarizers?
-  answers:
+- ask:
+    unsorted:
+    - Does MuLER work for summarization as well as translation?
+    - Can ROUGE be decomposed by feature to compare summarization models?
+    - What did MuLER find when comparing T5 and DistilBART summarizers?
+  answered_by:
   - summarization-concreteness
-- q:
-  - Does feature-level metric decomposition work with neural metrics like BERTScore?
-  - Is MuLER limited to n-gram overlap metrics such as BLEU and ROUGE?
-  - How is BERTScore adapted for oracle and anti-oracle masking?
-  answers:
+- ask:
+    unsorted:
+    - Does feature-level metric decomposition work with neural metrics like BERTScore?
+    - Is MuLER limited to n-gram overlap metrics such as BLEU and ROUGE?
+    - How is BERTScore adapted for oracle and anti-oracle masking?
+  answered_by:
   - bertscore-extension
   - what-muler-is
-- q:
-  - Can a MuLER score come out negative, and what does that mean?
-  - Why would masking a feature make the base metric worse instead of better?
-  - What are the known failure cases of oracle masking in MuLER?
-  answers:
+- ask:
+    unsorted:
+    - Can a MuLER score come out negative, and what does that mean?
+    - Why would masking a feature make the base metric worse instead of better?
+    - What are the known failure cases of oracle masking in MuLER?
+  answered_by:
   - negative-muler-edge
 one_liner: MuLER decomposes any reference-based metric, such as BLEU, ROUGE or BERTScore,
   into per-feature scores by masking a phenomenon (nouns, location names, gender) in both

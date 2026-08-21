@@ -115,69 +115,81 @@ claims:
     not re-run.
   evidence: Section 8, Section 9
 qa:
-- q:
-  - do models finetuned on the same dataset end up close together in weight space?
-  - are finetuned checkpoints from the same data clustered in parameter space?
-  - can you tell which dataset a model was finetuned on from its weights?
-  answers:
+- ask:
+    unsorted:
+    - do models finetuned on the same dataset end up close together in weight space?
+    - are finetuned checkpoints from the same data clustered in parameter space?
+    - can you tell which dataset a model was finetuned on from its weights?
+  answered_by:
   - dataset-clusters
   - task-clusters
-- q:
-  - is averaging finetuned models better than the finetuned models being averaged?
-  - does the midpoint between two finetuned models beat both endpoints?
-  - why does weight averaging of finetuned language models improve accuracy?
-  answers:
+- ask:
+    unsorted:
+    - is averaging finetuned models better than the finetuned models being averaged?
+    - does the midpoint between two finetuned models beat both endpoints?
+    - why does weight averaging of finetuned language models improve accuracy?
+  answered_by:
   - convex-hull-beats-finetuned
   - interpolation
   - context-explains-merging
-- q:
-  - how far can I extrapolate past a finetuned model before it breaks?
-  - how large is the low-loss basin around finetuned language models?
-  - do finetuned models sit in the middle or at the edge of a low-loss region?
-  answers:
+- ask:
+    practitioner: how far can I extrapolate past a finetuned model before it breaks?
+    unsorted:
+    - how large is the low-loss basin around finetuned language models?
+    - do finetuned models sit in the middle or at the edge of a low-loss region?
+  answered_by:
   - extrapolation-cliffs
-- q:
-  - is there a better starting point than the pretrained model for parameter-efficient finetuning?
-  - does initializing BitFit from an average of finetuned models help?
-  - how much accuracy do you gain by starting finetuning from a merged model instead of the
-    base checkpoint?
-  answers:
+- ask:
+    unsorted:
+    - is there a better starting point than the pretrained model for parameter-efficient finetuning?
+    - does initializing BitFit from an average of finetuned models help?
+    - how much accuracy do you gain by starting finetuning from a merged model instead of
+      the base checkpoint?
+  answered_by:
   - centroid-init-full
   - centroid-init-fewshot
-- q:
-  - does starting from averaged weights help when training data is scarce?
-  - what happens with few-shot parameter-efficient finetuning from a centroid initialization?
-  answers:
+- ask:
+    unsorted:
+    - does starting from averaged weights help when training data is scarce?
+    - what happens with few-shot parameter-efficient finetuning from a centroid initialization?
+  answered_by:
   - centroid-init-fewshot
-- q:
-  - does the amount of finetuning data determine where a model moves in weight space?
-  - is weight-space distance after finetuning driven by dataset size or dataset content?
-  answers:
+- ask:
+    unsorted:
+    - does the amount of finetuning data determine where a model moves in weight space?
+    - is weight-space distance after finetuning driven by dataset size or dataset content?
+  answered_by:
   - direction-not-size
-- q:
-  - can I merge or interpolate models that started from different pretrained checkpoints?
-  - does weight-space clustering require a shared initialization?
-  - is there a single low-loss region per task or many?
-  answers:
+- ask:
+    practitioner: can I merge or interpolate models that started from different pretrained
+      checkpoints?
+    unsorted:
+    - does weight-space clustering require a shared initialization?
+    - is there a single low-loss region per task or many?
+  answered_by:
   - pretrained-dependent
-- q:
-  - do finetuned models group by domain the way they group by task?
-  - can weight space distinguish Twitter-domain models from sentiment or topic models?
-  answers:
+- ask:
+    unsorted:
+    - do finetuned models group by domain the way they group by task?
+    - can weight space distinguish Twitter-domain models from sentiment or topic models?
+  answered_by:
   - domain-fails
   - task-clusters
-- q:
-  - what should I read to understand the geometry of finetuned model weights?
-  - which paper established that finetuned models occupy task-specific regions of weight space?
-  - what work goes beyond linear mode connectivity to whole low-loss regions?
-  answers:
+- ask:
+    practitioner: what should I read to understand the geometry of finetuned model weights?
+    unsorted:
+    - which paper established that finetuned models occupy task-specific regions of weight
+      space?
+    - what work goes beyond linear mode connectivity to whole low-loss regions?
+  answered_by:
   - context-region-framing
   - context-explains-merging
-- q:
-  - do interior models help on tasks they were never finetuned on?
-  - does a point inside the NLI region generalize across NLI datasets?
-  - how do models between finetuned models compare to unrelated finetuned models?
-  answers:
+- ask:
+    unsorted:
+    - do interior models help on tasks they were never finetuned on?
+    - does a point inside the NLI region generalize across NLI datasets?
+    - how do models between finetuned models compare to unrelated finetuned models?
+  answered_by:
   - convex-hull-task-general
   - convex-hull-beats-finetuned
 terminology:

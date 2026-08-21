@@ -69,8 +69,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import yaml  # noqa: E402
 
-from common import (BUILD, DATA, ROOT, get, has_live_sidecar,  # noqa: E402
-                    load_config, read_yaml, rules_block)
+from common import (BUILD, DATA, QA_ROLES, ROOT, answered_by, get,  # noqa: E402
+                    has_live_sidecar, load_config, phrasings, qa_loci, read_yaml,
+                    rules_block)
 from fulltext import LIMIT as FULLTEXT_LIMIT  # noqa: E402
 from fulltext import cut_chars  # noqa: E402
 from fulltext import resolve as resolve_fulltext  # noqa: E402
@@ -1158,7 +1159,8 @@ PATCH_SCHEMA = {
 def where(finding: str, fm: dict | None = None) -> str | None:
     """The single field a finding is about, as a locus, or None if it is about no one field.
 
-    A locus is `claim/<id>/text`, `claim/<id>/scope`, `qa/<i>/q/<j>`, `misreadings/<i>` or
+    A locus is `claim/<id>/text`, `claim/<id>/scope`, `qa/<i>/ask/<role>`,
+    `qa/<i>/ask/unsorted/<j>`, `misreadings/<i>` or
     `term/<name>` -- a path whose leaf is always a string, which is what lets the patch
     schema stay a flat list of replacements with no union in it.
 
@@ -1186,7 +1188,10 @@ def where(finding: str, fm: dict | None = None) -> str | None:
         return None
     m = re.match(r"^qa\[(\d+)\]: every phrasing contains", finding)
     if m:
-        return f"qa/{m.group(1)}/q/0"
+        i = int(m.group(1))
+        groups = (fm or {}).get("qa") or []
+        loci = qa_loci(groups[i]) if i < len(groups) else []
+        return f"qa/{i}/{loci[0][0]}" if loci else None
     m = re.match(r"^term '([^']+)': ", finding)
     if m:
         return f"term/{m.group(1)}"
@@ -1227,10 +1232,9 @@ def _quoting(fm: dict, value: str) -> str | None:
     None when two fields hold the same string: a fix aimed at one of them would be spliced
     into whichever was found first, and a duplicate is its own finding anyway.
     """
-    hits = [f"qa/{i}/q/{j}"
+    hits = [f"qa/{i}/{suffix}"
             for i, group in enumerate(fm.get("qa") or [])
-            if isinstance(group, dict)
-            for j, phrasing in enumerate(group.get("q") or [])
+            for suffix, phrasing in qa_loci(group)
             if phrasing == value]
     hits += [f"misreadings/{i}" for i, bullet in enumerate(fm.get("misreadings") or [])
              if bullet == value]
@@ -1250,13 +1254,19 @@ def _walk(fm: dict, locus: str):
             if isinstance(c, dict) and str(c.get("id")) == part[1] and part[2] in c:
                 return c, part[2]
         return None
-    if part[0] == "qa" and len(part) == 4:
+    # `qa/<i>/ask/<role>` patches a role in place; `qa/<i>/ask/unsorted/<j>` patches one
+    # legacy phrasing. Both leaves are strings, which is what keeps the patch schema a flat
+    # list of replacements -- see `where`.
+    if part[0] == "qa" and part[2:3] == ["ask"] and len(part) in (4, 5):
         groups = fm.get("qa") or []
         try:
-            group, j = groups[int(part[1])], int(part[3])
-            phrasings = group.get("q")
-            if isinstance(phrasings, list) and isinstance(phrasings[j], str):
-                return phrasings, j
+            ask = groups[int(part[1])]["ask"]
+            if len(part) == 4 and part[3] in QA_ROLES and isinstance(ask[part[3]], str):
+                return ask, part[3]
+            if len(part) == 5 and part[3] == "unsorted":
+                legacy, j = ask["unsorted"], int(part[4])
+                if isinstance(legacy, list) and isinstance(legacy[j], str):
+                    return legacy, j
         except (ValueError, IndexError, KeyError, AttributeError, TypeError):
             return None
     if part[0] == "misreadings" and len(part) == 2:
@@ -1318,8 +1328,17 @@ def limits(locus: str) -> str:
                 f"published after the words \"Holds for:\", so give the condition, not a "
                 f"description of the claim.")
     if locus.startswith("qa/"):
-        return ("a question someone would type, answerable on its own with no paper title "
-                "beside it, so every reference in it has to name what it points at.")
+        role = locus.split("/")[-1]
+        which = {"plain": "in the words of someone who has not read the paper, with no "
+                          "jargon and no coined name",
+                 "jargon": "in the field's own vocabulary",
+                 "task": "phrased as the thing they are trying to do",
+                 "practitioner": "in the first person, deciding whether to use this"}
+        return ("a question someone would type, ending in `?`, answerable on its own with "
+                "no paper title beside it, so every reference in it has to name what it "
+                "points at"
+                + (f" -- and this one is the `{role}` route, so keep it {which[role]}."
+                   if role in which else "."))
     return "keep it a single plain string, and keep the meaning."
 
 
@@ -1648,8 +1667,7 @@ def validate_draft(path: str, note: bool = True) -> tuple[list[str], list[str]]:
     for qa in (groups if isinstance(groups, list) else []):
         if not isinstance(qa, dict):
             continue
-        answers = qa.get("answers")
-        for a in (answers if isinstance(answers, list) else []):
+        for a in answered_by(qa):
             if a not in ids:
                 errs.append(f"{path}: qa answer `{a}` is not a claim id")
 
@@ -1764,8 +1782,8 @@ def checked(slug: str) -> dict | str:
     # is its own check and stays in the questions section, where the axes are comparable.
     asks: dict = {}
     for gi, g in enumerate(fm.get("qa") or []):
-        first = ((g.get("q") or [None])[0])
-        for a in g.get("answers") or []:
+        first = (phrasings(g) or [None])[0]
+        for a in answered_by(g):
             asks.setdefault(a, []).append((gi, oneline(first)))
     answered = set(asks)
     claims = []
@@ -1842,14 +1860,14 @@ def show(slug: str) -> None:
     # than one question.
     by_id, drawn = {str(c["id"]): c for c in d["claims"]}, set()
     for i, g in enumerate(d["qa"]):
-        qs = [q for q in (g.get("q") or []) if q]
+        qs = phrasings(g)
         print(f"\n  Q{i + 1}. {qs[0] if qs else '(no question text)'}"
               + (f"   (+{len(qs) - 1} more phrasing(s))" if len(qs) > 1 else ""))
         for m in (qs and d["prose_q"].get(str(qs[0])) or []):
             print(f"      UNANSWERABLE ALONE  {m}")
-        if not (g.get("answers") or []):
+        if not answered_by(g):
             print("      nothing answers this -- point it at a claim or drop it")
-        for a in g.get("answers") or []:
+        for a in answered_by(g):
             c = by_id.get(str(a))
             if c is None:
                 print(f"      points at {a}, which is not a claim id")
@@ -1865,10 +1883,11 @@ def show(slug: str) -> None:
             one_claim(c)
 
     for i, g in enumerate(d["qa"]):
-        if len(g.get("q") or []) > 1:
+        if len(phrasings(g)) > 1:
             print(f"\n  Q{i + 1} phrasings:")
-            for q in g["q"]:
-                print(f"      {q}")
+            for role, q in qa_loci(g):
+                label = role.split("/")[1] if role.startswith("ask/") else role
+                print(f"      {label if label != 'unsorted' else '(unsorted)':13} {q}")
                 for m in d["prose_q"].get(str(q)) or []:
                     print(f"        UNANSWERABLE ALONE  {m}")
 
@@ -2130,7 +2149,7 @@ def review_page(papers: list[dict]) -> str:
                 "judgement about the claim\u2019s reliability is the one to rewrite.</p>"]
         drawn: set = set()
         for gi, g in enumerate(d["qa"]):
-            qs = [x for x in (g.get("q") or []) if x]
+            qs = phrasings(g)
             extra = (f" <span class=dim>+{len(qs) - 1} phrasing"
                      f"{'s' if len(qs) > 2 else ''}</span>") if len(qs) > 1 else ""
             why = "".join(f"<br><span class=bad>unanswerable alone</span> "
@@ -2138,7 +2157,7 @@ def review_page(papers: list[dict]) -> str:
                           for m in (d["prose_q"].get(str(qs[0])) or []) if qs)
             head = e(qs[0]) if qs else "(no question text)"
             out.append(f"<p class=ask id='{e(slug)}-q{gi}'>{head}{extra}{why}</p>")
-            answers = [a for a in (g.get("answers") or [])]
+            answers = answered_by(g)
             if not answers:
                 out.append("<p class=note>Nothing answers this — either point it at a "
                            "claim or drop the question.</p>")
@@ -2165,16 +2184,23 @@ def review_page(papers: list[dict]) -> str:
                 out += claim_html(c)
 
         if d["qa"]:
-            out += ["<h3>Paraphrase check</h3>",
+            out += ["<h3>The four routes to each question</h3>",
                     "<p class=sub>The answers are above. What is left to read here is "
-                    "whether the 2\u20134 phrasings of one question vary the way real "
-                    "queries do — wording, specificity, the terms someone who has not "
-                    "read the paper would use — rather than restating each other.</p>"]
+                    "whether each labelled route is really a different route — "
+                    "<b>plain</b> in the words of someone who has not read the paper, "
+                    "<b>jargon</b> in the field\u2019s own vocabulary, <b>task</b> as the "
+                    "thing they are trying to do, <b>practitioner</b> in the first person "
+                    "and deciding. Three rewordings of one sentence match one query; "
+                    "three vocabularies match three. Anything marked "
+                    "<b>unsorted</b> predates the routes and is what a redraft "
+                    "replaces.</p>"]
             for gi, g in enumerate(d["qa"]):
                 out.append("<ul class=q>")
-                for i, q in enumerate(g.get("q") or []):
+                for i, (role, q) in enumerate(qa_loci(g)):
                     why = d["prose_q"].get(str(q)) or []
-                    out.append(f"<li>{'<b>' if not i else ''}{e(q)}"
+                    label = role.split("/")[1] if role.startswith("ask/") else role
+                    out.append(f"<li><span class=dim>{e(label)}</span> "
+                               f"{'<b>' if not i else ''}{e(q)}"
                                f"{'</b>' if not i else ''}"
                                + "".join(f"<br><span class=bad>unanswerable alone</span> "
                                          f"<span class=dim>{e(m)}</span>" for m in why)

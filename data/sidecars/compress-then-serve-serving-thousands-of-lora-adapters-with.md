@@ -124,75 +124,86 @@ claims:
     does not cover varied ranks, architectures or languages.
   evidence: Section 1, Table 3
 qa:
-- q:
-  - How can a server host thousands of fine-tuned adapters for one base model without running
-    out of GPU memory?
-  - What throughput can I expect when serving 1000+ LoRA adapters at once?
-  - Does compressing LoRA adapters actually make multi-adapter serving faster?
-  answers:
+- ask:
+    practitioner: What throughput can I expect when serving 1000+ LoRA adapters at once?
+    unsorted:
+    - How can a server host thousands of fine-tuned adapters for one base model without running
+      out of GPU memory?
+    - Does compressing LoRA adapters actually make multi-adapter serving faster?
+  answered_by:
   - throughput-1000
   - throughput-crossover
-- q:
-  - Does compressing LoRA adapters hurt task accuracy?
-  - How much performance is lost when many LoRAs share one basis?
-  - Can lossy compression of adapters ever improve results?
-  answers:
+- ask:
+    unsorted:
+    - Does compressing LoRA adapters hurt task accuracy?
+    - How much performance is lost when many LoRAs share one basis?
+    - Can lossy compression of adapters ever improve results?
+  answered_by:
   - lossy-helps
   - recon-threshold
-- q:
-  - How do I choose the compression rank and number of clusters for a large adapter collection?
-  - Can LoRA compression hyperparameters be tuned without expensive LLM evaluation?
-  - What reconstruction error is safe when compressing LoRAs?
-  answers:
+- ask:
+    practitioner: How do I choose the compression rank and number of clusters for a large
+      adapter collection?
+    unsorted:
+    - Can LoRA compression hyperparameters be tuned without expensive LLM evaluation?
+    - What reconstruction error is safe when compressing LoRAs?
+  answered_by:
   - recon-threshold
   - clustering-needed
-- q:
-  - When is clustering adapters necessary instead of a single shared basis?
-  - Is JD-Full or JD-Diag the better choice for compressing LoRAs?
-  - Does the shared-basis approach scale from tens to a thousand adapters?
-  answers:
+- ask:
+    unsorted:
+    - When is clustering adapters necessary instead of a single shared basis?
+    - Is JD-Full or JD-Diag the better choice for compressing LoRAs?
+    - Does the shared-basis approach scale from tens to a thousand adapters?
+  answered_by:
   - clustering-needed
   - throughput-crossover
-- q:
-  - Is there a theoretical limit on how well many low-rank adapters can share one basis?
-  - What guarantee bounds reconstruction error for joint diagonalization of LoRAs?
-  - When is joint compression of adapters provably lossy?
-  answers:
+- ask:
+    unsorted:
+    - Is there a theoretical limit on how well many low-rank adapters can share one basis?
+    - What guarantee bounds reconstruction error for joint diagonalization of LoRAs?
+    - When is joint compression of adapters provably lossy?
+  answered_by:
   - recon-bound
   - orthogonal-corollary
-- q:
-  - Do fine-tuned LoRA adapters share structure with each other?
-  - Is joint compression of LoRAs exploiting real shared structure or just low-rank noise?
-  - How does reconstruction error on trained adapters compare to random ones?
-  answers:
+- ask:
+    unsorted:
+    - Do fine-tuned LoRA adapters share structure with each other?
+    - Is joint compression of LoRAs exploiting real shared structure or just low-rank noise?
+    - How does reconstruction error on trained adapters compare to random ones?
+  answered_by:
   - trained-vs-random
   - orthogonal-corollary
-- q:
-  - Does joint LoRA compression still work when the adapter does not match the evaluation
-    task?
-  - How do compressed adapters do under the LoRA-hub out-of-distribution protocol?
-  - What happens to accuracy on unseen tasks after compressing 100 adapters?
-  answers:
+- ask:
+    unsorted:
+    - Does joint LoRA compression still work when the adapter does not match the evaluation
+      task?
+    - How do compressed adapters do under the LoRA-hub out-of-distribution protocol?
+    - What happens to accuracy on unseen tasks after compressing 100 adapters?
+  answered_by:
   - ood-lorahub
-- q:
-  - Where can I get a large public collection of LoRA adapters for research?
-  - Are the 1000 adapters used in the joint-compression experiments any good?
-  - How were 1000 task-specific adapters trained for Mistral-7B-Instruct?
-  answers:
+- ask:
+    practitioner: Where can I get a large public collection of LoRA adapters for research?
+    unsorted:
+    - Are the 1000 adapters used in the joint-compression experiments any good?
+    - How were 1000 task-specific adapters trained for Mistral-7B-Instruct?
+  answered_by:
   - context-artifact
   - lora-quality
-- q:
-  - Could compressing several users' adapters together leak information between them?
-  - Is joint compression of per-user adapters private?
-  - Does an adapter gain ability on another adapter's task after joint compression?
-  answers:
+- ask:
+    unsorted:
+    - Could compressing several users' adapters together leak information between them?
+    - Is joint compression of per-user adapters private?
+    - Does an adapter gain ability on another adapter's task after joint compression?
+  answered_by:
   - no-leakage
-- q:
-  - What should I read about serving many LoRA adapters efficiently?
-  - Which paper treats multi-adapter serving as a compression problem instead of a systems
-    problem?
-  - Where should I start reading about the memory bottleneck in multi-LoRA inference?
-  answers:
+- ask:
+    practitioner: What should I read about serving many LoRA adapters efficiently?
+    unsorted:
+    - Which paper treats multi-adapter serving as a compression problem instead of a systems
+      problem?
+    - Where should I start reading about the memory bottleneck in multi-LoRA inference?
+  answered_by:
   - context-problem
   - context-artifact
 terminology:

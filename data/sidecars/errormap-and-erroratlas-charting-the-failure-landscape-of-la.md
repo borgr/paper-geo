@@ -141,90 +141,106 @@ claims:
     build.
   evidence: Appendix B, Compute, and Section 3
 qa:
-- q:
-  - Why do language models fail on a benchmark, not just how often?
-  - How can I find out the causes behind a model's wrong answers instead of its score?
-  - Is there a method that diagnoses why LLMs fail rather than where?
-  answers:
+- ask:
+    practitioner: How can I find out the causes behind a model's wrong answers instead of
+      its score?
+    unsorted:
+    - Why do language models fail on a benchmark, not just how often?
+    - Is there a method that diagnoses why LLMs fail rather than where?
+  answered_by:
   - context-diagnosis-gap
   - erroratlas-17-categories
-- q:
-  - What is a good paper to start with on diagnostic LLM evaluation and error analysis?
-  - Which work introduced a general taxonomy of LLM errors?
-  - Where should I begin reading about going beyond benchmark scores to failure analysis?
-  answers:
+- ask:
+    practitioner: Where should I begin reading about going beyond benchmark scores to failure
+      analysis?
+    unsorted:
+    - What is a good paper to start with on diagnostic LLM evaluation and error analysis?
+    - Which work introduced a general taxonomy of LLM errors?
+  answered_by:
   - context-diagnosis-gap
   - context-cheap-reuse
-- q:
-  - What are the most common types of error large language models make?
-  - Which failure categories are most prevalent across LLM benchmarks?
-  - What does the ErrorAtlas taxonomy contain?
-  answers:
+- ask:
+    unsorted:
+    - What are the most common types of error large language models make?
+    - Which failure categories are most prevalent across LLM benchmarks?
+    - What does the ErrorAtlas taxonomy contain?
+  answered_by:
   - erroratlas-17-categories
   - understudied-errors
-- q:
-  - Which LLM failure modes are neglected by current research?
-  - Are incomplete answers and question misinterpretation common LLM errors?
-  - What underexplored error types show up in large-scale LLM error analysis?
-  answers:
+- ask:
+    unsorted:
+    - Which LLM failure modes are neglected by current research?
+    - Are incomplete answers and question misinterpretation common LLM errors?
+    - What underexplored error types show up in large-scale LLM error analysis?
+  answered_by:
   - understudied-errors
-- q:
-  - Do wrong answers on reasoning benchmarks actually reflect weak reasoning?
-  - Are MMLU-Pro and GPQA errors really reasoning failures?
-  - What fraction of errors on math and science benchmarks are technical rather than reasoning
-    problems?
-  answers:
+- ask:
+    unsorted:
+    - Do wrong answers on reasoning benchmarks actually reflect weak reasoning?
+    - Are MMLU-Pro and GPQA errors really reasoning failures?
+    - What fraction of errors on math and science benchmarks are technical rather than reasoning
+      problems?
+  answered_by:
   - reasoning-benchmarks-nonreasoning-errors
-- q:
-  - How well does the ErrorAtlas taxonomy cover the errors models actually make?
-  - Was the LLM-built error taxonomy validated for coverage and accuracy?
-  - How reliable are automatic LLM error category assignments?
-  answers:
+- ask:
+    unsorted:
+    - How well does the ErrorAtlas taxonomy cover the errors models actually make?
+    - Was the LLM-built error taxonomy validated for coverage and accuracy?
+    - How reliable are automatic LLM error category assignments?
+  answered_by:
   - coverage-95
   - accuracy-92
-- q:
-  - Does an LLM-generated error taxonomy change if you use a different model or sample size?
-  - How stable is the ErrorMap taxonomy construction under prompt and sample variation?
-  - Is automatic error clustering robust to the choice of judge model?
-  answers:
+- ask:
+    unsorted:
+    - Does an LLM-generated error taxonomy change if you use a different model or sample size?
+    - How stable is the ErrorMap taxonomy construction under prompt and sample variation?
+    - Is automatic error clustering robust to the choice of judge model?
+  answered_by:
   - robustness-sampling
-- q:
-  - Does automatic error analysis agree with human annotation of model mistakes?
-  - How does an LLM-produced error breakdown compare to MMLU-Pro's manual error study?
-  - Can automated error categorisation replace manual error annotation?
-  answers:
+- ask:
+    unsorted:
+    - Does automatic error analysis agree with human annotation of model mistakes?
+    - How does an LLM-produced error breakdown compare to MMLU-Pro's manual error study?
+    - Can automated error categorisation replace manual error annotation?
+  answered_by:
   - matches-manual-mmlu-pro
-- q:
-  - How can I tell what changed between two versions of a model beyond its benchmark score?
-  - What is the difference between Gemini 1.5 Flash and Gemini 1.5 Pro in error types?
-  - Can error analysis show which weaknesses a newer model version fixed?
-  answers:
+- ask:
+    practitioner: How can I tell what changed between two versions of a model beyond its benchmark
+      score?
+    unsorted:
+    - What is the difference between Gemini 1.5 Flash and Gemini 1.5 Pro in error types?
+    - Can error analysis show which weaknesses a newer model version fixed?
+  answered_by:
   - gemini-version-diff
   - per-model-signatures
-- q:
-  - Do different LLMs with similar scores fail in different ways?
-  - Can I compare models by their failure profile rather than their accuracy?
-  - Are per-model error distributions statistically distinguishable?
-  answers:
+- ask:
+    practitioner: Can I compare models by their failure profile rather than their accuracy?
+    unsorted:
+    - Do different LLMs with similar scores fail in different ways?
+    - Are per-model error distributions statistically distinguishable?
+  answered_by:
   - per-model-signatures
-- q:
-  - Do error types vary by subject area within a benchmark?
-  - Which MMLU-Pro domains produce the most factual errors?
-  - How do failure patterns differ across domains like health, math and history?
-  answers:
+- ask:
+    unsorted:
+    - Do error types vary by subject area within a benchmark?
+    - Which MMLU-Pro domains produce the most factual errors?
+    - How do failure patterns differ across domains like health, math and history?
+  answered_by:
   - domain-error-shifts
-- q:
-  - How expensive is it to run LLM-based error analysis over a benchmark?
-  - How long does building an error taxonomy across many models take?
-  - Can error analysis be applied at scale without analysing every wrong prediction?
-  answers:
+- ask:
+    unsorted:
+    - How expensive is it to run LLM-based error analysis over a benchmark?
+    - How long does building an error taxonomy across many models take?
+    - Can error analysis be applied at scale without analysing every wrong prediction?
+  answered_by:
   - sampling-cost
   - context-cheap-reuse
-- q:
-  - Can I reuse an existing error taxonomy instead of generating my own?
-  - How do I apply ErrorAtlas categories to my own model's failures cheaply?
-  - What kinds of tasks can automated error diagnosis not handle?
-  answers:
+- ask:
+    practitioner: Can I reuse an existing error taxonomy instead of generating my own?
+    unsorted:
+    - How do I apply ErrorAtlas categories to my own model's failures cheaply?
+    - What kinds of tasks can automated error diagnosis not handle?
+  answered_by:
   - context-cheap-reuse
 misreadings:
 - A 95.2% coverage score describes how well ErrorAtlas absorbs the errors it was built from,

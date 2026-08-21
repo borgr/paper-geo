@@ -3,86 +3,102 @@ one_liner: TIES-Merging resolves the two kinds of interference between task vect
   values and sign disagreement -- by trimming, electing a sign, and merging only the parameters
   that agree.
 qa:
-- q:
-  - What is TIES-Merging?
-  - How does TIES-Merging resolve parameter interference?
-  answers:
+- ask:
+    unsorted:
+    - What is TIES-Merging?
+    - How does TIES-Merging resolve parameter interference?
+  answered_by:
   - context-claim
-- q:
-  - What are the main steps in TIES-Merging?
-  - What are the three steps of TIES-Merging?
-  - What method does TIES-Merging use to merge models?
-  answers:
+- ask:
+    unsorted:
+    - What are the main steps in TIES-Merging?
+    - What are the three steps of TIES-Merging?
+    - What method does TIES-Merging use to merge models?
+  answered_by:
   - ties-merging-steps
-- q:
-  - How does TIES-Merging perform compared to other methods?
-  - What are the performance improvements of TIES-Merging over other merging methods?
-  answers:
+- ask:
+    unsorted:
+    - How does TIES-Merging perform compared to other methods?
+    - What are the performance improvements of TIES-Merging over other merging methods?
+  answered_by:
   - ties-merging-performance
-- q:
-  - What are the sources of interference in model merging?
-  - What causes interference in merging models?
-  answers:
+- ask:
+    unsorted:
+    - What are the sources of interference in model merging?
+    - What causes interference in merging models?
+  answered_by:
   - interference-sources
-- q:
-  - What is the importance of resolving sign conflicts in TIES-Merging?
-  - Why is resolving sign conflicts important in TIES-Merging?
-  answers:
+- ask:
+    unsorted:
+    - What is the importance of resolving sign conflicts in TIES-Merging?
+    - Why is resolving sign conflicts important in TIES-Merging?
+  answered_by:
   - sign-conflicts-importance
-- q:
-  - What is the impact of redundant parameters in TIES-Merging?
-  - How does TIES-Merging handle redundant parameters?
-  answers:
+- ask:
+    unsorted:
+    - What is the impact of redundant parameters in TIES-Merging?
+    - How does TIES-Merging handle redundant parameters?
+  answered_by:
   - redundant-parameters-impact
-- q:
-  - What is the performance of TIES-Merging on out-of-domain tasks?
-  - How does TIES-Merging generalize to out-of-domain tasks?
-  answers:
+- ask:
+    unsorted:
+    - What is the performance of TIES-Merging on out-of-domain tasks?
+    - How does TIES-Merging generalize to out-of-domain tasks?
+  answered_by:
   - out-of-domain-performance
-- q:
-  - What is the performance of TIES-Merging when merging different numbers of tasks?
-  - How does TIES-Merging scale with the number of tasks?
-  answers:
+- ask:
+    unsorted:
+    - What is the performance of TIES-Merging when merging different numbers of tasks?
+    - How does TIES-Merging scale with the number of tasks?
+  answered_by:
   - scaling-performance
-- q:
-  - What is the performance of TIES-Merging when merging checkpoints of the same task?
-  - How does TIES-Merging perform when merging multiple checkpoints of the same task?
-  answers:
+- ask:
+    unsorted:
+    - What is the performance of TIES-Merging when merging checkpoints of the same task?
+    - How does TIES-Merging perform when merging multiple checkpoints of the same task?
+  answered_by:
   - same-task-checkpoints-performance
-- q:
-  - What is the performance of TIES-Merging when used as an initialization for fine-tuning?
-  - How does TIES-Merging perform as an initialization for fine-tuning?
-  answers:
+- ask:
+    unsorted:
+    - What is the performance of TIES-Merging when used as an initialization for fine-tuning?
+    - How does TIES-Merging perform as an initialization for fine-tuning?
+  answered_by:
   - initialization-performance
-- q:
-  - What is the importance of the top-k% parameters in TIES-Merging?
-  - How does TIES-Merging handle the top-k% parameters?
-  answers:
+- ask:
+    unsorted:
+    - What is the importance of the top-k% parameters in TIES-Merging?
+    - How does TIES-Merging handle the top-k% parameters?
+  answered_by:
   - top-k-parameters-importance
-- q:
-  - What is the impact of hyperparameters in TIES-Merging?
-  - How sensitive is TIES-Merging to hyperparameters?
-  answers:
+- ask:
+    unsorted:
+    - What is the impact of hyperparameters in TIES-Merging?
+    - How sensitive is TIES-Merging to hyperparameters?
+  answered_by:
   - hyperparameters-impact
-- q:
-  - What is the performance of TIES-Merging when merging PEFT models?
-  - How does TIES-Merging perform with PEFT models?
-  answers:
+- ask:
+    unsorted:
+    - What is the performance of TIES-Merging when merging PEFT models?
+    - How does TIES-Merging perform with PEFT models?
+  answered_by:
   - peft-performance
-- q:
-  - What is the performance of TIES-Merging when merging fully fine-tuned vision models?
-  - How does TIES-Merging perform with fully fine-tuned vision models?
-  answers:
+- ask:
+    unsorted:
+    - What is the performance of TIES-Merging when merging fully fine-tuned vision models?
+    - How does TIES-Merging perform with fully fine-tuned vision models?
+  answered_by:
   - vision-performance
-- q:
-  - What is the performance of TIES-Merging when merging fully fine-tuned NLP models?
-  - How does TIES-Merging perform with fully fine-tuned NLP models?
-  answers:
+- ask:
+    unsorted:
+    - What is the performance of TIES-Merging when merging fully fine-tuned NLP models?
+    - How does TIES-Merging perform with fully fine-tuned NLP models?
+  answered_by:
   - nlp-performance
-- q:
-  - What is a good paper on merging models?
-  - What work established the importance of resolving interference in model merging?
-  answers:
+- ask:
+    unsorted:
+    - What is a good paper on merging models?
+    - What work established the importance of resolving interference in model merging?
+  answered_by:
   - context-claim
 claims:
 - id: ties-merging-steps

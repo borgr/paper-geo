@@ -100,64 +100,74 @@ claims:
   scope: Cost reported for HELM by Liang et al. (2022) and cited as of 2023-2024; shifts with
     hardware and inference pricing.
 qa:
-- q:
-  - How can I make language model benchmark evaluation cheaper without making it unreliable?
-  - What is efficient benchmarking of language models?
-  - Is there research on the compute cost of running LM benchmarks?
-  answers:
+- ask:
+    practitioner: How can I make language model benchmark evaluation cheaper without making
+      it unreliable?
+    unsorted:
+    - What is efficient benchmarking of language models?
+    - Is there research on the compute cost of running LM benchmarks?
+  answered_by:
   - efficient-benchmarking-problem
   - cost-of-full-benchmarks
-- q:
-  - Should I cut compute on a benchmark by using fewer datasets or fewer examples?
-  - Is dropping tasks a good way to shrink an evaluation suite?
-  - Which is safer to reduce in HELM, scenarios or examples?
-  answers:
+- ask:
+    practitioner: Should I cut compute on a benchmark by using fewer datasets or fewer examples?
+    unsorted:
+    - Is dropping tasks a good way to shrink an evaluation suite?
+    - Which is safer to reduce in HELM, scenarios or examples?
+  answered_by:
   - examples-reliable-scenarios-not
   - rank-stability-under-compute-cuts
-- q:
-  - How many evaluation examples do I actually need to rank language models?
-  - Do HELM model rankings change if only a small sample of evaluation examples is used?
-  - How much can HELM compute be reduced before ranks move?
-  answers:
+- ask:
+    practitioner: How many evaluation examples do I actually need to rank language models?
+    unsorted:
+    - Do HELM model rankings change if only a small sample of evaluation examples is used?
+    - How much can HELM compute be reduced before ranks move?
+  answered_by:
   - rank-stability-under-compute-cuts
   - cluster-error-rate
   - equivalence-classes
-- q:
-  - Can a benchmark reliably tell which language model is best?
-  - Is the top of the HELM leaderboard trustworthy?
-  - Are small rank differences between LMs on a benchmark meaningful?
-  answers:
+- ask:
+    unsorted:
+    - Can a benchmark reliably tell which language model is best?
+    - Is the top of the HELM leaderboard trustworthy?
+    - Are small rank differences between LMs on a benchmark meaningful?
+  answered_by:
   - top-model-unreliable
   - equivalence-classes
-- q:
-  - How do you measure whether a benchmark design decision is reliable?
-  - What does DIoR measure and how is it computed?
-  - Is there a statistic for benchmark reliability like p-values are for significance?
-  answers:
+- ask:
+    unsorted:
+    - How do you measure whether a benchmark design decision is reliable?
+    - What does DIoR measure and how is it computed?
+    - Is there a statistic for benchmark reliability like p-values are for significance?
+  answered_by:
   - dior-measure
-- q:
-  - Is it bad to group datasets into task categories when aggregating benchmark scores?
-  - Does aggregating subscenarios into scenarios hurt reliability?
-  - Should benchmark scores be averaged over task groups or over individual datasets?
-  answers:
+- ask:
+    unsorted:
+    - Is it bad to group datasets into task categories when aggregating benchmark scores?
+    - Does aggregating subscenarios into scenarios hurt reliability?
+    - Should benchmark scores be averaged over task groups or over individual datasets?
+  answered_by:
   - no-aggregation
-- q:
-  - What is the best way to spend a fixed inference budget across few-shot prompts and examples?
-  - Should each example be run with every prompt, or should prompts be sampled per example?
-  - How should prompt variation be sampled in a benchmark?
-  answers:
+- ask:
+    unsorted:
+    - What is the best way to spend a fixed inference budget across few-shot prompts and examples?
+    - Should each example be run with every prompt, or should prompts be sampled per example?
+    - How should prompt variation be sampled in a benchmark?
+  answered_by:
   - uniform-prompt-sampling
-- q:
-  - Can mean win rate leaderboards be gamed by submitting extra weak models?
-  - Does adding a low-ranked model change who leads a benchmark?
-  - What are the problems with win-rate aggregation in LM benchmarks?
-  answers:
+- ask:
+    unsorted:
+    - Can mean win rate leaderboards be gamed by submitting extra weak models?
+    - Does adding a low-ranked model change who leads a benchmark?
+    - What are the problems with win-rate aggregation in LM benchmarks?
+  answered_by:
   - mwr-gameable
-- q:
-  - What is Flash-HELM and how much compute does it save?
-  - Is there a cheap version of HELM that still gives correct ranks?
-  - How can a new model be ranked against a leaderboard without running the full benchmark?
-  answers:
+- ask:
+    unsorted:
+    - What is Flash-HELM and how much compute does it save?
+    - Is there a cheap version of HELM that still gives correct ranks?
+    - How can a new model be ranked against a leaderboard without running the full benchmark?
+  answered_by:
   - flash-helm-savings
 misreadings:
 - 'A 100x compute reduction on HELM preserves rank groups, not exact ranks: models adjacent

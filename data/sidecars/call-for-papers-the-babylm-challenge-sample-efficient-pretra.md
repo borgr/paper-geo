@@ -91,61 +91,71 @@ claims:
     and financial cost.
   evidence: Section 1 and Section 6
 qa:
-- q:
-  - What is a good starting point for research on training language models with as little
-    data as a child hears?
-  - Where should I start reading about sample-efficient or human-scale language model pretraining?
-  - What shared task exists for small-scale language modeling and cognitive modeling?
-  answers:
+- ask:
+    practitioner: Where should I start reading about sample-efficient or human-scale language
+      model pretraining?
+    unsorted:
+    - What is a good starting point for research on training language models with as little
+      data as a child hears?
+    - What shared task exists for small-scale language modeling and cognitive modeling?
+  answered_by:
   - challenge-purpose
   - democratization
-- q:
-  - How much training data does the BabyLM Challenge allow?
-  - How many words are in the 10M and 100M word pretraining corpora for the BabyLM shared
-    task?
-  - What is the size of the developmentally plausible pretraining dataset released for small-scale
-    language modeling?
-  answers:
+- ask:
+    unsorted:
+    - How much training data does the BabyLM Challenge allow?
+    - How many words are in the 10M and 100M word pretraining corpora for the BabyLM shared
+      task?
+    - What is the size of the developmentally plausible pretraining dataset released for small-scale
+      language modeling?
+  answered_by:
   - corpus-sizes
   - child-word-budget
-- q:
-  - What text sources make up the BabyLM pretraining corpus?
-  - Which corpora and domains are in the child-inspired 100M-word pretraining dataset?
-  - How much of the developmentally plausible pretraining data is transcribed speech versus
-    Wikipedia?
-  answers:
+- ask:
+    unsorted:
+    - What text sources make up the BabyLM pretraining corpus?
+    - Which corpora and domains are in the child-inspired 100M-word pretraining dataset?
+    - How much of the developmentally plausible pretraining data is transcribed speech versus
+      Wikipedia?
+  answered_by:
   - corpus-composition
-- q:
-  - What are the tracks of the BabyLM Challenge and how do they differ?
-  - Can I use my own data or multimodal data in the sample-efficient pretraining shared task?
-  - What is the difference between the Strict, Strict-small and Loose tracks?
-  answers:
+- ask:
+    practitioner: Can I use my own data or multimodal data in the sample-efficient pretraining
+      shared task?
+    unsorted:
+    - What are the tracks of the BabyLM Challenge and how do they differ?
+    - What is the difference between the Strict, Strict-small and Loose tracks?
+  answered_by:
   - three-tracks
-- q:
-  - Why did anyone set up a challenge about pretraining on child-sized amounts of text?
-  - How much more data do large language models see than a child does?
-  - What motivates studying language model pretraining at human data scales?
-  answers:
+- ask:
+    unsorted:
+    - Why did anyone set up a challenge about pretraining on child-sized amounts of text?
+    - How much more data do large language models see than a child does?
+    - What motivates studying language model pretraining at human data scales?
+  answered_by:
   - data-gap-motivation
   - challenge-purpose
-- q:
-  - What baseline models does the BabyLM Challenge provide?
-  - Are the OPT, RoBERTa and T5 baselines for the 10M-word pretraining task tuned?
-  - What should a submission to the sample-efficient pretraining challenge be compared against?
-  answers:
+- ask:
+    unsorted:
+    - What baseline models does the BabyLM Challenge provide?
+    - Are the OPT, RoBERTa and T5 baselines for the 10M-word pretraining task tuned?
+    - What should a submission to the sample-efficient pretraining challenge be compared against?
+  answered_by:
   - naive-baselines
-- q:
-  - What must a model be able to do to be evaluated in the BabyLM Challenge?
-  - Do submissions to the child-scale pretraining shared task have to be generative language
-    models?
-  - What interface does the shared evaluation pipeline for small-scale language models require?
-  answers:
+- ask:
+    unsorted:
+    - What must a model be able to do to be evaluated in the BabyLM Challenge?
+    - Do submissions to the child-scale pretraining shared task have to be generative language
+      models?
+    - What interface does the shared evaluation pipeline for small-scale language models require?
+  answered_by:
   - eval-requirements
-- q:
-  - Does the BabyLM Challenge limit training compute or epochs?
-  - Can I train for many epochs on the 10M-word BabyLM corpus?
-  - Are there hyperparameter restrictions in the sample-efficient pretraining shared task?
-  answers:
+- ask:
+    practitioner: Can I train for many epochs on the 10M-word BabyLM corpus?
+    unsorted:
+    - Does the BabyLM Challenge limit training compute or epochs?
+    - Are there hyperparameter restrictions in the sample-efficient pretraining shared task?
+  answered_by:
   - no-epoch-limit
 misreadings:
 - 'The BabyLM call for papers reports no model results: it specifies the tracks, the released

@@ -104,91 +104,104 @@ claims:
   scope: Argued from binary judgment tasks with single-token answers; whether the same decomposition
     localizes failures in open-ended generation or multi-step reasoning is untested.
 qa:
-- q:
-  - Does prompt phrasing change how a language model encodes its input, or only how it answers?
-  - Why are LLMs so sensitive to prompt paraphrases if their internal representations are
-    stable?
-  - Where do instructions actually take effect inside a transformer?
-  answers:
+- ask:
+    unsorted:
+    - Does prompt phrasing change how a language model encodes its input, or only how it answers?
+    - Why are LLMs so sensitive to prompt paraphrases if their internal representations are
+      stable?
+    - Where do instructions actually take effect inside a transformer?
+  answered_by:
   - sample-vs-output-spread
   - correlation-with-behavior
   - production-centered-mechanism
-- q:
-  - Is there causal evidence that instructions matter mainly at output positions?
-  - What happens if you block attention from instruction tokens to the rest of the prompt?
-  - How much accuracy is lost when instruction attention is cut off?
-  answers:
+- ask:
+    unsorted:
+    - Is there causal evidence that instructions matter mainly at output positions?
+    - What happens if you block attention from instruction tokens to the rest of the prompt?
+    - How much accuracy is lost when instruction attention is cut off?
+  answered_by:
   - full-intervention
   - prompt-only-intervention
-- q:
-  - Does scaling a model up improve what it encodes or how it expresses it?
-  - What changes internally between a 0.5B and a 32B model on judgment tasks?
-  - Do larger models encode more task information or just verbalize it better?
-  answers:
+- ask:
+    unsorted:
+    - Does scaling a model up improve what it encodes or how it expresses it?
+    - What changes internally between a 0.5B and a 32B model on judgment tasks?
+    - Do larger models encode more task information or just verbalize it better?
+  answered_by:
   - scaling-production
   - instruction-tuning
-- q:
-  - Is there mechanistic evidence for the Superficial Alignment Hypothesis?
-  - What does instruction tuning change inside a model's representations?
-  - Do base and instruction-tuned models encode the input differently?
-  answers:
+- ask:
+    unsorted:
+    - Is there mechanistic evidence for the Superficial Alignment Hypothesis?
+    - What does instruction tuning change inside a model's representations?
+    - Do base and instruction-tuned models encode the input differently?
+  answered_by:
   - instruction-tuning
   - scaling-production
-- q:
-  - Does the processing–production asymmetry depend on which judgment task is being evaluated?
-  - Which of BLiMP, StereoSet, oLMpics, EWOK and ToM show internal information that predicts
-    behavior best?
-  - Are grammaticality judgments different from world-knowledge judgments inside a language
-    model?
-  answers:
+- ask:
+    unsorted:
+    - Does the processing–production asymmetry depend on which judgment task is being evaluated?
+    - Which of BLiMP, StereoSet, oLMpics, EWOK and ToM show internal information that predicts
+      behavior best?
+    - Are grammaticality judgments different from world-knowledge judgments inside a language
+      model?
+  answered_by:
   - task-type-coupling
   - tom-interference
-- q:
-  - Can removing instruction influence ever help accuracy?
-  - Are there tasks where instructions interfere with input encoding?
-  - Which judgment task improves when instruction attention is blocked?
-  answers:
+- ask:
+    unsorted:
+    - Can removing instruction influence ever help accuracy?
+    - Are there tasks where instructions interfere with input encoding?
+    - Which judgment task improves when instruction attention is blocked?
+  answered_by:
   - tom-interference
-- q:
-  - What is a good paper on the gap between what language models encode and what they output?
-  - Where should I start reading about interpreting instruction following inside LLMs?
-  - What work frames prompt sensitivity as an output-generation phenomenon rather than an
-    encoding one?
-  answers:
+- ask:
+    practitioner: Where should I start reading about interpreting instruction following inside
+      LLMs?
+    unsorted:
+    - What is a good paper on the gap between what language models encode and what they output?
+    - What work frames prompt sensitivity as an output-generation phenomenon rather than an
+      encoding one?
+  answered_by:
   - production-centered-mechanism
   - evaluation-implication
-- q:
-  - Why are behavioral benchmark scores insufficient for diagnosing model failures?
-  - How can you tell whether a model lacked the knowledge or failed to express it?
-  - What does joint probing and behavioral evaluation add over accuracy alone?
-  answers:
+- ask:
+    unsorted:
+    - Why are behavioral benchmark scores insufficient for diagnosing model failures?
+    - How can you tell whether a model lacked the knowledge or failed to express it?
+    - What does joint probing and behavioral evaluation add over accuracy alone?
+  answered_by:
   - evaluation-implication
   - correlation-with-behavior
   - instance-level-agreement
-- q:
-  - How reliable are the linear probes used to measure task-specific information layer-wise?
-  - How many labeled examples are needed for layer-wise probing patterns to stabilize?
-  - Would non-linear probes change the layer-wise information findings?
-  answers:
+- ask:
+    unsorted:
+    - How reliable are the linear probes used to measure task-specific information layer-wise?
+    - How many labeled examples are needed for layer-wise probing patterns to stabilize?
+    - Would non-linear probes change the layer-wise information findings?
+  answered_by:
   - probing-validity
-- q:
-  - How much do model predictions change between instruction-first, sample-first and few-shot
-    prompting?
-  - Do different prompting formats agree on individual instances?
-  - Is in-context learning without instructions equivalent to giving an explicit instruction?
-  answers:
+- ask:
+    unsorted:
+    - How much do model predictions change between instruction-first, sample-first and few-shot
+      prompting?
+    - Do different prompting formats agree on individual instances?
+    - Is in-context learning without instructions equivalent to giving an explicit instruction?
+  answered_by:
   - instance-level-agreement
   - sample-vs-output-spread
-- q:
-  - What happens internally when a prompt instruction is irrelevant to the judgment being
-    made?
-  - Do nonsense or off-task instructions damage input encoding in language models?
-  answers:
+- ask:
+    unsorted:
+    - What happens internally when a prompt instruction is irrelevant to the judgment being
+      made?
+    - Do nonsense or off-task instructions damage input encoding in language models?
+  answered_by:
   - unrelated-instructions
-- q:
-  - Which models and tasks were used to test whether instructions shape encoding or generation?
-  - Does the production-centered finding hold across model families?
-  answers:
+- ask:
+    unsorted:
+    - Which models and tasks were used to test whether instructions shape encoding or generation?
+    - Does the production-centered finding hold across model families?
+  answered_by:
   - production-centered-mechanism
   - sample-vs-output-spread
   - task-type-coupling

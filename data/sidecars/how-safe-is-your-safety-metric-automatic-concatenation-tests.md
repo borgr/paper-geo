@@ -113,68 +113,79 @@ claims:
     more consistently in the cluster tests.
   evidence: Section 1
 qa:
-- q:
-  - Can a harmful response slip past an LLM safety filter just by being concatenated with
-    other text?
-  - Do harmfulness metrics reverse their verdict when unsafe prompt-response pairs are combined?
-  - How often does a GPT-based safety judge label concatenated unsafe content as safe?
-  answers:
+- ask:
+    unsorted:
+    - Can a harmful response slip past an LLM safety filter just by being concatenated with
+      other text?
+    - Do harmfulness metrics reverse their verdict when unsafe prompt-response pairs are combined?
+    - How often does a GPT-based safety judge label concatenated unsafe content as safe?
+  answered_by:
   - gpt35-cluster-flip
   - gpt4o-flip-rate-low
-- q:
-  - Does the order of content change how an LLM judge scores safety?
-  - How large is positional bias in GPT-3.5 and GPT-4o harmfulness judges?
-  - If safe text comes first, will a judge model call the whole input safe?
-  answers:
+- ask:
+    unsorted:
+    - Does the order of content change how an LLM judge scores safety?
+    - How large is positional bias in GPT-3.5 and GPT-4o harmfulness judges?
+    - If safe text comes first, will a judge model call the whole input safe?
+  answered_by:
   - gpt35-positional-bias
   - gpt4o-order-dominates
-- q:
-  - Does positional bias in LLM judges get worse with longer inputs?
-  - Is judge order sensitivity related to input length?
-  answers:
+- ask:
+    unsorted:
+    - Does positional bias in LLM judges get worse with longer inputs?
+    - Is judge order sensitivity related to input length?
+  answered_by:
   - positional-bias-grows-with-length
-- q:
-  - Are reward models usable as safety filters if an attacker repeats the prompt or response?
-  - Do OpenAssistant reward models change their score when input content is repeated?
-  - How much do repeated prompts and responses shift reward-model harmfulness scores?
-  answers:
+- ask:
+    unsorted:
+    - Are reward models usable as safety filters if an attacker repeats the prompt or response?
+    - Do OpenAssistant reward models change their score when input content is repeated?
+    - How much do repeated prompts and responses shift reward-model harmfulness scores?
+  answered_by:
   - reward-repetition-sensitive
   - deberta-repetition-magnitudes
-- q:
-  - Are GPT judges affected by repeated content in the input?
-  - Which safety metrics ignore duplicated prompts and responses?
-  answers:
+- ask:
+    unsorted:
+    - Are GPT judges affected by repeated content in the input?
+    - Which safety metrics ignore duplicated prompts and responses?
+  answered_by:
   - gpt-ignores-repetition
-- q:
-  - Are reward-model safety metrics sensitive to the order of concatenated inputs?
-  - Which harmfulness metrics have low positional bias?
-  answers:
+- ask:
+    unsorted:
+    - Are reward-model safety metrics sensitive to the order of concatenated inputs?
+    - Which harmfulness metrics have low positional bias?
+  answered_by:
   - reward-low-positional-bias
-- q:
-  - Do safety scores stay consistent when several equally safe pairs are concatenated?
-  - What happens to reward-model scores when two safe prompt-response pairs are merged into
-    one input?
-  answers:
+- ask:
+    unsorted:
+    - Do safety scores stay consistent when several equally safe pairs are concatenated?
+    - What happens to reward-model scores when two safe prompt-response pairs are merged into
+      one input?
+  answered_by:
   - reward-cluster-not-preserved
   - gpt-ignores-repetition
-- q:
-  - What work should I read on whether automatic safety evaluation metrics are reliable?
-  - Where can I find a paper on validating LLM-as-a-judge safety metrics?
-  - Is there research on testing the metrics used to measure model harmfulness?
-  - How do I check the validity of a safety metric without collecting new human labels?
-  answers:
+- ask:
+    practitioner: What work should I read on whether automatic safety evaluation metrics are
+      reliable?
+    unsorted:
+    - Where can I find a paper on validating LLM-as-a-judge safety metrics?
+    - Is there research on testing the metrics used to measure model harmfulness?
+    - How do I check the validity of a safety metric without collecting new human labels?
+  answered_by:
   - context-safety-of-safety-metrics
-- q:
-  - Is GPT-3.5 a trustworthy judge for measuring jailbreak attack success?
-  - Should attack-success rates measured with a GPT-3.5 judge be trusted?
-  - What are the risks of using an LLM judge to score multi-turn red-teaming attacks?
-  answers:
+- ask:
+    unsorted:
+    - Is GPT-3.5 a trustworthy judge for measuring jailbreak attack success?
+    - Should attack-success rates measured with a GPT-3.5 judge be trusted?
+    - What are the risks of using an LLM judge to score multi-turn red-teaming attacks?
+  answered_by:
   - context-judge-caution
   - gpt35-cluster-flip
-- q:
-  - Which safety metrics and datasets were tested in the concatenation study?
-  - What models were used to generate the harmful responses in the concatenation tests?
-  answers:
+- ask:
+    unsorted:
+    - Which safety metrics and datasets were tested in the concatenation study?
+    - What models were used to generate the harmful responses in the concatenation tests?
+  answered_by:
   - context-safety-of-safety-metrics
   - reward-repetition-sensitive
 misreadings:

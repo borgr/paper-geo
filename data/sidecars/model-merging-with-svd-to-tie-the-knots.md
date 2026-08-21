@@ -3,65 +3,75 @@ one_liner: KnOTS takes a joint SVD over the LoRA updates of separately finetuned
   that existing mergers work in one shared basis, and tests the result on a joint-task benchmark
   that asks whether the merge is general.
 qa:
-- q:
-  - What is KnOTS and how does it improve LoRA model merging?
-  - How does KnOTS enhance the merging of LoRA models?
-  - What method does KnOTS use to align LoRA model updates?
-  answers:
+- ask:
+    unsorted:
+    - What is KnOTS and how does it improve LoRA model merging?
+    - How does KnOTS enhance the merging of LoRA models?
+    - What method does KnOTS use to align LoRA model updates?
+  answered_by:
   - knots-1
-- q:
-  - What is the new benchmark introduced by KnOTS?
-  - How does KnOTS evaluate the generality of merged models?
-  - What benchmark does KnOTS use to assess the generality of merged models?
-  answers:
+- ask:
+    unsorted:
+    - What is the new benchmark introduced by KnOTS?
+    - How does KnOTS evaluate the generality of merged models?
+    - What benchmark does KnOTS use to assess the generality of merged models?
+  answered_by:
   - knots-2
-- q:
-  - What are the key contributions of the KnOTS paper?
-  - What does the KnOTS paper contribute to the field of model merging?
-  - What are the main findings of the KnOTS paper?
-  answers:
+- ask:
+    unsorted:
+    - What are the key contributions of the KnOTS paper?
+    - What does the KnOTS paper contribute to the field of model merging?
+    - What are the main findings of the KnOTS paper?
+  answered_by:
   - knots-10
-- q:
-  - How does KnOTS perform on larger models like ViT-L/14?
-  - Does KnOTS scale well to larger models?
-  - What is the performance of KnOTS on ViT-L/14 models?
-  answers:
+- ask:
+    unsorted:
+    - How does KnOTS perform on larger models like ViT-L/14?
+    - Does KnOTS scale well to larger models?
+    - What is the performance of KnOTS on ViT-L/14 models?
+  answered_by:
   - knots-4
-- q:
-  - What is the performance of KnOTS on language models like Llama3-8B?
-  - How does KnOTS perform on Llama3-8B models?
-  - What are the results of KnOTS on Llama3-8B models?
-  answers:
+- ask:
+    unsorted:
+    - What is the performance of KnOTS on language models like Llama3-8B?
+    - How does KnOTS perform on Llama3-8B models?
+    - What are the results of KnOTS on Llama3-8B models?
+  answered_by:
   - knots-5
-- q:
-  - What is the impact of KnOTS on the number of tasks being merged?
-  - How does KnOTS perform as the number of tasks increases?
-  - Does KnOTS maintain performance with an increasing number of tasks?
-  answers:
+- ask:
+    unsorted:
+    - What is the impact of KnOTS on the number of tasks being merged?
+    - How does KnOTS perform as the number of tasks increases?
+    - Does KnOTS maintain performance with an increasing number of tasks?
+  answered_by:
   - knots-6
-- q:
-  - How does KnOTS perform across different LoRA ranks?
-  - Is KnOTS robust to different LoRA ranks?
-  - What is the performance of KnOTS across varying LoRA ranks?
-  answers:
+- ask:
+    unsorted:
+    - How does KnOTS perform across different LoRA ranks?
+    - Is KnOTS robust to different LoRA ranks?
+    - What is the performance of KnOTS across varying LoRA ranks?
+  answered_by:
   - knots-7
-- q:
-  - What is the effect of concatenating task-updates in KnOTS?
-  - How does the concatenation method in KnOTS affect performance?
-  - What is the impact of concatenating task-updates column-wise in KnOTS?
-  answers:
+- ask:
+    unsorted:
+    - What is the effect of concatenating task-updates in KnOTS?
+    - How does the concatenation method in KnOTS affect performance?
+    - What is the impact of concatenating task-updates column-wise in KnOTS?
+  answered_by:
   - knots-8
-- q:
-  - What is the performance of KnOTS on the joint-task benchmark?
-  - How does KnOTS perform on the joint-task setting?
-  - What are the results of KnOTS on the joint-task benchmark?
-  answers:
+- ask:
+    unsorted:
+    - What is the performance of KnOTS on the joint-task benchmark?
+    - How does KnOTS perform on the joint-task setting?
+    - What are the results of KnOTS on the joint-task benchmark?
+  answered_by:
   - knots-9
-- q:
-  - What is a good paper on model merging with LoRA?
-  - Which paper introduces KnOTS for merging LoRA models?
-  - What is the key reference for merging LoRA models using SVD?
-  answers:
+- ask:
+    unsorted:
+    - What is a good paper on model merging with LoRA?
+    - Which paper introduces KnOTS for merging LoRA models?
+    - What is the key reference for merging LoRA models using SVD?
+  answered_by:
   - knots-10
 claims:
 - id: knots-1

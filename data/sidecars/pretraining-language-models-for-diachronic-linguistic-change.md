@@ -119,72 +119,84 @@ claims:
     to 14.6 thousand examples is specific to the paper's vocabulary overlap.
   evidence: Appendix C
 qa:
-- q:
-  - Does finetuning a large model on historical text keep it from knowing later language?
-  - Can LoRA or DoRA finetuning restrict a model to one time period?
-  - Do period-finetuned Llama models leak future word senses?
-  answers:
+- ask:
+    unsorted:
+    - Does finetuning a large model on historical text keep it from knowing later language?
+    - Can LoRA or DoRA finetuning restrict a model to one time period?
+    - Do period-finetuned Llama models leak future word senses?
+  answered_by:
   - leakage
   - cholera-example
   - context-pretraining-as-method
-- q:
-  - How well do small models pretrained on one time slice stay inside their period?
-  - Do time-sliced pretrained language models show period-specific perplexity?
-  - Which respects historical corpus boundaries better, pretraining or finetuning?
-  answers:
+- ask:
+    unsorted:
+    - How well do small models pretrained on one time slice stay inside their period?
+    - Do time-sliced pretrained language models show period-specific perplexity?
+    - Which respects historical corpus boundaries better, pretraining or finetuning?
+  answered_by:
   - pretrain-period-specific-ppl
   - leakage
-- q:
-  - How much worse are 10M-token period models than a finetuned Llama3-8B on grammar benchmarks?
-  - What BLiMP accuracy do BabyLlama-2 models trained on 10 million tokens reach?
-  - Are tiny domain-pretrained models still usable models of language?
-  answers:
+- ask:
+    unsorted:
+    - How much worse are 10M-token period models than a finetuned Llama3-8B on grammar benchmarks?
+    - What BLiMP accuracy do BabyLlama-2 models trained on 10 million tokens reach?
+    - Are tiny domain-pretrained models still usable models of language?
+  answered_by:
   - blimp-aggregate
-- q:
-  - Can a language model detect grammatical change over time, not just lexical change?
-  - How was diachronic change in negative polarity item licensing measured with language models?
-  - Do period models show a shift in preference for "only...ever" over "even...ever"?
-  answers:
+- ask:
+    unsorted:
+    - Can a language model detect grammatical change over time, not just lexical change?
+    - How was diachronic change in negative polarity item licensing measured with language
+      models?
+    - Do period models show a shift in preference for "only...ever" over "even...ever"?
+  answered_by:
   - npi-change
   - context-nonlexical-change
-- q:
-  - Is pretraining a small model cheaper than parameter-efficient finetuning of an 8B model?
-  - How long does it take to train one BabyLlama-2 period model on an A100?
-  - What is the compute cost of the diachronic model battery?
-  answers:
+- ask:
+    unsorted:
+    - Is pretraining a small model cheaper than parameter-efficient finetuning of an 8B model?
+    - How long does it take to train one BabyLlama-2 period model on an A100?
+    - What is the compute cost of the diachronic model battery?
+  answered_by:
   - training-cost
-- q:
-  - How can publication dates be assigned to Project Gutenberg works at scale?
-  - How accurate is an open-weight LLM at guessing when a book was written?
-  - Can Llama3.3-70B replace GPT-4o for work-date attribution?
-  answers:
+- ask:
+    unsorted:
+    - How can publication dates be assigned to Project Gutenberg works at scale?
+    - How accurate is an open-weight LLM at guessing when a book was written?
+    - Can Llama3.3-70B replace GPT-4o for work-date attribution?
+  answered_by:
   - date-attribution
-- q:
-  - How do you find candidate words for sense change using perplexity across periods?
-  - Can a battery of period language models separate two senses of the same word?
-  - What does the "station" example show about tracking sense trajectories?
-  answers:
+- ask:
+    unsorted:
+    - How do you find candidate words for sense change using perplexity across periods?
+    - Can a battery of period language models separate two senses of the same word?
+    - What does the "station" example show about tracking sense trajectories?
+  answered_by:
   - sense-trajectories
-- q:
-  - Can a model trained only on old text anticipate a sense that appears later?
-  - What is the "end of the line" example evidence for?
-  - Do earlier usages of a word prefigure later constructions?
-  answers:
+- ask:
+    unsorted:
+    - Can a model trained only on old text anticipate a sense that appears later?
+    - What is the "end of the line" example evidence for?
+    - Do earlier usages of a word prefigure later constructions?
+  answered_by:
   - prefiguration
-- q:
-  - What should I read about using language models for historical linguistics?
-  - Which paper argues for domain-restricted pretraining instead of finetuning in the digital
-    humanities?
-  - Where do I start on language models for diachronic change discovery?
-  - Is there work on training separate LMs per time period for humanities research?
-  answers:
+- ask:
+    practitioner: What should I read about using language models for historical linguistics?
+    unsorted:
+    - Which paper argues for domain-restricted pretraining instead of finetuning in the digital
+      humanities?
+    - Where do I start on language models for diachronic change discovery?
+    - Is there work on training separate LMs per time period for humanities research?
+  answered_by:
   - context-pretraining-as-method
   - context-nonlexical-change
-- q:
-  - Is there released code for training time-sliced language models on my own corpus?
-  - Where can I get the OED-based word sense cloze evaluation set?
-  - How do I reuse the diachronic pretraining pipeline on a different corpus division?
-  answers:
+- ask:
+    practitioner: Is there released code for training time-sliced language models on my own
+      corpus?
+    unsorted:
+    - Where can I get the OED-based word sense cloze evaluation set?
+    - How do I reuse the diachronic pretraining pipeline on a different corpus division?
+  answered_by:
   - context-pipeline
 misreadings:
 - 'The period-pretrained models are not better language models than the finetuned baselines:

@@ -109,91 +109,107 @@ claims:
     attributes the difference to catastrophic forgetting of BERT parameters when the layer
     is trainable.
 qa:
-- q:
-  - Why does reinforcement learning give such small gains for neural machine translation?
-  - What limits the effectiveness of RL fine-tuning in machine translation?
-  - Is the vocabulary size a problem for policy gradient training of translation models?
-  answers:
+- ask:
+    unsorted:
+    - Why does reinforcement learning give such small gains for neural machine translation?
+    - What limits the effectiveness of RL fine-tuning in machine translation?
+    - Is the vocabulary size a problem for policy gradient training of translation models?
+  answered_by:
   - action-space-hypothesis
   - small-vocab-rl-gain
-- q:
-  - What should I read about reinforcement learning and large action spaces in text generation?
-  - Which paper argues that the action space is what holds back RL for translation?
-  - Where does the idea of treating the NMT vocabulary as a too-large action space come from?
-  answers:
+- ask:
+    practitioner: What should I read about reinforcement learning and large action spaces
+      in text generation?
+    unsorted:
+    - Which paper argues that the action space is what holds back RL for translation?
+    - Where does the idea of treating the NMT vocabulary as a too-large action space come
+      from?
+  answered_by:
   - action-space-hypothesis
-- q:
-  - Does shrinking the target vocabulary make RL fine-tuning of a translation model work better?
-  - How much BLEU does RL add when the target BPE vocabulary is only 1K tokens?
-  - What happens to RL gains with a small versus large target vocabulary in NMT?
-  answers:
+- ask:
+    unsorted:
+    - Does shrinking the target vocabulary make RL fine-tuning of a translation model work
+      better?
+    - How much BLEU does RL add when the target BPE vocabulary is only 1K tokens?
+    - What happens to RL gains with a small versus large target vocabulary in NMT?
+  answered_by:
   - small-vocab-rl-gain
   - stv-low-ranks
-- q:
-  - Can RL improve translation on tokens the pretrained model ranked low?
-  - Does RL only promote tokens that already had high probability after MLE pretraining?
-  - Which tokens are responsible for the gains when RL is applied with a small action space?
-  answers:
+- ask:
+    unsorted:
+    - Can RL improve translation on tokens the pretrained model ranked low?
+    - Does RL only promote tokens that already had high probability after MLE pretraining?
+    - Which tokens are responsible for the gains when RL is applied with a small action space?
+  answered_by:
   - stv-low-ranks
   - bert-init-alone
-- q:
-  - How do you reduce the effective action space of a translation model without changing its
-    vocabulary?
-  - Can BERT embeddings be used as the decoder's output layer to help RL fine-tuning?
-  - How much BLEU does initializing and freezing the output embedding layer with BERT gain
-    over standard RL?
-  answers:
+- ask:
+    unsorted:
+    - How do you reduce the effective action space of a translation model without changing
+      its vocabulary?
+    - Can BERT embeddings be used as the decoder's output layer to help RL fine-tuning?
+    - How much BLEU does initializing and freezing the output embedding layer with BERT gain
+      over standard RL?
+  answered_by:
   - bert-freeze-bleu
   - bert-init-alone
-- q:
-  - Should the output embedding layer be frozen during RL fine-tuning of an NMT model?
-  - Does freezing the decoder's final fully connected layer hurt translation quality?
-  - How many trainable parameters does freezing target embeddings remove in a convolutional
-    NMT model?
-  answers:
+- ask:
+    unsorted:
+    - Should the output embedding layer be frozen during RL fine-tuning of an NMT model?
+    - Does freezing the decoder's final fully connected layer hurt translation quality?
+    - How many trainable parameters does freezing target embeddings remove in a convolutional
+      NMT model?
+  answered_by:
   - freeze-params
   - random-frozen-fails
-- q:
-  - Does freezing help because there are fewer parameters to learn, or because the embeddings
-    are good?
-  - What happens if you freeze randomly initialized output embeddings during RL?
-  answers:
+- ask:
+    unsorted:
+    - Does freezing help because there are fewer parameters to learn, or because the embeddings
+      are good?
+    - What happens if you freeze randomly initialized output embeddings during RL?
+  answered_by:
   - random-frozen-fails
   - simulation
-- q:
-  - Is there a synthetic experiment showing that duplicated actions slow down policy gradient
-    learning?
-  - How does a contextual bandit with duplicated actions motivate freezing the policy's last
-    layer?
-  - Does an informative last-layer initialization help even when it carries no reward information?
-  answers:
+- ask:
+    unsorted:
+    - Is there a synthetic experiment showing that duplicated actions slow down policy gradient
+      learning?
+    - How does a contextual bandit with duplicated actions motivate freezing the policy's
+      last layer?
+    - Does an informative last-layer initialization help even when it carries no reward information?
+  answered_by:
   - simulation
-- q:
-  - Do human annotators prefer translations from the BERT-initialized frozen-embedding RL
-    model?
-  - Was the BLEU improvement from reducing the action space confirmed by human evaluation?
-  - How was adequacy judged when comparing baseline RL against the improved RL model for translation?
-  answers:
+- ask:
+    unsorted:
+    - Do human annotators prefer translations from the BERT-initialized frozen-embedding RL
+      model?
+    - Was the BLEU improvement from reducing the action space confirmed by human evaluation?
+    - How was adequacy judged when comparing baseline RL against the improved RL model for
+      translation?
+  answered_by:
   - human-eval
   - sim-scores
-- q:
-  - Do the gains from BERT target embeddings show up on metrics other than the optimized BLEU
-    reward?
-  - What are the SIM semantic similarity scores for RL with frozen BERT target embeddings?
-  answers:
+- ask:
+    unsorted:
+    - Do the gains from BERT target embeddings show up on metrics other than the optimized
+      BLEU reward?
+    - What are the SIM semantic similarity scores for RL with frozen BERT target embeddings?
+  answered_by:
   - sim-scores
-- q:
-  - Are BERT embeddings better than MLE-learned output embeddings at grouping related words?
-  - Why do BERT target embeddings generalize over similar actions better than embeddings learned
-    by MLE?
-  - Do BERT embeddings put synonyms close together?
-  answers:
+- ask:
+    unsorted:
+    - Are BERT embeddings better than MLE-learned output embeddings at grouping related words?
+    - Why do BERT target embeddings generalize over similar actions better than embeddings
+      learned by MLE?
+    - Do BERT embeddings put synonyms close together?
+  answered_by:
   - bert-vs-mle-embeddings
-- q:
-  - Should BERT embeddings be trainable or frozen during MLE pretraining of a translation
-    model?
-  - What is the BLEU difference between frozen and trainable BERT embeddings in MLE training?
-  answers:
+- ask:
+    unsorted:
+    - Should BERT embeddings be trainable or frozen during MLE pretraining of a translation
+      model?
+    - What is the BLEU difference between frozen and trainable BERT embeddings in MLE training?
+  answered_by:
   - mle-bert-freeze
 terminology:
   target embeddings: The rows of the final fully connected layer that maps a decoder's internal

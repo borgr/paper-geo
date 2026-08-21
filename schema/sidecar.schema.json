@@ -1,100 +1,188 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/borgr/paper-geo/schema/sidecar.schema.json",
-  "title": "data/sidecars/<slug>.md front matter",
-  "description": "The only hand-written per-paper input. Targets fidelity -- being described correctly -- not just visibility. One sidecar per paper, ONE owner even when the paper has many authors: two co-authors independently paraphrasing the same finding is the fragmentation problem at scale.",
-  "type": "object",
-  "required": ["one_liner", "claims", "qa"],
-  "additionalProperties": false,
-  "properties": {
-    "key": {"type": "string", "description": "BibTeX key, for cross-checking against papers.yaml."},
-    "coined": {"type": "string", "description": "The coined name, if any: TIES-Merging, ZipNN, DOVE."},
-    "gloss": {
-      "type": "string",
-      "description": "Plain-language phrase for the coined name. Rendered adjacent to it everywhere, because a coined name has no lexical path from the question people actually ask."
-    },
-    "one_liner": {
-      "type": "string",
-      "maxLength": 320,
-      "description": "The canonical sentence. Reused VERBATIM in the page, README, model card, and talk abstract -- rewording fragments corroboration."
-    },
-    "qa": {
-      "type": "array",
-      "description": "Question/answer pairs. Never a question without its answer adjacent: a question-only passage matches the query and then loses the citation, because the concrete answer is not in the chunk.",
-      "items": {
-        "type": "object",
-        "required": ["q", "answers"],
-        "additionalProperties": false,
-        "properties": {
-          "q": {
-            "type": "array",
-            "minItems": 1,
-            "maxItems": 5,
-            "items": {"type": "string"},
-            "description": "2-4 PARAPHRASES of one question. Paraphrase deliberately here: engines fan a query into many synthetic sub-queries and you cannot guess which phrasing wins."
-          },
-          "answers": {
-            "type": "array",
-            "minItems": 1,
-            "items": {"type": "string"},
-            "description": "Claim ids, never prose. The renderer emits each claim's text verbatim. Never paraphrase a claim: a restated claim is a second, drifting version of your own finding."
-          }
-        }
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://github.com/borgr/paper-geo/schema/sidecar.schema.json",
+ "title": "data/sidecars/<slug>.md front matter",
+ "description": "The only hand-written per-paper input. Targets fidelity -- being described correctly -- not just visibility. One sidecar per paper, ONE owner even when the paper has many authors: two co-authors independently paraphrasing the same finding is the fragmentation problem at scale.",
+ "type": "object",
+ "required": [
+  "one_liner",
+  "claims",
+  "qa"
+ ],
+ "additionalProperties": false,
+ "properties": {
+  "key": {
+   "type": "string",
+   "description": "BibTeX key, for cross-checking against papers.yaml."
+  },
+  "coined": {
+   "type": "string",
+   "description": "The coined name, if any: TIES-Merging, ZipNN, DOVE."
+  },
+  "gloss": {
+   "type": "string",
+   "description": "Plain-language phrase for the coined name. Rendered adjacent to it everywhere, because a coined name has no lexical path from the question people actually ask."
+  },
+  "one_liner": {
+   "type": "string",
+   "maxLength": 320,
+   "description": "The canonical sentence. Reused VERBATIM in the page, README, model card, and talk abstract -- rewording fragments corroboration."
+  },
+  "qa": {
+   "type": "array",
+   "description": "Question groups. Never a question without its answer adjacent: a question-only passage matches the query and then loses the citation, because the concrete answer is not in the chunk.",
+   "items": {
+    "type": "object",
+    "required": [
+     "ask",
+     "answered_by"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "ask": {
+      "type": "object",
+      "description": "ONE question, asked by four different kinds of person. Fill `plain` always and at least one other: each role is a different lexical route to the same answer, and engines fan a query into synthetic sub-queries you cannot predict, so three vocabularies beat three rewordings of one. Every role is a natural question ending in `?`, never a keyword string.",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+       "plain": {
+        "type": "string",
+        "description": "The question as someone who has NOT read the paper would type it: no jargon, no coined name, names its own subject."
+       },
+       "jargon": {
+        "type": "string",
+        "description": "The same question in the field's own vocabulary, the way a specialist would type it."
+       },
+       "task": {
+        "type": "string",
+        "description": "The same question phrased as the thing they are trying to do -- 'how do I merge two adapters without retraining'."
+       },
+       "practitioner": {
+        "type": "string",
+        "description": "The same question in the first person, deciding -- 'should I use this for my model'. This is the highest-intent phrasing and the one a person asks an assistant."
+       },
+       "unsorted": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        },
+        "description": "LEGACY ONLY -- phrasings written before the roles existed. Never emit this field: put every phrasing in the role it belongs to."
+       }
       }
-    },
-    "claims": {
+     },
+     "answered_by": {
       "type": "array",
       "minItems": 1,
       "items": {
-        "type": "object",
-        "required": ["id", "text", "scope"],
-        "additionalProperties": false,
-        "properties": {
-          "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+       "type": "string"
+      },
+      "description": "Claim ids, never prose. The renderer emits each claim's text verbatim. Never paraphrase a claim: a restated claim is a second, drifting version of your own finding."
+     }
+    }
+   }
+  },
+  "claims": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "object",
+    "required": [
+     "id",
+     "text",
+     "scope"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "result",
+       "context"
+      ],
+      "description": "What the claim asserts, which decides what else it owes. `result` (the default when absent) is something the paper measured or demonstrated, and must cite `evidence`. `context` is what the paper IS -- what it contributed, what problem it opened, where it sits in its literature -- and needs no evidence, because a paper contains no sentence certifying its own standing. The asymmetry is deliberate: the highest-volume questions an engine receives ('what should I read about model merging') have no answer in any result claim, so a page of only result claims is invisible to them. `scope` is what makes the unverified half safe, which is why it stays required on both."
+     },
+     "text": {
+      "type": "string",
+      "description": "Self-contained and quotable: names the object, the finding and the magnitude in one sentence. No pronoun pointing outside the sentence -- it will be retrieved alone."
+     },
+     "scope": {
+      "type": "string",
+      "description": "The conditions under which it holds and does not. This is content, not a disclaimer. Boilerplate ('further research is needed') is worthless. LLM summaries drop scope ~5x more often than humans do; this is the only lever on that. On a `context` claim it carries more weight still: it is the entire bound on a claim nothing in the paper verifies."
+     },
+     "evidence": {
+      "type": "string",
+      "description": "Where in the paper: 'Table 2', 'Figure 4b'. Required on a `result` claim, absent on most `context` ones."
+     }
+    },
+    "allOf": [
+     {
+      "if": {
+       "anyOf": [
+        {
+         "properties": {
           "kind": {
-            "type": "string",
-            "enum": ["result", "context"],
-            "description": "What the claim asserts, which decides what else it owes. `result` (the default when absent) is something the paper measured or demonstrated, and must cite `evidence`. `context` is what the paper IS -- what it contributed, what problem it opened, where it sits in its literature -- and needs no evidence, because a paper contains no sentence certifying its own standing. The asymmetry is deliberate: the highest-volume questions an engine receives ('what should I read about model merging') have no answer in any result claim, so a page of only result claims is invisible to them. `scope` is what makes the unverified half safe, which is why it stays required on both."
-          },
-          "text": {
-            "type": "string",
-            "description": "Self-contained and quotable: names the object, the finding and the magnitude in one sentence. No pronoun pointing outside the sentence -- it will be retrieved alone."
-          },
-          "scope": {
-            "type": "string",
-            "description": "The conditions under which it holds and does not. This is content, not a disclaimer. Boilerplate ('further research is needed') is worthless. LLM summaries drop scope ~5x more often than humans do; this is the only lever on that. On a `context` claim it carries more weight still: it is the entire bound on a claim nothing in the paper verifies."
-          },
-          "evidence": {"type": "string", "description": "Where in the paper: 'Table 2', 'Figure 4b'. Required on a `result` claim, absent on most `context` ones."}
-        },
-        "allOf": [
-          {
-            "if": {
-              "anyOf": [
-                {"properties": {"kind": {"const": "result"}}, "required": ["kind"]},
-                {"not": {"required": ["kind"]}}
-              ]
-            },
-            "then": {"required": ["evidence"]}
+           "const": "result"
           }
-        ]
+         },
+         "required": [
+          "kind"
+         ]
+        },
+        {
+         "not": {
+          "required": [
+           "kind"
+          ]
+         }
+        }
+       ]
+      },
+      "then": {
+       "required": [
+        "evidence"
+       ]
       }
-    },
-    "misreadings": {
-      "type": "array",
-      "items": {"type": "string"},
-      "description": "What people wrongly conclude from this paper. Stated as corrections, not as questions."
-    },
-    "terminology": {
-      "type": "object",
-      "additionalProperties": {"type": "string"},
-      "description": "Terms of art used in a non-obvious sense in THIS paper."
-    },
-    "links_extra": {
-      "type": "object",
-      "additionalProperties": {"type": "string"},
-      "description": "What cannot be derived from identifiers: project page, talk video, slides, poster, leaderboard, blog post, demo. Merged into the derived links map."
-    },
-    "supersedes": {"type": "array", "items": {"type": "string"}, "description": "Slugs this work replaces."},
-    "superseded_by": {"type": "array", "items": {"type": "string"}}
+     }
+    ]
+   }
+  },
+  "misreadings": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "description": "What people wrongly conclude from this paper. Stated as corrections, not as questions."
+  },
+  "terminology": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "string"
+   },
+   "description": "Terms of art used in a non-obvious sense in THIS paper."
+  },
+  "links_extra": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "string"
+   },
+   "description": "What cannot be derived from identifiers: project page, talk video, slides, poster, leaderboard, blog post, demo. Merged into the derived links map."
+  },
+  "supersedes": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "description": "Slugs this work replaces."
+  },
+  "superseded_by": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
   }
+ }
 }

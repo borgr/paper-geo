@@ -122,77 +122,90 @@ claims:
     exhaustive systematic review of the literature.
   evidence: Section 6
 qa:
-- q:
-  - How do I check whether a new LLM benchmark is valid by comparing it to existing benchmarks?
-  - What are the recommended best practices for benchmark agreement testing?
-  - How should I run correlations between my benchmark and established LLM leaderboards?
-  answers:
+- ask:
+    practitioner: How do I check whether a new LLM benchmark is valid by comparing it to existing
+      benchmarks?
+    unsorted:
+    - What are the recommended best practices for benchmark agreement testing?
+    - How should I run correlations between my benchmark and established LLM leaderboards?
+  answered_by:
   - bat-guidelines-context
   - combined-variance-reduction
-- q:
-  - How much does following the BAT best practices actually reduce variance?
-  - Do the BenchBench recommendations make agreement results more stable, and by how much?
-  - What is the measured effect of aggregating references, sampling models and using a data-driven
-    threshold together?
-  answers:
+- ask:
+    unsorted:
+    - How much does following the BAT best practices actually reduce variance?
+    - Do the BenchBench recommendations make agreement results more stable, and by how much?
+    - What is the measured effect of aggregating references, sampling models and using a data-driven
+      threshold together?
+  answered_by:
   - combined-variance-reduction
   - aggregate-reference
   - model-selection
   - data-driven-threshold
-- q:
-  - Is it safe to validate a new benchmark against just one established benchmark?
-  - How much do agreement scores change if I pick a different reference benchmark?
-  - Why use an aggregate of several reference benchmarks instead of one?
-  answers:
+- ask:
+    practitioner: How much do agreement scores change if I pick a different reference benchmark?
+    unsorted:
+    - Is it safe to validate a new benchmark against just one established benchmark?
+    - Why use an aggregate of several reference benchmarks instead of one?
+  answered_by:
   - reference-choice-variability
   - aggregate-reference
-- q:
-  - How many models do I need for a reliable rank correlation between two benchmarks?
-  - Why is benchmark agreement unstable when only a few models are compared?
-  - What happens to correlation variance with small model subsets?
-  answers:
+- ask:
+    practitioner: How many models do I need for a reliable rank correlation between two benchmarks?
+    unsorted:
+    - Why is benchmark agreement unstable when only a few models are compared?
+    - What happens to correlation variance with small model subsets?
+  answered_by:
   - few-models-variance
   - model-selection
-- q:
-  - Why do benchmarks agree overall but disagree on the strongest models?
-  - Does benchmark agreement hold for top-ranked LLMs?
-  - Is high rank correlation between leaderboards meaningful for frontier models?
-  answers:
+- ask:
+    unsorted:
+    - Why do benchmarks agree overall but disagree on the strongest models?
+    - Does benchmark agreement hold for top-ranked LLMs?
+    - Is high rank correlation between leaderboards meaningful for frontier models?
+  answered_by:
   - granularity-top-models
   - adjacent-vs-random
-- q:
-  - Can I use the same 0.8 correlation threshold for Kendall-tau and Pearson?
-  - How do rank and score correlations differ when comparing LLM benchmarks?
-  - Is there a bias between Kendall-tau and Pearson agreement scores?
-  answers:
+- ask:
+    practitioner: Can I use the same 0.8 correlation threshold for Kendall-tau and Pearson?
+    unsorted:
+    - How do rank and score correlations differ when comparing LLM benchmarks?
+    - Is there a bias between Kendall-tau and Pearson agreement scores?
+  answered_by:
   - metric-bias
   - data-driven-threshold
-- q:
-  - Does benchmark agreement depend on whether the compared LLMs are weak, mid-range or state
-    of the art?
-  - How does model tier affect correlations between LLM benchmarks?
-  - Do older or lower-ranked models inflate benchmark agreement?
-  answers:
+- ask:
+    unsorted:
+    - Does benchmark agreement depend on whether the compared LLMs are weak, mid-range or
+      state of the art?
+    - How does model tier affect correlations between LLM benchmarks?
+    - Do older or lower-ranked models inflate benchmark agreement?
+  answered_by:
   - model-tier
   - adjacent-vs-random
-- q:
-  - Is there a software package for running benchmark agreement testing?
-  - What does the BenchBench leaderboard rank?
-  - Where can I get pooled results for many LLM benchmarks to correlate my own against?
-  answers:
+- ask:
+    practitioner: Where can I get pooled results for many LLM benchmarks to correlate my own
+      against?
+    unsorted:
+    - Is there a software package for running benchmark agreement testing?
+    - What does the BenchBench leaderboard rank?
+  answered_by:
   - benchbench-contribution
-- q:
-  - What should I read about the validity of LLM benchmarks and leaderboards?
-  - Which paper established standards for evaluating benchmarks against each other?
-  - Where should I start reading on meta-evaluation of LLM benchmarks?
-  answers:
+- ask:
+    practitioner: What should I read about the validity of LLM benchmarks and leaderboards?
+    unsorted:
+    - Which paper established standards for evaluating benchmarks against each other?
+    - Where should I start reading on meta-evaluation of LLM benchmarks?
+  answered_by:
   - bat-guidelines-context
   - survey-of-bat-practice
-- q:
-  - How inconsistent is existing practice when papers report agreement with established benchmarks?
-  - What thresholds have prior LLM benchmark papers used to call agreement high?
-  - Do published benchmark validation studies use a common methodology?
-  answers:
+- ask:
+    unsorted:
+    - How inconsistent is existing practice when papers report agreement with established
+      benchmarks?
+    - What thresholds have prior LLM benchmark papers used to call agreement high?
+    - Do published benchmark validation studies use a common methodology?
+  answered_by:
   - survey-of-bat-practice
   - bat-guidelines-context
 misreadings:

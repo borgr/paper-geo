@@ -121,85 +121,98 @@ claims:
     44.4% of errors are POS-based SEs.'
   evidence: Section 2 and Section 4.1
 qa:
-- q:
-  - How can grammatical errors in learner text be classified in a way that works for more
-    than one language?
-  - Is there a language-independent error taxonomy for grammatical error correction?
-  - What should I read about cross-lingual learner error taxonomies?
-  answers:
+- ask:
+    practitioner: What should I read about cross-lingual learner error taxonomies?
+    unsorted:
+    - How can grammatical errors in learner text be classified in a way that works for more
+      than one language?
+    - Is there a language-independent error taxonomy for grammatical error correction?
+  answered_by:
   - context-first-ud-taxonomy
   - complements-errant
-- q:
-  - Does SErCl replace ERRANT or complement it?
-  - How much of what ERRANT labels OTHER can be classified another way?
-  - What fraction of unclassified learner errors get a type from Universal Dependencies label
-    changes?
-  answers:
+- ask:
+    unsorted:
+    - Does SErCl replace ERRANT or complement it?
+    - How much of what ERRANT labels OTHER can be classified another way?
+    - What fraction of unclassified learner errors get a type from Universal Dependencies
+      label changes?
+  answered_by:
   - complements-errant
-- q:
-  - Can automatic dependency parsers be trusted on ungrammatical learner sentences?
-  - Does using UDPipe instead of manual treebank annotation change the learner error distribution?
-  - How reliable is syntactic error extraction from parsed learner text?
-  answers:
+- ask:
+    unsorted:
+    - Can automatic dependency parsers be trusted on ungrammatical learner sentences?
+    - Does using UDPipe instead of manual treebank annotation change the learner error distribution?
+    - How reliable is syntactic error extraction from parsed learner text?
+  answered_by:
   - auto-parse-reliable
-- q:
-  - Do UD-derived error types agree with hand-annotated taxonomies like NUCLE's?
-  - How well do syntactic error classes map onto the NUCLE error categories?
-  answers:
+- ask:
+    unsorted:
+    - Do UD-derived error types agree with hand-annotated taxonomies like NUCLE's?
+    - How well do syntactic error classes map onto the NUCLE error categories?
+  answered_by:
   - maps-to-nucle
-- q:
-  - Are grammatical error correction systems worse on syntactic errors than on other errors?
-  - What is the recall of the BEA2019 winning system on errors that change syntactic structure?
-  - How well does UEDIN-MS handle errors whose correction alters the parse?
-  answers:
+- ask:
+    unsorted:
+    - Are grammatical error correction systems worse on syntactic errors than on other errors?
+    - What is the recall of the BEA2019 winning system on errors that change syntactic structure?
+    - How well does UEDIN-MS handle errors whose correction alters the parse?
+  answered_by:
   - ses-harder
   - recall-uneven-by-type
-- q:
-  - Which learner error types do GEC systems handle worst?
-  - Are some syntactic error types much harder for correction systems than others?
-  answers:
+- ask:
+    unsorted:
+    - Which learner error types do GEC systems handle worst?
+    - Are some syntactic error types much harder for correction systems than others?
+  answered_by:
   - recall-uneven-by-type
   - grammarly-weak-on-ses
-- q:
-  - Does making more edits make a grammatical error correction system rank higher?
-  - Is system conservatism related to BEA2019 shared-task rank?
-  answers:
+- ask:
+    unsorted:
+    - Does making more edits make a grammatical error correction system rank higher?
+    - Is system conservatism related to BEA2019 shared-task rank?
+  answered_by:
   - no-conservatism-rank-link
-- q:
-  - How well does Grammarly correct errors that change part of speech?
-  - Does a commercial proofreading tool catch syntactic learner errors?
-  - Which error types does Grammarly miss almost entirely?
-  answers:
+- ask:
+    unsorted:
+    - How well does Grammarly correct errors that change part of speech?
+    - Does a commercial proofreading tool catch syntactic learner errors?
+    - Which error types does Grammarly miss almost entirely?
+  answered_by:
   - grammarly-weak-on-ses
-- q:
-  - Do more advanced learners make fewer errors that change part of speech?
-  - How do syntactic error rates differ across CEFR proficiency levels in W&I?
-  - Do native writers make fewer POS-changing errors than advanced learners?
-  answers:
+- ask:
+    practitioner: How do syntactic error rates differ across CEFR proficiency levels in W&I?
+    unsorted:
+    - Do more advanced learners make fewer errors that change part of speech?
+    - Do native writers make fewer POS-changing errors than advanced learners?
+  answered_by:
   - proficiency-monotone
-- q:
-  - What case errors do learners of Russian make most often?
-  - Which Russian noun case is hardest for learners?
-  - What do learner Russian case confusion matrices show?
-  answers:
+- ask:
+    unsorted:
+    - What case errors do learners of Russian make most often?
+    - Which Russian noun case is hardest for learners?
+    - What do learner Russian case confusion matrices show?
+  answered_by:
   - russian-case-genitive
-- q:
-  - What aspect and voice errors appear in learner Russian?
-  - Do learners of Russian confuse perfective and imperfective symmetrically?
-  answers:
+- ask:
+    unsorted:
+    - What aspect and voice errors appear in learner Russian?
+    - Do learners of Russian confuse perfective and imperfective symmetrically?
+  answered_by:
   - russian-verb-aspect-voice
-- q:
-  - Is a taxonomy of learner errors based on dependency edge labels worth building rather
-    than one based on POS tags?
-  - How correlated are POS-based and dependency-label-based learner error types?
-  - Do dependency labels add information over POS tags when typing learner errors?
-  answers:
+- ask:
+    unsorted:
+    - Is a taxonomy of learner errors based on dependency edge labels worth building rather
+      than one based on POS tags?
+    - How correlated are POS-based and dependency-label-based learner error types?
+    - Do dependency labels add information over POS tags when typing learner errors?
+  answered_by:
   - pos-edge-correlated
-- q:
-  - Which learner errors does a UD-label-change taxonomy fail to cover?
-  - Are agreement errors counted as syntactic errors by SErCl?
-  - What are the limits of defining errors by changed morphosyntactic labels?
-  answers:
+- ask:
+    unsorted:
+    - Which learner errors does a UD-label-change taxonomy fail to cover?
+    - Are agreement errors counted as syntactic errors by SErCl?
+    - What are the limits of defining errors by changed morphosyntactic labels?
+  answered_by:
   - context-only-form-changes
 terminology:
   syntactic error (SE): A grammatical error whose correction changes a morphological feature,

@@ -103,73 +103,84 @@ claims:
     the two embedding types are comparable in BLEU under normal, unpermuted training.
   evidence: Section 3.2
 qa:
-- q:
-  - Is the Transformer biased toward monotonic word order?
-  - Do self-attention translation models have a locality bias like LSTMs?
-  - What happens to Transformer BLEU when you permute the source word order?
-  answers:
+- ask:
+    unsorted:
+    - Is the Transformer biased toward monotonic word order?
+    - Do self-attention translation models have a locality bias like LSTMs?
+    - What happens to Transformer BLEU when you permute the source word order?
+  answered_by:
   - learned-pe-no-locality-bias
   - sine-pe-residual-bias
-- q:
-  - Does learned or sinusoidal positional encoding matter for machine translation?
-  - Should I use learned positional embeddings instead of sine ones?
-  - Are sinusoidal position embeddings introducing an order bias?
-  answers:
+- ask:
+    practitioner: Should I use learned positional embeddings instead of sine ones?
+    unsorted:
+    - Does learned or sinusoidal positional encoding matter for machine translation?
+    - Are sinusoidal position embeddings introducing an order bias?
+  answered_by:
   - sine-pe-residual-bias
   - positional-embedding-design-implication
-- q:
-  - Are long-distance dependencies still a problem for neural machine translation?
-  - Do modern MT systems handle discontinuous phrases like phrasal verbs?
-  - How much worse is translation quality on long-distance dependency sentences?
-  answers:
+- ask:
+    unsorted:
+    - Are long-distance dependencies still a problem for neural machine translation?
+    - Do modern MT systems handle discontinuous phrases like phrasal verbs?
+    - How much worse is translation quality on long-distance dependency sentences?
+  answered_by:
   - ldd-still-hard
   - difficulty-grows-with-distance
-- q:
-  - Does translation accuracy degrade as the distance between head and dependent grows?
-  - Is syntactic distance still a determinant of MT quality?
-  - Do human judgments confirm that longer dependencies are translated worse?
-  answers:
+- ask:
+    unsorted:
+    - Does translation accuracy degrade as the distance between head and dependent grows?
+    - Is syntactic distance still a determinant of MT quality?
+    - Do human judgments confirm that longer dependencies are translated worse?
+  answered_by:
   - difficulty-grows-with-distance
   - manual-accuracy-by-distance
-- q:
-  - How can I build a challenge set for machine translation without manual annotation?
-  - Can challenge sets for MT evaluation be extracted automatically?
-  - How large can automatically extracted MT challenge sets be?
-  answers:
+- ask:
+    practitioner: How can I build a challenge set for machine translation without manual annotation?
+    unsorted:
+    - Can challenge sets for MT evaluation be extracted automatically?
+    - How large can automatically extracted MT challenge sets be?
+  answered_by:
   - automatic-challenge-sets-contribution
   - challenge-set-sizes
-- q:
-  - How reliable is parser-based extraction of linguistic phenomena for evaluation sets?
-  - What is the precision of automatically extracted reflexive verb and preposition stranding
-    examples?
-  - Do automatically extracted challenge sentences actually contain the target phenomenon?
-  answers:
+- ask:
+    unsorted:
+    - How reliable is parser-based extraction of linguistic phenomena for evaluation sets?
+    - What is the precision of automatically extracted reflexive verb and preposition stranding
+      examples?
+    - Do automatically extracted challenge sentences actually contain the target phenomenon?
+  answered_by:
   - extraction-precision
-- q:
-  - Are challenge sets just harder because their sentences are longer?
-  - How do you rule out sentence length as the reason a challenge set is difficult?
-  - Is source length a confound in long-distance dependency evaluation?
-  answers:
+- ask:
+    unsorted:
+    - Are challenge sets just harder because their sentences are longer?
+    - How do you rule out sentence length as the reason a challenge set is difficult?
+    - Is source length a confound in long-distance dependency evaluation?
+  answered_by:
   - length-not-the-cause
-- q:
-  - What should I read about fine-grained evaluation of machine translation beyond BLEU?
-  - Which paper established automatic construction of linguistic challenge sets for MT?
-  - Where do I start reading on phenomenon-specific MT evaluation?
-  answers:
+- ask:
+    practitioner: What should I read about fine-grained evaluation of machine translation
+      beyond BLEU?
+    unsorted:
+    - Which paper established automatic construction of linguistic challenge sets for MT?
+    - Where do I start reading on phenomenon-specific MT evaluation?
+  answered_by:
   - automatic-challenge-sets-contribution
-- q:
-  - Does BLEU capture performance on rare syntactic phenomena?
-  - Why does a reordering-focused metric matter for evaluating word order?
-  - Do BLEU and RIBES agree on reordering challenge sets?
-  answers:
+- ask:
+    unsorted:
+    - Does BLEU capture performance on rare syntactic phenomena?
+    - Why does a reordering-focused metric matter for evaluating word order?
+    - Do BLEU and RIBES agree on reordering challenge sets?
+  answered_by:
   - ribes-reordering
   - ldd-still-hard
-- q:
-  - Which German and English constructions were used to build the long-distance dependency
-    sets?
-  - What phenomena are covered by the auto_challenge_sets corpora?
-  - How many sentences are in the English-German preposition stranding challenge set?
-  answers:
+- ask:
+    unsorted:
+    - Which German and English constructions were used to build the long-distance dependency
+      sets?
+    - What phenomena are covered by the auto_challenge_sets corpora?
+    - How many sentences are in the English-German preposition stranding challenge set?
+  answered_by:
   - challenge-set-sizes
 terminology:
   locality bias: The inductive assumption in a translation model that source words close together

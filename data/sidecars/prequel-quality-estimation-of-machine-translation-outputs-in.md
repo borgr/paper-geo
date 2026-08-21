@@ -122,92 +122,108 @@ claims:
     on development sets of NewsTests, bible-uedin, GlobalVoices and Tatoeba.
   evidence: Table 5
 qa:
-- q:
-  - Can you predict machine translation quality before translating a sentence?
-  - Is it possible to estimate translation quality from the source sentence only?
-  - What is PreQuEL?
-  answers:
+- ask:
+    unsorted:
+    - Can you predict machine translation quality before translating a sentence?
+    - Is it possible to estimate translation quality from the source sentence only?
+    - What is PreQuEL?
+  answered_by:
   - task-context
   - main-endezh
-- q:
-  - What should I read about quality estimation without access to the translation?
-  - Which paper introduced source-only translation quality prediction?
-  - Where should I start reading about deciding whether to machine translate or hire human
-    translators?
-  answers:
+- ask:
+    practitioner: What should I read about quality estimation without access to the translation?
+    unsorted:
+    - Which paper introduced source-only translation quality prediction?
+    - Where should I start reading about deciding whether to machine translate or hire human
+      translators?
+  answered_by:
   - task-context
   - why-read
-- q:
-  - How much worse is source-only prediction than a real quality estimation system?
-  - Does seeing the translation help quality estimation much?
-  - How close does PreQuEL get to TransQuest?
-  answers:
+- ask:
+    unsorted:
+    - How much worse is source-only prediction than a real quality estimation system?
+    - Does seeing the translation help quality estimation much?
+    - How close does PreQuEL get to TransQuest?
+  answered_by:
   - gap-to-qe
   - main-endezh
-- q:
-  - How can I get more training data for translation quality prediction without human annotation?
-  - Does labelling parallel corpora with COMET scores help train a quality predictor?
-  - What does the PreQuEL augmentation method contribute?
-  answers:
+- ask:
+    practitioner: How can I get more training data for translation quality prediction without
+      human annotation?
+    unsorted:
+    - Does labelling parallel corpora with COMET scores help train a quality predictor?
+    - What does the PreQuEL augmentation method contribute?
+  answered_by:
   - augmentation-gain
   - aug-helps-qe
-- q:
-  - Can automatic-metric augmentation improve a normal quality estimation model?
-  - Does COMET-based intertraining help TransQuest on WMT 2020 en-de?
-  answers:
+- ask:
+    unsorted:
+    - Can automatic-metric augmentation improve a normal quality estimation model?
+    - Does COMET-based intertraining help TransQuest on WMT 2020 en-de?
+  answered_by:
   - aug-helps-qe
-- q:
-  - Does a source-only quality predictor trained on one MT system transfer to another system?
-  - Is translation difficulty shared across state-of-the-art MT systems?
-  - How much correlation is lost when testing PreQuEL on a different translation system?
-  answers:
+- ask:
+    unsorted:
+    - Does a source-only quality predictor trained on one MT system transfer to another system?
+    - Is translation difficulty shared across state-of-the-art MT systems?
+    - How much correlation is lost when testing PreQuEL on a different translation system?
+  answered_by:
   - cross-system
-- q:
-  - Does source-only difficulty prediction depend on the target language?
-  - Is a sentence that is hard to translate into German also hard to translate into Chinese?
-  - Do en-de and en-zh PreQuEL models transfer to each other?
-  answers:
+- ask:
+    unsorted:
+    - Does source-only difficulty prediction depend on the target language?
+    - Is a sentence that is hard to translate into German also hard to translate into Chinese?
+    - Do en-de and en-zh PreQuEL models transfer to each other?
+  answered_by:
   - target-specific
-- q:
-  - Which features of a source sentence make it hard to machine translate?
-  - Do sentence length and n-gram probability predict translation difficulty?
-  - Does a source-only quality model rely too much on surface features?
-  answers:
+- ask:
+    unsorted:
+    - Which features of a source sentence make it hard to machine translate?
+    - Do sentence length and n-gram probability predict translation difficulty?
+    - Does a source-only quality model rely too much on surface features?
+  answered_by:
   - over-weights-features
   - transformation-probe
-- q:
-  - Does adding a dependency parser improve source-only translation quality prediction?
-  - How much does explicit syntactic knowledge help predicting MT difficulty?
-  answers:
+- ask:
+    unsorted:
+    - Does adding a dependency parser improve source-only translation quality prediction?
+    - How much does explicit syntactic knowledge help predicting MT difficulty?
+  answered_by:
   - syntax-parser
   - meaning-over-order
-- q:
-  - Is a source-only quality model sensitive to meaning or just to word order?
-  - What do German word-ordering challenge sets reveal about PreQuEL predictions?
-  answers:
+- ask:
+    unsorted:
+    - Is a source-only quality model sensitive to meaning or just to word order?
+    - What do German word-ordering challenge sets reveal about PreQuEL predictions?
+  answered_by:
   - meaning-over-order
-- q:
-  - Can a translation-difficulty model be used to study which linguistic phenomena hurt MT?
-  - What happens to predicted translation quality when person names or numbers are swapped
-    in the source?
-  - Which source-sentence perturbations change predicted MT quality most?
-  answers:
+- ask:
+    unsorted:
+    - Can a translation-difficulty model be used to study which linguistic phenomena hurt
+      MT?
+    - What happens to predicted translation quality when person names or numbers are swapped
+      in the source?
+    - Which source-sentence perturbations change predicted MT quality most?
+  answered_by:
   - transformation-probe
-- q:
-  - Is source-only quality estimation just an artifact of HTER labels?
-  - Does using direct-assessment scores instead of HTER stop models from cheating with the
-    source alone?
-  answers:
+- ask:
+    unsorted:
+    - Is source-only quality estimation just an artifact of HTER labels?
+    - Does using direct-assessment scores instead of HTER stop models from cheating with the
+      source alone?
+  answered_by:
   - hter-vs-da
-- q:
-  - How well does source-only translation quality prediction hold up on a new domain?
-  - Does the domain of the training corpus matter for predicting MT difficulty?
-  answers:
+- ask:
+    unsorted:
+    - How well does source-only translation quality prediction hold up on a new domain?
+    - Does the domain of the training corpus matter for predicting MT difficulty?
+  answered_by:
   - domain-matters
-- q:
-  - What accuracy does the best en-de PreQuEL model reach?
-  - What Pearson correlation does source-only MT quality prediction achieve on English-German?
-  answers:
+- ask:
+    unsorted:
+    - What accuracy does the best en-de PreQuEL model reach?
+    - What Pearson correlation does source-only MT quality prediction achieve on English-German?
+  answered_by:
   - main-endezh
   - augmentation-gain
 misreadings:

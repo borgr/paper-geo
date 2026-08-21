@@ -124,103 +124,123 @@ claims:
     account of why particular examples are easy; the paper reports that using the discovered
     order as a curriculum did not improve learning.
 qa:
-- q:
-  - Do neural networks learn training examples in the same order across random seeds?
-  - Does the order in which examples are learned depend on initialization and mini-batch sampling?
-  - Do independently trained networks of the same architecture agree on which examples they
-    classify correctly?
-  answers:
+- ask:
+    unsorted:
+    - Do neural networks learn training examples in the same order across random seeds?
+    - Does the order in which examples are learned depend on initialization and mini-batch
+      sampling?
+    - Do independently trained networks of the same architecture agree on which examples they
+      classify correctly?
+  answered_by:
   - bimodal-tp-agreement
   - hyperparameter-robustness
-- q:
-  - Which datasets show the shared classification order phenomenon?
-  - Does shared learning order appear outside image classification, for example in text classification?
-  - Was the learning-order effect tested on ImageNet and on NLP data?
-  answers:
+- ask:
+    unsorted:
+    - Which datasets show the shared classification order phenomenon?
+    - Does shared learning order appear outside image classification, for example in text
+      classification?
+    - Was the learning-order effect tested on ImageNet and on NLP data?
+  answered_by:
   - same-order-many-datasets
   - bimodal-tp-agreement
-- q:
-  - Do different architectures learn a dataset in the same order?
-  - How similar is the learning order between ResNet-50, AlexNet and DenseNet on ImageNet?
-  - Does a shared learning order survive across ResNet and AlexNet despite very different
-    accuracies?
-  answers:
+- ask:
+    unsorted:
+    - Do different architectures learn a dataset in the same order?
+    - How similar is the learning order between ResNet-50, AlexNet and DenseNet on ImageNet?
+    - Does a shared learning order survive across ResNet and AlexNet despite very different
+      accuracies?
+  answered_by:
   - cross-architecture-correlation
   - stronger-learns-superset
-- q:
-  - Does a more accurate network learn a superset of what a weaker network learns?
-  - What is the relationship between the examples learned by a strong and a weak architecture?
-  - Do stronger models learn easy examples first and then continue past what weak models manage?
-  answers:
+- ask:
+    unsorted:
+    - Does a more accurate network learn a superset of what a weaker network learns?
+    - What is the relationship between the examples learned by a strong and a weak architecture?
+    - Do stronger models learn easy examples first and then continue past what weak models
+      manage?
+  answered_by:
   - stronger-learns-superset
   - linear-nonlinear-nesting
-- q:
-  - Is the shared learning order just an artifact of SGD training?
-  - Are there datasets where neural networks learn examples in different orders?
-  - What happens to per-example agreement on synthetic datasets like Gabor patches or overlapping
-    Gaussians?
-  answers:
+- ask:
+    unsorted:
+    - Is the shared learning order just an artifact of SGD training?
+    - Are there datasets where neural networks learn examples in different orders?
+    - What happens to per-example agreement on synthetic datasets like Gabor patches or overlapping
+      Gaussians?
+  answered_by:
   - synthetic-datasets-break-order
   - random-labels-break-order
-- q:
-  - What happens to learning order when labels are randomly shuffled?
-  - Do networks memorize random labels in a consistent order?
-  - Is agreement on learning order tied to generalization rather than memorization?
-  answers:
+- ask:
+    unsorted:
+    - What happens to learning order when labels are randomly shuffled?
+    - Do networks memorize random labels in a consistent order?
+    - Is agreement on learning order tied to generalization rather than memorization?
+  answered_by:
   - random-labels-break-order
-- q:
-  - Do non-neural classifiers learn a dataset in the same order as neural networks?
-  - How does AdaBoost's learning order on CIFAR-10 compare with that of a CNN?
-  - Is example difficulty a property of a benchmark dataset alone, or of the learner too?
-  answers:
+- ask:
+    unsorted:
+    - Do non-neural classifiers learn a dataset in the same order as neural networks?
+    - How does AdaBoost's learning order on CIFAR-10 compare with that of a CNN?
+    - Is example difficulty a property of a benchmark dataset alone, or of the learner too?
+  answered_by:
   - adaboost-different-order
   - synthetic-datasets-break-order
-- q:
-  - Does the shared learning order depend on the exact training set used?
-  - If two models are trained on disjoint samples from the same distribution, do they learn
-    a common test set in the same order?
-  - How was the effect of the specific training split on learning order tested?
-  answers:
+- ask:
+    unsorted:
+    - Does the shared learning order depend on the exact training set used?
+    - If two models are trained on disjoint samples from the same distribution, do they learn
+      a common test set in the same order?
+    - How was the effect of the specific training split on learning order tested?
+  answered_by:
   - different-training-sets
-- q:
-  - Are examples ever forgotten after being learned by a network?
-  - Once a CNN classifies an example correctly, does it keep classifying it correctly?
-  - How stable is per-example correctness across training epochs?
-  answers:
+- ask:
+    unsorted:
+    - Are examples ever forgotten after being learned by a network?
+    - Once a CNN classifies an example correctly, does it keep classifying it correctly?
+    - How stable is per-example correctness across training epochs?
+  answered_by:
   - rarely-forgotten
-- q:
-  - Do linear convolutional networks show the same learning-order behaviour as non-linear
-    ones?
-  - Is the shared learning order caused by non-linearities in the network?
-  - What did linear st-VGG reveal about learning order on the small-mammals dataset?
-  answers:
+- ask:
+    unsorted:
+    - Do linear convolutional networks show the same learning-order behaviour as non-linear
+      ones?
+    - Is the shared learning order caused by non-linearities in the network?
+    - What did linear st-VGG reveal about learning order on the small-mammals dataset?
+  answered_by:
   - linear-nonlinear-nesting
-- q:
-  - How can I measure whether two trained neural networks are similar without comparing their
-    weights?
-  - What is TP-agreement and what does it measure?
-  - Is there a way to compare networks by their per-example predictions instead of their representations?
-  answers:
+- ask:
+    practitioner: How can I measure whether two trained neural networks are similar without
+      comparing their weights?
+    unsorted:
+    - What is TP-agreement and what does it measure?
+    - Is there a way to compare networks by their per-example predictions instead of their
+      representations?
+  answered_by:
   - context-similarity-measure
   - bimodal-tp-agreement
-- q:
-  - What paper should I read first about example difficulty and learning order in deep networks?
-  - Which work established that neural networks learn examples in a consistent order?
-  - Where does the idea of a per-example learning order in deep learning come from?
-  - What is a good starting paper on how neural networks discover structure in benchmark datasets?
-  answers:
+- ask:
+    practitioner: What paper should I read first about example difficulty and learning order
+      in deep networks?
+    unsorted:
+    - Which work established that neural networks learn examples in a consistent order?
+    - Where does the idea of a per-example learning order in deep learning come from?
+    - What is a good starting paper on how neural networks discover structure in benchmark
+      datasets?
+  answered_by:
   - context-learning-order-line
   - context-similarity-measure
-- q:
-  - Are whole classes learned in a consistent order, not just individual images?
-  - Does classification order induce a hierarchy over classes?
-  - Which classes does a CNN learn first on a 5-class CIFAR-100 super-class?
-  answers:
+- ask:
+    unsorted:
+    - Are whole classes learned in a consistent order, not just individual images?
+    - Does classification order induce a hierarchy over classes?
+    - Which classes does a CNN learn first on a 5-class CIFAR-100 super-class?
+  answered_by:
   - class-order-hierarchy
-- q:
-  - Does knowing the order examples are learned help build a better curriculum?
-  - Can learning order be used to speed up training?
-  answers:
+- ask:
+    unsorted:
+    - Does knowing the order examples are learned help build a better curriculum?
+    - Can learning order be used to speed up training?
+  answered_by:
   - context-learning-order-line
 coined: TP-agreement
 gloss: 'true-positive agreement: the fraction of independently trained networks that classify

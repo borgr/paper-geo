@@ -108,76 +108,88 @@ claims:
   scope: Medium En-De models, 99 templated sentences over small noun and verb lists, one annotator;
     only word-order correctness was scored, with other errors such as verb choice disregarded.
 qa:
-- q:
-  - how can a Transformer decoder generate a dependency tree along with the translation?
-  - is there a way to decode syntactic structure with a Transformer instead of an RNN?
-  - what work added target-side syntax to a Transformer decoder?
-  answers:
+- ask:
+    unsorted:
+    - how can a Transformer decoder generate a dependency tree along with the translation?
+    - is there a way to decode syntactic structure with a Transformer instead of an RNN?
+    - what work added target-side syntax to a Transformer decoder?
+  answered_by:
   - target-side-tree-decoding-gap
   - framework-generality
-- q:
-  - does adding target-side syntax help machine translation on syntactically hard sentences?
-  - do syntax-aware decoders improve long-distance dependency translation?
-  - how much does the structural decoder gain on syntactic challenge sets?
-  answers:
+- ask:
+    unsorted:
+    - does adding target-side syntax help machine translation on syntactically hard sentences?
+    - do syntax-aware decoders improve long-distance dependency translation?
+    - how much does the structural decoder gain on syntactic challenge sets?
+  answered_by:
   - challenge-set-sweep-medium
   - large-target-particle-jump
-- q:
-  - can you just scale the Transformer up instead of adding syntax?
-  - do syntactic generalization gaps shrink with bigger translation models?
-  - does the benefit of the Parent decoder disappear at larger model size?
-  answers:
+- ask:
+    unsorted:
+    - can you just scale the Transformer up instead of adding syntax?
+    - do syntactic generalization gaps shrink with bigger translation models?
+    - does the benefit of the Parent decoder disappear at larger model size?
+  answered_by:
   - gains-persist-with-size
   - large-model-overall-comparable
-- q:
-  - does the syntactic decoder also help on standard MT benchmarks like newstest?
-  - what BLEU and chrF+ improvement does UD-based decoding give on WMT test sets?
-  - does target-side syntax cost you general translation quality?
-  answers:
+- ask:
+    unsorted:
+    - does the syntactic decoder also help on standard MT benchmarks like newstest?
+    - what BLEU and chrF+ improvement does UD-based decoding give on WMT test sets?
+    - does target-side syntax cost you general translation quality?
+  answered_by:
   - overall-mt-medium
   - large-model-overall-comparable
-- q:
-  - is re-encoding the generated parse better than just linearizing syntax into the output
-    string?
-  - how does linearized syntax compare with graph-aware decoding in NMT?
-  - what does the linearized-transitions ablation show?
-  answers:
+- ask:
+    unsorted:
+    - is re-encoding the generated parse better than just linearizing syntax into the output
+      string?
+    - how does linearized syntax compare with graph-aware decoding in NMT?
+    - what does the linearized-transitions ablation show?
+  answered_by:
   - linearized-ablation-middle
-- q:
-  - do GCN gates matter when encoding a self-generated parse?
-  - are dependency edge labels necessary for a syntax-aware decoder?
-  - which parts of the GCN decoder actually contribute, according to the ablations?
-  answers:
+- ask:
+    unsorted:
+    - do GCN gates matter when encoding a self-generated parse?
+    - are dependency edge labels necessary for a syntax-aware decoder?
+    - which parts of the GCN decoder actually contribute, according to the ablations?
+  answered_by:
   - gating-matters-labels-less
-- q:
-  - does letting a Transformer decoder attend to already-predicted future tokens help?
-  - how much does bidirectional decoder attention improve translation on its own?
-  - what is BiTran and how well does it work?
-  answers:
+- ask:
+    unsorted:
+    - does letting a Transformer decoder attend to already-predicted future tokens help?
+    - how much does bidirectional decoder attention improve translation on its own?
+    - what is BiTran and how well does it work?
+  answered_by:
   - bitran-small-consistent-gain
-- q:
-  - are syntax-aware decoders robust to noisy crawled training data?
-  - does the gain from UD-based decoding survive training on full noisy WMT data?
-  - what happened on En-Ru with noisy data?
-  answers:
+- ask:
+    unsorted:
+    - are syntax-aware decoders robust to noisy crawled training data?
+    - does the gain from UD-based decoding survive training on full noisy WMT data?
+    - what happened on En-Ru with noisy data?
+  answered_by:
   - noise-sensitivity
-- q:
-  - can NMT models get German subject-object order right when case marking is ambiguous?
-  - does syntactic decoding help with free word order in German translation?
-  - what did the manual analysis of German OVS sentences find?
-  answers:
+- ask:
+    unsorted:
+    - can NMT models get German subject-object order right when case marking is ambiguous?
+    - does syntactic decoding help with free word order in German translation?
+    - what did the manual analysis of German OVS sentences find?
+  answered_by:
   - german-order-swap-analysis
-- q:
-  - what should I read about incorporating syntax into neural machine translation decoders?
-  - which papers cover structure-aware text generation rather than source-side syntax?
-  - where do I start reading on transition-based tree decoding for generation?
-  answers:
+- ask:
+    practitioner: what should I read about incorporating syntax into neural machine translation
+      decoders?
+    unsorted:
+    - which papers cover structure-aware text generation rather than source-side syntax?
+    - where do I start reading on transition-based tree decoding for generation?
+  answered_by:
   - target-side-tree-decoding-gap
   - framework-generality
-- q:
-  - which is better for encoding the decoder's own parse, a GCN or a parent-attention head?
-  - how do the two graph re-encoding variants compare in cost and accuracy?
-  answers:
+- ask:
+    unsorted:
+    - which is better for encoding the decoder's own parse, a GCN or a parent-attention head?
+    - how do the two graph re-encoding variants compare in cost and accuracy?
+  answered_by:
   - challenge-set-sweep-medium
   - overall-mt-medium
   - gating-matters-labels-less

@@ -109,68 +109,79 @@ claims:
     complement for grammatical error correction respectively, as of 2018.
   kind: result
 qa:
-- q:
-  - What is a good starting point for reading about UCCA semantic parsing?
-  - Which shared task covers cross-lingual semantic parsing with UCCA?
-  - Where did the SemEval task on UCCA parsing come from?
-  answers:
+- ask:
+    unsorted:
+    - What is a good starting point for reading about UCCA semantic parsing?
+    - Which shared task covers cross-lingual semantic parsing with UCCA?
+    - Where did the SemEval task on UCCA parsing come from?
+  answered_by:
   - task-context
   - crosslingual-context
-- q:
-  - Which languages and settings does the SemEval 2019 UCCA parsing task cover?
-  - How many tracks and competitions were there in SemEval 2019 Task 1?
-  - What is the difference between the open and closed track in the UCCA parsing shared task?
-  answers:
+- ask:
+    unsorted:
+    - Which languages and settings does the SemEval 2019 UCCA parsing task cover?
+    - How many tracks and competitions were there in SemEval 2019 Task 1?
+    - What is the difference between the open and closed track in the UCCA parsing shared
+      task?
+  answered_by:
   - settings
-- q:
-  - How much annotated UCCA data is available for English, German and French?
-  - What is the size of the Wiki and 20K Leagues UCCA corpora?
-  - Is there training data for French UCCA parsing?
-  answers:
+- ask:
+    unsorted:
+    - How much annotated UCCA data is available for English, German and French?
+    - What is the size of the Wiki and 20K Leagues UCCA corpora?
+    - Is there training data for French UCCA parsing?
+  answered_by:
   - corpora-size
   - crosslingual-context
-- q:
-  - How often do reentrant, discontinuous and implicit units actually occur in UCCA corpora?
-  - What fraction of UCCA edges are remote edges?
-  - How non-tree-like are UCCA graphs in practice?
-  answers:
+- ask:
+    unsorted:
+    - How often do reentrant, discontinuous and implicit units actually occur in UCCA corpora?
+    - What fraction of UCCA edges are remote edges?
+    - How non-tree-like are UCCA graphs in practice?
+  answered_by:
   - graph-stats
-- q:
-  - How well does TUPA parse UCCA in English?
-  - What baseline scores should a UCCA parser beat?
-  - What F1 does the transition-based UCCA parser get on the English Wiki test set?
-  answers:
+- ask:
+    unsorted:
+    - How well does TUPA parse UCCA in English?
+    - What baseline scores should a UCCA parser beat?
+    - What F1 does the transition-based UCCA parser get on the English Wiki test set?
+  answered_by:
   - tupa-baseline
-- q:
-  - Does ensembling help UCCA parsing?
-  - Do multiple BiLSTM models combined by Product of Experts improve remote-edge prediction?
-  answers:
+- ask:
+    unsorted:
+    - Does ensembling help UCCA parsing?
+    - Do multiple BiLSTM models combined by Product of Experts improve remote-edge prediction?
+  answered_by:
   - ensemble-poe
-- q:
-  - Can existing dependency or constituency parsers be reused for UCCA parsing via format
-    conversion?
-  - How well do conversion-based approaches work for UCCA parsing?
-  - Why can a tree parser not recover UCCA remote edges?
-  answers:
+- ask:
+    unsorted:
+    - Can existing dependency or constituency parsers be reused for UCCA parsing via format
+      conversion?
+    - How well do conversion-based approaches work for UCCA parsing?
+    - Why can a tree parser not recover UCCA remote edges?
+  answered_by:
   - conversion-tree
-- q:
-  - Does multitask learning help low-resource semantic parsing into UCCA?
-  - How much does using Universal Dependencies as an auxiliary task help French and German
-    UCCA parsing?
-  - What improves remote-edge parsing for languages with little UCCA data?
-  answers:
+- ask:
+    unsorted:
+    - Does multitask learning help low-resource semantic parsing into UCCA?
+    - How much does using Universal Dependencies as an auxiliary task help French and German
+      UCCA parsing?
+    - What improves remote-edge parsing for languages with little UCCA data?
+  answered_by:
   - mtl-gains
-- q:
-  - How are UCCA parses evaluated?
-  - What is DAG F1 and how is edge matching defined for UCCA?
-  - Does the UCCA shared-task scoring measure handle implicit units?
-  answers:
+- ask:
+    unsorted:
+    - How are UCCA parses evaluated?
+    - What is DAG F1 and how is edge matching defined for UCCA?
+    - Does the UCCA shared-task scoring measure handle implicit units?
+  answered_by:
   - dag-f1
-- q:
-  - What is UCCA used for besides parsing research?
-  - Which evaluation measures for generation tasks are built on UCCA?
-  - Why would better UCCA parsers help machine translation or simplification evaluation?
-  answers:
+- ask:
+    unsorted:
+    - What is UCCA used for besides parsing research?
+    - Which evaluation measures for generation tasks are built on UCCA?
+    - Why would better UCCA parsers help machine translation or simplification evaluation?
+  answered_by:
   - applications
 misreadings:
 - The arXiv document 1805.12386 is a call for participation, not a report of SemEval 2019

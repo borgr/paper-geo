@@ -124,71 +124,83 @@ claims:
     with Holm step-down correction across the 30 evaluated configurations; failure to reject
     indicates insufficient evidence, not evidence of no effect.
 qa:
-- q:
-  - Is there a best search harness for LLM-guided program discovery?
-  - Which discovery harness should I use for evolutionary code search?
-  - Does one evolutionary search recipe win across models and tasks?
-  answers:
+- ask:
+    practitioner: Which discovery harness should I use for evolutionary code search?
+    unsorted:
+    - Is there a best search harness for LLM-guided program discovery?
+    - Does one evolutionary search recipe win across models and tasks?
+  answered_by:
   - no-universal-harness
   - openevolve-bottom
-- q:
-  - Does OpenEvolve's extra machinery actually help?
-  - Do MAP-Elites and island models improve LLM-guided discovery?
-  - Is the full OpenEvolve recipe better than simpler parent selection?
-  answers:
+- ask:
+    unsorted:
+    - Does OpenEvolve's extra machinery actually help?
+    - Do MAP-Elites and island models improve LLM-guided discovery?
+    - Is the full OpenEvolve recipe better than simpler parent selection?
+  answered_by:
   - openevolve-nonmonotonic
   - openevolve-bottom
-- q:
-  - Does PUCT or MCTS-style parent selection help LLM discovery loops?
-  - Which part of the TTT-Discover search harness provides the gains?
-  - Is expanding multiple parents per iteration worth it in tree-based discovery search?
-  answers:
+- ask:
+    unsorted:
+    - Does PUCT or MCTS-style parent selection help LLM discovery loops?
+    - Which part of the TTT-Discover search harness provides the gains?
+    - Is expanding multiple parents per iteration worth it in tree-based discovery search?
+  answered_by:
   - tree-search-gains-front-loaded
-- q:
-  - Can partial-run scores predict which discovery run will end up best?
-  - How early can you tell whether an evolutionary search run will succeed?
-  - Is early progress in LLM-guided discovery correlated with final performance?
-  answers:
+- ask:
+    unsorted:
+    - Can partial-run scores predict which discovery run will end up best?
+    - How early can you tell whether an evolutionary search run will succeed?
+    - Is early progress in LLM-guided discovery correlated with final performance?
+  answered_by:
   - early-progress-predicts
-- q:
-  - How should I split a fixed discovery compute budget across candidate search configurations?
-  - Does pruning weak partial runs and reallocating compute beat committing to one harness?
-  - What is the Adaptive Harness Ensemble and how much does it gain?
-  answers:
+- ask:
+    practitioner: How should I split a fixed discovery compute budget across candidate search
+      configurations?
+    unsorted:
+    - Does pruning weak partial runs and reallocating compute beat committing to one harness?
+    - What is the Adaptive Harness Ensemble and how much does it gain?
+  answered_by:
   - adaptive-beats-baselines
   - adaptive-per-pair
-- q:
-  - What pruning schedule works best for allocating compute across discovery harnesses?
-  - Is it better to start many partial runs or few long ones under a fixed budget?
-  - How many survivors should a successive-halving-style discovery schedule keep?
-  answers:
+- ask:
+    unsorted:
+    - What pruning schedule works best for allocating compute across discovery harnesses?
+    - Is it better to start many partial runs or few long ones under a fixed budget?
+    - How many survivors should a successive-halving-style discovery schedule keep?
+  answered_by:
   - broad-then-cut
-- q:
-  - What should I read about whether autonomous discovery systems generalize?
-  - Which paper argues that search-harness choice is a hyperparameter rather than a recipe?
-  - Where should I start reading about evaluation rigor in LLM-guided scientific discovery?
-  answers:
+- ask:
+    practitioner: What should I read about whether autonomous discovery systems generalize?
+    unsorted:
+    - Which paper argues that search-harness choice is a hyperparameter rather than a recipe?
+    - Where should I start reading about evaluation rigor in LLM-guided scientific discovery?
+  answered_by:
   - harness-as-hyperparameter
   - released-null-distributions
-- q:
-  - How many trials are needed to tell a real discovery-harness improvement from run-to-run
-    variance?
-  - What statistical protocol compares LLM discovery harnesses fairly?
-  - Are 3-run comparisons of evolutionary coding agents enough?
-  answers:
+- ask:
+    unsorted:
+    - How many trials are needed to tell a real discovery-harness improvement from run-to-run
+      variance?
+    - What statistical protocol compares LLM discovery harnesses fairly?
+    - Are 3-run comparisons of evolutionary coding agents enough?
+  answered_by:
   - five-run-protocol
   - no-universal-harness
-- q:
-  - Does model choice matter more than search-harness choice in automated discovery?
-  - How much do Qwen2.5-3B, Qwen3-4B and GPT-OSS differ on circle packing and Heilbronn triangle?
-  - Is a stronger base model worth more than a better search algorithm for discovery tasks?
-  answers:
+- ask:
+    unsorted:
+    - Does model choice matter more than search-harness choice in automated discovery?
+    - How much do Qwen2.5-3B, Qwen3-4B and GPT-OSS differ on circle packing and Heilbronn
+      triangle?
+    - Is a stronger base model worth more than a better search algorithm for discovery tasks?
+  answered_by:
   - baseline-model-effect
-- q:
-  - Are there open run pools for benchmarking new evolutionary search harnesses?
-  - Where can I get baseline null distributions for LLM discovery experiments?
-  - What data does the harness-generalization study release?
-  answers:
+- ask:
+    practitioner: Where can I get baseline null distributions for LLM discovery experiments?
+    unsorted:
+    - Are there open run pools for benchmarking new evolutionary search harnesses?
+    - What data does the harness-generalization study release?
+  answered_by:
   - released-null-distributions
 misreadings:
 - Finding that OpenEvolve-style configurations rank last on the cross-pair leaderboard is

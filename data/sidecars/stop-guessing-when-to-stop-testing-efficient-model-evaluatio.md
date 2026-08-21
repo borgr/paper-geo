@@ -137,83 +137,96 @@ claims:
     or thresholds must be user-specified.
   evidence: Section 5.3
 qa:
-- q:
-  - How much compute can I save by stopping a benchmark evaluation early instead of running
-    all the examples?
-  - What fraction of a benchmark do I actually need for a reliable model score?
-  - Does adaptive stopping really cut evaluation cost by 80%?
-  answers:
+- ask:
+    practitioner: How much compute can I save by stopping a benchmark evaluation early instead
+      of running all the examples?
+    unsorted:
+    - What fraction of a benchmark do I actually need for a reliable model score?
+    - Does adaptive stopping really cut evaluation cost by 80%?
+  answered_by:
   - ci-target-savings
   - ci-vs-fraction
   - full-benchmark-waste
-- q:
-  - Is it safe to evaluate a language or vision model on only 1K examples?
-  - How wide are confidence intervals when people sub-sample a benchmark to a thousand examples?
-  - What is wrong with heuristically picking a small evaluation subset?
-  answers:
+- ask:
+    unsorted:
+    - Is it safe to evaluate a language or vision model on only 1K examples?
+    - How wide are confidence intervals when people sub-sample a benchmark to a thousand examples?
+    - What is wrong with heuristically picking a small evaluation subset?
+  answered_by:
   - small-subsets-uncertain
   - fixed-size-failures-invisible
-- q:
-  - How many examples do I need to tell two close models apart?
-  - Can sequential testing decide which of two similar models is better with less data?
-  - What happens when two models differ by less than a point on a benchmark?
-  answers:
+- ask:
+    practitioner: How many examples do I need to tell two close models apart?
+    unsorted:
+    - Can sequential testing decide which of two similar models is better with less data?
+    - What happens when two models differ by less than a point on a benchmark?
+  answered_by:
   - pairwise-gap-savings
   - beats-fixed-1200
-- q:
-  - Does sequential testing beat just picking a fixed sample size like 200 examples per dataset?
-  - How does adaptive evaluation compare against a fixed-size bootstrap evaluation on model
-    comparisons?
-  - Which resolves more model pairs, a fixed 1.2K-sample budget or adaptive stopping?
-  answers:
+- ask:
+    unsorted:
+    - Does sequential testing beat just picking a fixed sample size like 200 examples per
+      dataset?
+    - How does adaptive evaluation compare against a fixed-size bootstrap evaluation on model
+      comparisons?
+    - Which resolves more model pairs, a fixed 1.2K-sample budget or adaptive stopping?
+  answered_by:
   - beats-fixed-1200
   - fixed-size-failures-invisible
-- q:
-  - How can I check whether a new model improves on the deployed one by a practically meaningful
-    margin?
-  - Can evaluation stop as soon as a 2-point improvement is confirmed?
-  - How much data does a deployment go/no-go comparison need?
-  answers:
+- ask:
+    practitioner: How can I check whether a new model improves on the deployed one by a practically
+      meaningful margin?
+    unsorted:
+    - Can evaluation stop as soon as a 2-point improvement is confirmed?
+    - How much data does a deployment go/no-go comparison need?
+  answered_by:
   - deployment-case-study
   - stopping-rule-menu
-- q:
-  - How do I cheaply screen hundreds of training checkpoints or candidate models?
-  - Can weak candidate models be discarded early during evaluation?
-  - What savings come from filtering out underperforming checkpoints during benchmarking?
-  answers:
+- ask:
+    practitioner: How do I cheaply screen hundreds of training checkpoints or candidate models?
+    unsorted:
+    - Can weak candidate models be discarded early during evaluation?
+    - What savings come from filtering out underperforming checkpoints during benchmarking?
+  answered_by:
   - model-selection-case-study
-- q:
-  - How much of a benchmark is needed to rank a handful of closely matched models?
-  - Can adaptive evaluation produce a full ranking of several models cheaply?
-  answers:
+- ask:
+    unsorted:
+    - How much of a benchmark is needed to rank a handful of closely matched models?
+    - Can adaptive evaluation produce a full ranking of several models cheaply?
+  answered_by:
   - ranking-case-study
-- q:
-  - What should I read about making language model evaluation cheaper without losing statistical
-    guarantees?
-  - Which paper proposes sequential testing for benchmark evaluation?
-  - Where does the idea of adaptive stopping in NLP benchmarking come from?
-  - Is there work arguing against fixed-size benchmarks?
-  answers:
+- ask:
+    practitioner: What should I read about making language model evaluation cheaper without
+      losing statistical guarantees?
+    unsorted:
+    - Which paper proposes sequential testing for benchmark evaluation?
+    - Where does the idea of adaptive stopping in NLP benchmarking come from?
+    - Is there work arguing against fixed-size benchmarks?
+  answered_by:
   - context-call-to-adopt
   - context-no-past-statistics
-- q:
-  - What stopping criteria are available for adaptive model evaluation?
-  - How do I express an evaluation goal like 'stop when the CI is ±2 points' or 'stop when
-    the models are equivalent'?
-  - What is equivalence margin stopping versus futility stopping in benchmark evaluation?
-  answers:
+- ask:
+    practitioner: How do I express an evaluation goal like 'stop when the CI is ±2 points'
+      or 'stop when the models are equivalent'?
+    unsorted:
+    - What stopping criteria are available for adaptive model evaluation?
+    - What is equivalence margin stopping versus futility stopping in benchmark evaluation?
+  answered_by:
   - stopping-rule-menu
   - ranking-case-study
-- q:
-  - How does adaptive evaluation differ from methods that pick benchmark subsets using earlier
-    models' scores?
-  - Do I need to run the full benchmark on other models first to use sequential evaluation?
-  answers:
+- ask:
+    practitioner: Do I need to run the full benchmark on other models first to use sequential
+      evaluation?
+    unsorted:
+    - How does adaptive evaluation differ from methods that pick benchmark subsets using earlier
+      models' scores?
+  answered_by:
   - context-no-past-statistics
-- q:
-  - Should benchmark builders keep their datasets small to limit evaluation cost?
-  - Is a bigger benchmark wasteful if most examples add little precision?
-  answers:
+- ask:
+    unsorted:
+    - Should benchmark builders keep their datasets small to limit evaluation cost?
+    - Is a bigger benchmark wasteful if most examples add little precision?
+  answered_by:
   - full-benchmark-waste
   - small-subsets-uncertain
 misreadings:

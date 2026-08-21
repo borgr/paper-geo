@@ -102,64 +102,73 @@ claims:
     source languages were English and German, and the target corpus was a translation of the
     same book, so results may not extend to typologically distant languages or unrelated domains.
 qa:
-- q:
-  - What is a good benchmark for multilingual semantic parsing into graph representations?
-  - Where should I start reading about UCCA parsing?
-  - Which shared task evaluated cross-lingual UCCA semantic parsing?
-  answers:
+- ask:
+    practitioner: Where should I start reading about UCCA parsing?
+    unsorted:
+    - What is a good benchmark for multilingual semantic parsing into graph representations?
+    - Which shared task evaluated cross-lingual UCCA semantic parsing?
+  answered_by:
   - task-context
   - cross-lingual-transfer-context
-- q:
-  - How well can parsers produce UCCA graphs for English?
-  - What were the best English UCCA parsing scores in SemEval-2019 Task 1?
-  - How much did submitted systems beat the TUPA baseline on English Wikipedia?
-  answers:
+- ask:
+    unsorted:
+    - How well can parsers produce UCCA graphs for English?
+    - What were the best English UCCA parsing scores in SemEval-2019 Task 1?
+    - How much did submitted systems beat the TUPA baseline on English Wikipedia?
+  answered_by:
   - best-english-wiki
   - baseline-beaten-everywhere
-- q:
-  - Can you parse semantics in a language with almost no annotated training data?
-  - How well did French UCCA parsing work with only 15 training sentences?
-  - Does cross-lingual transfer help low-resource semantic parsing?
-  answers:
+- ask:
+    unsorted:
+    - Can you parse semantics in a language with almost no annotated training data?
+    - How well did French UCCA parsing work with only 15 training sentences?
+    - Does cross-lingual transfer help low-resource semantic parsing?
+  answered_by:
   - french-low-resource
   - cross-lingual-transfer-context
-- q:
-  - How much does out-of-domain text hurt UCCA parsers?
-  - What is the in-domain versus out-of-domain gap for English UCCA parsing?
-  answers:
+- ask:
+    unsorted:
+    - How much does out-of-domain text hurt UCCA parsers?
+    - What is the in-domain versus out-of-domain gap for English UCCA parsing?
+  answered_by:
   - out-of-domain-drop
-- q:
-  - Why are reentrancies and DAG structures hard for semantic parsers?
-  - How well do UCCA parsers handle remote edges?
-  - Did any SemEval-2019 Task 1 systems simply skip remote edges?
-  answers:
+- ask:
+    unsorted:
+    - Why are reentrancies and DAG structures hard for semantic parsers?
+    - How well do UCCA parsers handle remote edges?
+    - Did any SemEval-2019 Task 1 systems simply skip remote edges?
+  answered_by:
   - remote-edges-hard
   - corpus-structural-stats
-- q:
-  - Which UCCA semantic categories are hardest to predict?
-  - What did per-category F1 in SemEval-2019 Task 1 show about Ground and Relator edges?
-  - Is the Process versus State distinction hard for parsers?
-  answers:
+- ask:
+    unsorted:
+    - Which UCCA semantic categories are hardest to predict?
+    - What did per-category F1 in SemEval-2019 Task 1 show about Ground and Relator edges?
+    - Is the Process versus State distinction hard for parsers?
+  answered_by:
   - category-difficulty
-- q:
-  - What parsing architecture won SemEval-2019 Task 1?
-  - Is it better to convert semantic graphs to constituency trees than to parse them directly?
-  - What did the HLT@SUDA UCCA parser do differently from the other systems?
-  answers:
+- ask:
+    unsorted:
+    - What parsing architecture won SemEval-2019 Task 1?
+    - Is it better to convert semantic graphs to constituency trees than to parse them directly?
+    - What did the HLT@SUDA UCCA parser do differently from the other systems?
+  answered_by:
   - conversion-approach-wins
   - winner-scene-boundaries
-- q:
-  - How large are the UCCA annotated corpora, and how frequent are discontinuous and reentrant
-    structures?
-  - What fraction of UCCA edges are remote?
-  - How much German UCCA training data was available for SemEval-2019 Task 1?
-  answers:
+- ask:
+    unsorted:
+    - How large are the UCCA annotated corpora, and how frequent are discontinuous and reentrant
+      structures?
+    - What fraction of UCCA edges are remote?
+    - How much German UCCA training data was available for SemEval-2019 Task 1?
+  answered_by:
   - corpus-structural-stats
   - best-german
-- q:
-  - What is the difference between the open and closed tracks in SemEval-2019 Task 1?
-  - Which external resources were UCCA parsers allowed to use?
-  answers:
+- ask:
+    unsorted:
+    - What is the difference between the open and closed tracks in SemEval-2019 Task 1?
+    - Which external resources were UCCA parsers allowed to use?
+  answered_by:
   - best-english-wiki
   - best-german
 terminology:

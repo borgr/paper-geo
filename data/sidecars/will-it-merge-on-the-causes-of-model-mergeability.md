@@ -111,74 +111,84 @@ claims:
     data shares the evaluation format.
   evidence: Section 3
 qa:
-- q:
-  - Why do some finetuned models merge well and others badly?
-  - What determines whether model merging succeeds or fails?
-  - What predicts which LoRA adapters survive merging?
-  answers:
+- ask:
+    unsorted:
+    - Why do some finetuned models merge well and others badly?
+    - What determines whether model merging succeeds or fails?
+    - What predicts which LoRA adapters survive merging?
+  answered_by:
   - base-knowledge-popqa
   - base-knowledge-lots-of-loras
   - context-first-causes
-- q:
-  - Is mergeability a real property of a model update or just noise?
-  - How can you tell mergeability is not random variation across merges?
-  - What evidence is there that individual updates differ systematically in how well they
-    merge?
-  answers:
+- ask:
+    unsorted:
+    - Is mergeability a real property of a model update or just noise?
+    - How can you tell mergeability is not random variation across merges?
+    - What evidence is there that individual updates differ systematically in how well they
+      merge?
+  answered_by:
   - mergeability-exists
   - score-stability
-- q:
-  - Does the size or norm of a LoRA update predict how well it merges?
-  - Do weight-level properties like Frobenius norm and top singular value correlate with merging
-    success?
-  - Can I look at adapter weights to guess whether merging will work?
-  answers:
+- ask:
+    practitioner: Can I look at adapter weights to guess whether merging will work?
+    unsorted:
+    - Does the size or norm of a LoRA update predict how well it merges?
+    - Do weight-level properties like Frobenius norm and top singular value correlate with
+      merging success?
+  answered_by:
   - weights-no-correlation
   - lowest-bin-weights
-- q:
-  - Does mergeability depend on which other adapters you merge with?
-  - Is merging success a property of the merge set or of the individual update?
-  - If I merge a good adapter with bad ones, does the good one degrade?
-  answers:
+- ask:
+    practitioner: If I merge a good adapter with bad ones, does the good one degrade?
+    unsorted:
+    - Does mergeability depend on which other adapters you merge with?
+    - Is merging success a property of the merge set or of the individual update?
+  answered_by:
   - mergeability-is-local
-- q:
-  - How does the choice of merging algorithm change measured mergeability?
-  - Do Knots, TIES and simple weight averaging give different mergeability distributions?
-  - Does a stronger LoRA merging method produce more perfectly mergeable examples?
-  answers:
+- ask:
+    unsorted:
+    - How does the choice of merging algorithm change measured mergeability?
+    - Do Knots, TIES and simple weight averaging give different mergeability distributions?
+    - Does a stronger LoRA merging method produce more perfectly mergeable examples?
+  answered_by:
   - algorithm-tradeoff
-- q:
-  - How can I stop merging from wiping out tasks the base model is weak on?
-  - Does weighting adapters by base model accuracy improve merging?
-  - Is there a simple fix that preserves low-accuracy tasks when merging adapters?
-  answers:
+- ask:
+    practitioner: How can I stop merging from wiping out tasks the base model is weak on?
+    unsorted:
+    - Does weighting adapters by base model accuracy improve merging?
+    - Is there a simple fix that preserves low-accuracy tasks when merging adapters?
+  answered_by:
   - weighted-merging
-- q:
-  - What should I read about why model merging works or fails?
-  - Which paper studies the causes of merging success rather than proposing a new merging
-    algorithm?
-  - Where does research link a base model's pre-training knowledge to merging outcomes?
-  answers:
+- ask:
+    practitioner: What should I read about why model merging works or fails?
+    unsorted:
+    - Which paper studies the causes of merging success rather than proposing a new merging
+      algorithm?
+    - Where does research link a base model's pre-training knowledge to merging outcomes?
+  answered_by:
   - context-first-causes
   - context-two-granularities
-- q:
-  - Does training data difficulty affect how mergeable an adapter is?
-  - Do perplexity and context length of the finetuning data predict mergeability?
-  - Are harder finetuning examples less mergeable?
-  answers:
+- ask:
+    unsorted:
+    - Does training data difficulty affect how mergeable an adapter is?
+    - Do perplexity and context length of the finetuning data predict mergeability?
+    - Are harder finetuning examples less mergeable?
+  answered_by:
   - weights-no-correlation
   - context-two-granularities
-- q:
-  - Are the examples that are easiest to fix by finetuning also the most stable under merging?
-  - What is the relationship between how much finetuning improves an example and how well
-    it merges?
-  answers:
+- ask:
+    unsorted:
+    - Are the examples that are easiest to fix by finetuning also the most stable under merging?
+    - What is the relationship between how much finetuning improves an example and how well
+      it merges?
+  answered_by:
   - trained-gap-inversion
   - base-knowledge-popqa
-- q:
-  - How many trials and merge partners are needed to estimate a mergeability score reliably?
-  - Do mergeability scores change if you vary the number of merged adapters?
-  answers:
+- ask:
+    unsorted:
+    - How many trials and merge partners are needed to estimate a mergeability score reliably?
+    - Do mergeability scores change if you vary the number of merged adapters?
+  answered_by:
   - score-stability
 terminology:
   mergeability: A property of a model update describing how much of the knowledge it encodes

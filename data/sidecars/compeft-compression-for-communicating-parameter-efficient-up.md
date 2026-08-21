@@ -134,92 +134,105 @@ claims:
     hyperparameter alpha.
   evidence: Section 5
 qa:
-- q:
-  - How much can a LoRA or QLoRA adapter be shrunk without losing accuracy?
-  - Can fine-tuned adapters be compressed without retraining?
-  - What compression ratio does ComPEFT get on QLoRA adapters?
-  answers:
+- ask:
+    unsorted:
+    - How much can a LoRA or QLoRA adapter be shrunk without losing accuracy?
+    - Can fine-tuned adapters be compressed without retraining?
+    - What compression ratio does ComPEFT get on QLoRA adapters?
+  answered_by:
   - llama-65b-mmlu
   - small-models-peft
   - entropy-bound
-- q:
-  - Does compressing an adapter ever make it perform better?
-  - Why would sparsifying a task vector improve accuracy instead of hurting it?
-  - Does ComPEFT beat the uncompressed QLoRA checkpoint?
-  answers:
+- ask:
+    unsorted:
+    - Does compressing an adapter ever make it perform better?
+    - Why would sparsifying a task vector improve accuracy instead of hurting it?
+    - Does ComPEFT beat the uncompressed QLoRA checkpoint?
+  answered_by:
   - config-win-rate
   - scaling-trend
   - baselines-70b
-- q:
-  - Does adapter compression work better on bigger base models?
-  - Are task vectors from larger language models more compressible?
-  - How does ComPEFT scale from 7B to 65B parameters?
-  answers:
+- ask:
+    unsorted:
+    - Does adapter compression work better on bigger base models?
+    - Are task vectors from larger language models more compressible?
+    - How does ComPEFT scale from 7B to 65B parameters?
+  answered_by:
   - scaling-trend
   - llama-65b-mmlu
-- q:
-  - How much faster is it to download and load a compressed adapter?
-  - What are the real wall-clock savings from compressing expert modules?
-  - Does adapter compression reduce CPU-to-GPU transfer time?
-  answers:
+- ask:
+    unsorted:
+    - How much faster is it to download and load a compressed adapter?
+    - What are the real wall-clock savings from compressing expert modules?
+    - Does adapter compression reduce CPU-to-GPU transfer time?
+  answered_by:
   - latency
-- q:
-  - Can full fine-tuning residuals be compressed the same way as LoRA modules?
-  - Does ComPEFT work on fully fine-tuned models, not just PEFT?
-  - Is sign-plus-scalar compression lossless for full fine-tuning?
-  answers:
+- ask:
+    unsorted:
+    - Can full fine-tuning residuals be compressed the same way as LoRA modules?
+    - Does ComPEFT work on fully fine-tuned models, not just PEFT?
+    - Is sign-plus-scalar compression lossless for full fine-tuning?
+  answered_by:
   - full-finetuning
-- q:
-  - Does compressing checkpoints before merging hurt model merging?
-  - Do compressed task vectors merge better or worse with task arithmetic and TIES-Merging?
-  - What happens if I merge ComPEFT checkpoints instead of the originals?
-  answers:
+- ask:
+    practitioner: What happens if I merge ComPEFT checkpoints instead of the originals?
+    unsorted:
+    - Does compressing checkpoints before merging hurt model merging?
+    - Do compressed task vectors merge better or worse with task arithmetic and TIES-Merging?
+  answered_by:
   - merging
-- q:
-  - Do compressed LoRA experts still work for few-shot composition on unseen tasks?
-  - Does LoraHub still work if the expert modules are compressed?
-  - Is compositional generalization preserved after adapter compression?
-  answers:
+- ask:
+    unsorted:
+    - Do compressed LoRA experts still work for few-shot composition on unseen tasks?
+    - Does LoraHub still work if the expert modules are compressed?
+    - Is compositional generalization preserved after adapter compression?
+  answered_by:
   - compositional
-- q:
-  - How does ComPEFT compare with BitDelta and DAREx for delta compression?
-  - Is there a delta-compression method that beats STC without extra training?
-  - What baselines did ComPEFT beat on LLaMA2-70B?
-  answers:
+- ask:
+    unsorted:
+    - How does ComPEFT compare with BitDelta and DAREx for delta compression?
+    - Is there a delta-compression method that beats STC without extra training?
+    - What baselines did ComPEFT beat on LLaMA2-70B?
+  answered_by:
   - baselines-70b
   - ablation-stc
-- q:
-  - 'Which part of ComPEFT matters most: sparsification, ternarization or the scaling factor?'
-  - Why does Sparse Ternary Compression fail on task vectors where ComPEFT works?
-  - Does sparsifying and ternarizing a task vector need a tuned scaling factor?
-  answers:
+- ask:
+    unsorted:
+    - 'Which part of ComPEFT matters most: sparsification, ternarization or the scaling factor?'
+    - Why does Sparse Ternary Compression fail on task vectors where ComPEFT works?
+    - Does sparsifying and ternarizing a task vector need a tuned scaling factor?
+  answered_by:
   - ablation-stc
-- q:
-  - Do I have to tune the scaling hyperparameter alpha for ComPEFT?
-  - What value of alpha should I use for a 65B model?
-  - How sensitive is sparse ternary adapter compression to its scaling factor?
-  answers:
+- ask:
+    practitioner: Do I have to tune the scaling hyperparameter alpha for ComPEFT?
+    unsorted:
+    - What value of alpha should I use for a 65B model?
+    - How sensitive is sparse ternary adapter compression to its scaling factor?
+  answered_by:
   - alpha-tuning
-- q:
-  - Is ComPEFT competitive with other parameter-efficient fine-tuning methods on storage versus
-    performance?
-  - Which PEFT method gives the best accuracy per megabyte?
-  - How does compressed (IA)^3 compare to BitFit, Adapters and Prompt Tuning?
-  answers:
+- ask:
+    unsorted:
+    - Is ComPEFT competitive with other parameter-efficient fine-tuning methods on storage
+      versus performance?
+    - Which PEFT method gives the best accuracy per megabyte?
+    - How does compressed (IA)^3 compare to BitFit, Adapters and Prompt Tuning?
+  answered_by:
   - pareto
-- q:
-  - What should I read about the cost of serving many LoRA experts?
-  - Which paper argues that expert adapter size is a communication bottleneck?
-  - Where does work on compressing fine-tuning task vectors come from?
-  - What is a good starting paper on compressing PEFT modules for multi-expert serving?
-  answers:
+- ask:
+    practitioner: What should I read about the cost of serving many LoRA experts?
+    unsorted:
+    - Which paper argues that expert adapter size is a communication bottleneck?
+    - Where does work on compressing fine-tuning task vectors come from?
+    - What is a good starting paper on compressing PEFT modules for multi-expert serving?
+  answered_by:
   - context-motivation
   - context-position
-- q:
-  - How many bits per parameter does a ternary task vector need?
-  - What is the theoretical storage limit for a 95%-sparse ternary adapter update?
-  - How is the compressed ComPEFT checkpoint actually encoded on disk?
-  answers:
+- ask:
+    unsorted:
+    - How many bits per parameter does a ternary task vector need?
+    - What is the theoretical storage limit for a 95%-sparse ternary adapter update?
+    - How is the compressed ComPEFT checkpoint actually encoded on disk?
+  answered_by:
   - entropy-bound
 misreadings:
 - ''

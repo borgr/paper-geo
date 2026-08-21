@@ -54,8 +54,7 @@ gets copied to other people's installs — so drift here propagates.
 
 - [ ] Verify the drafts. Counted in `WORKLIST.md`, so no list here.
 - [ ] Draft the remaining 93. The `draft` step does 10 a run; it finishes itself.
-- [ ] `FAQPage` / `mainEntity` JSON-LD on paper pages — gated on the `qa` decisions,
-      because which of 2–4 paraphrases becomes the canonical `name` is one of them.
+
 - [ ] Generate the README/model-card claim snippet from the sidecar. [RULES.md
       §5](docs/RULES.md#5-say-the-same-thing-the-same-way) requires the canonical
       sentence to appear identically in several places; nothing enforces that, so

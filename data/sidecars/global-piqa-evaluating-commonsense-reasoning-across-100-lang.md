@@ -129,95 +129,110 @@ claims:
     related languages within the project.
   evidence: Section 1 and Section 3.2
 qa:
-- q:
-  - What benchmark should I use to test commonsense reasoning in low-resource languages?
-  - Is there a multilingual commonsense reasoning dataset that is not translated from English?
-  - Where should I start reading about culturally-specific LLM evaluation across many languages?
-  answers:
+- ask:
+    practitioner: What benchmark should I use to test commonsense reasoning in low-resource
+      languages?
+    unsorted:
+    - Is there a multilingual commonsense reasoning dataset that is not translated from English?
+    - Where should I start reading about culturally-specific LLM evaluation across many languages?
+  answered_by:
   - non-translated-design
   - participatory
   - coverage
-- q:
-  - How many languages does Global PIQA cover?
-  - Which language families and writing systems are represented in Global PIQA?
-  - How broad is the language coverage of a hand-written multilingual commonsense benchmark?
-  answers:
+- ask:
+    unsorted:
+    - How many languages does Global PIQA cover?
+    - Which language families and writing systems are represented in Global PIQA?
+    - How broad is the language coverage of a hand-written multilingual commonsense benchmark?
+  answered_by:
   - coverage
-- q:
-  - How was Global PIQA constructed?
-  - Who wrote the examples in Global PIQA, and were they paid annotators?
-  - How do you organise a benchmark written by hundreds of native speakers?
-  answers:
+- ask:
+    unsorted:
+    - How was Global PIQA constructed?
+    - Who wrote the examples in Global PIQA, and were they paid annotators?
+    - How do you organise a benchmark written by hundreds of native speakers?
+  answered_by:
   - participatory
   - manual-methods
-- q:
-  - How much of Global PIQA is actually culturally specific?
-  - What fraction of examples reference local foods, customs or traditions?
-  - Were LLMs used to write the Global PIQA examples?
-  answers:
+- ask:
+    unsorted:
+    - How much of Global PIQA is actually culturally specific?
+    - What fraction of examples reference local foods, customs or traditions?
+    - Were LLMs used to write the Global PIQA examples?
+  answered_by:
   - cultural-specificity
   - manual-methods
-- q:
-  - How was data quality verified in a benchmark built by hundreds of volunteers?
-  - Were the Global PIQA examples checked by native speakers?
-  - Do the Global PIQA examples come with English translations?
-  answers:
+- ask:
+    unsorted:
+    - How was data quality verified in a benchmark built by hundreds of volunteers?
+    - Were the Global PIQA examples checked by native speakers?
+    - Do the Global PIQA examples come with English translations?
+  answered_by:
   - native-validation
-- q:
-  - What is the difference between the parallel and non-parallel splits of Global PIQA?
-  - How can I compare LLM accuracy directly across languages on commonsense reasoning?
-  - How many examples are in the Global PIQA parallel split?
-  answers:
+- ask:
+    practitioner: How can I compare LLM accuracy directly across languages on commonsense
+      reasoning?
+    unsorted:
+    - What is the difference between the parallel and non-parallel splits of Global PIQA?
+    - How many examples are in the Global PIQA parallel split?
+  answered_by:
   - parallel-split
   - non-translated-design
-- q:
-  - How much do machine translations of commonsense questions need correcting for low-resource
-    languages?
-  - Which languages required the heaviest edits to machine-translated benchmark examples?
-  - Is machine translation good enough for building multilingual benchmarks?
-  answers:
+- ask:
+    unsorted:
+    - How much do machine translations of commonsense questions need correcting for low-resource
+      languages?
+    - Which languages required the heaviest edits to machine-translated benchmark examples?
+    - Is machine translation good enough for building multilingual benchmarks?
+  answered_by:
   - translation-edits
   - parallel-split
-- q:
-  - How well do frontier LLMs do on multilingual commonsense reasoning?
-  - What accuracy do GPT-5.4, Claude and Gemini get on Global PIQA?
-  - Is Global PIQA already saturated by closed models?
-  answers:
+- ask:
+    unsorted:
+    - How well do frontier LLMs do on multilingual commonsense reasoning?
+    - What accuracy do GPT-5.4, Claude and Gemini get on Global PIQA?
+    - Is Global PIQA already saturated by closed models?
+  answered_by:
   - closed-model-aggregate
   - worst-languages
-- q:
-  - What is the best open-weight model on multilingual commonsense reasoning?
-  - How big is the gap between open-weight models and proprietary systems on Global PIQA?
-  - Does scaling open-weight model size keep improving multilingual commonsense accuracy?
-  answers:
+- ask:
+    unsorted:
+    - What is the best open-weight model on multilingual commonsense reasoning?
+    - How big is the gap between open-weight models and proprietary systems on Global PIQA?
+    - Does scaling open-weight model size keep improving multilingual commonsense accuracy?
+  answered_by:
   - open-weight-gap
-- q:
-  - How large is the accuracy gap between high- and low-resource languages on commonsense
-    reasoning?
-  - Do LLMs perform worse on Sub-Saharan African languages than European ones?
-  - What accuracy disparity across regions does Global PIQA reveal?
-  answers:
+- ask:
+    unsorted:
+    - How large is the accuracy gap between high- and low-resource languages on commonsense
+      reasoning?
+    - Do LLMs perform worse on Sub-Saharan African languages than European ones?
+    - What accuracy disparity across regions does Global PIQA reveal?
+  answered_by:
   - region-gap
   - worst-languages
-- q:
-  - Which languages do LLMs handle worst on Global PIQA?
-  - Are there languages where even the best model scores under 80% on commonsense questions?
-  - How badly do models do on Ekpeye and Idoma?
-  answers:
+- ask:
+    unsorted:
+    - Which languages do LLMs handle worst on Global PIQA?
+    - Are there languages where even the best model scores under 80% on commonsense questions?
+    - How badly do models do on Ekpeye and Idoma?
+  answered_by:
   - worst-languages
-- q:
-  - Can a benchmark separate a model's cultural knowledge from its linguistic ability in a
-    language?
-  - Which languages show weaker cultural knowledge than linguistic competence in LLMs?
-  - What does the drop from the parallel to the non-parallel split of Global PIQA mean?
-  answers:
+- ask:
+    unsorted:
+    - Can a benchmark separate a model's cultural knowledge from its linguistic ability in
+      a language?
+    - Which languages show weaker cultural knowledge than linguistic competence in LLMs?
+    - What does the drop from the parallel to the non-parallel split of Global PIQA mean?
+  answered_by:
   - cultural-vs-linguistic
   - parallel-split
-- q:
-  - Is everyday commonsense still a weakness of LLMs, or only expert reasoning?
-  - What does Global PIQA claim about where multilingual LLMs still fail?
-  - Why evaluate commonsense knowledge rather than complex reasoning across languages?
-  answers:
+- ask:
+    unsorted:
+    - Is everyday commonsense still a weakness of LLMs, or only expert reasoning?
+    - What does Global PIQA claim about where multilingual LLMs still fail?
+    - Why evaluate commonsense knowledge rather than complex reasoning across languages?
+  answered_by:
   - everyday-knowledge-framing
   - region-gap
 terminology:

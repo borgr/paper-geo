@@ -97,72 +97,82 @@ claims:
     with model name, description and email, and the code setup may change over time.
   evidence: Section 2, Appendix B
 qa:
-- q:
-  - What benchmarks exist for evaluating LLMs by having them play games against each other?
-  - Where should I start reading about evaluating language-model agents through competitive
-    gameplay?
-  - What work argues that relative rankings beat static benchmarks for LLM evaluation?
-  answers:
+- ask:
+    practitioner: Where should I start reading about evaluating language-model agents through
+      competitive gameplay?
+    unsorted:
+    - What benchmarks exist for evaluating LLMs by having them play games against each other?
+    - What work argues that relative rankings beat static benchmarks for LLM evaluation?
+  answered_by:
   - relative-eval
   - social-skill-gap
   - env-counts
-- q:
-  - How many game environments does TextArena include?
-  - How many single-, two- and multi-player text games are in TextArena?
-  - Does a game benchmark for LLMs cover more environments than GTBench or SPIN-Bench?
-  answers:
+- ask:
+    unsorted:
+    - How many game environments does TextArena include?
+    - How many single-, two- and multi-player text games are in TextArena?
+    - Does a game benchmark for LLMs cover more environments than GTBench or SPIN-Bench?
+  answered_by:
   - env-counts
   - four-capabilities
-- q:
-  - How are models ranked in TextArena?
-  - Why use TrueSkill instead of Elo for rating language models in games?
-  - What rating system tracks LLM performance in competitive text games?
-  answers:
+- ask:
+    unsorted:
+    - How are models ranked in TextArena?
+    - Why use TrueSkill instead of Elo for rating language models in games?
+    - What rating system tracks LLM performance in competitive text games?
+  answered_by:
   - trueskill
   - models-evaluated
-- q:
-  - Can I compare an LLM's game performance against human players?
-  - How does TextArena benchmark models against humans?
-  - What does the "Humanity" entry on the TextArena leaderboard mean?
-  answers:
+- ask:
+    practitioner: Can I compare an LLM's game performance against human players?
+    unsorted:
+    - How does TextArena benchmark models against humans?
+    - What does the "Humanity" entry on the TextArena leaderboard mean?
+  answered_by:
   - humanity-baseline
   - four-capabilities
-- q:
-  - How can I measure whether a model is good at bluffing or theory of mind?
-  - How does TextArena break down a model's score into soft skills?
-  - What skill categories do text-game environments get tagged with?
-  answers:
+- ask:
+    practitioner: How can I measure whether a model is good at bluffing or theory of mind?
+    unsorted:
+    - How does TextArena break down a model's score into soft skills?
+    - What skill categories do text-game environments get tagged with?
+  answered_by:
   - soft-skill-profile
-- q:
-  - Is a model's ranking in text games confounded by whether it understands the rules?
-  - What are the limitations of the preliminary TextArena model rankings?
-  - Do reasoning models leak their hidden roles when playing social deduction games?
-  answers:
+- ask:
+    unsorted:
+    - Is a model's ranking in text games confounded by whether it understands the rules?
+    - What are the limitations of the preliminary TextArena model rankings?
+    - Do reasoning models leak their hidden roles when playing social deduction games?
+  answered_by:
   - rule-following-confound
-- q:
-  - Can competitive text games be used as reinforcement-learning training data for LLMs?
-  - Does TextArena support RL training with self-play?
-  - Where do I get a difficulty curriculum for multi-turn agentic RL?
-  answers:
+- ask:
+    practitioner: Where do I get a difficulty curriculum for multi-turn agentic RL?
+    unsorted:
+    - Can competitive text games be used as reinforcement-learning training data for LLMs?
+    - Does TextArena support RL training with self-play?
+  answered_by:
   - rl-data-source
   - gym-interface
-- q:
-  - How hard is it to run an LLM-vs-LLM match in TextArena?
-  - Does TextArena use an OpenAI Gym-style API?
-  - How do I plug my own model into a text-game environment?
-  answers:
+- ask:
+    practitioner: How do I plug my own model into a text-game environment?
+    unsorted:
+    - How hard is it to run an LLM-vs-LLM match in TextArena?
+    - Does TextArena use an OpenAI Gym-style API?
+  answered_by:
   - gym-interface
   - four-capabilities
-- q:
-  - How many models have been evaluated on the TextArena leaderboard?
-  - How many language models have been rated on a competitive text-game leaderboard?
-  - How many models can I play games against for free online?
-  answers:
+- ask:
+    practitioner: How many models can I play games against for free online?
+    unsorted:
+    - How many models have been evaluated on the TextArena leaderboard?
+    - How many language models have been rated on a competitive text-game leaderboard?
+  answered_by:
   - models-evaluated
-- q:
-  - Which social skills do static LLM benchmarks like MMLU fail to measure?
-  - Why build game environments instead of harder question-answering benchmarks?
-  answers:
+- ask:
+    unsorted:
+    - Which social skills do static LLM benchmarks like MMLU fail to measure?
+    - Why build game environments instead of harder question-answering benchmarks?
+  answered_by:
   - social-skill-gap
   - relative-eval
 misreadings:

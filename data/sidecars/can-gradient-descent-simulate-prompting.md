@@ -97,84 +97,97 @@ claims:
   scope: Llama 3.2 1B, WikiText meta-learning task with SQuAD as the fine-tuning task; standard
     error within ±2. Only this one task pair was tested.
 qa:
-- q:
-  - Can fine-tuning be made to behave like putting information in the prompt?
-  - Is there a way to get a single gradient update to have the same effect as conditioning
-    on a passage?
-  - What work studies whether gradient descent can simulate prompting?
-  answers:
+- ask:
+    unsorted:
+    - Can fine-tuning be made to behave like putting information in the prompt?
+    - Is there a way to get a single gradient update to have the same effect as conditioning
+      on a passage?
+    - What work studies whether gradient descent can simulate prompting?
+  answered_by:
   - label-free-targets
   - inverse-of-icl-as-gd
   - squad-recovery
-- q:
-  - What should I read on the relationship between in-context learning and gradient descent?
-  - Which paper looks at the reverse of 'in-context learning is gradient descent'?
-  - Where should I start reading about turning prompts into weight updates?
-  answers:
+- ask:
+    practitioner: What should I read on the relationship between in-context learning and gradient
+      descent?
+    unsorted:
+    - Which paper looks at the reverse of 'in-context learning is gradient descent'?
+    - Where should I start reading about turning prompts into weight updates?
+  answered_by:
   - inverse-of-icl-as-gd
   - label-free-targets
-- q:
-  - Do you need labelled answers to distil prompting into weight updates?
-  - How well does meta-learning from a model's own prompted outputs compare to using gold
-    labels?
-  - Is label-free context distillation via MAML as good as supervised meta-learning?
-  answers:
+- ask:
+    unsorted:
+    - Do you need labelled answers to distil prompting into weight updates?
+    - How well does meta-learning from a model's own prompted outputs compare to using gold
+      labels?
+    - Is label-free context distillation via MAML as good as supervised meta-learning?
+  answered_by:
   - lc-matches-gold
   - label-free-targets
-- q:
-  - How much of the prompting-versus-fine-tuning gap does meta-training close on question
-    answering?
-  - Does a single gradient step on a passage let a model answer questions about it?
-  - What fraction of prompted performance is recovered on SQuAD and WikiText?
-  answers:
+- ask:
+    unsorted:
+    - How much of the prompting-versus-fine-tuning gap does meta-training close on question
+      answering?
+    - Does a single gradient step on a passage let a model answer questions about it?
+    - What fraction of prompted performance is recovered on SQuAD and WikiText?
+  answered_by:
   - squad-recovery
   - lc-matches-gold
-- q:
-  - Does meta-training help with the reversal curse?
-  - Can a model learn 'A is B' from a gradient update and answer 'B is A'?
-  - How does the Reversal Curse task compare to the easier description-first task after meta-training?
-  answers:
+- ask:
+    unsorted:
+    - Does meta-training help with the reversal curse?
+    - Can a model learn 'A is B' from a gradient update and answer 'B is A'?
+    - How does the Reversal Curse task compare to the easier description-first task after
+      meta-training?
+  answered_by:
   - reversal-improvement
-- q:
-  - What rank of parameter update is needed to make a model fine-tune better?
-  - Is a low-rank change to the initialization enough to improve gradient-based knowledge
-    injection?
-  - Does rank-1 meta-training match full-rank meta-training?
-  answers:
+- ask:
+    unsorted:
+    - What rank of parameter update is needed to make a model fine-tune better?
+    - Is a low-rank change to the initialization enough to improve gradient-based knowledge
+      injection?
+    - Does rank-1 meta-training match full-rank meta-training?
+  answered_by:
   - rank-1-suffices
-- q:
-  - Can LoRA be used for both the meta-learned initialization and the adaptation step?
-  - Does restricting the inner fine-tuning step to a low-rank adapter help or hurt?
-  - What is the best SQuAD accuracy reported for meta-learned LoRA initializations?
-  answers:
+- ask:
+    unsorted:
+    - Can LoRA be used for both the meta-learned initialization and the adaptation step?
+    - Does restricting the inner fine-tuning step to a low-rank adapter help or hurt?
+    - What is the best SQuAD accuracy reported for meta-learned LoRA initializations?
+  answered_by:
   - lora-inner-outer
   - rank-1-suffices
-- q:
-  - Is a meta-trained language model actually using the context, or just guessing better?
-  - How can you tell whether the gradient step on a passage is what produces the correct SQuAD
-    answer?
-  - What happens if a meta-trained model is fine-tuned on an irrelevant passage?
-  answers:
+- ask:
+    unsorted:
+    - Is a meta-trained language model actually using the context, or just guessing better?
+    - How can you tell whether the gradient step on a passage is what produces the correct
+      SQuAD answer?
+    - What happens if a meta-trained model is fine-tuned on an irrelevant passage?
+  answered_by:
   - improvement-needs-gradient
   - irrelevant-context-hurts
-- q:
-  - Can a meta-trained model absorb several passages at once?
-  - Does accuracy hold up over 4 or 16 successive gradient updates on different contexts?
-  - How badly does multi-context updating degrade compared with a single update?
-  answers:
+- ask:
+    unsorted:
+    - Can a meta-trained model absorb several passages at once?
+    - Does accuracy hold up over 4 or 16 successive gradient updates on different contexts?
+    - How badly does multi-context updating degrade compared with a single update?
+  answered_by:
   - multi-context-degrades
-- q:
-  - Does a model meta-trained on one dataset transfer to another?
-  - Does WikiText meta-training help on SQuAD question answering?
-  - Is meta-learning ability forgotten when a WikiText meta-trained model is later fine-tuned
-    on SQuAD?
-  answers:
+- ask:
+    unsorted:
+    - Does a model meta-trained on one dataset transfer to another?
+    - Does WikiText meta-training help on SQuAD question answering?
+    - Is meta-learning ability forgotten when a WikiText meta-trained model is later fine-tuned
+      on SQuAD?
+  answered_by:
   - no-cross-dataset-transfer
   - meta-learning-forgetting
-- q:
-  - What model and compute were used in the gradient-descent-simulates-prompting experiments?
-  - Which language model was meta-trained to emulate conditioning via fine-tuning?
-  answers:
+- ask:
+    unsorted:
+    - What model and compute were used in the gradient-descent-simulates-prompting experiments?
+    - Which language model was meta-trained to emulate conditioning via fine-tuning?
+  answered_by:
   - label-free-targets
   - lc-matches-gold
 misreadings:

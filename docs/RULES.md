@@ -540,7 +540,7 @@ is the truth; the prose above is the explanation.
 | affiliations are a bare name or `{name, url, ror, wikidata}`, ROR and QID well-formed | `validate.py check_affiliations` |
 | every `overrides.yaml` key is one something reads, and every `fields:` slug names a live paper | `validate.py check_overrides` (both failures are silent no-ops that look done) |
 | a retired slug redirects to a live page, or explicitly to `null` | `validate.py check_slug_history`. That the file is append-only is convention, not a check — deleting a line breaks a published URL |
-| every sidecar `answers` id names a real claim | `validate.py check_sidecars` |
+| every sidecar `answered_by` id names a real claim | `validate.py check_sidecars` |
 | every `qa` entry has at least one phrasing | `validate.py check_sidecars` |
 | the corpus sizes stated in the docs are current | `validate.py check_doc_counts`, `--fix-counts` to rewrite. Reported, not fatal — the one problem class that does not mean something is broken |
 | the prompt blocks in this file and `SIDECAR.md` exist | `validate.py` marker check, and `rules_block()` raises rather than sending a model an empty prompt |

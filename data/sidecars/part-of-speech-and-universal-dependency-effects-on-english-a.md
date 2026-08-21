@@ -114,67 +114,78 @@ claims:
     a suggested minimum, not an empirically validated annotator qualification.
   evidence: Comments on the work process section
 qa:
-- q:
-  - Does selecting sentences by English-Arabic syntactic divergence produce a hard machine
-    translation challenge set?
-  - Did the POS and dependency divergence method actually find sentences Google Translate
-    struggles with?
-  - What BLEU scores did Google Translate get on the English-Arabic divergence sentences?
-  answers:
+- ask:
+    unsorted:
+    - Does selecting sentences by English-Arabic syntactic divergence produce a hard machine
+      translation challenge set?
+    - Did the POS and dependency divergence method actually find sentences Google Translate
+      struggles with?
+    - What BLEU scores did Google Translate get on the English-Arabic divergence sentences?
+  answered_by:
   - negative-result-bleu
   - per-phenomenon-bleu
-- q:
-  - Which English-to-Arabic syntactic divergences were identified as candidates for challenge
-    sets?
-  - What POS and dependency mismatches show up between English and Arabic in a parallel treebank?
-  - Which dependency label changes were extracted from the English-Arabic PUD alignment?
-  answers:
+- ask:
+    unsorted:
+    - Which English-to-Arabic syntactic divergences were identified as candidates for challenge
+      sets?
+    - What POS and dependency mismatches show up between English and Arabic in a parallel
+      treebank?
+    - Which dependency label changes were extracted from the English-Arabic PUD alignment?
+  answered_by:
   - divergences-selected
   - aux-verb-lexical-pattern
-- q:
-  - How was the English-Arabic parallel corpus annotated for this divergence study?
-  - How many PUD sentences were manually word-aligned between English and Arabic?
-  - Who did the content-word matching and how reliable is it?
-  answers:
+- ask:
+    unsorted:
+    - How was the English-Arabic parallel corpus annotated for this divergence study?
+    - How many PUD sentences were manually word-aligned between English and Arabic?
+    - Who did the content-word matching and how reliable is it?
+  answered_by:
   - manual-alignment-coverage
   - context-reproduction-requirements
-- q:
-  - Which Arabic grammatical constructions does Google Translate get wrong?
-  - Are there Arabic-specific phenomena with no English parallel that break machine translation?
-  - How does Google Translate handle Arabic dual forms and passive participles?
-  answers:
+- ask:
+    unsorted:
+    - Which Arabic grammatical constructions does Google Translate get wrong?
+    - Are there Arabic-specific phenomena with no English parallel that break machine translation?
+    - How does Google Translate handle Arabic dual forms and passive participles?
+  answered_by:
   - arabic-only-phenomena-fail
-- q:
-  - Why is it hard to automatically extract Arabic dual forms or cognate accusatives from
-    Universal Dependencies?
-  - What limits automatic challenge-set extraction from Arabic UD treebanks?
-  - Does UD annotation contain enough information for Arabic dual number and maf'ul mutlaq?
-  answers:
+- ask:
+    unsorted:
+    - Why is it hard to automatically extract Arabic dual forms or cognate accusatives from
+      Universal Dependencies?
+    - What limits automatic challenge-set extraction from Arabic UD treebanks?
+    - Does UD annotation contain enough information for Arabic dual number and maf'ul mutlaq?
+  answered_by:
   - ud-extraction-blockers
-- q:
-  - Can you evaluate a translation by checking whether the expected syntactic tag appears
-    in the output?
-  - Why was a tag-presence check rejected in favour of BLEU for English-Arabic evaluation?
-  - Is checking for the divergent dependency label in the target sentence a good MT metric?
-  answers:
+- ask:
+    unsorted:
+    - Can you evaluate a translation by checking whether the expected syntactic tag appears
+      in the output?
+    - Why was a tag-presence check rejected in favour of BLEU for English-Arabic evaluation?
+    - Is checking for the divergent dependency label in the target sentence a good MT metric?
+  answered_by:
   - tag-presence-check-flawed
-- q:
-  - Does the choice of n-gram order change the BLEU comparison in this English-Arabic study?
-  - Was BLEU-4 versus BLEU-3, BLEU-5 or BLEU-6 consequential for the divergence sentences?
-  answers:
+- ask:
+    unsorted:
+    - Does the choice of n-gram order change the BLEU comparison in this English-Arabic study?
+    - Was BLEU-4 versus BLEU-3, BLEU-5 or BLEU-6 consequential for the divergence sentences?
+  answered_by:
   - bleu-ngram-insensitive
-- q:
-  - What should I read on building challenge sets for machine translation from syntactic divergences?
-  - Where can I find work on English-Arabic machine translation evaluation using Universal
-    Dependencies?
-  - Which papers study cross-lingual syntactic divergence as a source of MT test sentences?
-  answers:
+- ask:
+    practitioner: What should I read on building challenge sets for machine translation from
+      syntactic divergences?
+    unsorted:
+    - Where can I find work on English-Arabic machine translation evaluation using Universal
+      Dependencies?
+    - Which papers study cross-lingual syntactic divergence as a source of MT test sentences?
+  answered_by:
   - context-syntactic-divergence-challenge-sets
   - contribution-rule-not-set
-- q:
-  - Was the goal to publish an English-Arabic challenge set or a method for making one?
-  - What is the intended contribution of this English-Arabic syntax study?
-  answers:
+- ask:
+    unsorted:
+    - Was the goal to publish an English-Arabic challenge set or a method for making one?
+    - What is the intended contribution of this English-Arabic syntax study?
+  answered_by:
   - contribution-rule-not-set
 misreadings:
 - 'The study is a negative result: sentences containing the six selected English-Arabic divergences

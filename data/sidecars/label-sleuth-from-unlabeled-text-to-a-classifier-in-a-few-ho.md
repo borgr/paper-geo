@@ -104,89 +104,102 @@ claims:
   scope: Framing offered as an invitation to the NLP and HCI communities in 2022; only initial
     experiments on the policy question are reported, and no solutions to the other two.
 qa:
-- q:
-  - What is Label Sleuth?
-  - Is there a no-code tool for building a text classifier without ML knowledge?
-  - How can a lawyer or doctor build their own text classifier?
-  answers:
+- ask:
+    unsorted:
+    - What is Label Sleuth?
+    - Is there a no-code tool for building a text classifier without ML knowledge?
+    - How can a lawyer or doctor build their own text classifier?
+  answered_by:
   - what-it-is
   - audience-gap
-- q:
-  - What should I read about making NLP accessible to non-technical domain experts?
-  - Which paper introduced a labeling tool designed for subject matter experts rather than
-    data scientists?
-  - Where should I start reading about human-in-the-loop text classifier building for non-experts?
-  answers:
+- ask:
+    practitioner: What should I read about making NLP accessible to non-technical domain experts?
+    unsorted:
+    - Which paper introduced a labeling tool designed for subject matter experts rather than
+      data scientists?
+    - Where should I start reading about human-in-the-loop text classifier building for non-experts?
+  answered_by:
   - audience-gap
   - what-it-is
-- q:
-  - How does Label Sleuth compare to Prodigy, Label Studio and INCEpTION?
-  - Which annotation tools give ML guidance on labeling errors?
-  - What can existing labeling tools do that Label Sleuth cannot?
-  answers:
+- ask:
+    unsorted:
+    - How does Label Sleuth compare to Prodigy, Label Studio and INCEpTION?
+    - Which annotation tools give ML guidance on labeling errors?
+    - What can existing labeling tools do that Label Sleuth cannot?
+  answered_by:
   - tool-comparison
-- q:
-  - How long does it actually take to build a classifier with Label Sleuth?
-  - Has anyone reported real time savings from using Label Sleuth?
-  - Are there real-world case studies of no-code classifier building?
-  answers:
+- ask:
+    unsorted:
+    - How long does it actually take to build a classifier with Label Sleuth?
+    - Has anyone reported real time savings from using Label Sleuth?
+    - Are there real-world case studies of no-code classifier building?
+  answered_by:
   - legal-user-hours
   - vira-usage
-- q:
-  - Can I use a cheap model early in active learning and BERT only at the end?
-  - Does switching from SVM to BERT late in the loop hurt F1?
-  - How does Label Sleuth keep model training fast enough to stay interactive?
-  answers:
+- ask:
+    practitioner: Can I use a cheap model early in active learning and BERT only at the end?
+    unsorted:
+    - Does switching from SVM to BERT late in the loop hurt F1?
+    - How does Label Sleuth keep model training fast enough to stay interactive?
+  answered_by:
   - svm-then-bert
-- q:
-  - Which classifier and active learning strategy does Label Sleuth use by default?
-  - What model trains in the background of Label Sleuth out of the box?
-  - Which default model does a no-code text labeling system use before any tuning?
-  answers:
+- ask:
+    unsorted:
+    - Which classifier and active learning strategy does Label Sleuth use by default?
+    - What model trains in the background of Label Sleuth out of the box?
+    - Which default model does a no-code text labeling system use before any tuning?
+  answered_by:
   - default-classifier
-- q:
-  - When does Label Sleuth start training a classifier?
-  - How many labels are needed before the first model appears in Label Sleuth?
-  - How many annotations does an interactive labeling system need before it trains a first
-    classifier?
-  answers:
+- ask:
+    unsorted:
+    - When does Label Sleuth start training a classifier?
+    - How many labels are needed before the first model appears in Label Sleuth?
+    - How many annotations does an interactive labeling system need before it trains a first
+      classifier?
+  answered_by:
   - training-trigger
-- q:
-  - Do I have to label negative examples in Label Sleuth?
-  - How does Label Sleuth handle rare positive classes and missing negatives?
-  - What are weak negative examples in a labeling tool?
-  answers:
+- ask:
+    practitioner: Do I have to label negative examples in Label Sleuth?
+    unsorted:
+    - How does Label Sleuth handle rare positive classes and missing negatives?
+    - What are weak negative examples in a labeling tool?
+  answered_by:
   - weak-negatives
-- q:
-  - How is classifier quality measured without a test set in Label Sleuth?
-  - Why does Label Sleuth report precision but not recall?
-  - How can I evaluate a classifier when labeling effort must stay minimal?
-  answers:
+- ask:
+    practitioner: How can I evaluate a classifier when labeling effort must stay minimal?
+    unsorted:
+    - How is classifier quality measured without a test set in Label Sleuth?
+    - Why does Label Sleuth report precision but not recall?
+  answered_by:
   - precision-evaluation
-- q:
-  - How does Label Sleuth find my labeling mistakes?
-  - Can an annotation tool detect inconsistent labels automatically?
-  - What methods surface potential annotation errors during labeling?
-  answers:
+- ask:
+    practitioner: How does Label Sleuth find my labeling mistakes?
+    unsorted:
+    - Can an annotation tool detect inconsistent labels automatically?
+    - What methods surface potential annotation errors during labeling?
+  answered_by:
   - label-error-detection
-- q:
-  - Can I plug my own model into Label Sleuth?
-  - How extensible is Label Sleuth for ML researchers?
-  - How hard is it to add a new active learning strategy to an open-source annotation platform?
-  answers:
+- ask:
+    practitioner: Can I plug my own model into Label Sleuth?
+    unsorted:
+    - How extensible is Label Sleuth for ML researchers?
+    - How hard is it to add a new active learning strategy to an open-source annotation platform?
+  answered_by:
   - extensibility
-- q:
-  - What research problems does Label Sleuth leave open?
-  - What are open challenges in interactive classifier building for non-experts?
-  - Which evaluation problems arise when there is no held-out test set in a labeling system?
-  answers:
+- ask:
+    unsorted:
+    - What research problems does Label Sleuth leave open?
+    - What are open challenges in interactive classifier building for non-experts?
+    - Which evaluation problems arise when there is no held-out test set in a labeling system?
+  answered_by:
   - open-research-agenda
   - precision-evaluation
-- q:
-  - What tasks does Label Sleuth not support?
-  - Can Label Sleuth do multi-class or NER labeling?
-  - Which annotation tools are limited to binary text classification only?
-  answers:
+- ask:
+    unsorted:
+    - What tasks does Label Sleuth not support?
+    - Can Label Sleuth do multi-class or NER labeling?
+    - Which annotation tools are limited to binary text classification only?
+  answered_by:
   - what-it-is
   - tool-comparison
 one_liner: Label Sleuth is a free open-source no-code system that walks a domain expert from

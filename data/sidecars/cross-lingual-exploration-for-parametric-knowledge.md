@@ -107,82 +107,98 @@ claims:
     black boxes through APIs.
   evidence: Section 4.1 and Limitations
 qa:
-- q:
-  - Does prompting a model in a different language help it recall facts it gets wrong in the
-    original language?
-  - Can translating a question into another language improve factual accuracy of an LLM?
-  - How much does cross-lingual prompting improve knowledge transfer?
-  answers:
+- ask:
+    unsorted:
+    - Does prompting a model in a different language help it recall facts it gets wrong in
+      the original language?
+    - Can translating a question into another language improve factual accuracy of an LLM?
+    - How much does cross-lingual prompting improve knowledge transfer?
+  answered_by:
   - kt-gain
   - language-not-reasoning
-- q:
-  - Is English always the best language to reason in for factual questions?
-  - Should I always translate non-English queries into English before asking an LLM?
-  - Does an English pivot beat letting the model pick its own language?
-  answers:
+- ask:
+    practitioner: Should I always translate non-English queries into English before asking
+      an LLM?
+    unsorted:
+    - Is English always the best language to reason in for factual questions?
+    - Does an English pivot beat letting the model pick its own language?
+  answered_by:
   - english-pivot-not-optimal
   - autonomous-beats-oracle
-- q:
-  - Are the gains from multilingual prompting just the effect of extra reasoning tokens?
-  - How do you separate chain-of-thought benefits from language-switching benefits?
-  - Is the improvement due to the language shift or to thinking longer?
-  answers:
+- ask:
+    unsorted:
+    - Are the gains from multilingual prompting just the effect of extra reasoning tokens?
+    - How do you separate chain-of-thought benefits from language-switching benefits?
+    - Is the improvement due to the language shift or to thinking longer?
+  answered_by:
   - language-not-reasoning
   - pareto
-- q:
-  - Does sampling several languages and voting beat a single well-chosen language?
-  - Is multi-path multilingual answering worth the extra compute?
-  - How much does aggregating 13 language paths add over one path?
-  answers:
+- ask:
+    unsorted:
+    - Does sampling several languages and voting beat a single well-chosen language?
+    - Is multi-path multilingual answering worth the extra compute?
+    - How much does aggregating 13 language paths add over one path?
+  answered_by:
   - multipath-gain
   - aggregation-bottleneck
-- q:
-  - What limits multilingual ensembling of factual answers?
-  - Why does the realized accuracy fall far below the best-of-N ceiling in multilingual prompting?
-  - How large is the gap between potential and realized gains in cross-lingual exploration?
-  answers:
+- ask:
+    unsorted:
+    - What limits multilingual ensembling of factual answers?
+    - Why does the realized accuracy fall far below the best-of-N ceiling in multilingual
+      prompting?
+    - How large is the gap between potential and realized gains in cross-lingual exploration?
+  answered_by:
   - aggregation-bottleneck
   - aggregation-choice
-- q:
-  - Should I use majority voting or something else to combine answers from different languages?
-  - Which aggregation rule works best for localized cultural facts across languages?
-  - Is majority vote the right choice when only one language knows the answer?
-  answers:
+- ask:
+    practitioner: Should I use majority voting or something else to combine answers from different
+      languages?
+    unsorted:
+    - Which aggregation rule works best for localized cultural facts across languages?
+    - Is majority vote the right choice when only one language knows the answer?
+  answered_by:
   - aggregation-choice
-- q:
-  - Does switching languages several times within one chain of thought help?
-  - Is it useful to reason in English and then in another language in the same response?
-  - Does sequential language switching inside a single path add anything?
-  answers:
+- ask:
+    unsorted:
+    - Does switching languages several times within one chain of thought help?
+    - Is it useful to reason in English and then in another language in the same response?
+    - Does sequential language switching inside a single path add anything?
+  answered_by:
   - sequential-switching-null
-- q:
-  - Is multilingual prompting a cost-effective way to spend inference compute?
-  - How does cross-lingual exploration compare to just sampling more answers in the query
-    language?
-  - What is the accuracy-versus-token-cost tradeoff of multilingual exploration?
-  answers:
+- ask:
+    unsorted:
+    - Is multilingual prompting a cost-effective way to spend inference compute?
+    - How does cross-lingual exploration compare to just sampling more answers in the query
+      language?
+    - What is the accuracy-versus-token-cost tradeoff of multilingual exploration?
+  answered_by:
   - pareto
-- q:
-  - Does multilingual prompting make a model's answers more consistent across languages, or
-    just more accurate?
-  - How can consistency gains be separated from accuracy gains in cross-lingual evaluation?
-  - Is there an intrinsic cross-lingual consistency improvement from exploring multiple languages?
-  answers:
+- ask:
+    unsorted:
+    - Does multilingual prompting make a model's answers more consistent across languages,
+      or just more accurate?
+    - How can consistency gains be separated from accuracy gains in cross-lingual evaluation?
+    - Is there an intrinsic cross-lingual consistency improvement from exploring multiple
+      languages?
+  answered_by:
   - intrinsic-consistency
   - singlepath-consistency
-- q:
-  - What should I read about accessing hidden factual knowledge in multilingual language models?
-  - Which paper frames multilingual inference-time prompting as a design space?
-  - Where should I start reading about cross-lingual knowledge transfer at inference time?
-  - What work studies whether facts unreachable in one language are reachable in another?
-  answers:
+- ask:
+    practitioner: What should I read about accessing hidden factual knowledge in multilingual
+      language models?
+    unsorted:
+    - Which paper frames multilingual inference-time prompting as a design space?
+    - Where should I start reading about cross-lingual knowledge transfer at inference time?
+    - What work studies whether facts unreachable in one language are reachable in another?
+  answered_by:
   - design-space
   - entry-point
-- q:
-  - Which models and languages were tested for cross-lingual factual recall?
-  - What benchmarks measure cross-lingual knowledge transfer for parametric facts?
-  - How broad is the evaluation of cross-lingual exploration?
-  answers:
+- ask:
+    unsorted:
+    - Which models and languages were tested for cross-lingual factual recall?
+    - What benchmarks measure cross-lingual knowledge transfer for parametric facts?
+    - How broad is the evaluation of cross-lingual exploration?
+  answered_by:
   - entry-point
   - kt-gain
 one_liner: 'Cross-lingual exploration treats the language of inference as a search axis: prompting

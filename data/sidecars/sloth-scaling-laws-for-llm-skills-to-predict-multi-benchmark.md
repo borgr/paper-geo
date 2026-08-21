@@ -133,92 +133,107 @@ claims:
     benchmark scaling-law work as of publication.
   evidence: Section 4.1
 qa:
-- q:
-  - How can I predict how a bigger model in my LLM family will score on benchmarks without
-    training it?
-  - Can benchmark performance of an untrained larger LLM be forecast from leaderboard data?
-  - What method predicts a 70B model's benchmark scores from smaller models in the same family?
-  answers:
+- ask:
+    practitioner: How can I predict how a bigger model in my LLM family will score on benchmarks
+      without training it?
+    unsorted:
+    - Can benchmark performance of an untrained larger LLM be forecast from leaderboard data?
+    - What method predicts a 70B model's benchmark scores from smaller models in the same
+      family?
+  answered_by:
   - prediction-competitive
   - one-model-per-family
-- q:
-  - How many models per family do I need before a scaling law can extrapolate to a larger
-    one?
-  - Does fitting Sloth require training several model sizes in the new family?
-  - What is the minimum data on a new LLM family needed to fit a skills scaling law?
-  answers:
+- ask:
+    practitioner: How many models per family do I need before a scaling law can extrapolate
+      to a larger one?
+    unsorted:
+    - Does fitting Sloth require training several model sizes in the new family?
+    - What is the minimum data on a new LLM family needed to fit a skills scaling law?
+  answered_by:
   - one-model-per-family
   - context-position
-- q:
-  - What latent skills explain LLM benchmark scores?
-  - Which benchmarks measure reasoning versus knowledge versus instruction following?
-  - How many dimensions are needed to summarize Open LLM Leaderboard results?
-  answers:
+- ask:
+    unsorted:
+    - What latent skills explain LLM benchmark scores?
+    - Which benchmarks measure reasoning versus knowledge versus instruction following?
+    - How many dimensions are needed to summarize Open LLM Leaderboard results?
+  answered_by:
   - three-skills
-- q:
-  - Does model size or training data matter more for reasoning ability?
-  - How do parameters and tokens differently affect knowledge versus reasoning skills?
-  - Is reasoning driven by parameter count or by number of training tokens?
-  answers:
+- ask:
+    unsorted:
+    - Does model size or training data matter more for reasoning ability?
+    - How do parameters and tokens differently affect knowledge versus reasoning skills?
+    - Is reasoning driven by parameter count or by number of training tokens?
+  answered_by:
   - reasoning-size-driven
-- q:
-  - What does instruction tuning do to a model's reasoning ability?
-  - Does instruction tuning help or hurt latent skills of LLMs?
-  - How large is the effect of instruction tuning compared with scaling up compute?
-  answers:
+- ask:
+    unsorted:
+    - What does instruction tuning do to a model's reasoning ability?
+    - Does instruction tuning help or hurt latent skills of LLMs?
+    - How large is the effect of instruction tuning compared with scaling up compute?
+  answered_by:
   - instruction-tuning-effects
   - instruction-tuning-dominates-compute
-- q:
-  - Can leaderboard scores be used to predict coding ability on HumanEval?
-  - How do you forecast a hypothetical LLM's performance on a downstream task like code completion
-    or emotional intelligence?
-  - Which latent skill predicts code-completion performance?
-  answers:
+- ask:
+    unsorted:
+    - Can leaderboard scores be used to predict coding ability on HumanEval?
+    - How do you forecast a hypothetical LLM's performance on a downstream task like code
+      completion or emotional intelligence?
+    - Which latent skill predicts code-completion performance?
+  answered_by:
   - downstream-humaneval
-- q:
-  - Can pass@k behavior under repeated sampling be predicted before a model is trained?
-  - How is test-time compute scaling on MATH forecast for a hypothetical LLM?
-  - Does combining a scaling law with item response theory predict inference-time scaling?
-  answers:
+- ask:
+    unsorted:
+    - Can pass@k behavior under repeated sampling be predicted before a model is trained?
+    - How is test-time compute scaling on MATH forecast for a hypothetical LLM?
+    - Does combining a scaling law with item response theory predict inference-time scaling?
+  answered_by:
   - test-time-scaling
-- q:
-  - Given a FLOPs budget, how should I split it between parameters and tokens to maximize
-    reasoning?
-  - Does compute-optimal allocation depend on which capability you care about?
-  - Is Chinchilla-style optimal allocation the same for knowledge and for reasoning skills?
-  answers:
+- ask:
+    practitioner: Given a FLOPs budget, how should I split it between parameters and tokens
+      to maximize reasoning?
+    unsorted:
+    - Does compute-optimal allocation depend on which capability you care about?
+    - Is Chinchilla-style optimal allocation the same for knowledge and for reasoning skills?
+  answered_by:
   - compute-optimal-skills
-- q:
-  - How many parameters does a skills-based scaling law need compared with per-benchmark scaling
-    laws?
-  - Is Sloth more parameter-efficient than fitting one curve per benchmark?
-  answers:
+- ask:
+    unsorted:
+    - How many parameters does a skills-based scaling law need compared with per-benchmark
+      scaling laws?
+    - Is Sloth more parameter-efficient than fitting one curve per benchmark?
+  answered_by:
   - parameter-efficiency
-- q:
-  - Are the latent skills recovered by a factor-analysis-style scaling law uniquely identified?
-  - Is it valid to rotate the loadings before naming the latent skills of LLMs?
-  - What theoretical guarantee does Sloth have about its parameters?
-  answers:
+- ask:
+    unsorted:
+    - Are the latent skills recovered by a factor-analysis-style scaling law uniquely identified?
+    - Is it valid to rotate the loadings before naming the latent skills of LLMs?
+    - What theoretical guarantee does Sloth have about its parameters?
+  answered_by:
   - identifiability
-- q:
-  - What should I read about scaling laws that predict benchmark performance rather than loss?
-  - Which paper addresses why a single scaling law fails across LLM families?
-  - Where should I start reading on observational scaling laws for LLM benchmarks?
-  answers:
+- ask:
+    practitioner: What should I read about scaling laws that predict benchmark performance
+      rather than loss?
+    unsorted:
+    - Which paper addresses why a single scaling law fails across LLM families?
+    - Where should I start reading on observational scaling laws for LLM benchmarks?
+  answered_by:
   - context-position
   - context-dataset
-- q:
-  - How accurate are skills-based scaling law predictions in percentage terms?
-  - Do the prediction gains hold under MAPE as well as MAE?
-  answers:
+- ask:
+    unsorted:
+    - How accurate are skills-based scaling law predictions in percentage terms?
+    - Do the prediction gains hold under MAPE as well as MAE?
+  answered_by:
   - mape-same-conclusion
   - prediction-competitive
-- q:
-  - What leaderboard data are skills scaling laws for LLMs fitted on, and how many model families
-    does it cover?
-  - Which leaderboards and how many model families are in the Sloth dataset?
-  - How many LLM families are available for fitting benchmark scaling laws from public leaderboards?
-  answers:
+- ask:
+    unsorted:
+    - What leaderboard data are skills scaling laws for LLMs fitted on, and how many model
+      families does it cover?
+    - Which leaderboards and how many model families are in the Sloth dataset?
+    - How many LLM families are available for fitting benchmark scaling laws from public leaderboards?
+  answered_by:
   - context-dataset
 terminology:
   Skills Scaling Laws (SSLaws): A scaling law in which benchmark scores are a linear combination

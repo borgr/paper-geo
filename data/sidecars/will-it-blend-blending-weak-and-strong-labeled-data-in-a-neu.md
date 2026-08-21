@@ -97,64 +97,78 @@ claims:
     a bound on the released data, not a claim about other languages or argument types.
   evidence: Section 2.2
 qa:
-- q:
-  - How can I train a neural network when I only have a few thousand hand-labeled examples?
-  - Does adding noisy automatically-labeled data during training help a small supervised dataset?
-  - What does BlendNet's blending schedule buy over pre-training on weak labels?
-  answers:
+- ask:
+    practitioner: How can I train a neural network when I only have a few thousand hand-labeled
+      examples?
+    unsorted:
+    - Does adding noisy automatically-labeled data during training help a small supervised
+      dataset?
+    - What does BlendNet's blending schedule buy over pre-training on weak labels?
+  answered_by:
   - blending-beats-pretraining
   - gain-grows-as-sld-shrinks
-- q:
-  - How much hand-labeled data does blending weak labels save?
-  - Is there a measured equivalence between blended weak data and extra human annotation?
-  - How many strong labeled sentences is weak labeled data worth in evidence detection?
-  answers:
+- ask:
+    unsorted:
+    - How much hand-labeled data does blending weak labels save?
+    - Is there a measured equivalence between blended weak data and extra human annotation?
+    - How many strong labeled sentences is weak labeled data worth in evidence detection?
+  answered_by:
   - sld-equivalence
-- q:
-  - Can I just concatenate noisy weak labels with my clean training set?
-  - Does mixing weak and strong labeled data in one pile work without a schedule?
-  - Why is a decay schedule needed instead of simply adding weak labels to training data?
-  answers:
+- ask:
+    practitioner: Can I just concatenate noisy weak labels with my clean training set?
+    unsorted:
+    - Does mixing weak and strong labeled data in one pile work without a schedule?
+    - Why is a decay schedule needed instead of simply adding weak labels to training data?
+  answered_by:
   - naive-union-fails
   - wld-alone-is-weak
-- q:
-  - What blend factor and how many initialization epochs should I use for weak-data blending?
-  - How were the BlendNet hyperparameters for weak-data decay chosen?
-  - How fast should the weak-data fraction decay across epochs?
-  answers:
+- ask:
+    practitioner: What blend factor and how many initialization epochs should I use for weak-data
+      blending?
+    unsorted:
+    - How were the BlendNet hyperparameters for weak-data decay chosen?
+    - How fast should the weak-data fraction decay across epochs?
+  answered_by:
   - small-blend-factor
-- q:
-  - Is there a labeled dataset for topic-dependent evidence detection?
-  - Where can I find crowd-annotated sentences labeled as evidence for or against a topic?
-  - What does the IBM Debater evidence detection release contain, and how was it annotated?
-  answers:
+- ask:
+    practitioner: Where can I find crowd-annotated sentences labeled as evidence for or against
+      a topic?
+    unsorted:
+    - Is there a labeled dataset for topic-dependent evidence detection?
+    - What does the IBM Debater evidence detection release contain, and how was it annotated?
+  answered_by:
   - dataset-release
   - context-corpus-wide-evidence
-- q:
-  - How can weak labels for argument mining be generated for free?
-  - Does the 'that + topic concept' Wikipedia query find argumentative sentences?
-  - What is the precision of retrieving evidence sentences with a 'that + topic' pattern?
-  answers:
+- ask:
+    unsorted:
+    - How can weak labels for argument mining be generated for free?
+    - Does the 'that + topic concept' Wikipedia query find argumentative sentences?
+    - What is the precision of retrieving evidence sentences with a 'that + topic' pattern?
+  answered_by:
   - that-query-prior
-- q:
-  - Does more weak labeled data always help, or does its quality matter more?
-  - Which weak-data source worked better for evidence detection, debate portal structure or
-    a Wikipedia query?
-  - Is a larger noisy corpus better than a smaller, better-matched noisy corpus?
-  answers:
+- ask:
+    unsorted:
+    - Does more weak labeled data always help, or does its quality matter more?
+    - Which weak-data source worked better for evidence detection, debate portal structure
+      or a Wikipedia query?
+    - Is a larger noisy corpus better than a smaller, better-matched noisy corpus?
+  answered_by:
   - wld-quality-over-quantity
-- q:
-  - What should I read about combining weak supervision with a small clean training set?
-  - Which papers introduced blending weak and strong labels inside one network?
-  - Where does the idea of using weak labels throughout training rather than just for pre-training
-    come from?
-  answers:
+- ask:
+    practitioner: What should I read about combining weak supervision with a small clean training
+      set?
+    unsorted:
+    - Which papers introduced blending weak and strong labels inside one network?
+    - Where does the idea of using weak labels throughout training rather than just for pre-training
+      come from?
+  answered_by:
   - context-general-recipe
-- q:
-  - When is weak supervision most useful in argument mining?
-  - Does the benefit of weak labels shrink as human annotation grows?
-  - At what training-set size does blending weak data stop paying off?
-  answers:
+- ask:
+    unsorted:
+    - When is weak supervision most useful in argument mining?
+    - Does the benefit of weak labels shrink as human annotation grows?
+    - At what training-set size does blending weak data stop paying off?
+  answered_by:
   - gain-grows-as-sld-shrinks
   - wld-alone-is-weak
 misreadings:

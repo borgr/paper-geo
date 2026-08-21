@@ -127,93 +127,109 @@ claims:
     runs with only 5 active identities, so its offline TrueSkill is a local estimate.'
   evidence: Table 17
 qa:
-- q:
-  - What benchmark should I read about evaluating social reasoning in multi-agent LLMs?
-  - Is there a benchmark where LLM agents play multiple social games against each other?
-  - Where can I find a live arena for theory-of-mind and strategic reasoning in LLM agents?
-  answers:
+- ask:
+    practitioner: What benchmark should I read about evaluating social reasoning in multi-agent
+      LLMs?
+    unsorted:
+    - Is there a benchmark where LLM agents play multiple social games against each other?
+    - Where can I find a live arena for theory-of-mind and strategic reasoning in LLM agents?
+  answered_by:
   - arena-context
   - dataset-scale
-- q:
-  - Is there a large public dataset of LLM agents playing multi-agent games?
-  - How many games and trajectories does the MindGames dataset contain?
-  - Where can I get turn-level trajectories of LLMs playing Mafia and Codenames?
-  answers:
+- ask:
+    practitioner: Where can I get turn-level trajectories of LLMs playing Mafia and Codenames?
+    unsorted:
+    - Is there a large public dataset of LLM agents playing multi-agent games?
+    - How many games and trajectories does the MindGames dataset contain?
+  answered_by:
   - dataset-scale
-- q:
-  - How often do LLM agents break the rules in text-based games?
-  - What fraction of MindGames competition games contained invalid actions?
-  - Is rule adherence or strategy the bigger bottleneck for LLM game-playing agents?
-  answers:
+- ask:
+    unsorted:
+    - How often do LLM agents break the rules in text-based games?
+    - What fraction of MindGames competition games contained invalid actions?
+    - Is rule adherence or strategy the bigger bottleneck for LLM game-playing agents?
+  answered_by:
   - error-rates-stage2
   - error-improvement
-- q:
-  - Can a leaderboard in a social deduction arena be confounded by opponent failures?
-  - What is the error-survival confound in Secret Mafia rankings?
-  - Do top-ranked Mafia agents win by playing well or by surviving other agents' errors?
-  answers:
+- ask:
+    unsorted:
+    - Can a leaderboard in a social deduction arena be confounded by opponent failures?
+    - What is the error-survival confound in Secret Mafia rankings?
+    - Do top-ranked Mafia agents win by playing well or by surviving other agents' errors?
+  answered_by:
   - error-survival-confound
   - termination-depth
-- q:
-  - How can I tell whether a multi-agent leaderboard measures strategic skill?
-  - What diagnostics detect when arena rankings reflect robustness to opponent errors?
-  - Which MindGames environments give interpretable rankings and which do not?
-  answers:
+- ask:
+    practitioner: How can I tell whether a multi-agent leaderboard measures strategic skill?
+    unsorted:
+    - What diagnostics detect when arena rankings reflect robustness to opponent errors?
+    - Which MindGames environments give interpretable rankings and which do not?
+  answered_by:
   - validity-diagnostic
   - error-survival-confound
-- q:
-  - Do TrueSkill ratings and cumulative reward agree for LLM game agents?
-  - Should I report Elo-style ratings or total reward when ranking agents in an arena?
-  - Can metric choice reverse the ranking of LLM agents in a game benchmark?
-  answers:
+- ask:
+    practitioner: Should I report Elo-style ratings or total reward when ranking agents in
+      an arena?
+    unsorted:
+    - Do TrueSkill ratings and cumulative reward agree for LLM game agents?
+    - Can metric choice reverse the ranking of LLM agents in a game benchmark?
+  answered_by:
   - trueskill-reward-divergence
-- q:
-  - Does the assigned role bias win rates in Mafia and Codenames with LLM players?
-  - Is the Mafia role inherently advantaged in LLM social deduction games?
-  - Should benchmark scores in social deduction be reported per role?
-  answers:
+- ask:
+    unsorted:
+    - Does the assigned role bias win rates in Mafia and Codenames with LLM players?
+    - Is the Mafia role inherently advantaged in LLM social deduction games?
+    - Should benchmark scores in social deduction be reported per role?
+  answered_by:
   - role-advantage
-- q:
-  - Does adding memory or reflection modules improve LLM agent performance?
-  - Why did cognitive scaffolding hurt an 8B model in social deduction?
-  - Do memory layers for LLM agents need fine-tuning to help?
-  answers:
+- ask:
+    unsorted:
+    - Does adding memory or reflection modules improve LLM agent performance?
+    - Why did cognitive scaffolding hurt an 8B model in social deduction?
+    - Do memory layers for LLM agents need fine-tuning to help?
+  answered_by:
   - scaffolding-backfires
-- q:
-  - Is fine-tuning or prompting scaffolding better for LLM game agents?
-  - What design patterns did winning agents in the MindGames competition use?
-  - Can an 8B open-weight agent beat prompted frontier models at strategy games?
-  answers:
+- ask:
+    unsorted:
+    - Is fine-tuning or prompting scaffolding better for LLM game agents?
+    - What design patterns did winning agents in the MindGames competition use?
+    - Can an 8B open-weight agent beat prompted frontier models at strategy games?
+  answered_by:
   - training-vs-scaffolding
-- q:
-  - Can a small non-LLM policy beat LLM agents at Colonel Blotto?
-  - How well does a distilled graph network play resource-allocation games?
-  - Are LLMs better used as teachers than as game-playing policies?
-  answers:
+- ask:
+    unsorted:
+    - Can a small non-LLM policy beat LLM agents at Colonel Blotto?
+    - How well does a distilled graph network play resource-allocation games?
+    - Are LLMs better used as teachers than as game-playing policies?
+  answered_by:
   - non-llm-policy
-- q:
-  - Which side is harder for LLMs in Mafia, the informed mafia or the villagers?
-  - Do architectural improvements help the villager role more than the mafia role?
-  - Why do baseline LLMs do better as mafia than as deducing villagers?
-  answers:
+- ask:
+    unsorted:
+    - Which side is harder for LLMs in Mafia, the informed mafia or the villagers?
+    - Do architectural improvements help the villager role more than the mafia role?
+    - Why do baseline LLMs do better as mafia than as deducing villagers?
+  answered_by:
   - villager-asymmetry
-- q:
-  - How can I evaluate a new agent against the MindGames 2025 competition entrants without
-    a live server?
-  - What is MG-Ref and how many games does the offline tournament run?
-  - Is there a reproducible offline protocol for scoring LLM agents against a frozen reference
-    pool?
-  answers:
+- ask:
+    practitioner: How can I evaluate a new agent against the MindGames 2025 competition entrants
+      without a live server?
+    unsorted:
+    - What is MG-Ref and how many games does the offline tournament run?
+    - Is there a reproducible offline protocol for scoring LLM agents against a frozen reference
+      pool?
+  answered_by:
   - mgref-protocol
-- q:
-  - How much did error rates improve over the course of the MindGames competition?
-  - Did LLM agents become more rule-compliant between the online ladder and the final evaluation?
-  answers:
+- ask:
+    unsorted:
+    - How much did error rates improve over the course of the MindGames competition?
+    - Did LLM agents become more rule-compliant between the online ladder and the final evaluation?
+  answered_by:
   - error-improvement
-- q:
-  - How quickly do LLM agent games end in failure in social deduction?
-  - Do forfeited Mafia games last long enough for strategy to matter?
-  answers:
+- ask:
+    unsorted:
+    - How quickly do LLM agent games end in failure in social deduction?
+    - Do forfeited Mafia games last long enough for strategy to matter?
+  answered_by:
   - termination-depth
 misreadings:
 - 'MindGames Secret Mafia leaderboard position is not a clean measure of social deduction

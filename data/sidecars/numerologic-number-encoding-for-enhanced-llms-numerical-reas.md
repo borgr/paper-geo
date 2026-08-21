@@ -109,72 +109,84 @@ claims:
     than by a direct probe of place-value representations.
   evidence: Section 1
 qa:
-- q:
-  - How can I make a language model better at arithmetic without changing its architecture?
-  - Is there a simple text formatting trick that improves LLM number handling?
-  - What does prefixing numbers with their digit count do for a language model?
-  answers:
+- ask:
+    practitioner: How can I make a language model better at arithmetic without changing its
+      architecture?
+    unsorted:
+    - Is there a simple text formatting trick that improves LLM number handling?
+    - What does prefixing numbers with their digit count do for a language model?
+  answered_by:
   - no-arch-change
   - nanogpt-add-sub
   - llama-float-tasks
-- q:
-  - Why do LLMs struggle to read numbers left to right?
-  - What is the place-value problem for decoder-only language models reading digits?
-  - Why does a causal model not know if a digit means thousands or hundreds?
-  answers:
+- ask:
+    unsorted:
+    - Why do LLMs struggle to read numbers left to right?
+    - What is the place-value problem for decoder-only language models reading digits?
+    - Why does a causal model not know if a digit means thousands or hundreds?
+  answered_by:
   - place-value-hypothesis
-- q:
-  - Does the digit-count prefix help a 7B model or only tiny models?
-  - Do NumeroLogic gains hold when finetuning Llama2-7B?
-  - How much does number reformatting improve floating-point multiplication for Llama2-7B?
-  answers:
+- ask:
+    unsorted:
+    - Does the digit-count prefix help a 7B model or only tiny models?
+    - Do NumeroLogic gains hold when finetuning Llama2-7B?
+    - How much does number reformatting improve floating-point multiplication for Llama2-7B?
+  answered_by:
   - llama-float-tasks
   - llama-saturated
-- q:
-  - Does changing number formatting help general language understanding, not just arithmetic?
-  - What happens to MMLU when a model is pretrained with digit-count-prefixed numbers?
-  - Can number encoding improve benchmark accuracy outside of math tasks?
-  answers:
+- ask:
+    unsorted:
+    - Does changing number formatting help general language understanding, not just arithmetic?
+    - What happens to MMLU when a model is pretrained with digit-count-prefixed numbers?
+    - Can number encoding improve benchmark accuracy outside of math tasks?
+  answered_by:
   - mmlu-pretraining
   - mmlu-numeric-subsets
-- q:
-  - Are the gains from extra tokens rather than from the digit-count information?
-  - Would inserting filler whitespace tokens give the same benefit as NumeroLogic?
-  - How does random whitespace insertion compare with digit-count prefixes on multiplication?
-  answers:
+- ask:
+    unsorted:
+    - Are the gains from extra tokens rather than from the digit-count information?
+    - Would inserting filler whitespace tokens give the same benefit as NumeroLogic?
+    - How does random whitespace insertion compare with digit-count prefixes on multiplication?
+  answered_by:
   - not-extra-tokens
-- q:
-  - Is digit-count encoding more useful on the operands or on the result of an arithmetic
-    equation?
-  - Does the benefit of digit-count prefixes come from input comprehension or from a chain-of-thought
-    effect on the answer?
-  - Should digit-count prefixes be applied to operands, results, or both?
-  answers:
+- ask:
+    unsorted:
+    - Is digit-count encoding more useful on the operands or on the result of an arithmetic
+      equation?
+    - Does the benefit of digit-count prefixes come from input comprehension or from a chain-of-thought
+      effect on the answer?
+    - Should digit-count prefixes be applied to operands, results, or both?
+  answered_by:
   - operands-vs-results
-- q:
-  - Which digit-count number format works best?
-  - Is an end-of-number token needed, or is a digit-count prefix enough?
-  - Do dedicated special tokens per digit count work better than a digit-count prefix?
-  answers:
+- ask:
+    unsorted:
+    - Which digit-count number format works best?
+    - Is an end-of-number token needed, or is a digit-count prefix enough?
+    - Do dedicated special tokens per digit count work better than a digit-count prefix?
+  answered_by:
   - encoding-variants
-- q:
-  - What should I read about number tokenization and numerical reasoning in LLMs?
-  - Which papers propose changing how numbers are represented for language models?
-  - Where does work on number formatting for language models sit relative to arithmetic chain-of-thought
-    methods?
-  answers:
+- ask:
+    practitioner: What should I read about number tokenization and numerical reasoning in
+      LLMs?
+    unsorted:
+    - Which papers propose changing how numbers are represented for language models?
+    - Where does work on number formatting for language models sit relative to arithmetic
+      chain-of-thought methods?
+  answered_by:
   - general-lm-not-arithmetic-trick
   - place-value-hypothesis
-- q:
-  - What are the costs or downsides of adding digit-count prefixes to numbers?
-  - Does NumeroLogic increase token count and inference latency?
-  answers:
+- ask:
+    unsorted:
+    - What are the costs or downsides of adding digit-count prefixes to numbers?
+    - Does NumeroLogic increase token count and inference latency?
+  answered_by:
   - no-arch-change
-- q:
-  - How much does digit-count encoding help small models trained from scratch on arithmetic?
-  - Does the format help on sine and square root, not just addition?
-  - What are NanoGPT accuracies with and without digit-count prefixes on multiplication?
-  answers:
+- ask:
+    unsorted:
+    - How much does digit-count encoding help small models trained from scratch on arithmetic?
+    - Does the format help on sine and square root, not just addition?
+    - What are NanoGPT accuracies with and without digit-count prefixes on multiplication?
+  answered_by:
   - nanogpt-mult-float
   - nanogpt-add-sub
 misreadings:

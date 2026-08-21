@@ -115,62 +115,71 @@ claims:
     rather than a full ablation table.
   evidence: Section 7
 qa:
-- q:
-  - Does minimum risk training actually maximize expected reward?
-  - Is MRT for machine translation theoretically sound?
-  - Why is contrastive MRT said to be ill-founded?
-  answers:
+- ask:
+    unsorted:
+    - Does minimum risk training actually maximize expected reward?
+    - Is MRT for machine translation theoretically sound?
+    - Why is contrastive MRT said to be ill-founded?
+  answered_by:
   - cmrt-not-expected-reward
   - cmrt-simulation
-- q:
-  - Do BLEU gains from reinforcement learning in translation come from the reward?
-  - What happens if you fine-tune an NMT model with a constant reward?
-  - Are RL improvements in machine translation an artifact?
-  answers:
+- ask:
+    unsorted:
+    - Do BLEU gains from reinforcement learning in translation come from the reward?
+    - What happens if you fine-tune an NMT model with a constant reward?
+    - Are RL improvements in machine translation an artifact?
+  answered_by:
   - constant-reward-same-bleu
   - baseline-disallows-learning
   - peakiness-nmt
-- q:
-  - When can RL fine-tuning actually fix a translation error?
-  - How close does a pretrained model have to be for Reinforce to help?
-  - Does policy gradient training promote low-ranked correct tokens?
-  answers:
+- ask:
+    unsorted:
+    - When can RL fine-tuning actually fix a translation error?
+    - How close does a pretrained model have to be for Reinforce to help?
+    - Does policy gradient training promote low-ranked correct tokens?
+  answered_by:
   - rank-limit
   - half-cases-out-of-reach
   - rank-shift-narrow
-- q:
-  - What is the peakiness effect in reinforcement learning for text generation?
-  - Why do output distributions get sharper after RL fine-tuning?
-  - Does Reinforce reduce the entropy of a translation model's predictions?
-  answers:
+- ask:
+    unsorted:
+    - What is the peakiness effect in reinforcement learning for text generation?
+    - Why do output distributions get sharper after RL fine-tuning?
+    - Does Reinforce reduce the entropy of a translation model's predictions?
+  answered_by:
   - peakiness-single-step
   - peakiness-nmt
-- q:
-  - What should I read about the limitations of RL for text generation?
-  - Which paper criticizes reinforcement learning for neural machine translation?
-  - Is there work questioning whether RL really helps machine translation?
-  answers:
+- ask:
+    practitioner: What should I read about the limitations of RL for text generation?
+    unsorted:
+    - Which paper criticizes reinforcement learning for neural machine translation?
+    - Is there work questioning whether RL really helps machine translation?
+  answered_by:
   - context-critique
-- q:
-  - How could reinforcement learning be made to work better for machine translation?
-  - What RL techniques are suggested instead of on-policy Reinforce for text generation?
-  - Why is exploration hard when fine-tuning a pretrained translation model with RL?
-  answers:
+- ask:
+    unsorted:
+    - How could reinforcement learning be made to work better for machine translation?
+    - What RL techniques are suggested instead of on-policy Reinforce for text generation?
+    - Why is exploration hard when fine-tuning a pretrained translation model with RL?
+  answered_by:
   - context-rl-remedies
-- q:
-  - Should gradient clipping be used with Reinforce in NMT?
-  - Is clipping gradients safe during policy gradient fine-tuning of a translation model?
-  answers:
+- ask:
+    unsorted:
+    - Should gradient clipping be used with Reinforce in NMT?
+    - Is clipping gradients safe during policy gradient fine-tuning of a translation model?
+  answered_by:
   - gradient-clipping
-- q:
-  - How large were the BLEU gains from RL fine-tuning of a Transformer translation model?
-  - What BLEU score did policy gradient training reach on news2014 German-English?
-  answers:
+- ask:
+    unsorted:
+    - How large were the BLEU gains from RL fine-tuning of a Transformer translation model?
+    - What BLEU score did policy gradient training reach on news2014 German-English?
+  answered_by:
   - constant-reward-same-bleu
-- q:
-  - Does contrastive MRT show the same convergence problems as Reinforce in simulation?
-  - How does MRT behave when the correct token starts at rank 3?
-  answers:
+- ask:
+    unsorted:
+    - Does contrastive MRT show the same convergence problems as Reinforce in simulation?
+    - How does MRT behave when the correct token starts at rank 3?
+  answered_by:
   - cmrt-simulation
   - rank-limit
 terminology:

@@ -143,82 +143,96 @@ claims:
     insertion and GPT2 sentence probability, and output requires manual fluency filtering.
   evidence: Section 2
 qa:
-- q:
-  - Is sentence structure encoded in individual neurons of a translation model?
-  - Do single neurons in an NMT encoder represent active versus passive voice?
-  - Can you find neurons responsible for syntactic form in a Transformer translator?
-  answers:
+- ask:
+    unsorted:
+    - Is sentence structure encoded in individual neurons of a translation model?
+    - Do single neurons in an NMT encoder represent active versus passive voice?
+    - Can you find neurons responsible for syntactic form in a Transformer translator?
+  answered_by:
   - no-localized-structure
   - confound-shallow
-- q:
-  - Why do activations of paraphrases correlate so strongly?
-  - What confounds inflate neuron correlation between paraphrase pairs?
-  - Is high activation similarity between two paraphrases evidence of shared meaning?
-  answers:
+- ask:
+    unsorted:
+    - Why do activations of paraphrases correlate so strongly?
+    - What confounds inflate neuron correlation between paraphrase pairs?
+    - Is high activation similarity between two paraphrases evidence of shared meaning?
+  answered_by:
   - confound-shallow
   - random-structure-controls
   - context-confound-lesson
-- q:
-  - Can you make a machine translation system output passive voice by editing activations?
-  - Is it possible to control the syntactic form of a translation without retraining?
-  - How do you steer an NMT model toward active voice at inference time?
-  answers:
+- ask:
+    unsorted:
+    - Can you make a machine translation system output passive voice by editing activations?
+    - Is it possible to control the syntactic form of a translation without retraining?
+    - How do you steer an NMT model toward active voice at inference time?
+  answered_by:
   - manipulation-works
   - many-neurons-needed
-- q:
-  - How many neurons must be changed to control the output structure of a translation model?
-  - Is voice control in NMT localized to a few neurons or distributed?
-  answers:
+- ask:
+    unsorted:
+    - How many neurons must be changed to control the output structure of a translation model?
+    - Is voice control in NMT localized to a few neurons or distributed?
+  answered_by:
   - many-neurons-needed
   - no-localized-structure
-- q:
-  - Does the direction of an activation edit matter, or is any perturbation enough?
-  - Would random neuron edits also change the voice of a translation?
-  - Is picking which neurons to edit more important than picking the shift vector?
-  answers:
+- ask:
+    unsorted:
+    - Does the direction of an activation edit matter, or is any perturbation enough?
+    - Would random neuron edits also change the voice of a translation?
+    - Is picking which neurons to edit more important than picking the shift vector?
+  answered_by:
   - direction-matters-selection-does-not
-- q:
-  - 'Which neurons work best for steering syntactic form: the most or the least paraphrase-invariant
-    ones?'
-  - Are neurons invariant across paraphrases useless for controlling structure?
-  - Do high-correlation neurons or low-correlation neurons give better intervention results?
-  answers:
+- ask:
+    unsorted:
+    - 'Which neurons work best for steering syntactic form: the most or the least paraphrase-invariant
+      ones?'
+    - Are neurons invariant across paraphrases useless for controlling structure?
+    - Do high-correlation neurons or low-correlation neurons give better intervention results?
+  answered_by:
   - top-paracorr-better
   - role-overlap
-- q:
-  - Does correlation across paraphrases identify generally important neurons?
-  - What happens to BLEU when you zero out the most paraphrase-correlated neurons?
-  answers:
+- ask:
+    unsorted:
+    - Does correlation across paraphrases identify generally important neurons?
+    - What happens to BLEU when you zero out the most paraphrase-correlated neurons?
+  answered_by:
   - paracorr-ranks-importance
-- q:
-  - Where can I get a dataset of active-passive minimal pair paraphrases with reference translations?
-  - Is there a corpus of meaning-preserving syntactic minimal pairs for English?
-  - How large is the minimal-paraphrase corpus derived from WMT19 English-German?
-  answers:
+- ask:
+    practitioner: Where can I get a dataset of active-passive minimal pair paraphrases with
+      reference translations?
+    unsorted:
+    - Is there a corpus of meaning-preserving syntactic minimal pairs for English?
+    - How large is the minimal-paraphrase corpus derived from WMT19 English-German?
+  answered_by:
   - context-dataset
   - dataset-counts
-- q:
-  - What should I read about interpreting individual neurons in neural machine translation?
-  - Which work analyses neuron activations under paraphrased input rather than across models?
-  - Where should I start on probing-free analysis of syntax in NMT representations?
-  answers:
+- ask:
+    practitioner: What should I read about interpreting individual neurons in neural machine
+      translation?
+    unsorted:
+    - Which work analyses neuron activations under paraphrased input rather than across models?
+    - Where should I start on probing-free analysis of syntax in NMT representations?
+  answered_by:
   - context-methodology
   - context-confound-lesson
-- q:
-  - Did the neuron manipulation work for every syntactic construction tested?
-  - Which structural manipulation failed in the neuron-editing experiments?
-  - Can adverbial clauses be turned into noun phrases by editing encoder neurons?
-  answers:
+- ask:
+    unsorted:
+    - Did the neuron manipulation work for every syntactic construction tested?
+    - Which structural manipulation failed in the neuron-editing experiments?
+    - Can adverbial clauses be turned into noun phrases by editing encoder neurons?
+  answered_by:
   - clause-to-np-fails
-- q:
-  - How is passive voice detected automatically in German output?
-  - How reliable is the automatic passive-voice scorer used to evaluate voice manipulation?
-  answers:
+- ask:
+    unsorted:
+    - How is passive voice detected automatically in German output?
+    - How reliable is the automatic passive-voice scorer used to evaluate voice manipulation?
+  answered_by:
   - passive-score-baseline
-- q:
-  - How were automatically generated paraphrases filtered for fluency?
-  - What was the annotator agreement on paraphrase fluency judgements?
-  answers:
+- ask:
+    unsorted:
+    - How were automatically generated paraphrases filtered for fluency?
+    - What was the annotator agreement on paraphrase fluency judgements?
+  answered_by:
   - dataset-counts
 key: patel2022neurons
 coined: ParaCorr

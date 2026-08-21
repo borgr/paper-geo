@@ -102,74 +102,85 @@ claims:
     for recent models; HELM used chain-of-thought prompting while the study requested a final
     answer only.
 qa:
-- q:
-  - Does higher benchmark accuracy make an LLM more consistent under prompt variations?
-  - How strongly is LLM robustness correlated with task performance?
-  - Is prompt sensitivity just a symptom of low accuracy?
-  answers:
+- ask:
+    unsorted:
+    - Does higher benchmark accuracy make an LLM more consistent under prompt variations?
+    - How strongly is LLM robustness correlated with task performance?
+    - Is prompt sensitivity just a symptom of low accuracy?
+  answered_by:
   - perf-explains-robustness
   - imdb-saturated-robust
-- q:
-  - Is high consistency on an easy benchmark just an artifact of high accuracy?
-  - How is trivial robustness from high success rates ruled out when comparing consistency
-    to accuracy?
-  - What random baseline is used for output consistency across prompt variations?
-  answers:
+- ask:
+    unsorted:
+    - Is high consistency on an easy benchmark just an artifact of high accuracy?
+    - How is trivial robustness from high success rates ruled out when comparing consistency
+      to accuracy?
+    - What random baseline is used for output consistency across prompt variations?
+  answered_by:
   - beats-random-baseline
   - imdb-saturated-robust
-- q:
-  - Are some language models inherently more robust than others?
-  - Does LLM output consistency depend on which model is used or on how well it performs the
-    task?
-  - Do bigger models in the same family show better prompt consistency at equal accuracy?
-  answers:
+- ask:
+    unsorted:
+    - Are some language models inherently more robust than others?
+    - Does LLM output consistency depend on which model is used or on how well it performs
+      the task?
+    - Do bigger models in the same family show better prompt consistency at equal accuracy?
+  answered_by:
   - model-factors-weak
   - reframing-robustness
-- q:
-  - Should researchers keep building dedicated robustness benchmarks for LLMs?
-  - What is a good paper arguing robustness will emerge as benchmarks saturate?
-  - Where should I start reading on the relationship between benchmark saturation and LLM
-    reliability?
-  answers:
+- ask:
+    practitioner: Where should I start reading on the relationship between benchmark saturation
+      and LLM reliability?
+    unsorted:
+    - Should researchers keep building dedicated robustness benchmarks for LLMs?
+    - What is a good paper arguing robustness will emerge as benchmarks saturate?
+  answered_by:
   - reframing-robustness
   - perf-explains-robustness
-- q:
-  - Can I use benchmark accuracy as a signal that a model is ready for deployment?
-  - Which tasks are LLMs actually reliable on for high-stakes use?
-  - Does strong performance on a task predict stable behavior in production?
-  answers:
+- ask:
+    practitioner: Can I use benchmark accuracy as a signal that a model is ready for deployment?
+    unsorted:
+    - Which tasks are LLMs actually reliable on for high-stakes use?
+    - Does strong performance on a task predict stable behavior in production?
+  answered_by:
   - deployment-signal
   - imdb-saturated-robust
-- q:
-  - How many models, datasets and prompt configurations were tested?
-  - What is the experimental scale of the robustness-versus-performance analysis?
-  - Which benchmarks and perturbations were used to measure output consistency?
-  answers:
+- ask:
+    unsorted:
+    - How many models, datasets and prompt configurations were tested?
+    - What is the experimental scale of the robustness-versus-performance analysis?
+    - Which benchmarks and perturbations were used to measure output consistency?
+  answered_by:
   - study-scale
   - config-choices-minor
-- q:
-  - Do the conclusions depend on which robustness metric is used?
-  - Does performance drop rate show the same trend as strict output consistency?
-  - Are score-based and output-based robustness measures consistent with each other?
-  answers:
+- ask:
+    unsorted:
+    - Do the conclusions depend on which robustness metric is used?
+    - Does performance drop rate show the same trend as strict output consistency?
+    - Are score-based and output-based robustness measures consistent with each other?
+  answered_by:
   - metrics-agree
   - long-tail-consistency
-- q:
-  - Do choices like number of few-shot demonstrations or temperature drive the reported results?
-  - Was a statistical test run on whether configuration parameters affect accuracy?
-  - How much does prompt variation change measured performance on MMLU or RewardBench?
-  answers:
+- ask:
+    unsorted:
+    - Do choices like number of few-shot demonstrations or temperature drive the reported
+      results?
+    - Was a statistical test run on whether configuration parameters affect accuracy?
+    - How much does prompt variation change measured performance on MMLU or RewardBench?
+  answered_by:
   - config-choices-minor
-- q:
-  - Are the accuracy numbers in this robustness study consistent with published leaderboards?
-  - How were the measured MMLU-Pro and GPQA scores sanity-checked?
-  - Do the reported model scores match HELM and model cards?
-  answers:
+- ask:
+    unsorted:
+    - Are the accuracy numbers in this robustness study consistent with published leaderboards?
+    - How were the measured MMLU-Pro and GPQA scores sanity-checked?
+    - Do the reported model scores match HELM and model cards?
+  answered_by:
   - external-validation
-- q:
-  - Could benchmark contamination explain the high consistency across prompt variants?
-  - How is data contamination addressed in the performance-robustness analysis?
-  answers:
+- ask:
+    unsorted:
+    - Could benchmark contamination explain the high consistency across prompt variants?
+    - How is data contamination addressed in the performance-robustness analysis?
+  answered_by:
   - long-tail-consistency
   - beats-random-baseline
 terminology:

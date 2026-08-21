@@ -120,97 +120,113 @@ claims:
     models is not reversed.
   evidence: Figure 8 (Appendix C)
 qa:
-- q:
-  - What is a good paper to read on how to estimate scaling laws for language models?
-  - Where should I start if I want to learn how to fit a scaling law for a new model family?
-  - Is there work studying scaling law estimation practice rather than proposing a new scaling
-    law?
-  answers:
+- ask:
+    practitioner: Where should I start if I want to learn how to fit a scaling law for a new
+      model family?
+    unsorted:
+    - What is a good paper to read on how to estimate scaling laws for language models?
+    - Is there work studying scaling law estimation practice rather than proposing a new scaling
+      law?
+  answered_by:
   - guide-context
   - dataset
-- q:
-  - Is there a public dataset of pretraining loss curves across many model families?
-  - Where can I get training losses and checkpoints for many published LLMs?
-  - How much data was used to study scaling law estimation across families?
-  answers:
+- ask:
+    practitioner: Where can I get training losses and checkpoints for many published LLMs?
+    unsorted:
+    - Is there a public dataset of pretraining loss curves across many model families?
+    - How much data was used to study scaling law estimation across families?
+  answered_by:
   - dataset
-- q:
-  - Should scaling laws be fit only to final losses, or also to intermediate checkpoints?
-  - Does using checkpoints from the middle of training improve scaling law accuracy?
-  - Is it wasteful to throw away intermediate training losses when fitting a scaling law?
-  answers:
+- ask:
+    unsorted:
+    - Should scaling laws be fit only to final losses, or also to intermediate checkpoints?
+    - Does using checkpoints from the middle of training improve scaling law accuracy?
+    - Is it wasteful to throw away intermediate training losses when fitting a scaling law?
+  answered_by:
   - intermediate-checkpoints
   - drop-early
-- q:
-  - Are early training checkpoints harmful when fitting a scaling law?
-  - How many initial tokens of training should be discarded before fitting a scaling law?
-  - Why do the first billions of training tokens hurt scaling law fits?
-  answers:
+- ask:
+    unsorted:
+    - Are early training checkpoints harmful when fitting a scaling law?
+    - How many initial tokens of training should be discarded before fitting a scaling law?
+    - Why do the first billions of training tokens hurt scaling law fits?
+  answered_by:
   - drop-early
-- q:
-  - How accurate does a scaling law prediction need to be to be useful?
-  - What error level makes a scaling law good enough to compare pretraining decisions?
-  - How much loss difference do published pretraining A/B tests actually report?
-  answers:
+- ask:
+    unsorted:
+    - How accurate does a scaling law prediction need to be to be useful?
+    - What error level makes a scaling law good enough to compare pretraining decisions?
+    - How much loss difference do published pretraining A/B tests actually report?
+  answered_by:
   - target-accuracy
-- q:
-  - Can I predict a large model's loss from just one smaller model?
-  - Is it possible to reuse scaling parameters from another model family?
-  - Do I need to train a whole ladder of models, or can a single run suffice?
-  answers:
+- ask:
+    practitioner: Can I predict a large model's loss from just one smaller model?
+    unsorted:
+    - Is it possible to reuse scaling parameters from another model family?
+    - Do I need to train a whole ladder of models, or can a single run suffice?
+  answered_by:
   - one-model
   - family-params-differ
-- q:
-  - Do different model families have different scaling law parameters?
-  - Does architecture change the exponents in a scaling law?
-  - Can a scaling law be transferred between architectures unchanged?
-  answers:
+- ask:
+    unsorted:
+    - Do different model families have different scaling law parameters?
+    - Does architecture change the exponents in a scaling law?
+    - Can a scaling law be transferred between architectures unchanged?
+  answered_by:
   - family-params-differ
   - one-model
-- q:
-  - Is it better to train the target model partially instead of training many small models?
-  - How much of the full training run of a target LLM is needed to extrapolate its final loss?
-  - Can I stop a big pretraining run early and predict where the loss will land?
-  answers:
+- ask:
+    practitioner: Can I stop a big pretraining run early and predict where the loss will land?
+    unsorted:
+    - Is it better to train the target model partially instead of training many small models?
+    - How much of the full training run of a target LLM is needed to extrapolate its final
+      loss?
+  answered_by:
   - partial-target
-- q:
-  - How much better is fitting a scaling law than just taking the best small model's loss?
-  - Are naive baselines enough instead of fitting a scaling law?
-  - What error do no-fit baselines get when predicting a large model's loss?
-  answers:
+- ask:
+    unsorted:
+    - How much better is fitting a scaling law than just taking the best small model's loss?
+    - Are naive baselines enough instead of fitting a scaling law?
+    - What error do no-fit baselines get when predicting a large model's loss?
+  answered_by:
   - baselines
-- q:
-  - Is it better to train more small models or one big model for a scaling law?
-  - How many preliminary models are needed for a reliable scaling law?
-  - Does adding more models help scaling law accuracy even if they are small?
-  answers:
+- ask:
+    unsorted:
+    - Is it better to train more small models or one big model for a scaling law?
+    - How many preliminary models are needed for a reliable scaling law?
+    - Does adding more models help scaling law accuracy even if they are small?
+  answered_by:
   - more-small-models
   - model-size
-- q:
-  - How large should the biggest preliminary model be when fitting a scaling law?
-  - Does using models closer in size to the target improve extrapolation?
-  - How far up in parameter count can a scaling law extrapolate reliably?
-  answers:
+- ask:
+    unsorted:
+    - How large should the biggest preliminary model be when fitting a scaling law?
+    - Does using models closer in size to the target improve extrapolation?
+    - How far up in parameter count can a scaling law extrapolate reliably?
+  answered_by:
   - model-size
   - more-small-models
-- q:
-  - Can I detect which preliminary models are bad to fit a scaling law on?
-  - Does cross-validation help remove outlier models from a scaling law fit?
-  - Why is scaling law estimation noisy when one model behaves badly?
-  answers:
+- ask:
+    practitioner: Can I detect which preliminary models are bad to fit a scaling law on?
+    unsorted:
+    - Does cross-validation help remove outlier models from a scaling law fit?
+    - Why is scaling law estimation noisy when one model behaves badly?
+  answered_by:
   - cv-fails
   - more-small-models
-- q:
-  - Does the Chinchilla scaling law form have redundant parameters?
-  - How many independent degrees of freedom do fitted scaling law parameters actually have?
-  - Are the parameter and token scaling coefficients correlated across model families?
-  answers:
+- ask:
+    unsorted:
+    - Does the Chinchilla scaling law form have redundant parameters?
+    - How many independent degrees of freedom do fitted scaling law parameters actually have?
+    - Are the parameter and token scaling coefficients correlated across model families?
+  answered_by:
   - degrees-of-freedom
-- q:
-  - Can scaling laws extrapolate downward to smaller models?
-  - Does predicting a small model's loss from larger models work?
-  - How much training is needed to fit a scaling law that scales down?
-  answers:
+- ask:
+    unsorted:
+    - Can scaling laws extrapolate downward to smaller models?
+    - Does predicting a small model's loss from larger models work?
+    - How much training is needed to fit a scaling law that scales down?
+  answered_by:
   - scale-down
 terminology:
   scaled model family: A set of language models differing only in parameter count and number

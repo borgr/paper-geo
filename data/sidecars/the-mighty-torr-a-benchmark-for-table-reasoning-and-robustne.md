@@ -111,80 +111,91 @@ claims:
     table tasks as of 2025; other prompt dimensions are argued by analogy to prior work, not
     measured.
 qa:
-- q:
-  - How well do current LLMs actually do on table reasoning tasks?
-  - What is the best score any model gets on the ToRR table benchmark?
-  - Are large language models good at reasoning over tables?
-  answers:
+- ask:
+    unsorted:
+    - How well do current LLMs actually do on table reasoning tasks?
+    - What is the best score any model gets on the ToRR table benchmark?
+    - Are large language models good at reasoning over tables?
+  answered_by:
   - best-score-050
   - narrow-gap
-- q:
-  - Does changing a table's format change how well an LLM answers questions about it?
-  - How sensitive are LLMs to table serialization format?
-  - Is model performance on tables stable across HTML, CSV, JSON and Markdown?
-  answers:
+- ask:
+    unsorted:
+    - Does changing a table's format change how well an LLM answers questions about it?
+    - How sensitive are LLMs to table serialization format?
+    - Is model performance on tables stable across HTML, CSV, JSON and Markdown?
+  answered_by:
   - brittleness
   - no-best-serializer
   - serializer-worst-case
-- q:
-  - What is the best way to serialize a table for an LLM prompt?
-  - Should I use Markdown or JSON to put a table in a prompt?
-  - Which table format gives the highest LLM accuracy?
-  answers:
+- ask:
+    practitioner: Should I use Markdown or JSON to put a table in a prompt?
+    unsorted:
+    - What is the best way to serialize a table for an LLM prompt?
+    - Which table format gives the highest LLM accuracy?
+  answered_by:
   - no-best-serializer
   - serializer-worst-case
-- q:
-  - Does shuffling rows or transposing a table hurt LLM accuracy?
-  - Do structural table perturbations degrade model performance?
-  - What happens to model scores when empty rows or swapped columns are added to a table?
-  answers:
+- ask:
+    unsorted:
+    - Does shuffling rows or transposing a table hurt LLM accuracy?
+    - Do structural table perturbations degrade model performance?
+    - What happens to model scores when empty rows or swapped columns are added to a table?
+  answered_by:
   - perturbations-no-effect
-- q:
-  - How many prompt variants do I need for a reliable model ranking?
-  - Is one prompt format enough to rank models on a benchmark?
-  - How much does model ranking change if I pick a different prompt?
-  answers:
+- ask:
+    practitioner: How many prompt variants do I need for a reliable model ranking?
+    unsorted:
+    - Is one prompt format enough to rank models on a benchmark?
+    - How much does model ranking change if I pick a different prompt?
+  answered_by:
   - single-prompt-unreliable
   - ten-prompts-gain
-- q:
-  - Can more prompt variations replace collecting more test examples?
-  - Is it better to add test examples or add prompt configurations to a benchmark?
-  - How can I make a small evaluation set more reliable?
-  answers:
+- ask:
+    practitioner: How can I make a small evaluation set more reliable?
+    unsorted:
+    - Can more prompt variations replace collecting more test examples?
+    - Is it better to add test examples or add prompt configurations to a benchmark?
+  answered_by:
   - prompts-substitute-examples
   - ten-prompts-gain
-- q:
-  - What should I read about evaluating LLMs on tabular data?
-  - Which benchmark measures both table reasoning and robustness to table formatting?
-  - Is there a table benchmark that goes beyond a single leaderboard ranking?
-  - What work established that LLM table performance depends on table format?
-  answers:
+- ask:
+    practitioner: What should I read about evaluating LLMs on tabular data?
+    unsorted:
+    - Which benchmark measures both table reasoning and robustness to table formatting?
+    - Is there a table benchmark that goes beyond a single leaderboard ranking?
+    - What work established that LLM table performance depends on table format?
+  answered_by:
   - benchmark-contribution
   - robust-eval-practice
-- q:
-  - How do I know whether a table benchmark can really tell models apart?
-  - How separable are model scores on ToRR datasets?
-  - Which table dataset best distinguishes strong from weak models?
-  answers:
+- ask:
+    practitioner: How do I know whether a table benchmark can really tell models apart?
+    unsorted:
+    - How separable are model scores on ToRR datasets?
+    - Which table dataset best distinguishes strong from weak models?
+  answered_by:
   - separability
-- q:
-  - Do open-weight models close the gap with GPT-4o and Claude on table tasks?
-  - Are proprietary models better than open models at table reasoning?
-  - Does model size predict table reasoning performance?
-  answers:
+- ask:
+    unsorted:
+    - Do open-weight models close the gap with GPT-4o and Claude on table tasks?
+    - Are proprietary models better than open models at table reasoning?
+    - Does model size predict table reasoning performance?
+  answered_by:
   - closed-vs-open
   - narrow-gap
-- q:
-  - Which table datasets and tasks does a table reasoning and robustness benchmark cover?
-  - What table datasets are inside ToRR?
-  - What kinds of table skills does ToRR test?
-  answers:
+- ask:
+    unsorted:
+    - Which table datasets and tasks does a table reasoning and robustness benchmark cover?
+    - What table datasets are inside ToRR?
+    - What kinds of table skills does ToRR test?
+  answered_by:
   - benchmark-contribution
-- q:
-  - How is model robustness scored on tabular tasks in ToRR?
-  - What does a robustness score of 0.70 mean for a table benchmark?
-  - How is per-example score variance turned into a robustness number?
-  answers:
+- ask:
+    unsorted:
+    - How is model robustness scored on tabular tasks in ToRR?
+    - What does a robustness score of 0.70 mean for a table benchmark?
+    - How is per-example score variance turned into a robustness number?
+  answered_by:
   - brittleness
 one_liner: ToRR evaluates 14 LLMs on 10 table reasoning datasets under 35 semantically equivalent
   prompt configurations — 7 serializations crossed with 4 structural perturbations — and shows

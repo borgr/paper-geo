@@ -121,77 +121,91 @@ claims:
     per dataset, and no dev set is assumed.
   evidence: Section 2
 qa:
-- q:
-  - How can I improve text classification accuracy when I only have a few dozen labeled examples?
-  - What helps BERT fine-tuning in a cold-start setting with scarce labels?
-  - How much does clustering-based inter-training help with 64 labeled examples?
-  answers:
+- ask:
+    practitioner: How can I improve text classification accuracy when I only have a few dozen
+      labeled examples?
+    unsorted:
+    - What helps BERT fine-tuning in a cold-start setting with scarce labels?
+    - How much does clustering-based inter-training help with 64 labeled examples?
+  answered_by:
   - topical-gain-64
   - significance-budget
-- q:
-  - Is clustering better than continued MLM pre-training on domain data as an intermediate
-    task?
-  - Does further pre-training with masked language modeling beat training on cluster labels?
-  - Should I do domain-adaptive MLM or cluster prediction before fine-tuning BERT?
-  answers:
+- ask:
+    practitioner: Should I do domain-adaptive MLM or cluster prediction before fine-tuning
+      BERT?
+    unsorted:
+    - Is clustering better than continued MLM pre-training on domain data as an intermediate
+      task?
+    - Does further pre-training with masked language modeling beat training on cluster labels?
+  answered_by:
   - beats-mlm
   - complementary
-- q:
-  - When does cluster-based inter-training fail to help text classification?
-  - Does Cluster & Tune work for sentiment analysis or spam detection?
-  - Why does clustering-based pre-finetuning help topical tasks but not stylistic ones?
-  answers:
+- ask:
+    unsorted:
+    - When does cluster-based inter-training fail to help text classification?
+    - Does Cluster & Tune work for sentiment analysis or spam detection?
+    - Why does clustering-based pre-finetuning help topical tasks but not stylistic ones?
+  answered_by:
   - nontopical-no-gain
   - nmi-predicts-gain
-- q:
-  - Which clustering algorithm should be used to generate pseudo-labels for intermediate training?
-  - Is sequential Information Bottleneck over bag-of-words better than K-means over GloVe
-    for inter-training?
-  - Does the choice of clustering method matter for BERT_IT:CLUST?
-  answers:
+- ask:
+    unsorted:
+    - Which clustering algorithm should be used to generate pseudo-labels for intermediate
+      training?
+    - Is sequential Information Bottleneck over bag-of-words better than K-means over GloVe
+      for inter-training?
+    - Does the choice of clustering method matter for BERT_IT:CLUST?
+  answered_by:
   - sib-best-clustering
-- q:
-  - Could a simple bag-of-words classifier match cluster-based BERT inter-training in low-label
-    settings?
-  - Do Naive Bayes and SVM baselines explain the gains from clustering-based inter-training?
-  - Is a nearest-cluster label-propagation classifier as good as inter-trained BERT?
-  answers:
+- ask:
+    unsorted:
+    - Could a simple bag-of-words classifier match cluster-based BERT inter-training in low-label
+      settings?
+    - Do Naive Bayes and SVM baselines explain the gains from clustering-based inter-training?
+    - Is a nearest-cluster label-propagation classifier as good as inter-trained BERT?
+  answered_by:
   - not-just-bow
   - clusters-alone-insufficient
-- q:
-  - What changes in BERT's sentence embeddings after training on cluster labels?
-  - Does inter-training on clusters make same-class representations closer together?
-  - Is there evidence that cluster inter-training gives a better starting point for fine-tuning?
-  answers:
+- ask:
+    unsorted:
+    - What changes in BERT's sentence embeddings after training on cluster labels?
+    - Does inter-training on clusters make same-class representations closer together?
+    - Is there evidence that cluster inter-training gives a better starting point for fine-tuning?
+  answered_by:
   - embeddings-tighter
-- q:
-  - How expensive is it to add a clustering-based intermediate training phase?
-  - What is the runtime cost of Cluster & Tune?
-  - How long does one inter-training epoch over cluster labels take on a single GPU?
-  answers:
+- ask:
+    unsorted:
+    - How expensive is it to add a clustering-based intermediate training phase?
+    - What is the runtime cost of Cluster & Tune?
+    - How long does one inter-training epoch over cluster labels take on a single GPU?
+  answered_by:
   - cheap-to-run
-- q:
-  - What should I read about using unsupervised clustering as pseudo-labels for NLP transfer
-    learning?
-  - Which paper introduced clustering as an intermediate task between pre-training and fine-tuning
-    for text classification?
-  - Where should I start reading about cold-start text classification with pre-trained language
-    models?
-  answers:
+- ask:
+    practitioner: What should I read about using unsupervised clustering as pseudo-labels
+      for NLP transfer learning?
+    unsorted:
+    - Which paper introduced clustering as an intermediate task between pre-training and fine-tuning
+      for text classification?
+    - Where should I start reading about cold-start text classification with pre-trained language
+      models?
+  answered_by:
   - context-cold-start
   - context-no-extra-labels
-- q:
-  - Up to what labeling budget does the clustering intermediate phase still pay off?
-  - Does the benefit of cluster-based inter-training disappear with more labeled data?
-  - At how many labeled examples do the gains from cluster pseudo-labels become insignificant?
-  answers:
+- ask:
+    unsorted:
+    - Up to what labeling budget does the clustering intermediate phase still pay off?
+    - Does the benefit of cluster-based inter-training disappear with more labeled data?
+    - At how many labeled examples do the gains from cluster pseudo-labels become insignificant?
+  answered_by:
   - significance-budget
   - topical-gain-64
-- q:
-  - Do I need extra labeled data from another task to use clustering as an intermediate task?
-  - What data does Cluster & Tune require beyond the few target-task labels?
-  - Can the intermediate phase be run without any annotation at all?
-  answers:
+- ask:
+    practitioner: Do I need extra labeled data from another task to use clustering as an intermediate
+      task?
+    unsorted:
+    - What data does Cluster & Tune require beyond the few target-task labels?
+    - Can the intermediate phase be run without any annotation at all?
+  answered_by:
   - context-no-extra-labels
   - cheap-to-run
 misreadings:

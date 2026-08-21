@@ -102,75 +102,87 @@ claims:
     8.
   evidence: Figure 2 and Section 4.3
 qa:
-- q:
-  - Do people's prompts change in a systematic way as they retry a text-to-image model?
-  - How do user prompts evolve across iterations with Midjourney?
-  - Does prompt length or perplexity drift over repeated image generation attempts?
-  answers:
+- ask:
+    unsorted:
+    - Do people's prompts change in a systematic way as they retry a text-to-image model?
+    - How do user prompts evolve across iterations with Midjourney?
+    - Does prompt length or perplexity drift over repeated image generation attempts?
+  answered_by:
   - monotone-thread-trends
   - both-explanations-supported
-- q:
-  - What makes a text-to-image prompt more likely to produce an image the user keeps?
-  - How do upscaled Midjourney prompts differ from ones that were not upscaled?
-  - Are longer or lower-perplexity prompts associated with better image outcomes?
-  answers:
+- ask:
+    unsorted:
+    - What makes a text-to-image prompt more likely to produce an image the user keeps?
+    - How do upscaled Midjourney prompts differ from ones that were not upscaled?
+    - Are longer or lower-perplexity prompts associated with better image outcomes?
+  answered_by:
   - upscaled-prompts-differ
   - concreteness-not-significant
-- q:
-  - Can you tell from the prompt alone whether a user liked the generated image?
-  - How accurately does a classifier predict image upscaling from text or from the image?
-  - Is user satisfaction with a generated image predictable from partial input?
-  answers:
+- ask:
+    unsorted:
+    - Can you tell from the prompt alone whether a user liked the generated image?
+    - How accurately does a classifier predict image upscaling from text or from the image?
+    - Is user satisfaction with a generated image predictable from partial input?
+  answered_by:
   - prompt-only-classifier
-- q:
-  - Is there a dataset of multi-turn text-to-image prompting sessions?
-  - Where can I get Midjourney prompts with images, upscale labels and user ids?
-  - What data exists for studying iterative prompting behaviour?
-  answers:
+- ask:
+    practitioner: Where can I get Midjourney prompts with images, upscale labels and user
+      ids?
+    unsorted:
+    - Is there a dataset of multi-turn text-to-image prompting sessions?
+    - What data exists for studying iterative prompting behaviour?
+  answered_by:
   - midjourney-threads-dataset
   - thread-length-distribution
-- q:
-  - What should I read about how humans adapt their language to generative models?
-  - Which paper studies human-model linguistic alignment in text-to-image prompting?
-  - What work established that users drift toward a model's preferred prompt style?
-  answers:
+- ask:
+    practitioner: What should I read about how humans adapt their language to generative models?
+    unsorted:
+    - Which paper studies human-model linguistic alignment in text-to-image prompting?
+    - What work established that users drift toward a model's preferred prompt style?
+  answered_by:
   - iterative-prompting-dynamics-agenda
   - rlhf-data-caution
-- q:
-  - Is it safe to use logged user prompts and upscale clicks as RLHF preference data?
-  - What are the risks of training on human feedback collected from text-to-image logs?
-  - Why might reusing Midjourney user data bias a model?
-  answers:
+- ask:
+    unsorted:
+    - Is it safe to use logged user prompts and upscale clicks as RLHF preference data?
+    - What are the risks of training on human feedback collected from text-to-image logs?
+    - Why might reusing Midjourney user data bias a model?
+  answered_by:
   - rlhf-data-caution
   - both-explanations-supported
-- q:
-  - Do prompt-convergence findings hold outside Midjourney?
-  - Do the same iterative prompting trends appear with Stable Diffusion data?
-  - Does the analysis replicate on DiffusionDB?
-  answers:
+- ask:
+    unsorted:
+    - Do prompt-convergence findings hold outside Midjourney?
+    - Do the same iterative prompting trends appear with Stable Diffusion data?
+    - Does the analysis replicate on DiffusionDB?
+  answered_by:
   - diffusiondb-replication
-- q:
-  - How do you decide whether two consecutive prompts belong to the same generation attempt?
-  - How were Midjourney prompts grouped into interaction threads, and how well does it work?
-  - Does an intersection-over-union heuristic beat BERTScore for segmenting prompt sessions?
-  answers:
+- ask:
+    unsorted:
+    - How do you decide whether two consecutive prompts belong to the same generation attempt?
+    - How were Midjourney prompts grouped into interaction threads, and how well does it work?
+    - Does an intersection-over-union heuristic beat BERTScore for segmenting prompt sessions?
+  answered_by:
   - thread-split-agreement
-- q:
-  - Do users converge on a particular prompt length regardless of where they started?
-  - Is there evidence of a preferred 'good' prompt length range for image models?
-  - What does the split between lengthening and shortening Midjourney threads show?
-  answers:
+- ask:
+    unsorted:
+    - Do users converge on a particular prompt length regardless of where they started?
+    - Is there evidence of a preferred 'good' prompt length range for image models?
+    - What does the split between lengthening and shortening Midjourney threads show?
+  answered_by:
   - length-convergence
-- q:
-  - Do users make their prompts more concrete as they iterate?
-  - Does word concreteness predict whether a generated image gets upscaled?
-  answers:
+- ask:
+    unsorted:
+    - Do users make their prompts more concrete as they iterate?
+    - Does word concreteness predict whether a generated image gets upscaled?
+  answered_by:
   - concreteness-not-significant
-- q:
-  - Are so-called magic words like '8K' and 'highly detailed' actually associated with kept
-    images?
-  - Do users add more aesthetic keywords as an image-generation session goes on?
-  answers:
+- ask:
+    unsorted:
+    - Are so-called magic words like '8K' and 'highly detailed' actually associated with kept
+      images?
+    - Do users add more aesthetic keywords as an image-generation session goes on?
+  answered_by:
   - upscaled-prompts-differ
   - monotone-thread-trends
 one_liner: A dataset of 107,051 iterative Midjourney prompting threads shows that user prompts

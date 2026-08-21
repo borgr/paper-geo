@@ -39,9 +39,10 @@ import urllib.parse
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, ROOT, is_preprint_venue,  # noqa: E402
+from common import (BUILD, DATA, ROOT, answered_by, is_preprint_venue,  # noqa: E402
                     load_config, norm_title, note_fetch, org_name, paper_doi,
-                    read_yaml, short_venue, slugify, social_url, venue_is_conference)
+                    phrasings, read_yaml, short_venue, slugify, social_url,
+                    venue_is_conference)
 from ownership import write_manifest  # noqa: E402
 
 OUT = os.path.join(BUILD, "site")
@@ -436,20 +437,20 @@ def faq_jsonld(p: dict, sc: dict, cfg) -> dict | None:
     url = f"{base}/{p['slug']}/"
     entities = []
     for qa in sc.get("qa") or []:
-        phrasings = [" ".join(q.split()) for q in (qa.get("q") or []) if q.strip()]
-        answers = [claims[cid] for cid in (qa.get("answers") or []) if cid in claims]
-        if not phrasings or not answers:
+        asked = [" ".join(q.split()) for q in phrasings(qa)]
+        answers = [claims[cid] for cid in answered_by(qa) if cid in claims]
+        if not asked or not answers:
             continue
         # The claim verbatim with its scope, never a paraphrase: the scope is the half
         # that stops the answer being quoted past what the paper supports.
         text = "\n\n".join(f"{' '.join(c['text'].split())} "
                            f"Holds for: {' '.join(c['scope'].split())}" for c in answers)
         node = {"@type": "Question",
-                "name": phrasings[0],
+                "name": asked[0],
                 "answerCount": 1,
                 "acceptedAnswer": {"@type": "Answer", "text": text, "url": url}}
-        if len(phrasings) > 1:
-            node["alternateName"] = phrasings[1:]
+        if len(asked) > 1:
+            node["alternateName"] = asked[1:]
         entities.append(node)
     if not entities:
         return None
@@ -564,9 +565,9 @@ def paper_page(p: dict, sc: dict, cfg) -> str:
         b.append("<h2>Questions this paper answers</h2>")
         b.append('<dl class="qa">')
         for qa in sc["qa"]:
-            for q in qa.get("q") or []:
+            for q in phrasings(qa):
                 b.append(f"<dt>{E(q)}</dt>")
-            for cid in qa.get("answers") or []:
+            for cid in answered_by(qa):
                 c = claims.get(cid)
                 if not c:
                     continue
@@ -756,7 +757,7 @@ def build(cfg) -> dict:
         # a reader types rather than on 113 titles. First phrasing only: the rest are the
         # same question, and this file is an index, not the answer.
         for qa in sc.get("qa") or []:
-            first = next((" ".join(q.split()) for q in (qa.get("q") or []) if q.strip()), "")
+            first = next((" ".join(q.split()) for q in phrasings(qa)), "")
             if first:
                 questions.append(f"- {first} — [{title}]({site}/papers/{slug}/llms.txt)")
 

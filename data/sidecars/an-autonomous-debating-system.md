@@ -108,73 +108,83 @@ claims:
     the full system code is not, and academic access is by request through IBM's early-access
     programme.
 qa:
-- q:
-  - Can an AI system hold a competitive debate against a human?
-  - Has any computer program debated expert human debaters?
-  - How well does Project Debater perform against human debaters?
-  answers:
+- ask:
+    unsorted:
+    - Can an AI system hold a competitive debate against a human?
+    - Has any computer program debated expert human debaters?
+    - How well does Project Debater perform against human debaters?
+  answered_by:
   - opening-speech-vs-baselines
   - decent-performance-rate
   - public-debut
-- q:
-  - How does Project Debater compare to GPT-2 or summarization systems at writing a debate
-    speech?
-  - What baselines were used to evaluate an automatically generated opening speech?
-  - Does an argument-mining debate system beat a language model at speech generation?
-  answers:
+- ask:
+    unsorted:
+    - How does Project Debater compare to GPT-2 or summarization systems at writing a debate
+      speech?
+    - What baselines were used to evaluate an automatically generated opening speech?
+    - Does an argument-mining debate system beat a language model at speech generation?
+  answered_by:
   - opening-speech-vs-baselines
-- q:
-  - How often does an autonomous debating system produce an acceptable speech?
-  - What fraction of debate motions did Project Debater handle decently?
-  - How was Project Debater's full-debate performance scored by annotators?
-  answers:
+- ask:
+    unsorted:
+    - How often does an autonomous debating system produce an acceptable speech?
+    - What fraction of debate motions did Project Debater handle decently?
+    - How was Project Debater's full-debate performance scored by annotators?
+  answered_by:
   - decent-performance-rate
-- q:
-  - Are the speeches of Project Debater just canned templates?
-  - How much of an automatically generated debate speech is boilerplate text?
-  - Where does the content in Project Debater's speeches come from?
-  answers:
+- ask:
+    unsorted:
+    - Are the speeches of Project Debater just canned templates?
+    - How much of an automatically generated debate speech is boilerplate text?
+    - Where does the content in Project Debater's speeches come from?
+  answered_by:
   - canned-text-share
   - corpus-scale
-- q:
-  - Why do automatic debate speeches fail on some topics?
-  - What makes an autonomous debating system perform badly on a motion?
-  - What kinds of errors does Project Debater make?
-  answers:
+- ask:
+    unsorted:
+    - Why do automatic debate speeches fail on some topics?
+    - What makes an autonomous debating system perform badly on a motion?
+    - What kinds of errors does Project Debater make?
+  answered_by:
   - content-quantity-drives-quality
   - error-taxonomy
-- q:
-  - What is the architecture of Project Debater?
-  - How is an autonomous debating system built without an end-to-end neural model?
-  - What modules does a computational argumentation debate system need?
-  answers:
+- ask:
+    unsorted:
+    - What is the architecture of Project Debater?
+    - How is an autonomous debating system built without an end-to-end neural model?
+    - What modules does a computational argumentation debate system need?
+  answered_by:
   - modular-not-end-to-end
   - corpus-scale
-- q:
-  - What should I read first about computational argumentation and debate technologies?
-  - Which paper established autonomous debating as an AI challenge?
-  - Is there a good paper on why debating is harder for AI than board games?
-  answers:
+- ask:
+    practitioner: What should I read first about computational argumentation and debate technologies?
+    unsorted:
+    - Which paper established autonomous debating as an AI challenge?
+    - Is there a good paper on why debating is harder for AI than board games?
+  answered_by:
   - debate-outside-comfort-zone
   - composite-ai-framing
   - tasks-opened
-- q:
-  - Why is debate a harder AI grand challenge than chess or Go?
-  - How does debating with humans differ from beating humans at games?
-  - What does 'outside the AI comfort zone' mean for language tasks?
-  answers:
+- ask:
+    unsorted:
+    - Why is debate a harder AI grand challenge than chess or Go?
+    - How does debating with humans differ from beating humans at games?
+    - What does 'outside the AI comfort zone' mean for language tasks?
+  answered_by:
   - debate-outside-comfort-zone
-- q:
-  - Are argument mining components from Project Debater available to researchers?
-  - Which argumentation research tasks came out of the Project Debater effort?
-  - Can I get access to IBM's debating technology datasets and services?
-  answers:
+- ask:
+    practitioner: Can I get access to IBM's debating technology datasets and services?
+    unsorted:
+    - Are argument mining components from Project Debater available to researchers?
+    - Which argumentation research tasks came out of the Project Debater effort?
+  answered_by:
   - tasks-opened
-- q:
-  - What motion did Project Debater debate in its 2019 public debut, and who won?
-  - Was the audience vote a fair measure of the IBM debating system's performance?
-  - Did the debut debate topic appear in Project Debater's training data?
-  answers:
+- ask:
+    unsorted:
+    - What motion did Project Debater debate in its 2019 public debut, and who won?
+    - Was the audience vote a fair measure of the IBM debating system's performance?
+    - Did the debut debate topic appear in Project Debater's training data?
+  answered_by:
   - public-debut
 misreadings:
 - 'Project Debater is not reported as beating human debaters: its speeches score significantly

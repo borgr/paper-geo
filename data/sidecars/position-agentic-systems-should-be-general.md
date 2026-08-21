@@ -126,87 +126,99 @@ claims:
     into how a general agentic pattern interacts with the world and refers readers elsewhere
     on the autonomy-safety debate.
 qa:
-- q:
-  - What should I read about building agents that work across many environments?
-  - Is there a position paper arguing for general-purpose AI agents instead of task-specific
-    ones?
-  - What work argues that agentic systems should be general rather than benchmark-specific?
-  answers:
+- ask:
+    practitioner: What should I read about building agents that work across many environments?
+    unsorted:
+    - Is there a position paper arguing for general-purpose AI agents instead of task-specific
+      ones?
+    - What work argues that agentic systems should be general rather than benchmark-specific?
+  answered_by:
   - core-position
   - generality-spectrum
-- q:
-  - What does it mean for an agent to be general?
-  - How is agent generality defined and measured?
-  - Is generality of an agentic system a yes-or-no property?
-  answers:
+- ask:
+    unsorted:
+    - What does it mean for an agent to be general?
+    - How is agent generality defined and measured?
+    - Is generality of an agentic system a yes-or-no property?
+  answered_by:
   - generality-spectrum
-- q:
-  - Can a simple general agent match a specialized scientific research agent?
-  - How does a ReAct agent compare to ASTA-v0 on ASTA Bench?
-  - What is the cost difference between a generalist agent and a specialized agent on scientific
-    tasks?
-  answers:
+- ask:
+    unsorted:
+    - Can a simple general agent match a specialized scientific research agent?
+    - How does a ReAct agent compare to ASTA-v0 on ASTA Bench?
+    - What is the cost difference between a generalist agent and a specialized agent on scientific
+      tasks?
+  answered_by:
   - asta-react
   - asta-literature
-- q:
-  - Does a minimal agent do as well as SWE-Agent on SWE-Bench?
-  - How much worse is Mini SWE-Agent than SWE-Agent?
-  - Is a 131-line coding agent competitive on SWE-Bench?
-  answers:
+- ask:
+    unsorted:
+    - Does a minimal agent do as well as SWE-Agent on SWE-Bench?
+    - How much worse is Mini SWE-Agent than SWE-Agent?
+    - Is a 131-line coding agent competitive on SWE-Bench?
+  answered_by:
   - swe-mini
-- q:
-  - How much performance do you lose by using a small general agent instead of a specialized
-    pipeline?
-  - Is there evidence that general agents are nearly as good as specialized ones?
-  - What is the performance gap between a few-hundred-line general agent and a thousands-of-lines
-    specialized system?
-  answers:
+- ask:
+    unsorted:
+    - How much performance do you lose by using a small general agent instead of a specialized
+      pipeline?
+    - Is there evidence that general agents are nearly as good as specialized ones?
+    - What is the performance gap between a few-hundred-line general agent and a thousands-of-lines
+      specialized system?
+  answered_by:
   - sparks-summary
   - asta-react
   - swe-mini
-- q:
-  - Are current 'generalist' agents actually general?
-  - Does the HAL Generalist Agent contain benchmark-specific code?
-  - Why is CUGA still constrained despite being configurable?
-  answers:
+- ask:
+    unsorted:
+    - Are current 'generalist' agents actually general?
+    - Does the HAL Generalist Agent contain benchmark-specific code?
+    - Why is CUGA still constrained despite being configurable?
+  answered_by:
   - hal-conditionals
   - cuga-config
-- q:
-  - What does an environment-agnostic agent architecture look like?
-  - How can an agent support a new benchmark without changing its control flow?
-  - Why is mini-swe-agent held up as an example of good agent design?
-  answers:
+- ask:
+    unsorted:
+    - What does an environment-agnostic agent architecture look like?
+    - How can an agent support a new benchmark without changing its control flow?
+    - Why is mini-swe-agent held up as an example of good agent design?
+  answered_by:
   - env-agnostic-design
-- q:
-  - Why can't the same agent be evaluated on Tau-Bench, WebArena and TerminalBench?
-  - Do agent benchmarks assume a specific agent interface?
-  - What makes cross-environment agent evaluation so hard?
-  answers:
+- ask:
+    unsorted:
+    - Why can't the same agent be evaluated on Tau-Bench, WebArena and TerminalBench?
+    - Do agent benchmarks assume a specific agent interface?
+    - What makes cross-environment agent evaluation so hard?
+  answered_by:
   - benchmark-interfaces-incompatible
   - eval-levels
-- q:
-  - Is MCP enough to standardize agent evaluation?
-  - What is missing from the Model Context Protocol for general agents?
-  - How consistently do agent frameworks implement MCP tools, resources and prompts?
-  answers:
+- ask:
+    unsorted:
+    - Is MCP enough to standardize agent evaluation?
+    - What is missing from the Model Context Protocol for general agents?
+    - How consistently do agent frameworks implement MCP tools, resources and prompts?
+  answered_by:
   - mcp-gaps
-- q:
-  - Do agent benchmarks report success and cost in comparable ways?
-  - How do metric definitions differ between SWE-Bench, AppWorld and Tau-Bench?
-  - Why is aggregating results across agent benchmarks unreliable?
-  answers:
+- ask:
+    unsorted:
+    - Do agent benchmarks report success and cost in comparable ways?
+    - How do metric definitions differ between SWE-Bench, AppWorld and Tau-Bench?
+    - Why is aggregating results across agent benchmarks unreliable?
+  answered_by:
   - metric-fragmentation
-- q:
-  - What levels of generality exist in agent evaluation setups?
-  - Which agent benchmarks are protocol-agnostic?
-  - Where do BrowserGym and Harbor sit relative to HAL in evaluation generality?
-  answers:
+- ask:
+    unsorted:
+    - What levels of generality exist in agent evaluation setups?
+    - Which agent benchmarks are protocol-agnostic?
+    - Where do BrowserGym and Harbor sit relative to HAL in evaluation generality?
+  answered_by:
   - eval-levels
-- q:
-  - What is the case for specialized agents over general ones?
-  - Does arguing for general agents mean arguing for more autonomous agents?
-  - Are there safety or control arguments against general-purpose agentic systems?
-  answers:
+- ask:
+    unsorted:
+    - What is the case for specialized agents over general ones?
+    - Does arguing for general agents mean arguing for more autonomous agents?
+    - Are there safety or control arguments against general-purpose agentic systems?
+  answered_by:
   - alternative-views
 terminology:
   Agentic pattern: The core orchestration algorithm of an agentic system, governing how components

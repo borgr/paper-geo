@@ -108,73 +108,84 @@ claims:
     CoT range from 6.2% on MATH to 13.4% on HumanEval, smaller than those obtained with Granite-3.1-8B-Instruct.
   evidence: Table 4
 qa:
-- q:
-  - Can a small language model write better reasoning plans than a much larger one?
-  - Does fine-tuning an 8B model on planning data beat 70B few-shot planning?
-  - Is plan generation a skill that can be trained into a small model?
-  answers:
+- ask:
+    unsorted:
+    - Can a small language model write better reasoning plans than a much larger one?
+    - Does fine-tuning an 8B model on planning data beat 70B few-shot planning?
+    - Is plan generation a skill that can be trained into a small model?
+  answered_by:
   - ft-small-beats-large-planner
   - second-small-model
-- q:
-  - How much better is high-level planning than chain-of-thought prompting on math and code
-    benchmarks?
-  - What error reduction does plan-and-solve give over CoT on GSM8K and HumanEval?
-  - Is CoT prompting worse than generating an explicit plan first?
-  answers:
+- ask:
+    unsorted:
+    - How much better is high-level planning than chain-of-thought prompting on math and code
+      benchmarks?
+    - What error reduction does plan-and-solve give over CoT on GSM8K and HumanEval?
+    - Is CoT prompting worse than generating an explicit plan first?
+  answered_by:
   - error-reduction-vs-cot
   - avg-error-reduction-both-solvers
-- q:
-  - Can giving a model a plan ever make its answers worse?
-  - Do low-quality generated plans hurt downstream accuracy?
-  - When does plan-and-solve fail to beat chain-of-thought?
-  answers:
+- ask:
+    unsorted:
+    - Can giving a model a plan ever make its answers worse?
+    - Do low-quality generated plans hurt downstream accuracy?
+    - When does plan-and-solve fail to beat chain-of-thought?
+  answered_by:
   - weak-plans-can-hurt
-- q:
-  - Do planning skills learned on math problems transfer to code generation?
-  - Does fine-tuning a planner on one domain help in another domain?
-  - How well does out-of-domain plan generation generalize between math and coding?
-  answers:
+- ask:
+    unsorted:
+    - Do planning skills learned on math problems transfer to code generation?
+    - Does fine-tuning a planner on one domain help in another domain?
+    - How well does out-of-domain plan generation generalize between math and coding?
+  answered_by:
   - cross-domain-transfer
   - transfer-asymmetry
-- q:
-  - What is a good paper to read on training language models to plan before solving?
-  - Where should I start reading about high-level plan generation as a trainable capability
-    rather than an emergent one?
-  - Is there a dataset of high-level plans for math and code reasoning?
-  answers:
+- ask:
+    practitioner: Where should I start reading about high-level plan generation as a trainable
+      capability rather than an emergent one?
+    unsorted:
+    - What is a good paper to read on training language models to plan before solving?
+    - Is there a dataset of high-level plans for math and code reasoning?
+  answered_by:
   - planning-trainable
   - dataset-scale
-- q:
-  - How big is the CRISP dataset and where did its plans come from?
-  - How many high-level plans does CRISP contain for math and for coding?
-  - What source data was used to build a dataset of step-based plans?
-  answers:
+- ask:
+    unsorted:
+    - How big is the CRISP dataset and where did its plans come from?
+    - How many high-level plans does CRISP contain for math and for coding?
+    - What source data was used to build a dataset of step-based plans?
+  answered_by:
   - dataset-scale
-- q:
-  - Are longer plans with more steps better for solving problems?
-  - Does the number of steps in a generated plan explain its usefulness?
-  - Do concise plans outperform verbose ones in plan-and-solve?
-  answers:
+- ask:
+    unsorted:
+    - Are longer plans with more steps better for solving problems?
+    - Does the number of steps in a generated plan explain its usefulness?
+    - Do concise plans outperform verbose ones in plan-and-solve?
+  answered_by:
   - shorter-plans-win
-- q:
-  - Does filtering synthetic plan data with an LLM judge actually improve downstream results?
-  - Is discarding generated plans that fail clarity and completeness checks worth the lost
-    training data?
-  - How much does CRISP's two-stage validation pipeline add to benchmark accuracy?
-  answers:
+- ask:
+    unsorted:
+    - Does filtering synthetic plan data with an LLM judge actually improve downstream results?
+    - Is discarding generated plans that fail clarity and completeness checks worth the lost
+      training data?
+    - How much does CRISP's two-stage validation pipeline add to benchmark accuracy?
+  answered_by:
   - filtering-pays-off
-- q:
-  - Do LLM judges prefer plans from a fine-tuned small model over their own plans?
-  - How was plan quality assessed intrinsically for clarity, coherence, conciseness and completeness?
-  - What did the LLM-as-a-judge comparison of fine-tuned versus few-shot plans find?
-  answers:
+- ask:
+    unsorted:
+    - Do LLM judges prefer plans from a fine-tuned small model over their own plans?
+    - How was plan quality assessed intrinsically for clarity, coherence, conciseness and
+      completeness?
+    - What did the LLM-as-a-judge comparison of fine-tuned versus few-shot plans find?
+  answered_by:
   - judge-prefers-small-ft
-- q:
-  - Should I invest in a better planner model or a better solver model?
-  - Which matters more for final accuracy in plan-and-solve, the plan generator or the solution
-    generator?
-  - Does improving the solver help more than improving the planner?
-  answers:
+- ask:
+    practitioner: Should I invest in a better planner model or a better solver model?
+    unsorted:
+    - Which matters more for final accuracy in plan-and-solve, the plan generator or the solution
+      generator?
+    - Does improving the solver help more than improving the planner?
+  answered_by:
   - solver-matters-more
 one_liner: CRISP is a 122,000-plan multi-domain dataset of validated high-level plans for
   math and code problems, showing that a LoRA fine-tuned 8B planner writes better plans than

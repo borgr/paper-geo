@@ -109,71 +109,82 @@ claims:
     to be updated as new models and datasets appear.
   evidence: Section 5
 qa:
-- q:
-  - Where can I find a list of benchmarks known to be contaminated in LLM pre-training data?
-  - Is there a public database of data contamination evidence for NLP evaluation datasets?
-  - What resource tracks which evaluation datasets leaked into pre-training corpora?
-  answers:
+- ask:
+    practitioner: Where can I find a list of benchmarks known to be contaminated in LLM pre-training
+      data?
+    unsorted:
+    - Is there a public database of data contamination evidence for NLP evaluation datasets?
+    - What resource tracks which evaluation datasets leaked into pre-training corpora?
+  answered_by:
   - database-contribution
   - totals
-- q:
-  - What should I read first about data contamination in NLP evaluation?
-  - Which paper documents real cases of benchmark contamination rather than proposing a detection
-    method?
-  - Who compiled organized evidence of data contamination across models and corpora?
-  answers:
+- ask:
+    practitioner: What should I read first about data contamination in NLP evaluation?
+    unsorted:
+    - Which paper documents real cases of benchmark contamination rather than proposing a
+      detection method?
+    - Who compiled organized evidence of data contamination across models and corpora?
+  answered_by:
   - compiled-evidence-motivation
   - database-contribution
-- q:
-  - How many contamination reports were collected in the 2024 CONDA shared task?
-  - How large is the CONDA data contamination database?
-  - How many datasets and sources are covered by the CONDA contamination report?
-  answers:
+- ask:
+    unsorted:
+    - How many contamination reports were collected in the 2024 CONDA shared task?
+    - How large is the CONDA data contamination database?
+    - How many datasets and sources are covered by the CONDA contamination report?
+  answered_by:
   - totals
   - split-breakdown
-- q:
-  - Which pre-training corpora have the most reported contamination?
-  - Is C4 or the Pile contaminated with evaluation test sets?
-  - How many test sets were found in RedPajama v2 and OSCAR?
-  answers:
+- ask:
+    unsorted:
+    - Which pre-training corpora have the most reported contamination?
+    - Is C4 or the Pile contaminated with evaluation test sets?
+    - How many test sets were found in RedPajama v2 and OSCAR?
+  answered_by:
   - corpora-counts
-- q:
-  - Which language models have the most documented benchmark contamination?
-  - How much contamination evidence exists for GPT-3, GPT-4 and PaLM?
-  - Are closed models or open models more often reported as contaminated?
-  answers:
+- ask:
+    unsorted:
+    - Which language models have the most documented benchmark contamination?
+    - How much contamination evidence exists for GPT-3, GPT-4 and PaLM?
+    - Are closed models or open models more often reported as contaminated?
+  answered_by:
   - closed-models-counts
   - open-models-counts
-- q:
-  - Are popular leaderboard benchmarks like MMLU and GLUE contaminated?
-  - Which task types show the most reported contamination?
-  - Do widely downloaded evaluation datasets appear in contamination reports?
-  answers:
+- ask:
+    unsorted:
+    - Are popular leaderboard benchmarks like MMLU and GLUE contaminated?
+    - Which task types show the most reported contamination?
+    - Do widely downloaded evaluation datasets appear in contamination reports?
+  answered_by:
   - popular-benchmarks-contaminated
-- q:
-  - Are older or newer benchmarks more likely to be contaminated?
-  - Does a model's release date affect which datasets it is contaminated with?
-  - What publication years do the contaminated test sets come from?
-  answers:
+- ask:
+    unsorted:
+    - Are older or newer benchmarks more likely to be contaminated?
+    - Does a model's release date affect which datasets it is contaminated with?
+    - What publication years do the contaminated test sets come from?
+  answered_by:
   - dataset-years
   - newer-models-newer-data
-- q:
-  - What are the two main families of contamination detection methods?
-  - What is the difference between data-based and model-based contamination detection?
-  - How do you detect contamination when the pre-training data is not public?
-  answers:
+- ask:
+    unsorted:
+    - What are the two main families of contamination detection methods?
+    - What is the difference between data-based and model-based contamination detection?
+    - How do you detect contamination when the pre-training data is not public?
+  answered_by:
   - method-taxonomy
-- q:
-  - If a benchmark is absent from the CONDA contamination database, is it clean?
-  - How complete is the CONDA 2024 contamination report?
-  - What are the limits of the CONDA data contamination database as evidence?
-  answers:
+- ask:
+    unsorted:
+    - If a benchmark is absent from the CONDA contamination database, is it clean?
+    - How complete is the CONDA 2024 contamination report?
+    - What are the limits of the CONDA data contamination database as evidence?
+  answered_by:
   - coverage-limit
   - split-breakdown
-- q:
-  - How can I contribute new contamination evidence for a model or dataset?
-  - Is the CONDA contamination database still accepting submissions?
-  answers:
+- ask:
+    practitioner: How can I contribute new contamination evidence for a model or dataset?
+    unsorted:
+    - Is the CONDA contamination database still accepting submissions?
+  answered_by:
   - database-contribution
   - coverage-limit
 misreadings:

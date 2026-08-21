@@ -106,75 +106,85 @@ claims:
     per block; layer-normalization scores rise sharply in layers 5-8 for reasons the paper
     does not explain.
 qa:
-- q:
-  - How can I read a prediction out of a transformer's intermediate layer more accurately
-    than the logit lens?
-  - Is projecting hidden states straight onto the output embeddings the best way to inspect
-    intermediate layers?
-  - What improves on interpreting hidden representations in the final-layer space?
-  answers:
+- ask:
+    practitioner: How can I read a prediction out of a transformer's intermediate layer more
+      accurately than the logit lens?
+    unsorted:
+    - Is projecting hidden states straight onto the output embeddings the best way to inspect
+      intermediate layers?
+    - What improves on interpreting hidden representations in the final-layer space?
+  answered_by:
   - context-logit-lens-alternative
   - mat-vs-id-r2
   - gpt2-precision-gain
-- q:
-  - Do language models decide their output in early layers?
-  - How often does an early GPT-2 layer already contain the final next-token prediction?
-  - At what depth does BERT's masked-token answer become readable?
-  answers:
+- ask:
+    unsorted:
+    - Do language models decide their output in early layers?
+    - How often does an early GPT-2 layer already contain the final next-token prediction?
+    - At what depth does BERT's masked-token answer become readable?
+  answered_by:
   - gpt2-early-layers
   - bert-precision-gain
-- q:
-  - Can linear layer-skipping make early exiting cheaper?
-  - How many transformer layers can be skipped while keeping 95% accuracy?
-  - Does replacing the identity read-out in an early-exit confidence rule save compute?
-  answers:
+- ask:
+    unsorted:
+    - Can linear layer-skipping make early exiting cheaper?
+    - How many transformer layers can be skipped while keeping 95% accuracy?
+    - Does replacing the identity read-out in an early-exit confidence rule save compute?
+  answered_by:
   - early-exit-savings
-- q:
-  - Do learned layer-to-layer mappings still work on text from a different domain?
-  - Do linear shortcut matrices fitted on Wikipedia transfer to news sentences?
-  - Are the linear mappings for skipping transformer layers domain-specific?
-  answers:
+- ask:
+    unsorted:
+    - Do learned layer-to-layer mappings still work on text from a different domain?
+    - Do linear shortcut matrices fitted on Wikipedia transfer to news sentences?
+    - Are the linear mappings for skipping transformer layers domain-specific?
+  answered_by:
   - cross-distribution
-- q:
-  - Does the linear shortcut result hold for larger models?
-  - Was linear layer-skipping tested on more than one model size and architecture?
-  - Do linear cross-layer mappings work for both decoder-only and encoder-only models?
-  answers:
+- ask:
+    unsorted:
+    - Does the linear shortcut result hold for larger models?
+    - Was linear layer-skipping tested on more than one model size and architecture?
+    - Do linear cross-layer mappings work for both decoder-only and encoder-only models?
+  answered_by:
   - scale-robustness
   - mat-vs-id-r2
-- q:
-  - Which part of a transformer block can be replaced by a linear map with the least damage?
-  - Is attention or the feed-forward network easier to approximate linearly?
-  - Can individual sub-modules of a transformer be linearised?
-  answers:
+- ask:
+    unsorted:
+    - Which part of a transformer block can be replaced by a linear map with the least damage?
+    - Is attention or the feed-forward network easier to approximate linearly?
+    - Can individual sub-modules of a transformer be linearised?
+  answered_by:
   - attention-linearizable
-- q:
-  - Are the tokens read off intermediate layers actually plausible to a human?
-  - Was there a human evaluation of predictions decoded from BERT's hidden layers?
-  - How often are top-5 tokens from an intermediate layer grammatical in context?
-  answers:
+- ask:
+    unsorted:
+    - Are the tokens read off intermediate layers actually plausible to a human?
+    - Was there a human evaluation of predictions decoded from BERT's hidden layers?
+    - How often are top-5 tokens from an intermediate layer grammatical in context?
+  answered_by:
   - bert-plausibility
-- q:
-  - Is it better to jump straight to the last layer or to alternate real blocks with linear
-    jumps?
-  - Do partial layer skips beat a single mapping to the final layer?
-  - How should a schedule of linear jumps through a transformer be chosen?
-  answers:
+- ask:
+    unsorted:
+    - Is it better to jump straight to the last layer or to alternate real blocks with linear
+      jumps?
+    - Do partial layer skips beat a single mapping to the final layer?
+    - How should a schedule of linear jumps through a transformer be chosen?
+  answered_by:
   - alternation
-- q:
-  - What should I read about how much of transformer computation is linear?
-  - Which paper argues transformer inference has more linear structure than the residual stream
-    explains?
-  - Where does the claim that transformer layers can be short-cut with a single matrix come
-    from?
-  answers:
+- ask:
+    practitioner: What should I read about how much of transformer computation is linear?
+    unsorted:
+    - Which paper argues transformer inference has more linear structure than the residual
+      stream explains?
+    - Where does the claim that transformer layers can be short-cut with a single matrix come
+      from?
+  answered_by:
   - context-linearity-finding
   - context-logit-lens-alternative
-- q:
-  - Does short-cutting layers with a matrix require retraining the language model?
-  - How expensive is it to fit cross-layer linear mappings for a transformer?
-  - What training is needed to skip transformer layers linearly?
-  answers:
+- ask:
+    unsorted:
+    - Does short-cutting layers with a matrix require retraining the language model?
+    - How expensive is it to fit cross-layer linear mappings for a transformer?
+    - What training is needed to skip transformer layers linearly?
+  answered_by:
   - context-logit-lens-alternative
   - mat-vs-id-r2
 one_liner: Jump to Conclusions fits one least-squares matrix per pair of transformer layers,

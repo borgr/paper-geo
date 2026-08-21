@@ -113,75 +113,91 @@ claims:
     tasks; released at github.com/IBM/low-resource-text-classification-framework.
   evidence: Section 3.6
 qa:
-- q:
-  - Does active learning actually help BERT, or is BERT already good enough with few labels?
-  - Can active learning improve BERT text classification under a tiny annotation budget?
-  - How much does active learning gain over random sampling when fine-tuning BERT?
-  answers:
+- ask:
+    unsorted:
+    - Does active learning actually help BERT, or is BERT already good enough with few labels?
+    - Can active learning improve BERT text classification under a tiny annotation budget?
+    - How much does active learning gain over random sampling when fine-tuning BERT?
+  answered_by:
   - practical-gain
   - significance-imbalanced
-- q:
-  - Which active learning strategy works best with BERT?
-  - Is there a clear winner among uncertainty, core-set and discriminative active learning
-    for BERT?
-  - Should I pick least confidence or Core-Set for active learning with a transformer classifier?
-  answers:
+- ask:
+    practitioner: Should I pick least confidence or Core-Set for active learning with a transformer
+      classifier?
+    unsorted:
+    - Which active learning strategy works best with BERT?
+    - Is there a clear winner among uncertainty, core-set and discriminative active learning
+      for BERT?
+  answered_by:
   - no-winner
   - runtime
-- q:
-  - What happens if I bootstrap a classifier from keyword search results instead of random
-    labeling?
-  - Can active learning recover from a biased seed collected with keyword queries?
-  - Does starting from a keyword-query seed permanently hurt classifier quality?
-  answers:
+- ask:
+    practitioner: What happens if I bootstrap a classifier from keyword search results instead
+      of random labeling?
+    unsorted:
+    - Can active learning recover from a biased seed collected with keyword queries?
+    - Does starting from a keyword-query seed permanently hurt classifier quality?
+  answered_by:
   - gap-bridged
   - recall-driven
   - practical-scenario-framing
-- q:
-  - Does active learning improve precision or recall for rare-class text classification?
-  - Where does the F1 improvement come from when using active learning on skewed data?
-  answers:
+- ask:
+    unsorted:
+    - Does active learning improve precision or recall for rare-class text classification?
+    - Where does the F1 improvement come from when using active learning on skewed data?
+  answered_by:
   - recall-driven
-- q:
-  - How expensive is each active learning strategy to run per iteration with BERT?
-  - Which active learning selection methods are computationally cheap enough for a transformer?
-  - What is the runtime cost of EGL and Monte Carlo Dropout selection compared to random?
-  answers:
+- ask:
+    unsorted:
+    - How expensive is each active learning strategy to run per iteration with BERT?
+    - Which active learning selection methods are computationally cheap enough for a transformer?
+    - What is the runtime cost of EGL and Monte Carlo Dropout selection compared to random?
+  answered_by:
   - runtime
-- q:
-  - Is BERT fine-tuning stable when trained on 100 randomly labeled examples of a rare class?
-  - What goes wrong when fine-tuning BERT on a small, highly imbalanced labeled seed?
-  - How can a small imbalanced seed set be stabilised without more annotation budget?
-  answers:
+- ask:
+    unsorted:
+    - Is BERT fine-tuning stable when trained on 100 randomly labeled examples of a rare class?
+    - What goes wrong when fine-tuning BERT on a small, highly imbalanced labeled seed?
+    - How can a small imbalanced seed set be stabilised without more annotation budget?
+  answered_by:
   - unstable-random-seed
-- q:
-  - Do different active learning strategies pick the same examples?
-  - How much do batches selected by different acquisition functions overlap?
-  - Is there room to combine complementary active learning strategies?
-  answers:
+- ask:
+    unsorted:
+    - Do different active learning strategies pick the same examples?
+    - How much do batches selected by different acquisition functions overlap?
+    - Is there room to combine complementary active learning strategies?
+  answered_by:
   - low-overlap
-- q:
-  - Which acquisition strategies select diverse and representative batches?
-  - Does Core-Set pick outliers when used with BERT representations?
-  - How do diversity and representativeness differ across active learning strategies for BERT?
-  answers:
+- ask:
+    unsorted:
+    - Which acquisition strategies select diverse and representative batches?
+    - Does Core-Set pick outliers when used with BERT representations?
+    - How do diversity and representativeness differ across active learning strategies for
+      BERT?
+  answered_by:
   - diversity-dal
-- q:
-  - What should I read first about active learning with pre-trained language models?
-  - Is there a good empirical study comparing active learning strategies for text classification?
-  - Which paper established whether active learning helps BERT?
-  answers:
+- ask:
+    practitioner: What should I read first about active learning with pre-trained language
+      models?
+    unsorted:
+    - Is there a good empirical study comparing active learning strategies for text classification?
+    - Which paper established whether active learning helps BERT?
+  answered_by:
   - first-systematic-bert-al
   - framework-release
-- q:
-  - Is there code and data available for benchmarking active learning strategies on text classification?
-  - Where can I find an open-source framework for low-resource text classification experiments?
-  answers:
+- ask:
+    practitioner: Where can I find an open-source framework for low-resource text classification
+      experiments?
+    unsorted:
+    - Is there code and data available for benchmarking active learning strategies on text
+      classification?
+  answered_by:
   - framework-release
-- q:
-  - How many datasets and runs does the BERT active learning study cover?
-  - What experimental scale backs the claims about active learning with BERT?
-  answers:
+- ask:
+    unsorted:
+    - How many datasets and runs does the BERT active learning study cover?
+    - What experimental scale backs the claims about active learning with BERT?
+  answered_by:
   - first-systematic-bert-al
   - significance-imbalanced
 misreadings:

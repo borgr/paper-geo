@@ -136,90 +136,104 @@ claims:
     privacy and legal practice.
   evidence: Section 3
 qa:
-- q:
-  - What should I read about opening up human feedback data for language models?
-  - Is there a good overview paper on the human feedback data ecosystem for LLMs?
-  - Where can I start reading about why RLHF preference data is closed and what to do about
-    it?
-  answers:
+- ask:
+    practitioner: What should I read about opening up human feedback data for language models?
+    unsorted:
+    - Is there a good overview paper on the human feedback data ecosystem for LLMs?
+    - Where can I start reading about why RLHF preference data is closed and what to do about
+      it?
+  answered_by:
   - seven-themes
   - three-reasons-underdeveloped
   - ecosystem-three-components
-- q:
-  - What does it mean for a human feedback dataset to be open?
-  - How can openness of preference data be measured beyond just a public download link?
-  - Are there dimensions of openness for RLHF datasets other than access?
-  answers:
+- ask:
+    unsorted:
+    - What does it mean for a human feedback dataset to be open?
+    - How can openness of preference data be measured beyond just a public download link?
+    - Are there dimensions of openness for RLHF datasets other than access?
+  answered_by:
   - openness-five-axes
-- q:
-  - Which human preference datasets are actually open?
-  - Are any RLHF feedback datasets open on every dimension of openness?
-  - How do WildChat, PRISM, Chatbot Arena and AnthropicHH compare on openness?
-  answers:
+- ask:
+    unsorted:
+    - Which human preference datasets are actually open?
+    - Are any RLHF feedback datasets open on every dimension of openness?
+    - How do WildChat, PRISM, Chatbot Arena and AnthropicHH compare on openness?
+  answered_by:
   - no-dataset-open-on-all-axes
   - frontier-model-reports-closed
-- q:
-  - Why is there so little open human feedback data for language models?
-  - What blocks researchers from releasing new preference datasets?
-  - Why are open preference datasets static instead of continuously updated?
-  answers:
+- ask:
+    unsorted:
+    - Why is there so little open human feedback data for language models?
+    - What blocks researchers from releasing new preference datasets?
+    - Why are open preference datasets static instead of continuously updated?
+  answered_by:
   - three-reasons-underdeveloped
-- q:
-  - What can open human feedback collection learn from Wikipedia and open source?
-  - Do peer production communities offer lessons for collecting AI training feedback?
-  - How much do volunteer communities like Wikipedia actually produce?
-  answers:
+- ask:
+    unsorted:
+    - What can open human feedback collection learn from Wikipedia and open source?
+    - Do peer production communities offer lessons for collecting AI training feedback?
+    - How much do volunteer communities like Wikipedia actually produce?
+  answered_by:
   - peer-production-lessons
-- q:
-  - How expensive is collecting expert feedback in domains like medicine or law?
-  - Why can't open communities collect domain-expert annotations for LLMs?
-  - What does graduate-level expert annotation cost per hour?
-  answers:
+- ask:
+    unsorted:
+    - How expensive is collecting expert feedback in domains like medicine or law?
+    - Why can't open communities collect domain-expert annotations for LLMs?
+    - What does graduate-level expert annotation cost per hour?
+  answered_by:
   - expert-feedback-cost
-- q:
-  - Is generating preference data with GPT-4 a valid substitute for human feedback?
-  - What is wrong with simulating human feedback using closed models?
-  - Are synthetic preferences from strong models a problem for open AI research?
-  answers:
+- ask:
+    unsorted:
+    - Is generating preference data with GPT-4 a valid substitute for human feedback?
+    - What is wrong with simulating human feedback using closed models?
+    - Are synthetic preferences from strong models a problem for open AI research?
+  answered_by:
   - distillation-loophole
-- q:
-  - Who actually contributes to open feedback datasets, and is the pool diverse?
-  - Are open preference datasets representative across languages and cultures?
-  - Do a few annotators dominate crowdsourced feedback for LLMs?
-  answers:
+- ask:
+    unsorted:
+    - Who actually contributes to open feedback datasets, and is the pool diverse?
+    - Are open preference datasets representative across languages and cultures?
+    - Do a few annotators dominate crowdsourced feedback for LLMs?
+  answered_by:
   - diversity-skew
-- q:
-  - How can chat platforms collect feedback without asking users to rate responses?
-  - What is naturally occurring feedback in a conversation with a language model?
-  - Are thumbs-up ratings and pairwise comparisons enough for collecting feedback?
-  answers:
+- ask:
+    unsorted:
+    - How can chat platforms collect feedback without asking users to rate responses?
+    - What is naturally occurring feedback in a conversation with a language model?
+    - Are thumbs-up ratings and pairwise comparisons enough for collecting feedback?
+  answered_by:
   - naturally-occurring-feedback
-- q:
-  - What infrastructure would a sustainable open feedback ecosystem need?
-  - What components are proposed for pooling chats and feedback across the community?
-  - Do existing platforms like Hugging Face Spaces or Argilla already support open feedback
-    collection?
-  answers:
+- ask:
+    unsorted:
+    - What infrastructure would a sustainable open feedback ecosystem need?
+    - What components are proposed for pooling chats and feedback across the community?
+    - Do existing platforms like Hugging Face Spaces or Argilla already support open feedback
+      collection?
+  answered_by:
   - ecosystem-three-components
   - specialized-model-loop
-- q:
-  - Why would anyone donate their chat logs and feedback to a shared pool?
-  - What incentives could sustain long-term contribution of preference data?
-  - How can contributors of feedback benefit directly from what they give?
-  answers:
+- ask:
+    unsorted:
+    - Why would anyone donate their chat logs and feedback to a shared pool?
+    - What incentives could sustain long-term contribution of preference data?
+    - How can contributors of feedback benefit directly from what they give?
+  answered_by:
   - specialized-model-loop
   - peer-production-lessons
-- q:
-  - Who legally owns feedback given on a language model's output?
-  - What licensing and consent practices are recommended for sharing chat feedback?
-  - Can users retract feedback they contributed to an open dataset?
-  answers:
+- ask:
+    unsorted:
+    - Who legally owns feedback given on a language model's output?
+    - What licensing and consent practices are recommended for sharing chat feedback?
+    - Can users retract feedback they contributed to an open dataset?
+  answered_by:
   - human-owns-data
-- q:
-  - What concrete steps can a project take today to open its feedback pipeline?
-  - Which recommendations for open human feedback are already actionable versus needing research?
-  - Is there a checklist for building an open human feedback project?
-  answers:
+- ask:
+    unsorted:
+    - What concrete steps can a project take today to open its feedback pipeline?
+    - Which recommendations for open human feedback are already actionable versus needing
+      research?
+    - Is there a checklist for building an open human feedback project?
+  answered_by:
   - actions-checklist
   - seven-themes
 terminology:

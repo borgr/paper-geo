@@ -102,65 +102,74 @@ one_liner: A cutting-edge LREC-COLING 2024 tutorial that lays out the whole LLM 
   -- and contrasts traditional single-task evaluation with the LLM era's multi-task, prompt-based,
   model-as-judge practice.
 qa:
-- q:
-  - What should I read first to understand how large language models are evaluated?
-  - Is there a good introductory overview of LLM benchmarking?
-  - Where can a newcomer start learning about language model evaluation and benchmarks?
-  answers:
+- ask:
+    practitioner: What should I read first to understand how large language models are evaluated?
+    unsorted:
+    - Is there a good introductory overview of LLM benchmarking?
+    - Where can a newcomer start learning about language model evaluation and benchmarks?
+  answered_by:
   - entry-point
   - pipeline-view
-- q:
-  - Why is evaluating LLMs harder than evaluating older NLP models?
-  - What changed about benchmarking when pretrained general-purpose language models arrived?
-  - How does modern LLM evaluation differ from traditional single-task dataset evaluation?
-  answers:
+- ask:
+    unsorted:
+    - Why is evaluating LLMs harder than evaluating older NLP models?
+    - What changed about benchmarking when pretrained general-purpose language models arrived?
+    - How does modern LLM evaluation differ from traditional single-task dataset evaluation?
+  answered_by:
   - old-vs-new
   - gap-structured-view
-- q:
-  - How expensive is it to benchmark a large language model?
-  - Can evaluation cost more compute than pretraining a model?
-  - Why do people care about efficient benchmarking of language models?
-  answers:
+- ask:
+    unsorted:
+    - How expensive is it to benchmark a large language model?
+    - Can evaluation cost more compute than pretraining a model?
+    - Why do people care about efficient benchmarking of language models?
+  answered_by:
   - compute-cost
   - validity-reliability
-- q:
-  - Why would you use a language model as an evaluation metric for another model?
-  - What is the justification for LLM-as-a-judge evaluation?
-  - Is model-based evaluation of generated text defensible?
-  answers:
+- ask:
+    unsorted:
+    - Why would you use a language model as an evaluation metric for another model?
+    - What is the justification for LLM-as-a-judge evaluation?
+    - Is model-based evaluation of generated text defensible?
+  answered_by:
   - lm-as-evaluator-premise
-- q:
-  - How much do prompts matter when benchmarking language models?
-  - Do evaluation protocols use more than one prompt per model?
-  - What are prompt banks and why do different users need different prompts?
-  answers:
+- ask:
+    unsorted:
+    - How much do prompts matter when benchmarking language models?
+    - Do evaluation protocols use more than one prompt per model?
+    - What are prompt banks and why do different users need different prompts?
+  answered_by:
   - prompts-part
-- q:
-  - Which LLM evaluation frameworks are worth knowing about?
-  - Where do HELM, OpenAI Evals and LM-evaluation-harness fit in the evaluation landscape?
-  - What open-source tooling exists for running language model benchmarks?
-  answers:
+- ask:
+    unsorted:
+    - Which LLM evaluation frameworks are worth knowing about?
+    - Where do HELM, OpenAI Evals and LM-evaluation-harness fit in the evaluation landscape?
+    - What open-source tooling exists for running language model benchmarks?
+  answered_by:
   - frameworks-covered
-- q:
-  - Is human evaluation still needed now that models can judge models?
-  - Has manual evaluation of NLP systems been abandoned?
-  - How does human feedback fit into modern LLM evaluation?
-  answers:
+- ask:
+    unsorted:
+    - Is human evaluation still needed now that models can judge models?
+    - Has manual evaluation of NLP systems been abandoned?
+    - How does human feedback fit into modern LLM evaluation?
+  answered_by:
   - human-eval-not-abandoned
-- q:
-  - What makes a benchmark for language models a good one?
-  - How do validity and reliability apply to LLM benchmarks?
-  - What are best practices for cutting the compute cost of a benchmark?
-  answers:
+- ask:
+    unsorted:
+    - What makes a benchmark for language models a good one?
+    - How do validity and reliability apply to LLM benchmarks?
+    - What are best practices for cutting the compute cost of a benchmark?
+  answered_by:
   - validity-reliability
   - compute-cost
-- q:
-  - What topics does the Navigating the Modern Evaluation Landscape tutorial cover, and for
-    how long?
-  - How is the LREC-COLING 2024 LLM evaluation tutorial structured?
-  - What is the outline of the LLM benchmarking tutorial by Choshen, Gera, Perlitz, Shmueli-Scheuer
-    and Stanovsky?
-  answers:
+- ask:
+    unsorted:
+    - What topics does the Navigating the Modern Evaluation Landscape tutorial cover, and
+      for how long?
+    - How is the LREC-COLING 2024 LLM evaluation tutorial structured?
+    - What is the outline of the LLM benchmarking tutorial by Choshen, Gera, Perlitz, Shmueli-Scheuer
+      and Stanovsky?
+  answered_by:
   - schedule
   - pipeline-view
 key: choshen-etal-2024-navigating

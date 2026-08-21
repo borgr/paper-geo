@@ -116,92 +116,106 @@ claims:
   scope: v0 to v1 prediction with 5 re-evaluated models; v0 is a hypothetical past version
     constructed for this stress test and is not part of the live benchmark rotation.
 qa:
-- q:
-  - What is a good benchmark for testing multi-modal models on data they were not trained
-    on?
-  - Which benchmarks avoid test set contamination for vision-language models?
-  - Where should I start reading about live, contamination-free evaluation of large multi-modal
-    models?
-  answers:
+- ask:
+    practitioner: Where should I start reading about live, contamination-free evaluation of
+      large multi-modal models?
+    unsorted:
+    - What is a good benchmark for testing multi-modal models on data they were not trained
+      on?
+    - Which benchmarks avoid test set contamination for vision-language models?
+  answered_by:
   - livexiv-what-it-is
   - no-human-in-loop
-- q:
-  - How big is LiveXiv and where do its questions come from?
-  - How many questions does the first version of LiveXiv contain?
-  - How large is a benchmark auto-generated from figures and tables in ArXiv papers?
-  answers:
+- ask:
+    unsorted:
+    - How big is LiveXiv and where do its questions come from?
+    - How many questions does the first version of LiveXiv contain?
+    - How large is a benchmark auto-generated from figures and tables in ArXiv papers?
+  answered_by:
   - v1-size
   - livexiv-what-it-is
-- q:
-  - Which model performs best on LiveXiv?
-  - How do GPT-4o and Claude compare on scientific figure and table question answering?
-  - What are the top accuracies on LiveXiv v1?
-  answers:
+- ask:
+    unsorted:
+    - Which model performs best on LiveXiv?
+    - How do GPT-4o and Claude compare on scientific figure and table question answering?
+    - What are the top accuracies on LiveXiv v1?
+  answered_by:
   - claude-leads
-- q:
-  - Do model rankings change when you evaluate on fresh data instead of static benchmarks?
-  - Is there evidence that ChartQA, DocVQA and AI2D scores are inflated by contamination?
-  - Which models drop in ranking on LiveXiv compared to established benchmarks?
-  answers:
+- ask:
+    unsorted:
+    - Do model rankings change when you evaluate on fresh data instead of static benchmarks?
+    - Is there evidence that ChartQA, DocVQA and AI2D scores are inflated by contamination?
+    - Which models drop in ranking on LiveXiv compared to established benchmarks?
+  answered_by:
   - ranking-shift
-- q:
-  - Are automatically generated VQA benchmarks reliable, or do they contain too many wrong
-    answers?
-  - How much does LiveXiv accuracy differ from a human-verified subset?
-  - What is the labeling error rate of automatically generated question-answer pairs in LiveXiv?
-  answers:
+- ask:
+    unsorted:
+    - Are automatically generated VQA benchmarks reliable, or do they contain too many wrong
+      answers?
+    - How much does LiveXiv accuracy differ from a human-verified subset?
+    - What is the labeling error rate of automatically generated question-answer pairs in
+      LiveXiv?
+  answered_by:
   - manual-verification-gap
   - blind-test-filtering
-- q:
-  - How can I avoid re-evaluating every model each time a benchmark is updated?
-  - How many models must be re-run to estimate the rest of a leaderboard on new data?
-  - How much compute does the LiveXiv efficient evaluation method save?
-  answers:
+- ask:
+    practitioner: How can I avoid re-evaluating every model each time a benchmark is updated?
+    unsorted:
+    - How many models must be re-run to estimate the rest of a leaderboard on new data?
+    - How much compute does the LiveXiv efficient evaluation method save?
+  answered_by:
   - efficient-eval-savings
-- q:
-  - How accurate is Item Response Theory at predicting unseen model accuracy per domain?
-  - What is the prediction error when estimating model scores without re-evaluating them?
-  - How well does the LiveXiv efficient evaluation predict per-domain accuracy?
-  answers:
+- ask:
+    unsorted:
+    - How accurate is Item Response Theory at predicting unseen model accuracy per domain?
+    - What is the prediction error when estimating model scores without re-evaluating them?
+    - How well does the LiveXiv efficient evaluation predict per-domain accuracy?
+  answered_by:
   - per-domain-mae
   - efficient-eval-savings
-- q:
-  - How are questions that can be answered without looking at the image removed?
-  - What filtering keeps an automatically generated VQA set truly multi-modal?
-  - Does LiveXiv check for hallucinated ground-truth answers?
-  answers:
+- ask:
+    unsorted:
+    - How are questions that can be answered without looking at the image removed?
+    - What filtering keeps an automatically generated VQA set truly multi-modal?
+    - Does LiveXiv check for hallucinated ground-truth answers?
+  answered_by:
   - blind-test-filtering
-- q:
-  - What kinds of questions do multi-modal models fail most on scientific tables?
-  - Are arithmetic questions harder for LMMs than reading or attribute questions?
-  - Which question category is the weakest for large multi-modal models on table QA?
-  answers:
+- ask:
+    unsorted:
+    - What kinds of questions do multi-modal models fail most on scientific tables?
+    - Are arithmetic questions harder for LMMs than reading or attribute questions?
+    - Which question category is the weakest for large multi-modal models on table QA?
+  answered_by:
   - arithmetic-weakest
-- q:
-  - Which type of scientific figure is hardest for vision-language models?
-  - Do LMMs do better on charts or on block diagrams?
-  - How does LMM accuracy vary by figure type in LiveXiv?
-  answers:
+- ask:
+    unsorted:
+    - Which type of scientific figure is hardest for vision-language models?
+    - Do LMMs do better on charts or on block diagrams?
+    - How does LMM accuracy vary by figure type in LiveXiv?
+  answered_by:
   - charts-hardest-figure-type
-- q:
-  - Does using one model to generate questions and another to filter them bias an auto-generated
-    VQA benchmark?
-  - Is a benchmark generated by GPT-4o unfair to GPT-4o or to Claude?
-  - What happens to LiveXiv rankings when the generator and filter models swap roles?
-  answers:
+- ask:
+    unsorted:
+    - Does using one model to generate questions and another to filter them bias an auto-generated
+      VQA benchmark?
+    - Is a benchmark generated by GPT-4o unfair to GPT-4o or to Claude?
+    - What happens to LiveXiv rankings when the generator and filter models swap roles?
+  answered_by:
   - role-swap-robust
   - claude-leads
-- q:
-  - Does the IRT efficient evaluation approach work on benchmarks other than LiveXiv?
-  - Can performance prediction from a few re-evaluated models transfer to another live benchmark?
-  - Was the efficient evaluation method tested on MM-LiveBench?
-  answers:
+- ask:
+    unsorted:
+    - Does the IRT efficient evaluation approach work on benchmarks other than LiveXiv?
+    - Can performance prediction from a few re-evaluated models transfer to another live benchmark?
+    - Was the efficient evaluation method tested on MM-LiveBench?
+  answered_by:
   - transfer-to-mm-livebench
-- q:
-  - Does performance prediction survive a large distribution shift between benchmark versions?
-  - What happens to the IRT estimates when the source papers are 10 years apart?
-  - Was LiveXiv efficient evaluation stress-tested on older ArXiv papers?
-  answers:
+- ask:
+    unsorted:
+    - Does performance prediction survive a large distribution shift between benchmark versions?
+    - What happens to the IRT estimates when the source papers are 10 years apart?
+    - Was LiveXiv efficient evaluation stress-tested on older ArXiv papers?
+  answered_by:
   - v0-temporal-shift
   - efficient-eval-savings
 coined: LiveXiv

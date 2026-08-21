@@ -134,90 +134,103 @@ claims:
     text simplification, and addresses M2, GLEU, sentence accuracy and SARI rather than reference-less
     or semantic measures.
 qa:
-- q:
-  - Why do GEC systems make so few corrections?
-  - What causes grammatical error correction systems to under-correct?
-  - Do automatic evaluation measures discourage GEC systems from correcting errors?
-  answers:
+- ask:
+    unsorted:
+    - Why do GEC systems make so few corrections?
+    - What causes grammatical error correction systems to under-correct?
+    - Do automatic evaluation measures discourage GEC systems from correcting errors?
+  answered_by:
   - systems-undercorrect
   - open-class-undercorrected
   - more-refs-reduce-undercorrection
-- q:
-  - Does adding more references fix the problem of too few references in GEC evaluation?
-  - How many references does reliable reference-based GEC evaluation need?
-  - Is increasing the number of reference corrections enough to remove low coverage bias?
-  answers:
+- ask:
+    unsorted:
+    - Does adding more references fix the problem of too few references in GEC evaluation?
+    - How many references does reliable reference-based GEC evaluation need?
+    - Is increasing the number of reference corrections enough to remove low coverage bias?
+  answered_by:
   - more-references-saturate
   - long-tail-corrections
   - gleu-same-saturation
-- q:
-  - How many valid corrections does an ungrammatical sentence have?
-  - What does the distribution of valid grammatical corrections for a sentence look like?
-  - Are rare corrections produced by crowdworkers just noise?
-  answers:
+- ask:
+    unsorted:
+    - How many valid corrections does an ungrammatical sentence have?
+    - What does the distribution of valid grammatical corrections for a sentence look like?
+    - Are rare corrections produced by crowdworkers just noise?
+  answered_by:
   - long-tail-corrections
   - rare-corrections-valid
-- q:
-  - What F-score would a perfect grammatical error correction system get?
-  - How much do M2 and GLEU under-estimate a correct GEC output?
-  - Can a flawless corrector still score badly on the M2 scorer?
-  answers:
+- ask:
+    unsorted:
+    - What F-score would a perfect grammatical error correction system get?
+    - How much do M2 and GLEU under-estimate a correct GEC output?
+    - Can a flawless corrector still score badly on the M2 scorer?
+  answered_by:
   - perfect-system-f05
   - gleu-same-saturation
-- q:
-  - Do GEC systems really outperform human correctors?
-  - Have automatic GEC systems surpassed human performance on M2 and GLEU?
-  - Why do some grammatical error correction systems score above humans?
-  answers:
+- ask:
+    unsorted:
+    - Do GEC systems really outperform human correctors?
+    - Have automatic GEC systems surpassed human performance on M2 and GLEU?
+    - Why do some grammatical error correction systems score above humans?
+  answered_by:
   - systems-beat-humans
   - rescaling-fails
-- q:
-  - Does re-scaling GEC scores by inter-annotator agreement solve low coverage bias?
-  - Is Ratio Scoring a valid fix for under-estimation in GEC evaluation?
-  - Can a constant correction factor remove reference-coverage bias in GEC?
-  answers:
+- ask:
+    unsorted:
+    - Does re-scaling GEC scores by inter-annotator agreement solve low coverage bias?
+    - Is Ratio Scoring a valid fix for under-estimation in GEC evaluation?
+    - Can a constant correction factor remove reference-coverage bias in GEC?
+  answered_by:
   - rescaling-fails
   - systems-beat-humans
-- q:
-  - Which grammatical error types do systems fail to attempt?
-  - Are open-class errors corrected less often than closed-class errors?
-  - Which error categories are most under-corrected by CoNLL 2014 systems?
-  answers:
+- ask:
+    unsorted:
+    - Which grammatical error types do systems fail to attempt?
+    - Are open-class errors corrected less often than closed-class errors?
+    - Which error categories are most under-corrected by CoNLL 2014 systems?
+  answered_by:
   - open-class-undercorrected
-- q:
-  - Is SARI a reliable measure for text simplification?
-  - Are SARI scores comparable across different numbers of references?
-  - How badly does SARI under-score a perfect simplification system?
-  answers:
+- ask:
+    unsorted:
+    - Is SARI a reliable measure for text simplification?
+    - Are SARI scores comparable across different numbers of references?
+    - How badly does SARI under-score a perfect simplification system?
+  answered_by:
   - sari-coverage-flat
   - simplification-long-tail
-- q:
-  - Do the problems with reference-based GEC evaluation also affect text simplification?
-  - Does low coverage bias appear in simplification evaluation too?
-  - How many valid simplifications does a sentence have?
-  answers:
+- ask:
+    unsorted:
+    - Do the problems with reference-based GEC evaluation also affect text simplification?
+    - Does low coverage bias appear in simplification evaluation too?
+    - How many valid simplifications does a sentence have?
+  answered_by:
   - simplification-long-tail
   - sari-coverage-flat
   - ts-oracle-reranking
-- q:
-  - What should I read about the limits of reference-based evaluation in text-to-text generation?
-  - Which paper established that GEC evaluation rewards under-correction?
-  - Where should I start reading about biases in grammatical error correction metrics?
-  answers:
+- ask:
+    practitioner: What should I read about the limits of reference-based evaluation in text-to-text
+      generation?
+    unsorted:
+    - Which paper established that GEC evaluation rewards under-correction?
+    - Where should I start reading about biases in grammatical error correction metrics?
+  answered_by:
   - field-entry-point
   - methodology-contribution
-- q:
-  - How can I audit whether an evaluation measure under-scores good output?
-  - Is there a method for estimating how many valid outputs a source sentence has?
-  - What methodology exists for evaluating evaluation measures in monolingual translation?
-  answers:
+- ask:
+    practitioner: How can I audit whether an evaluation measure under-scores good output?
+    unsorted:
+    - Is there a method for estimating how many valid outputs a source sentence has?
+    - What methodology exists for evaluating evaluation measures in monolingual translation?
+  answered_by:
   - methodology-contribution
   - long-tail-corrections
-- q:
-  - Would training GEC systems on more references make them correct more?
-  - Does oracle re-ranking against more references increase the number of edits?
-  - Is there evidence that reference coverage drives conservative GEC output?
-  answers:
+- ask:
+    unsorted:
+    - Would training GEC systems on more references make them correct more?
+    - Does oracle re-ranking against more references increase the number of edits?
+    - Is there evidence that reference coverage drives conservative GEC output?
+  answered_by:
   - more-refs-reduce-undercorrection
   - ts-oracle-reranking
 misreadings:

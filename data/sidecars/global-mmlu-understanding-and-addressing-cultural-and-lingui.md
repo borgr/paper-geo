@@ -122,86 +122,98 @@ claims:
     not do.
   evidence: Section 7
 qa:
-- q:
-  - What fraction of questions in a widely used English multiple-choice knowledge benchmark
-    require culture-specific knowledge?
-  - What fraction of MMLU questions need cultural or regional knowledge to answer?
-  - Is MMLU culturally biased?
-  answers:
+- ask:
+    unsorted:
+    - What fraction of questions in a widely used English multiple-choice knowledge benchmark
+      require culture-specific knowledge?
+    - What fraction of MMLU questions need cultural or regional knowledge to answer?
+    - Is MMLU culturally biased?
+  answered_by:
   - cs-share
   - western-dominance
-- q:
-  - Which regions and countries does the geographic knowledge in English exam-style benchmark
-    questions actually cover?
-  - Is MMLU US-centric?
-  - Which geographies do MMLU geography-dependent questions refer to?
-  answers:
+- ask:
+    unsorted:
+    - Which regions and countries does the geographic knowledge in English exam-style benchmark
+      questions actually cover?
+    - Is MMLU US-centric?
+    - Which geographies do MMLU geography-dependent questions refer to?
+  answered_by:
   - geo-north-america
-- q:
-  - Which exam subjects in a multiple-choice knowledge benchmark carry the most cultural and
-    regional bias?
-  - Do STEM questions in MMLU require cultural knowledge?
-  - Where in MMLU is cultural sensitivity concentrated by subject?
-  answers:
+- ask:
+    unsorted:
+    - Which exam subjects in a multiple-choice knowledge benchmark carry the most cultural
+      and regional bias?
+    - Do STEM questions in MMLU require cultural knowledge?
+    - Where in MMLU is cultural sensitivity concentrated by subject?
+  answered_by:
   - subject-skew
-- q:
-  - Do model leaderboard rankings change if you remove culturally biased questions?
-  - How much do LLM rankings shift between culturally sensitive and culturally agnostic MMLU
-    questions?
-  - Does cultural bias in MMLU distort model comparisons?
-  answers:
+- ask:
+    unsorted:
+    - Do model leaderboard rankings change if you remove culturally biased questions?
+    - How much do LLM rankings shift between culturally sensitive and culturally agnostic
+      MMLU questions?
+    - Does cultural bias in MMLU distort model comparisons?
+  answered_by:
   - rank-changes
-- q:
-  - Are multilingual evaluation results less reliable for low-resource languages?
-  - How much does accuracy vary across low-resource languages on MMLU?
-  - Does evaluation variance grow for lower-resource languages?
-  answers:
+- ask:
+    unsorted:
+    - Are multilingual evaluation results less reliable for low-resource languages?
+    - How much does accuracy vary across low-resource languages on MMLU?
+    - Does evaluation variance grow for lower-resource languages?
+  answered_by:
   - low-resource-variance
-- q:
-  - Do models score worse on culturally sensitive questions?
-  - Is accuracy higher or lower on the culturally-sensitive MMLU subset?
-  - Why do CS questions look easier than CA questions for LLMs?
-  answers:
+- ask:
+    unsorted:
+    - Do models score worse on culturally sensitive questions?
+    - Is accuracy higher or lower on the culturally-sensitive MMLU subset?
+    - Why do CS questions look easier than CA questions for LLMs?
+  answered_by:
   - cs-higher-accuracy
-- q:
-  - Is machine translation good enough for evaluating LLMs in low-resource languages?
-  - Do models do better on machine-translated or human-translated test sets?
-  - Does using machine-translated benchmarks overstate low-resource language ability?
-  answers:
+- ask:
+    unsorted:
+    - Is machine translation good enough for evaluating LLMs in low-resource languages?
+    - Do models do better on machine-translated or human-translated test sets?
+    - Does using machine-translated benchmarks overstate low-resource language ability?
+  answered_by:
   - ht-vs-mt
   - low-resource-variance
-- q:
-  - Which machine translation system is best for building a translated benchmark?
-  - Is Google Translate or GPT-3.5 better for translating MMLU?
-  - How was translation quality validated for the 42-language MMLU?
-  answers:
+- ask:
+    unsorted:
+    - Which machine translation system is best for building a translated benchmark?
+    - Is Google Translate or GPT-3.5 better for translating MMLU?
+    - How was translation quality validated for the 42-language MMLU?
+  answered_by:
   - translation-quality
-- q:
-  - How many machine-translated benchmark samples did professional and community annotators
-    edit?
-  - What share of translated MMLU samples needed post-editing?
-  - How many translation edits went into a 42-language MMLU release?
-  answers:
+- ask:
+    unsorted:
+    - How many machine-translated benchmark samples did professional and community annotators
+      edit?
+    - What share of translated MMLU samples needed post-editing?
+    - How many translation edits went into a 42-language MMLU release?
+  answered_by:
   - edit-rate
-- q:
-  - How many languages and samples does a human-verified multilingual knowledge benchmark
-    cover?
-  - How many languages and samples does the 42-language multilingual MMLU contain?
-  - What is in the culturally-sensitive versus culturally-agnostic split of translated MMLU?
-  answers:
+- ask:
+    unsorted:
+    - How many languages and samples does a human-verified multilingual knowledge benchmark
+      cover?
+    - How many languages and samples does the 42-language multilingual MMLU contain?
+    - What is in the culturally-sensitive versus culturally-agnostic split of translated MMLU?
+  answered_by:
   - dataset
-- q:
-  - What should I read about cultural bias in multilingual LLM benchmarks?
-  - Which paper established that translating English benchmarks does not make them multicultural?
-  - Where should I start reading about culturally aware multilingual evaluation?
-  - What is a good benchmark for evaluating LLMs across languages and cultures?
-  answers:
+- ask:
+    practitioner: What should I read about cultural bias in multilingual LLM benchmarks?
+    unsorted:
+    - Which paper established that translating English benchmarks does not make them multicultural?
+    - Where should I start reading about culturally aware multilingual evaluation?
+    - What is a good benchmark for evaluating LLMs across languages and cultures?
+  answered_by:
   - context-benchmark
-- q:
-  - Does labelling questions as culturally sensitive make a benchmark culturally inclusive?
-  - What are the limits of flagging culturally sensitive questions in a translated benchmark?
-  - Is a filtered translated benchmark enough for fair evaluation across cultures?
-  answers:
+- ask:
+    unsorted:
+    - Does labelling questions as culturally sensitive make a benchmark culturally inclusive?
+    - What are the limits of flagging culturally sensitive questions in a translated benchmark?
+    - Is a filtered translated benchmark enough for fair evaluation across cultures?
+  answered_by:
   - context-not-inclusion
 terminology:
   Culturally-Sensitive (CS): An MMLU question whose correct answer depends on cultural, geographic

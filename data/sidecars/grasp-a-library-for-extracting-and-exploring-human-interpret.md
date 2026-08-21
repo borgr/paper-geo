@@ -121,71 +121,84 @@ claims:
   scope: Flask-based tool consuming the JSON exported by the GrASP library; it can also display
     output from other pattern-extraction algorithms if formatted into the required JSON schema.
 qa:
-- q:
-  - What tools exist for exploring a text dataset beyond word clouds and n-gram counts?
-  - Where should I start reading about learning interpretable patterns from text?
-  - Is there a library that extracts human-readable linguistic patterns from labelled text?
-  answers:
+- ask:
+    practitioner: Where should I start reading about learning interpretable patterns from
+      text?
+    unsorted:
+    - What tools exist for exploring a text dataset beyond word clouds and n-gram counts?
+    - Is there a library that extracts human-readable linguistic patterns from labelled text?
+  answered_by:
   - exploration-tool-context
   - first-public-impl
-- q:
-  - Does removing dataset artifacts actually improve out-of-distribution accuracy?
-  - How much does filtering artifact-matching training examples help generalization on 20Newsgroups?
-  - What was the out-of-distribution gain from GrASP-based artifact removal?
-  answers:
+- ask:
+    unsorted:
+    - Does removing dataset artifacts actually improve out-of-distribution accuracy?
+    - How much does filtering artifact-matching training examples help generalization on 20Newsgroups?
+    - What was the out-of-distribution gain from GrASP-based artifact removal?
+  answered_by:
   - artifact-filtering-ood
   - artifact-filtering-indomain
-- q:
-  - Does deleting artifact-matched training examples hurt in-domain accuracy?
-  - What is the in-domain cost of filtering a training set with GrASP patterns?
-  answers:
+- ask:
+    unsorted:
+    - Does deleting artifact-matched training examples hurt in-domain accuracy?
+    - What is the in-domain cost of filtering a training set with GrASP patterns?
+  answered_by:
   - artifact-filtering-indomain
-- q:
-  - How much human effort does it take to label patterns as dataset artifacts?
-  - How many GrASP patterns did an annotator flag as artifacts in 20Newsgroups?
-  answers:
+- ask:
+    unsorted:
+    - How much human effort does it take to label patterns as dataset artifacts?
+    - How many GrASP patterns did an annotator flag as artifacts in 20Newsgroups?
+  answered_by:
   - human-annotation-throughput
-- q:
-  - Can pattern mining find annotation artifacts in SNLI?
-  - What artifacts does GrASP find in SNLI hypotheses, and with what precision?
-  - Do hypothesis-only artifacts in natural language inference show up as linguistic patterns?
-  answers:
+- ask:
+    unsorted:
+    - Can pattern mining find annotation artifacts in SNLI?
+    - What artifacts does GrASP find in SNLI hypotheses, and with what precision?
+    - Do hypothesis-only artifacts in natural language inference show up as linguistic patterns?
+  answered_by:
   - snli-artifact-precision
-- q:
-  - Can pattern extraction tell me which inputs a machine translation model handles well?
-  - How were easy and hard MT inputs characterized with GrASP on WMT19 English-German?
-  - Are hard-to-translate sentences harder to characterize with patterns than easy ones?
-  answers:
+- ask:
+    practitioner: Can pattern extraction tell me which inputs a machine translation model
+      handles well?
+    unsorted:
+    - How were easy and hard MT inputs characterized with GrASP on WMT19 English-German?
+    - Are hard-to-translate sentences harder to characterize with patterns than easy ones?
+  answered_by:
   - mt-quality-patterns
   - mt-known-hurdles
-- q:
-  - Does GrASP rediscover things experts already know about argumentative text?
-  - What did pattern mining reveal on the topic-dependent argument mining corpus?
-  - Which single feature was most indicative of evidence sentences in argument mining?
-  answers:
+- ask:
+    unsorted:
+    - Does GrASP rediscover things experts already know about argumentative text?
+    - What did pattern mining reveal on the topic-dependent argument mining corpus?
+    - Which single feature was most indicative of evidence sentences in argument mining?
+  answered_by:
   - argument-mining-rediscovery
-- q:
-  - What does a GrASP pattern actually look like?
-  - How can one pattern match spam messages that share no words?
-  - What is an example of an attribute-sequence pattern for SMS spam?
-  answers:
+- ask:
+    unsorted:
+    - What does a GrASP pattern actually look like?
+    - How can one pattern match spam messages that share no words?
+    - What is an example of an attribute-sequence pattern for SMS spam?
+  answered_by:
   - pattern-generalization
-- q:
-  - How are extracted linguistic patterns made readable for non-experts?
-  - Can attribute patterns be translated into plain English?
-  answers:
+- ask:
+    unsorted:
+    - How are extracted linguistic patterns made readable for non-experts?
+    - Can attribute patterns be translated into plain English?
+  answered_by:
   - pattern2text
-- q:
-  - How do I add my own domain-specific attributes to GrASP pattern extraction?
-  - What does the GrASP library add over the original 2017 algorithm?
-  - Can I change the criterion used to rank extracted patterns?
-  answers:
+- ask:
+    practitioner: How do I add my own domain-specific attributes to GrASP pattern extraction?
+    unsorted:
+    - What does the GrASP library add over the original 2017 algorithm?
+    - Can I change the criterion used to rank extracted patterns?
+  answered_by:
   - custom-attributes-extensions
-- q:
-  - What does the GrASP web interface show?
-  - Can I browse extracted patterns and their matches in a dataset visually?
-  - Can the web viewer display patterns from a different pattern-extraction algorithm?
-  answers:
+- ask:
+    practitioner: Can I browse extracted patterns and their matches in a dataset visually?
+    unsorted:
+    - What does the GrASP web interface show?
+    - Can the web viewer display patterns from a different pattern-extraction algorithm?
+  answered_by:
   - four-report-views
 misreadings:
 - 'GrASP is not a new pattern-learning algorithm: the algorithm dates from Shnarch et al.

@@ -313,15 +313,46 @@ conditions; and for a `context` claim the honest bound *is* a condition — "as 
 publication in 2023", "about English-language benchmarks only" — so say that
 instead.
 
-**4. Questions.** Each `qa` entry is **one question in 2–4 paraphrases**, answered
-by a list of claim **ids**. The rule that is easy to get backwards:
+**4. Questions.** Each `qa` entry is **one question asked by four different kinds of
+person**, answered by a list of claim **ids** in `answered_by`. It is a form, and you
+fill it:
 
-| | Rule | Why |
-|---|---|---|
-| Questions | **paraphrase deliberately** | engines fan one query into many synthetic sub-queries; you cannot know which phrasing wins, so cover several |
-| Claims | **never paraphrase** | a restated claim is a second, drifting copy of the author's own finding, and the two then compete for the same citation |
+```yaml
+- ask:
+    plain: how much data does it take to fit a latent-skill model of arena outcomes?
+    jargon: what sample size does an IRT ability estimate over pairwise arena data need?
+    task: how do I estimate model skill from arena votes without collecting new battles?
+    practitioner: can I reuse existing arena votes instead of running my own evaluation?
+  answered_by: [sample-size]
+```
 
-So `answers` holds ids and never prose. The renderer resolves each id to the claim's
+`plain` is required. Fill **at least one other**, and fill all four when all four are
+real questions. The roles are not four wordings of one sentence — each is a different
+**vocabulary**, because that is the only kind of variation that buys anything:
+
+| role | who types it |
+|---|---|
+| `plain` | someone who has not read the paper, in their own words: no jargon, no coined name |
+| `jargon` | a specialist, in the field's own terms |
+| `task` | someone describing what they are trying to do — *"how do I merge two adapters without retraining"* |
+| `practitioner` | someone deciding, in the first person — *"should I use this for my model"*. The highest-intent phrasing, and the one a person asks an assistant |
+
+Engines fan one query into many synthetic sub-queries and you cannot know which
+phrasing wins, so cover several routes. Three lexical routes reach three query
+populations; three rewordings of one sentence reach one. What is *never* paraphrased is
+a claim: a restated claim is a second, drifting copy of the author's own finding, and
+the two then compete for the same citation.
+
+**Every role is a natural question, ending in `?`.** Never a keyword string
+(*"ties merging retraining required"*): the phrasing is published as visible page text
+and as a `Question.name`, both of which are read, and a keyword string in either place
+is the pattern search engines have penalised for twenty years.
+
+**Never emit `unsorted`.** It holds phrasings written before the roles existed, and it
+exists only so migrating 1263 groups did not require guessing which route each one took.
+A redraft empties it.
+
+So `answered_by` holds ids and never prose. The renderer resolves each id to the claim's
 sentence verbatim plus its scope, so a reader sees the question followed immediately
 by the real answer — never a slug, never a paraphrase. **Never a question whose
 answer is not adjacent.** Every claim should be reachable from some question; a claim
@@ -410,12 +441,12 @@ out. Write fewer, better ones and stop.
 | claim `text` | **60–450 chars**, **≤2 sentences**, **≤32 words each**, **≤1** colon/semicolon/dash | one proposition, quotable verbatim. Aim near `one_liner`'s 320. The char band alone let a 79-word single sentence pass, which is why the sentence caps exist: each extra separator is where a second finding got bolted on instead of becoming its own claim |
 | `scope` | **40–800 chars** | a condition list, and usually the longest field — it is the one summarisers drop, so brevity here buys nothing. The ceiling is where it stops being a list of conditions and becomes an essay that dilutes the claim it qualifies. The floor was 80 and is 40 because rule 31 made it wrong: strip the trailing "…, demonstrating robust performance" that 18 scopes carried and what is left — "Llama3-8B models finetuned with LoRA on NLI tasks" — is a real condition of 50 chars, so the two rules together were demanding the padding back |
 | `qa` | **4–20 groups**, ≥1 answered by a `context` claim | question groups are query surface, so the ceiling is loose: it exists to catch a run of invented questions, not to ration real ones |
-| `q` per group | **2–4 phrasings** | |
+| `ask` per group | **`plain` plus ≥1 other role**, all four when all four are real | the roles are a closed set, so four is the ceiling by construction. The old band was a count of 2–4 phrasings, which three rewordings of one sentence satisfied — the routes are the thing being asked for, so they are what is counted |
 | `misreadings` | **0–14**, each stated as a correction and never as a question | only ones the paper gives you a reason to expect |
 | `terminology` | **0–13** | this paper's own terms, not a glossary of the field |
 
 The three character ceilings are the 90th percentile of what the 324 already drafted
-claims do, so they cut a tail and leave honest practice alone. The `claims`, `q` and
+claims do, so they cut a tail and leave honest practice alone. The `claims`, `ask` and
 sentence limits are not: they are the anti-paraphrase and anti-overloading rules, and
 most current drafts break them. Median first sentence today is 43 words against a cap
 of 32; 99 of 324 claims stack two or more separators. That is the intended reading —
@@ -449,15 +480,16 @@ one_liner: >
   parameter-sign conflicts, outperforming task arithmetic across 11 tasks.
 
 qa:
-  - q:
-      - how do I combine multiple fine-tuned models without retraining?
-      - why does averaging fine-tuned weights hurt performance?
-      - what is model merging?
-    answers: [sign-conflict]
-  - q:
-      - what should I read first about merging fine-tuned models?
-      - which paper introduced sign conflicts as the reason merging fails?
-    answers: [standing]
+  - ask:
+      plain: why does averaging fine-tuned weights hurt performance?
+      jargon: what causes degradation when task vectors are added?
+      task: how do I combine multiple fine-tuned models without retraining?
+      practitioner: should I just average my fine-tuned checkpoints?
+    answered_by: [sign-conflict]
+  - ask:
+      plain: what should I read first about merging fine-tuned models?
+      jargon: which paper introduced sign conflicts as the reason merging fails?
+    answered_by: [standing]
 
 claims:
   - id: sign-conflict
@@ -522,13 +554,13 @@ he retract a page over a long sentence. `--anyway` overrides the whole tier.
 | 5 | `kind` is `result` or `context` | schema | schema `enum`, default `result` when absent |
 | 6 | a `result` claim has `evidence` | schema | schema `if/then`. A `context` claim does not need it — [§2](#2-the-rules) |
 | 7 | no key outside the schema | schema | `additionalProperties: false` |
-| 8 | `qa[].q` has 1–5 entries | schema | schema, plus `check_sidecars` for the empty case |
-| 9 | every `answers` entry is an existing claim id | schema-tier | `validate.py check_sidecars` — a dangling id renders a question with no answer |
+| 8 | `qa[].ask` holds only the four roles (plus legacy `unsorted`) | schema | `additionalProperties: false` on `ask`, plus `check_sidecars` for the empty case |
+| 9 | every `answered_by` entry is an existing claim id | schema-tier | `validate.py check_sidecars` — a dangling id renders a question with no answer |
 | 10 | the rules block in §2 exists and is non-trivial | schema-tier | `validate.py`, and `rules_block()` raises rather than sending an empty prompt |
 | 11 | a draft can never reach a page | file layout | the site globs `data/sidecars/*.md`; drafts sit one level down |
 | 12 | 5–15 claims, ≥1 `context`, and more `result` than `context` | shape | `validate.py check_sidecar_shape` |
 | 13 | `text` 60–450 chars, `scope` 40–800 chars | shape | `check_sidecar_shape` |
-| 14 | 4–20 `qa` groups, 2–4 phrasings each | shape | `check_sidecar_shape` |
+| 14 | 4–20 `qa` groups; each fills `plain` plus ≥1 other role, and every role ends in `?` | shape | `check_sidecar_shape`. A group still holding `unsorted` is exempt — it predates the roles, and a redraft is what fills them |
 | 15 | ≥1 `qa` group answered by a `context` claim | shape | `check_sidecar_shape` |
 | 16 | every claim is pointed at by some `qa` entry | shape | `check_sidecar_shape` (was D3) |
 | 17 | no `qa` group where every phrasing contains the coined name | shape | `check_sidecar_shape` |
@@ -561,6 +593,7 @@ for §6 existing, and the reason to distrust any rule not in the table above.
 | claims per paper | 3 | 16.5 | 22 |
 | question groups | 2 | 14 | 19 |
 | phrasings per group | 2.7 | 3.1 | 3.6 |
+| of which first person | 0% | 8% | 67% |
 | claim text length | 182 | 306 | 411 |
 | **`scope` length** | **124** | **530** | **694** |
 | misreadings | 3 | 10.5 | 16 |
@@ -592,7 +625,7 @@ the next time somebody rereads a draft.
 | unnamed comparator — "outperforms other methods" | 37 of 343 claims | The phrase is a real sentence when what follows it *is* the paper's baseline set. Telling those apart needs the paper |
 | circular `scope` — the claim's own subject as its condition | 19 of 343 | Mostly "ViT-B/32 models", a genuine bound that happens to repeat the claim's noun. No regex separates those |
 | a magnitude filed under the wrong pointer | 1 of 343, found by hand | Needs the number located inside the specific figure. The cached full text does not preserve which table a number sat in |
-| `qa` phrasings that are only syntactic rewrites | 0 of 308 groups | Nothing to catch. Q2 above is still open as a decision, but no draft violates it |
+| `qa` phrasings that are only syntactic rewrites | 0 of 308 groups by any measure a regex has | Still semantic, and this row is why Q2 was answered with structure instead of a check: nothing caught the rewrites, so the fix was to ask for named routes rather than to grade a list |
 | near-duplicate claim `text` by character similarity | fires only on claims that should exist | Two claims measuring the same thing on ViT-B/32 and on ViT-L/14 score 0.8 similar and both belong |
 | entity-first claim `text` | 39 of 343 open with a subordinate or prepositional clause | Proposed as a rule and refuted by the measurement: those 39 are the strongest claims in the corpus, and a uniform "X outperforms Y" opener is the weaker pattern, not the better one |
 | two claims asserting one finding in different words | — | Semantic, so it stays agent or human judgement; §2's one-proposition rule is the guidance |
@@ -618,6 +651,7 @@ decision with no record of having been made gets re-litigated.
 | A2 | minimum viable sidecar | 5 claims, from the band |
 | C7 | where a topic-level claim lives | nowhere new. A claim about the state of a field is not one this paper supports, and both candidate homes — a `kind: topic` claim, and per-line-of-work topic pages — needed a defensible account of who else established it, which is a literature review with no gate behind it. The general question stays a `context` claim about *this* work, with others referred to generically and unnamed. §2, and the same line as scenario class 5 |
 | D1, D4 | canonical key order, and a formatter for it | **no rule, and no formatter.** Key order, list order and id casing are invisible past the parser: the published page and its JSON-LD are generated from the parsed values, so no ordering of the source file reaches a crawler or a model. The whole cost is noisier `git diff`s on files that change rarely, and the whole benefit would be quieter ones — which does not pay for a tool that rewrites 113 accepted files, each one an assertion published under the author's name. `--fix-counts` is not the precedent it looked like: a stale count in a doc is *wrong*, and a key in an unusual order is not |
+| E1 | `FAQPage` / `mainEntity` JSON-LD | **shipped** — `build_site.faq_jsonld`, one `Question` per group, the claim text plus its scope as the accepted answer. It was blocked on which paraphrase is canonical, and the `ask` roles answer it: `plain` is required and leads, so it is the `Question.name` and the other routes are `alternateName` |
 | C6 | how many `context` claims before a page reads as self-promotion | ≥1 required, and `result` must outnumber `context`. A page whose majority is unverifiable standing claims is an advert; the majority rule is the cheapest expression of that. §4 row 12 |
 
 ### Shape and enforcement
@@ -628,13 +662,20 @@ decision with no record of having been made gets re-litigated.
 
 ### The question list
 
-| | Decision | Options | If we do nothing |
-|---|---|---|---|
-| Q1 | natural questions or search queries | *"Does merging models require retraining?"* vs *"ties merging retraining required"*. (a) natural only; (b) both in one array; (c) both, separate fields — and whether the answer differs between crawl-fed engines and what a model already knows | natural only, by drafter habit rather than by decision |
-| Q2 | what varies between the 2–4 paraphrases | (a) no rule; (b) an axis rule — one lay phrasing, one field-jargon phrasing, one task-oriented phrasing. Three syntactic rewrites of one wording buy far less than three lexical routes | syntactic near-duplicates |
-| Q3 | first person or not | 0%–67% across the corpus. Practitioner queries are first-person (*"should I use this"*), literature queries are not. (a) allow both; (b) require one of each; (c) third person only | whatever the model felt like |
-| Q5 | field names | `q` vs `questions` vs `phrasings`; `answers` vs `answered_by` vs `claims`. `q` holds an array, so a singular-looking name is mildly wrong and `question` would be worse. Cosmetic once, permanent after: every co-author's file and every future tool reads it | `q` / `answers` |
-| Q8 | how many general questions | one is required and the band caps the total, but a page could reasonably carry three entry-point questions out of eight. Is there a *minimum share*, not just a minimum count? | exactly one, by the letter of the rule |
+All five closed together, because four of them were the same decision: a rule that
+*names what to cover* and then leaves the drafter to decide whether it did. `q: [a, b, c]`
+with "2–4 paraphrases, vary them deliberately" produced 3692 phrasings that are 90% third
+person and mostly syntactic rewrites of one wording — every one of them satisfying the
+letter of the rule. So the group became a form with named roles ([§2 rule 4](#2-the-rules)),
+and each rule below is now a field that is either filled or visibly empty.
+
+| | Was | Decided |
+|---|---|---|
+| Q1 | natural questions or keyword search queries | **natural only, and enforced**: every role has to end in `?`. Not a preference — a phrasing is published twice, as visible page text and as a `Question.name`, and a keyword string is what search engines have penalised for twenty years in the first position and unreadable in the second. Nothing was gained by the second field either: the engines this project targets match on meaning, not on term overlap |
+| Q2 | what varies between the 2–4 paraphrases | **the axis rule, as structure**: `plain` / `jargon` / `task` / `practitioner`, each a different vocabulary rather than a different word order. `plain` plus one other is the floor; four is the ceiling by construction |
+| Q3 | first person or not | **required as a role**, not as a share of a list. `practitioner` is the first-person route and it is one of the four fields; 299 of the corpus's existing first-person phrasings migrated straight into it |
+| Q5 | field names | **`ask` / `answered_by`**, and `q` / `answers` are gone. Asked as "what would we pick with no technical debt" the answer is not close: `ask` holds a mapping of roles and `answered_by` holds claim ids, and both say what they hold. The debt was one mechanical rewrite of 113 files, done in the same commit as the roles |
+| Q8 | a minimum *share* of general questions | **no share rule.** ≥1 group answered by a `context` claim stays the requirement (rule 15). A share would be a quota on a number the paper decides: a paper with four findings and eight groups does not owe the field three entry points, and the only way to meet a quota on a page that has one honest general question is to invent the other two — which is the padding failure C2 and rule 31 already exist to stop |
 
 **The scenario classes**, as decided in Q6. Kept because the rejections are the
 useful half: two of these are things we could write and have chosen not to.
@@ -668,7 +709,6 @@ that.
 |---|---|---|---|
 | A1 | is the author's slant separable | if two authors lead with different claims, is that an overlay on one shared claim set, or two files? | not expressible |
 | A3 | a "no sidecar, ever" verdict | most papers have no draft and some never should — workshop reports, position pieces someone else led. Absence currently reads as "not done yet" | the worklist asks forever |
-| E1 | `FAQPage` / `mainEntity` JSON-LD | absent today. [RULES.md §6](RULES.md#6-dont) warns against markup not backed by visible text — here it *is* backed, which is the exempt case. Blocked on Q2: `Question` takes one `name`, so one paraphrase has to be canonical | visible HTML only |
 | E2 | publish the machine-readable sidecar | a `.yaml` or `.jsonld` beside each page would let co-authors consume claims verbatim instead of paraphrasing them, which is the mechanism [RULES.md §5](RULES.md#5-say-the-same-thing-the-same-way) depends on | they paraphrase |
 | E3 | what a co-author's site emits for a paper it does not own | `rel=canonical` at the owner — but does it also carry the claim sentences (corroboration) or only the pointer (no duplicate content)? The two rules point opposite ways | unresolved in the docs too |
 | F1 | review granularity | `--accept` is all-or-nothing over ~16 claims and ~14 question groups | the author reviews thirty items or none |

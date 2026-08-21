@@ -102,67 +102,76 @@ claims:
   scope: Intervals are valid under the fitted beta-likelihood scaling model and require observed
     data from other models in the same family; as of the 2025 preprint.
 qa:
-- q:
-  - Do different LLM skills scale differently with model size versus training data?
-  - Is math ability more data-hungry than common-sense reasoning?
-  - Which benchmarks improve with more parameters and which with more tokens?
-  answers:
+- ask:
+    unsorted:
+    - Do different LLM skills scale differently with model size versus training data?
+    - Is math ability more data-hungry than common-sense reasoning?
+    - Which benchmarks improve with more parameters and which with more tokens?
+  answered_by:
   - skills-scale-differently
   - compute-optimal-differs-by-skill
-- q:
-  - How many latent skills are needed to explain LLM benchmark scores?
-  - How is the latent dimension chosen in a latent-skill scaling law?
-  - Do a handful of factors explain performance across 12 leaderboard benchmarks?
-  answers:
+- ask:
+    unsorted:
+    - How many latent skills are needed to explain LLM benchmark scores?
+    - How is the latent dimension chosen in a latent-skill scaling law?
+    - Do a handful of factors explain performance across 12 leaderboard benchmarks?
+  answered_by:
   - four-skills-suffice
-- q:
-  - Why doesn't instruction-following performance improve much with pretraining scale?
-  - Does IFEval scale with parameters and tokens?
-  - Which skill scales worst with compute in the Open LLM Leaderboard data?
-  answers:
+- ask:
+    unsorted:
+    - Why doesn't instruction-following performance improve much with pretraining scale?
+    - Does IFEval scale with parameters and tokens?
+    - Which skill scales worst with compute in the Open LLM Leaderboard data?
+  answered_by:
   - ifeval-weak-scaling
-- q:
-  - Can a scaling law give prediction intervals rather than point forecasts for an untrained
-    model?
-  - How accurate are forecasts for held-out large models like Llama-3-70B and Qwen-2-72B?
-  - Which benchmarks are hardest to predict from compute?
-  answers:
+- ask:
+    unsorted:
+    - Can a scaling law give prediction intervals rather than point forecasts for an untrained
+      model?
+    - How accurate are forecasts for held-out large models like Llama-3-70B and Qwen-2-72B?
+    - Which benchmarks are hardest to predict from compute?
+  answered_by:
   - prediction-intervals-cover
   - context-intervals
-- q:
-  - Are there statistical guarantees for latent-skill scaling law estimators?
-  - Is the maximum likelihood estimator of a latent variable scaling law consistent?
-  - Where do standard errors on scaling-law coefficients come from?
-  answers:
+- ask:
+    unsorted:
+    - Are there statistical guarantees for latent-skill scaling law estimators?
+    - Is the maximum likelihood estimator of a latent variable scaling law consistent?
+    - Where do standard errors on scaling-law coefficients come from?
+  answered_by:
   - consistency-and-normality
   - context-guarantees-gap
-- q:
-  - What should I read about scaling laws for downstream benchmarks rather than validation
-    loss?
-  - Which work models heterogeneity across LLM families in a scaling law?
-  - Where should I start reading about latent skills and LLM evaluation?
-  - What is a good paper on statistical modelling of LLM benchmark performance?
-  answers:
+- ask:
+    practitioner: What should I read about scaling laws for downstream benchmarks rather than
+      validation loss?
+    unsorted:
+    - Which work models heterogeneity across LLM families in a scaling law?
+    - Where should I start reading about latent skills and LLM evaluation?
+    - What is a good paper on statistical modelling of LLM benchmark performance?
+  answered_by:
   - context-framework
   - context-guarantees-gap
-- q:
-  - Does instruction tuning hurt mathematical reasoning?
-  - How can I compare two model families on a specific skill?
-  - What does a chat variant change relative to its base family?
-  answers:
+- ask:
+    practitioner: How can I compare two model families on a specific skill?
+    unsorted:
+    - Does instruction tuning hurt mathematical reasoning?
+    - What does a chat variant change relative to its base family?
+  answered_by:
   - chat-family-comparison
-- q:
-  - Are LLM latent skills independent of each other?
-  - How correlated are family-level abilities across benchmarks?
-  - Do factor-analytic LLM skills have to be orthogonal?
-  answers:
+- ask:
+    unsorted:
+    - Are LLM latent skills independent of each other?
+    - How correlated are family-level abilities across benchmarks?
+    - Do factor-analytic LLM skills have to be orthogonal?
+  answered_by:
   - correlated-skills
-- q:
-  - How should a fixed FLOPs budget be split between parameters and tokens for math versus
-    reasoning?
-  - Is Chinchilla-style allocation the same for every capability?
-  - What is compute-optimal for a specific skill?
-  answers:
+- ask:
+    unsorted:
+    - How should a fixed FLOPs budget be split between parameters and tokens for math versus
+      reasoning?
+    - Is Chinchilla-style allocation the same for every capability?
+    - What is compute-optimal for a specific skill?
+  answered_by:
   - compute-optimal-differs-by-skill
 terminology:
   scaling model: The statistical latent variable model for how LLM benchmark performance depends

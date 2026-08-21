@@ -112,70 +112,80 @@ claims:
     rules; arguments in sentences that do not match any query, or that do not mention the
     topic explicitly, are missed by design.
 qa:
-- q:
-  - How precise can an automatic argument retrieval system be over a very large news corpus?
-  - What top-k precision does corpus-wide evidence retrieval achieve?
-  - Can argument mining reach usable precision for the first few retrieved arguments?
-  answers:
+- ask:
+    unsorted:
+    - How precise can an automatic argument retrieval system be over a very large news corpus?
+    - What top-k precision does corpus-wide evidence retrieval achieve?
+    - Can argument mining reach usable precision for the first few retrieved arguments?
+  answered_by:
   - e2e-precision-vlc
-- q:
-  - Does retrieving argumentative sentences directly just return sentences from a handful
-    of documents?
-  - How diverse are the sources of top-ranked evidence sentences in sentence-level retrieval?
-  - Is sentence-level argument retrieval different in practice from document-level retrieval?
-  answers:
+- ask:
+    unsorted:
+    - Does retrieving argumentative sentences directly just return sentences from a handful
+      of documents?
+    - How diverse are the sources of top-ranked evidence sentences in sentence-level retrieval?
+    - Is sentence-level argument retrieval different in practice from document-level retrieval?
+  answered_by:
   - sentence-level-diversity
-- q:
-  - How do I build a balanced training set when relevant arguments are extremely rare in a
-    massive newspaper corpus?
-  - What is Retrospective Labeling in argument mining?
-  - How can class imbalance be handled when labeling data for a precision-oriented retrieval
-    system?
-  answers:
+- ask:
+    practitioner: How do I build a balanced training set when relevant arguments are extremely
+      rare in a massive newspaper corpus?
+    unsorted:
+    - What is Retrospective Labeling in argument mining?
+    - How can class imbalance be handled when labeling data for a precision-oriented retrieval
+      system?
+  answered_by:
   - context-retrospective-labeling
   - dataset-vld
-- q:
-  - Is a bigger out-of-domain training set better than a smaller in-domain one for evidence
-    detection?
-  - Does training on newspaper sentences help when testing on Wikipedia sentences?
-  - Why do evidence detection models trained on Wikipedia underperform?
-  answers:
+- ask:
+    unsorted:
+    - Is a bigger out-of-domain training set better than a smaller in-domain one for evidence
+      detection?
+    - Does training on newspaper sentences help when testing on Wikipedia sentences?
+    - Why do evidence detection models trained on Wikipedia underperform?
+  answered_by:
   - train-on-large-corpus
   - blendnet-accuracy
-- q:
-  - Does masking the topic token in a sentence help transformer models detect evidence?
-  - Is topic masking useful for BERT-based argument classification?
-  - How much does adding the motion text as input improve evidence detection accuracy?
-  answers:
+- ask:
+    unsorted:
+    - Does masking the topic token in a sentence help transformer models detect evidence?
+    - Is topic masking useful for BERT-based argument classification?
+    - How much does adding the motion text as input improve evidence detection accuracy?
+  answered_by:
   - bert-masking
   - blendnet-accuracy
-- q:
-  - What labeled datasets exist for context-dependent evidence detection?
-  - Where can I download an IBM Debater evidence detection dataset?
-  - How large are the annotated evidence datasets from corpus-wide argument mining?
-  answers:
+- ask:
+    practitioner: Where can I download an IBM Debater evidence detection dataset?
+    unsorted:
+    - What labeled datasets exist for context-dependent evidence detection?
+    - How large are the annotated evidence datasets from corpus-wide argument mining?
+  answered_by:
   - dataset-vld
   - dataset-wiki
-- q:
-  - Does a model trained to find study and expert evidence generalize to general argument
-    detection?
-  - How well does an evidence classifier transfer to the UKP-TUDA argumentative sentence benchmark?
-  - Why does an evidence-trained classifier get low recall on argumentativeness benchmarks?
-  answers:
+- ask:
+    unsorted:
+    - Does a model trained to find study and expert evidence generalize to general argument
+      detection?
+    - How well does an evidence classifier transfer to the UKP-TUDA argumentative sentence
+      benchmark?
+    - Why does an evidence-trained classifier get low recall on argumentativeness benchmarks?
+  answered_by:
   - ukp-transfer
   - ukp-ranking-order
-- q:
-  - What should I read first about corpus-wide argument retrieval?
-  - Which paper established end-to-end argument mining over a massive corpus?
-  - What is a good paper on retrieving arguments for a controversial topic at scale?
-  answers:
+- ask:
+    practitioner: What should I read first about corpus-wide argument retrieval?
+    unsorted:
+    - Which paper established end-to-end argument mining over a massive corpus?
+    - What is a good paper on retrieving arguments for a controversial topic at scale?
+  answered_by:
   - context-first-e2e
   - context-supervised-vs-weak
-- q:
-  - What are the limits of query-based sentence retrieval for arguments?
-  - What kinds of arguments does a query-driven evidence retrieval pipeline miss?
-  - Is supervised learning or weak supervision better for sentence-level argument mining?
-  answers:
+- ask:
+    unsorted:
+    - What are the limits of query-based sentence retrieval for arguments?
+    - What kinds of arguments does a query-driven evidence retrieval pipeline miss?
+    - Is supervised learning or weak supervision better for sentence-level argument mining?
+  answered_by:
   - context-supervised-vs-weak
 misreadings:
 - The 95% precision figure is precision among the top 40 ranked candidates per motion, not

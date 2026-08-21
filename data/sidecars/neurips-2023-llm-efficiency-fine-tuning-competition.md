@@ -109,76 +109,90 @@ claims:
     recipes.
   evidence: Section 2.3
 qa:
-- q:
-  - Does a high score on public benchmark tasks predict performance on unseen held-out tasks?
-  - How well did open-evaluation leaderboard scores transfer to hidden tasks in the NeurIPS
-    2023 LLM efficiency competition?
-  - Is there evidence that fine-tuned LLMs overfit the benchmarks used to develop them?
-  answers:
+- ask:
+    unsorted:
+    - Does a high score on public benchmark tasks predict performance on unseen held-out tasks?
+    - How well did open-evaluation leaderboard scores transfer to hidden tasks in the NeurIPS
+      2023 LLM efficiency competition?
+    - Is there evidence that fine-tuned LLMs overfit the benchmarks used to develop them?
+  answered_by:
   - open-closed-disagreement
   - winners-not-top-on-open
-- q:
-  - What did the winning teams of the NeurIPS 2023 LLM fine-tuning competition actually do?
-  - Which techniques won a 24-hour single-GPU LLM fine-tuning contest?
-  - Was data curation or custom training code more important for the top competition entries?
-  answers:
+- ask:
+    unsorted:
+    - What did the winning teams of the NeurIPS 2023 LLM fine-tuning competition actually
+      do?
+    - Which techniques won a 24-hour single-GPU LLM fine-tuning contest?
+    - Was data curation or custom training code more important for the top competition entries?
+  answered_by:
   - data-curation-not-code
   - winners-not-top-on-open
-- q:
-  - Which open-source libraries do practitioners use most for single-GPU LLM fine-tuning?
-  - What tooling appeared most often in NeurIPS 2023 LLM efficiency competition submissions?
-  - How common were PEFT and Transformers in competition fine-tuning entries?
-  answers:
+- ask:
+    unsorted:
+    - Which open-source libraries do practitioners use most for single-GPU LLM fine-tuning?
+    - What tooling appeared most often in NeurIPS 2023 LLM efficiency competition submissions?
+    - How common were PEFT and Transformers in competition fine-tuning entries?
+  answered_by:
   - library-usage
-- q:
-  - How reproducible were the code submissions to an LLM fine-tuning competition?
-  - Why did submitted Dockerfiles fail to build in the NeurIPS 2023 LLM efficiency challenge?
-  - What software-quality problems show up in ML competition submissions?
-  answers:
+- ask:
+    unsorted:
+    - How reproducible were the code submissions to an LLM fine-tuning competition?
+    - Why did submitted Dockerfiles fail to build in the NeurIPS 2023 LLM efficiency challenge?
+    - What software-quality problems show up in ML competition submissions?
+  answered_by:
   - reproducibility-failures
-- q:
-  - What does it cost to fine-tune an open LLM on a single GPU?
-  - How long did top NeurIPS 2023 competition entries take to fine-tune within a 24-hour budget?
-  - Is single-GPU LLM fine-tuning affordable for individuals?
-  answers:
+- ask:
+    unsorted:
+    - What does it cost to fine-tune an open LLM on a single GPU?
+    - How long did top NeurIPS 2023 competition entries take to fine-tune within a 24-hour
+      budget?
+    - Is single-GPU LLM fine-tuning affordable for individuals?
+  answered_by:
   - cost-of-finetuning
-- q:
-  - Does the best model overall win on every evaluation scenario?
-  - How much do HELM scenario rankings disagree about which fine-tuned model is best?
-  - Should model selection rely on a single aggregate benchmark score?
-  answers:
+- ask:
+    unsorted:
+    - Does the best model overall win on every evaluation scenario?
+    - How much do HELM scenario rankings disagree about which fine-tuned model is best?
+    - Should model selection rely on a single aggregate benchmark score?
+  answered_by:
   - scenario-rank-disagreement
   - coarse-fine-scatter
-- q:
-  - What should I read about benchmark overfitting in fine-tuned language models?
-  - Is there a good paper on the limits of leaderboard-based LLM evaluation?
-  - Where can I start reading about whether LLM benchmark rankings generalize to unseen tasks?
-  answers:
+- ask:
+    practitioner: What should I read about benchmark overfitting in fine-tuned language models?
+    unsorted:
+    - Is there a good paper on the limits of leaderboard-based LLM evaluation?
+    - Where can I start reading about whether LLM benchmark rankings generalize to unseen
+      tasks?
+  answered_by:
   - context-benchmark-overfitting
-- q:
-  - Where can I download the entries and evaluation code from the NeurIPS 2023 LLM efficiency
-    competition?
-  - Are there public datasets of real fine-tuning submissions for studying reproducibility?
-  - What artifacts did the NeurIPS 2023 LLM fine-tuning competition release?
-  answers:
+- ask:
+    practitioner: Where can I download the entries and evaluation code from the NeurIPS 2023
+      LLM efficiency competition?
+    unsorted:
+    - Are there public datasets of real fine-tuning submissions for studying reproducibility?
+    - What artifacts did the NeurIPS 2023 LLM fine-tuning competition release?
+  answered_by:
   - context-artifacts
-- q:
-  - Did reducing the number of evaluation samples per task change competition rankings?
-  - How reliable are sparse or subsampled HELM evaluations compared with full ones?
-  - Is it safe to evaluate LLMs on fewer problems per task to save compute?
-  answers:
+- ask:
+    unsorted:
+    - Did reducing the number of evaluation samples per task change competition rankings?
+    - How reliable are sparse or subsampled HELM evaluations compared with full ones?
+    - Is it safe to evaluate LLMs on fewer problems per task to save compute?
+  answered_by:
   - coarse-fine-scatter
-- q:
-  - What made submissions fail besides low accuracy in the NeurIPS 2023 LLM efficiency challenge?
-  - How often did slow inference or out-of-memory errors sink competition entries?
-  - Do inference-time limits affect LLM competition scores?
-  answers:
+- ask:
+    unsorted:
+    - What made submissions fail besides low accuracy in the NeurIPS 2023 LLM efficiency challenge?
+    - How often did slow inference or out-of-memory errors sink competition entries?
+    - Do inference-time limits affect LLM competition scores?
+  answered_by:
   - inference-time-failures
-- q:
-  - Did the two hardware tracks of the NeurIPS 2023 LLM competition behave the same under
-    evaluation?
-  - How did A100 and 4090 track submissions differ in benchmark score agreement?
-  answers:
+- ask:
+    unsorted:
+    - Did the two hardware tracks of the NeurIPS 2023 LLM competition behave the same under
+      evaluation?
+    - How did A100 and 4090 track submissions differ in benchmark score agreement?
+  answered_by:
   - full-hidden-agreement
 misreadings:
 - The competition's low open-versus-closed score correlation does not establish overfitting

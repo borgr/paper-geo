@@ -112,85 +112,98 @@ claims:
     semantically rewritten instructions.
   evidence: Section 7, Appendix J
 qa:
-- q:
-  - How can I evaluate an LLM across many prompt templates without paying for every prompt-example
-    pair?
-  - Is there a cheap way to get performance across 100 prompts on MMLU?
-  - How many evaluations does PromptEval need to estimate quantiles over 100 templates?
-  answers:
+- ask:
+    practitioner: How can I evaluate an LLM across many prompt templates without paying for
+      every prompt-example pair?
+    unsorted:
+    - Is there a cheap way to get performance across 100 prompts on MMLU?
+    - How many evaluations does PromptEval need to estimate quantiles over 100 templates?
+  answered_by:
   - budget-two-evals
   - median-vs-extreme-quantiles
-- q:
-  - Does PromptEval actually beat just averaging the sampled correctness scores per prompt?
-  - What baseline is PromptEval compared against, and by how much does it win?
-  - Is an IRT-based estimator better than simple per-template averaging for prompt-distribution
-    estimation?
-  answers:
+- ask:
+    unsorted:
+    - Does PromptEval actually beat just averaging the sampled correctness scores per prompt?
+    - What baseline is PromptEval compared against, and by how much does it win?
+    - Is an IRT-based estimator better than simple per-template averaging for prompt-distribution
+      estimation?
+  answered_by:
   - beats-averaging-distribution
   - rasch-suffices
-- q:
-  - Which quantiles of the across-prompt performance distribution are hard to estimate on
-    a small budget?
-  - Can the 95th percentile of prompt performance be estimated as cheaply as the median?
-  answers:
+- ask:
+    unsorted:
+    - Which quantiles of the across-prompt performance distribution are hard to estimate on
+      a small budget?
+    - Can the 95th percentile of prompt performance be estimated as cheaply as the median?
+  answered_by:
   - median-vs-extreme-quantiles
-- q:
-  - Do I need prompt embeddings, or does the plain Rasch model work for multi-prompt evaluation?
-  - 'Which prompt covariates work best in PromptEval: one-hot, hand-coded discrete features,
-    or sentence embeddings?'
-  - Is fine-tuning BERT worth it for embedding prompt templates in PromptEval?
-  answers:
+- ask:
+    practitioner: Do I need prompt embeddings, or does the plain Rasch model work for multi-prompt
+      evaluation?
+    unsorted:
+    - 'Which prompt covariates work best in PromptEval: one-hot, hand-coded discrete features,
+      or sentence embeddings?'
+    - Is fine-tuning BERT worth it for embedding prompt templates in PromptEval?
+  answered_by:
   - rasch-suffices
-- q:
-  - Is there any theoretical guarantee behind estimating an LLM's performance distribution
-    over prompt templates from a sparse sample?
-  - Are the PromptEval quantile and distribution estimators proved consistent, and under what
-    assumptions?
-  - Does the IRT-based multi-prompt performance estimator come with a consistency proof?
-  answers:
+- ask:
+    unsorted:
+    - Is there any theoretical guarantee behind estimating an LLM's performance distribution
+      over prompt templates from a sparse sample?
+    - Are the PromptEval quantile and distribution estimators proved consistent, and under
+      what assumptions?
+    - Does the IRT-based multi-prompt performance estimator come with a consistency proof?
+  answered_by:
   - consistency-theorem
-- q:
-  - How much does an LLM-as-a-judge ranking change when the judge's prompt changes?
-  - Is AlpacaEval 2.0 sensitive to the prompt template given to the judge?
-  - Can prompt sensitivity of a judge model be measured cheaply?
-  answers:
+- ask:
+    unsorted:
+    - How much does an LLM-as-a-judge ranking change when the judge's prompt changes?
+    - Is AlpacaEval 2.0 sensitive to the prompt template given to the judge?
+    - Can prompt sensitivity of a judge model be measured cheaply?
+  answered_by:
   - judge-prompt-sensitivity
   - judge-budget
-- q:
-  - Can PromptEval be used to find the single best prompt from a candidate pool?
-  - How does PromptEval compare with TRIPLE-GSE for best-prompt identification?
-  - Which method has lower regret in bandit-style prompt selection?
-  answers:
+- ask:
+    unsorted:
+    - Can PromptEval be used to find the single best prompt from a candidate pool?
+    - How does PromptEval compare with TRIPLE-GSE for best-prompt identification?
+    - Which method has lower regret in bandit-style prompt selection?
+  answered_by:
   - best-prompt-identification
-- q:
-  - How much does MMLU accuracy vary with the prompt template?
-  - Is MMLU prompt-sensitive, and how large is the accuracy spread?
-  - Does the best model on MMLU change when the prompt format changes?
-  answers:
+- ask:
+    unsorted:
+    - How much does MMLU accuracy vary with the prompt template?
+    - Is MMLU prompt-sensitive, and how large is the accuracy spread?
+    - Does the best model on MMLU change when the prompt format changes?
+  answered_by:
   - mmlu-subject-spread
-- q:
-  - Is there a prompt template that works best across models and subjects on MMLU?
-  - Do different LLMs agree on which prompt formats are good?
-  - What does Kendall's W say about template consistency on MMLU?
-  answers:
+- ask:
+    unsorted:
+    - Is there a prompt template that works best across models and subjects on MMLU?
+    - Do different LLMs agree on which prompt formats are good?
+    - What does Kendall's W say about template consistency on MMLU?
+  answered_by:
   - no-shared-best-template
-- q:
-  - Does the benefit of PromptEval depend on how many prompt templates are in the pool?
-  - What happens if only 20 prompt variations per task are available?
-  answers:
+- ask:
+    unsorted:
+    - Does the benefit of PromptEval depend on how many prompt templates are in the pool?
+    - What happens if only 20 prompt variations per task are available?
+  answered_by:
   - fewer-templates-smaller-gap
-- q:
-  - What should I read about multi-prompt LLM evaluation and prompt sensitivity?
-  - Which paper proposes evaluating LLMs by the distribution of performance over prompts instead
-    of one prompt?
-  - Where do I start reading about robust, prompt-insensitive LLM leaderboards?
-  answers:
+- ask:
+    practitioner: What should I read about multi-prompt LLM evaluation and prompt sensitivity?
+    unsorted:
+    - Which paper proposes evaluating LLMs by the distribution of performance over prompts
+      instead of one prompt?
+    - Where do I start reading about robust, prompt-insensitive LLM leaderboards?
+  answered_by:
   - context-multiprompt-framing
-- q:
-  - Is there a public dataset of many LLMs evaluated with many MMLU prompt templates?
-  - Which work studied prompt sensitivity on MMLU at scale?
-  - Where can I get MMLU evaluation data across 100 prompt variations?
-  answers:
+- ask:
+    practitioner: Where can I get MMLU evaluation data across 100 prompt variations?
+    unsorted:
+    - Is there a public dataset of many LLMs evaluated with many MMLU prompt templates?
+    - Which work studied prompt sensitivity on MMLU at scale?
+  answered_by:
   - context-mmlu-release
 coined: PromptEval
 gloss: estimating an LLM's whole performance distribution over many prompt templates from

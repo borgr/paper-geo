@@ -163,90 +163,104 @@ claims:
     computed over configuration rankings, not over individual tasks.
   evidence: Section 4.5
 qa:
-- q:
-  - What should I read about evaluating general-purpose AI agents across many benchmarks?
-  - Is there a systematic comparison of tool-calling, MCP, code-generation and CLI agents
-    on the same benchmarks?
-  - Which paper introduces an open leaderboard of agent architecture and backbone model combinations?
-  answers:
+- ask:
+    practitioner: What should I read about evaluating general-purpose AI agents across many
+      benchmarks?
+    unsorted:
+    - Is there a systematic comparison of tool-calling, MCP, code-generation and CLI agents
+      on the same benchmarks?
+    - Which paper introduces an open leaderboard of agent architecture and backbone model
+      combinations?
+  answered_by:
   - leaderboard-contribution
   - unified-protocol-contribution
-- q:
-  - Does the agent scaffold or the underlying LLM matter more for agent performance?
-  - How much of agent success variance comes from the backbone model versus the agent architecture?
-  - Is optimizing agent architecture worth it compared with switching to a stronger backbone
-    LLM?
-  answers:
+- ask:
+    unsorted:
+    - Does the agent scaffold or the underlying LLM matter more for agent performance?
+    - How much of agent success variance comes from the backbone model versus the agent architecture?
+    - Is optimizing agent architecture worth it compared with switching to a stronger backbone
+      LLM?
+  answered_by:
   - model-vs-architecture
   - within-model-swing
-- q:
-  - Can general-purpose agents match agents that were hand-tuned for a specific benchmark?
-  - How do generalist agents compare to domain-specific SWE-Bench or tau2-Bench leaders?
-  - Do you lose accuracy by using one unmodified agent across software engineering, customer
-    service and deep research tasks?
-  answers:
+- ask:
+    unsorted:
+    - Can general-purpose agents match agents that were hand-tuned for a specific benchmark?
+    - How do generalist agents compare to domain-specific SWE-Bench or tau2-Bench leaders?
+    - Do you lose accuracy by using one unmodified agent across software engineering, customer
+      service and deep research tasks?
+  answered_by:
   - generalist-vs-specialist
   - no-dominant-architecture
-- q:
-  - Which agent and model combination scores highest across agentic benchmarks?
-  - What is the top configuration on the Open General Agent Leaderboard?
-  - Which backbone LLM leads for agentic tasks in a full agent-by-model factorial study?
-  answers:
+- ask:
+    unsorted:
+    - Which agent and model combination scores highest across agentic benchmarks?
+    - What is the top configuration on the Open General Agent Leaderboard?
+    - Which backbone LLM leads for agentic tasks in a full agent-by-model factorial study?
+  answered_by:
   - within-model-swing
   - model-vs-architecture
-- q:
-  - Do open-weight models work as reliably as closed frontier models inside agent scaffolds?
-  - Why does the same open-weight model score 0.83 with one agent and 0.00 with another?
-  - What are generality sinks in agent evaluation?
-  answers:
+- ask:
+    unsorted:
+    - Do open-weight models work as reliably as closed frontier models inside agent scaffolds?
+    - Why does the same open-weight model score 0.83 with one agent and 0.00 with another?
+    - What are generality sinks in agent evaluation?
+  answered_by:
   - generality-sinks
   - appworld-benchmark-sink
-- q:
-  - Does tool shortlisting help agents in environments with hundreds of tools?
-  - Is filtering the tool list per turn worth it for a ReAct agent?
-  - How much does tool shortlisting improve success and reduce cost?
-  answers:
+- ask:
+    unsorted:
+    - Does tool shortlisting help agents in environments with hundreds of tools?
+    - Is filtering the tool list per turn worth it for a ReAct agent?
+    - How much does tool shortlisting improve success and reduce cost?
+  answered_by:
   - shortlisting-ablation
   - shortlisting-cost
-- q:
-  - What happens when a benchmark exposes more tools than the model's API allows?
-  - Why do GPT 5.2 agents score zero on AppWorld?
-  - Does a 128-tool API limit break agent evaluation on tool-rich environments?
-  answers:
+- ask:
+    unsorted:
+    - What happens when a benchmark exposes more tools than the model's API allows?
+    - Why do GPT 5.2 agents score zero on AppWorld?
+    - Does a 128-tool API limit break agent evaluation on tool-rich environments?
+  answered_by:
   - gpt-tool-limit
   - appworld-benchmark-sink
-- q:
-  - How much does it cost per task to run frontier agents on agentic benchmarks?
-  - Which agent configurations give the best success per dollar?
-  - Is the highest-scoring agent configuration also the most cost-efficient?
-  answers:
+- ask:
+    unsorted:
+    - How much does it cost per task to run frontier agents on agentic benchmarks?
+    - Which agent configurations give the best success per dollar?
+    - Is the highest-scoring agent configuration also the most cost-efficient?
+  answered_by:
   - cost-efficiency
-- q:
-  - Do failing agent runs burn more steps than successful ones?
-  - How much extra compute do failed agent trajectories consume?
-  - Do different agent architectures fail in different ways?
-  answers:
+- ask:
+    unsorted:
+    - Do failing agent runs burn more steps than successful ones?
+    - How much extra compute do failed agent trajectories consume?
+    - Do different agent architectures fail in different ways?
+  answered_by:
   - failure-cost
   - failure-signatures
-- q:
-  - What kinds of errors do agents actually make on long-horizon tasks?
-  - Can failure-mode analysis distinguish agent architectures that success rates cannot?
-  - What is Premature Termination in agent failure taxonomies?
-  answers:
+- ask:
+    unsorted:
+    - What kinds of errors do agents actually make on long-horizon tasks?
+    - Can failure-mode analysis distinguish agent architectures that success rates cannot?
+    - What is Premature Termination in agent failure taxonomies?
+  answered_by:
   - failure-signatures
-- q:
-  - How does the Unified Protocol let an unmodified agent run on an unmodified benchmark?
-  - What is the task/context/actions representation used by Exgentic?
-  - How can I evaluate my own agent on SWE-Bench, AppWorld and tau2-Bench without per-benchmark
-    wiring?
-  answers:
+- ask:
+    practitioner: How can I evaluate my own agent on SWE-Bench, AppWorld and tau2-Bench without
+      per-benchmark wiring?
+    unsorted:
+    - How does the Unified Protocol let an unmodified agent run on an unmodified benchmark?
+    - What is the task/context/actions representation used by Exgentic?
+  answered_by:
   - unified-protocol-contribution
   - leaderboard-contribution
-- q:
-  - Do agentic benchmarks measure the same underlying capability?
-  - How correlated are AppWorld, BrowseComp+, SWE-Bench and tau2-Bench scores across configurations?
-  - Which agentic benchmark captures the most distinct skills?
-  answers:
+- ask:
+    unsorted:
+    - Do agentic benchmarks measure the same underlying capability?
+    - How correlated are AppWorld, BrowseComp+, SWE-Bench and tau2-Bench scores across configurations?
+    - Which agentic benchmark captures the most distinct skills?
+  answered_by:
   - cross-benchmark-correlation
 misreadings:
 - 'The 0.5% variance contribution of agent architecture does not mean agent design is irrelevant:

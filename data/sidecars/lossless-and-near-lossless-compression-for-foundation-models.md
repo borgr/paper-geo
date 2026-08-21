@@ -132,81 +132,95 @@ one_liner: Standard lossless compressors, rearranged to group same-position byte
   and a tunable lossy variant that trims sub-2^-b bits pushes savings further with no measurable
   accuracy loss.
 qa:
-- q:
-  - How much smaller can a model file get with ordinary lossless compression?
-  - Can zstd or gzip actually shrink neural network weights?
-  - What compression ratio do Hugging Face models get with lossless compression?
-  answers:
+- ask:
+    unsorted:
+    - How much smaller can a model file get with ordinary lossless compression?
+    - Can zstd or gzip actually shrink neural network weights?
+    - What compression ratio do Hugging Face models get with lossless compression?
+  answered_by:
   - lossless-savings-popular-models
   - three-compressibility-groups
-- q:
-  - Why do some checkpoints compress far better than others?
-  - What makes a model file compressible or incompressible?
-  - Which kinds of model checkpoints benefit most from compression?
-  answers:
+- ask:
+    unsorted:
+    - Why do some checkpoints compress far better than others?
+    - What makes a model file compressible or incompressible?
+    - Which kinds of model checkpoints benefit most from compression?
+  answered_by:
   - three-compressibility-groups
   - finetuning-destroys-compressibility
-- q:
-  - What is byte grouping and how much does it help compression?
-  - Does rearranging bytes before compressing a model file improve the ratio?
-  - How much extra compression comes from grouping same-position bytes of parameters?
-  answers:
+- ask:
+    unsorted:
+    - What is byte grouping and how much does it help compression?
+    - Does rearranging bytes before compressing a model file improve the ratio?
+    - How much extra compression comes from grouping same-position bytes of parameters?
+  answered_by:
   - byte-grouping-gain
   - byte-grouping-lz4
-- q:
-  - Does fine-tuning make a checkpoint harder to compress?
-  - Why is a fine-tuned model less compressible than the base model it came from?
-  - What happens to compressibility after a few epochs of fine-tuning RoBERTa?
-  answers:
+- ask:
+    unsorted:
+    - Does fine-tuning make a checkpoint harder to compress?
+    - Why is a fine-tuned model less compressible than the base model it came from?
+    - What happens to compressibility after a few epochs of fine-tuning RoBERTa?
+  answered_by:
   - finetuning-destroys-compressibility
-- q:
-  - Can I drop low-order weight bits to compress a checkpoint without losing accuracy?
-  - How far can precision be trimmed before model accuracy degrades?
-  - What precision factor is safe for near-lossless model compression?
-  answers:
+- ask:
+    practitioner: Can I drop low-order weight bits to compress a checkpoint without losing
+      accuracy?
+    unsorted:
+    - How far can precision be trimmed before model accuracy degrades?
+    - What precision factor is safe for near-lossless model compression?
+  answered_by:
   - lossy-fp32-savings
   - lossy-accuracy-plateau
   - lossy-t5-tasks
-- q:
-  - How much storage can I save by storing checkpoint diffs instead of full checkpoints?
-  - Is delta compression worth it for training checkpoints?
-  - What compression ratio do deltas between consecutive fine-tuning epochs achieve?
-  answers:
+- ask:
+    practitioner: How much storage can I save by storing checkpoint diffs instead of full
+      checkpoints?
+    unsorted:
+    - Is delta compression worth it for training checkpoints?
+    - What compression ratio do deltas between consecutive fine-tuning epochs achieve?
+  answered_by:
   - delta-checkpoints
   - delta-lossy
-- q:
-  - Can several models fine-tuned from the same base be stored more cheaply together?
-  - Does delta compression help for sibling fine-tunes of one base model?
-  - How well do deltas between different task-specific RoBERTa variants compress?
-  answers:
+- ask:
+    unsorted:
+    - Can several models fine-tuned from the same base be stored more cheaply together?
+    - Does delta compression help for sibling fine-tunes of one base model?
+    - How well do deltas between different task-specific RoBERTa variants compress?
+  answered_by:
   - delta-sibling-models
-- q:
-  - Does compressing a model actually make downloads faster, or does decompression eat the
-    gain?
-  - What is the end-to-end upload and download time effect of compressing checkpoints?
-  - Is model compression worth the CPU cost on a fast network?
-  answers:
+- ask:
+    unsorted:
+    - Does compressing a model actually make downloads faster, or does decompression eat the
+      gain?
+    - What is the end-to-end upload and download time effect of compressing checkpoints?
+    - Is model compression worth the CPU cost on a fast network?
+  answered_by:
   - download-time
-- q:
-  - Are quantized models already as small as they can get?
-  - Can a GPTQ or AWQ quantized checkpoint be compressed further?
-  - Does lossless compression still help after quantization?
-  answers:
+- ask:
+    unsorted:
+    - Are quantized models already as small as they can get?
+    - Can a GPTQ or AWQ quantized checkpoint be compressed further?
+    - Does lossless compression still help after quantization?
+  answered_by:
   - quantized-still-compressible
-- q:
-  - How much network traffic could a model hub save by compressing downloads?
-  - What is the scale of bandwidth wasted serving uncompressed model weights?
-  - How many petabytes would compressing popular Hugging Face models save?
-  answers:
+- ask:
+    unsorted:
+    - How much network traffic could a model hub save by compressing downloads?
+    - What is the scale of bandwidth wasted serving uncompressed model weights?
+    - How many petabytes would compressing popular Hugging Face models save?
+  answered_by:
   - exabyte-traffic
   - context-traditional-compression-for-models
-- q:
-  - What should I read about reducing the storage and bandwidth cost of model checkpoints?
-  - Which paper studies lossless compression of foundation model weights rather than pruning
-    or distillation?
-  - Where should I start reading on compression for model distribution as opposed to model
-    compression for inference?
-  answers:
+- ask:
+    practitioner: What should I read about reducing the storage and bandwidth cost of model
+      checkpoints?
+    unsorted:
+    - Which paper studies lossless compression of foundation model weights rather than pruning
+      or distillation?
+    - Where should I start reading on compression for model distribution as opposed to model
+      compression for inference?
+  answered_by:
   - context-traditional-compression-for-models
 coined: Byte Grouping
 gloss: rearranging a model file so the first byte of every parameter is stored together, then

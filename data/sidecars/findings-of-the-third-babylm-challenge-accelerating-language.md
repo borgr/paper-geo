@@ -107,78 +107,89 @@ claims:
     vision embeddings and data download process and plan to move to a more openly licensed
     dataset.
 qa:
-- q:
-  - What is a good paper to read about training language models on human-scale amounts of
-    data?
-  - Where should I start reading about sample-efficient pretraining shared tasks?
-  - Which paper documents the BabyLM Challenge results?
-  answers:
+- ask:
+    practitioner: Where should I start reading about sample-efficient pretraining shared tasks?
+    unsorted:
+    - What is a good paper to read about training language models on human-scale amounts of
+      data?
+    - Which paper documents the BabyLM Challenge results?
+  answered_by:
   - what-it-is
   - objective-arch-win
-- q:
-  - What was new in the 2025 BabyLM Challenge compared with earlier years?
-  - How does the BabyLM interaction track work?
-  - Can a small model learn from a bigger teacher model under the BabyLM rules?
-  answers:
+- ask:
+    unsorted:
+    - What was new in the 2025 BabyLM Challenge compared with earlier years?
+    - How does the BabyLM interaction track work?
+    - Can a small model learn from a bigger teacher model under the BabyLM rules?
+  answered_by:
   - new-interaction-track
   - interaction-winner-numbers
-- q:
-  - Does curriculum learning actually help when pretraining on 100M words?
-  - What kinds of methods won the third BabyLM Challenge?
-  - Which approaches worked best under a fixed small data budget?
-  answers:
+- ask:
+    unsorted:
+    - Does curriculum learning actually help when pretraining on 100M words?
+    - What kinds of methods won the third BabyLM Challenge?
+    - Which approaches worked best under a fixed small data budget?
+  answered_by:
   - objective-arch-win
   - gpt-bert-backbone
-- q:
-  - Did any 2025 BabyLM submission beat the previous year's winning baseline?
-  - How did submissions compare with the GPT-BERT baselines?
-  - Were the BabyLM baselines beaten in the strict and strict-small tracks?
-  answers:
+- ask:
+    unsorted:
+    - Did any 2025 BabyLM submission beat the previous year's winning baseline?
+    - How did submissions compare with the GPT-BERT baselines?
+    - Were the BabyLM baselines beaten in the strict and strict-small tracks?
+  answered_by:
   - strictsmall-beats-baseline
   - strict-winners-numbers
   - interaction-winner-numbers
-- q:
-  - Does spending more compute improve BabyLM scores?
-  - Is there a relationship between training FLOPs and performance for small-data language
-    models?
-  - Did the BabyLM organizers find a compute-performance correlation in 2025?
-  answers:
+- ask:
+    unsorted:
+    - Does spending more compute improve BabyLM scores?
+    - Is there a relationship between training FLOPs and performance for small-data language
+      models?
+    - Did the BabyLM organizers find a compute-performance correlation in 2025?
+  answered_by:
   - flops-not-predictive
-- q:
-  - Do models that look human-like on cognitive tasks also do well on linguistic benchmarks?
-  - Is cognitive modeling performance correlated with BLiMP and GLUE performance?
-  - Do human-likeness and NLP task scores go together for BabyLM models?
-  answers:
+- ask:
+    unsorted:
+    - Do models that look human-like on cognitive tasks also do well on linguistic benchmarks?
+    - Is cognitive modeling performance correlated with BLiMP and GLUE performance?
+    - Do human-likeness and NLP task scores go together for BabyLM models?
+  answered_by:
   - cog-ling-correlation
-- q:
-  - How close are 100M-word models to large language models on grammaticality judgments?
-  - Can a model trained on 100M words match Llama 70B on BLiMP?
-  - Where do small-data language models still fall short of humans?
-  answers:
+- ask:
+    unsorted:
+    - How close are 100M-word models to large language models on grammaticality judgments?
+    - Can a model trained on 100M words match Llama 70B on BLiMP?
+    - Where do small-data language models still fall short of humans?
+  answered_by:
   - blimp-vs-llama70b
-- q:
-  - How do BabyLM abilities emerge over the course of pretraining?
-  - When do morphological generalization abilities appear as words seen increases?
-  - Does entity tracking improve monotonically with pretraining data?
-  answers:
+- ask:
+    unsorted:
+    - How do BabyLM abilities emerge over the course of pretraining?
+    - When do morphological generalization abilities appear as words seen increases?
+    - Does entity tracking improve monotonically with pretraining data?
+  answered_by:
   - training-dynamics
-- q:
-  - Can GLUE-style evaluation of BabyLM models be done zero-shot instead of by finetuning?
-  - Why does the BabyLM evaluation pipeline still require finetuning?
-  - Do 100M-word models show in-context learning?
-  answers:
+- ask:
+    unsorted:
+    - Can GLUE-style evaluation of BabyLM models be done zero-shot instead of by finetuning?
+    - Why does the BabyLM evaluation pipeline still require finetuning?
+    - Do 100M-word models show in-context learning?
+  answered_by:
   - zero-shot-glue-failed
-- q:
-  - Why are there so few multimodal BabyLM submissions?
-  - How did vision-language models do in the 2025 BabyLM Challenge?
-  - What is being changed about the BabyLM multimodal track?
-  answers:
+- ask:
+    unsorted:
+    - Why are there so few multimodal BabyLM submissions?
+    - How did vision-language models do in the 2025 BabyLM Challenge?
+    - What is being changed about the BabyLM multimodal track?
+  answered_by:
   - multimodal-track-thin
-- q:
-  - Which model architecture performs best when pretraining on 10M-100M words?
-  - Is GPT-BERT still the strongest backbone for small-data pretraining?
-  - Which backbones lead on the BabyLM evaluation suite?
-  answers:
+- ask:
+    unsorted:
+    - Which model architecture performs best when pretraining on 10M-100M words?
+    - Is GPT-BERT still the strongest backbone for small-data pretraining?
+    - Which backbones lead on the BabyLM evaluation suite?
+  answered_by:
   - gpt-bert-backbone
 terminology:
   Strict and Strict-Small tracks: BabyLM Challenge tracks limiting training data to at most
