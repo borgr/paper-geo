@@ -97,6 +97,66 @@ def verification_meta(cfg) -> str:
     return out
 
 
+# Set once in `main()` and read by `page()`, which is called from four places and does
+# not otherwise see the config. A global rather than a fifth parameter because the value
+# is a property of the whole build, not of any one page.
+_ANALYTICS = ""
+
+# provider -> (required config key, snippet template). Deliberately a whitelist: the
+# alternative is a free-form `head_html` config key, and a config value that becomes
+# executable script on every page is the one place in this repo where a typo turns into
+# an injection. Each snippet is the vendor's own documented form, nothing more.
+ANALYTICS = {
+    "plausible": ("domain",
+                  '  <script defer data-domain="{v}" '
+                  'src="https://plausible.io/js/script.js"></script>\n'),
+    "goatcounter": ("endpoint",
+                    '  <script data-goatcounter="{v}" async '
+                    'src="//gc.zgo.at/count.js"></script>\n'),
+    "umami": ("website_id",
+              '  <script defer data-website-id="{v}" '
+              'src="https://cloud.umami.is/script.js"></script>\n'),
+    "ga4": ("measurement_id",
+            '  <script async src="https://www.googletagmanager.com/gtag/js?id={v}">'
+            '</script>\n'
+            '  <script>window.dataLayer=window.dataLayer||[];'
+            'function gtag(){{dataLayer.push(arguments);}}'
+            "gtag('js',new Date());gtag('config','{v}');</script>\n"),
+}
+
+
+def analytics_snippet(cfg) -> str:
+    """The one instrument that can show an AI answer sent a real person here.
+
+    A referral from `chatgpt.com`, `perplexity.ai` or `claude.ai` is the only ground truth
+    available at this scale: the counters in `measure/` are confounded and slow, and claim
+    fidelity says how a model describes the work, not whether anyone arrived. The asymmetry
+    is worth stating because it decides how the number is read -- AI answers are frequently
+    not clicked at all, so a rise is evidence and a flat line is uninformative.
+
+    What this cannot give you is crawler hits (`GPTBot`, `ClaudeBot`, `PerplexityBot`),
+    which are the earliest possible signal and arrive weeks before any answer. Those are
+    server-side, GitHub Pages publishes no logs, and no script tag can see a bot that never
+    runs JavaScript. That needs a CDN in front of the site, which is a hosting decision.
+
+    Left null by default. Three of the four providers set no cookies and need no consent
+    banner; `ga4` does, and choosing it is choosing that obligation.
+    """
+    a = (cfg.get("site") or {}).get("analytics") or {}
+    provider = (a.get("provider") or "").strip().lower()
+    if not provider:
+        return ""
+    if provider not in ANALYTICS:
+        raise SystemExit(f"site.analytics.provider {provider!r} is not one of "
+                         f"{', '.join(sorted(ANALYTICS))}")
+    key, tmpl = ANALYTICS[provider]
+    value = a.get(key)
+    if not value:
+        raise SystemExit(f"site.analytics.provider is {provider!r}, which needs "
+                         f"site.analytics.{key}")
+    return tmpl.format(v=E(str(value)))
+
+
 def year_sections(papers: list) -> list:
     """Every paper under its year, newest year first, most cited first within a year.
 
@@ -166,7 +226,7 @@ def page(title: str, body: str, *, head: str = "", canonical: str = "") -> str:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{E(title)}</title>{can}
-{head}  <style>
+{_ANALYTICS}{head}  <style>
     body {{ max-width: 46rem; margin: 2rem auto; padding: 0 1rem;
             font: 16px/1.6 Georgia, "Times New Roman", serif; color: #1a1a1a; }}
     h1, h2, h3 {{ font-family: -apple-system, system-ui, sans-serif; line-height: 1.25; }}
@@ -640,6 +700,8 @@ def redirect_stub(site: str, new_slug: str, title: str) -> str:
 
 
 def build(cfg) -> dict:
+    global _ANALYTICS
+    _ANALYTICS = analytics_snippet(cfg)      # every page, so it is set before any is written
     papers = [p for p in (read_yaml(os.path.join(DATA, "papers.yaml")) or {})["papers"]]
     repos = (read_yaml(os.path.join(DATA, "repos.yaml")) or {}).get("repos", [])
     ident = cfg["identity"]

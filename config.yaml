@@ -270,6 +270,28 @@ site:
   # ever want to; the only cost is that the first submission after the change 403s
   # until the new key file is live.
   indexnow_key: c6773a10d38042a78a215ca799c8aad3
+  # The only instrument that can show an AI answer sent a real person here: a referral
+  # from chatgpt.com, perplexity.ai or claude.ai. Everything else measurable at this
+  # scale is either confounded (citation counters) or about how a model describes the
+  # work rather than whether anyone arrived (claim fidelity). Read it asymmetrically --
+  # AI answers are frequently not clicked, so a rise is evidence and a flat line is not.
+  #
+  # `provider` is one of plausible, goatcounter, umami, ga4, or null for none, and each
+  # needs exactly one value alongside it (domain, endpoint, website_id, measurement_id).
+  # A whitelist rather than a free-form head snippet on purpose: this is the one config
+  # value that becomes executable script on every page. The first three set no cookies
+  # and need no consent banner; ga4 does, and picking it is picking that obligation.
+  #
+  # It cannot show crawler hits -- GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot --
+  # which are the earliest signal of all, weeks ahead of any answer. Those are server
+  # side, github.io publishes no logs, and no script sees a bot that runs no JavaScript.
+  # That needs a CDN in front of the site, which is a hosting decision, not a config key.
+  analytics:
+    provider: null
+    domain: null
+    endpoint: null
+    website_id: null
+    measurement_id: null
 
 github_sweep:
   # Forks are excluded: they are not yours to describe, and topics on a fork are

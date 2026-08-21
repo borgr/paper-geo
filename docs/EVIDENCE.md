@@ -457,10 +457,12 @@ separately checkable. Say that in public rather than implying a result nobody ha
   `ClaudeBot`, `PerplexityBot` and `OAI-SearchBot` by user-agent — the earliest
   possible signal that a page was noticed, weeks before any answer cites it. Highest
   value per unit of effort on this list; GitHub Pages gives no logs.
-- **Referrer analytics** (Plausible, GA4). Referrals from `chatgpt.com`,
+- **Referrer analytics** — **built**, off by default. Referrals from `chatgpt.com`,
   `perplexity.ai`, `claude.ai` are ground truth that an AI answer sent a human here.
   AI answers frequently are not clicked, so a rise is evidence and a flat line is
-  uninformative.
+  uninformative. Set `site.analytics.provider` in `config.yaml` to one of `plausible`,
+  `goatcounter`, `umami` or `ga4` and the snippet goes on every page; the first three
+  set no cookies, `ga4` does.
 - **Scholar / S2 / OpenAlex counters over time.** Already collected. Slow, heavily
   confounded, not attributable — useful as a tripwire that something broke, not as an
   outcome.

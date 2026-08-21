@@ -3347,3 +3347,41 @@ class TestAHandoverBundleDecidesNothing(unittest.TestCase):
         text = config_text(found["name"], found, None, None)
         self.assertIsNone(yaml.safe_load(text)["identity"]["orcid"])
         self.assertIn("0000-0001-0000-0002", text)
+
+
+class TestAnalyticsIsOptAndWhitelisted(unittest.TestCase):
+    """The one config value that becomes executable script on every published page.
+
+    So the failure modes are worth pinning: silently emitting nothing when a provider was
+    named, and accepting a provider name nobody wrote a snippet for.
+    """
+
+    def test_no_provider_emits_nothing(self):
+        from build_site import analytics_snippet
+        self.assertEqual(analytics_snippet({}), "")
+        self.assertEqual(analytics_snippet({"site": {"analytics": {"provider": None}}}), "")
+
+    def test_a_named_provider_without_its_value_is_an_error(self):
+        """Not a silent no-op: a site that thinks it has analytics and does not is worse."""
+        from build_site import analytics_snippet
+        with self.assertRaises(SystemExit):
+            analytics_snippet({"site": {"analytics": {"provider": "plausible"}}})
+
+    def test_an_unknown_provider_is_an_error(self):
+        from build_site import analytics_snippet
+        with self.assertRaises(SystemExit):
+            analytics_snippet({"site": {"analytics": {"provider": "matomo",
+                                                     "domain": "x.example"}}})
+
+    def test_the_value_is_escaped_into_the_snippet(self):
+        from build_site import analytics_snippet
+        out = analytics_snippet({"site": {"analytics": {"provider": "plausible",
+                                                       "domain": 'a"b'}}})
+        self.assertIn("plausible.io/js/script.js", out)
+        self.assertNotIn('data-domain="a"b"', out)
+
+    def test_it_reaches_every_page_not_just_the_homepage(self):
+        """Unlike the verification tags, which are homepage-only by design."""
+        import build_site
+        with mock.patch.object(build_site, "_ANALYTICS", '  <script defer id="t"></script>\n'):
+            self.assertIn('id="t"', build_site.page("t", "<p>b</p>"))
