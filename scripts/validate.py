@@ -843,11 +843,26 @@ _UNBOUND = re.compile(
     # flagged 21 of those across the corpus. Reaching forward for the `to` instead would
     # have exempted "does it generalize to new tasks", which is a real reference to nothing
     # and has to keep failing -- so the list of predicates is closed and short.
+    # The same dummy subject takes a verb rather than an adjective in "does it matter
+    # whether you compare benchmarks by rank order or by raw scores" -- 12 of those, and
+    # the complement clause (`whether`/`if`/`which`) is what marks the `it` as expletive
+    # rather than a reference, so the exemption asks for the clause and not just the verb.
     r"|^(?:is|are|was|were|does|do|did|has|have|can|could|would|will|should)\s+"
     r"(?:it|they|its|their)\b(?!\s+\w+\s+that\b)"
+    r"(?!\s+(?:matter|help|hurt|pay|change|make)\b[^?]*?\b(?:whether|if|which|when|that)\b)"
     r"(?!\s+(?:worth|better|best|enough|possible|feasible|safe|true|ok|okay|necessary"
     r"|useful|worthwhile|harder|easier|hard|cheaper|faster|fine|reasonable|realistic"
-    r"|practical|advisable|common|normal|standard|sensible|risky|wise)\b)", re.I)
+    r"|practical|advisable|common|normal|standard|sensible|risky|wise)\b)"
+    # ...and an adjective list cannot be closed: "is it a bad idea to clip gradients",
+    # "is it wasteful to build a huge benchmark", "does it help to build the data from
+    # documents in the same area" are all the same dummy subject with a different
+    # predicate. What they share is the infinitive the `it` anticipates, so ask for that
+    # instead -- with a bare verb after `to`, since "does it generalize to new tasks" is a
+    # reference to nothing and has to keep failing, and what tells the two apart is that a
+    # to-infinitive does not start with a determiner or a comparative.
+    r"(?!\s+[^?]*?\bto\s+(?!the\b|a\b|an\b|my\b|your\b|our\b|their\b|its\b|new\b"
+    r"|other\b|another\b|different\b|any\b|some\b|more\b|most\b|all\b|every\b|each\b"
+    r"|higher\b|lower\b|larger\b|smaller\b|bigger\b|longer\b|shorter\b)[a-z]+\b)", re.I)
 
 # The same failure one step subtler, and the one the demonstrative rules miss entirely:
 # a definite noun phrase whose referent is the paper the reader is not looking at.
@@ -856,14 +871,26 @@ _UNBOUND = re.compile(
 # question. Only the bare form counts, `the` immediately followed by the role noun: a
 # qualifier in between is what makes it specific, so "the anchor-point method" and "the
 # best active-learning strategy" are exactly the phrasings this must leave alone.
+# The list is nouns that can only mean *this paper's* one of them. It used to carry the
+# generic-domain nouns too -- model, models, task, corpus, dataset, benchmark, game,
+# score -- and on the roles corpus that fired 68 times on phrasings that are ordinary
+# English: "does training only one of a low-rank adapter's two matrices help the model
+# generalize?" means *a* model, names its subject, and is exactly what the `plain` role is
+# for. Worse, the exemption below keys on a capitalised token, which `plain` is forbidden
+# to contain, so the two rules pulled against each other by construction. "the method" and
+# "the estimator" stay, because a question containing them is asking about a specific one
+# the reader cannot see.
 _BARE_DEFINITE = re.compile(
-    r"\bthe\s+(?:estimator|correction|method|approach|framework|algorithm|model|models"
-    r"|pipeline|metric|technique|system|procedure|setup|dataset|benchmark|corpus"
-    r"|suite|study|experiment|experiments|finding|findings|task|game|challenge"
-    r"|paper|work|authors?|tool|score|scores)\b"
+    r"\bthe\s+(?:estimator|correction|method|approach|framework|algorithm"
+    r"|pipeline|metric|technique|procedure|suite|study"
+    r"|findings?|paper|work|authors?|tool)\b"
     # A relative clause binds it as well as an adjective does: "the models I merge" and
     # "the model they came from" both say which, and both are the natural English.
-    r"(?!\s+(?:I|we|you|they|that|which|who|whose)\b)", re.I)
+    # A prepositional postmodifier names it as well as a relative clause does: "the
+    # experiments on making a training step behave like prompting" says which experiments,
+    # and "does the work" is an idiom with no referent in it at all.
+    r"(?!\s+(?:I|we|you|they|that|which|who|whose"
+    r"|of|on|in|for|from|with|about|behind|under|between)\b)", re.I)
 
 # ...unless the question names something a query would contain. A capitalised token past
 # the first word, a coined name, a digit: any of them gives "the model" something on
@@ -872,6 +899,32 @@ _BARE_DEFINITE = re.compile(
 # starts capitalised.
 _NAMES_SOMETHING = re.compile(r"\S+\s+.*?\b[A-Z][A-Za-z0-9]*[A-Z0-9][A-Za-z0-9-]*\b"
                               r"|\S+\s+.*?\b[A-Z][a-z]{2,}\b|\d")
+
+def _bound_earlier(q: str, m) -> bool:
+    """True when the flagged phrase's own head noun already appeared in this question.
+
+    "if a model of game results uses several hidden abilities, are those abilities pinned
+    down uniquely?" is not a reference to something off screen -- the antecedent is eight
+    words to its left, in the same sentence a reader would be quoted. 19 of the rerouted
+    phrasings are that shape, and the regexes cannot see it because a lookbehind cannot
+    ask "does this noun occur anywhere before here".
+
+    The head is the last word of the match for a bare definite (`the models`) and the word
+    after it for a demonstrative that matched on its verb (`are those` + `abilities`).
+    Compared on a crude stem so that "abilities"/"ability" and "models"/"model" match,
+    which is enough: this only ever suppresses a complaint about a noun the question has
+    already introduced.
+    """
+    before, after = q[:m.start()].lower(), q[m.end():].lower()
+    tail = re.findall(r"[a-z][a-z-]+", m.group(0).lower())
+    head = tail[-1] if tail and tail[-1] not in ("this", "these", "those", "the") else None
+    if head is None:
+        head = next(iter(re.findall(r"[a-z][a-z-]+", after)), None)
+    if not head or len(head) < 4:
+        return False
+    stem = re.sub(r"(ies|es|s)$", "", head)
+    return re.search(rf"\b{re.escape(stem)}(?:y|ies|es|s)?\b", before) is not None
+
 
 # A claim that enumerates its parts. Matches "(1) ... (2)", "(i) ... (ii)" and
 # "(a) ... (b)" only: a bare "1." never appears mid-sentence in the corpus, and a lone
@@ -1260,6 +1313,8 @@ def readability(fm: dict, slug: str | None = None) -> list[tuple[str, str, str]]
             # names a benchmark and is still unanswerable about *which* method.
             m = _UNBOUND.search(str(q)) or (
                 None if _NAMES_SOMETHING.search(str(q)) else _BARE_DEFINITE.search(str(q)))
+            if m and _bound_earlier(str(q), m):
+                continue
             if m:
                 out.append(("question", str(q), f"{m.group(0).strip()!r} has no antecedent in the "
                                     "question, so it matches no query and cannot be "

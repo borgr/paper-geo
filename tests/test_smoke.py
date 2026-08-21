@@ -691,9 +691,9 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
         from validate import check_readability
         bad = {"qa": [{"ask": {"plain": "Is there a guarantee that the estimator is "
                                         "correct?",
-                               "jargon": "How are the model parameters estimated?"}}]}
+                               "jargon": "How does the approach handle ties?"}}]}
         found = " ".join(check_readability([("bad.md", bad)]))
-        for want in ("'the estimator' has no antecedent", "'the model' has no antecedent"):
+        for want in ("'the estimator' has no antecedent", "'the approach' has no antecedent"):
             with self.subTest(want=want):
                 self.assertIn(want, found)
         ok = {"qa": [{"ask": {"plain": "Does the anchor-point method apply to prompt "
@@ -704,6 +704,42 @@ class TestTheReadabilityRulesStillFire(unittest.TestCase):
                               "task": "Is it enough to train only the B matrix in "
                                       "LoRA?"}}]}
         self.assertEqual(check_readability([("ok.md", ok)]), [])
+
+    def test_a_generic_definite_about_a_reader_s_own_model_is_not_a_reference(self):
+        """The nouns that mean "this paper's one" are flagged; the generic ones are not.
+
+        The list used to hold model, task, corpus, dataset, benchmark and score, and on the
+        rerouted corpus that fired 68 times on ordinary English -- "help the model
+        generalize" means *a* model. It also fought the `plain` role head-on, because the
+        escape hatch keys on a capitalised token and `plain` is forbidden to carry a coined
+        name, so the sharpest plain phrasings were the ones it flagged.
+        """
+        from validate import check_readability
+        ok = {"qa": [{"ask": {
+            "plain": "Does training only one of a low-rank adapter's two matrices help "
+                     "the model generalize?",
+            "task": "how do I set up a confidence reward so the model cannot game it by "
+                    "giving up on the answer?",
+            "jargon": "does agreement between benchmarks depend on whether the models "
+                      "compared are weak or state of the art?",
+            "practitioner": "how do I stop my correlation numbers from swinging around "
+                            "when I change the setup?"}}]}
+        self.assertEqual(check_readability([("ok.md", ok)]), [])
+
+    def test_a_noun_already_in_the_question_is_its_own_antecedent(self):
+        """A demonstrative eight words after the noun it points at is bound, not dangling."""
+        from validate import check_readability
+        ok = {"qa": [{"ask": {
+            "plain": "if a model of game results uses several hidden abilities, are those "
+                     "abilities pinned down uniquely?",
+            "jargon": "how does resolving cross-task interference change sensitivity to "
+                      "merging hyperparameters, and can those hyperparameters be tuned on "
+                      "unlabeled data?"}}]}
+        self.assertEqual(check_readability([("ok.md", ok)]), [])
+        # ...and a demonstrative with nothing before it still fails.
+        bad = {"qa": [{"ask": {"plain": "do these layer shortcuts only work on one small "
+                                        "model?"}}]}
+        self.assertTrue(check_readability([("bad.md", bad)]))
 
     def test_a_claim_that_only_describes_construction_is_caught(self):
         """Rule 30, and the two things it must not do.
