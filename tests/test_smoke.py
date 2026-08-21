@@ -3387,61 +3387,36 @@ class TestAnalyticsIsOptAndWhitelisted(unittest.TestCase):
             self.assertIn('id="t"', build_site.page("t", "<p>b</p>"))
 
 
-class TestWikipediaAsksOnlyForWhatCOIAllows(unittest.TestCase):
-    """The one surface where the project's own leverage argument points at a forbidden act.
+class TestWikipediaAsksOnlyForCorrections(unittest.TestCase):
+    """The surface with the most leverage and the least room to act on it.
 
     Wikipedia carries roughly half the citations in ChatGPT answers, and WP:COI plus
-    WP:SELFCITE forbid the author from acting on that. Every check here is a guard against
-    the emitter drifting back toward the edit that would get reverted -- or, just as bad,
-    toward a confident wrong suggestion, since a page that proposes adding a benchmark to
-    the article on a grape variety stops being read.
+    WP:SELFCITE forbid the author from adding anything. The emitter's whole scope is
+    therefore checks on what other people wrote, and these tests hold that line -- both
+    against drifting back toward asking for an insertion, and against the quieter failure of
+    a confident wrong match, since a page that sends you to check "Brushstrokes in Flight"
+    stops being read.
     """
-
-    PAPER = {"slug": "s", "title": "tinyBenchmarks: evaluating LLMs with fewer examples",
-             "authors": ["A One", "B Two"], "venue": "ICML", "year": 2024,
-             "doi": "10.0/x", "citations": 292}
 
     def _mod(self):
         import wikipedia_tasks
         return wikipedia_tasks
 
-    def test_the_payload_discloses_the_conflict_and_claims_nothing(self):
-        w = self._mod()
-        text = "\n".join(w.proposal_body("tinyBenchmarks", self.PAPER, "It curates subsets."))
-        self.assertIn("{{edit COI|answered=no}}", text)
-        self.assertIn("conflict of interest", text)
-        self.assertIn("will not edit the article", text)
-        # The citation count is context for someone else's judgement, never an argument.
-        self.assertIn("292 times", text)
-        self.assertNotIn("notable", text.lower())
-        self.assertNotIn("should be", text.lower())
-
-    def test_a_host_outside_the_field_is_never_offered(self):
-        """The Syrah case: a lexical search hit that has nothing to do with the work."""
-        w = self._mod()
-        with mock.patch.object(w, "search", lambda q, limit=20: [{"title": "Syrah"}]), \
-             mock.patch.object(w, "in_domain", lambda t: False):
-            self.assertIsNone(w.host_for(["BlendNet weak and strong labels"], {}))
-
-    def test_a_host_is_found_even_when_no_keyword_covers_the_work(self):
-        w = self._mod()
-        with mock.patch.object(w, "search", lambda q, limit=20: [{"title": "Language model"}]), \
-             mock.patch.object(w, "in_domain", lambda t: True):
-            self.assertEqual(w.host_for(["tinyBenchmarks"], {}), "Language model")
-
-    def test_a_declared_keyword_article_outranks_a_search_hit(self):
-        w = self._mod()
-        hits = [{"title": "Deep learning"}, {"title": "Language model"}]
-        with mock.patch.object(w, "search", lambda q, limit=20: hits), \
-             mock.patch.object(w, "in_domain", lambda t: True):
-            self.assertEqual(w.host_for(["x"], {"kw": "Language model"}), "Language model")
-
     def test_a_case_insensitive_match_is_not_coverage(self):
         """`ColD Fusion` is not covered by the article on cold fusion."""
         w = self._mod()
         with mock.patch.object(w, "search", lambda q, limit=20: [
-                {"title": "Cold fusion", "snippet": "the <b>cold fusion</b> claim"}]):
+                {"title": "Cold fusion", "snippet": "the <b>cold fusion</b> claim"}]), \
+             mock.patch.object(w, "in_domain", lambda t: True):
             self.assertEqual(w.mentions("ColD Fusion"), [])
+
+    def test_a_match_outside_the_field_is_not_a_check(self):
+        """`RLCR` matched five sculptures and a rotisserie oven."""
+        w = self._mod()
+        with mock.patch.object(w, "search", lambda q, limit=20: [
+                {"title": "Brushstrokes in Flight", "snippet": "RLCR"}]), \
+             mock.patch.object(w, "in_domain", lambda t: False):
+            self.assertEqual(w.mentions("RLCR"), [])
 
     def test_a_redirect_or_disambiguation_page_is_not_an_article(self):
         """`DORA` resolved to an EU regulation and silently dropped the item."""
@@ -3453,19 +3428,16 @@ class TestWikipediaAsksOnlyForWhatCOIAllows(unittest.TestCase):
         with mock.patch.object(w, "api", lambda **kw: {"query": {"pages": pages}}):
             self.assertIsNone(w.exists("DORA"))
 
-    def test_a_bracketed_qualifier_is_not_a_coined_name(self):
-        """"BabyLM Challenge (2nd edition)" is one name and one qualifier."""
+    def test_a_coinage_colliding_with_an_established_term_is_skipped(self):
+        """`E-values` is a reinforcement learning quantity here, statistics on Wikipedia."""
         w = self._mod()
-        names = [n.strip() for n in re.split(r"\s*/\s*|\s*[(),]\s*",
-                                             "BabyLM Challenge (2nd edition)")]
-        kept = [n for n in names if len(n) > 2 and not re.match(r"^\d|edition$|^v\d", n)]
-        self.assertEqual(kept, ["BabyLM Challenge"])
-        self.assertTrue(hasattr(w, "sidecar_terms"))
+        for term in ("E-values", "Sloth", "Genie", "DORA"):
+            self.assertTrue(w.AMBIGUOUS.match(term), term)
 
-    def test_the_worklist_never_asks_for_an_article_edit(self):
-        """The whole page is proposals; an imperative aimed at an article is the bug."""
-        text = open(os.path.join(ROOT, "tasks", "wikipedia.md")).read()
-        for banned in ("edit the article", "add a citation", "create the article"):
-            for line in text.splitlines():
-                if banned in line.lower() and not line.lstrip().startswith(("-", "I ", "I")):
-                    self.fail(f"{banned!r} asked for in tasks/wikipedia.md: {line}")
+    def test_no_insertion_is_ever_asked_for(self):
+        """The whole page is checks. A drafted request to add a mention is the regression."""
+        text = open(os.path.join(ROOT, "tasks", "wikipedia.md")).read().lower()
+        for banned in ("edit coi", "suggested addition", "== ", "propose a mention"):
+            self.assertNotIn(banned, text, f"{banned!r} is back in tasks/wikipedia.md")
+        for banned in ("{{edit coi", "suggested addition"):
+            self.assertNotIn(banned, open(os.path.join(ROOT, "WORKLIST.md")).read().lower())

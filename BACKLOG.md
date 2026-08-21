@@ -29,8 +29,8 @@ gets copied to other people's installs — so drift here propagates.
       `validate.py` or the schema. The claim-side decisions are settled and recorded
       there (D2, D3, C1, C2, C3, C6, A2, Q4, Q6); what is left is **the question
       list** — Q1 natural-vs-query, Q2 what varies between paraphrases, Q3 person,
-      Q5 field names, Q8 minimum share of general questions — and the formatter pair
-      D1/D4 below.
+      Q5 field names, Q8 minimum share of general questions. The formatter pair D1/D4
+      is now decided against, below.
 - [ ] **Re-draft the 17 stale drafts, or delete them.** Every one was written before
       `kind`, the bands and the no-invented-number check existed: none has a `context`
       claim, so `--accept` refuses each of them, and `pending()` skips any paper that
@@ -42,7 +42,7 @@ gets copied to other people's installs — so drift here propagates.
 - [ ] **Finish the shape enforcement** the schema cannot express. Field length bands,
       claim-count bands and claims with no `qa` pointing at them are now
       `check_sidecar_shape()` in `validate.py`; key order, list order, id casing and
-      wrapping are not, and are the formatter question D1/D4. (`qa` pointing at ids
+      wrapping are not, and by the D1/D4 decision never will be. (`qa` pointing at ids
       that do not exist is an error in `check_sidecars`.)
 - [ ] **Reconcile the schema's `description` strings with the prompt.** The rules now
       have two homes, not three: `docs/SIDECAR.md` §2 is read verbatim by the drafter,
@@ -86,6 +86,15 @@ Deferred with a release condition in [`data/declines.yaml`](data/declines.yaml),
       explicit go-ahead by design, not by accident.
 
 ## Decided against, with the measurement
+
+- [x] **A sidecar formatter. Decided: no rule, no tool.** Key order, list order, id
+      casing and wrapping are invisible past the parser — the page and its JSON-LD are
+      built from parsed values, so nothing about the source file's ordering reaches a
+      crawler or a model. The measurement: **zero GEO effect, and the cost is a tool
+      that rewrites 113 accepted files**, each one an assertion published under the
+      author's name. `--fix-counts` looked like a precedent and is not: a stale count in
+      a doc is wrong, a key in an unusual order is only unusual. Recorded in
+      [docs/SIDECAR.md §6](docs/SIDECAR.md#6-the-open-decisions) as D1/D4.
 
 - [x] **Where a topic-level claim lives. Decided: nowhere new.** Both candidate homes
       needed the same thing behind them — a defensible account of who *else* established
@@ -161,12 +170,6 @@ Recorded rather than fixed, so the next person does not rediscover it as a bug.
       `build_site.py` indexes `p["owner"]` directly. And `owner_source` is what
       distinguishes "unclaimed" from "deferred to a peer's manifest", so dropping the
       first case makes the second easier to misread. Small, not free.
-- [ ] **No formatter, only a validator.** `validate.py --fix-counts` set the
-      precedent that mechanical things get fixed rather than reported, and then
-      nothing else followed it. Key order, list order, id casing and line wrapping in
-      the sidecars are all mechanical and all currently hand-fixed, inconsistently.
-      This is the same item as the shape enforcement above, seen from the tooling
-      side: whichever way D4 in `docs/SIDECAR.md` goes decides both.
 - [ ] **The agent's procedure is only half tested.** One of the two proxies now
       exists: no claim may contain a figure absent from the paper's own full text
       (`check_sidecar_numbers()`), which is what caught an invented gap in a draft.

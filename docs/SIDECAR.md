@@ -549,7 +549,7 @@ he retract a page over a long sentence. `--anyway` overrides the whole tier.
 | 32 | a `result` claim's `scope` does not open by naming the analysis it came from | accept-time | `readability` — "the analysis of sign conflicts and their impact on merging" is falsifiable by nothing, and where a result lives in the paper is what `evidence` is for. 5 of 344 scopes. `context` claims are exempt: they have no measurement to state conditions on, and §2 names the publication date as their bound |
 | 33 | a claim's `text` does not enumerate `(1) ... (2)` | accept-time | `readability` — two claims sharing one id, and the sentence-count rule misses it because the enumeration is one sentence. 1 of 343 claims, and it was the abstract's contributions bullet pasted in. Checked because the check is two lines and a numbered list is never the shortest way to say one thing |
 | 34 | `one_liner` is not a claim restated | accept-time | `readability`, page-level — both are published, so the page said one sentence twice and spent a claim slot on it. 1 of 343, at ratio 1.00; the threshold is 0.9 on content words because sharing a subject and verb with a claim is expected and only near-identity is the defect |
-| 35 | canonical key order | — | **nothing — open, D1** |
+| 35 | canonical key order | — | **nothing, by decision — see D1** |
 
 ## 5. What the drift actually looks like
 
@@ -617,14 +617,13 @@ decision with no record of having been made gets re-litigated.
 | C3 | is `evidence` required | on `kind: result`, yes. On `kind: context`, no — and that asymmetry *is* the answer to "can we ship useful unverified claims" |
 | A2 | minimum viable sidecar | 5 claims, from the band |
 | C7 | where a topic-level claim lives | nowhere new. A claim about the state of a field is not one this paper supports, and both candidate homes — a `kind: topic` claim, and per-line-of-work topic pages — needed a defensible account of who else established it, which is a literature review with no gate behind it. The general question stays a `context` claim about *this* work, with others referred to generically and unnamed. §2, and the same line as scenario class 5 |
+| D1, D4 | canonical key order, and a formatter for it | **no rule, and no formatter.** Key order, list order and id casing are invisible past the parser: the published page and its JSON-LD are generated from the parsed values, so no ordering of the source file reaches a crawler or a model. The whole cost is noisier `git diff`s on files that change rarely, and the whole benefit would be quieter ones — which does not pay for a tool that rewrites 113 accepted files, each one an assertion published under the author's name. `--fix-counts` is not the precedent it looked like: a stale count in a doc is *wrong*, and a key in an unusual order is not |
 | C6 | how many `context` claims before a page reads as self-promotion | ≥1 required, and `result` must outnumber `context`. A page whose majority is unverifiable standing claims is an advert; the majority rule is the cheapest expression of that. §4 row 12 |
 
 ### Shape and enforcement
 
 | | Decision | Options | If we do nothing |
 |---|---|---|---|
-| D1 | canonical key order | (a) fixed order, rewritten by a formatter; (b) fixed order, reported by the validator; (c) no rule | three orders, growing |
-| D4 | formatter or validator | `validate.py --fix-counts` set the precedent that mechanical things get fixed rather than reported. Key order, list order, id casing and wrapping are all mechanical | hand-fixing, inconsistently |
 | D5 | do the shape bands apply to a sidecar accepted before they existed | they are non-fatal by design, so old files report and keep working. But `--accept --replace` on a redraft *will* enforce them, so the first redraft of any paper is where the band bites | the corpus splits into pre-band and post-band files |
 
 ### The question list

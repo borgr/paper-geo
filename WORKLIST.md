@@ -16,15 +16,14 @@ holds the instructions; nothing here repeats them.
 **One edit each, and each one closes a section outright.** This is where
 the page gets visibly shorter.
 
-1. **Wikipedia: propose a mention of BabyLM Challenge on *Deep learning*** — one talk-page paste per proposal, and then wait. It is the highest-value surface in the project -- about 48% of the citations in ChatGPT answers -- and the only one where you may not act directly, so the whole item is paste-and-leave-it.
-2. **Wikipedia already mentions you in 1 article(s) — check the facts** — read the article and check it describes the work correctly. Only raise something on the talk page if it is wrong; a correct mention needs nothing from you.
+1. **Wikipedia describes your work in 3 place(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
 
 **As much as you have patience for.** Per-paper clicking, because
 there is no write API behind either surface — and both are ordered so
 that stopping early still captures most of the value.
 
-3. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
-4. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section.
+2. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
+3. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section.
 
 ## Waiting on the outside world
 
@@ -67,103 +66,24 @@ undo than an unclaimed one, and it makes the split look deliberate.
 - [ ] 8 cites — Navigating the Modern Evaluation Landscape: Consideratio — <https://www.semanticscholar.org/paper/269804253>
 - … and 22 more in [`tasks/s2_merge.md`](tasks/s2_merge.md), same order
 
-## Wikipedia: propose a mention of BabyLM Challenge on *Deep learning*
+## Wikipedia describes your work in 3 place(s) — check the facts
 
-Wikipedia is the single most-cited domain in AI answers, and the one place
-you may not act directly: WP:COI and WP:SELFCITE make an edit of your own
-into the thing that gets reverted. So this is a talk-page proposal an
-uninvolved editor is free to decline, and a decline is the system working.
+Wikipedia carries roughly half the citations in AI answers, and WP:COI
+means you may not edit these. What you *can* do is the thing only an
+author can: notice that a description is wrong. If it reads correctly,
+tick it and move on — that is the expected outcome.
 
-[Open a new section on Talk:Deep learning](https://en.wikipedia.org/wiki/Talk:Deep_learning?action=edit&section=new) — paste this whole
-block, nothing else (236 citations is the only weight
-argument made, and it is left for the editor to weigh):
+A correction goes on the talk page, with the corrected value and the page
+or table it comes from. Never in the article, and never a citation of your
+own work — that is the edit that gets reverted on sight.
 
-```wikitext
-== BabyLM Challenge ==
-{{edit COI|answered=no}}
-I have a conflict of interest: I am an author of the paper below, so I am
-proposing this here rather than editing the article, per WP:COI and WP:SELFCITE.
+- [ ] **Argument technology** — [Argument technology](https://en.wikipedia.org/wiki/Argument_technology) ([talk](https://en.wikipedia.org/wiki/Talk:Argument_technology))
+- [ ] **Project Debater** — [Project Debater](https://en.wikipedia.org/wiki/Project_Debater) ([talk](https://en.wikipedia.org/wiki/Talk:Project_Debater)), [Outline of artificial intelligence](https://en.wikipedia.org/wiki/Outline_of_artificial_intelligence) ([talk](https://en.wikipedia.org/wiki/Talk:Outline_of_artificial_intelligence)), [Argument technology](https://en.wikipedia.org/wiki/Argument_technology) ([talk](https://en.wikipedia.org/wiki/Talk:Argument_technology)), [Open to Debate](https://en.wikipedia.org/wiki/Open_to_Debate) ([talk](https://en.wikipedia.org/wiki/Talk:Open_to_Debate)), [Noam Slonim](https://en.wikipedia.org/wiki/Noam_Slonim) ([talk](https://en.wikipedia.org/wiki/Talk:Noam_Slonim))
+- [ ] **PromptEval** — [Prompt engineering](https://en.wikipedia.org/wiki/Prompt_engineering) ([talk](https://en.wikipedia.org/wiki/Talk:Prompt_engineering))
 
-Suggested addition, wherever editors judge it fits:
-: The BabyLM Challenge is a shared task in which participants pretrain language models on a fixed 10M- or 100M-word developmentally plausible corpus, and in its 2023 first iteration the winning LTG-BERT-based submission outscored Llama 2 and RoBERTa-base in aggregate while most curriculum-learning attempts failed.
-
-Source: Alex Warstadt, Aaron Mueller, Leshem Choshen, Ethan Wilcox et al.. "Findings of the BabyLM Challenge: Sample-Efficient Pretraining on Developmentally Plausible Corpora". Proceedings of the BabyLM Challenge at the 27th Conference on Computational Natural Language Learning. 2023. https://doi.org/10.18653/v1/2023.conll-babylm.1
-Cited 236 times per Semantic Scholar as of this posting,
-offered only as context for a weight judgement I should not be making myself.
-I have no view on whether this meets WP:DUE and will not edit the article.
-~~~~
-```
-
-Everything else Wikipedia-shaped, including the 12 coinages deliberately
-left alone, is in [`tasks/wikipedia.md`](tasks/wikipedia.md).
-
-## Wikipedia: propose a mention of Global-MMLU on *MMLU*
-
-Wikipedia is the single most-cited domain in AI answers, and the one place
-you may not act directly: WP:COI and WP:SELFCITE make an edit of your own
-into the thing that gets reverted. So this is a talk-page proposal an
-uninvolved editor is free to decline, and a decline is the system working.
-
-[Open a new section on Talk:MMLU](https://en.wikipedia.org/wiki/Talk:MMLU?action=edit&section=new) — paste this whole
-block, nothing else (188 citations is the only weight
-argument made, and it is left for the editor to weigh):
-
-```wikitext
-== Global-MMLU ==
-{{edit COI|answered=no}}
-I have a conflict of interest: I am an author of the paper below, so I am
-proposing this here rather than editing the article, per WP:COI and WP:SELFCITE.
-
-Suggested addition, wherever editors judge it fits:
-: Global-MMLU re-annotates MMLU for the cultural, geographic and dialect knowledge its questions require and releases a 42-language test set with human-verified translations, so multilingual results can be reported separately on culturally-sensitive and culturally-agnostic subsets.
-
-Source: Shivalika Singh, Angelika Romanou, Clémentine Fourrier, David Ifeoluwa Adelani et al.. "Global MMLU: Understanding and Addressing Cultural and Linguistic Biases in Multilingual Evaluation". Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers). 2025. https://doi.org/10.18653/v1/2025.acl-long.919
-Cited 188 times per Semantic Scholar as of this posting,
-offered only as context for a weight judgement I should not be making myself.
-I have no view on whether this meets WP:DUE and will not edit the article.
-~~~~
-```
-
-Everything else Wikipedia-shaped, including the 12 coinages deliberately
-left alone, is in [`tasks/wikipedia.md`](tasks/wikipedia.md).
-
-## Wikipedia: propose a mention of tinyBenchmarks on *Language model*
-
-Wikipedia is the single most-cited domain in AI answers, and the one place
-you may not act directly: WP:COI and WP:SELFCITE make an edit of your own
-into the thing that gets reverted. So this is a talk-page proposal an
-uninvolved editor is free to decline, and a decline is the system working.
-
-[Open a new section on Talk:Language model](https://en.wikipedia.org/wiki/Talk:Language_model?action=edit&section=new) — paste this whole
-block, nothing else (292 citations is the only weight
-argument made, and it is left for the editor to weigh):
-
-```wikitext
-== tinyBenchmarks ==
-{{edit COI|answered=no}}
-I have a conflict of interest: I am an author of the paper below, so I am
-proposing this here rather than editing the article, per WP:COI and WP:SELFCITE.
-
-Suggested addition, wherever editors judge it fits:
-: tinyBenchmarks curates 100 examples per scenario by clustering item-response-theory embeddings of benchmark examples, and corrects the resulting score with an IRT-based estimator, reproducing full-benchmark LLM performance on MMLU, the Open LLM Leaderboard, HELM Lite and AlpacaEval 2.0 within about 2%.
-
-Source: Felipe Maia Polo, Lucas Weber, Leshem Choshen, Yuekai Sun et al.. "tinyBenchmarks: evaluating LLMs with fewer examples". Forty-first International Conference on Machine Learning, {ICML} 2024, Vienna, Austria, July 21-27, 2024. 2024. https://doi.org/10.48550/arXiv.2402.14992
-Cited 292 times per Semantic Scholar as of this posting,
-offered only as context for a weight judgement I should not be making myself.
-I have no view on whether this meets WP:DUE and will not edit the article.
-~~~~
-```
-
-Everything else Wikipedia-shaped, including the 12 coinages deliberately
-left alone, is in [`tasks/wikipedia.md`](tasks/wikipedia.md).
-
-## Wikipedia already mentions you in 1 article(s) — check the facts
-
-The one COI case where speaking up is unambiguously helpful is a wrong
-summary of your own work — on the talk page, with the correction and the
-page or table it comes from, never in the article.
-
-- [ ] [Argument technology](https://en.wikipedia.org/wiki/Argument_technology) — [talk](https://en.wikipedia.org/wiki/Talk:Argument_technology)
+The 35 coinages Wikipedia does not mention are listed in
+[`tasks/wikipedia.md`](tasks/wikipedia.md) as deliberately not actionable, along with
+the field articles you could improve with other people's sources.
 
 ## arXiv journal-ref missing (64 papers)
 
