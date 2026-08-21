@@ -113,97 +113,130 @@ claims:
   evidence: Section 3
 qa:
 - ask:
-    practitioner: Where should I start reading about sample-efficient pretraining on developmentally
-      plausible data?
-    unsorted:
-    - What is the BabyLM Challenge about?
-    - Which shared task limits language model pretraining to a child-sized amount of data?
+    plain: which competition asks people to train language models on only as much text as
+      a child hears?
+    jargon: what shared task evaluates pretraining sample efficiency under a developmentally
+      plausible corpus cap?
+    task: where do I start if I want to work on pretraining language models with very little
+      text?
+    practitioner: is there a benchmark I can enter if my lab cannot afford large-scale pretraining
+      runs?
   answered_by:
   - context-shared-task
   - tracks
 - ask:
-    practitioner: How many words am I allowed to pretrain on in the 2024 sample-efficient
-      pretraining shared task?
-    unsorted:
-    - What tracks does the 2nd BabyLM Challenge have?
-    - Is there a multimodal track in the second BabyLM Challenge?
+    plain: what kinds of entries does the 2024/2025 sample-efficient language model pretraining
+      competition accept?
+    jargon: how are the 2nd BabyLM Challenge tracks split across word budgets and multimodal
+      pretraining?
+    task: which BabyLM track should I submit to if I want to train on images and text together?
+    practitioner: can I enter a vision-language model in the 2024 BabyLM round, or is it text
+      only?
   answered_by:
   - tracks
   - multimodal-corpus
 - ask:
-    practitioner: Can I use my own pretraining corpus in the 2024 BabyLM Challenge?
-    unsorted:
-    - Did the 2024 sample-efficient pretraining competition drop its fixed-dataset requirement?
-    - Do I need a datasheet if I build my own BabyLM dataset?
+    plain: can entrants to the 2024 small-data language model competition pick their own training
+      text?
+    jargon: does the 2024/2025 BabyLM edition still fix the pretraining corpus, or permit
+      participant-constructed corpora?
+    task: how do I build my own 10M-word pretraining corpus and still be eligible for BabyLM?
+    practitioner: if I curate my own child-scale training data, what documentation do I have
+      to submit with it?
   answered_by:
   - own-data
 - ask:
-    unsorted:
-    - Does training a tokenizer count against the BabyLM word budget?
-    - Is synthetic or augmented data allowed in the BabyLM Challenge?
-    - How is a 100M word pretraining limit counted when ancillary models are used?
+    plain: in the BabyLM competition, does text used to train a tokenizer or a data-augmentation
+      model count toward the limit?
+    jargon: how is the BabyLM word budget accounted across ancillary components such as tokenizers,
+      parsers and rerankers?
+    task: can I generate synthetic training text or use an off-the-shelf parser and still
+      stay inside a 100M-word budget?
+    practitioner: I want to augment my 10M words with a pretrained helper model — does that
+      break the BabyLM rules?
   answered_by:
   - budget-counting
 - ask:
-    unsorted:
-    - What data is in the BabyLM multimodal corpus?
-    - Which image-caption datasets are used by the 2024 vision-language track for child-scale
-      pretraining?
-    - How many images are in the BabyLM 2024 multimodal dataset?
+    plain: what text and pictures make up the training data for the image-and-text part of
+      the BabyLM competition?
+    jargon: which caption corpora and what text/image-text split compose the BabyLM Vision
+      track's 100M-word pretraining set?
+    task: what should I train on if I want a multimodal model within a child-scale word budget?
+    practitioner: how many images and captions do I actually get if I use the suggested BabyLM
+      multimodal corpus?
   answered_by:
   - multimodal-corpus
 - ask:
-    unsorted:
-    - What changed in the BabyLM 100M-word text corpus for 2024?
-    - Why was QED removed from a child-scale pretraining dataset?
-    - How much CHILDES data is in the BabyLM strict-track corpus?
+    plain: how did the rules about training text change for the 2024/2025 round of the small-data
+      language model pretraining contest?
+    jargon: what source-level composition does the updated 100M-word BabyLM text corpus use,
+      and which 2023 source was dropped?
+    task: how much child-directed speech do I get if I pretrain on the BabyLM strict-track
+      corpus?
+    practitioner: should I reuse the 2023 BabyLM corpus, or is the 2024 text mix different
+      enough to matter?
   answered_by:
   - text-corpus
 - ask:
-    unsorted:
-    - What baseline models does the 2nd BabyLM Challenge provide?
-    - Which baselines are used for the BabyLM vision track?
-    - Are the 2024 baselines for the child-scale pretraining competition stronger than the
-      2023 ones?
+    plain: what ready-made corpus is released as a starting point for entrants in the 2024/2025
+      child-scale language model pretraining competition?
+    jargon: which architectures serve as the 2nd BabyLM Challenge baselines for the strict
+      and vision tracks?
+    task: what do I need to beat to be competitive in the BabyLM strict-small track?
+    practitioner: are the 2024 BabyLM baselines harder to beat than the naively trained ones
+      from 2023?
   answered_by:
   - baselines
 - ask:
-    practitioner: Can I tune hyperparameters freely in the BabyLM Challenge?
-    unsorted:
-    - Is there a limit on epochs or hyperparameters when training a BabyLM?
-    - Does training for many epochs help on 100M words?
+    plain: is there any cap on how long or with what settings a BabyLM entry can be trained?
+    jargon: does the BabyLM Challenge constrain epoch count or hyperparameter search, and
+      what do repeated passes over 100M words buy?
+    task: should I keep training more epochs on my 100M-word corpus, or is compute better
+      spent elsewhere?
+    practitioner: if I train 20 epochs on 10M words, am I breaking a BabyLM rule or wasting
+      my time?
   answered_by:
   - epochs
 - ask:
-    unsorted:
-    - What must a model be able to do to be evaluated in the BabyLM Challenge?
-    - Do submissions to the 2024 sample-efficient pretraining competition have to be HuggingFace
-      models?
-    - Does a BabyLM submission need to generate text?
+    plain: what does a model have to be able to do before the small-data pretraining competition
+      can evaluate it?
+    jargon: what interface must a BabyLM submission expose — pseudo-log-likelihood scoring,
+      fine-tuning, generation?
+    task: how do I make sure my masked language model can be scored by the BabyLM evaluation
+      pipeline?
+    practitioner: my model cannot generate text and is not a standard HuggingFace class —
+      can I still submit it to BabyLM?
   answered_by:
   - eval-requirements
 - ask:
-    practitioner: Can I dual-submit a BabyLM paper elsewhere?
-    unsorted:
-    - How are BabyLM Challenge papers reviewed?
-    - What are the page limits and archival rules for a submission to the 2024 child-scale
-      pretraining shared task?
+    plain: how are write-ups submitted to the 2024/2025 sample-efficient pretraining competition
+      judged, and do they count as publications?
+    jargon: what are the BabyLM Challenge's reviewing criteria, page limit and archival and
+      dual-submission policy?
+    task: how long can I make my BabyLM write-up, and can I send the same work to another
+      venue?
+    practitioner: if my BabyLM model scores badly, will the write-up still be accepted?
   answered_by:
   - review
 - ask:
-    unsorted:
-    - Did visual or non-linguistic grounding help models in the first BabyLM Challenge?
-    - What did BabyLM 2023 find about multimodal grounding?
-    - Is there evidence that image data improves low-resource language model pretraining?
+    plain: did adding pictures help the models entered in the first round of the BabyLM competition?
+    jargon: what did the first BabyLM Challenge find about non-linguistic grounding for sample-efficient
+      pretraining?
+    task: is it worth adding paired image-text data to a low-resource pretraining run?
+    practitioner: should I bother with a multimodal setup for my 100M-word model, given what
+      happened in the 2023 round?
   answered_by:
   - grounding-negative
   - multimodal-corpus
 - ask:
-    practitioner: Can I submit an analysis or benchmark paper instead of a model to BabyLM?
-    unsorted:
-    - What is the BabyLM paper track for?
-    - Does a submission to the 2024 sample-efficient pretraining competition have to be a
-      competition entry?
+    plain: can I enter the 2024/2025 sample-efficient pretraining competition without training
+      a model at all?
+    jargon: what does the 2nd BabyLM Challenge's paper-only track admit, and how is best paper
+      chosen there?
+    task: where can I submit a new cognitively-inspired evaluation metric or an analysis of
+      an existing BabyLM model?
+    practitioner: I have an analysis rather than a model — is a BabyLM submission still archival
+      and reviewed?
   answered_by:
   - context-paper-track
   - review

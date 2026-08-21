@@ -118,96 +118,138 @@ claims:
   evidence: Section 4.2.1
 qa:
 - ask:
-    practitioner: Can I freeze one of the two LoRA matrices without losing accuracy?
-    unsorted:
-    - Which LoRA matrix matters more to fine-tune, the down-projection or the up-projection?
-    - Is it better to train B or A in a low-rank adapter?
+    plain: When fine-tuning with a low-rank adapter, which of its two weight matrices is worth
+      training?
+    jargon: In LoRA, does tuning the up-projection B with a frozen random down-projection
+      A beat tuning A with B frozen?
+    task: How do I decide which LoRA factor to train when I can only afford to update one
+      of them?
+    practitioner: If I freeze half my adapter to save memory, should I keep training the input-side
+      or the output-side matrix?
   answered_by:
   - asymmetry-roles
   - tune-b-beats-tune-a-theory
   - glue-b-vs-a
 - ask:
-    unsorted:
-    - What do the A and B matrices in LoRA actually do?
-    - Why are the two factors of a low-rank adapter not interchangeable?
-    - What roles do the LoRA down- and up-projections play during fine-tuning?
+    plain: What do the two matrices inside a low-rank adapter each learn during fine-tuning?
+    jargon: What functional roles do the LoRA down-projection and up-projection play, and
+      which one carries task-specific information?
+    task: How do I reason about which part of a LoRA adapter encodes the task I fine-tuned
+      on?
+    practitioner: Should I expect the two halves of my LoRA adapter to be interchangeable
+      when I swap or reuse them?
   answered_by:
   - asymmetry-roles
   - b-similarity-task-dependent
 - ask:
-    unsorted:
-    - Is there a proof that freezing the LoRA input projection is better than freezing the
-      output projection?
-    - What theory supports training only the up-projection of a low-rank adapter?
-    - Does the LoRA asymmetry show up even in linear least-squares models?
+    plain: Is there any mathematical argument that freezing one half of a low-rank adapter
+      is the better choice?
+    jargon: Does a least-squares analysis prove that freezing a random orthonormal down-projection
+      and optimizing the up-projection attains lower loss than the reverse?
+    task: How do I justify training only the output-side factor of a low-rank update beyond
+      just benchmark numbers?
+    practitioner: Do I have a theoretical reason to trust one-sided LoRA training, or is it
+      only an empirical trick?
   answered_by:
   - tune-b-beats-tune-a-theory
   - asymmetry-gap-size
 - ask:
-    unsorted:
-    - Does freezing one LoRA matrix improve generalization bounds?
-    - What generalization guarantee do you get from training half of a low-rank adapter?
-    - Can the rank be increased for free when only one adapter factor is trained?
+    plain: Does training only one of a low-rank adapter's two matrices help the model generalize?
+    jargon: How do information-theoretic generalization bounds for LoRA change when a single
+      factor is trained instead of both, and can rank be traded against that?
+    task: How do I raise the rank of my adapter without weakening its generalization guarantee?
+    practitioner: If I train only one adapter factor, can I spend the saved parameters on
+      a higher rank?
   answered_by:
   - generalization-bound-sqrt2
   - half-parameters
 - ask:
-    unsorted:
-    - How much does a random frozen A cost on the GLUE benchmark with RoBERTa?
-    - What are the GLUE numbers for tuning only B versus only A?
-    - Does a LoRA variant with a frozen random projection match AdaLoRA on GLUE?
+    plain: How well does a language model do on standard sentence-understanding tasks when
+      half its adapter stays random and frozen?
+    jargon: What GLUE averages does RoBERTa-large reach with B-only versus A-only LoRA training,
+      and how do they compare to AdaLoRA?
+    task: How do I hit competitive GLUE accuracy while training as few adapter parameters
+      as possible?
+    practitioner: Can I drop to a frozen random projection on GLUE without losing accuracy
+      against fancier adaptive-rank methods?
   answered_by:
   - glue-b-vs-a
   - glue-b-only-matches-adalora
 - ask:
-    unsorted:
-    - Is LoRA's asymmetry just a consequence of initializing B to zero and A randomly?
-    - Does changing the initialization of the adapter matrices explain the asymmetry?
-    - What happens on GLUE when the zero and random initializations of A and B are swapped?
+    plain: Is the difference between the two adapter matrices just an accident of how each
+      one is initialized at the start of training?
+    jargon: Does swapping the zero and random initializations of the LoRA factors account
+      for the observed A/B asymmetry on GLUE?
+    task: How do I rule out initialization as the explanation for one adapter factor mattering
+      more than the other?
+    practitioner: Should I try a different adapter initialization scheme to get rid of the
+      imbalance between the two factors?
   answered_by:
   - init-not-the-cause
 - ask:
-    unsorted:
-    - Does the asymmetry between adapter matrices hold for summarization with BART?
-    - What ROUGE scores does tuning only B get on XSum and CNN/DailyMail?
-    - Does freezing the LoRA input projection work for text generation?
+    plain: Does the advantage of training only one adapter matrix carry over to models that
+      generate text, like summarizers?
+    jargon: What ROUGE-1/2/L does BART-large reach on XSum and CNN/DailyMail with B-only versus
+      A-only LoRA at rank 16?
+    task: How do I fine-tune a summarization model with a frozen random adapter projection
+      and still keep ROUGE up?
+    practitioner: Should I use one-sided adapter training for my abstractive summarization
+      fine-tune?
   answered_by:
   - summarization-bart
 - ask:
-    unsorted:
-    - Does the LoRA asymmetry hold for a 7B language model?
-    - What MMLU accuracy does Llama-2-7B get when only the B matrices are trained?
-    - Can halving LoRA's trainable parameters beat standard LoRA on MMLU?
+    plain: Does training only one adapter matrix still work when the model has billions of
+      parameters?
+    jargon: What 5-shot MMLU accuracy does Llama-2-7B instruction-tuned on Alpaca reach with
+      B-only LoRA versus standard LoRA?
+    task: How do I instruction-tune a 7B model on knowledge benchmarks with roughly half the
+      usual adapter parameters?
+    practitioner: For a 7B instruction tune, is it safe to train only the output-side adapter
+      factor?
   answered_by:
   - mmlu-llama2
 - ask:
-    unsorted:
-    - Does freezing one LoRA factor help out-of-distribution accuracy on vision transformers?
-    - What are the DomainBed results for tuning only the B matrix of a ViT adapter?
-    - Which parameter-efficient fine-tuning choice generalizes best across domains for ViTs?
+    plain: Does freezing half of an adapter help an image model hold up on data from a new
+      domain?
+    jargon: What out-of-domain accuracy does B-only LoRA on a ViT reach on DomainBed, and
+      how does the train-test gap compare to standard LoRA?
+    task: How do I fine-tune a vision transformer so it transfers to unseen domains rather
+      than overfitting the training ones?
+    practitioner: For domain shift in my vision model, should I train one adapter factor or
+      both?
   answered_by:
   - ood-vit
   - train-test-gap
 - ask:
-    unsorted:
-    - How many fewer parameters does training only the up-projection of LoRA use?
-    - What is the parameter saving from freezing the LoRA down-projection?
+    plain: How much memory or parameter count do you actually save by training only one of
+      an adapter's two matrices?
+    jargon: What is the reduction in LoRA trainable parameters from updating only the up-projection
+      at fixed rank r?
+    task: How do I calculate the parameter savings from freezing the down-projection of my
+      adapter at a given rank?
+    practitioner: Is training a single adapter factor really half the trainable parameters
+      for my square weight matrices?
   answered_by:
   - half-parameters
 - ask:
-    practitioner: What should I read to understand how LoRA fine-tuning actually works?
-    unsorted:
-    - Which paper explains why methods like VeRA and LoRA-FA can freeze one adapter matrix?
-    - What work established the asymmetry between low-rank adapter matrices?
+    plain: Which paper should I read to understand why some fine-tuning methods leave one
+      adapter matrix frozen and random?
+    jargon: What work gives the formal analysis of asymmetry between the two low-rank adapter
+      factors that frozen-projection LoRA variants rely on?
+    task: Where do I start reading on why one half of a low-rank adapter can be left untrained?
+    practitioner: Is there a reference I can cite for why frozen random projections in low-rank
+      adapters are justified?
   answered_by:
   - asymmetry-roles
 - ask:
-    unsorted:
-    - How were the learned LoRA adapter matrices compared across seeds and GLUE tasks in the
-      RoBERTa experiment?
-    - What evidence shows the LoRA B matrix encodes the fine-tuning task while A reflects
-      only its initialization?
-    - Are learned LoRA B matrices similar across random seeds on the same task?
+    plain: Do the learned halves of an adapter look alike when you retrain on the same task
+      versus a different task?
+    jargon: How similar are learned LoRA B matrices across random seeds on one GLUE task compared
+      to across tasks, and what about the A matrices?
+    task: How do I tell whether the task information in my fine-tuned adapter sits in the
+      down-projection or the up-projection?
+    practitioner: Can I reuse one factor of an adapter I trained on another task, or does
+      that half depend on the task?
   answered_by:
   - b-similarity-task-dependent
 one_liner: LoRA's two factors have different jobs — A extracts features from the layer input,

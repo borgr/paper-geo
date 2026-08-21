@@ -123,88 +123,113 @@ claims:
   evidence: Section 6
 qa:
 - ask:
-    practitioner: How do I check whether a new LLM benchmark is valid by comparing it to existing
-      benchmarks?
-    unsorted:
-    - What are the recommended best practices for benchmark agreement testing?
-    - How should I run correlations between my benchmark and established LLM leaderboards?
+    plain: what is the right way to check whether a new language model benchmark agrees with
+      existing ones?
+    jargon: what protocol should benchmark agreement testing follow when validating a new
+      LLM benchmark against established leaderboards?
+    task: how do I show that the benchmark I built produces rankings consistent with well-known
+      LLM benchmarks?
+    practitioner: I am about to correlate my new eval against MMLU and Chatbot Arena, what
+      setup should I use so the number means something?
   answered_by:
   - bat-guidelines-context
   - combined-variance-reduction
 - ask:
-    unsorted:
-    - How much does following the BAT best practices actually reduce variance?
-    - Do the BenchBench recommendations make agreement results more stable, and by how much?
-    - What is the measured effect of aggregating references, sampling models and using a data-driven
-      threshold together?
+    plain: how much more stable do benchmark comparison results get if you follow better measurement
+      practice?
+    jargon: what is the combined variance reduction from aggregate references, random model
+      sampling and data-driven agreement thresholds in BAT?
+    task: how do I stop my benchmark correlation numbers from swinging around when I change
+      the setup?
+    practitioner: is it worth the extra work to average several reference benchmarks and sample
+      more models, or will my correlation come out the same?
   answered_by:
   - combined-variance-reduction
   - aggregate-reference
   - model-selection
   - data-driven-threshold
 - ask:
-    practitioner: How much do agreement scores change if I pick a different reference benchmark?
-    unsorted:
-    - Is it safe to validate a new benchmark against just one established benchmark?
-    - Why use an aggregate of several reference benchmarks instead of one?
+    plain: can you trust a comparison against one well-known benchmark, or should several
+      be combined?
+    jargon: how sensitive is a rank-correlation agreement conclusion to the choice of reference
+      benchmark, and does an aggregate reference help?
+    task: which established benchmarks should I correlate my new evaluation against?
+    practitioner: if my eval correlates well with Chatbot Arena but not MT-Bench, which answer
+      do I report?
   answered_by:
   - reference-choice-variability
   - aggregate-reference
 - ask:
-    practitioner: How many models do I need for a reliable rank correlation between two benchmarks?
-    unsorted:
-    - Why is benchmark agreement unstable when only a few models are compared?
-    - What happens to correlation variance with small model subsets?
+    plain: how many models do you need to compare before a benchmark correlation is trustworthy?
+    jargon: how does the size of the model subset affect the variance of Kendall-tau agreement
+      between two LLM benchmarks?
+    task: how many models should I score on both benchmarks before comparing their rankings?
+    practitioner: I have results for 5 models on my benchmark and on an established leaderboard,
+      is that enough to claim they agree?
   answered_by:
   - few-models-variance
   - model-selection
 - ask:
-    unsorted:
-    - Why do benchmarks agree overall but disagree on the strongest models?
-    - Does benchmark agreement hold for top-ranked LLMs?
-    - Is high rank correlation between leaderboards meaningful for frontier models?
+    plain: why can two leaderboards mostly rank models the same way yet disagree completely
+      about the best ones?
+    jargon: does high overall rank correlation between LLM benchmarks persist when restricted
+      to top-ranked or rank-adjacent model subsets?
+    task: how do I check whether two benchmarks still agree on the frontier models I actually
+      care about?
+    practitioner: I only care about picking between the top few models, does a reported high
+      correlation between benchmarks tell me anything?
   answered_by:
   - granularity-top-models
   - adjacent-vs-random
 - ask:
-    practitioner: Can I use the same 0.8 correlation threshold for Kendall-tau and Pearson?
-    unsorted:
-    - How do rank and score correlations differ when comparing LLM benchmarks?
-    - Is there a bias between Kendall-tau and Pearson agreement scores?
+    plain: does it matter whether you compare benchmarks by rank order or by raw scores?
+    jargon: is there a systematic offset between Kendall-tau and Pearson agreement scores
+      across benchmark pairs, and can one threshold serve both?
+    task: which correlation measure and cutoff should I use to decide that two benchmarks
+      agree?
+    practitioner: can I keep using a 0.8 cutoff for both rank and score correlation when validating
+      my benchmark?
   answered_by:
   - metric-bias
   - data-driven-threshold
 - ask:
-    unsorted:
-    - Does benchmark agreement depend on whether the compared LLMs are weak, mid-range or
-      state of the art?
-    - How does model tier affect correlations between LLM benchmarks?
-    - Do older or lower-ranked models inflate benchmark agreement?
+    plain: does agreement between language model benchmarks depend on whether the models compared
+      are weak or state of the art?
+    jargon: how does model tier and rank adjacency change Kendall agreement coefficients between
+      LLM benchmarks?
+    task: how do I pick which models to include so my benchmark comparison is not inflated
+      by weak ones?
+    practitioner: my correlation with an established leaderboard looks great, but most of
+      my models are old and weak, is the number real?
   answered_by:
   - model-tier
   - adjacent-vs-random
 - ask:
-    practitioner: Where can I get pooled results for many LLM benchmarks to correlate my own
-      against?
-    unsorted:
-    - Is there a software package for running benchmark agreement testing?
-    - What does the BenchBench leaderboard rank?
+    plain: is there ready-made software for comparing a new language model benchmark against
+      existing ones?
+    jargon: what tooling supports benchmark agreement testing with stored results across many
+      LLM benchmarks?
+    task: how do I run agreement testing without evaluating dozens of models on every reference
+      benchmark myself?
+    practitioner: can I validate my benchmark against established ones without paying for
+      all that inference?
   answered_by:
   - benchbench-contribution
 - ask:
-    practitioner: What should I read about the validity of LLM benchmarks and leaderboards?
-    unsorted:
-    - Which paper established standards for evaluating benchmarks against each other?
-    - Where should I start reading on meta-evaluation of LLM benchmarks?
+    plain: what should I read first about judging whether language model benchmarks measure
+      the same thing?
+    jargon: which work sets out methodology for meta-evaluation of LLM benchmarks via inter-benchmark
+      agreement?
+    task: where do I start if I need to justify a new LLM benchmark against prior ones?
   answered_by:
   - bat-guidelines-context
   - survey-of-bat-practice
 - ask:
-    unsorted:
-    - How inconsistent is existing practice when papers report agreement with established
-      benchmarks?
-    - What thresholds have prior LLM benchmark papers used to call agreement high?
-    - Do published benchmark validation studies use a common methodology?
+    plain: do papers that claim their benchmark matches existing ones all use the same standard?
+    jargon: what correlation metrics, thresholds and model counts have prior papers reported
+      when validating benchmarks against references?
+    practitioner: my reviewers asked for a correlation threshold, is there an accepted one
+      in prior benchmark papers?
   answered_by:
   - survey-of-bat-practice
   - bat-guidelines-context

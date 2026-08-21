@@ -93,71 +93,104 @@ claims:
   evidence: Section 6
 qa:
 - ask:
-    unsorted:
-    - Are all grammatical error types equally important to correct?
-    - Do readers care more about frequent grammatical errors?
-    - Which grammatical errors bother native English speakers most?
+    plain: which kinds of English mistakes annoy native speakers the most, and are they the
+      ones learners make most often?
+    jargon: how do per-error-type importance weights from reader bother ratings compare with
+      error-type frequency in NUCLE?
+    task: how do I decide which grammatical error types a correction system should prioritise
+      fixing?
+    practitioner: if my grammar checker can only fix a few error types well, which ones should
+      I fix first?
   answered_by:
   - frequency-vs-importance
   - verb-orthography-top
   - low-importance-types
 - ask:
-    unsorted:
-    - Which error types are least annoying to readers of learner English?
-    - What grammatical errors can be deprioritised in error correction?
+    plain: which mistakes in learner English do readers barely notice?
+    jargon: which error types receive the lowest importance weights from sentence-level bother
+      ratings of learner text?
+    task: which grammatical error types can I safely deprioritise in a correction system?
+    practitioner: can I ignore missing-token and morphology corrections without readers minding?
   answered_by:
   - low-importance-types
 - ask:
-    practitioner: What should I read about weighting error types in grammatical error correction
-      evaluation?
-    unsorted:
-    - Is there work arguing GEC metrics like M^2 treat all errors equally and shouldn't?
-    - What paper questions counting corrected errors as the GEC evaluation target?
+    plain: is there research arguing that counting every corrected mistake equally is the
+      wrong way to score a grammar correction system?
+    jargon: which work argues that M^2 and similar GEC metrics weight error types by corpus
+      frequency rather than by reader impact?
+    task: what should I read before choosing an evaluation metric for a grammatical error
+      correction system?
+    practitioner: should I trust M^2 scores as a measure of how much my grammar correction
+      helps readers?
   answered_by:
   - metrics-mismatch
   - frequency-vs-importance
 - ask:
-    unsorted:
-    - How can importance weights be estimated for an error typology without new annotation?
-    - Can sentence-level human ratings be turned into per-error-type importance scores?
-    - How were importance weights computed for NUCLE, ERRANT and SErCl types?
+    plain: how can you work out how much each kind of writing mistake bothers readers without
+      labelling every mistake one by one?
+    jargon: how are per-error-type importance weights regressed from sentence-level human
+      ratings across NUCLE, ERRANT and SErCl typologies?
+    task: how do I get importance scores for my own error typology without collecting new
+      human annotation for it?
+    practitioner: can I reuse whole-sentence human ratings I already have to score individual
+      error categories?
   answered_by:
   - method-transfers-typologies
   - bother-not-grammaticality
 - ask:
-    unsorted:
-    - How much crowd annotation was collected on NUCLE for error importance?
-    - How many sentences and annotators went into rating how much errors bother readers?
-    - What did the Mechanical Turk annotation of NUCLE cost and how long did it take?
+    plain: how many sentences of learner English were rated by crowd workers for how much
+      the mistakes bother them, and what did it cost?
+    jargon: what is the annotation volume, cost and turnaround of the NUCLE crowd bother-rating
+      collection?
+    task: how much crowd annotation and budget do I need to rate a whole learner corpus for
+      error severity?
+    practitioner: is collecting reader-annoyance ratings over a full learner corpus cheap
+      enough for me to run?
   answered_by:
   - annotation-scale
   - bother-not-grammaticality
 - ask:
-    unsorted:
-    - How were low-quality crowd annotators of grammatical error ratings filtered out?
-    - What quality controls were used in the NUCLE bother-rating annotation?
-    - How many crowdworkers were removed by the filtering procedure?
+    plain: how do you weed out crowd workers who click through a task of rating writing mistakes
+      without reading?
+    jargon: what quality-control filters were applied to crowd annotators of the NUCLE bother
+      ratings, and what fraction were excluded?
+    task: how do I filter unreliable crowd workers out of a sentence-rating annotation job?
+    practitioner: what share of my crowd annotators should I expect to throw away on a slider-rating
+      task?
   answered_by:
   - filtering
   - robust-to-filtering
 - ask:
-    unsorted:
-    - Are the error-importance rankings robust to how aggressively annotators are filtered?
-    - Do stricter annotator filters change which grammatical errors rank as important?
+    plain: would the ranking of which writing mistakes annoy readers change if you were stricter
+      about which raters you kept?
+    jargon: are the error-type importance weights stable under harsher annotator-filtering
+      thresholds on the bother ratings?
+    task: how do I check whether my annotator filtering choices are driving my per-category
+      results?
+    practitioner: should I worry that my crowd-filtering threshold is what produced my error-importance
+      ranking?
   answered_by:
   - robust-to-filtering
   - verb-orthography-top
 - ask:
-    unsorted:
-    - Does training a GEC model with error-importance weights help?
-    - Has anyone tried weighting the GEC training loss by how much each error type bothers
-      readers?
+    plain: does telling a grammar correction model to care more about the mistakes readers
+      hate actually make it better at them?
+    jargon: does weighting training spans by estimated error-type importance improve a GEC
+      network on the targeted error types?
+    task: how do I bias a grammatical error correction model toward the error types readers
+      care about?
+    practitioner: is it worth reweighting my GEC training loss by error-type importance?
   answered_by:
   - weighted-training
 - ask:
-    unsorted:
-    - Why ask annotators how much mistakes bother them instead of asking about grammaticality?
-    - What question wording was used to elicit grammatical error importance judgements?
+    plain: why ask people how much mistakes in a text bother them instead of asking whether
+      the sentence is grammatical?
+    jargon: why elicit bother ratings on a 1 to 100 slider rather than grammaticality judgements
+      from non-expert annotators?
+    task: how should I word the prompt if I want non-experts to judge how bad a writing error
+      is?
+    practitioner: can I ask untrained crowd workers about grammaticality, or will bother ratings
+      work better?
   answered_by:
   - bother-not-grammaticality
 misreadings:

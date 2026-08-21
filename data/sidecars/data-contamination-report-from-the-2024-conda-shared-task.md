@@ -110,80 +110,116 @@ claims:
   evidence: Section 5
 qa:
 - ask:
-    practitioner: Where can I find a list of benchmarks known to be contaminated in LLM pre-training
+    plain: Is there a public list of which test sets have turned up inside the training data
+      of language models?
+    jargon: Does a centralized registry of documented evaluation-data contamination in pre-training
+      corpora and LLMs exist?
+    task: Where can I look up whether a benchmark I want to use has already leaked into pre-training
       data?
-    unsorted:
-    - Is there a public database of data contamination evidence for NLP evaluation datasets?
-    - What resource tracks which evaluation datasets leaked into pre-training corpora?
+    practitioner: Before I report scores on a benchmark, can I check a shared contamination
+      registry for it?
   answered_by:
   - database-contribution
   - totals
 - ask:
-    practitioner: What should I read first about data contamination in NLP evaluation?
-    unsorted:
-    - Which paper documents real cases of benchmark contamination rather than proposing a
-      detection method?
-    - Who compiled organized evidence of data contamination across models and corpora?
+    plain: Which write-up actually collects real reported cases of benchmark data leakage
+      instead of proposing a new way to detect it?
+    jargon: What work compiles documented contamination evidence across pre-training corpora
+      and models rather than introducing a detection method?
+    task: I want evidence that benchmark contamination happens in practice, not another detection
+      algorithm -- what should I cite?
+    practitioner: Is there a single reference I can point colleagues to for organized evidence
+      that evaluation data leaks into training corpora?
   answered_by:
   - compiled-evidence-motivation
   - database-contribution
 - ask:
-    unsorted:
-    - How many contamination reports were collected in the 2024 CONDA shared task?
-    - How large is the CONDA data contamination database?
-    - How many datasets and sources are covered by the CONDA contamination report?
+    plain: How many reports of test-set leakage were gathered in the 2024 community effort,
+      and how many benchmarks do they cover?
+    jargon: What is the size of the CONDA 2024 contamination database in entries, evaluation
+      datasets and contaminated sources?
+    task: How much documented contamination evidence would I be searching through if I used
+      the CONDA database?
+    practitioner: Is the CONDA contamination database large enough to be worth consulting
+      for my benchmark?
   answered_by:
   - totals
   - split-breakdown
 - ask:
-    unsorted:
-    - Which pre-training corpora have the most reported contamination?
-    - Is C4 or the Pile contaminated with evaluation test sets?
-    - How many test sets were found in RedPajama v2 and OSCAR?
+    plain: Which big text collections used to train language models most often contain benchmark
+      test data?
+    jargon: Which pre-training corpora accumulate the most reported contamination events with
+      evaluation datasets?
+    task: I am about to pre-train on C4 or RedPajama -- how many benchmark leaks have been
+      reported in each?
+    practitioner: If I train on the Pile or OSCAR, how much documented test-set overlap am
+      I inheriting?
   answered_by:
   - corpora-counts
 - ask:
-    unsorted:
-    - Which language models have the most documented benchmark contamination?
-    - How much contamination evidence exists for GPT-3, GPT-4 and PaLM?
-    - Are closed models or open models more often reported as contaminated?
+    plain: Which language models have the most reported cases of having seen benchmark test
+      data?
+    jargon: How does reported contamination evidence distribute across closed models such
+      as GPT-3, GPT-4 and PaLM versus open models?
+    task: How do I find out how many contamination reports exist for the model I plan to evaluate?
+    practitioner: I am choosing between an API model and an open-weights model for evaluation
+      -- which has more documented benchmark contamination?
   answered_by:
   - closed-models-counts
   - open-models-counts
 - ask:
-    unsorted:
-    - Are popular leaderboard benchmarks like MMLU and GLUE contaminated?
-    - Which task types show the most reported contamination?
-    - Do widely downloaded evaluation datasets appear in contamination reports?
+    plain: Are the popular leaderboard benchmarks everyone uses among the ones reported as
+      leaked?
+    jargon: Which task formats and widely downloaded evaluation datasets dominate reported
+      contamination, and do they overlap with Open LLM Leaderboard suites?
+    task: How do I tell whether the benchmarks I use for leaderboard comparisons are among
+      the contaminated ones?
+    practitioner: Should I trust MMLU or GLUE numbers when picking a model?
   answered_by:
   - popular-benchmarks-contaminated
 - ask:
-    unsorted:
-    - Are older or newer benchmarks more likely to be contaminated?
-    - Does a model's release date affect which datasets it is contaminated with?
-    - What publication years do the contaminated test sets come from?
+    plain: Are old benchmarks or recent ones more likely to show up in a model's training
+      data?
+    jargon: How do reported contaminated test sets distribute by publication year, and does
+      a model's release date shift that distribution?
+    task: If I want a benchmark unlikely to be in a given model's pre-training data, does
+      the benchmark's publication year help me choose?
+    practitioner: For evaluating a model released in 2023, is picking an older benchmark safer
+      or riskier than a newer one?
   answered_by:
   - dataset-years
   - newer-models-newer-data
 - ask:
-    unsorted:
-    - What are the two main families of contamination detection methods?
-    - What is the difference between data-based and model-based contamination detection?
-    - How do you detect contamination when the pre-training data is not public?
+    plain: What are the broad ways people check whether a benchmark ended up in a model's
+      training data?
+    jargon: How does the CONDA report taxonomize contamination detection into data-based and
+      model-based approaches, and how does data or model openness split each family?
+    task: How do I check for contamination when the pre-training corpus is not available to
+      search?
+    practitioner: I only have API access to a model -- which contamination check can I actually
+      run?
   answered_by:
   - method-taxonomy
 - ask:
-    unsorted:
-    - If a benchmark is absent from the CONDA contamination database, is it clean?
-    - How complete is the CONDA 2024 contamination report?
-    - What are the limits of the CONDA data contamination database as evidence?
+    plain: If a benchmark is not listed in the community contamination registry, does that
+      mean it is clean?
+    jargon: What coverage limitations qualify the CONDA 2024 contamination database as evidence,
+      including its non-contamination entries?
+    task: How should I interpret the absence of my benchmark from the CONDA contamination
+      database?
+    practitioner: Can I treat a benchmark missing from the CONDA database as safe to evaluate
+      on?
   answered_by:
   - coverage-limit
   - split-breakdown
 - ask:
-    practitioner: How can I contribute new contamination evidence for a model or dataset?
-    unsorted:
-    - Is the CONDA contamination database still accepting submissions?
+    plain: Can new evidence of benchmark leakage still be added to the community contamination
+      registry?
+    jargon: Is the CONDA Data Contamination Database open to further contamination-evidence
+      submissions beyond the 2024 shared task period?
+    task: How do I submit contamination evidence I found for an evaluation dataset?
+    practitioner: I found a test set inside a pre-training corpus -- where do I report it
+      so others see it?
   answered_by:
   - database-contribution
   - coverage-limit

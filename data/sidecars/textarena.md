@@ -98,80 +98,114 @@ claims:
   evidence: Section 2, Appendix B
 qa:
 - ask:
-    practitioner: Where should I start reading about evaluating language-model agents through
-      competitive gameplay?
-    unsorted:
-    - What benchmarks exist for evaluating LLMs by having them play games against each other?
-    - What work argues that relative rankings beat static benchmarks for LLM evaluation?
+    plain: where can I read about testing language models by making them play games against
+      each other instead of answering quiz questions?
+    jargon: which work motivates competitive-play relative rankings over saturating static
+      LLM benchmarks?
+    task: how do I evaluate a language model's negotiation and deception ability when quiz-style
+      benchmarks give me nothing to measure?
+    practitioner: my model tops the usual multiple-choice benchmarks, so what should I read
+      to start evaluating it in interactive games?
   answered_by:
   - relative-eval
   - social-skill-gap
   - env-counts
 - ask:
-    unsorted:
-    - How many game environments does TextArena include?
-    - How many single-, two- and multi-player text games are in TextArena?
-    - Does a game benchmark for LLMs cover more environments than GTBench or SPIN-Bench?
+    plain: how many text games can a language model be tested on in TextArena, and how many
+      players do they take?
+    jargon: what is the environment count of TextArena by single-player, two-player and multi-player
+      category relative to other game-based LLM suites?
+    task: how do I find a text-game suite with enough single-player, head-to-head and group
+      games to cover a whole evaluation?
+    practitioner: if I want breadth of games rather than a handful, is TextArena bigger than
+      the other LLM game benchmarks?
   answered_by:
   - env-counts
   - four-capabilities
 - ask:
-    unsorted:
-    - How are models ranked in TextArena?
-    - Why use TrueSkill instead of Elo for rating language models in games?
-    - What rating system tracks LLM performance in competitive text games?
+    plain: how does a text-game leaderboard turn win-loss records between language models
+      into a skill number?
+    jargon: why is TrueSkill rather than Elo used to rate LLMs from competitive text-game
+      match outcomes?
+    task: how do I get a stable skill rating for my model from a limited number of games against
+      other models?
+    practitioner: should I rate my models with TrueSkill or Elo if I want a reliable ranking
+      from few matches?
   answered_by:
   - trueskill
   - models-evaluated
 - ask:
-    practitioner: Can I compare an LLM's game performance against human players?
-    unsorted:
-    - How does TextArena benchmark models against humans?
-    - What does the "Humanity" entry on the TextArena leaderboard mean?
+    plain: can a language model's game rating be compared with how well actual people play
+      the same games?
+    jargon: how does TextArena produce a human baseline rating on the same scale as model
+      ratings for model-vs-human play?
+    task: how do I check whether my model actually beats people at negotiation or bluffing
+      games rather than just other models?
+    practitioner: can I put my model up against human opponents and see a single human rating
+      to compare against?
   answered_by:
   - humanity-baseline
   - four-capabilities
 - ask:
-    practitioner: How can I measure whether a model is good at bluffing or theory of mind?
-    unsorted:
-    - How does TextArena break down a model's score into soft skills?
-    - What skill categories do text-game environments get tagged with?
+    plain: can a text-game score be split up to show whether a model is good at bluffing versus
+      reading other players?
+    jargon: how are per-skill aptitudes such as theory of mind and persuasion derived from
+      environment-level ratings and skill tags?
+    task: how do I find out which social abilities my model is weak at rather than just its
+      overall rank?
+    practitioner: can I get a skill breakdown for my model instead of one leaderboard position?
   answered_by:
   - soft-skill-profile
 - ask:
-    unsorted:
-    - Is a model's ranking in text games confounded by whether it understands the rules?
-    - What are the limitations of the preliminary TextArena model rankings?
-    - Do reasoning models leak their hidden roles when playing social deduction games?
+    plain: if a model loses a text game, does that mean it plays badly or that it did not
+      follow the rules?
+    jargon: do TextArena's preliminary rankings conflate strategic play with rule and output-format
+      compliance?
+    task: how do I tell whether my model's poor game results come from weak strategy or from
+      failing to obey the game format?
+    practitioner: should I trust an early text-game leaderboard position as a measure of my
+      model's reasoning?
   answered_by:
   - rule-following-confound
 - ask:
-    practitioner: Where do I get a difficulty curriculum for multi-turn agentic RL?
-    unsorted:
-    - Can competitive text games be used as reinforcement-learning training data for LLMs?
-    - Does TextArena support RL training with self-play?
+    plain: can games between language models generate the training data needed to make them
+      better at multi-step reasoning?
+    jargon: can competitive self-play in text games serve as a reinforcement-learning signal
+      with an adaptive difficulty curriculum?
+    task: how do I generate multi-turn interaction data for RL training without writing a
+      new reward function for every task?
+    practitioner: is self-play in text games worth using as an RL data source for my agent?
   answered_by:
   - rl-data-source
   - gym-interface
 - ask:
-    practitioner: How do I plug my own model into a text-game environment?
-    unsorted:
-    - How hard is it to run an LLM-vs-LLM match in TextArena?
-    - Does TextArena use an OpenAI Gym-style API?
+    plain: how much code does it take to set up a match between two language models in a text
+      game?
+    jargon: does TextArena expose an OpenAI Gym-style API with stackable wrappers for model-vs-model
+      episodes?
+    task: how do I run a head-to-head match between two models across several games without
+      building the harness myself?
+    practitioner: will TextArena drop into my existing Gym-based evaluation code?
   answered_by:
   - gym-interface
   - four-capabilities
 - ask:
-    practitioner: How many models can I play games against for free online?
-    unsorted:
-    - How many models have been evaluated on the TextArena leaderboard?
-    - How many language models have been rated on a competitive text-game leaderboard?
+    plain: how many language models have already been scored on a competitive text-game leaderboard?
+    jargon: what is the size of the evaluated model pool on TextArena's online leaderboard,
+      including community submissions?
+    practitioner: if I submit my model, how many other models will it already have ratings
+      to be compared against?
   answered_by:
   - models-evaluated
 - ask:
-    unsorted:
-    - Which social skills do static LLM benchmarks like MMLU fail to measure?
-    - Why build game environments instead of harder question-answering benchmarks?
+    plain: which abilities does a quiz-style benchmark like MMLU miss that showing up in games
+      with other players would reveal?
+    jargon: why target dynamic multi-agent social capabilities instead of building harder
+      static question-answering benchmarks?
+    task: how do I measure negotiation, persuasion and theory of mind in a model when the
+      standard benchmarks only test knowledge?
+    practitioner: is it worth moving to interactive game evaluation for my model, or should
+      I just find a harder QA benchmark?
   answered_by:
   - social-skill-gap
   - relative-eval

@@ -138,108 +138,146 @@ claims:
   evidence: Appendix B
 qa:
 - ask:
-    practitioner: How can I combine many separately finetuned models into a better starting
-      point for new tasks?
-    unsorted:
-    - Is there a way to get multitask learning benefits without pooling everyone's training
-      data?
-    - What does ColD Fusion do?
+    plain: can several teams share the benefits of training on each other's tasks without
+      ever sharing their training data?
+    jargon: how can publicly shared finetuned checkpoints be recycled into an improved pretrained
+      model without pooling the underlying datasets?
+    task: how do I build a stronger starting checkpoint for my classification tasks by reusing
+      other people's finetuned models instead of their data?
+    practitioner: my data cannot leave my organization, so can I still get multitask gains
+      by contributing only model weights?
   answered_by:
   - context-recycling
   - roberta-gain
 - ask:
-    unsorted:
-    - How much does iterative weight averaging of finetuned models improve over the pretrained
-      model?
-    - What accuracy gain does ColD Fusion get over RoBERTa-base?
-    - Does averaging finetuned checkpoints actually beat plain finetuning of the pretrained
-      model?
+    plain: how much better does a base model get if you repeatedly average many finetuned
+      copies of it back together?
+    jargon: what average gain over pretrained RoBERTa-base does iterative weight averaging
+      of finetuned models give after downstream finetuning?
+    task: if I swap pretrained RoBERTa-base for a recycled fused checkpoint, how much accuracy
+      do I gain on my classification datasets?
+    practitioner: is starting from a ColD Fusion checkpoint worth it compared with just finetuning
+      RoBERTa-base myself?
   answered_by:
   - roberta-gain
   - beats-multitask-and-fuse
 - ask:
-    unsorted:
-    - Does repeated model averaging beat conventional multitask training?
-    - How does ColD Fusion compare with MUPPET and with one-shot model fusing?
-    - Is distributed weight averaging competitive with a centralized multitask baseline?
+    plain: does repeatedly averaging separately trained models work as well as training one
+      model on all the tasks at once?
+    jargon: how does iterative model fusion compare with centralized multitask pretraining
+      and with single-round weight averaging as a base model?
+    task: should I train a multitask model on the combined datasets or iteratively fuse per-dataset
+      finetuned checkpoints?
+    practitioner: I already have a multitask baseline like MUPPET, would switching to iterative
+      checkpoint fusing actually gain me anything?
   answered_by:
   - beats-multitask-and-fuse
   - consistency-vs-muppet
 - ask:
-    unsorted:
-    - Which multitask base model is more reliable across individual datasets, MUPPET or ColD
-      Fusion?
-    - Can a multitask base model hurt performance on some downstream datasets?
-    - How consistent are the per-dataset gains from iterative model fusion?
+    plain: can a base model that was trained on many tasks end up hurting accuracy on some
+      individual datasets?
+    jargon: how consistent are per-dataset gains from iteratively fused base models compared
+      with a MUPPET-style multitask base model?
+    task: how do I pick a multitask starting checkpoint that will not tank one of my datasets?
+    practitioner: what is the worst-case downside per dataset if I adopt a fused multitask
+      checkpoint instead of the plain pretrained one?
   answered_by:
   - consistency-vs-muppet
 - ask:
-    unsorted:
-    - Does a fused multitask base model help on tasks it never saw during training?
-    - How well does ColD Fusion transfer to unseen datasets?
-    - Are gains from collaborative model averaging limited to the datasets used to build the
-      fused base model?
+    plain: does a model built by averaging other people's finetuned models help on tasks that
+      were never part of that pool?
+    jargon: how well does an iteratively fused base model transfer to datasets held out of
+      the fusion pool, under full finetuning versus linear probing?
+    task: my task was not in the fusion pool, will a recycled fused checkpoint still help
+      me?
+    practitioner: should I expect gains on my own dataset if it is nothing like the 35 classification
+      datasets used to build the checkpoint?
   answered_by:
   - unseen-datasets
   - few-shot
 - ask:
-    unsorted:
-    - Does iterative model fusion help in low-resource or few-shot finetuning?
-    - How much does ColD Fusion gain with only 100 labelled examples per task?
-    - Is a recycled base model especially useful when there is little labelled data?
+    plain: does a recycled starting model help most when you only have a hundred labelled
+      examples?
+    jargon: what few-shot gain does an iteratively fused base model give over pretrained RoBERTa-base
+      on held-out datasets?
+    task: how do I improve accuracy on a new task when I can only label about 100 examples?
+    practitioner: I have almost no labelled data, is a fused base checkpoint the cheapest
+      way to get better results?
   answered_by:
   - few-shot
 - ask:
-    unsorted:
-    - How many contributors per round are needed for collaborative model averaging to work?
-    - Does the number of fused models per iteration matter in ColD Fusion?
-    - Is a small number of participants enough for distributed multitask fusing?
+    plain: how many participants have to send in a model each round for shared weight averaging
+      to work?
+    jargon: how does the number of contributors fused per iteration affect base-model quality
+      and convergence speed in ColD Fusion?
+    task: how many partners do I need to recruit per round before collaborative checkpoint
+      averaging pays off?
+    practitioner: can I run collaborative model fusing with only a couple of participating
+      groups?
   answered_by:
   - contributors-per-iteration
   - distributing-cost
 - ask:
-    unsorted:
-    - Does giving each participant more training data help or hurt weight averaging?
-    - How does per-contributor dataset size affect how close the fused model gets to centralized
-      finetuning?
-    - Do large local updates break parameter averaging in ColD Fusion?
+    plain: is it better for each participant to train on a lot of data or a little before
+      their models are averaged?
+    jargon: how does per-contributor training set size affect how closely the fused model
+      approaches centralized full finetuning?
+    task: how much MNLI data should each contributor train on before I average their weights?
+    practitioner: will large local finetuning runs break the averaging step, or should I let
+      each contributor train on as much data as they have?
   answered_by:
   - more-data-per-contributor
 - ask:
-    unsorted:
-    - Can a shared model keep improving as new data keeps arriving from participants?
-    - Does ColD Fusion work in a federated-learning-style setting on a single dataset?
-    - Does iterative fusing accumulate new examples or just dataset identity?
+    plain: can a shared model keep getting better as participants keep feeding in newly collected
+      examples?
+    jargon: does iterative weight fusion accumulate fresh examples sampled each round, or
+      only coarse dataset identity?
+    task: how do I keep improving a shared checkpoint as new labelled data arrives from each
+      contributor over time?
+    practitioner: in a federated setup where my contributors collect new data every round,
+      will repeated fusing keep paying off?
   answered_by:
   - federated-streaming
 - ask:
-    unsorted:
-    - Does adding more tasks always improve a multitask base model?
-    - How does the number of datasets in the fusing pool affect ColD Fusion results?
-    - Why might multitask training on 8 datasets be worse than on 4?
+    plain: does throwing more tasks into a shared training pool always make the resulting
+      model better?
+    jargon: how does the size of the dataset pool affect fused base-model quality, and is
+      the relationship monotonic?
+    task: how many datasets should I put in the fusion pool to get the best shared checkpoint?
+    practitioner: I can fuse over 4, 8 or 36 datasets, does adding more always help me?
   answered_by:
   - dataset-pool-nonmonotonic
 - ask:
-    unsorted:
-    - Does collaborative weight averaging work on encoder-decoder models like T5?
-    - Has ColD Fusion been tested beyond RoBERTa?
-    - Is iterative model fusion architecture-specific?
+    plain: does the trick of repeatedly averaging finetuned models work on architectures other
+      than a masked language model?
+    jargon: does iterative model fusion replicate on an encoder-decoder model such as T5,
+      for both finetuned and frozen evaluation?
+    task: how do I know whether collaborative weight fusing will transfer to a T5-style seq2seq
+      backbone?
+    practitioner: my stack is T5, not RoBERTa, is iterative checkpoint fusing still going
+      to work for me?
   answered_by:
   - t5-replication
 - ask:
-    unsorted:
-    - How expensive is it to reproduce the ColD Fusion experiments?
-    - What GPU budget and storage does iterative collaborative finetuning need?
-    - Is repeated multitask fusing cheaper or more expensive than ordinary multitask training?
+    plain: how much computing time and disk space does it take to rerun a large repeated model-averaging
+      study?
+    jargon: what GPU-hour and storage budget does reproducing the main ColD Fusion experiment
+      over 30 iterations and 36 test sets require?
+    task: how do I budget GPUs and storage before reproducing an iterative checkpoint-fusing
+      experiment?
+    practitioner: do I have enough compute to reproduce ColD Fusion, or should I just download
+      the released checkpoint?
   answered_by:
   - compute-cost
 - ask:
-    practitioner: What should I read first about recycling finetuned models to improve a pretrained
-      model?
-    unsorted:
-    - Which paper established collaborative, data-private multitask learning by weight averaging?
-    - What is a good paper on model merging for continually improving base models?
-    - Where does ColD Fusion sit relative to model soups and federated learning?
+    plain: which paper should I read first about repeatedly recycling shared finetuned models
+      into a better starting model?
+    jargon: what work introduced collaborative multitask learning by iterative weight averaging
+      with private contributor data?
+    task: where do I start reading about merging community checkpoints into a continually
+      improving pretrained model?
+    practitioner: I am surveying model merging and federated learning for a continually improving
+      base model, which paper is the reference point for weight-averaging collaboration?
   answered_by:
   - context-collaborative-multitask
   - context-recycling

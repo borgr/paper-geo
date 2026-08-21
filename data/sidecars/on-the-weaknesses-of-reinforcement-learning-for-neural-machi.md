@@ -116,69 +116,102 @@ claims:
   evidence: Section 7
 qa:
 - ask:
-    unsorted:
-    - Does minimum risk training actually maximize expected reward?
-    - Is MRT for machine translation theoretically sound?
-    - Why is contrastive MRT said to be ill-founded?
+    plain: does minimum risk training really push a translation model toward higher expected
+      reward?
+    jargon: is the contrastive MRT objective used in NMT a consistent estimator of expected
+      reward, and does it inherit Reinforce's rank limitation?
+    task: how do I tell whether minimum risk training will actually optimize the sentence-level
+      score I care about?
+    practitioner: should I trust minimum risk training over plain policy gradient for fine-tuning
+      my translation model?
   answered_by:
   - cmrt-not-expected-reward
   - cmrt-simulation
 - ask:
-    unsorted:
-    - Do BLEU gains from reinforcement learning in translation come from the reward?
-    - What happens if you fine-tune an NMT model with a constant reward?
-    - Are RL improvements in machine translation an artifact?
+    plain: are the translation quality gains from reinforcement learning actually coming from
+      the reward signal?
+    jargon: do BLEU improvements from Reinforce fine-tuning of an NMT system survive replacing
+      the sentence-level reward with a constant, and what does a zero-mean baseline do?
+    task: how can I check whether my RL fine-tuning run is learning from the reward or just
+      sharpening the output distribution?
+    practitioner: if I fine-tune my translation model with reinforcement learning, will the
+      BLEU bump be worth attributing to the reward?
   answered_by:
   - constant-reward-same-bleu
   - baseline-disallows-learning
   - peakiness-nmt
 - ask:
-    unsorted:
-    - When can RL fine-tuning actually fix a translation error?
-    - How close does a pretrained model have to be for Reinforce to help?
-    - Does policy gradient training promote low-ranked correct tokens?
+    plain: how nearly right does a translation model have to already be for reinforcement
+      learning to fix a word?
+    jargon: what pretrained rank must the reference token hold for Reinforce fine-tuning to
+      make it the mode, and how often is it outside the top 3 in a real NMT system?
+    task: how do I work out which of my translation model's errors policy gradient fine-tuning
+      could realistically repair?
+    practitioner: my model puts the correct word around rank 5 in many contexts, is reinforcement
+      learning going to promote it?
   answered_by:
   - rank-limit
   - half-cases-out-of-reach
   - rank-shift-narrow
 - ask:
-    unsorted:
-    - What is the peakiness effect in reinforcement learning for text generation?
-    - Why do output distributions get sharper after RL fine-tuning?
-    - Does Reinforce reduce the entropy of a translation model's predictions?
+    plain: why do a translation model's word probabilities become more concentrated after
+      reinforcement learning?
+    jargon: how does Reinforce fine-tuning shift probability mass onto the mode and lower
+      the conditional entropy of an NMT system?
+    task: how do I detect distribution sharpening rather than genuine learning in an RL-fine-tuned
+      generation model?
+    practitioner: will reinforcement learning fine-tuning make my translation system's predictions
+      more confident even without a useful reward?
   answered_by:
   - peakiness-single-step
   - peakiness-nmt
 - ask:
-    practitioner: What should I read about the limitations of RL for text generation?
-    unsorted:
-    - Which paper criticizes reinforcement learning for neural machine translation?
-    - Is there work questioning whether RL really helps machine translation?
+    plain: is there a paper arguing that reinforcement learning does not really improve machine
+      translation?
+    jargon: what critical analysis of reward-based fine-tuning for NMT attributes the reported
+      gains to peakiness rather than reward optimization?
+    task: what should I read before committing to reward-based fine-tuning for a text generation
+      system?
   answered_by:
   - context-critique
 - ask:
-    unsorted:
-    - How could reinforcement learning be made to work better for machine translation?
-    - What RL techniques are suggested instead of on-policy Reinforce for text generation?
-    - Why is exploration hard when fine-tuning a pretrained translation model with RL?
+    plain: what would make reinforcement learning work better for training translation and
+      other text generators?
+    jargon: which exploration strategies are recommended over on-policy sampling for reward-based
+      fine-tuning in a vocabulary-sized action space?
+    task: how do I get useful exploration when fine-tuning an already peaky pretrained language
+      generator with a reward?
+    practitioner: if on-policy Reinforce is a dead end for my translation model, what direction
+      should I try instead?
   answered_by:
   - context-rl-remedies
 - ask:
-    unsorted:
-    - Should gradient clipping be used with Reinforce in NMT?
-    - Is clipping gradients safe during policy gradient fine-tuning of a translation model?
+    plain: is it a bad idea to clip gradients when training a translation model with a reward
+      signal?
+    jargon: does gradient clipping violate the assumptions of Reinforce when fine-tuning an
+      NMT system?
+    task: how should I set gradient clipping for policy gradient fine-tuning of a translation
+      model?
+    practitioner: I clip gradients by default in my NMT training script, should I turn that
+      off for reinforcement learning fine-tuning?
   answered_by:
   - gradient-clipping
 - ask:
-    unsorted:
-    - How large were the BLEU gains from RL fine-tuning of a Transformer translation model?
-    - What BLEU score did policy gradient training reach on news2014 German-English?
+    plain: how much did translation quality actually improve when a Transformer system was
+      fine-tuned with a reward?
+    jargon: what BLEU did Reinforce fine-tuning of a pretrained Transformer reach on the news2014
+      test set, and what did a constant reward reach?
+    practitioner: how big a BLEU gain should I expect from reward-based fine-tuning of a pretrained
+      Transformer translation system?
   answered_by:
   - constant-reward-same-bleu
 - ask:
-    unsorted:
-    - Does contrastive MRT show the same convergence problems as Reinforce in simulation?
-    - How does MRT behave when the correct token starts at rank 3?
+    plain: does minimum risk training run into the same problem as policy gradients when the
+      right word starts low in the ranking?
+    jargon: in controlled softmax simulations, does contrastive MRT promote the target token
+      to the mode from rank 3 or below the way Reinforce fails to?
+    practitioner: if the correct token sits at rank 3 in my model, would switching from Reinforce
+      to MRT help?
   answered_by:
   - cmrt-simulation
   - rank-limit

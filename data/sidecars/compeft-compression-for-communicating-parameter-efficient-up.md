@@ -135,103 +135,136 @@ claims:
   evidence: Section 5
 qa:
 - ask:
-    unsorted:
-    - How much can a LoRA or QLoRA adapter be shrunk without losing accuracy?
-    - Can fine-tuned adapters be compressed without retraining?
-    - What compression ratio does ComPEFT get on QLoRA adapters?
+    plain: how much smaller can a fine-tuned adapter file be made before its accuracy drops?
+    jargon: how far can a LoRA or QLoRA task vector be sparsified and ternarized without accuracy
+      loss?
+    task: how do I shrink a QLoRA adapter checkpoint for storage without retraining it?
+    practitioner: can I compress the LoRA adapters I already trained and still trust their
+      scores?
   answered_by:
   - llama-65b-mmlu
   - small-models-peft
   - entropy-bound
 - ask:
-    unsorted:
-    - Does compressing an adapter ever make it perform better?
-    - Why would sparsifying a task vector improve accuracy instead of hurting it?
-    - Does ComPEFT beat the uncompressed QLoRA checkpoint?
+    plain: can throwing away most of an adapter's weights ever make the model score higher?
+    jargon: why does sparsifying and ternarizing a fine-tuning task vector sometimes exceed
+      the dense checkpoint on MMLU?
+    task: how do I tell whether compressing my QLoRA checkpoint costs accuracy or gains it?
+    practitioner: if I compress my fine-tuned expert, should I expect to lose accuracy?
   answered_by:
   - config-win-rate
   - scaling-trend
   - baselines-70b
 - ask:
-    unsorted:
-    - Does adapter compression work better on bigger base models?
-    - Are task vectors from larger language models more compressible?
-    - How does ComPEFT scale from 7B to 65B parameters?
+    plain: does shrinking adapters work better for bigger language models?
+    jargon: does the accuracy gain from ternary task-vector compression scale with base-model
+      parameter count from 7B to 65B?
+    task: how do I predict the accuracy effect of adapter compression at 33B or 65B rather
+      than 7B?
+    practitioner: my base model is 65B rather than 7B, is adapter compression a better deal
+      for me?
   answered_by:
   - scaling-trend
   - llama-65b-mmlu
 - ask:
-    unsorted:
-    - How much faster is it to download and load a compressed adapter?
-    - What are the real wall-clock savings from compressing expert modules?
-    - Does adapter compression reduce CPU-to-GPU transfer time?
+    plain: how much time does a smaller adapter file save when downloading and loading it?
+    jargon: what wall-clock savings does a compressed QLoRA checkpoint give on network transfer
+      and CPU-to-GPU load?
+    task: how do I cut the swap-in latency of per-query expert modules in a multi-expert server?
+    practitioner: is compressing my expert adapters worth it for serving latency, not just
+      disk space?
   answered_by:
   - latency
 - ask:
-    unsorted:
-    - Can full fine-tuning residuals be compressed the same way as LoRA modules?
-    - Does ComPEFT work on fully fine-tuned models, not just PEFT?
-    - Is sign-plus-scalar compression lossless for full fine-tuning?
+    plain: can the weight changes from ordinary full fine-tuning be shrunk the same way as
+      small adapters?
+    jargon: does sign-plus-scalar compression of task vectors transfer from PEFT modules to
+      full fine-tuning residuals on BERT, RoBERTa and T5?
+    task: how do I compress a fully fine-tuned checkpoint rather than a LoRA module?
+    practitioner: I fully fine-tuned my model instead of using LoRA, can I still compress
+      the difference from the base weights?
   answered_by:
   - full-finetuning
 - ask:
-    practitioner: What happens if I merge ComPEFT checkpoints instead of the originals?
-    unsorted:
-    - Does compressing checkpoints before merging hurt model merging?
-    - Do compressed task vectors merge better or worse with task arithmetic and TIES-Merging?
+    plain: if several fine-tuned models are shrunk first, does combining them into one model
+      still work?
+    jargon: how does compressing task vectors before merging affect merged-model performance
+      with task arithmetic and TIES-Merging?
+    task: how do I combine several fine-tuned experts into one model while keeping each checkpoint
+      small?
+    practitioner: should I compress my checkpoints before or after merging them?
   answered_by:
   - merging
 - ask:
-    unsorted:
-    - Do compressed LoRA experts still work for few-shot composition on unseen tasks?
-    - Does LoraHub still work if the expert modules are compressed?
-    - Is compositional generalization preserved after adapter compression?
+    plain: can shrunken adapters still be mixed on the fly to handle a task none of them was
+      trained on?
+    jargon: is compositional generalization of LoRA experts under LoraHub preserved after
+      sparsification and ternarization?
+    task: how do I keep few-shot composition over a library of LoRA experts working once the
+      experts are compressed?
+    practitioner: I compose LoRA experts for unseen tasks, will compressing the library break
+      that?
   answered_by:
   - compositional
 - ask:
-    unsorted:
-    - How does ComPEFT compare with BitDelta and DAREx for delta compression?
-    - Is there a delta-compression method that beats STC without extra training?
-    - What baselines did ComPEFT beat on LLaMA2-70B?
+    plain: how does shrinking a fine-tuned model's weight changes compare with other ways
+      of storing model deltas?
+    jargon: how does post-hoc ternary task-vector compression compare with BitDelta and DAREx-q
+      on LLaMA2-70B MMLU at matched storage?
+    task: how do I pick a delta-compression method that needs no extra backward passes?
+    practitioner: BitDelta needs a trained scale factor, is there a method I can apply without
+      any training?
   answered_by:
   - baselines-70b
   - ablation-stc
 - ask:
-    unsorted:
-    - 'Which part of ComPEFT matters most: sparsification, ternarization or the scaling factor?'
-    - Why does Sparse Ternary Compression fail on task vectors where ComPEFT works?
-    - Does sparsifying and ternarizing a task vector need a tuned scaling factor?
+    plain: 'when shrinking a fine-tuned adapter, which step matters most: dropping the small
+      weights, rounding the rest to plus or minus one, or rescaling them?'
+    jargon: how much of the performance recovery after sparsification and ternarization comes
+      from the tuned scalar rather than from the ternary quantization itself?
+    task: how do I stop a sparse ternary compression of my task vector from losing accuracy?
+    practitioner: if I just prune and ternarize my adapter myself, what am I missing?
   answered_by:
   - ablation-stc
 - ask:
-    practitioner: Do I have to tune the scaling hyperparameter alpha for ComPEFT?
-    unsorted:
-    - What value of alpha should I use for a 65B model?
-    - How sensitive is sparse ternary adapter compression to its scaling factor?
+    plain: how carefully do I need to pick the number that rescales a compressed adapter?
+    jargon: how sensitive is compressed task-vector performance to the scaling factor alpha
+      across densities and base-model sizes?
+    task: how do I choose the rescaling factor when compressing a 65B model's adapter?
+    practitioner: do I have to tune the scaling factor for my compressed adapter, or can I
+      just leave it at 1?
   answered_by:
   - alpha-tuning
 - ask:
-    unsorted:
-    - Is ComPEFT competitive with other parameter-efficient fine-tuning methods on storage
-      versus performance?
-    - Which PEFT method gives the best accuracy per megabyte?
-    - How does compressed (IA)^3 compare to BitFit, Adapters and Prompt Tuning?
+    plain: which way of cheaply adapting a large model gives the best accuracy for the least
+      stored data?
+    jargon: is compressed (IA)^3 Pareto-optimal in performance versus parameter storage against
+      BitFit, Compacter, Prompt Tuning and Prefix Tuning?
+    task: how do I choose a parameter-efficient fine-tuning setup when storage per task is
+      the binding constraint?
+    practitioner: I need hundreds of task-specific modules on disk, which fine-tuning method
+      should I store them in?
   answered_by:
   - pareto
 - ask:
-    practitioner: What should I read about the cost of serving many LoRA experts?
-    unsorted:
-    - Which paper argues that expert adapter size is a communication bottleneck?
-    - Where does work on compressing fine-tuning task vectors come from?
-    - What is a good starting paper on compressing PEFT modules for multi-expert serving?
+    plain: what should I read first about making fine-tuned expert modules small enough to
+      serve many of them?
+    jargon: which work reframes PEFT module size as a communication and memory bottleneck
+      for multi-expert serving?
+    task: where do I start reading about post-hoc compression of fine-tuning task vectors?
+    practitioner: I am building a multi-expert serving stack, which paper frames the adapter-size
+      problem the way I have it?
   answered_by:
   - context-motivation
   - context-position
 - ask:
-    unsorted:
-    - How many bits per parameter does a ternary task vector need?
-    - What is the theoretical storage limit for a 95%-sparse ternary adapter update?
-    - How is the compressed ComPEFT checkpoint actually encoded on disk?
+    plain: how few bits per weight does a compressed fine-tuning update actually need?
+    jargon: what is the per-parameter entropy of a 95%-sparse ternary task vector against
+      a bfloat16 one?
+    task: how do I work out the best-case storage for a sparse ternary fine-tuning update
+      before implementing the encoding?
+    practitioner: what compression factor should I expect from ternary adapter updates if
+      I write an ideal encoder?
   answered_by:
   - entropy-bound
 misreadings:

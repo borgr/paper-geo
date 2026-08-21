@@ -144,94 +144,134 @@ claims:
   evidence: Section 2
 qa:
 - ask:
-    unsorted:
-    - Is sentence structure encoded in individual neurons of a translation model?
-    - Do single neurons in an NMT encoder represent active versus passive voice?
-    - Can you find neurons responsible for syntactic form in a Transformer translator?
+    plain: can you point to particular neurons in a translation model that handle whether
+      a sentence is active or passive?
+    jargon: is the active-passive distinction localized to individual encoder neurons in a
+      Transformer NMT model?
+    task: how do I find the neurons that encode sentence structure in a translation encoder?
+    practitioner: if I want to locate a small set of syntax neurons in my translation model,
+      is that a realistic goal?
   answered_by:
   - no-localized-structure
   - confound-shallow
 - ask:
-    unsorted:
-    - Why do activations of paraphrases correlate so strongly?
-    - What confounds inflate neuron correlation between paraphrase pairs?
-    - Is high activation similarity between two paraphrases evidence of shared meaning?
+    plain: if two ways of saying the same thing light up a network almost identically, does
+      that mean it has captured the meaning?
+    jargon: what token-identity and positional-encoding confounds inflate neuron activation
+      correlation between paraphrase pairs?
+    task: what controls do I need before reading a high activation correlation between paraphrases
+      as evidence of shared structure?
+    practitioner: my paraphrase pairs give near-identical activations, should I trust that
+      as a representation finding?
   answered_by:
   - confound-shallow
   - random-structure-controls
   - context-confound-lesson
 - ask:
-    unsorted:
-    - Can you make a machine translation system output passive voice by editing activations?
-    - Is it possible to control the syntactic form of a translation without retraining?
-    - How do you steer an NMT model toward active voice at inference time?
+    plain: can you push a translation system to say something in active voice instead of passive
+      by nudging its internal numbers?
+    jargon: can encoder activation shifts steer the syntactic form of NMT output without retraining?
+    task: how do I change the voice of a translation model's output at inference time without
+      fine-tuning it?
+    practitioner: is editing encoder activations a workable way to control voice in my en-de
+      translation system?
   answered_by:
   - manipulation-works
   - many-neurons-needed
 - ask:
-    unsorted:
-    - How many neurons must be changed to control the output structure of a translation model?
-    - Is voice control in NMT localized to a few neurons or distributed?
+    plain: how many internal units do you have to change to alter the grammatical form of
+      a translation?
+    jargon: is control of output voice in an NMT encoder distributed across neurons or confined
+      to a small subset?
+    task: how many encoder neurons do I need to modify to reliably flip a translation's voice?
+    practitioner: can I get away with editing a handful of neurons, or does voice control
+      need most of the encoder?
   answered_by:
   - many-neurons-needed
   - no-localized-structure
 - ask:
-    unsorted:
-    - Does the direction of an activation edit matter, or is any perturbation enough?
-    - Would random neuron edits also change the voice of a translation?
-    - Is picking which neurons to edit more important than picking the shift vector?
+    plain: when you nudge a network's internal values, does the direction of the nudge matter
+      or would any disturbance do?
+    jargon: does the shift vector or the neuron selection criterion drive the effect of activation
+      manipulation on output voice?
+    task: how do I choose the shift vector and the neurons when editing activations to change
+      a translation's syntax?
+    practitioner: should I spend my effort picking the right neurons or the right direction
+      to shift them in?
   answered_by:
   - direction-matters-selection-does-not
 - ask:
-    unsorted:
-    - 'Which neurons work best for steering syntactic form: the most or the least paraphrase-invariant
-      ones?'
-    - Are neurons invariant across paraphrases useless for controlling structure?
-    - Do high-correlation neurons or low-correlation neurons give better intervention results?
+    plain: to change a sentence's grammar by editing a network, are you better off touching
+      the units that stay the same across rewordings or the ones that change?
+    jargon: do high-ParaCorr or low-ParaCorr encoder neurons give stronger voice-flipping
+      interventions?
+    task: which neurons should I pick for an activation edit that changes the syntactic form
+      of a translation?
+    practitioner: my intuition says to edit the change-sensitive neurons, is that the right
+      bet for controlling voice?
   answered_by:
   - top-paracorr-better
   - role-overlap
 - ask:
-    unsorted:
-    - Does correlation across paraphrases identify generally important neurons?
-    - What happens to BLEU when you zero out the most paraphrase-correlated neurons?
+    plain: do the units that behave the same way across reworded sentences turn out to be
+      the generally important ones?
+    jargon: does correlation across paraphrases rank encoder neurons by general importance,
+      as measured by BLEU under ablation?
+    task: how do I tell whether a neuron ranking reflects a structural role or just overall
+      importance to translation quality?
+    practitioner: can I use paraphrase-based correlation as a cheap importance score for pruning
+      or analysis?
   answered_by:
   - paracorr-ranks-importance
 - ask:
-    practitioner: Where can I get a dataset of active-passive minimal pair paraphrases with
-      reference translations?
-    unsorted:
-    - Is there a corpus of meaning-preserving syntactic minimal pairs for English?
-    - How large is the minimal-paraphrase corpus derived from WMT19 English-German?
+    plain: is there a ready-made collection of English sentence pairs that mean the same thing
+      but differ in one grammatical way?
+    jargon: is there a corpus of meaning-preserving syntactic minimal pairs with reference
+      German translations, and how many pairs does it hold?
+    task: where do I get active-passive and clause-to-noun-phrase minimal pairs with reference
+      translations for analysing a translation model?
+    practitioner: is the WMT19-derived minimal-paraphrase corpus large enough for my analysis?
   answered_by:
   - context-dataset
   - dataset-counts
 - ask:
-    practitioner: What should I read about interpreting individual neurons in neural machine
-      translation?
-    unsorted:
-    - Which work analyses neuron activations under paraphrased input rather than across models?
-    - Where should I start on probing-free analysis of syntax in NMT representations?
+    plain: what should I read first about studying how a translation network handles sentence
+      structure by changing its input rather than its weights?
+    jargon: which work analyses syntax in NMT representations by correlating neuron activations
+      across paraphrased input instead of probing or cross-model comparison?
+    task: where do I start if I want to study syntax encoding in a translation model without
+      training a probe?
   answered_by:
   - context-methodology
   - context-confound-lesson
 - ask:
-    unsorted:
-    - Did the neuron manipulation work for every syntactic construction tested?
-    - Which structural manipulation failed in the neuron-editing experiments?
-    - Can adverbial clauses be turned into noun phrases by editing encoder neurons?
+    plain: did editing internal units change every kind of grammatical rewrite that was tried,
+      or did some fail?
+    jargon: does encoder activation manipulation transfer from active-passive voice to the
+      adverbial-clause to noun-phrase construction?
+    task: can I use activation editing to turn an adverbial clause into a noun phrase in a
+      German translation?
+    practitioner: before I try activation editing on my own construction, is there a construction
+      where it did not work?
   answered_by:
   - clause-to-np-fails
 - ask:
-    unsorted:
-    - How is passive voice detected automatically in German output?
-    - How reliable is the automatic passive-voice scorer used to evaluate voice manipulation?
+    plain: how do you automatically check whether a German sentence came out in passive voice,
+      and how well does that check work?
+    jargon: how reliable is the dependency-and-POS-based German passive-voice detector used
+      to score voice manipulation?
+    task: how do I measure whether my model's German output is passive, and how much should
+      I trust the score?
+    practitioner: can I rely on an automatic German passive detector as an absolute metric
+      for my voice experiments?
   answered_by:
   - passive-score-baseline
 - ask:
-    unsorted:
-    - How were automatically generated paraphrases filtered for fluency?
-    - What was the annotator agreement on paraphrase fluency judgements?
+    plain: how were the automatically generated sentence pairs checked before being kept?
+    jargon: what manual fluency filtering was applied to the generated active-passive and
+      clause-to-noun-phrase paraphrase pairs, and how many survived?
+    task: how do I filter automatically generated minimal-pair paraphrases down to usable
+      ones?
   answered_by:
   - dataset-counts
 key: patel2022neurons

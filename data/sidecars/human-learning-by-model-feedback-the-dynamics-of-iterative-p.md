@@ -103,85 +103,123 @@ claims:
   evidence: Figure 2 and Section 4.3
 qa:
 - ask:
-    unsorted:
-    - Do people's prompts change in a systematic way as they retry a text-to-image model?
-    - How do user prompts evolve across iterations with Midjourney?
-    - Does prompt length or perplexity drift over repeated image generation attempts?
+    plain: when someone keeps rewriting a prompt for an image generator, do the rewrites change
+      in a predictable direction?
+    jargon: how do linguistic features of text-to-image prompts shift with turn index within
+      an interaction thread?
+    task: how can I tell whether my prompt edits across a Midjourney session follow a systematic
+      pattern rather than random trial and error?
+    practitioner: if I look at my own history of retried image prompts, should I expect them
+      to be getting longer and more model-friendly over time?
   answered_by:
   - monotone-thread-trends
   - both-explanations-supported
 - ask:
-    unsorted:
-    - What makes a text-to-image prompt more likely to produce an image the user keeps?
-    - How do upscaled Midjourney prompts differ from ones that were not upscaled?
-    - Are longer or lower-perplexity prompts associated with better image outcomes?
+    plain: what is different about the wording of image prompts whose results people actually
+      keep?
+    jargon: which linguistic features separate upscaled from non-upscaled Midjourney prompts,
+      and which fail to reach significance?
+    task: how should I word a text-to-image prompt so the output is one I want to keep?
+    practitioner: is it worth making my image prompts longer and adding style keywords, or
+      does concreteness matter more?
   answered_by:
   - upscaled-prompts-differ
   - concreteness-not-significant
 - ask:
-    unsorted:
-    - Can you tell from the prompt alone whether a user liked the generated image?
-    - How accurately does a classifier predict image upscaling from text or from the image?
-    - Is user satisfaction with a generated image predictable from partial input?
+    plain: can you guess from the wording alone whether someone was happy with the picture
+      an image generator made?
+    jargon: how well does a GPT-2 prompt-only classifier predict upscale events compared with
+      a ResNet18 on the image grid?
+    task: how do I predict from logged prompt text whether a user will keep a generated image?
+    practitioner: if I only have prompt text and no click data, can I get a usable signal
+      about image satisfaction?
   answered_by:
   - prompt-only-classifier
 - ask:
-    practitioner: Where can I get Midjourney prompts with images, upscale labels and user
-      ids?
-    unsorted:
-    - Is there a dataset of multi-turn text-to-image prompting sessions?
-    - What data exists for studying iterative prompting behaviour?
+    plain: is there a public collection of people's repeated attempts at prompting an image
+      generator?
+    jargon: what corpus of multi-turn text-to-image interaction threads with upscale labels
+      is available, and how long are the threads?
+    task: where do I get data to study how users revise image prompts across turns?
+    practitioner: is a Midjourney Discord prompt corpus big enough for me to study multi-turn
+      revision, or are most sessions single-shot?
   answered_by:
   - midjourney-threads-dataset
   - thread-length-distribution
 - ask:
-    practitioner: What should I read about how humans adapt their language to generative models?
-    unsorted:
-    - Which paper studies human-model linguistic alignment in text-to-image prompting?
-    - What work established that users drift toward a model's preferred prompt style?
+    plain: which study looks at how people change their language to suit an image generator?
+    jargon: what work frames iterative text-to-image prompting as a repeated reference game
+      with one-sided human adaptation?
+    task: what should I read first about humans adapting their language to a text-to-image
+      model over turns?
+    practitioner: I need a citation for users drifting toward a generative model's preferred
+      phrasing — which paper covers that?
   answered_by:
   - iterative-prompting-dynamics-agenda
   - rlhf-data-caution
 - ask:
-    unsorted:
-    - Is it safe to use logged user prompts and upscale clicks as RLHF preference data?
-    - What are the risks of training on human feedback collected from text-to-image logs?
-    - Why might reusing Midjourney user data bias a model?
+    plain: is it safe to train a model on which pictures users chose to keep from their own
+      prompts?
+    jargon: what is the risk of treating upscaled prompt-image pairs from generation logs
+      as RLHF preference data?
+    task: how do I avoid bias if I build a preference dataset out of logged image-generation
+      prompts and upscale clicks?
+    practitioner: should I use Midjourney-style upscale logs as free human preference data
+      for my image model?
   answered_by:
   - rlhf-data-caution
   - both-explanations-supported
 - ask:
-    unsorted:
-    - Do prompt-convergence findings hold outside Midjourney?
-    - Do the same iterative prompting trends appear with Stable Diffusion data?
-    - Does the analysis replicate on DiffusionDB?
+    plain: do the same patterns in repeated image prompts show up on data from a different
+      generator?
+    jargon: do the thread-level feature trends replicate on DiffusionDB Stable Diffusion prompts,
+      and which feature fails?
+    task: can I expect prompt-revision trends measured on Midjourney to carry over to Stable
+      Diffusion logs I have?
+    practitioner: if my logs come from Stable Diffusion rather than Midjourney, do the reported
+      iteration trends still apply?
   answered_by:
   - diffusiondb-replication
 - ask:
-    unsorted:
-    - How do you decide whether two consecutive prompts belong to the same generation attempt?
-    - How were Midjourney prompts grouped into interaction threads, and how well does it work?
-    - Does an intersection-over-union heuristic beat BERTScore for segmenting prompt sessions?
+    plain: how do you work out which consecutive image prompts are all attempts at the same
+      picture?
+    jargon: how accurate is word intersection-over-union thread segmentation of consecutive
+      prompts against manual annotation, versus a BERTScore threshold?
+    task: how do I segment a stream of logged prompts into separate interaction threads?
+    practitioner: should I use a word-overlap rule or an embedding-similarity rule to group
+      my logged prompts into sessions?
   answered_by:
   - thread-split-agreement
 - ask:
-    unsorted:
-    - Do users converge on a particular prompt length regardless of where they started?
-    - Is there evidence of a preferred 'good' prompt length range for image models?
-    - What does the split between lengthening and shortening Midjourney threads show?
+    plain: do people end up at a similar prompt length no matter how long their first prompt
+      was?
+    jargon: do lengthening and shortening Midjourney threads converge on a common prompt-length
+      range?
+    task: how long should my image prompts be if I want to land where experienced users end
+      up?
+    practitioner: my image prompts are very long — is trimming them toward a middle length
+      what other users converge on?
   answered_by:
   - length-convergence
 - ask:
-    unsorted:
-    - Do users make their prompts more concrete as they iterate?
-    - Does word concreteness predict whether a generated image gets upscaled?
+    plain: does using more concrete, physical wording make an image generator give you something
+      you keep?
+    jargon: does mean word concreteness differ significantly between upscaled and non-upscaled
+      text-to-image prompts?
+    task: should I swap abstract words for concrete ones when revising an image prompt?
+    practitioner: is it worth rewriting my prompts to be more concrete, or does that not affect
+      whether I keep the image?
   answered_by:
   - concreteness-not-significant
 - ask:
-    unsorted:
-    - Are so-called magic words like '8K' and 'highly detailed' actually associated with kept
-      images?
-    - Do users add more aesthetic keywords as an image-generation session goes on?
+    plain: do phrases like '8K' and 'highly detailed' really go with image prompts people
+      keep, and do users add more of them as they go?
+    jargon: how do magic-words ratios relate to upscale outcomes and to prompt index within
+      an interaction thread?
+    task: should I be stacking aesthetic quality keywords into my image prompts, and do users
+      pile on more over a session?
+    practitioner: are style booster keywords worth adding to my image prompts, or is that
+      just a habit users pick up as a session drags on?
   answered_by:
   - upscaled-prompts-differ
   - monotone-thread-trends

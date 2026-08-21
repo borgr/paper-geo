@@ -121,111 +121,164 @@ claims:
   evidence: Figure 8 (Appendix C)
 qa:
 - ask:
-    practitioner: Where should I start if I want to learn how to fit a scaling law for a new
-      model family?
-    unsorted:
-    - What is a good paper to read on how to estimate scaling laws for language models?
-    - Is there work studying scaling law estimation practice rather than proposing a new scaling
-      law?
+    plain: which paper should I read to learn how to predict how a language model will improve
+      with more size and data?
+    jargon: is there a study of scaling law estimation methodology, rather than another proposed
+      functional form for one model family?
+    task: where do I start if I need to fit a scaling law for my own pretraining runs and
+      do not know how to choose the small models?
+    practitioner: I am planning a pretraining budget and want guidance on scaling-law fitting
+      practice, what should I read first?
   answered_by:
   - guide-context
   - dataset
 - ask:
-    practitioner: Where can I get training losses and checkpoints for many published LLMs?
-    unsorted:
-    - Is there a public dataset of pretraining loss curves across many model families?
-    - How much data was used to study scaling law estimation across families?
+    plain: is there an open collection of training loss curves from many published language
+      models?
+    jargon: is there a released corpus of pretraining losses and downstream evaluations spanning
+      many scaled model families and training steps?
+    task: where can I get loss curves across model families so I can test scaling-law fitting
+      procedures without pretraining anything myself?
+    practitioner: can I reuse someone else's published loss curves instead of training models
+      to study scaling behaviour?
   answered_by:
   - dataset
 - ask:
-    unsorted:
-    - Should scaling laws be fit only to final losses, or also to intermediate checkpoints?
-    - Does using checkpoints from the middle of training improve scaling law accuracy?
-    - Is it wasteful to throw away intermediate training losses when fitting a scaling law?
+    plain: when predicting how a big model will do, is it better to use only each small model's
+      final loss or its whole training curve?
+    jargon: do intermediate checkpoint losses improve scaling law fits relative to fitting
+      final-loss points only?
+    task: I logged loss every few thousand steps for my small runs, should I feed all of those
+      points into the scaling-law fit or just the last one?
+    practitioner: is it worth keeping and using all my intermediate checkpoints when fitting
+      a scaling law, or can I just use the end of training?
   answered_by:
   - intermediate-checkpoints
   - drop-early
 - ask:
-    unsorted:
-    - Are early training checkpoints harmful when fitting a scaling law?
-    - How many initial tokens of training should be discarded before fitting a scaling law?
-    - Why do the first billions of training tokens hurt scaling law fits?
+    plain: do the very first stages of training mess up predictions of how a model will improve
+      at larger scale?
+    jargon: should early-training checkpoints be filtered out of a scaling law fit, and above
+      what token count do fits stabilise?
+    task: how do I decide which early checkpoints to drop from my loss curves before fitting
+      a scaling law?
+    practitioner: my early loss curve has spikes and weird jumps, should I exclude that part
+      before fitting a scaling law?
   answered_by:
   - drop-early
 - ask:
-    unsorted:
-    - How accurate does a scaling law prediction need to be to be useful?
-    - What error level makes a scaling law good enough to compare pretraining decisions?
-    - How much loss difference do published pretraining A/B tests actually report?
+    plain: how precise does a prediction of a large model's loss have to be before it is actually
+      useful for making decisions?
+    jargon: what absolute relative error threshold does a scaling law need to discriminate
+      between pretraining interventions given seed noise?
+    task: how do I know whether my scaling-law prediction is accurate enough to choose between
+      two pretraining recipes?
+    practitioner: my scaling law is off by several percent, is that good enough to trust for
+      a pretraining decision?
   answered_by:
   - target-accuracy
 - ask:
-    practitioner: Can I predict a large model's loss from just one smaller model?
-    unsorted:
-    - Is it possible to reuse scaling parameters from another model family?
-    - Do I need to train a whole ladder of models, or can a single run suffice?
+    plain: can I borrow numbers from someone else's published scaling study instead of training
+      a whole ladder of small models?
+    jargon: can model-size scaling parameters be fixed from prior published fits so a single
+      partially trained run suffices for a new family?
+    task: I can only afford one small training run, how do I still get a loss prediction for
+      the larger model I want to train?
+    practitioner: do I really need to train five or six models of different sizes, or can
+      one run plus published parameters do?
   answered_by:
   - one-model
   - family-params-differ
 - ask:
-    unsorted:
-    - Do different model families have different scaling law parameters?
-    - Does architecture change the exponents in a scaling law?
-    - Can a scaling law be transferred between architectures unchanged?
+    plain: do models with different architectures improve at different rates as you add data
+      or parameters?
+    jargon: do fitted scaling coefficients such as the data and parameter exponents vary across
+      model families, or can a law be transferred unchanged?
+    task: can I take a published scaling law from one model family and apply it to my own
+      architecture without refitting?
+    practitioner: my architecture differs from the one a published scaling law was fit on,
+      should I refit it?
   answered_by:
   - family-params-differ
   - one-model
 - ask:
-    practitioner: Can I stop a big pretraining run early and predict where the loss will land?
-    unsorted:
-    - Is it better to train the target model partially instead of training many small models?
-    - How much of the full training run of a target LLM is needed to extrapolate its final
-      loss?
+    plain: can I just train the model I actually care about part of the way and guess where
+      its loss ends up?
+    jargon: how much of a target model's token budget must be completed before extrapolating
+      its final pretraining loss is reliable?
+    task: instead of a ladder of small models, how far into the target run do I need to go
+      to predict its final loss?
+    practitioner: should I spend my compute on several small models or on partially training
+      the big model I want?
   answered_by:
   - partial-target
 - ask:
-    unsorted:
-    - How much better is fitting a scaling law than just taking the best small model's loss?
-    - Are naive baselines enough instead of fitting a scaling law?
-    - What error do no-fit baselines get when predicting a large model's loss?
+    plain: how much worse is simply using the best small model's loss as a guess for a bigger
+      model?
+    jargon: what absolute relative error do no-fit baselines that assume the target is no
+      better than the largest preliminary model incur?
+    task: do I need to fit a curve at all, or can I just report the smallest-loss small model
+      as an estimate for the large one?
+    practitioner: is fitting a scaling law worth the effort compared with eyeballing my best
+      small run?
   answered_by:
   - baselines
 - ask:
-    unsorted:
-    - Is it better to train more small models or one big model for a scaling law?
-    - How many preliminary models are needed for a reliable scaling law?
-    - Does adding more models help scaling law accuracy even if they are small?
+    plain: is it better to train more small models or a few bigger ones when trying to predict
+      a large model's loss?
+    jargon: how many preliminary models does a reliable scaling law fit need, and does adding
+      models help without increasing maximum size?
+    task: I have a fixed compute budget for preliminary runs, how many models should I train
+      before fitting a scaling law?
+    practitioner: I have trained 3 small models so far, should I train more before trusting
+      the extrapolation?
   answered_by:
   - more-small-models
   - model-size
 - ask:
-    unsorted:
-    - How large should the biggest preliminary model be when fitting a scaling law?
-    - Does using models closer in size to the target improve extrapolation?
-    - How far up in parameter count can a scaling law extrapolate reliably?
+    plain: how big do the practice models need to be compared with the large model whose loss
+      I want to predict?
+    jargon: how much does the parameter-count gap between preliminary models and the target
+      affect extrapolation error in a scaling law fit?
+    task: how do I pick the sizes of the small models I train so the extrapolation to my target
+      size holds up?
+    practitioner: can I get away with only very small preliminary runs, or does my largest
+      one need to be near the target size?
   answered_by:
   - model-size
   - more-small-models
 - ask:
-    practitioner: Can I detect which preliminary models are bad to fit a scaling law on?
-    unsorted:
-    - Does cross-validation help remove outlier models from a scaling law fit?
-    - Why is scaling law estimation noisy when one model behaves badly?
+    plain: if one of my practice runs behaved strangely, can I find and remove it by holding
+      models out one at a time?
+    jargon: does leave-one-out cross-validation identify which preliminary models corrupt
+      a scaling law fit?
+    task: how do I detect which preliminary model is poisoning my scaling-law fit before I
+      extrapolate?
+    practitioner: one of my small models looks like an outlier, should I trust cross-validation
+      to tell me whether to drop it?
   answered_by:
   - cv-fails
   - more-small-models
 - ask:
-    unsorted:
-    - Does the Chinchilla scaling law form have redundant parameters?
-    - How many independent degrees of freedom do fitted scaling law parameters actually have?
-    - Are the parameter and token scaling coefficients correlated across model families?
+    plain: are the numbers fitted in a scaling formula actually independent, or do some of
+      them move together?
+    jargon: how many effective degrees of freedom do the 5 fitted parameters of a Chinchilla-style
+      scaling law have across families?
+    task: can I reduce the number of free parameters I fit in a scaling law by exploiting
+      relationships between them?
+    practitioner: should I fit all 5 scaling-law parameters for my family, or constrain some
+      of them?
   answered_by:
   - degrees-of-freedom
 - ask:
-    unsorted:
-    - Can scaling laws extrapolate downward to smaller models?
-    - Does predicting a small model's loss from larger models work?
-    - How much training is needed to fit a scaling law that scales down?
+    plain: can the same curve that predicts big models also predict a small one from the large
+      ones?
+    jargon: can a scaling law extrapolate downward, fitting the smallest model's loss in a
+      family from the largest models?
+    task: how do I estimate what a tiny version of my model would score without training it,
+      given results from my larger runs?
+    practitioner: I already trained large models, can I predict a small one's loss instead
+      of running it?
   answered_by:
   - scale-down
 terminology:

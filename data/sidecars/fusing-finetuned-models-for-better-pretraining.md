@@ -95,84 +95,117 @@ claims:
     only indirectly from HuggingFace hub counts and 20 sampled EMNLP 2021 papers.
 qa:
 - ask:
-    unsorted:
-    - Can averaging the weights of several finetuned models give a better starting point than
-      the pretrained model?
-    - Does weight averaging of finetuned checkpoints improve initialization for a new task?
-    - Is a fused model a better base model than the original pretrained one?
+    plain: if I average together the weights of several models that were each fine-tuned on
+      a different task, is the result a better starting point for training on a new task than
+      the original pretrained model?
+    jargon: does weight averaging of multiple finetuned checkpoints yield a stronger initialization
+      for downstream finetuning than the pretrained backbone?
+    task: how do I build a better base checkpoint for a new task out of finetuned models I
+      already have lying around?
+    practitioner: should I start my next finetuning run from an average of my old finetuned
+      checkpoints instead of the pretrained release?
   answered_by:
   - fuse-beats-pretrain
   - stability
 - ask:
-    unsorted:
-    - Is fusing better than intermediate-task training?
-    - Does averaging several finetuned models beat picking one good intermediate task?
-    - How does fusing compare to intertraining on a well-chosen source task?
+    plain: is averaging a bunch of models trained on other tasks as good as first training
+      on one carefully picked helper task?
+    jargon: does fusing all available finetuned checkpoints outperform intermediate-task training
+      on a well-selected source task?
+    task: how do I choose between averaging many source checkpoints and running a single intermediate-task
+      training stage before my target task?
+    practitioner: I already know which helper task transfers well to my target task, so is
+      averaging models worth doing instead?
   answered_by:
   - intertrain-still-better-when-chosen
   - pairs-beat-max-intertraining
 - ask:
-    practitioner: Which finetuned models should I average to get a good base model?
-    unsorted:
-    - Does the choice of source models matter when fusing checkpoints?
-    - Which pair of GLUE finetuned models makes the best fused initialization?
+    plain: when averaging fine-tuned models to make a starting point, does it matter which
+      models go into the average?
+    jargon: which source checkpoints should be selected for weight fusion, and are the best
+      fusion candidates the same as the best intermediate-task donors?
+    task: how do I pick which finetuned GLUE checkpoints to average into a base model for
+      a new task?
+    practitioner: can I just throw every finetuned checkpoint I have into the average, or
+      do I need to select the pair?
   answered_by:
   - best-pair-mnli-sst2
   - fusing-target-insensitive
 - ask:
-    practitioner: Do I need source tasks related to my target task for weight averaging to
-      help?
-    unsorted:
-    - Does the benefit of averaging finetuned models depend on the target task?
-    - Is intermediate-task transfer more target-dependent than model fusing?
+    plain: does averaging finetuned models help every new task equally, or do I have to redo
+      the choice of models for each new task?
+    jargon: is fused-checkpoint initialization less target-task sensitive than intermediate-task
+      transfer?
+    task: how do I avoid re-selecting a source task every time I move to a new target task?
+    practitioner: can one averaged base model serve all my target tasks, or must I tune source
+      selection per task?
   answered_by:
   - fusing-target-insensitive
 - ask:
-    unsorted:
-    - Does weight decay during finetuning affect intermediate-task transfer?
-    - Why does intertraining stop helping when AdamW weight decay is used?
-    - Is model weight averaging robust to the finetuning optimizer's regularization?
+    plain: does using weight decay while finetuning wipe out the gains from training on a
+      helper task first?
+    jargon: how does AdamW weight decay during finetuning interact with the benefit of intermediate-task
+      training versus checkpoint fusion?
+    task: how do I keep the advantage of a better starting checkpoint when my finetuning recipe
+      uses weight decay?
+    practitioner: my finetuning recipe uses weight decay of 0.01, so will a fused starting
+      point still help me?
   answered_by:
   - weight-decay
 - ask:
-    unsorted:
-    - Does starting from an averaged model make finetuning more stable across seeds?
-    - How much does seed variance drop when finetuning from a fused base model?
-    - Is training variance lower when initializing from averaged finetuned weights?
+    plain: does starting from an averaged model make training results vary less from one random
+      seed to another?
+    jargon: does initializing from fused finetuned weights reduce across-seed standard deviation
+      of target-task accuracy?
+    task: how do I cut the seed-to-seed variance in my finetuning runs?
+    practitioner: my finetuning results swing a lot between seeds, would starting from averaged
+      checkpoints steady them?
   answered_by:
   - stability
 - ask:
-    unsorted:
-    - How much source training data is needed for weight averaging to pay off?
-    - Does the size of the source datasets change how good a fused base model is?
-    - Is fusing more data-efficient than intertraining in the source task?
+    plain: how much training data do the donor models need before averaging them makes a useful
+      starting point?
+    jargon: how does source-task training set size affect the quality of a fused base model
+      relative to intermediate-task training?
+    task: how do I tell whether my source checkpoints were trained on enough data to be worth
+      averaging?
+    practitioner: my source tasks only have small datasets, is averaging their checkpoints
+      still worth it?
   answered_by:
   - source-data-size
 - ask:
-    practitioner: What should I read first about model merging as a way to build base models?
-    unsorted:
-    - What early work established that averaging finetuned model weights makes a better pretrained
-      model?
-    - Which paper proposed recycling existing finetuned checkpoints instead of pretraining
-      from scratch?
-    - What is a good paper on weight averaging for transfer learning?
+    plain: what research first suggested making a better starting model by averaging models
+      people had already fine-tuned?
+    jargon: which work proposed recycling finetuned checkpoints via weight averaging as a
+      replacement for the pretrained initialization in transfer learning?
+    task: where should I start reading about reusing existing finetuned checkpoints instead
+      of pretraining a new base model?
+    practitioner: what should I read first if I want to build base models out of finetuned
+      checkpoints I already have?
   answered_by:
   - context-reverse-transfer
   - context-generalizes-intertraining
 - ask:
-    practitioner: Can I merge models without access to their training data?
-    unsorted:
-    - How does model merging for initialization differ from Model Soups and Fisher-weighted
-      averaging?
-    - What assumptions does recycling finetuned checkpoints as a base model require?
+    plain: what do you actually need to have on hand to turn a pile of fine-tuned models into
+      a better starting model?
+    jargon: what assumptions does fusing finetuned checkpoints into a base model make about
+      access to source training data and multitask pretraining compute?
+    task: how do I improve a base model when the source datasets are unavailable and I cannot
+      afford multitask pretraining?
+    practitioner: I only have the finetuned weights and no source data or pretraining budget,
+      can I still get a better base model?
   answered_by:
   - context-no-source-data
   - context-reverse-transfer
 - ask:
-    unsorted:
-    - Is intermediate-task training a special case of model merging?
-    - How is picking one finetuned checkpoint related to averaging several of them?
-    - What is the relationship between intertraining and fusing model weights?
+    plain: how does picking one fine-tuned model to start from relate to averaging several
+      of them?
+    jargon: is intermediate-task training the single-model special case of weight fusion for
+      initialization?
+    task: how should I frame the choice of a starting checkpoint if averaging several sources
+      is on the table?
+    practitioner: should I think of choosing a helper task and averaging several helper models
+      as the same decision?
   answered_by:
   - context-generalizes-intertraining
 coined: Fusing

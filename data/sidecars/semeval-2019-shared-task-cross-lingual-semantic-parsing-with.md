@@ -110,77 +110,105 @@ claims:
   kind: result
 qa:
 - ask:
-    unsorted:
-    - What is a good starting point for reading about UCCA semantic parsing?
-    - Which shared task covers cross-lingual semantic parsing with UCCA?
-    - Where did the SemEval task on UCCA parsing come from?
+    plain: where should someone start reading about parsing sentences into UCCA meaning graphs
+      across languages?
+    jargon: which shared task established benchmarks for UCCA semantic graph parsing in English,
+      German and French?
+    task: how do I find a benchmark for cross-lingual semantic graph parsing when the target
+      language has no training treebank?
+    practitioner: I need a reference evaluation for semantic parsing beyond dependency trees,
+      is the SemEval UCCA task the one to build on?
   answered_by:
   - task-context
   - crosslingual-context
 - ask:
-    unsorted:
-    - Which languages and settings does the SemEval 2019 UCCA parsing task cover?
-    - How many tracks and competitions were there in SemEval 2019 Task 1?
-    - What is the difference between the open and closed track in the UCCA parsing shared
-      task?
+    plain: which languages and test conditions does the SemEval 2019 UCCA parsing competition
+      include?
+    jargon: what are the in-domain, out-of-domain and zero-shot tracks of SemEval 2019 Task
+      1, and how do open and closed tracks differ?
+    task: how do I decide which tracks of the UCCA parsing shared task to submit a system
+      to?
+    practitioner: if I only have one UCCA parser, can I still enter more than one track of
+      the SemEval 2019 competition?
   answered_by:
   - settings
 - ask:
-    unsorted:
-    - How much annotated UCCA data is available for English, German and French?
-    - What is the size of the Wiki and 20K Leagues UCCA corpora?
-    - Is there training data for French UCCA parsing?
+    plain: how many annotated sentences of UCCA meaning graphs exist for English, German and
+      French?
+    jargon: what is the token and sentence count of the English Wiki and German 20K Leagues
+      UCCA corpora, and does French have a training split?
+    task: how much supervised data can I train a UCCA parser on for each language?
+    practitioner: is there enough French UCCA data to train on, or do I have to transfer from
+      English?
   answered_by:
   - corpora-size
   - crosslingual-context
 - ask:
-    unsorted:
-    - How often do reentrant, discontinuous and implicit units actually occur in UCCA corpora?
-    - What fraction of UCCA edges are remote edges?
-    - How non-tree-like are UCCA graphs in practice?
+    plain: how often do UCCA annotations actually contain units that a tree cannot represent?
+    jargon: what percentage of UCCA edges are remote and what percentage of nodes are reentrant,
+      discontinuous or implicit?
+    task: how do I tell whether I need a graph parser or a tree parser for UCCA annotations?
+    practitioner: is it worth implementing full DAG support in my UCCA parser, or are the
+      hard cases rare enough to ignore?
   answered_by:
   - graph-stats
 - ask:
-    unsorted:
-    - How well does TUPA parse UCCA in English?
-    - What baseline scores should a UCCA parser beat?
-    - What F1 does the transition-based UCCA parser get on the English Wiki test set?
+    plain: how accurately can current software parse English sentences into UCCA graphs?
+    jargon: what labeled primary and remote edge F1 does TUPA achieve on the English Wiki
+      in-domain UCCA test set?
+    task: what score do I have to beat to claim progress on English UCCA parsing?
+    practitioner: should I use the BiLSTM version of TUPA rather than its sparse perceptron
+      classifier?
   answered_by:
   - tupa-baseline
 - ask:
-    unsorted:
-    - Does ensembling help UCCA parsing?
-    - Do multiple BiLSTM models combined by Product of Experts improve remote-edge prediction?
+    plain: does combining several UCCA parsing models give better meaning graphs than one
+      model?
+    jargon: does a Product of Experts ensemble of BiLSTM TUPA models improve primary and remote
+      edge F1?
+    task: how do I squeeze more accuracy out of an existing UCCA parser without changing its
+      architecture?
+    practitioner: is training 3 UCCA parsers and ensembling them worth the compute if I care
+      about remote edges?
   answered_by:
   - ensemble-poe
 - ask:
-    unsorted:
-    - Can existing dependency or constituency parsers be reused for UCCA parsing via format
-      conversion?
-    - How well do conversion-based approaches work for UCCA parsing?
-    - Why can a tree parser not recover UCCA remote edges?
+    plain: can an ordinary syntactic parser be reused for UCCA meaning graphs by converting
+      formats?
+    jargon: what primary-edge F1 does a bilexical-tree conversion plus stack-LSTM dependency
+      parser reach on English UCCA, and can it recover remote edges?
+    task: how do I parse UCCA without writing a new parser, using a dependency parser I already
+      have?
+    practitioner: if I convert UCCA to trees so my existing parser can handle it, what do
+      I lose?
   answered_by:
   - conversion-tree
 - ask:
-    unsorted:
-    - Does multitask learning help low-resource semantic parsing into UCCA?
-    - How much does using Universal Dependencies as an auxiliary task help French and German
-      UCCA parsing?
-    - What improves remote-edge parsing for languages with little UCCA data?
+    plain: does training on syntax at the same time help parse meaning graphs in languages
+      with little annotated data?
+    jargon: how much does multitask learning with Universal Dependencies raise TUPA's remote
+      and primary edge F1 on French and German UCCA?
+    task: how do I improve UCCA parsing for a language with only a few hundred annotated sentences?
+    practitioner: should I add a Universal Dependencies auxiliary task to my German or French
+      UCCA parser?
   answered_by:
   - mtl-gains
 - ask:
-    unsorted:
-    - How are UCCA parses evaluated?
-    - What is DAG F1 and how is edge matching defined for UCCA?
-    - Does the UCCA shared-task scoring measure handle implicit units?
+    plain: how is the accuracy of a UCCA meaning graph scored against the gold annotation?
+    jargon: how does DAG F1 define edge matching for UCCA, and how does it relate to standard
+      parsing F1 on trees?
+    task: how do I compute a comparable score for my UCCA parser's output graphs?
+    practitioner: if my UCCA parser outputs only trees, is the shared-task scorer still fair
+      to it?
   answered_by:
   - dag-f1
 - ask:
-    unsorted:
-    - What is UCCA used for besides parsing research?
-    - Which evaluation measures for generation tasks are built on UCCA?
-    - Why would better UCCA parsers help machine translation or simplification evaluation?
+    plain: what is UCCA annotation actually used for outside of parsing research?
+    jargon: which text-to-text generation evaluation measures are built on UCCA structures?
+    task: how can I use semantic structure to evaluate machine translation, simplification
+      or grammatical error correction output?
+    practitioner: would a better UCCA parser make semantic evaluation of my translation or
+      simplification system feasible?
   answered_by:
   - applications
 misreadings:

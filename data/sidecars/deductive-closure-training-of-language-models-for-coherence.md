@@ -113,92 +113,133 @@ claims:
   evidence: Section 5
 qa:
 - ask:
-    unsorted:
-    - Can a language model improve its own factual accuracy with no labelled data?
-    - Does fine-tuning on self-generated statements actually raise fact-verification accuracy?
-    - How much does unsupervised Deductive Closure Training help on CREAK?
+    plain: can a language model get more accurate about facts by training on statements it
+      wrote itself, with no human labels?
+    jargon: how much does unsupervised fine-tuning on self-generated, consistency-filtered
+      statements improve fact-verification accuracy on CREAK?
+    task: how do I raise a 7B model's factual accuracy when I have no labelled fact-checking
+      data?
+    practitioner: is self-generated training data enough to beat few-shot prompting for fact
+      verification on my own model?
   answered_by:
   - creak-unsup
   - consistency-eval-ablation
 - ask:
-    unsorted:
-    - Does the logical consistency step matter, or is fine-tuning on self-generated text enough?
-    - What happens if you skip consistency checking and just train on generated implications?
+    plain: if a model trains on text it generated itself, does anything filter out the false
+      parts?
+    jargon: what is the contribution of the logical consistency-evaluation step in Deductive
+      Closure Training, relative to fine-tuning on seed statements alone?
+    task: do I need to check generated implications for consistency before fine-tuning on
+      them, or can I train on all of them?
+    practitioner: can I skip the consistency-checking stage and still come out ahead of just
+      fine-tuning on the seed statements?
   answered_by:
   - consistency-eval-ablation
   - double-check
 - ask:
-    unsorted:
-    - Do a few labelled examples combine usefully with self-generated training data?
-    - Is semi-supervised fine-tuning better than either 20 labelled claims or unsupervised
-      generation alone?
+    plain: if I have only a couple dozen labelled examples, is it worth combining them with
+      machine-generated training data?
+    jargon: does pooling a small labelled set with unsupervised Deductive Closure Training
+      data beat both supervised fine-tuning and the unsupervised setting on CREAK?
+    task: how do I make 20 hand-labelled claims go further for training a fact-verification
+      model?
+    practitioner: I have about 20 annotated claims and lots of unlabelled text — should I
+      train on both together?
   answered_by:
   - semi-supervised
 - ask:
-    unsorted:
-    - Does having unlabelled test claims during training help fact verification?
-    - How does transductive Deductive Closure Training compare with inference-time consistency
-      reasoning on CREAK?
-    - Is fine-tuning on generated implication graphs better than reasoning over them at inference
-      time?
+    plain: does letting a model see the unlabelled test questions during training help it
+      answer them correctly?
+    jargon: how does transductive Deductive Closure Training on unlabelled CREAK validation
+      claims compare with inference-time implication-graph reasoning?
+    task: I have the unlabelled evaluation claims in hand — should I fine-tune on their implications
+      or run consistency reasoning at inference time?
+    practitioner: is it better to bake consistency reasoning into the weights or pay for it
+      at inference on every query?
   answered_by:
   - transductive
 - ask:
-    unsorted:
-    - Does self-training reduce self-contradiction in a language model?
-    - Can fine-tuning stop a model from labelling two contradictory claims as both true?
-    - How is logical coherence measured on the CREAK contrast set?
+    plain: can training a model on its own statements stop it from agreeing with two claims
+      that contradict each other?
+    jargon: does self-training on generated contradictions reduce the rate of contradictory
+      statement pairs both labelled true, and what happens to accuracy?
+    task: how do I stop a model from labelling a claim and its negation as both true?
+    practitioner: if I fine-tune for logical coherence, do I lose accuracy to get consistency?
   answered_by:
   - coherence
 - ask:
-    unsorted:
-    - Why do model edits fail to propagate to multi-hop questions?
-    - How does Deductive Closure Training compare with MEMIT and MeLLo on MQuAKE?
-    - What method works best for updating a language model so its consequences follow?
+    plain: after you correct a fact in a language model, why does it still get wrong the questions
+      that depend on that fact?
+    jargon: how does Deductive Closure Training compare with MEMIT, MeLLo and fine-tuning
+      on edits for multi-hop counterfactual accuracy on MQuAKE?
+    task: how do I edit thousands of facts in a model so that multi-hop answers depending
+      on them also change?
+    practitioner: which knowledge-editing approach should I pick if my questions require chaining
+      two edited facts together?
   answered_by:
   - mquake
   - correlative
 - ask:
-    unsorted:
-    - Does prompting for related background facts before implications help model editing?
-    - What are correlative implications and do they beat plain implications?
+    plain: does asking a model to recall related background facts first make the statements
+      it generates more useful for training?
+    jargon: do correlative implications, generated after eliciting related background knowledge,
+      outperform plain implications on MQuAKE and introduce more new information?
+    task: how should I prompt a model to generate training statements that carry consequences
+      of an edited fact rather than restating it?
+    practitioner: is it worth an extra prompting step to get background facts before generating
+      implications of an edit?
   answered_by:
   - correlative
   - correlative-novelty
 - ask:
-    unsorted:
-    - Can fine-tuning fix the reversal curse?
-    - Does training on implications let a model answer 'B is A' after learning 'A is B'?
-    - How much does DCT improve reversed-direction accuracy on the Reversal Curse benchmark?
+    plain: if a model learns that A is B, can training fix the fact that it cannot answer
+      the question the other way round?
+    jargon: does fine-tuning on generated implications mitigate the reversal curse, and at
+      what cost to forward-direction exact-match accuracy?
+    task: how do I teach a model a relation so it answers questions in both directions rather
+      than only the one it was trained on?
+    practitioner: will training on generated implications fix reversed-order recall without
+      degrading the direction that already worked?
   answered_by:
   - reversal
 - ask:
-    unsorted:
-    - Is there any theoretical reason self-generated training data should improve accuracy?
-    - Under what assumptions is Deductive Closure Training guaranteed to help?
+    plain: is there any proof that training a model on text it produced itself should make
+      it more accurate rather than reinforce its mistakes?
+    jargon: under what assumptions on seed-pair correctness and conditional probability gain
+      is Deductive Closure Training guaranteed to increase the probability of the correct
+      answer?
+    practitioner: is there a formal argument I can rely on before I fine-tune a model on its
+      own generations?
   answered_by:
   - proposition
 - ask:
-    unsorted:
-    - Does asking a model to double-check its own generated implications improve their quality?
-    - How much training data is lost by filtering self-generated implications for validity?
+    plain: if a model re-checks the statements it generated, do they get more reliable, and
+      how much gets thrown away?
+    jargon: how much does a double-checking verification pass raise the validity rate of generated
+      implications and contradictions, and what fraction is discarded?
+    task: how do I filter self-generated implications for validity without discarding most
+      of my training set?
+    practitioner: is a second verification pass over generated statements worth losing most
+      of the data I generated?
   answered_by:
   - double-check
 - ask:
-    practitioner: What should I read about using a language model's own reasoning to supervise
-      its training?
-    unsorted:
-    - Which paper established that inference-time consistency reasoning can be used at training
-      time?
-    - Where should I start reading about self-supervised factuality fine-tuning for language
-      models?
+    plain: which work first turned checking a claim against its logical consequences into
+      a way of training a model rather than a way of answering at inference time?
+    jargon: which paper reframes inference-time consistency reasoning over implications and
+      contradictions as training-time supervision for factuality?
+    task: where should I start reading about improving a language model's factuality without
+      labelled data?
   answered_by:
   - context-self-training
   - context-editing
 - ask:
-    unsorted:
-    - What is a good paper on whether knowledge edits generalize to their logical consequences?
-    - Which work evaluates edit propagation across multi-hop questions and reversal generalization?
+    plain: what should I read about whether correcting a fact in a language model also corrects
+      everything that follows from it?
+    jargon: which work evaluates whether knowledge edits propagate to multi-hop questions
+      and to reversed relation directions?
+    task: how do I find out whether an edit to one fact in a model generalizes to its consequences
+      before I rely on it?
   answered_by:
   - context-editing
   - mquake

@@ -127,97 +127,135 @@ claims:
     on the autonomy-safety debate.
 qa:
 - ask:
-    practitioner: What should I read about building agents that work across many environments?
-    unsorted:
-    - Is there a position paper arguing for general-purpose AI agents instead of task-specific
-      ones?
-    - What work argues that agentic systems should be general rather than benchmark-specific?
+    plain: is there a paper arguing that AI agents should be built to work anywhere instead
+      of tuned for one task?
+    jargon: which position paper argues for general-purpose agentic systems over benchmark-specific
+      agent designs?
+    task: where do I find the argument for building one agent that transfers across environments
+      rather than one per domain?
+    practitioner: should I read a position paper before committing my team to a domain-specific
+      agent architecture?
   answered_by:
   - core-position
   - generality-spectrum
 - ask:
-    unsorted:
-    - What does it mean for an agent to be general?
-    - How is agent generality defined and measured?
-    - Is generality of an agentic system a yes-or-no property?
+    plain: what makes an AI agent count as general rather than built for one job?
+    jargon: how is generality of an agentic system defined and measured, and is it binary
+      or graded?
+    task: how do I judge how general my agent actually is instead of just reporting its benchmark
+      score?
+    practitioner: can I call my agent general if it only tops one benchmark?
   answered_by:
   - generality-spectrum
 - ask:
-    unsorted:
-    - Can a simple general agent match a specialized scientific research agent?
-    - How does a ReAct agent compare to ASTA-v0 on ASTA Bench?
-    - What is the cost difference between a generalist agent and a specialized agent on scientific
-      tasks?
+    plain: can a short, simple agent keep up with a purpose-built research assistant on science
+      tasks, and what does each cost per task?
+    jargon: how does a generalist ReAct scaffold compare with the specialized ASTA-v0 pipeline
+      on ASTA Bench score and per-task cost?
+    task: how do I decide between a small ReAct loop and a specialized scientific-research
+      pipeline for literature and science tasks?
+    practitioner: is a purpose-built scientific agent worth its per-task cost over a plain
+      ReAct agent I can write myself?
   answered_by:
   - asta-react
   - asta-literature
 - ask:
-    unsorted:
-    - Does a minimal agent do as well as SWE-Agent on SWE-Bench?
-    - How much worse is Mini SWE-Agent than SWE-Agent?
-    - Is a 131-line coding agent competitive on SWE-Bench?
+    plain: can a tiny coding agent of about a hundred lines fix real GitHub issues about as
+      well as a much bigger one?
+    jargon: what is the SWE-Bench resolve rate and per-task cost of mini-swe-agent versus
+      the full SWE-Agent scaffold under Claude 4 Sonnet?
+    task: how do I pick between a minimal command-line coding agent and a full software-engineering
+      scaffold for issue fixing?
+    practitioner: can I ship the minimal SWE agent instead of the heavier one without losing
+      much accuracy?
   answered_by:
   - swe-mini
 - ask:
-    unsorted:
-    - How much performance do you lose by using a small general agent instead of a specialized
-      pipeline?
-    - Is there evidence that general agents are nearly as good as specialized ones?
-    - What is the performance gap between a few-hundred-line general agent and a thousands-of-lines
-      specialized system?
+    plain: how much accuracy do you give up by using a small general-purpose agent instead
+      of a big purpose-built pipeline?
+    jargon: what fraction of specialized-system performance do compact domain-agnostic scaffolds
+      recover on scientific and software-engineering benchmarks?
+    task: how do I estimate the accuracy penalty of replacing a thousands-of-lines specialized
+      agent with a few-hundred-line general one?
+    practitioner: is the engineering cost of a large specialized agent justified by the performance
+      it buys over a small general one?
   answered_by:
   - sparks-summary
   - asta-react
   - swe-mini
 - ask:
-    unsorted:
-    - Are current 'generalist' agents actually general?
-    - Does the HAL Generalist Agent contain benchmark-specific code?
-    - Why is CUGA still constrained despite being configurable?
+    plain: are agents advertised as generalist really general, or do they have code paths
+      per benchmark?
+    jargon: do the HAL Generalist Agent and CUGA achieve multi-benchmark support through genuine
+      environment abstraction or benchmark-keyed conditionals and manual setup?
+    task: how do I tell whether a multi-benchmark agent I am adopting has hidden per-benchmark
+      branching and setup?
+    practitioner: if I run the HAL Generalist Agent or CUGA on my own environment, how much
+      benchmark-specific plumbing will I have to write?
   answered_by:
   - hal-conditionals
   - cuga-config
 - ask:
-    unsorted:
-    - What does an environment-agnostic agent architecture look like?
-    - How can an agent support a new benchmark without changing its control flow?
-    - Why is mini-swe-agent held up as an example of good agent design?
+    plain: what does an agent design look like when it does not need changing for each new
+      environment?
+    jargon: how does mini-swe-agent stay environment-agnostic through a single command-execution
+      interface without benchmark-keyed control flow?
+    task: how do I add a new environment to my agent without touching its control loop?
+    practitioner: what interface should I expose so my agent supports a new benchmark by adding
+      a backend rather than a code branch?
   answered_by:
   - env-agnostic-design
 - ask:
-    unsorted:
-    - Why can't the same agent be evaluated on Tau-Bench, WebArena and TerminalBench?
-    - Do agent benchmarks assume a specific agent interface?
-    - What makes cross-environment agent evaluation so hard?
+    plain: why is it so hard to run the same AI agent on several different benchmarks?
+    jargon: why do Tau-Bench, WebArena and TerminalBench hard-code mutually incompatible agent
+      interfaces, and what levels of evaluation generality exist above them?
+    task: how do I evaluate one agent across a messaging benchmark, a browser benchmark and
+      a terminal benchmark without ad hoc glue code?
+    practitioner: should I expect to write custom adapters for every agent benchmark I want
+      to test my agent on?
   answered_by:
   - benchmark-interfaces-incompatible
   - eval-levels
 - ask:
-    unsorted:
-    - Is MCP enough to standardize agent evaluation?
-    - What is missing from the Model Context Protocol for general agents?
-    - How consistently do agent frameworks implement MCP tools, resources and prompts?
+    plain: is the Model Context Protocol enough to let one agent be evaluated everywhere?
+    jargon: do MCP's tools, resources and prompts primitives cover benchmark task semantics
+      and evaluation workflows, and how uniformly are they implemented across agent frameworks?
+    task: can I rely on MCP as the single integration layer for running my agent against many
+      benchmarks?
+    practitioner: if I build on MCP, which of its primitives will actually be supported by
+      the agent frameworks I use?
   answered_by:
   - mcp-gaps
 - ask:
-    unsorted:
-    - Do agent benchmarks report success and cost in comparable ways?
-    - How do metric definitions differ between SWE-Bench, AppWorld and Tau-Bench?
-    - Why is aggregating results across agent benchmarks unreliable?
+    plain: do different AI agent benchmarks report success and cost in ways you can compare?
+    jargon: how do outcome and cost metric definitions differ across SWE-Bench, AppWorld and
+      Tau-Bench?
+    task: how do I aggregate success rates and costs from several agent benchmarks into one
+      comparable table?
+    practitioner: can I trust a leaderboard that averages agent success rates across benchmarks
+      with different metric definitions?
   answered_by:
   - metric-fragmentation
 - ask:
-    unsorted:
-    - What levels of generality exist in agent evaluation setups?
-    - Which agent benchmarks are protocol-agnostic?
-    - Where do BrowserGym and Harbor sit relative to HAL in evaluation generality?
+    plain: are there degrees of generality in how AI agents get evaluated, and where do current
+      benchmarks fall?
+    jargon: what 5-level classification places BFCL, Tau-Bench, WebArena, HAL, BrowserGym
+      and Harbor on a spectrum of evaluation generality?
+    task: how do I work out which rung of evaluation generality my agent harness currently
+      sits on?
+    practitioner: is there any existing agent evaluation setup that is protocol-agnostic,
+      or do I have to build one?
   answered_by:
   - eval-levels
 - ask:
-    unsorted:
-    - What is the case for specialized agents over general ones?
-    - Does arguing for general agents mean arguing for more autonomous agents?
-    - Are there safety or control arguments against general-purpose agentic systems?
+    plain: what are the good arguments for building a narrow, task-specific AI agent instead
+      of a general one?
+    jargon: which advantages of specialized agents, such as control, predictability, efficiency
+      and evaluation rigor, are conceded, and is generality the same property as autonomy?
+    task: how do I weigh control and predictability against generality when choosing an agent
+      design?
+    practitioner: if I make my agent more general, am I also making it more autonomous and
+      harder to control?
   answered_by:
   - alternative-views
 terminology:

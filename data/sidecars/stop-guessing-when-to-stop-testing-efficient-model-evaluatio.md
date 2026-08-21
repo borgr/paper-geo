@@ -138,94 +138,127 @@ claims:
   evidence: Section 5.3
 qa:
 - ask:
-    practitioner: How much compute can I save by stopping a benchmark evaluation early instead
-      of running all the examples?
-    unsorted:
-    - What fraction of a benchmark do I actually need for a reliable model score?
-    - Does adaptive stopping really cut evaluation cost by 80%?
+    plain: how many benchmark examples does it take to get a trustworthy score for one vision-language
+      model?
+    jargon: how does confidence-interval half-width on Open VLM Leaderboard accuracy scale
+      with the fraction of examples scored?
+    task: how do I decide when to stop scoring a model on a benchmark once its score is precise
+      enough?
+    practitioner: can I skip most of a vision-language benchmark and still report a score
+      I would defend?
   answered_by:
   - ci-target-savings
   - ci-vs-fraction
   - full-benchmark-waste
 - ask:
-    unsorted:
-    - Is it safe to evaluate a language or vision model on only 1K examples?
-    - How wide are confidence intervals when people sub-sample a benchmark to a thousand examples?
-    - What is wrong with heuristically picking a small evaluation subset?
+    plain: is a 1,000-example slice of a benchmark enough to tell models apart?
+    jargon: how wide are bootstrap confidence intervals on accuracy when a multimodal benchmark
+      is sub-sampled to 1K items?
+    task: how do I check whether the small evaluation subset I picked is precise enough to
+      act on?
+    practitioner: my eval budget is about 1K examples per model, should I trust the rankings
+      I get?
   answered_by:
   - small-subsets-uncertain
   - fixed-size-failures-invisible
 - ask:
-    practitioner: How many examples do I need to tell two close models apart?
-    unsorted:
-    - Can sequential testing decide which of two similar models is better with less data?
-    - What happens when two models differ by less than a point on a benchmark?
+    plain: can you tell which of two closely scoring models is better without running the
+      whole benchmark?
+    jargon: how does sequential stopping behave for pairwise model comparisons as the true
+      accuracy gap shrinks below 2 points?
+    task: how do I compare two candidate vision-language models on as few examples as possible?
+    practitioner: the two models I am choosing between are less than a point apart, is more
+      evaluation going to settle it?
   answered_by:
   - pairwise-gap-savings
   - beats-fixed-1200
 - ask:
-    unsorted:
-    - Does sequential testing beat just picking a fixed sample size like 200 examples per
-      dataset?
-    - How does adaptive evaluation compare against a fixed-size bootstrap evaluation on model
-      comparisons?
-    - Which resolves more model pairs, a fixed 1.2K-sample budget or adaptive stopping?
+    plain: does stopping an evaluation when the numbers are clear beat fixing the sample size
+      in advance?
+    jargon: how does adaptive sequential testing compare with a fixed 1.2K-sample bootstrap
+      evaluation for resolving model pairs at 95% confidence?
+    task: how do I choose between a fixed per-dataset sample budget and stopping rules when
+      comparing many model pairs?
+    practitioner: I currently run 200 examples per dataset for every comparison, would switching
+      to adaptive stopping resolve more of them?
   answered_by:
   - beats-fixed-1200
   - fixed-size-failures-invisible
 - ask:
-    practitioner: How can I check whether a new model improves on the deployed one by a practically
-      meaningful margin?
-    unsorted:
-    - Can evaluation stop as soon as a 2-point improvement is confirmed?
-    - How much data does a deployment go/no-go comparison need?
+    plain: how much evaluation is needed to confirm a new model is at least 2 points better
+      than the one in production?
+    jargon: what efficacy stopping rule and sample fraction does a superiority test against
+      a deployed baseline require at 95% confidence?
+    task: how do I test a candidate model against my deployed baseline without running a full
+      benchmark sweep?
+    practitioner: should I stop my A/B evaluation as soon as the candidate clears my 2-point
+      improvement bar?
   answered_by:
   - deployment-case-study
   - stopping-rule-menu
 - ask:
-    practitioner: How do I cheaply screen hundreds of training checkpoints or candidate models?
-    unsorted:
-    - Can weak candidate models be discarded early during evaluation?
-    - What savings come from filtering out underperforming checkpoints during benchmarking?
+    plain: can obviously weak models be dropped partway through a benchmark run instead of
+      scored in full?
+    jargon: what sample-budget savings does a threshold-crossing futility rule give when screening
+      leaderboard models below a score cutoff?
+    task: how do I screen a large pool of checkpoints on a benchmark without paying full evaluation
+      cost for the bad ones?
+    practitioner: I have dozens of checkpoints and only care about the good ones, can I cut
+      the weak ones off early?
   answered_by:
   - model-selection-case-study
 - ask:
-    unsorted:
-    - How much of a benchmark is needed to rank a handful of closely matched models?
-    - Can adaptive evaluation produce a full ranking of several models cheaply?
+    plain: how much of a benchmark do you need to rank a handful of models that score close
+      together?
+    jargon: what fraction of examples does pairwise ranking of 5 top-15 models with a ±2-point
+      equivalence margin at α=0.05 consume?
+    task: how do I produce a defensible ranking of several similar models at reduced evaluation
+      cost?
+    practitioner: can I rank my 5 finalist models cheaply, and will I be told which pairs
+      are simply too close to call?
   answered_by:
   - ranking-case-study
 - ask:
-    practitioner: What should I read about making language model evaluation cheaper without
-      losing statistical guarantees?
-    unsorted:
-    - Which paper proposes sequential testing for benchmark evaluation?
-    - Where does the idea of adaptive stopping in NLP benchmarking come from?
-    - Is there work arguing against fixed-size benchmarks?
+    plain: what work argues that benchmarks should not use a fixed number of test examples?
+    jargon: which work imports group sequential trial designs into NLP and vision-language
+      benchmark evaluation?
+    task: where should I start reading about sequential stopping for model benchmarking?
+    practitioner: is there a paper I can cite for evaluating models on adaptive rather than
+      fixed-size test sets?
   answered_by:
   - context-call-to-adopt
   - context-no-past-statistics
 - ask:
-    practitioner: How do I express an evaluation goal like 'stop when the CI is ±2 points'
-      or 'stop when the models are equivalent'?
-    unsorted:
-    - What stopping criteria are available for adaptive model evaluation?
-    - What is equivalence margin stopping versus futility stopping in benchmark evaluation?
+    plain: what kinds of stopping rules can an evaluation use to decide it has seen enough
+      examples?
+    jargon: which stopping criteria — efficacy, equivalence, minimum detectable effect, threshold,
+      futility, diminishing returns — are available for sequential benchmark evaluation?
+    task: how do I pick a stopping criterion that matches whether I am ranking models, screening
+      them or testing equivalence?
+    practitioner: which stopping rule should I set for my evaluation goal, and can I combine
+      more than one?
   answered_by:
   - stopping-rule-menu
   - ranking-case-study
 - ask:
-    practitioner: Do I need to run the full benchmark on other models first to use sequential
-      evaluation?
-    unsorted:
-    - How does adaptive evaluation differ from methods that pick benchmark subsets using earlier
-      models' scores?
+    plain: can an evaluation cut its cost without relying on scores from previously tested
+      models?
+    jargon: how do sequential stopping guarantees differ from benchmark-subset selection methods
+      fitted on full-benchmark score matrices?
+    task: how do I evaluate a brand-new model efficiently when no prior model scores exist
+      for the benchmark?
+    practitioner: my model is not on any leaderboard, can I still use an efficient evaluation
+      method?
   answered_by:
   - context-no-past-statistics
 - ask:
-    unsorted:
-    - Should benchmark builders keep their datasets small to limit evaluation cost?
-    - Is a bigger benchmark wasteful if most examples add little precision?
+    plain: is it wasteful to build a huge benchmark if most of its examples barely change
+      a model's score?
+    jargon: what does the precision-versus-sample-size curve on the Open VLM Leaderboard imply
+      for benchmark dataset sizing?
+    task: how do I size a new benchmark so that it is neither too imprecise nor mostly redundant?
+    practitioner: I am assembling a benchmark, should I keep it small to hold evaluation costs
+      down?
   answered_by:
   - full-benchmark-waste
   - small-subsets-uncertain

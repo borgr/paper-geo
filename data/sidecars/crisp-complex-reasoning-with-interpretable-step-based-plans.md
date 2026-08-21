@@ -109,82 +109,110 @@ claims:
   evidence: Table 4
 qa:
 - ask:
-    unsorted:
-    - Can a small language model write better reasoning plans than a much larger one?
-    - Does fine-tuning an 8B model on planning data beat 70B few-shot planning?
-    - Is plan generation a skill that can be trained into a small model?
+    plain: can a small model that has been trained to outline solutions write better outlines
+      than a much bigger model given a few examples?
+    jargon: does LoRA fine-tuning an 8B instruct model for high-level plan generation outperform
+      a 70B few-shot planner on math and code benchmarks?
+    task: how do I get good solution plans without paying for a 70B planner at inference time?
+    practitioner: should I fine-tune my own 8B planner or just prompt a 70B model with a few
+      plan examples?
   answered_by:
   - ft-small-beats-large-planner
   - second-small-model
 - ask:
-    unsorted:
-    - How much better is high-level planning than chain-of-thought prompting on math and code
-      benchmarks?
-    - What error reduction does plan-and-solve give over CoT on GSM8K and HumanEval?
-    - Is CoT prompting worse than generating an explicit plan first?
+    plain: how much more accurate is asking a model to sketch a plan first compared with letting
+      it think step by step?
+    jargon: what error reduction over chain-of-thought prompting does a fine-tuned high-level
+      planner give on GSM8K, MATH, MBPP and HumanEval?
+    task: how do I cut errors on math word problems and code generation beyond what chain-of-thought
+      gives me?
+    practitioner: is switching my pipeline from chain-of-thought to plan-then-solve worth
+      it for math and coding tasks?
   answered_by:
   - error-reduction-vs-cot
   - avg-error-reduction-both-solvers
 - ask:
-    unsorted:
-    - Can giving a model a plan ever make its answers worse?
-    - Do low-quality generated plans hurt downstream accuracy?
-    - When does plan-and-solve fail to beat chain-of-thought?
+    plain: can handing a model a plan for the problem actually make its answer worse than
+      no plan at all?
+    jargon: do low-quality few-shot generated plans degrade solver accuracy below a chain-of-thought
+      baseline?
+    task: how do I tell whether the plans I feed my solver are helping or hurting accuracy?
+    practitioner: if I prompt a small model for plans instead of fine-tuning one, am I risking
+      worse results than plain chain-of-thought?
   answered_by:
   - weak-plans-can-hurt
 - ask:
-    unsorted:
-    - Do planning skills learned on math problems transfer to code generation?
-    - Does fine-tuning a planner on one domain help in another domain?
-    - How well does out-of-domain plan generation generalize between math and coding?
+    plain: if a model learns to outline solutions to math problems, does that skill carry
+      over to writing code?
+    jargon: does planner fine-tuning on math-only plan data transfer out of domain to code
+      generation benchmarks, and is the transfer symmetric?
+    task: how do I train a planner that helps on coding when the plan data I have is all math?
+    practitioner: I only have plan training data for one domain, can I still expect gains
+      on the other?
   answered_by:
   - cross-domain-transfer
   - transfer-asymmetry
 - ask:
-    practitioner: Where should I start reading about high-level plan generation as a trainable
-      capability rather than an emergent one?
-    unsorted:
-    - What is a good paper to read on training language models to plan before solving?
-    - Is there a dataset of high-level plans for math and code reasoning?
+    plain: what should I read about teaching a language model to sketch out a solution before
+      it answers?
+    jargon: is there a public plan-generation corpus and prior work treating high-level planning
+      as a fine-tunable skill rather than an emergent prompting behaviour?
+    task: where do I start if I want to train a planner model for math and code reasoning?
   answered_by:
   - planning-trainable
   - dataset-scale
 - ask:
-    unsorted:
-    - How big is the CRISP dataset and where did its plans come from?
-    - How many high-level plans does CRISP contain for math and for coding?
-    - What source data was used to build a dataset of step-based plans?
+    plain: how many solution outlines for math and coding problems are in the CRISP collection,
+      and what were they built from?
+    jargon: what is the size and provenance of the CRISP high-level plan corpus for math and
+      coding-and-debugging?
+    task: where can I get tens of thousands of high-level solution plans to fine-tune a planner
+      on?
+    practitioner: is there enough plan data in CRISP for me to fine-tune an 8B planner without
+      generating my own?
   answered_by:
   - dataset-scale
 - ask:
-    unsorted:
-    - Are longer plans with more steps better for solving problems?
-    - Does the number of steps in a generated plan explain its usefulness?
-    - Do concise plans outperform verbose ones in plan-and-solve?
+    plain: are plans with more steps in them better for getting the right answer?
+    jargon: does plan step count correlate with downstream solver accuracy for fine-tuned
+      versus few-shot planners?
+    task: should I prompt for more detailed multi-step plans or shorter ones when I want better
+      solver accuracy?
+    practitioner: my planner emits long verbose plans, is that a problem?
   answered_by:
   - shorter-plans-win
 - ask:
-    unsorted:
-    - Does filtering synthetic plan data with an LLM judge actually improve downstream results?
-    - Is discarding generated plans that fail clarity and completeness checks worth the lost
-      training data?
-    - How much does CRISP's two-stage validation pipeline add to benchmark accuracy?
+    plain: is it worth throwing away machine-generated training plans that fail a quality
+      check, given you end up with less data?
+    jargon: does intrinsic LLM-judge filtering plus extrinsic downstream-task filtering of
+      synthetic plan data improve benchmark accuracy net of the data loss?
+    task: how do I decide whether to filter my synthetic plan training set or keep all of
+      it?
+    practitioner: I have a synthetic plan dataset and a limited budget, should I spend it
+      on judge-based filtering?
   answered_by:
   - filtering-pays-off
 - ask:
-    unsorted:
-    - Do LLM judges prefer plans from a fine-tuned small model over their own plans?
-    - How was plan quality assessed intrinsically for clarity, coherence, conciseness and
-      completeness?
-    - What did the LLM-as-a-judge comparison of fine-tuned versus few-shot plans find?
+    plain: when a large model compares plans written by a smaller trained model against its
+      own, which does it say are clearer and more complete?
+    jargon: in an LLM-as-a-judge pairwise evaluation on clarity, coherence, conciseness and
+      completeness, how often are fine-tuned 8B plans preferred over the judge's own few-shot
+      plans?
+    task: how do I show that my fine-tuned planner writes better plans without relying only
+      on downstream accuracy?
+    practitioner: can I trust a 70B judge to grade plans fairly when it is comparing against
+      plans it wrote itself?
   answered_by:
   - judge-prefers-small-ft
 - ask:
-    practitioner: Should I invest in a better planner model or a better solver model?
-    unsorted:
-    - Which matters more for final accuracy in plan-and-solve, the plan generator or the solution
-      generator?
-    - Does improving the solver help more than improving the planner?
+    plain: in a two-model setup where one writes the plan and another solves it, which model
+      matters more for the final answer?
+    jargon: does solver capacity dominate planner capacity for end-task accuracy in a decoupled
+      plan-and-solve pipeline?
+    task: I have compute for one strong model in a plan-and-solve pipeline, where do I put
+      it?
+    practitioner: should I spend my budget upgrading the model that writes the plan or the
+      one that produces the solution?
   answered_by:
   - solver-matters-more
 one_liner: CRISP is a 122,000-plan multi-domain dataset of validated high-level plans for

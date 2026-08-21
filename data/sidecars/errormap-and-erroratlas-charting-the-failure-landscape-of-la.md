@@ -142,104 +142,132 @@ claims:
   evidence: Appendix B, Compute, and Section 3
 qa:
 - ask:
-    practitioner: How can I find out the causes behind a model's wrong answers instead of
-      its score?
-    unsorted:
-    - Why do language models fail on a benchmark, not just how often?
-    - Is there a method that diagnoses why LLMs fail rather than where?
+    plain: why do language models get benchmark questions wrong, not just how often?
+    jargon: is there an automated pipeline that produces per-instance error diagnoses of LLM
+      benchmark failures rather than aggregate accuracy?
+    task: how do I find out what kinds of mistakes my model is making on a benchmark instead
+      of just its score?
+    practitioner: my model scores 62% on a benchmark and I need to know why it loses the other
+      38% -- what can tell me that?
   answered_by:
   - context-diagnosis-gap
   - erroratlas-17-categories
 - ask:
-    practitioner: Where should I begin reading about going beyond benchmark scores to failure
-      analysis?
-    unsorted:
-    - What is a good paper to start with on diagnostic LLM evaluation and error analysis?
-    - Which work introduced a general taxonomy of LLM errors?
+    plain: what should I read first about diagnosing why language models fail rather than
+      just scoring them?
+    jargon: which work introduced a reusable taxonomy of LLM error types for diagnostic evaluation?
+    task: where do I start if I want to build error analysis into my model evaluation pipeline?
   answered_by:
   - context-diagnosis-gap
   - context-cheap-reuse
 - ask:
-    unsorted:
-    - What are the most common types of error large language models make?
-    - Which failure categories are most prevalent across LLM benchmarks?
-    - What does the ErrorAtlas taxonomy contain?
+    plain: what kinds of mistakes do large language models make most often?
+    jargon: which error categories dominate the failure distribution across LLM benchmarks
+      and models?
+    task: how do I know which failure types to prioritise fixing in my language model?
+    practitioner: if I only have time to fix one class of model mistake, which one is most
+      common?
   answered_by:
   - erroratlas-17-categories
   - understudied-errors
 - ask:
-    unsorted:
-    - Which LLM failure modes are neglected by current research?
-    - Are incomplete answers and question misinterpretation common LLM errors?
-    - What underexplored error types show up in large-scale LLM error analysis?
+    plain: are there common ways language models fail that hardly anyone studies?
+    jargon: which prevalent LLM failure modes are underrepresented in the research literature
+      relative to their frequency?
+    task: how do I check whether my model is leaving out required parts of an answer or misreading
+      the question?
+    practitioner: should I be worried about incomplete answers and misread instructions rather
+      than reasoning ability?
   answered_by:
   - understudied-errors
 - ask:
-    unsorted:
-    - Do wrong answers on reasoning benchmarks actually reflect weak reasoning?
-    - Are MMLU-Pro and GPQA errors really reasoning failures?
-    - What fraction of errors on math and science benchmarks are technical rather than reasoning
-      problems?
+    plain: when a model gets a hard reasoning question wrong, is bad reasoning actually the
+      cause?
+    jargon: what share of errors on MMLU-Pro, GPQA and Omni-MATH have low reasoning orientation?
+    task: how do I tell whether my model's losses on a reasoning benchmark come from arithmetic
+      and formatting slips instead of reasoning?
+    practitioner: can I trust a reasoning benchmark score as a measure of my model's reasoning?
   answered_by:
   - reasoning-benchmarks-nonreasoning-errors
 - ask:
-    unsorted:
-    - How well does the ErrorAtlas taxonomy cover the errors models actually make?
-    - Was the LLM-built error taxonomy validated for coverage and accuracy?
-    - How reliable are automatic LLM error category assignments?
+    plain: can you trust error categories that a language model assigned automatically?
+    jargon: how were the coverage and label accuracy of the ErrorAtlas category assignments
+      validated?
+    task: how do I check that an automatic error categorisation is not just putting everything
+      in a catch-all bucket?
+    practitioner: before I report an automated error breakdown, how do I know the labels are
+      right?
   answered_by:
   - coverage-95
   - accuracy-92
 - ask:
-    unsorted:
-    - Does an LLM-generated error taxonomy change if you use a different model or sample size?
-    - How stable is the ErrorMap taxonomy construction under prompt and sample variation?
-    - Is automatic error clustering robust to the choice of judge model?
+    plain: if you rebuild an automatically generated list of error types with a different
+      model or a smaller sample, do you get the same list?
+    jargon: how stable is LLM-induced error taxonomy construction under prompt rephrasing,
+      example changes and sampling rate?
+    task: how big a sample of wrong predictions do I need before an induced error taxonomy
+      stops changing?
+    practitioner: can I use a cheaper judge model and a 5% sample and still get the same error
+      categories?
   answered_by:
   - robustness-sampling
 - ask:
-    unsorted:
-    - Does automatic error analysis agree with human annotation of model mistakes?
-    - How does an LLM-produced error breakdown compare to MMLU-Pro's manual error study?
-    - Can automated error categorisation replace manual error annotation?
+    plain: does an automatic breakdown of model mistakes match what human annotators found?
+    jargon: how does an LLM-generated error distribution on MMLU-Pro compare with the benchmark
+      paper's manual error annotation?
+    task: how do I validate automated error labelling against a hand-annotated error study?
+    practitioner: can automated error analysis save me from hand-annotating my model's wrong
+      answers?
   answered_by:
   - matches-manual-mmlu-pro
 - ask:
-    practitioner: How can I tell what changed between two versions of a model beyond its benchmark
-      score?
-    unsorted:
-    - What is the difference between Gemini 1.5 Flash and Gemini 1.5 Pro in error types?
-    - Can error analysis show which weaknesses a newer model version fixed?
+    plain: what kinds of mistakes did the newer, stronger version of a model stop making?
+    jargon: can error-category analysis localise the accuracy gap between Gemini 1.5 Flash
+      and Gemini 1.5 Pro?
+    task: how do I work out which specific weaknesses a model upgrade actually fixed?
+    practitioner: is it worth paying for the larger model version, and which failures does
+      it fix?
   answered_by:
   - gemini-version-diff
   - per-model-signatures
 - ask:
-    practitioner: Can I compare models by their failure profile rather than their accuracy?
-    unsorted:
-    - Do different LLMs with similar scores fail in different ways?
-    - Are per-model error distributions statistically distinguishable?
+    plain: do two language models with similar scores get things wrong in different ways?
+    jargon: are per-model error-category distributions on HELM Capabilities distinguishable
+      across frontier LLMs?
+    task: how do I compare candidate models by their failure profile rather than a single
+      accuracy number?
+    practitioner: two models score the same on my benchmark -- how do I pick the one whose
+      mistakes I can live with?
   answered_by:
   - per-model-signatures
 - ask:
-    unsorted:
-    - Do error types vary by subject area within a benchmark?
-    - Which MMLU-Pro domains produce the most factual errors?
-    - How do failure patterns differ across domains like health, math and history?
+    plain: do models make different kinds of mistakes in health questions than in maths questions?
+    jargon: how do LLM error-category distributions shift across MMLU-Pro subject domains?
+    task: how do I tell whether my model's errors in one subject area are factual rather than
+      computational?
+    practitioner: should I expect my model's failure pattern to change when I move it from
+      maths to medical questions?
   answered_by:
   - domain-error-shifts
 - ask:
-    unsorted:
-    - How expensive is it to run LLM-based error analysis over a benchmark?
-    - How long does building an error taxonomy across many models take?
-    - Can error analysis be applied at scale without analysing every wrong prediction?
+    plain: how much compute and time does it take to analyse why a model got thousands of
+      questions wrong?
+    jargon: what is the inference cost of building an LLM error taxonomy over many model-dataset
+      pairs at a 10% failure sample?
+    task: how do I run error analysis over a whole benchmark without sending every wrong prediction
+      through a judge model?
+    practitioner: can I afford to run LLM-based error analysis on my evaluation runs?
   answered_by:
   - sampling-cost
   - context-cheap-reuse
 - ask:
-    practitioner: Can I reuse an existing error taxonomy instead of generating my own?
-    unsorted:
-    - How do I apply ErrorAtlas categories to my own model's failures cheaply?
-    - What kinds of tasks can automated error diagnosis not handle?
+    plain: can I reuse an existing list of model error types on my own model's wrong answers
+      instead of building one?
+    jargon: does applying a static LLM error taxonomy skip the taxonomy-induction stage?
+    task: how do I label my model's failures with categories that are comparable to other
+      papers' error analyses?
+    practitioner: should I generate my own error categories or apply a published taxonomy
+      to my model?
   answered_by:
   - context-cheap-reuse
 misreadings:

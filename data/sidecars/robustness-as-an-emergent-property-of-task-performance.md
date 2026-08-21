@@ -103,83 +103,112 @@ claims:
     answer only.
 qa:
 - ask:
-    unsorted:
-    - Does higher benchmark accuracy make an LLM more consistent under prompt variations?
-    - How strongly is LLM robustness correlated with task performance?
-    - Is prompt sensitivity just a symptom of low accuracy?
+    plain: if a language model scores very high on a task, does it also give the same answer
+      when the prompt is worded differently?
+    jargon: how much of the variance in output-consistency robustness across prompt perturbations
+      is explained by benchmark accuracy?
+    task: how do I predict whether a model will be prompt-stable on a task without running
+      a full perturbation sweep?
+    practitioner: can I use my model's accuracy on a task as a proxy for how sensitive it
+      will be to prompt wording?
   answered_by:
   - perf-explains-robustness
   - imdb-saturated-robust
 - ask:
-    unsorted:
-    - Is high consistency on an easy benchmark just an artifact of high accuracy?
-    - How is trivial robustness from high success rates ruled out when comparing consistency
-      to accuracy?
-    - What random baseline is used for output consistency across prompt variations?
+    plain: when a model is right almost every time, isn't matching answers across reworded
+      prompts just luck?
+    jargon: what matched random baseline rules out chance agreement when comparing strict
+      output consistency to accuracy?
+    task: how do I check that consistency across prompt variants is more than what a per-configuration
+      success rate alone would produce?
+    practitioner: should I believe reported prompt-consistency numbers on a saturated benchmark
+      like IMDB, or is the high accuracy doing all the work?
   answered_by:
   - beats-random-baseline
   - imdb-saturated-robust
 - ask:
-    unsorted:
-    - Are some language models inherently more robust than others?
-    - Does LLM output consistency depend on which model is used or on how well it performs
-      the task?
-    - Do bigger models in the same family show better prompt consistency at equal accuracy?
+    plain: are some language models just naturally steadier under different prompt wordings
+      than others, regardless of how well they do the task?
+    jargon: how much does model identity contribute to output consistency once task performance
+      is controlled for?
+    task: how do I decide whether to switch model families or improve task accuracy to get
+      more stable answers?
+    practitioner: if I pick a bigger model from the same family at similar accuracy, will
+      my answers get more consistent across prompt variants?
   answered_by:
   - model-factors-weak
   - reframing-robustness
 - ask:
-    practitioner: Where should I start reading on the relationship between benchmark saturation
-      and LLM reliability?
-    unsorted:
-    - Should researchers keep building dedicated robustness benchmarks for LLMs?
-    - What is a good paper arguing robustness will emerge as benchmarks saturate?
+    plain: is it worth building separate tests just for how sensitive language models are
+      to prompt wording?
+    jargon: what work argues that LLM robustness is a concomitant of task competence rather
+      than a separate capability to benchmark?
+    task: where should I start reading before designing a robustness evaluation for language
+      models?
+    practitioner: should I invest in a dedicated prompt-robustness benchmark, or expect robustness
+      to arrive as accuracy climbs?
   answered_by:
   - reframing-robustness
   - perf-explains-robustness
 - ask:
-    practitioner: Can I use benchmark accuracy as a signal that a model is ready for deployment?
-    unsorted:
-    - Which tasks are LLMs actually reliable on for high-stakes use?
-    - Does strong performance on a task predict stable behavior in production?
+    plain: which kinds of tasks can a language model actually be trusted on for important
+      decisions?
+    jargon: can very high benchmark accuracy serve as an empirical indicator of stable behaviour
+      under prompt variation in deployment?
+    task: how do I choose which tasks to hand a language model in a sensitive application?
+    practitioner: my use case is high-stakes -- should I pick a task where models are already
+      near-saturated rather than a frontier benchmark?
   answered_by:
   - deployment-signal
   - imdb-saturated-robust
 - ask:
-    unsorted:
-    - How many models, datasets and prompt configurations were tested?
-    - What is the experimental scale of the robustness-versus-performance analysis?
-    - Which benchmarks and perturbations were used to measure output consistency?
+    plain: how many models, datasets and prompt setups went into the comparison of accuracy
+      against answer consistency?
+    jargon: what is the inference budget and configuration grid used to measure output consistency
+      across models and benchmarks?
+    task: how do I size a sweep of models, datasets and inference configurations to measure
+      prompt robustness?
   answered_by:
   - study-scale
   - config-choices-minor
 - ask:
-    unsorted:
-    - Do the conclusions depend on which robustness metric is used?
-    - Does performance drop rate show the same trend as strict output consistency?
-    - Are score-based and output-based robustness measures consistent with each other?
+    plain: does the link between accuracy and answer consistency still show up if consistency
+      is measured a different way?
+    jargon: does average performance drop rate reproduce the dataset ordering obtained under
+      strict output consistency?
+    task: how do I check my robustness conclusions are not an artefact of the consistency
+      metric I chose?
+    practitioner: which robustness metric should I report -- strict output agreement or a
+      score-based drop rate?
   answered_by:
   - metrics-agree
   - long-tail-consistency
 - ask:
-    unsorted:
-    - Do choices like number of few-shot demonstrations or temperature drive the reported
-      results?
-    - Was a statistical test run on whether configuration parameters affect accuracy?
-    - How much does prompt variation change measured performance on MMLU or RewardBench?
+    plain: do things like how many examples you show the model or the temperature setting
+      change measured accuracy much?
+    jargon: what effect sizes does an ANOVA over demonstration count, prompt variation, template
+      and temperature yield on benchmark scores?
+    task: how do I tell whether few-shot count, template choice or temperature is worth tuning
+      for accuracy on MMLU or RewardBench?
+    practitioner: should I spend time tuning prompt template and temperature, or will it barely
+      move my benchmark score?
   answered_by:
   - config-choices-minor
 - ask:
-    unsorted:
-    - Are the accuracy numbers in this robustness study consistent with published leaderboards?
-    - How were the measured MMLU-Pro and GPQA scores sanity-checked?
-    - Do the reported model scores match HELM and model cards?
+    plain: do the accuracy numbers reported for models like Llama 4 and gpt-oss in a prompt-consistency
+      study match what is published elsewhere?
+    jargon: how were measured MMLU-Pro scores validated against the HELM capabilities leaderboard?
+    practitioner: can I trust the model scores in a robustness study that re-ran the benchmarks
+      itself?
   answered_by:
   - external-validation
 - ask:
-    unsorted:
-    - Could benchmark contamination explain the high consistency across prompt variants?
-    - How is data contamination addressed in the performance-robustness analysis?
+    plain: could models having seen the benchmark data during training explain why they answer
+      reworded prompts the same way?
+    jargon: does benchmark contamination account for the observed output consistency across
+      prompt configurations?
+    practitioner: should I discount high prompt-consistency results on public benchmarks as
+      a contamination effect?
   answered_by:
   - long-tail-consistency
   - beats-random-baseline

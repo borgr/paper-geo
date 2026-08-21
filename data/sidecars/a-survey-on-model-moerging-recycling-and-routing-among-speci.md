@@ -123,109 +123,150 @@ claims:
   evidence: Section 7
 qa:
 - ask:
-    practitioner: What should I read first about routing among fine-tuned expert models?
-    unsorted:
-    - Is there a survey on reusing LoRA adapters and expert models with a learned router?
-    - Where can I find an overview of MoErging methods?
-    - What paper organizes the literature on recycling specialized expert models?
+    plain: Is there a survey of methods that reuse many separately fine-tuned models by picking
+      between them automatically?
+    jargon: What survey organises post-hoc routing over independently trained expert modules
+      such as LoRA adapters?
+    task: Where do I start reading about combining a pool of community fine-tuned adapters
+      with a learned router?
+    practitioner: I have dozens of LoRA adapters lying around, is there a review that tells
+      me what my options are for serving them together?
   answered_by:
   - taxonomy-nine-axes
   - four-categories
   - moerging-vs-moe-vs-merging
 - ask:
-    unsorted:
-    - How is MoErging different from mixture-of-experts?
-    - What distinguishes routing among independently trained experts from model merging?
-    - Is combining fine-tuned adapters with a router the same thing as a sparse MoE model?
+    plain: How is picking between separately trained expert models different from a mixture-of-experts
+      network or from averaging model weights?
+    jargon: What separates post-hoc routing over decentralized experts from jointly trained
+      sparse MoE and from static parameter merging?
+    task: How do I decide between merging my fine-tuned checkpoints into one model and routing
+      between them at query time?
+    practitioner: Should I treat a router over my existing adapters as an MoE model, or is
+      it a different kind of system?
   answered_by:
   - moerging-vs-moe-vs-merging
 - ask:
-    unsorted:
-    - What are the main ways of building a router over pre-trained experts?
-    - How can methods for selecting among fine-tuned experts be categorized?
-    - What families of expert-routing methods exist?
+    plain: What are the main ways of deciding which fine-tuned model to use for a given input?
+    jargon: How can post-hoc routing mechanisms over pre-trained expert modules be grouped
+      into families?
+    task: How do I choose an approach for building a router over a library of fine-tuned experts?
+    practitioner: Which style of expert selection should I build for my adapter pool, similarity
+      search, a trained classifier, or something without a router?
   answered_by:
   - four-categories
   - embedding-router-strength
   - classifier-router-tradeoff
   - router-free-zero-shot
 - ask:
-    practitioner: What method should I use for zero-shot routing among adapters?
-    unsorted:
-    - Which expert-routing approach works without any labeled routing data?
-    - Can I route among LoRA experts without training a router?
+    plain: Which ways of choosing between fine-tuned models work without collecting any labelled
+      examples of which model to use?
+    jargon: Which expert-routing approaches support zero-shot deployment with no routing-specific
+      training data?
+    task: How do I route among LoRA experts when I have no labelled routing data and cannot
+      train a router?
+    practitioner: Can I serve a pool of adapters with automatic selection without first labelling
+      data for the routing decision?
   answered_by:
   - router-free-zero-shot
   - embedding-router-strength
 - ask:
-    unsorted:
-    - When does a learned classifier router beat embedding similarity for expert selection?
-    - What are the drawbacks of training a dedicated router to pick among LLMs?
-    - Do classifier-based LLM routers like RouteLLM need labeled data?
+    plain: When is training a small model to pick the right expert better than just comparing
+      text embeddings?
+    jargon: What are the tradeoffs of classifier-based routing versus embedding-similarity
+      routing for expert selection?
+    task: How do I choose between an embedding-similarity router and a trained classifier
+      for dispatching queries to LLM experts?
+    practitioner: Do I need to collect labelled routing data if I want a trained router for
+      picking between my models?
   answered_by:
   - classifier-router-tradeoff
   - embedding-router-strength
 - ask:
-    unsorted:
-    - Should routing among experts happen per token, per example, or per task?
-    - What is the cost of fine-grained routing decisions in adapter mixtures?
-    - How does routing granularity affect adaptability and compute?
+    plain: Should the choice of which fine-tuned model to use be made once per task, per input,
+      or at every generation step?
+    jargon: How does routing granularity, per-task versus per-example versus per-step, trade
+      adaptability against cost and stability?
+    task: How do I pick the granularity of routing decisions when serving a mixture over adapters?
+    practitioner: Is per-token routing over my adapters worth the extra compute compared with
+      deciding once per request?
   answered_by:
   - granularity-tradeoff
 - ask:
-    unsorted:
-    - Why is it so hard to compare methods that route among fine-tuned experts?
-    - Do MoErging papers evaluate against each other?
-    - Are expert-routing methods benchmarked in a consistent setup?
+    plain: Why is it hard to tell which method for picking between fine-tuned models is actually
+      better?
+    jargon: How consistently do post-hoc expert-routing papers evaluate against each other
+      and under matched data-access assumptions?
+    task: How do I compare published expert-routing methods when I need to choose one to implement?
+    practitioner: Can I trust reported numbers to tell me which adapter-routing method to
+      use?
   answered_by:
   - no-mutual-comparison
   - data-access-gates-applicability
 - ask:
-    unsorted:
-    - What baseline is often missing from papers that route among expert adapters?
-    - If all expert training datasets are available, what should a routing method be compared
-      to?
-    - When is plain multitask training a fair baseline for expert recycling methods?
+    plain: If someone has all the training data for every expert model, what simple alternative
+      should their routing method be compared against?
+    jargon: What baseline is missing from expert-routing papers that assume simultaneous access
+      to all expert training datasets?
+    task: What should I benchmark my router over fine-tuned experts against when I own all
+      the expert training sets?
+    practitioner: Before building a router over my own fine-tuned models, should I just train
+      one multitask model instead?
   answered_by:
   - missing-baselines
 - ask:
-    practitioner: Does needing the experts' training data limit which routing methods I can
-      use?
-    unsorted:
-    - Can a routing method that requires a labeled target-task set improve zero-shot performance?
-    - What assumptions rule out applying an expert-routing method to adapters downloaded from
-      a model hub?
+    plain: What data does a method for choosing between fine-tuned models need, and when does
+      that rule it out?
+    jargon: Which data-access assumptions, such as labeled target-task data or shared expert
+      training sets, gate the applicability of expert-routing methods?
+    task: How do I tell whether an expert-routing method can be applied to adapters downloaded
+      from a model hub?
+    practitioner: I only have the adapter weights and no training data behind them, which
+      routing approaches are even usable for me?
   answered_by:
   - data-access-gates-applicability
 - ask:
-    unsorted:
-    - Are methods for recycling fine-tuned experts actually used in production?
-    - Why has adaptive routing among community adapters not been widely adopted?
-    - What is holding back practical adoption of expert-recycling systems?
+    plain: Why do so few of the published ways of reusing other people's fine-tuned models
+      get used in real systems?
+    jargon: What blocks practical adoption of post-hoc routing over decentralized expert modules
+      despite reported gains?
+    task: What should I expect to have to build myself if I want to deploy adaptive routing
+      over community adapters?
+    practitioner: Are any of these expert-routing methods mature enough for me to put in production?
   answered_by:
   - little-practical-use
   - tools-inventory
 - ask:
-    unsorted:
-    - What software exists for merging and routing among expert models?
-    - Which libraries support building a mixture over LoRA adapters?
-    - Are there tools for decentralized sharing and combination of fine-tuned models?
+    plain: What existing software can combine or switch between many fine-tuned versions of
+      a model?
+    jargon: Which libraries and platforms support merging, serving and routing over PEFT adapters
+      and expert checkpoints?
+    task: Which tools do I use to host a mixture over many LoRA adapters?
+    practitioner: Is there a ready-made library for serving hundreds of adapters, or do I
+      need to write the routing layer myself?
   answered_by:
   - tools-inventory
 - ask:
-    unsorted:
-    - What are the open research problems in recycling and routing among expert models?
-    - How do you handle redundant or malicious contributed experts in a shared expert pool?
-    - What future work is needed for decentralized collaborative model development?
+    plain: What still needs solving before communities can keep improving a shared model by
+      contributing fine-tuned pieces?
+    jargon: What open problems remain in expert-pool maintenance, including redundancy removal,
+      admission decisions and detection of malicious experts?
+    task: How do I manage a growing shared pool of contributed experts, including duplicates
+      and bad-faith uploads?
+    practitioner: If I open a shared adapter pool to contributors, what problems have no good
+      answer yet?
   answered_by:
   - open-problems
   - little-practical-use
 - ask:
-    practitioner: What design choices should I document when proposing a new expert-routing
-      method?
-    unsorted:
-    - Which axes describe how a router over fine-tuned experts is built and applied?
-    - How do I classify a MoErging method's assumptions about expert data and user data?
+    plain: What questions should I ask about a method that picks between fine-tuned models
+      before deciding if it fits my setup?
+    jargon: Along which design axes can expert-routing methods be characterised, from expert
+      training and data privacy to routing granularity and generalization target?
+    task: How do I compare two adapter-routing methods on their assumptions about expert data
+      and user-provided data?
+    practitioner: How do I check whether an expert-routing paper's assumptions match the data
+      I actually have?
   answered_by:
   - taxonomy-nine-axes
   - data-access-gates-applicability

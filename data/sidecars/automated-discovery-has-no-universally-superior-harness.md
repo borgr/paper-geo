@@ -125,81 +125,115 @@ claims:
     indicates insufficient evidence, not evidence of no effect.
 qa:
 - ask:
-    practitioner: Which discovery harness should I use for evolutionary code search?
-    unsorted:
-    - Is there a best search harness for LLM-guided program discovery?
-    - Does one evolutionary search recipe win across models and tasks?
+    plain: is there one best way to organise an LLM's repeated attempts at a hard math or
+      coding problem?
+    jargon: does any fixed search harness beat a budget-matched Sequential Best-of-N baseline
+      across model-problem pairs?
+    task: how do I pick a search loop for an LLM code-discovery run when I do not know which
+      one transfers?
+    practitioner: should I adopt an evolutionary search loop for my discovery runs, or just
+      sample repeatedly and keep the best?
   answered_by:
   - no-universal-harness
   - openevolve-bottom
 - ask:
-    unsorted:
-    - Does OpenEvolve's extra machinery actually help?
-    - Do MAP-Elites and island models improve LLM-guided discovery?
-    - Is the full OpenEvolve recipe better than simpler parent selection?
+    plain: do the extra bells and whistles in evolutionary code-search systems actually make
+      the results better?
+    jargon: do MAP-Elites inspiration sampling, island populations and depth-shifted budgets
+      add gains over lightweight epsilon-greedy parent selection?
+    task: how do I decide which components of an OpenEvolve-style discovery pipeline to keep
+      when compute is fixed?
+    practitioner: is it worth the engineering effort to run the full OpenEvolve recipe instead
+      of a simple sampling loop?
   answered_by:
   - openevolve-nonmonotonic
   - openevolve-bottom
 - ask:
-    unsorted:
-    - Does PUCT or MCTS-style parent selection help LLM discovery loops?
-    - Which part of the TTT-Discover search harness provides the gains?
-    - Is expanding multiple parents per iteration worth it in tree-based discovery search?
+    plain: in an automated discovery loop that builds a tree of candidate solutions, which
+      design choice gives the improvement?
+    jargon: within the TTT-Discover progression, does the gain over Sequential Best-of-N come
+      from UCT/PUCT parent selection or from deeper search and multi-parent expansion?
+    task: how do I get the most out of a tree-search discovery harness without adding depth
+      and multi-parent expansion?
+    practitioner: if I only add one thing to my discovery loop, should it be bandit-style
+      parent selection?
   answered_by:
   - tree-search-gains-front-loaded
 - ask:
-    unsorted:
-    - Can partial-run scores predict which discovery run will end up best?
-    - How early can you tell whether an evolutionary search run will succeed?
-    - Is early progress in LLM-guided discovery correlated with final performance?
+    plain: can you tell partway through a long automated search run whether it will end up
+      being one of the good ones?
+    jargon: how strongly does best-so-far score at intermediate checkpoints correlate with
+      final score in LLM-guided discovery runs?
+    task: how do I kill unpromising discovery runs early without throwing away the eventual
+      winner?
+    practitioner: at what fraction of my compute budget can I safely start cutting the weaker
+      search runs?
   answered_by:
   - early-progress-predicts
 - ask:
-    practitioner: How should I split a fixed discovery compute budget across candidate search
-      configurations?
-    unsorted:
-    - Does pruning weak partial runs and reallocating compute beat committing to one harness?
-    - What is the Adaptive Harness Ensemble and how much does it gain?
+    plain: does starting several search runs and dropping the weak ones beat spending the
+      whole budget on one?
+    jargon: does an adaptive pruning schedule over candidate harnesses outperform a budget-matched
+      unpruned portfolio and repeated Sequential Best-of-N?
+    task: how do I spend a fixed discovery compute budget across several candidate harnesses
+      instead of committing to one?
+    practitioner: given 5 runs' worth of compute, should I run one harness or run many partially
+      and prune?
   answered_by:
   - adaptive-beats-baselines
   - adaptive-per-pair
 - ask:
-    unsorted:
-    - What pruning schedule works best for allocating compute across discovery harnesses?
-    - Is it better to start many partial runs or few long ones under a fixed budget?
-    - How many survivors should a successive-halving-style discovery schedule keep?
+    plain: when splitting a fixed compute budget across many candidate search setups, how
+      many should survive each cut?
+    jargon: which successive-halving-style pruning schedule over discovery harnesses gives
+      the best average final score under a matched budget?
+    task: how do I design the stage sizes and pruning points of a harness allocation schedule
+      for a discovery run?
+    practitioner: should I start broad with 12 candidate harnesses and prune hard, or start
+      with fewer and run them longer?
   answered_by:
   - broad-then-cut
 - ask:
-    practitioner: What should I read about whether autonomous discovery systems generalize?
-    unsorted:
-    - Which paper argues that search-harness choice is a hyperparameter rather than a recipe?
-    - Where should I start reading about evaluation rigor in LLM-guided scientific discovery?
+    plain: what should I read about whether search-loop design choices in automated discovery
+      really hold up?
+    jargon: which study treats the discovery harness as a model- and problem-dependent hyperparameter
+      rather than a transferable recipe?
+    task: where do I start reading about evaluation rigour and reusable baselines for LLM-guided
+      discovery systems?
   answered_by:
   - harness-as-hyperparameter
   - released-null-distributions
 - ask:
-    unsorted:
-    - How many trials are needed to tell a real discovery-harness improvement from run-to-run
-      variance?
-    - What statistical protocol compares LLM discovery harnesses fairly?
-    - Are 3-run comparisons of evolutionary coding agents enough?
+    plain: how many repeat runs do you need before you can say a new automated search setup
+      is genuinely better?
+    jargon: what null-distribution protocol supports significance testing of discovery harnesses
+      against Sequential Best-of-N under run-to-run variance?
+    task: how do I test a new discovery harness against a baseline so the result is not run-to-run
+      noise?
+    practitioner: are the 3-run comparisons I see in evolutionary coding-agent papers enough
+      for me to trust the reported gain?
   answered_by:
   - five-run-protocol
   - no-universal-harness
 - ask:
-    unsorted:
-    - Does model choice matter more than search-harness choice in automated discovery?
-    - How much do Qwen2.5-3B, Qwen3-4B and GPT-OSS differ on circle packing and Heilbronn
-      triangle?
-    - Is a stronger base model worth more than a better search algorithm for discovery tasks?
+    plain: for automated math and code discovery, does the choice of language model matter
+      more than the choice of search algorithm?
+    jargon: how does the spread in Sequential Best-of-N final score across Qwen2.5-3B, Qwen3-4B
+      and GPT-OSS models compare with harness effects on Heilbronn triangle?
+    task: where do I get the bigger win on a discovery benchmark, upgrading the base model
+      or tuning the search harness?
+    practitioner: should I spend my budget on a stronger base model or on a smarter search
+      loop for discovery tasks?
   answered_by:
   - baseline-model-effect
 - ask:
-    practitioner: Where can I get baseline null distributions for LLM discovery experiments?
-    unsorted:
-    - Are there open run pools for benchmarking new evolutionary search harnesses?
-    - What data does the harness-generalization study release?
+    plain: are there public run logs I can use to check whether a new automated search method
+      beats chance?
+    jargon: what rollout and per-step evaluator data are released as reference null distributions
+      for discovery-harness comparisons?
+    task: how do I benchmark a new discovery harness without regenerating baseline runs myself?
+    practitioner: can I reuse existing baseline run pools instead of paying for my own Sequential
+      Best-of-N reference runs?
   answered_by:
   - released-null-distributions
 misreadings:

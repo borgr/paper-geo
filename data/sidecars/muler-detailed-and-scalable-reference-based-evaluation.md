@@ -109,88 +109,126 @@ claims:
   evidence: Table 7 and Appendix G
 qa:
 - ask:
-    practitioner: How can I find out which linguistic phenomena a machine translation system
-      gets wrong, instead of just its BLEU score?
-    unsorted:
-    - Is there a way to break a single BLEU or ROUGE number down by error type?
-    - What does MuLER do?
+    plain: is there a way to find out which kinds of words a translation system gets wrong,
+      instead of just one overall score?
+    jargon: can a reference-based generation metric such as BLEU or BERTScore be decomposed
+      into per-phenomenon error scores?
+    task: how do I break a single BLEU or ROUGE number down by error type without building
+      a new test set?
+    practitioner: my system's BLEU went up but I need to know what it actually improved at,
+      can MuLER tell me?
   answered_by:
   - what-muler-is
   - naturalistic-alternative
 - ask:
-    practitioner: What should I read about fine-grained evaluation of text generation systems?
-    unsorted:
-    - Which papers move beyond bottom-line metrics like BLEU toward per-phenomenon analysis?
-    - Where does MuLER sit relative to challenge-set evaluation?
+    plain: what should I read about going beyond a single translation quality score to see
+      specific error types?
+    jargon: what work offers an alternative to challenge sets for fine-grained evaluation
+      of generation systems?
+    task: how do I get phenomenon-level evaluation from a test set I already have rather than
+      writing minimal pairs?
+    practitioner: should I build a challenge set for the phenomena I care about, or can I
+      reuse my existing test set for fine-grained analysis?
   answered_by:
   - naturalistic-alternative
   - what-muler-is
 - ask:
-    unsorted:
-    - Which parts of speech are hardest for machine translation systems to get right?
-    - Are frequent words like nouns and verbs easy for MT systems to translate?
-    - What did analysing all WMT submissions from 2014 to 2020 reveal about POS tags?
+    plain: which kinds of words do machine translation systems get wrong most often, and are
+      common words like nouns easier?
+    jargon: which POS tags show the largest per-phenomenon error rates in WMT news-translation
+      submissions?
+    task: which word classes should I look at first when diagnosing a translation model's
+      errors?
+    practitioner: should I assume my MT system handles frequent nouns and verbs well because
+      they are common in the training data?
   answered_by:
   - nouns-verbs-hard
 - ask:
-    unsorted:
-    - Does a higher BLEU score mean better named-entity translation?
-    - Do all linguistic phenomena improve as overall MT quality improves?
-    - Which features track overall metric gains and which do not?
+    plain: if a translation system's overall score goes up, does that mean it also got better
+      at names of people and places?
+    jargon: do per-feature MuLER scores correlate with BLEU uniformly across named-entity
+      types and lexical features such as concreteness and valence?
+    task: can I use overall BLEU improvements as evidence that named-entity translation improved?
+    practitioner: my BLEU is 2 points higher than last quarter, can I tell my users that entity
+      translation got better too?
   answered_by:
   - ne-not-tracking-bleu
   - nouns-verbs-hard
 - ask:
-    unsorted:
-    - Is there human validation that MuLER scores reflect real translation quality on a feature?
-    - How well does a fine-grained metric decomposition agree with human judgement of feature
-      translation quality?
-    - Was MuLER checked manually against annotated WMT outputs?
+    plain: has anyone checked with human readers that a per-word-type error score really reflects
+      worse translation of those words?
+    jargon: what is the human agreement rate for MuLER's per-feature ranking on WMT system
+      pairs with near-equal BLEU?
+    task: how do I know a fine-grained metric decomposition agrees with human judgement before
+      I trust it to rank systems?
+    practitioner: should I trust MuLER's per-feature ranking of two systems whose overall
+      BLEU is basically tied?
   answered_by:
   - manual-agreement
 - ask:
-    practitioner: How do I know a fine-grained metric is not just measuring feature frequency?
-    unsorted:
-    - Does a per-feature evaluation score get confounded by how often the feature occurs?
-    - Why does MuLER normalize by the oracle minus anti-oracle interval?
+    plain: if a word type shows up rarely in a test set, does that distort a score measuring
+      how well it is translated?
+    jargon: how does normalizing by the oracle-to-anti-oracle interval control MuLER's sensitivity
+      to feature frequency?
+    task: how do I compare error rates across features that occur at very different frequencies
+      in the same test set?
+    practitioner: can I compare a MuLER score for rare location names against one for nouns,
+      or is the frequency gap going to fool me?
   answered_by:
   - frequency-robust
   - monotonic-range
 - ask:
-    unsorted:
-    - Would a feature-masking evaluation score fire on arbitrary random word sets too?
-    - How was MuLER shown to be specific to real linguistic phenomena?
-    - What synthetic experiments validate MuLER?
+    plain: would a score that measures errors on nouns give the same answer for a random group
+      of words?
+    jargon: what synthetic control experiments establish MuLER's specificity to genuine linguistic
+      features rather than frequency-matched word sets?
+    task: how do I rule out that my per-feature error scores are an artefact of feature frequency
+      rather than the linguistic phenomenon?
+    practitioner: before I read anything into MuLER's noun score, is there evidence the score
+      is not just noise from picking words at that rate?
   answered_by:
   - specificity
   - monotonic-range
 - ask:
-    unsorted:
-    - Can BLEU detect whether a system translates gender correctly?
-    - What do WinoGender pairs reveal about the blind spots of overlap metrics?
-    - How does MuLER expose gender errors that BLEU misses?
+    plain: can an overlap score like BLEU tell whether a translation used the right gender
+      for a pronoun?
+    jargon: what do WinoGender minimal pairs show about BLEU's sensitivity to gender errors
+      compared with a gender-feature MuLER score?
+    task: how do I detect gender translation errors that leave my overall BLEU almost unchanged?
+    practitioner: my model scores well on BLEU, is that any evidence it is not making gender
+      errors?
   answered_by:
   - gender-blind-bleu
 - ask:
-    unsorted:
-    - Does MuLER work for summarization as well as translation?
-    - Can ROUGE be decomposed by feature to compare summarization models?
-    - What did MuLER find when comparing T5 and DistilBART summarizers?
+    plain: does the per-error-type analysis work for summarization, not just translation?
+    jargon: can ROUGE be decomposed per feature to compare abstractive summarizers such as
+      T5 and DistilBART?
+    task: how do I compare two summarization models on specific lexical properties like concreteness
+      rather than a single ROUGE number?
+    practitioner: I evaluate summarizers with ROUGE, can I get feature-level error analysis
+      out of it with MuLER?
   answered_by:
   - summarization-concreteness
 - ask:
-    unsorted:
-    - Does feature-level metric decomposition work with neural metrics like BERTScore?
-    - Is MuLER limited to n-gram overlap metrics such as BLEU and ROUGE?
-    - How is BERTScore adapted for oracle and anti-oracle masking?
+    plain: does the per-error-type breakdown only work with word-overlap scores, or also with
+      embedding-based ones?
+    jargon: can MuLER's oracle and anti-oracle masking be applied to BERTScore's reference-candidate
+      similarity matrix?
+    task: how do I get feature-level error analysis when my evaluation pipeline uses BERTScore
+      rather than BLEU?
+    practitioner: we switched from BLEU to BERTScore, can I still get per-phenomenon error
+      scores?
   answered_by:
   - bertscore-extension
   - what-muler-is
 - ask:
-    unsorted:
-    - Can a MuLER score come out negative, and what does that mean?
-    - Why would masking a feature make the base metric worse instead of better?
-    - What are the known failure cases of oracle masking in MuLER?
+    plain: why would a per-word-type error score come out negative, and what does that tell
+      me?
+    jargon: under what conditions does oracle masking lower rather than raise the base metric,
+      producing a negative MuLER score?
+    task: what do I do when a feature's MuLER score comes out below zero?
+    practitioner: I got a negative MuLER value for one feature, is my setup broken or is the
+      tagger to blame?
   answered_by:
   - negative-muler-edge
 one_liner: MuLER decomposes any reference-based metric, such as BLEU, ROUGE or BERTScore,

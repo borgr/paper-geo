@@ -101,85 +101,125 @@ claims:
     selection models are also among the eight evaluated.
 qa:
 - ask:
-    practitioner: What benchmark should I use to evaluate language identification on noisy
-      web text?
-    unsorted:
-    - Is there a human-annotated LID evaluation set for web data?
-    - Where can I find an open language identification benchmark covering low-resource languages?
+    plain: is there a language identification test set made of real web pages and labelled
+      by people who speak the languages?
+    jargon: does an openly licensed, human-annotated LID evaluation corpus exist for the web
+      domain, including long-tail varieties?
+    task: where do I get evaluation data to test a language identifier on messy crawled web
+      text rather than clean sentences?
+    practitioner: I need to benchmark my language detector on low-resource web text with a
+      permissive license, is there a dataset I can just download?
   answered_by:
   - web-lid-benchmark
   - dataset-size
 - ask:
-    unsorted:
-    - How large is CommonLID and how many languages does it cover?
-    - How many lines and languages are in the CommonLID dataset?
-    - How big is the Common Crawl human-annotated language identification dataset?
+    plain: how many languages are covered by the new human-annotated benchmark for detecting
+      which language a web page is written in?
+    jargon: what is the size, mean line length and language-variety coverage of the CommonLID
+      annotated Common Crawl sample?
+    task: how many languages can I actually evaluate on if I use the CommonLID web benchmark,
+      and how many have enough lines to be meaningful?
+    practitioner: is CommonLID big enough per language for me to trust a per-language F1 I
+      compute on it?
   answered_by:
   - dataset-size
 - ask:
-    unsorted:
-    - Do language identification models perform worse on web text than on FLORES?
-    - How much do LID accuracy numbers drop on web data?
-    - Are published LID accuracy scores overestimates?
+    plain: do language detectors get much worse on raw web pages than on clean translated
+      sentences?
+    jargon: how large is the macro-F1 gap for LID systems between web-domain lines and FLORES+,
+      and how much of the older numbers reflect train-test overlap?
+    task: how should I adjust my expectations of a language identifier's reported accuracy
+      before running it over a web crawl?
+    practitioner: can I trust the accuracy figure published for a language identifier when
+      I plan to run it on Common Crawl?
   answered_by:
   - harder-than-clean-sets
   - overestimation
 - ask:
-    unsorted:
-    - Which language identification model is most accurate overall?
-    - Is GlotLID the best LID model?
-    - How do GlotLID, CLD2 and OpenLID compare on shared languages?
+    plain: when several language detectors are compared on the languages they all support,
+      which one comes out ahead?
+    jargon: on the shared label intersection, how do GlotLID, CLD2, CLD3 and OpenLID-v2 rank
+      on F1 and false positive rate, and does any system clear 75% macro-F1?
+    task: which off-the-shelf language identifier should I pick for a multilingual crawl if
+      I care about false positives?
+    practitioner: is GlotLID good enough for my pipeline, or is one of the older detectors
+      still competitive on the languages I need?
   answered_by:
   - glotlid-best-shared-languages
   - no-model-above-75
 - ask:
-    unsorted:
-    - Can GPT-4o or GPT-5 do language identification as well as a dedicated classifier?
-    - Are LLMs good at identifying the language of a text?
-    - How do OpenAI GPT models compare with GlotLID for LID?
+    plain: can a general-purpose chatbot tell you what language a piece of text is in as well
+      as a purpose-built detector?
+    jargon: how do zero-shot GPT-4o and GPT-5 variants compare with GlotLID on LID F1 across
+      core and African language subsets?
+    task: should I prompt an LLM to label the language of my documents, or run a dedicated
+      classifier over them?
+    practitioner: I already pay for GPT-5 API calls, is it worth using them for language identification
+      on African languages?
   answered_by:
   - llms-lose
 - ask:
-    unsorted:
-    - Which LID model is fastest, and what does the extra accuracy cost in throughput?
-    - How many samples per second can GlotLID and CLD2 classify?
-    - What is the speed versus accuracy tradeoff among language identification models?
+    plain: how much throughput do you give up to get a more accurate language detector?
+    jargon: which LID systems lie on the speed-accuracy Pareto frontier, and what are their
+      samples-per-second rates?
+    task: which language identifier can I afford to run over billions of web lines without
+      the labelling step dominating my compute?
+    practitioner: my crawl is huge, should I take the fast detector or pay the slowdown for
+      the more accurate one?
   answered_by:
   - speed-tradeoff
 - ask:
-    unsorted:
-    - Is language identification a solved problem?
-    - What is the current state of the art in language identification?
-    - Which LID model works well across all domains?
+    plain: is telling what language a text is written in basically a solved problem?
+    jargon: do any current LID systems reach high macro-F1 across all six evaluation sets,
+      and can systems be ranked by a single aggregate score at all?
+    task: how do I decide whether language identification is still a research problem worth
+      working on for my languages?
+    practitioner: can I just plug in an existing language detector and stop worrying about
+      it?
   answered_by:
   - no-model-above-75
   - coverage-comparison-problem
 - ask:
-    unsorted:
-    - Why is it hard to compare language identification models fairly?
-    - How should LID models with different language coverage be scored against each other?
-    - Does higher language coverage make a LID model better?
+    plain: why is it unfair to compare two language detectors that recognise different lists
+      of languages?
+    jargon: how should LID systems with mismatched label sets be scored, given that whole-test-set
+      macro-F1 rewards coverage and covered-language scoring rewards specialisation?
+    task: how do I build a fair comparison table for language identifiers that each support
+      a different number of languages?
+    practitioner: should I prefer a language detector that claims 2000 languages over one
+      that claims 100?
   answered_by:
   - coverage-comparison-problem
 - ask:
-    unsorted:
-    - How much do native-speaker annotators disagree when labelling the language of web lines?
-    - What is the inter-annotator agreement in CommonLID?
-    - Which languages cause the most annotation disagreement in LID labelling?
+    plain: how often do people who speak a language disagree about what language a line of
+      web text is in?
+    jargon: what is the inter-annotator disagreement rate on multiply-annotated CommonLID
+      lines, and which macro/micro-language pairs drive it?
+    task: how much label noise should I expect when I have native speakers annotate crawled
+      lines for language?
+    practitioner: if my annotators disagree on a few percent of lines, is that normal for
+      web language labelling?
   answered_by:
   - annotator-disagreement
 - ask:
-    unsorted:
-    - What are the limitations of building a LID benchmark by sampling Common Crawl?
-    - Does CommonLID inherit bias from the LID models used to pre-select data?
-    - How was the web text for CommonLID annotation chosen?
+    plain: what goes wrong when you build a language benchmark by filtering crawled pages
+      with existing detectors first?
+    jargon: how does pre-selecting candidate lines with fastText, OpenLID, GlotLID and MADLAD-400
+      bias CommonLID's language and register coverage?
+    task: how do I sample web text for language annotation without inheriting the blind spots
+      of the detectors I used to find it?
+    practitioner: should I worry that a benchmark's own results are flattering the detectors
+      that were used to collect it?
   answered_by:
   - selection-bias-limit
 - ask:
-    unsorted:
-    - Why do LID models score so high on UDHR and Bible test sets?
-    - Is training and test data overlapping in long-tail language identification evaluation?
-    - What makes Bible-based LID evaluation misleading?
+    plain: why do language detectors score so well on religious texts and human-rights declarations?
+    jargon: to what extent do high macro-F1 scores on UDHR and Bible evaluation sets reflect
+      overlap with LID training corpora?
+    task: how do I tell whether a language identifier's long-tail scores come from genuine
+      generalisation or from having trained on the same test text?
+    practitioner: can I use a detector's Bible-based scores to predict how it will do on my
+      own long-tail language data?
   answered_by:
   - overestimation
 misreadings:

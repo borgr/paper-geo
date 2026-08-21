@@ -106,81 +106,110 @@ claims:
     largely absent from the existing suite.
 qa:
 - ask:
-    practitioner: How many questions do I need to run to estimate a model's full benchmark
-      score?
-    unsorted:
-    - How accurate is IRT-based anchor-item prediction of full-evaluation accuracy?
-    - Can 100 anchor questions per dataset replace running a model on the whole benchmark
-      suite?
+    plain: how few benchmark questions can predict what a language model would score on the
+      whole benchmark?
+    jargon: how accurately do IRT-selected anchor items predict a model's full-benchmark accuracy
+      at 100 items per dataset?
+    task: how do I estimate a model's score on a large benchmark suite without running every
+      question?
+    practitioner: can I trust a 100-question-per-dataset subset to stand in for my full evaluation
+      run?
   answered_by:
   - anchor-100-mae
   - anchor-coverage-fraction
 - ask:
-    unsorted:
-    - Does prediction error build up as more datasets are added to an evaluation suite?
-    - Does IRT calibration degrade over long chains of benchmark additions?
-    - Is fixed parameter calibration as accurate as refitting all IRT parameters from scratch?
+    plain: if benchmarks keep getting added one by one, does the predicted score drift further
+      off each time?
+    jargon: does mean absolute error accumulate along a fixed parameter calibration chain
+      compared with concurrent re-calibration?
+    task: how do I keep score estimates comparable as I keep bolting new datasets onto an
+      evaluation suite?
+    practitioner: do I have to refit all item parameters from scratch each time a dataset
+      is added, or is holding anchors fixed good enough?
   answered_by:
   - no-error-accumulation
 - ask:
-    practitioner: How can I add a new benchmark to a leaderboard without re-evaluating every
-      existing model?
-    unsorted:
-    - What is the cost of extending an evaluation suite with a new dataset?
-    - Why is joint re-calibration of all item parameters expensive when benchmarks keep arriving?
+    plain: what does it cost to add a new test set to an evaluation suite that already has
+      many?
+    jargon: how does per-step evaluation cost of fixed parameter calibration scale with the
+      number of accumulated datasets versus concurrent calibration?
+    task: how do I add a dataset to a growing benchmark suite without re-running every model
+      on everything?
+    practitioner: if I add a benchmark next month, how much inference will I have to pay for
+      again?
   answered_by:
   - constant-cost
   - retroactive-estimation
 - ask:
-    unsorted:
-    - Are model rankings preserved when scores are predicted from a small item subset?
-    - What Spearman correlation does anchor-based prediction achieve with full-evaluation
-      rankings?
-    - Does subsampling a benchmark change the leaderboard order?
+    plain: does ordering models by a predicted score give the same leaderboard as testing
+      them on everything?
+    jargon: what Spearman rank correlation with full-evaluation rankings do anchor-based ability
+      estimates reach on the Open LLM Leaderboard and MMLU?
+    task: how do I rank many models against each other while only scoring them on a small
+      item subset?
+    practitioner: if I evaluate on a subsample, will my model still land in the right place
+      on the leaderboard?
   answered_by:
   - ranking-spearman
 - ask:
-    practitioner: Is random subsampling of benchmark questions good enough, or do I need IRT?
-    unsorted:
-    - When does IRT-based item selection beat just averaging a random sample of questions?
-    - Does psychometric modelling of benchmark items still help at large sample sizes?
+    plain: is picking questions cleverly better than just grabbing a random handful of them?
+    jargon: at what anchor budget does random item sampling become competitive with IRT-based
+      anchor selection?
+    task: how many questions do I need before random sampling is good enough and item response
+      modelling stops paying off?
+    practitioner: should I bother fitting an IRT model, or just sample 100 random questions
+      per dataset?
   answered_by:
   - random-baseline-crossover
 - ask:
-    practitioner: How many models do I need to calibrate an IRT model for benchmark prediction?
-    unsorted:
-    - How large must the reference model pool be for reliable anchor calibration?
-    - Why does MMLU need fewer reference models than the Open LLM Leaderboard?
+    plain: how many previously tested models do you need on hand before score prediction becomes
+      reliable?
+    jargon: what reference model pool size does fixed parameter calibration need for stable
+      item parameter estimates on the Open LLM Leaderboard versus MMLU?
+    task: how many existing model evaluation records do I need to collect before calibrating
+      anchors on my benchmark?
+    practitioner: I only have 25 models' worth of past results, is that enough to predict
+      scores for a new one?
   answered_by:
   - reference-pool-size
 - ask:
-    unsorted:
-    - Should anchor questions be the most discriminative items in a benchmark?
-    - How should representative benchmark subsets be chosen for efficient evaluation?
-    - Does picking high-discrimination items beat clustering-based anchor selection?
+    plain: which questions make the best small stand-in for a whole test set, the hardest-to-fake
+      ones or a spread of them?
+    jargon: does clustering IRT item representations select better anchor items than taking
+      the top-K items by discrimination?
+    task: how do I choose a representative subset of benchmark items for cheap evaluation?
+    practitioner: should I keep only the most discriminative questions in my evaluation subset?
   answered_by:
   - clustering-beats-topk
 - ask:
-    practitioner: What should I read about keeping LLM benchmark scores comparable as benchmarks
-      change?
-    unsorted:
-    - Which paper connects psychometric test equating to LLM evaluation?
-    - Where can I start reading about efficient and extensible LLM benchmarking?
-    - What work frames benchmark growth as a scale-linking problem?
+    plain: what should I read about handling language model evaluation when new benchmarks
+      keep arriving?
+    jargon: which work applies psychometric test equating and scale linking to LLM benchmarking?
+    task: where do I start reading about making a growing LLM benchmark suite cheap and comparable
+      over time?
+    practitioner: is there a paper I can cite for treating benchmark growth as a test-equating
+      problem?
   answered_by:
   - scale-linking-framing
   - fpc-first-in-llm-eval
 - ask:
-    practitioner: Can I estimate how older models would have scored on a benchmark released
-      after they were evaluated?
-    unsorted:
-    - Is retroactive scoring of historical models on new datasets possible without re-inference?
+    plain: can models evaluated last year be given a score on a test set released this year
+      without running them again?
+    jargon: does fixed parameter calibration support retroactive ability estimation of historical
+      models on newly added datasets?
+    task: how do I fill in missing scores for older models on a dataset that did not exist
+      when they were evaluated?
+    practitioner: my older checkpoints are gone or expensive to run, can I still place them
+      on a new benchmark?
   answered_by:
   - retroactive-estimation
 - ask:
-    unsorted:
-    - What fraction of a benchmark do 100 anchor items actually represent?
-    - How does anchor budget relate to dataset size in the Open LLM Leaderboard and MMLU?
+    plain: how big a slice of a test set is 100 questions, in practice?
+    jargon: what fraction of MMLU, HellaSwag and TruthfulQA items does an anchor budget of
+      100 per dataset cover?
+    task: how do I set an anchor budget when the datasets in my suite differ hugely in size?
+    practitioner: is a fixed 100-question budget sensible for both a 14,000-item benchmark
+      and an 857-item one?
   answered_by:
   - anchor-coverage-fraction
 misreadings:

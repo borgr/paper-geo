@@ -122,96 +122,137 @@ claims:
   evidence: Section 2 and Section 4.1
 qa:
 - ask:
-    practitioner: What should I read about cross-lingual learner error taxonomies?
-    unsorted:
-    - How can grammatical errors in learner text be classified in a way that works for more
+    plain: is there a way to label grammar mistakes in learner writing that works for more
       than one language?
-    - Is there a language-independent error taxonomy for grammatical error correction?
+    jargon: can a learner-error taxonomy be derived from Universal Dependencies annotation
+      instead of hand-designed error categories?
+    task: how do I get error types for learner text in a language with no hand-built error
+      taxonomy?
+    practitioner: should I build my own error category list for my learner corpus, or reuse
+      a syntax-based one?
   answered_by:
   - context-first-ud-taxonomy
   - complements-errant
 - ask:
-    unsorted:
-    - Does SErCl replace ERRANT or complement it?
-    - How much of what ERRANT labels OTHER can be classified another way?
-    - What fraction of unclassified learner errors get a type from Universal Dependencies
-      label changes?
+    plain: how many of the learner mistakes that automatic error taggers leave unclassified
+      can actually be given a type?
+    jargon: what share of ERRANT OTHER edits receive a syntactic error class from POS-change
+      typing?
+    task: how do I get informative labels for the edits ERRANT dumps into OTHER?
+    practitioner: if I already tag my learner corpus with ERRANT, is a syntax-based taxonomy
+      worth adding on top?
   answered_by:
   - complements-errant
 - ask:
-    unsorted:
-    - Can automatic dependency parsers be trusted on ungrammatical learner sentences?
-    - Does using UDPipe instead of manual treebank annotation change the learner error distribution?
-    - How reliable is syntactic error extraction from parsed learner text?
+    plain: can you trust an automatic parser on sentences written by language learners, which
+      are full of mistakes?
+    jargon: does substituting UDPipe parses for gold treebank dependency annotation shift
+      the distribution of extracted syntactic error types?
+    task: how do I extract syntactic error types from a learner corpus that has no manual
+      dependency annotation?
+    practitioner: do I need gold-parsed learner data, or is running a parser over my own corpus
+      good enough?
   answered_by:
   - auto-parse-reliable
 - ask:
-    unsorted:
-    - Do UD-derived error types agree with hand-annotated taxonomies like NUCLE's?
-    - How well do syntactic error classes map onto the NUCLE error categories?
+    plain: do error types built from grammar annotation line up with the categories human
+      annotators use?
+    jargon: how much do POS-change syntactic error types overlap with the NUCLE error taxonomy's
+      manual categories?
+    task: how do I tell whether a syntax-derived error type corresponds to a familiar hand-annotated
+      error category?
+    practitioner: can I interpret syntax-derived error types using the NUCLE categories my
+      team already knows?
   answered_by:
   - maps-to-nucle
 - ask:
-    unsorted:
-    - Are grammatical error correction systems worse on syntactic errors than on other errors?
-    - What is the recall of the BEA2019 winning system on errors that change syntactic structure?
-    - How well does UEDIN-MS handle errors whose correction alters the parse?
+    plain: are automatic grammar correction tools worse at mistakes that change a sentence's
+      structure?
+    jargon: what recall upper bound does the BEA2019 winning system UEDIN-MS reach on gold
+      syntactic errors compared with its overall recall?
+    task: how do I find out which part of my error correction system's recall gap comes from
+      structural errors?
+    practitioner: if my users mostly make structure-changing mistakes, can I expect a top
+      shared-task system to fix them?
   answered_by:
   - ses-harder
   - recall-uneven-by-type
 - ask:
-    unsorted:
-    - Which learner error types do GEC systems handle worst?
-    - Are some syntactic error types much harder for correction systems than others?
+    plain: which kinds of learner mistakes do automatic correction tools handle worst?
+    jargon: how do recall upper bounds for UEDIN-MS and Grammarly vary across individual syntactic
+      error types?
+    task: how do I work out which error types to target when improving a grammar correction
+      system?
+    practitioner: which learner error types should I not rely on existing correction systems
+      for?
   answered_by:
   - recall-uneven-by-type
   - grammarly-weak-on-ses
 - ask:
-    unsorted:
-    - Does making more edits make a grammatical error correction system rank higher?
-    - Is system conservatism related to BEA2019 shared-task rank?
+    plain: do grammar correction systems that make more changes score better in competitions?
+    jargon: is the number of syntactic-error edits a BEA2019 system makes correlated with
+      its shared-task ranking?
+    task: should I make my grammar correction system less conservative to move up the leaderboard?
+    practitioner: if I tune my system to edit more aggressively, will its shared-task rank
+      improve?
   answered_by:
   - no-conservatism-rank-link
 - ask:
-    unsorted:
-    - How well does Grammarly correct errors that change part of speech?
-    - Does a commercial proofreading tool catch syntactic learner errors?
-    - Which error types does Grammarly miss almost entirely?
+    plain: does a commercial writing assistant catch mistakes where the wrong kind of word
+      was used?
+    jargon: what is Grammarly's recall on syntactic error types where correction changes the
+      token's POS tag?
+    task: how do I know which learner error types a commercial proofreader will leave uncorrected?
+    practitioner: can I hand my students Grammarly and expect it to fix missing verbs and
+      adverbs?
   answered_by:
   - grammarly-weak-on-ses
 - ask:
-    practitioner: How do syntactic error rates differ across CEFR proficiency levels in W&I?
-    unsorted:
-    - Do more advanced learners make fewer errors that change part of speech?
-    - Do native writers make fewer POS-changing errors than advanced learners?
+    plain: do stronger language learners make fewer mistakes where a word of the wrong type
+      is used?
+    jargon: does the share of POS-preserving corrections increase monotonically with CEFR
+      proficiency level in W&I, and how do native writers compare?
+    task: how do I check whether my learners' error profiles shift as their proficiency rises?
+    practitioner: can I use POS-changing error rates as a proficiency signal for my learners?
   answered_by:
   - proficiency-monotone
 - ask:
-    unsorted:
-    - What case errors do learners of Russian make most often?
-    - Which Russian noun case is hardest for learners?
-    - What do learner Russian case confusion matrices show?
+    plain: which noun endings do people learning Russian get wrong most often?
+    jargon: which noun case substitutions dominate the case confusion matrix in learner Russian
+      corrections?
+    task: how do I find out which Russian case contrasts to drill with my students?
+    practitioner: should my Russian learner-error tooling prioritise genitive case confusions?
   answered_by:
   - russian-case-genitive
 - ask:
-    unsorted:
-    - What aspect and voice errors appear in learner Russian?
-    - Do learners of Russian confuse perfective and imperfective symmetrically?
+    plain: what kinds of verb mistakes do learners of Russian make, and do the mix-ups go
+      both ways?
+    jargon: are aspect substitutions in learner Russian symmetric, and how does that compare
+      with voice substitutions?
+    task: how do I tell whether a Russian verb error type needs direction-specific handling?
+    practitioner: for Russian learner verb errors, do I need to model both directions of the
+      confusion separately?
   answered_by:
   - russian-verb-aspect-voice
 - ask:
-    unsorted:
-    - Is a taxonomy of learner errors based on dependency edge labels worth building rather
-      than one based on POS tags?
-    - How correlated are POS-based and dependency-label-based learner error types?
-    - Do dependency labels add information over POS tags when typing learner errors?
+    plain: when labelling learner mistakes, do grammatical relations tell you anything that
+      word categories do not?
+    jargon: how strongly associated are POS-based and dependency-edge-label-based syntactic
+      error types in learner English?
+    task: should I type learner errors by dependency relation labels or by POS tags?
+    practitioner: is it worth the extra work to build a dependency-edge error taxonomy for
+      my learner corpus?
   answered_by:
   - pos-edge-correlated
 - ask:
-    unsorted:
-    - Which learner errors does a UD-label-change taxonomy fail to cover?
-    - Are agreement errors counted as syntactic errors by SErCl?
-    - What are the limits of defining errors by changed morphosyntactic labels?
+    plain: which learner mistakes are missed by an approach that defines errors as changes
+      to a word's grammatical label?
+    jargon: which error classes fall outside a taxonomy keyed on morphosyntactic label change,
+      and are agreement errors covered?
+    task: how do I know whether agreement and determiner-choice errors will show up in a label-change
+      error taxonomy?
+    practitioner: if my main concern is agreement errors, will a POS-change-based taxonomy
+      cover them?
   answered_by:
   - context-only-form-changes
 terminology:

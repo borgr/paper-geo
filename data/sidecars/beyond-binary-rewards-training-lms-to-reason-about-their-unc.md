@@ -143,99 +143,137 @@ claims:
   evidence: Table 6
 qa:
 - ask:
-    unsorted:
-    - Does adding a confidence-calibration reward to RL training hurt task accuracy?
-    - Can a reasoning model be trained for accuracy and calibrated confidence at the same
-      time?
-    - Is there a tradeoff between correctness and calibration in RLCR?
+    plain: if a model is trained to say how sure it is, does it get worse at getting answers
+      right?
+    jargon: does adding a proper-scoring-rule calibration term to a binary correctness reward
+      trade off task accuracy against calibration error?
+    task: how do I train a reasoning model to output a confidence score without losing accuracy
+      on the task itself?
+    practitioner: should I worry about losing accuracy if I add a confidence reward to my
+      RL fine-tuning run?
   answered_by:
   - theorem-bounded-proper
   - hotpot-ece
   - math-ece
 - ask:
-    unsorted:
-    - Why use the Brier score instead of log loss as a calibration reward?
-    - What goes wrong if you reward verbalized confidence with the logarithmic scoring rule?
-    - Which proper scoring rules are safe to combine with a correctness reward?
+    plain: which formula for scoring a stated confidence is safe to use as a training reward,
+      and which one breaks?
+    jargon: why is a bounded Brier term preferred over the logarithmic scoring rule when combined
+      with a correctness reward in RL?
+    task: which scoring rule should I pick for the confidence part of my reward so training
+      does not degenerate?
+    practitioner: can I just use log loss on the verbalized confidence as my calibration reward,
+      or will that blow up?
   answered_by:
   - theorem-bounded-proper
   - log-score-collapse
 - ask:
-    unsorted:
-    - Does standard RL with verifiable rewards make language models overconfident?
-    - What happens to calibration when a model is trained with binary correctness rewards?
-    - Does RLVR degrade calibration on tasks it was not trained on?
+    plain: does reinforcement learning on right-or-wrong answers make a model more overconfident?
+    jargon: how does RLVR with binary verifiable rewards affect Brier score and AUROC, including
+      on datasets outside the training distribution?
+    task: how do I tell whether my RL-tuned reasoning model became less reliable at judging
+      its own answers on new tasks?
+    practitioner: my model was RL-trained on correctness only, should I expect its confidence
+      estimates to be trustworthy off-distribution?
   answered_by:
   - ood-calibration
   - reward-beats-prompting
 - ask:
-    practitioner: Do I need a second model to get calibrated confidence from a reasoning LM?
-    unsorted:
-    - Is training a separate confidence classifier as good as training a reasoning LM to verbalize
-      its own confidence?
-    - How does RLCR compare to post-hoc confidence heads and linear probes?
+    plain: is it better to have the model itself state how sure it is, or to bolt a separate
+      confidence predictor on top?
+    jargon: how does verbalized confidence trained with a calibration-augmented RL reward
+      compare with post-hoc confidence heads, linear probes on hidden states, and answer-token
+      likelihood?
+    task: how do I get calibrated uncertainty for a reasoning model without training and serving
+      a second scoring model?
+    practitioner: should I train a separate confidence classifier for my reasoning model or
+      train the model to report confidence itself?
   answered_by:
   - beats-classifiers
   - calibration-only-rl-collapses
 - ask:
-    unsorted:
-    - Can a model's own stated confidence be used for best-of-N or majority voting?
-    - Does confidence-weighted majority voting beat plain majority voting?
-    - Is verbalized confidence useful for test-time scaling without a reward model?
+    plain: can a model's own stated confidence be used to pick among several sampled answers?
+    jargon: does weighting majority voting by verbalized confidence outperform unweighted
+      self-consistency and generation-likelihood weighting as sample count grows?
+    task: how do I aggregate multiple sampled answers at inference time without running a
+      reward model or verifier?
+    practitioner: is my model's stated confidence good enough to weight best-of-N or voting
+      at test time?
   answered_by:
   - confidence-weighted-scaling
 - ask:
-    unsorted:
-    - Is it enough to just prompt a model to reason about its uncertainty?
-    - Does the calibration gain come from the reward or from the uncertainty-reasoning prompt?
-    - How much of RLCR's calibration improvement survives if the uncertainty analysis is removed?
+    plain: is asking a model to think about how unsure it is enough, or does the training
+      reward have to change?
+    jargon: is the calibration improvement attributable to the calibration-augmented reward
+      or to uncertainty reasoning in the chain of thought?
+    task: how do I improve my model's confidence estimates - change the prompt to reason about
+      uncertainty, or change the training objective?
+    practitioner: can I skip retraining and just prompt my reasoning model to assess its own
+      uncertainty?
   answered_by:
   - reward-beats-prompting
   - no-analysis-variant
 - ask:
-    unsorted:
-    - Does RLCR add many extra tokens to each response?
-    - Is there a cheap version of calibrated-confidence RL with RLVR-like token cost?
+    plain: does making a model report calibrated confidence make its answers much longer?
+    jargon: what is the token overhead of calibration-trained verbalized confidence relative
+      to a correctness-only RL baseline, and does dropping the uncertainty analysis retain
+      the calibration gain?
+    task: how do I add calibrated confidence output without increasing inference cost per
+      response?
+    practitioner: will adding confidence training blow up my generation length and serving
+      cost?
   answered_by:
   - no-analysis-variant
 - ask:
-    unsorted:
-    - Are verbalized confidence scores from an RLCR model stable across samples?
-    - Does an RLCR-trained model give consistent confidence when the same answer is re-analysed?
-    - Do confidences over competing answers to one question sum to 1?
+    plain: if you ask a model the same question twice, does it give the same confidence number?
+    jargon: how stable are verbalized confidence scores across resampled uncertainty-reasoning
+      chains, and do mean confidences over distinct sampled answers sum to 1?
+    task: how do I check whether the confidence numbers my model emits are reproducible enough
+      to threshold on?
+    practitioner: can I rely on a single sampled confidence score from my model, or do I need
+      to average several?
   answered_by:
   - self-consistency
   - confidence-sums
 - ask:
-    unsorted:
-    - Does the calibration reward work on model families other than Qwen2.5?
-    - Has RLCR been tested on OlMo-2 or Qwen3?
-    - Do the calibration gains transfer across base models?
+    plain: do the confidence gains show up on more than one base model, or just the one it
+      was developed on?
+    jargon: does the accuracy-neutral calibration improvement from a Brier-augmented RL reward
+      replicate across base model families such as OlMo-2-7B-Instruct and Qwen-3-8B?
+    task: how do I know whether calibration-augmented RL will work on the base model I actually
+      use?
+    practitioner: my base model is not Qwen2.5, will calibration training still help me?
   answered_by:
   - model-generality
 - ask:
-    practitioner: What should I read about training language models to express calibrated
-      uncertainty?
-    unsorted:
-    - Which paper introduced proper scoring rules as an RL reward for reasoning models?
-    - Where should I start reading on hallucination and calibration in RL-trained reasoning
-      models?
-    - What work established that calibration can be optimized jointly with correctness in
-      RLVR?
+    plain: what should I read first about getting reinforcement-learned reasoning models to
+      know when they are wrong?
+    jargon: what work established that calibration can be optimized jointly with correctness
+      in RL with verifiable rewards using a proper scoring rule?
+    task: where do I start reading about training reasoning models to report reliable confidence
+      instead of fitting confidence after the fact?
   answered_by:
   - rlcr-context
 - ask:
-    unsorted:
-    - What happens if you optimize only a calibration reward without any correctness term?
-    - Do calibration-only RL methods reward hack?
-    - How does RLCR compare to abstention-style ternary rewards?
+    plain: what happens if a model is rewarded only for accurate confidence and not for being
+      right?
+    jargon: does optimizing a calibration reward alone over the whole generation induce reward
+      hacking such as degenerate answers at confidence 0?
+    task: how do I set up a confidence reward so the model cannot game it by giving up on
+      the answer?
+    practitioner: can I drop the correctness term and train on the calibration reward alone?
   answered_by:
   - calibration-only-rl-collapses
   - log-score-collapse
 - ask:
-    unsorted:
-    - Is out-of-domain calibration actually solved by adding a Brier reward?
-    - How large is the remaining calibration error after RLCR on unseen tasks?
+    plain: after training a model to report confidence, how much overconfidence is left on
+      tasks it never saw?
+    jargon: how much residual calibration error and cross-answer confidence mass remains out
+      of distribution after Brier-augmented RL training?
+    task: how do I estimate how far I can trust confidence scores on domains outside the training
+      distribution?
+    practitioner: is out-of-domain calibration good enough after this kind of training that
+      I can act on the confidence numbers?
   answered_by:
   - ood-calibration
   - confidence-sums

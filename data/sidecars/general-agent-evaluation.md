@@ -164,102 +164,138 @@ claims:
   evidence: Section 4.5
 qa:
 - ask:
-    practitioner: What should I read about evaluating general-purpose AI agents across many
-      benchmarks?
-    unsorted:
-    - Is there a systematic comparison of tool-calling, MCP, code-generation and CLI agents
-      on the same benchmarks?
-    - Which paper introduces an open leaderboard of agent architecture and backbone model
-      combinations?
+    plain: is there a study that tests many AI agent designs and many underlying chat models
+      against the same set of tasks?
+    jargon: which work publishes a full factorial of agent scaffolds by backbone LLMs across
+      multiple agentic benchmarks with a shared task representation?
+    task: where can I find head-to-head numbers for CLI, tool-calling and MCP agents run unmodified
+      on the same benchmark suite?
+    practitioner: I need a neutral reference before picking an agent stack — is there an open
+      leaderboard I can consult?
   answered_by:
   - leaderboard-contribution
   - unified-protocol-contribution
 - ask:
-    unsorted:
-    - Does the agent scaffold or the underlying LLM matter more for agent performance?
-    - How much of agent success variance comes from the backbone model versus the agent architecture?
-    - Is optimizing agent architecture worth it compared with switching to a stronger backbone
-      LLM?
+    plain: for how well an AI agent does its job, does the wrapper around the model matter
+      more than the model itself?
+    jargon: how is success-rate variance partitioned between backbone LLM and agent scaffold,
+      and how large is the within-model spread?
+    task: should I put engineering effort into rebuilding my agent loop or into upgrading
+      the model behind it?
+    practitioner: my agent underperforms — do I get more by swapping in a stronger backbone
+      or by redesigning the scaffold?
   answered_by:
   - model-vs-architecture
   - within-model-swing
 - ask:
-    unsorted:
-    - Can general-purpose agents match agents that were hand-tuned for a specific benchmark?
-    - How do generalist agents compare to domain-specific SWE-Bench or tau2-Bench leaders?
-    - Do you lose accuracy by using one unmodified agent across software engineering, customer
-      service and deep research tasks?
+    plain: can one general-purpose AI agent do as well as agents that were built and tuned
+      for one specific task type?
+    jargon: do out-of-the-box general agent configurations reach parity with published domain-specific
+      leaders on SWE-Bench Verified, tau2-Bench and browsing benchmarks?
+    task: can I run a single unmodified agent across coding, customer-service and web-research
+      tasks without giving up accuracy?
+    practitioner: is it worth maintaining separate specialist agents per domain, or will one
+      general agent be close enough?
   answered_by:
   - generalist-vs-specialist
   - no-dominant-architecture
 - ask:
-    unsorted:
-    - Which agent and model combination scores highest across agentic benchmarks?
-    - What is the top configuration on the Open General Agent Leaderboard?
-    - Which backbone LLM leads for agentic tasks in a full agent-by-model factorial study?
+    plain: which combination of agent design and underlying model comes out on top across
+      agent tasks?
+    jargon: which architecture-backbone cell leads on bench-weighted success, and how wide
+      is the spread within one backbone?
+    task: which agent plus model pairing should I copy if I want the highest scores across
+      agentic benchmarks?
+    practitioner: if I want the best-scoring setup today, which model do I pick and does the
+      agent framework around it change the answer?
   answered_by:
   - within-model-swing
   - model-vs-architecture
 - ask:
-    unsorted:
-    - Do open-weight models work as reliably as closed frontier models inside agent scaffolds?
-    - Why does the same open-weight model score 0.83 with one agent and 0.00 with another?
-    - What are generality sinks in agent evaluation?
+    plain: do open-weight models behave as dependably as the big commercial ones when you
+      wrap them in an agent?
+    jargon: do open-weight backbones exhibit architecture-dependent collapse to zero success
+      that frontier closed models do not?
+    task: can I substitute an open-weight model for a frontier API model in my agent without
+      losing whole task categories?
+    practitioner: I want to cut costs with an open-weight backbone — what breaks, and does
+      it depend on which agent framework I use?
   answered_by:
   - generality-sinks
   - appworld-benchmark-sink
 - ask:
-    unsorted:
-    - Does tool shortlisting help agents in environments with hundreds of tools?
-    - Is filtering the tool list per turn worth it for a ReAct agent?
-    - How much does tool shortlisting improve success and reduce cost?
+    plain: when an environment offers hundreds of possible actions, does filtering the list
+      down before each step help the agent?
+    jargon: what is the effect of per-turn tool shortlisting on success rate and per-task
+      cost across backbones in a ReAct loop?
+    task: how do I stop my agent drowning in a huge tool catalogue, and what does trimming
+      it cost or save?
+    practitioner: should I add a tool-retrieval step to my ReAct agent, and will it pay for
+      itself in tokens?
   answered_by:
   - shortlisting-ablation
   - shortlisting-cost
 - ask:
-    unsorted:
-    - What happens when a benchmark exposes more tools than the model's API allows?
-    - Why do GPT 5.2 agents score zero on AppWorld?
-    - Does a 128-tool API limit break agent evaluation on tool-rich environments?
+    plain: what happens to an AI agent when an app exposes more actions than the model's interface
+      will accept at once?
+    jargon: how does a hard tool-count ceiling in a model API interact with tool-rich environments
+      like AppWorld, and is the failure backbone-specific?
+    task: my environment has hundreds of callable functions and the model API rejects the
+      list — how do I keep the agent working?
+    practitioner: is a tool-count limit on my chosen model a reason to switch models before
+      I benchmark my agent?
   answered_by:
   - gpt-tool-limit
   - appworld-benchmark-sink
 - ask:
-    unsorted:
-    - How much does it cost per task to run frontier agents on agentic benchmarks?
-    - Which agent configurations give the best success per dollar?
-    - Is the highest-scoring agent configuration also the most cost-efficient?
+    plain: how expensive is it to run an AI agent per task, and does spending more buy better
+      results?
+    jargon: how wide is the score-per-dollar spread across agent-backbone configurations,
+      and is the top-scoring cell also efficient?
+    task: how do I choose an agent setup on a budget rather than on raw score?
+    practitioner: I have a fixed API budget — is the best-performing agent configuration the
+      one I should pay for?
   answered_by:
   - cost-efficiency
 - ask:
-    unsorted:
-    - Do failing agent runs burn more steps than successful ones?
-    - How much extra compute do failed agent trajectories consume?
-    - Do different agent architectures fail in different ways?
+    plain: when an AI agent fails a task, does it burn more effort than when it succeeds,
+      and do different designs fail differently?
+    jargon: what is the step overhead of failed versus successful trajectories per architecture,
+      and do failure-mode distributions differ across scaffolds?
+    task: how do I budget for the runs my agent will fail, and can I tell architectures apart
+      by how they go wrong?
+    practitioner: should I add early-stopping to my agent, given how much a doomed run costs?
   answered_by:
   - failure-cost
   - failure-signatures
 - ask:
-    unsorted:
-    - What kinds of errors do agents actually make on long-horizon tasks?
-    - Can failure-mode analysis distinguish agent architectures that success rates cannot?
-    - What is Premature Termination in agent failure taxonomies?
+    plain: what kinds of mistakes do AI agents actually make on long multi-step tasks?
+    jargon: can a failure-mode taxonomy separate agent scaffolds that aggregate success rates
+      cannot distinguish?
+    task: how do I diagnose whether my agent is giving up too early rather than reasoning
+      badly?
   answered_by:
   - failure-signatures
 - ask:
-    practitioner: How can I evaluate my own agent on SWE-Bench, AppWorld and tau2-Bench without
-      per-benchmark wiring?
-    unsorted:
-    - How does the Unified Protocol let an unmodified agent run on an unmodified benchmark?
-    - What is the task/context/actions representation used by Exgentic?
+    plain: how can one agent be plugged into a benchmark it was never built for without editing
+      either side?
+    jargon: what minimal task representation lets CLI, tool-calling and MCP agents be served
+      in their native protocols against unmodified benchmarks?
+    task: how do I run my existing agent on a new agentic benchmark without writing an adapter
+      for every harness?
+    practitioner: can I evaluate my own agent inside a shared harness without rewriting it
+      for each benchmark?
   answered_by:
   - unified-protocol-contribution
   - leaderboard-contribution
 - ask:
-    unsorted:
-    - Do agentic benchmarks measure the same underlying capability?
-    - How correlated are AppWorld, BrowseComp+, SWE-Bench and tau2-Bench scores across configurations?
-    - Which agentic benchmark captures the most distinct skills?
+    plain: do the various AI agent test suites end up measuring the same underlying ability?
+    jargon: how strongly do per-configuration scores rank-correlate across AppWorld, BrowseComp+,
+      SWE-Bench Verified and tau2-Bench subdomains?
+    task: if I can only afford to run one agentic benchmark, which one tells me the least
+      about the others?
+    practitioner: do I need to run all six agentic benchmarks, or will a couple predict the
+      rest for my agent?
   answered_by:
   - cross-benchmark-correlation
 misreadings:

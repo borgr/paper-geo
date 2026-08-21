@@ -114,103 +114,133 @@ claims:
   evidence: Section 5.4
 qa:
 - ask:
-    practitioner: What work should I read on why AI benchmarks stop distinguishing models?
-    unsorted:
-    - Is there a systematic study of benchmark saturation in language model evaluation?
-    - Who gave a quantitative definition of benchmark saturation?
+    plain: has anyone measured how many language model benchmarks no longer tell the best
+      models apart?
+    jargon: is there a quantitative operationalization of benchmark saturation across LLM
+      leaderboards?
+    task: where do I start reading about whether LLM benchmarks still separate frontier models?
+    practitioner: I need a citable source on benchmark saturation for an evaluation report,
+      what should I cite?
   answered_by:
   - saturation-index-definition
   - prevalence
 - ask:
-    unsorted:
-    - How many popular LLM benchmarks are already saturated?
-    - What fraction of language model benchmarks have lost discriminative power?
-    - How widespread is benchmark saturation across widely used benchmarks?
+    plain: how many of the popular language model benchmarks have stopped separating the top
+      models?
+    jargon: what share of widely used text LLM benchmarks exhibit high saturation index values?
+    task: how do I tell whether the benchmarks in my evaluation suite still have discriminative
+      power?
+    practitioner: are the standard benchmarks I report on still worth reporting?
   answered_by:
   - prevalence
   - age-effect
 - ask:
-    unsorted:
-    - Do older benchmarks saturate more than newer ones?
-    - Does benchmark age predict loss of discriminative power?
-    - Is there evidence that benchmark saturation increases over time since release?
+    plain: do benchmarks get worse at separating models the longer they have been out?
+    jargon: is time since benchmark release a predictor of saturation index?
+    task: how do I use a benchmark's release date to judge whether it is still useful?
+    practitioner: should I drop a benchmark from my evaluation suite once it is a few years
+      old?
   answered_by:
   - age-effect
   - joint-model
 - ask:
-    unsorted:
-    - Does keeping a test set private stop a benchmark from saturating?
-    - Are held-out or hidden test sets a defense against benchmark saturation?
-    - Do public benchmarks saturate faster than private ones?
+    plain: does hiding the test answers keep a benchmark from going stale?
+    jargon: do private held-out test splits slow saturation relative to fully public benchmarks?
+    task: if I want my new benchmark to last, is withholding the test set enough?
+    practitioner: should I pay for a benchmark with a hidden test set instead of using a public
+      one?
   answered_by:
   - private-test-sets
 - ask:
-    unsorted:
-    - Does switching from multiple choice to open-ended generation extend a benchmark's useful
-      life?
-    - Do free-form generation benchmarks saturate slower than multiple-choice ones?
-    - Does output format affect benchmark saturation?
+    plain: does asking for written answers instead of multiple choice make a benchmark last
+      longer?
+    jargon: does open-ended generation versus closed-ended answer format affect saturation
+      rates?
+    task: when designing an eval, should I use free-form responses to keep it discriminative
+      for longer?
+    practitioner: is it worth rebuilding my multiple-choice eval as open-ended generation?
   answered_by:
   - output-format
 - ask:
-    unsorted:
-    - Are multilingual benchmarks more resistant to saturation than English-only ones?
-    - Does adding more languages make an evaluation benchmark last longer?
-    - Why do multilingual benchmarks look less saturated?
+    plain: do benchmarks covering many languages stay useful longer than English-only ones?
+    jargon: is the lower observed saturation of multilingual benchmarks intrinsic or confounded
+      by release recency?
+    task: can I extend an evaluation's shelf life by adding more languages to it?
+    practitioner: should I invest in translating my benchmark into more languages to keep
+      it hard?
   answered_by:
   - multilingual-confound
 - ask:
-    unsorted:
-    - What benchmark design choices actually slow down saturation?
-    - Does expert curation help a benchmark stay discriminative?
-    - Which benchmarks remain unsaturated despite years of exposure?
+    plain: what actually makes some evaluations keep separating the best models for years?
+    jargon: which design factors, such as expert curation or templated item generation, are
+      associated with slower saturation?
+    task: how should I build a benchmark that stays discriminative as models improve?
+    practitioner: is it worth paying domain experts to write my eval items instead of crowdsourcing
+      them?
   answered_by:
   - expert-curation
   - templating
 - ask:
-    unsorted:
-    - Does a benchmark's popularity or citation count predict saturation?
-    - Is how often a benchmark appears in model release reports linked to saturation?
-    - Does heavy adoption cause benchmarks to saturate?
+    plain: do the most cited and most reported benchmarks wear out faster?
+    jargon: after adjusting for age, are citation counts or appearance in developer technical
+      reports associated with saturation?
+    task: can I use a benchmark's popularity to predict whether it is still discriminative?
+    practitioner: should I avoid the most widely reported benchmarks on the assumption that
+      heavy use burns them out?
   answered_by:
   - adoption-not-predictive
   - age-effect
 - ask:
-    unsorted:
-    - Does test set size matter for telling top models apart?
-    - Why do small benchmarks lose discriminative power faster?
-    - How does evaluation resolution relate to benchmark saturation?
+    plain: does having more test questions help tell the best models apart?
+    jargon: how does test set size relate to saturation index and measurement resolution among
+      top models?
+    task: how many examples should my benchmark contain if I want it to distinguish frontier
+      models?
+    practitioner: is it worth expanding my 500-item eval to a few thousand items?
   answered_by:
   - test-set-scale
   - joint-model
 - ask:
-    unsorted:
-    - How is a benchmark saturation index computed and is it robust to its hyperparameters?
-    - How sensitive is a saturation index to the number of top leaderboard models used?
-    - Does changing k or alpha change which benchmarks count as saturated?
+    plain: how do you put a number on benchmark staleness, and does the number move if you
+      change the settings?
+    jargon: how sensitive is a leaderboard saturation index to the number of top models k
+      and the weighting parameter alpha?
+    task: if I compute a saturation score for my own benchmarks, which parameter choices do
+      I need to worry about?
+    practitioner: can I trust a saturation ranking of benchmarks enough to act on it?
   answered_by:
   - index-stability
   - saturation-index-definition
 - ask:
-    unsorted:
-    - Can a benchmark be saturated even when top scores are only around 79%?
-    - Does a saturated LLM benchmark mean models have solved its task?
-    - What is the difference between benchmark saturation and stagnation?
+    plain: can a benchmark be exhausted even though the best scores are nowhere near 100%?
+    jargon: does a high saturation index imply the task is solved, or can score clustering
+      occur well below ceiling?
+    task: how do I tell whether flat leaderboard scores mean my benchmark is used up or that
+      models have stopped improving?
+    practitioner: top models on my benchmark all sit around 79% and within a point of each
+      other, is the benchmark still informative?
   answered_by:
   - saturation-at-low-scores
   - saturation-index-definition
 - ask:
-    unsorted:
-    - What should benchmark creators do when models become indistinguishable?
-    - Are there recommendations for retiring or refreshing saturated benchmarks?
-    - How should leaderboards report uncertainty to avoid over-reading small gains?
+    plain: what should the people who build evaluations do once all the best models score
+      the same?
+    jargon: what lifecycle practices are recommended for benchmarks that have lost discriminative
+      power among frontier models?
+    task: how do I decide when to refresh, stratify or retire a benchmark I maintain?
+    practitioner: my leaderboard's top entries are within noise of each other, should I retire
+      it or refresh the test set?
   answered_by:
   - lifecycle-recommendations
 - ask:
-    unsorted:
-    - Which benchmark properties best explain variation in saturation when analyzed jointly?
-    - How well can benchmark metadata predict whether a benchmark is saturated?
-    - What did the Bayesian regression on 60 LLM benchmarks find about saturation drivers?
+    plain: which properties of a benchmark best explain whether it still separates the top
+      models?
+    jargon: in a joint Bayesian regression over benchmark metadata, which covariates explain
+      variance in the saturation index?
+    task: can I predict from a benchmark's metadata alone whether it is saturated before running
+      any models?
+    practitioner: if I only know a benchmark's age, size and format, can I judge whether it
+      is worth running?
   answered_by:
   - joint-model
   - auroc

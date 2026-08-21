@@ -103,71 +103,105 @@ claims:
     same book, so results may not extend to typologically distant languages or unrelated domains.
 qa:
 - ask:
-    practitioner: Where should I start reading about UCCA parsing?
-    unsorted:
-    - What is a good benchmark for multilingual semantic parsing into graph representations?
-    - Which shared task evaluated cross-lingual UCCA semantic parsing?
+    plain: which shared task released multilingual data and scores for parsing sentences into
+      meaning graphs?
+    jargon: what benchmark exists for cross-lingual UCCA semantic graph parsing with an official
+      evaluation script?
+    task: where can I find annotated corpora and a scoring script to start working on multilingual
+      semantic graph parsing?
+    practitioner: if I want to benchmark my semantic parser across several languages, which
+      shared task data should I use?
   answered_by:
   - task-context
   - cross-lingual-transfer-context
 - ask:
-    unsorted:
-    - How well can parsers produce UCCA graphs for English?
-    - What were the best English UCCA parsing scores in SemEval-2019 Task 1?
-    - How much did submitted systems beat the TUPA baseline on English Wikipedia?
+    plain: how accurately can software turn English Wikipedia sentences into meaning graphs?
+    jargon: what labeled F1 did the top UCCA parsers reach on the English-Wiki in-domain track,
+      and did they clear the TUPA baseline?
+    task: how good a score should I expect to have to reach on English UCCA parsing to be
+      competitive?
+    practitioner: is the transition-based TUPA parser still the strongest option for English
+      UCCA, or did submitted systems beat it?
   answered_by:
   - best-english-wiki
   - baseline-beaten-everywhere
 - ask:
-    unsorted:
-    - Can you parse semantics in a language with almost no annotated training data?
-    - How well did French UCCA parsing work with only 15 training sentences?
-    - Does cross-lingual transfer help low-resource semantic parsing?
+    plain: can a parser learn to build meaning graphs for a language with only a handful of
+      annotated sentences?
+    jargon: how well does cross-lingual transfer support UCCA parsing in a low-resource French
+      setting with 15 in-language training sentences?
+    task: how do I build a semantic parser for a language where I can only afford to annotate
+      a few dozen sentences?
+    practitioner: should I annotate more data in my target language or rely on transfer from
+      English for semantic parsing?
   answered_by:
   - french-low-resource
   - cross-lingual-transfer-context
 - ask:
-    unsorted:
-    - How much does out-of-domain text hurt UCCA parsers?
-    - What is the in-domain versus out-of-domain gap for English UCCA parsing?
+    plain: how much worse do meaning-graph parsers get on text from a different genre than
+      they were trained on?
+    jargon: what is the in-domain to out-of-domain labeled F1 drop for UCCA parsers between
+      Wikipedia and 20K Leagues text?
+    task: how much accuracy should I budget for if I run an English UCCA parser on text outside
+      Wikipedia?
+    practitioner: can I trust published English UCCA parsing scores if my documents are literary
+      rather than encyclopedic?
   answered_by:
   - out-of-domain-drop
 - ask:
-    unsorted:
-    - Why are reentrancies and DAG structures hard for semantic parsers?
-    - How well do UCCA parsers handle remote edges?
-    - Did any SemEval-2019 Task 1 systems simply skip remote edges?
+    plain: how well do parsers recover the extra links that let a sentence's meaning graph
+      share one word between two parts?
+    jargon: how do UCCA parsers score on remote edges relative to primary edges, and how frequent
+      are remote and reentrant structures in the corpora?
+    task: if I need reentrant and remote links in my semantic parses, how reliable are current
+      UCCA parsers at producing them?
+    practitioner: is it worth handling remote edges in my UCCA parser, or are they too rare
+      and too inaccurate to matter?
   answered_by:
   - remote-edges-hard
   - corpus-structural-stats
 - ask:
-    unsorted:
-    - Which UCCA semantic categories are hardest to predict?
-    - What did per-category F1 in SemEval-2019 Task 1 show about Ground and Relator edges?
-    - Is the Process versus State distinction hard for parsers?
+    plain: which kinds of semantic relations are hardest for parsers to label correctly?
+    jargon: how does per-category labeled F1 vary across UCCA edge categories such as Relator
+      and Ground?
+    task: which UCCA categories should I expect my parser to fail on when I inspect its per-label
+      errors?
+    practitioner: if my application depends on a specific UCCA relation type, can I count
+      on a parser getting that label right?
   answered_by:
   - category-difficulty
 - ask:
-    unsorted:
-    - What parsing architecture won SemEval-2019 Task 1?
-    - Is it better to convert semantic graphs to constituency trees than to parse them directly?
-    - What did the HLT@SUDA UCCA parser do differently from the other systems?
+    plain: what design did the winning system use to turn sentences into meaning graphs, and
+      how did it differ from the rest?
+    jargon: did tree conversion with multi-task recovery of remote edges outperform transition-based
+      DAG parsing in SemEval-2019 Task 1?
+    task: should I build a semantic graph parser by converting graphs to constituency trees
+      or by parsing the graph directly with a transition system?
+    practitioner: I already have a strong constituency parser, is converting UCCA graphs to
+      trees a better bet than writing a DAG parser?
   answered_by:
   - conversion-approach-wins
   - winner-scene-boundaries
 - ask:
-    unsorted:
-    - How large are the UCCA annotated corpora, and how frequent are discontinuous and reentrant
-      structures?
-    - What fraction of UCCA edges are remote?
-    - How much German UCCA training data was available for SemEval-2019 Task 1?
+    plain: how much annotated German data was available for meaning-graph parsing, and how
+      often do awkward structures like crossing branches appear?
+    jargon: what are the corpus statistics for remote edges, discontinuous and reentrant non-terminals
+      in the UCCA treebanks, and what German labeled F1 followed?
+    task: how do I judge whether the German UCCA training data is large and varied enough
+      to train a parser on?
+    practitioner: is there enough German UCCA annotation for me to expect usable parsing accuracy?
   answered_by:
   - corpus-structural-stats
   - best-german
 - ask:
-    unsorted:
-    - What is the difference between the open and closed tracks in SemEval-2019 Task 1?
-    - Which external resources were UCCA parsers allowed to use?
+    plain: does letting a parser use extra pretrained resources change how well it builds
+      meaning graphs?
+    jargon: how do closed-track and open-track labeled F1 scores compare for UCCA parsing
+      on English-Wiki and German-20K?
+    task: how much accuracy do I gain by allowing external embeddings and pretrained models
+      in a UCCA parser?
+    practitioner: if I am restricted to the provided training data only, how much UCCA parsing
+      accuracy am I giving up?
   answered_by:
   - best-english-wiki
   - best-german

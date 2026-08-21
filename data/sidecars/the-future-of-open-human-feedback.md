@@ -137,102 +137,143 @@ claims:
   evidence: Section 3
 qa:
 - ask:
-    practitioner: What should I read about opening up human feedback data for language models?
-    unsorted:
-    - Is there a good overview paper on the human feedback data ecosystem for LLMs?
-    - Where can I start reading about why RLHF preference data is closed and what to do about
-      it?
+    plain: where can I start reading about why the human feedback data behind chatbots is
+      mostly locked away?
+    jargon: is there a position paper surveying the RLHF preference data ecosystem and proposals
+      for opening it?
+    task: how do I get up to speed on building an open, sustainable human feedback pipeline
+      for language models?
+    practitioner: I want to release open preference data for my model, what should I read
+      before designing the collection?
   answered_by:
   - seven-themes
   - three-reasons-underdeveloped
   - ecosystem-three-components
 - ask:
-    unsorted:
-    - What does it mean for a human feedback dataset to be open?
-    - How can openness of preference data be measured beyond just a public download link?
-    - Are there dimensions of openness for RLHF datasets other than access?
+    plain: what makes a collection of human ratings of chatbot answers genuinely open, rather
+      than just downloadable?
+    jargon: how can openness of a human preference dataset be scored beyond public access
+      to the annotations?
+    task: how do I judge whether a human feedback dataset counts as open before I build on
+      it?
+    practitioner: I am publishing feedback data, which properties beyond a download link do
+      I need to get right to call it open?
   answered_by:
   - openness-five-axes
 - ask:
-    unsorted:
-    - Which human preference datasets are actually open?
-    - Are any RLHF feedback datasets open on every dimension of openness?
-    - How do WildChat, PRISM, Chatbot Arena and AnthropicHH compare on openness?
+    plain: are any of the existing collections of human ratings on chatbot replies actually
+      open in every respect?
+    jargon: which human feedback datasets and frontier model reports score open across all
+      axes of openness?
+    task: which human feedback dataset should I pick if I need its collection methodology
+      and annotator pool documented?
+    practitioner: can I trust Chatbot Arena or WildChat data as fully open, or is something
+      withheld?
   answered_by:
   - no-dataset-open-on-all-axes
   - frontier-model-reports-closed
 - ask:
-    unsorted:
-    - Why is there so little open human feedback data for language models?
-    - What blocks researchers from releasing new preference datasets?
-    - Why are open preference datasets static instead of continuously updated?
+    plain: why is there so little freely available human feedback data for training chatbots?
+    jargon: why does sustainable sourcing of preference data for language model alignment
+      remain underdeveloped?
+    task: why can't I just download a large, continuously updated preference dataset for alignment
+      work?
+    practitioner: if I want fresh human preference data, will I have to collect it myself
+      rather than reuse a public release?
   answered_by:
   - three-reasons-underdeveloped
 - ask:
-    unsorted:
-    - What can open human feedback collection learn from Wikipedia and open source?
-    - Do peer production communities offer lessons for collecting AI training feedback?
-    - How much do volunteer communities like Wikipedia actually produce?
+    plain: can collecting AI training feedback work the way Wikipedia and open source projects
+      do?
+    jargon: what transferable ingredients do peer production and open source offer for sustaining
+      an open feedback commons?
+    task: how do I design governance and hosting for a volunteer-run feedback collection so
+      it lasts?
+    practitioner: is a volunteer community realistically able to maintain a large feedback
+      dataset long term?
   answered_by:
   - peer-production-lessons
 - ask:
-    unsorted:
-    - How expensive is collecting expert feedback in domains like medicine or law?
-    - Why can't open communities collect domain-expert annotations for LLMs?
-    - What does graduate-level expert annotation cost per hour?
+    plain: how much does it cost to get real specialists to review chatbot answers in fields
+      like medicine or law?
+    jargon: why are domain-expert annotations for language models absent from open preference
+      collections?
+    task: how do I budget for graduate-level expert annotation of model outputs?
+    practitioner: can my open project afford expert feedback in a specialised domain, or is
+      that out of reach?
   answered_by:
   - expert-feedback-cost
 - ask:
-    unsorted:
-    - Is generating preference data with GPT-4 a valid substitute for human feedback?
-    - What is wrong with simulating human feedback using closed models?
-    - Are synthetic preferences from strong models a problem for open AI research?
+    plain: is having a strong commercial chatbot rate the answers a real replacement for asking
+      people?
+    jargon: what are the problems with distilling preference labels from powerful closed models
+      instead of collecting human feedback?
+    task: should I generate my preference labels with a closed frontier model or collect human
+      ones?
+    practitioner: if I label my alignment data with GPT-4, what problems am I taking on?
   answered_by:
   - distillation-loophole
 - ask:
-    unsorted:
-    - Who actually contributes to open feedback datasets, and is the pool diverse?
-    - Are open preference datasets representative across languages and cultures?
-    - Do a few annotators dominate crowdsourced feedback for LLMs?
+    plain: who actually writes the feedback in public chatbot rating datasets, and is that
+      group varied?
+    jargon: how skewed are open feedback collections in language, culture and annotator concentration?
+    task: how do I check whether a feedback dataset represents the users and languages I care
+      about?
+    practitioner: can I rely on existing open feedback data to reflect non-English users of
+      my product?
   answered_by:
   - diversity-skew
 - ask:
-    unsorted:
-    - How can chat platforms collect feedback without asking users to rate responses?
-    - What is naturally occurring feedback in a conversation with a language model?
-    - Are thumbs-up ratings and pairwise comparisons enough for collecting feedback?
+    plain: can you learn what users think of a chatbot's answers without asking them to rate
+      anything?
+    jargon: what naturally occurring feedback signals in chat logs can supplement prompted
+      ratings and pairwise rankings?
+    task: how do I collect useful feedback from my chat product without adding rating buttons?
+    practitioner: are thumbs-up and side-by-side comparisons enough for my feedback collection,
+      or am I missing signal?
   answered_by:
   - naturally-occurring-feedback
 - ask:
-    unsorted:
-    - What infrastructure would a sustainable open feedback ecosystem need?
-    - What components are proposed for pooling chats and feedback across the community?
-    - Do existing platforms like Hugging Face Spaces or Argilla already support open feedback
-      collection?
+    plain: what would you actually have to build so people could share chatbot conversations
+      and feedback in one pool?
+    jargon: what components does a sustainable open human feedback ecosystem require, and
+      how does it close the loop with model training?
+    task: how do I set up shared infrastructure for pooling chats and feedback across many
+      contributors?
+    practitioner: if I want to start a community feedback pool, what pieces do I need in place
+      first?
   answered_by:
   - ecosystem-three-components
   - specialized-model-loop
 - ask:
-    unsorted:
-    - Why would anyone donate their chat logs and feedback to a shared pool?
-    - What incentives could sustain long-term contribution of preference data?
-    - How can contributors of feedback benefit directly from what they give?
+    plain: why would anyone hand over their chatbot conversations and ratings to a shared
+      public pool?
+    jargon: what incentive mechanisms could sustain long-term contribution of human preference
+      data to an open pool?
+    task: how do I give contributors a reason to keep donating feedback rather than a one-off
+      donation?
+    practitioner: what can I offer my users in return if I ask them to share their chats and
+      feedback?
   answered_by:
   - specialized-model-loop
   - peer-production-lessons
 - ask:
-    unsorted:
-    - Who legally owns feedback given on a language model's output?
-    - What licensing and consent practices are recommended for sharing chat feedback?
-    - Can users retract feedback they contributed to an open dataset?
+    plain: who owns the rating a person gives to a chatbot's answer, the person or the company
+      running the model?
+    jargon: what ownership, consent and licensing arrangements are recommended for released
+      human feedback data?
+    task: how do I license and obtain consent for chat feedback I want to publish openly?
+    practitioner: if a user later changes their mind, can they pull their feedback out of
+      a dataset I released?
   answered_by:
   - human-owns-data
 - ask:
-    unsorted:
-    - What concrete steps can a project take today to open its feedback pipeline?
-    - Which recommendations for open human feedback are already actionable versus needing
-      research?
-    - Is there a checklist for building an open human feedback project?
+    plain: what can a project do right now to open up how it collects feedback on its chatbot?
+    jargon: which recommendations for an open human feedback ecosystem are feasible with existing
+      tools versus requiring R&D?
+    task: how do I work out which steps toward open feedback collection I can implement today?
+    practitioner: is there a checklist I can follow to open my feedback pipeline, sorted by
+      how much research it needs?
   answered_by:
   - actions-checklist
   - seven-themes

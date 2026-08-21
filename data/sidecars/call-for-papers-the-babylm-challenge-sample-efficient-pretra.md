@@ -92,69 +92,93 @@ claims:
   evidence: Section 1 and Section 6
 qa:
 - ask:
-    practitioner: Where should I start reading about sample-efficient or human-scale language
-      model pretraining?
-    unsorted:
-    - What is a good starting point for research on training language models with as little
-      data as a child hears?
-    - What shared task exists for small-scale language modeling and cognitive modeling?
+    plain: Is there a competition where people try to train language models on only as much
+      text as a child hears?
+    jargon: Which shared task covers sample-efficient pretraining at developmentally plausible
+      data scales for cognitive modeling and low-resource NLP?
+    task: Where do I start if I want to work on language model pretraining without a large
+      compute or data budget?
+    practitioner: I run a small university lab with no web-scale corpus — is there a venue
+      and benchmark I can enter for data-efficient pretraining?
   answered_by:
   - challenge-purpose
   - democratization
 - ask:
-    unsorted:
-    - How much training data does the BabyLM Challenge allow?
-    - How many words are in the 10M and 100M word pretraining corpora for the BabyLM shared
-      task?
-    - What is the size of the developmentally plausible pretraining dataset released for small-scale
-      language modeling?
+    plain: How many words of text are you allowed to train on in the child-scale pretraining
+      competition, and why that many?
+    jargon: What are the word counts of the BabyLM Strict and Strict-small pretraining corpora,
+      and what child input estimates set the cap?
+    task: How big a training corpus do I need to assemble if I want to match the BabyLM data
+      budget?
+    practitioner: Should I pretrain my small language model on the 10M-word or the 100M-word
+      BabyLM training set?
   answered_by:
   - corpus-sizes
   - child-word-budget
 - ask:
-    unsorted:
-    - What text sources make up the BabyLM pretraining corpus?
-    - Which corpora and domains are in the child-inspired 100M-word pretraining dataset?
-    - How much of the developmentally plausible pretraining data is transcribed speech versus
-      Wikipedia?
+    plain: What kinds of text go into a training set meant to resemble what a child hears?
+    jargon: What is the domain composition of the BabyLM pretraining corpus across transcribed
+      speech, child-directed speech and encyclopedic text?
+    task: How should I weight subtitles, dialogue transcripts, CHILDES and Wikipedia if I
+      want to rebuild a child-inspired pretraining mix?
+    practitioner: If I train on the BabyLM corpus, how much of what my model sees is spoken-style
+      transcription rather than written prose?
   answered_by:
   - corpus-composition
 - ask:
-    practitioner: Can I use my own data or multimodal data in the sample-efficient pretraining
-      shared task?
-    unsorted:
-    - What are the tracks of the BabyLM Challenge and how do they differ?
-    - What is the difference between the Strict, Strict-small and Loose tracks?
+    plain: Are there separate categories in the child-scale language model competition for
+      people who want to bring their own data?
+    jargon: How do the BabyLM Strict, Strict-small and Loose tracks differ in permitted corpora
+      and word budget?
+    task: Which BabyLM track do I enter if I want to add images or my own text sources to
+      a 100M-word budget?
+    practitioner: I want to use non-linguistic data alongside text — can I still submit to
+      the sample-efficient pretraining challenge?
   answered_by:
   - three-tracks
 - ask:
-    unsorted:
-    - Why did anyone set up a challenge about pretraining on child-sized amounts of text?
-    - How much more data do large language models see than a child does?
-    - What motivates studying language model pretraining at human data scales?
+    plain: How much more text does a large language model read than a child hears before growing
+      up, and why does that gap matter?
+    jargon: What is the data-efficiency gap between LLM pretraining corpora and human language
+      acquisition input that motivates the BabyLM shared task?
+    task: How do I justify working on pretraining at human-scale data budgets rather than
+      scaling up?
+    practitioner: Is there any real research payoff to pretraining on child-sized amounts
+      of text instead of billions of words?
   answered_by:
   - data-gap-motivation
   - challenge-purpose
 - ask:
-    unsorted:
-    - What baseline models does the BabyLM Challenge provide?
-    - Are the OPT, RoBERTa and T5 baselines for the 10M-word pretraining task tuned?
-    - What should a submission to the sample-efficient pretraining challenge be compared against?
+    plain: What already-trained models come with the child-scale pretraining competition to
+      compare against?
+    jargon: Which baseline architectures does BabyLM release for the Strict and Strict-small
+      tracks, and were their hyperparameters retuned for 10M and 100M words?
+    task: What do I benchmark my sample-efficient pretrained model against, and can I expect
+      to beat it easily?
+    practitioner: Should I treat the OPT, RoBERTa and T5 baselines released with BabyLM as
+      strong competitors or as a low bar?
   answered_by:
   - naive-baselines
 - ask:
-    unsorted:
-    - What must a model be able to do to be evaluated in the BabyLM Challenge?
-    - Do submissions to the child-scale pretraining shared task have to be generative language
-      models?
-    - What interface does the shared evaluation pipeline for small-scale language models require?
+    plain: Does a model entered in the child-scale pretraining competition have to be able
+      to write text, or just score it?
+    jargon: What scoring and fine-tuning interface must a BabyLM submission expose for the
+      shared evaluation pipeline?
+    task: How do I make sure my architecture is compatible with the BabyLM evaluation harness
+      before I train it?
+    practitioner: My model only assigns pseudo-log-likelihoods and cannot generate — can I
+      still submit it to the sample-efficient pretraining challenge?
   answered_by:
   - eval-requirements
 - ask:
-    practitioner: Can I train for many epochs on the 10M-word BabyLM corpus?
-    unsorted:
-    - Does the BabyLM Challenge limit training compute or epochs?
-    - Are there hyperparameter restrictions in the sample-efficient pretraining shared task?
+    plain: Is there a cap on how long or how many times you can train over the text in the
+      child-scale pretraining competition?
+    jargon: Does BabyLM restrict epoch count, compute or hyperparameter search in the Strict
+      tracks?
+    task: Can I do multiple passes over a 10M-word corpus and tune hyperparameters freely
+      for a BabyLM submission?
+    practitioner: If only the data is capped, should I spend my budget on more epochs and
+      hyperparameter sweeps?
   answered_by:
   - no-epoch-limit
 misreadings:

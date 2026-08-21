@@ -112,89 +112,124 @@ claims:
     measured.
 qa:
 - ask:
-    unsorted:
-    - How well do current LLMs actually do on table reasoning tasks?
-    - What is the best score any model gets on the ToRR table benchmark?
-    - Are large language models good at reasoning over tables?
+    plain: how good are today's chatbots at answering questions about spreadsheets and tables?
+    jargon: what overall accuracy do frontier LLMs reach on tabular reasoning tasks, and how
+      far apart are models within one family?
+    task: how do I find out whether any available LLM is accurate enough to run question answering
+      over my data tables?
+    practitioner: if I need table question answering, does it matter much which top model
+      I pick?
   answered_by:
   - best-score-050
   - narrow-gap
 - ask:
-    unsorted:
-    - Does changing a table's format change how well an LLM answers questions about it?
-    - How sensitive are LLMs to table serialization format?
-    - Is model performance on tables stable across HTML, CSV, JSON and Markdown?
+    plain: does writing a table as CSV instead of HTML change how well a language model answers
+      questions about it?
+    jargon: how sensitive is LLM table reasoning accuracy to the serialization format of the
+      input table?
+    task: how do I tell whether my table formatting choice is costing me accuracy on a table
+      QA pipeline?
+    practitioner: should I worry that switching my tables from markdown to JSON will change
+      my model's answers?
   answered_by:
   - brittleness
   - no-best-serializer
   - serializer-worst-case
 - ask:
-    practitioner: Should I use Markdown or JSON to put a table in a prompt?
-    unsorted:
-    - What is the best way to serialize a table for an LLM prompt?
-    - Which table format gives the highest LLM accuracy?
+    plain: what is the best way to write a table into a prompt so a language model understands
+      it?
+    jargon: is there a serialization format for tabular input that dominates across models
+      and table reasoning datasets?
+    task: which table format should I use when I feed tables into an LLM prompt?
+    practitioner: can I just pick one table format for all my models, or do I have to test
+      each one?
   answered_by:
   - no-best-serializer
   - serializer-worst-case
 - ask:
-    unsorted:
-    - Does shuffling rows or transposing a table hurt LLM accuracy?
-    - Do structural table perturbations degrade model performance?
-    - What happens to model scores when empty rows or swapped columns are added to a table?
+    plain: if I shuffle the rows of a table or flip it sideways, do language models get more
+      answers wrong?
+    jargon: what effect do structural table perturbations such as row and column swapping
+      or transposition have on LLM task scores?
+    task: do I need to normalize row order and orientation in my tables before sending them
+      to an LLM?
+    practitioner: is it worth cleaning up transposed tables and blank rows in my data before
+      running a model on them?
   answered_by:
   - perturbations-no-effect
 - ask:
-    practitioner: How many prompt variants do I need for a reliable model ranking?
-    unsorted:
-    - Is one prompt format enough to rank models on a benchmark?
-    - How much does model ranking change if I pick a different prompt?
+    plain: can you trust a leaderboard that tested every model with the same single prompt?
+    jargon: how many prompt configurations are needed before model rankings become stable
+      in Kendall's W agreement?
+    task: how many prompt variants should I evaluate over to get a model ranking that does
+      not flip?
+    practitioner: I ranked a few models with one prompt template, should I redo it with more?
   answered_by:
   - single-prompt-unreliable
   - ten-prompts-gain
 - ask:
-    practitioner: How can I make a small evaluation set more reliable?
-    unsorted:
-    - Can more prompt variations replace collecting more test examples?
-    - Is it better to add test examples or add prompt configurations to a benchmark?
+    plain: is it better to test a model on more examples or on more versions of the same prompt?
+    jargon: can additional prompt configurations substitute for test-set size in achieving
+      reliable model rankings?
+    task: I have a limited evaluation budget for table tasks, how should I split it between
+      examples and prompt variants?
+    practitioner: should I spend my annotation budget labelling more test examples or writing
+      more prompt formats?
   answered_by:
   - prompts-substitute-examples
   - ten-prompts-gain
 - ask:
-    practitioner: What should I read about evaluating LLMs on tabular data?
-    unsorted:
-    - Which benchmark measures both table reasoning and robustness to table formatting?
-    - Is there a table benchmark that goes beyond a single leaderboard ranking?
-    - What work established that LLM table performance depends on table format?
+    plain: is there a benchmark that checks both whether models can read tables and whether
+      their answers survive reformatting?
+    jargon: which table reasoning benchmark treats robustness across semantically equivalent
+      prompts as a reported metric rather than a fixed prompt leaderboard?
+    task: where should I start reading about how table formatting affects language model evaluation?
+    practitioner: which table benchmark should I cite if I want to argue single-prompt leaderboards
+      are unreliable?
   answered_by:
   - benchmark-contribution
   - robust-eval-practice
 - ask:
-    practitioner: How do I know whether a table benchmark can really tell models apart?
-    unsorted:
-    - How separable are model scores on ToRR datasets?
-    - Which table dataset best distinguishes strong from weak models?
+    plain: on table question answering tests, can you actually tell two models apart or do
+      their scores overlap?
+    jargon: what fraction of model pairs are separated by non-overlapping confidence intervals
+      on aggregated versus individual table reasoning datasets?
+    task: which table dataset should I evaluate on if I need to show a statistically distinguishable
+      difference between two models?
+    practitioner: is one table dataset enough to prove my model beats a competitor, or do
+      I need to aggregate several?
   answered_by:
   - separability
 - ask:
-    unsorted:
-    - Do open-weight models close the gap with GPT-4o and Claude on table tasks?
-    - Are proprietary models better than open models at table reasoning?
-    - Does model size predict table reasoning performance?
+    plain: are open models catching up with the big commercial ones at reading tables?
+    jargon: do open-weight LLMs match proprietary models on tabular reasoning performance
+      and robustness, and does parameter count track accuracy?
+    task: how do I decide between a self-hosted open model and a commercial API for reasoning
+      over tables?
+    practitioner: can I swap a paid API for an open-weight model on my table extraction workload
+      without losing accuracy?
   answered_by:
   - closed-vs-open
   - narrow-gap
 - ask:
-    unsorted:
-    - Which table datasets and tasks does a table reasoning and robustness benchmark cover?
-    - What table datasets are inside ToRR?
-    - What kinds of table skills does ToRR test?
+    plain: what kinds of table questions and data sources go into a table reasoning test set?
+    jargon: which tabular tasks, datasets and prompt configurations make up the ToRR benchmark
+      suite?
+    task: what table skills would I be covering if I evaluated on a multi-task table reasoning
+      benchmark?
+    practitioner: does a table benchmark I might adopt cover the task types my product actually
+      does, like fact checking and table QA?
   answered_by:
   - benchmark-contribution
 - ask:
-    unsorted:
-    - How is model robustness scored on tabular tasks in ToRR?
-    - What does a robustness score of 0.70 mean for a table benchmark?
-    - How is per-example score variance turned into a robustness number?
+    plain: how do you put a number on whether a model gives consistent answers when a table
+      is rewritten?
+    jargon: how is a per-example robustness score computed across semantically equivalent
+      table prompt configurations?
+    task: how do I measure the spread between a model's best-case and worst-case score across
+      equivalent prompts?
+    practitioner: how should I report my model's consistency across table formats rather than
+      just its average accuracy?
   answered_by:
   - brittleness
 one_liner: ToRR evaluates 14 LLMs on 10 table reasoning datasets under 35 semantically equivalent

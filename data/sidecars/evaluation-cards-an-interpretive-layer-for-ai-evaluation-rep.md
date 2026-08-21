@@ -137,107 +137,155 @@ claims:
   evidence: Section 5, Appendix A.2, Appendix N
 qa:
 - ask:
-    unsorted:
-    - How often do published AI evaluation results include the settings needed to re-run them?
-    - What share of reported model scores are missing generation parameters like temperature
-      and max_tokens?
-    - Is public LLM benchmark reporting reproducible?
+    plain: when a company publishes a benchmark score for a language model, do they usually
+      say enough for someone else to get the same number?
+    jargon: how prevalent are missing decoding-configuration fields such as temperature and
+      max_tokens across publicly reported LLM benchmark results?
+    task: how do I find out whether a published model score lists the generation settings
+      I would need to re-run the evaluation?
+    practitioner: can I trust a leaderboard score enough to reproduce it on my own infrastructure,
+      or will the sampling settings be missing?
   answered_by:
   - repro-gap-corpus
 - ask:
-    unsorted:
-    - Do model developers document their own evaluations less thoroughly than independent
-      evaluators?
-    - Are first-party reported benchmark scores less well documented than third-party ones?
-    - Who reports more configuration detail, labs evaluating their own models or outside evaluators?
+    plain: do the companies that build AI models write down less about how they tested them
+      than outside testers do?
+    jargon: does first-party evaluation reporting populate fewer reproducibility fields than
+      third-party reporting on the same model-benchmark pairs?
+    task: how do I tell whether a developer-reported score or an independent evaluator's score
+      comes with more usable configuration detail?
+    practitioner: if I need documented evaluation settings, should I take the number from
+      the model developer or from an independent evaluator?
   answered_by:
   - first-vs-third-party-fields
 - ask:
-    unsorted:
-    - How well documented are AI benchmarks themselves?
-    - What fraction of benchmark documentation fields are actually populated in public reporting?
-    - Which benchmark reporting fields are always present and which are always missing?
+    plain: how much of the basic information about a benchmark is actually written down where
+      people report scores from it?
+    jargon: what is the per-benchmark field population rate against an operationalized evaluation
+      documentation schema, and which fields saturate at 100% or 0%?
+    task: how do I check which parts of a benchmark's documentation, like preregistration
+      or lifecycle status, I can expect to find at all?
+    practitioner: if I want benchmark metadata beyond the score itself, which fields will
+      I realistically get and which will I have to chase down?
   answered_by:
   - completeness-median
 - ask:
-    unsorted:
-    - How often is the same model and benchmark scored by more than one organization?
-    - Do benchmark scores from different reporting organizations agree with each other?
-    - How common is cross-party disagreement on LLM benchmark scores?
+    plain: is the same AI model usually tested on the same benchmark by more than one organization,
+      and do their numbers match?
+    jargon: what fraction of (model, benchmark) pairs have multi-organization coverage, and
+      how many metric groups exceed a cross-party score-divergence threshold?
+    task: how do I check whether a reported model score has been independently corroborated
+      by another organization?
+    practitioner: should I treat a single reported benchmark number as corroborated, or look
+      for a second organization's run of the same evaluation?
   answered_by:
   - single-party-reporting
 - ask:
-    unsorted:
-    - Which kinds of benchmarks rely most on developer self-reported scores?
-    - Are safety benchmarks or agentic benchmarks more likely to have only first-party results?
-    - Where is independent evaluation reporting scarcest across benchmark categories?
+    plain: which types of AI tests are mostly scored by the companies that built the models,
+      rather than by outsiders?
+    jargon: how does the rate of first-party-only reporting vary across benchmark categories
+      such as agentic, general and safety?
+    task: how do I find out whether agentic or safety scores for a model have any independent
+      reporting behind them?
+    practitioner: for agentic capability claims, can I expect an independent evaluation to
+      compare against, or only the developer's own numbers?
   answered_by:
   - first-party-only-by-category
 - ask:
-    unsorted:
-    - How much do GPT-5 benchmark scores differ between reporting sources?
-    - What does an audit of reported GPT-5 evaluation results show about reproducibility?
-    - Do different organizations report different MATH-500 scores for the same model?
+    plain: do different websites report different benchmark scores for GPT-5, and by how much?
+    jargon: how do reported GPT-5 results vary across reporting organizations on MATH-500,
+      and how many lack decoding configuration fields?
+    task: how do I reconcile conflicting MATH-500 numbers reported for GPT-5 by different
+      evaluation organizations?
+    practitioner: which GPT-5 math benchmark number should I cite when several organizations
+      report different ones?
   answered_by:
   - gpt5-walkthrough
 - ask:
-    unsorted:
-    - What happens when MMLU-Pro results are aggregated across reporting organizations?
-    - Do MMLU-Pro scores for the same model disagree across sources?
-    - How complete is the reporting behind MMLU-Pro leaderboard scores?
+    plain: do scores reported for the MMLU-Pro test disagree depending on who ran it?
+    jargon: what cross-party score divergence and missing-field rates appear when MMLU-Pro
+      results are aggregated across reporting organizations?
+    task: how do I check whether an MMLU-Pro number for a model like Llama 3.2 is consistent
+      across the sources that report it?
+    practitioner: if I am comparing models on MMLU-Pro, can I mix numbers from different leaderboards?
   answered_by:
   - mmlu-pro-walkthrough
 - ask:
-    unsorted:
-    - How was the Evaluation Cards reporting framework derived?
-    - What evidence base underlies a reporting schema for AI evaluations?
-    - How many papers and interviews went into the Evaluation Cards framework?
+    plain: where do the rules for what an AI evaluation report should contain actually come
+      from?
+    jargon: what corpus of recommendation items and stakeholder input was coded to derive
+      the Evaluation Cards five-part reporting structure?
+    task: how do I justify the set of fields I ask evaluators to report, rather than inventing
+      a checklist?
+    practitioner: is the evaluation reporting structure grounded in prior recommendations,
+      or is it one team's opinion about what to record?
   answered_by:
   - framework-derivation
 - ask:
-    unsorted:
-    - How accurately can model and benchmark names be resolved to canonical identifiers across
-      evaluation sources?
-    - Does entity matching across leaderboards and evaluation repositories work reliably?
-    - How good is the Evaluation Cards canonicalization on models, benchmarks and metrics?
+    plain: can model and test names collected from many different websites be matched up reliably
+      to one canonical name?
+    jargon: what accuracy does the Evaluation Cards entity resolver achieve when canonicalizing
+      model, benchmark and metric strings?
+    task: how do I merge evaluation results from several leaderboards when each one spells
+      the model and benchmark names differently?
+    practitioner: if I build on this aggregated evaluation corpus, how much name-matching
+      error should I expect on benchmarks versus models?
   answered_by:
   - entity-resolver-accuracy
 - ask:
-    unsorted:
-    - Why is a flat (model, benchmark, score) triple not enough to describe an evaluation
-      result?
-    - How can an aggregate benchmark claim be traced to the specific subtask and metric behind
-      it?
-    - What is the Evaluation Cards rollout hierarchy for evaluation evidence?
+    plain: why is saying "model X scores 0.99 on MATH" not enough to know what was actually
+      measured?
+    jargon: how does a five-level rollout hierarchy of family, composite, benchmark, split
+      and metric resolve an aggregate benchmark claim to its underlying metric?
+    task: how do I trace a headline benchmark number back to the specific split and metric
+      it came from?
+    practitioner: if I record evaluation results in my own database, is a flat model-benchmark-score
+      row going to be enough?
   answered_by:
   - rollout-hierarchy
 - ask:
-    unsorted:
-    - How can evaluation reporting serve both researchers and policymakers from the same record?
-    - What are reader modes in Evaluation Cards?
-    - Can the same evaluation record be rendered in plain language for non-technical readers?
+    plain: can the same record of how a model was tested be shown both to a researcher and
+      to someone without a technical background?
+    jargon: how do the Evaluation Cards reader modes surface or compress the same underlying
+      record for research versus policy audiences?
+    task: how do I present missing evaluation configuration fields to a non-technical reader
+      without dumbing down the underlying record?
+    practitioner: do I need two separate documents for researchers and policy readers, or
+      can one evaluation record serve both?
   answered_by:
   - reader-modes
 - ask:
-    unsorted:
-    - Does Evaluation Cards grade or rank model developers on their reporting?
-    - Are benchmark documentation completeness scores turned into pass/fail judgements?
-    - Is a documentation completeness score a measure of evaluation quality?
+    plain: does a low documentation completeness number mean an AI model or its developer
+      is bad?
+    jargon: does Evaluation Cards convert documentation completeness into letter grades, pass/fail
+      thresholds or developer rankings?
+    task: how do I report gaps in evaluation documentation without turning them into a scorecard
+      that penalizes developers?
+    practitioner: if my model's card shows low completeness, is that a quality judgement I
+      have to answer for?
   answered_by:
   - no-grades
 - ask:
-    practitioner: What should I read about standardizing how AI evaluation results are reported?
-    unsorted:
-    - Is there a paper that unifies benchmark cards, evaluation run schemas and model metadata?
-    - Where should I start reading about AI evaluation reporting infrastructure?
+    plain: is there a project that pulls benchmark descriptions, evaluation run details and
+      model metadata into one place?
+    jargon: which work composes benchmark metadata schemas, evaluation run records and model
+      catalogs into a single reader-facing evaluation record?
+    task: where do I start reading if I want to build infrastructure for AI evaluation reporting
+      rather than another documentation standard?
+    practitioner: do I have to fill in yet another documentation template, or is there an
+      integration layer that assembles evaluation records from what already exists?
   answered_by:
   - context-composition
   - context-monitoring-instrument
 - ask:
-    unsorted:
-    - Is there a tool that continuously monitors the state of public AI evaluation reporting?
-    - What work measures reporting gaps across thousands of models and benchmarks at once?
-    - Which paper audits public LLM evaluation reporting practice at scale?
+    plain: is anyone actually keeping track of how well AI evaluation results are being reported
+      across the whole field?
+    jargon: what deployed instrument monitors reporting completeness and cross-party divergence
+      across thousands of models, benchmarks and reported results?
+    task: how do I get an at-scale picture of evaluation reporting gaps without auditing each
+      leaderboard by hand?
+    practitioner: is there a live, open tool I can point at to show how public AI evaluation
+      reporting currently stands?
   answered_by:
   - context-monitoring-instrument
 misreadings:

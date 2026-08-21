@@ -123,96 +123,135 @@ claims:
   evidence: Section 7
 qa:
 - ask:
-    unsorted:
-    - What fraction of questions in a widely used English multiple-choice knowledge benchmark
-      require culture-specific knowledge?
-    - What fraction of MMLU questions need cultural or regional knowledge to answer?
-    - Is MMLU culturally biased?
+    plain: how many questions on the MMLU exam benchmark need knowledge of a particular culture
+      or region to answer?
+    jargon: what proportion of MMLU items are culturally sensitive, and which cultures do
+      the culture-dependent items presuppose?
+    task: how do I find out whether an English multiple-choice benchmark I am reporting on
+      is loaded with culture-specific questions?
+    practitioner: should I worry that MMLU scores reflect Western cultural knowledge rather
+      than general ability?
   answered_by:
   - cs-share
   - western-dominance
 - ask:
-    unsorted:
-    - Which regions and countries does the geographic knowledge in English exam-style benchmark
-      questions actually cover?
-    - Is MMLU US-centric?
-    - Which geographies do MMLU geography-dependent questions refer to?
+    plain: when MMLU questions depend on geography, which countries and continents do they
+      actually talk about?
+    jargon: what is the regional distribution of geography-dependent MMLU items across North
+      America, Europe and the rest of the world?
+    task: how do I check whether the geographic content of an exam-style benchmark is skewed
+      toward the United States?
+    practitioner: can I treat MMLU as a globally representative knowledge test, or is its
+      geography mostly US-based?
   answered_by:
   - geo-north-america
 - ask:
-    unsorted:
-    - Which exam subjects in a multiple-choice knowledge benchmark carry the most cultural
-      and regional bias?
-    - Do STEM questions in MMLU require cultural knowledge?
-    - Where in MMLU is cultural sensitivity concentrated by subject?
+    plain: which school subjects in a translated multiple-choice knowledge test contain the
+      most culture-specific questions?
+    jargon: how is cultural sensitivity distributed across MMLU subject categories such as
+      Humanities, Social Sciences and STEM?
+    task: how do I pick MMLU subjects that will not be confounded by cultural or regional
+      knowledge?
+    practitioner: if I only evaluate on STEM subjects of MMLU, do I avoid cultural bias?
   answered_by:
   - subject-skew
 - ask:
-    unsorted:
-    - Do model leaderboard rankings change if you remove culturally biased questions?
-    - How much do LLM rankings shift between culturally sensitive and culturally agnostic
-      MMLU questions?
-    - Does cultural bias in MMLU distort model comparisons?
+    plain: do model leaderboards look different if you drop the questions that need culture-specific
+      knowledge?
+    jargon: how much do model rankings shift between culturally-sensitive and culturally-agnostic
+      MMLU subsets across languages?
+    task: how do I tell whether culture-dependent questions are distorting the model comparison
+      I am publishing?
+    practitioner: should I report separate scores for culture-dependent and culture-neutral
+      MMLU questions when ranking models?
   answered_by:
   - rank-changes
 - ask:
-    unsorted:
-    - Are multilingual evaluation results less reliable for low-resource languages?
-    - How much does accuracy vary across low-resource languages on MMLU?
-    - Does evaluation variance grow for lower-resource languages?
+    plain: are test scores across languages more erratic for languages with little data online?
+    jargon: how does cross-language accuracy standard deviation on MMLU compare between high-resource
+      and low-resource languages?
+    task: how do I judge how much to trust a multilingual benchmark score for a low-resource
+      language?
+    practitioner: can I rely on a single multilingual MMLU number for a low-resource language,
+      or is the spread too wide?
   answered_by:
   - low-resource-variance
 - ask:
-    unsorted:
-    - Do models score worse on culturally sensitive questions?
-    - Is accuracy higher or lower on the culturally-sensitive MMLU subset?
-    - Why do CS questions look easier than CA questions for LLMs?
+    plain: are questions that need cultural knowledge actually harder for language models
+      to answer?
+    jargon: is average accuracy higher on the culturally-sensitive or the culturally-agnostic
+      MMLU subset, and what explains the gap?
+    task: how should I read a higher score on culture-dependent MMLU questions than on culture-neutral
+      ones?
+    practitioner: if my model scores better on the culturally-sensitive split, does that mean
+      it handles cultural knowledge well?
   answered_by:
   - cs-higher-accuracy
 - ask:
-    unsorted:
-    - Is machine translation good enough for evaluating LLMs in low-resource languages?
-    - Do models do better on machine-translated or human-translated test sets?
-    - Does using machine-translated benchmarks overstate low-resource language ability?
+    plain: do language models score differently on questions translated by a machine than
+      on questions translated by people?
+    jargon: how do model accuracies on human-translated versus machine-translated culturally-sensitive
+      MMLU differ for Yoruba and French?
+    task: how do I decide whether machine translation is adequate for building an MMLU evaluation
+      set in a low-resource language?
+    practitioner: can I evaluate my model on machine-translated MMLU for Yoruba, or do I need
+      human translators?
   answered_by:
   - ht-vs-mt
   - low-resource-variance
 - ask:
-    unsorted:
-    - Which machine translation system is best for building a translated benchmark?
-    - Is Google Translate or GPT-3.5 better for translating MMLU?
-    - How was translation quality validated for the 42-language MMLU?
+    plain: which translation tool produces better results when turning an English exam benchmark
+      into other languages?
+    jargon: how do Google Translate and GPT-3.5-Turbo compare on ChrF++ against professional
+      MMLU translations across subjects and languages?
+    task: how do I choose a translation system for producing a multilingual version of an
+      English benchmark?
+    practitioner: should I use Google Translate or an LLM to translate my evaluation set into
+      40-odd languages?
   answered_by:
   - translation-quality
 - ask:
-    unsorted:
-    - How many machine-translated benchmark samples did professional and community annotators
-      edit?
-    - What share of translated MMLU samples needed post-editing?
-    - How many translation edits went into a 42-language MMLU release?
+    plain: how much of a machine-translated exam benchmark did human reviewers actually have
+      to fix?
+    jargon: what post-edit rate did professional annotators and community contributors apply
+      to the machine-translated MMLU samples?
+    task: how do I estimate the human post-editing effort needed to clean up a machine-translated
+      benchmark?
+    practitioner: if I hire annotators to post-edit a translated benchmark, what share of
+      samples should I budget for edits?
   answered_by:
   - edit-rate
 - ask:
-    unsorted:
-    - How many languages and samples does a human-verified multilingual knowledge benchmark
-      cover?
-    - How many languages and samples does the 42-language multilingual MMLU contain?
-    - What is in the culturally-sensitive versus culturally-agnostic split of translated MMLU?
+    plain: how many languages and questions are in the human-checked multilingual version
+      of MMLU?
+    jargon: what is the language coverage and sample count of Global-MMLU, including its culturally-sensitive
+      and culturally-agnostic annotated splits?
+    task: how do I find a multilingual knowledge benchmark that covers dozens of languages
+      with human-verified translations?
+    practitioner: is there a multilingual MMLU I can drop into my evaluation suite, and how
+      big is it?
   answered_by:
   - dataset
 - ask:
-    practitioner: What should I read about cultural bias in multilingual LLM benchmarks?
-    unsorted:
-    - Which paper established that translating English benchmarks does not make them multicultural?
-    - Where should I start reading about culturally aware multilingual evaluation?
-    - What is a good benchmark for evaluating LLMs across languages and cultures?
+    plain: what should I read first about evaluating language models across languages and
+      cultures, not just translations?
+    jargon: which work established that machine-translating an English benchmark gives multilinguality
+      without multiculturality?
+    task: how do I report multilingual evaluations separately for culture-dependent and culture-neutral
+      questions?
+    practitioner: which multilingual benchmark should I cite if I want to argue that translated
+      evaluations miss cultural knowledge?
   answered_by:
   - context-benchmark
 - ask:
-    unsorted:
-    - Does labelling questions as culturally sensitive make a benchmark culturally inclusive?
-    - What are the limits of flagging culturally sensitive questions in a translated benchmark?
-    - Is a filtered translated benchmark enough for fair evaluation across cultures?
+    plain: does labelling which questions need cultural knowledge make a benchmark fair across
+      cultures?
+    jargon: what are the limits of culturally-sensitive annotation on a translated benchmark
+      for claims of cultural inclusivity?
+    task: how do I know whether filtering a translated benchmark by cultural sensitivity is
+      enough for a fair cross-cultural evaluation?
+    practitioner: if I use the culturally-agnostic split of a translated MMLU, can I claim
+      my evaluation is culturally inclusive?
   answered_by:
   - context-not-inclusion
 terminology:

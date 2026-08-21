@@ -103,72 +103,91 @@ one_liner: A cutting-edge LREC-COLING 2024 tutorial that lays out the whole LLM 
   model-as-judge practice.
 qa:
 - ask:
-    practitioner: What should I read first to understand how large language models are evaluated?
-    unsorted:
-    - Is there a good introductory overview of LLM benchmarking?
-    - Where can a newcomer start learning about language model evaluation and benchmarks?
+    plain: what should I read first to understand how language models are benchmarked?
+    jargon: is there a tutorial that surveys LLM evaluation end to end for someone with no
+      evaluation background?
+    task: how do I get up to speed on language model benchmarking from scratch?
+    practitioner: I need to set up evaluation for our models and know nothing about benchmarks
+      -- where do I start?
   answered_by:
   - entry-point
   - pipeline-view
 - ask:
-    unsorted:
-    - Why is evaluating LLMs harder than evaluating older NLP models?
-    - What changed about benchmarking when pretrained general-purpose language models arrived?
-    - How does modern LLM evaluation differ from traditional single-task dataset evaluation?
+    plain: why is testing today's chat models harder than testing older language systems?
+    jargon: how does LLM-era benchmarking depart from single-task supervised dataset evaluation
+      with train and test splits?
+    task: how do I adjust an evaluation setup built for task-specific models to work for general-purpose
+      LLMs?
+    practitioner: our old per-task test sets no longer tell us much about our LLM -- what
+      actually changed?
   answered_by:
   - old-vs-new
   - gap-structured-view
 - ask:
-    unsorted:
-    - How expensive is it to benchmark a large language model?
-    - Can evaluation cost more compute than pretraining a model?
-    - Why do people care about efficient benchmarking of language models?
+    plain: how much computing does it take to test a large language model properly?
+    jargon: how does the compute cost of broad multi-task LLM benchmarking compare to pretraining,
+      and why does efficient benchmarking matter?
+    task: how do I keep the compute bill for evaluating language models under control?
+    practitioner: is my evaluation run going to cost more GPU time than training the model
+      itself?
   answered_by:
   - compute-cost
   - validity-reliability
 - ask:
-    unsorted:
-    - Why would you use a language model as an evaluation metric for another model?
-    - What is the justification for LLM-as-a-judge evaluation?
-    - Is model-based evaluation of generated text defensible?
+    plain: why would anyone trust one language model to grade another model's answers?
+    jargon: what is the underlying assumption that licenses LLM-as-a-judge as an evaluation
+      metric?
+    task: how do I justify using a model-based judge instead of exact-match scoring for open-ended
+      outputs?
+    practitioner: should I let a language model score my system's generations, or is that
+      circular?
   answered_by:
   - lm-as-evaluator-premise
 - ask:
-    unsorted:
-    - How much do prompts matter when benchmarking language models?
-    - Do evaluation protocols use more than one prompt per model?
-    - What are prompt banks and why do different users need different prompts?
+    plain: does the wording of a test prompt change how a language model scores?
+    jargon: how do prompt selection and prompt banks affect LLM benchmark results, and how
+      do prompt desiderata differ across use cases?
+    task: how many prompts should I use per task when benchmarking a language model?
+    practitioner: I am comparing two models on one fixed prompt -- is that enough to call
+      a winner?
   answered_by:
   - prompts-part
 - ask:
-    unsorted:
-    - Which LLM evaluation frameworks are worth knowing about?
-    - Where do HELM, OpenAI Evals and LM-evaluation-harness fit in the evaluation landscape?
-    - What open-source tooling exists for running language model benchmarks?
+    plain: what existing tools can run a batch of tests on a language model?
+    jargon: which open-source LLM evaluation harnesses and business frameworks are covered
+      in a survey of benchmarking frameworks?
+    task: how do I pick an evaluation framework for running language model benchmarks?
+    practitioner: should I adopt an off-the-shelf evaluation harness or build our own benchmarking
+      pipeline?
   answered_by:
   - frameworks-covered
 - ask:
-    unsorted:
-    - Is human evaluation still needed now that models can judge models?
-    - Has manual evaluation of NLP systems been abandoned?
-    - How does human feedback fit into modern LLM evaluation?
+    plain: do people still need humans to rate model outputs now that models can rate each
+      other?
+    jargon: what role does manual evaluation retain alongside the alignment paradigm and LLM-human
+      feedback loops?
+    task: how do I decide when to spend money on human annotation for evaluating a language
+      model?
+    practitioner: can I drop human raters from our evaluation and rely on automatic judges?
   answered_by:
   - human-eval-not-abandoned
 - ask:
-    unsorted:
-    - What makes a benchmark for language models a good one?
-    - How do validity and reliability apply to LLM benchmarks?
-    - What are best practices for cutting the compute cost of a benchmark?
+    plain: what makes a language model benchmark a good one rather than a bad one?
+    jargon: how do validity and reliability apply to LLM benchmarks, and which compute-reduction
+      practices are considered best practice?
+    task: how do I cut the cost of a language model benchmark without making the scores untrustworthy?
+    practitioner: I want to subsample our benchmark to save compute -- will the numbers still
+      be trustworthy?
   answered_by:
   - validity-reliability
   - compute-cost
 - ask:
-    unsorted:
-    - What topics does the Navigating the Modern Evaluation Landscape tutorial cover, and
-      for how long?
-    - How is the LREC-COLING 2024 LLM evaluation tutorial structured?
-    - What is the outline of the LLM benchmarking tutorial by Choshen, Gera, Perlitz, Shmueli-Scheuer
-      and Stanovsky?
+    plain: what is covered in the LREC-COLING 2024 tutorial on language model evaluation,
+      and how long is each part?
+    jargon: what is the part-by-part schedule of the Navigating the Modern Evaluation Landscape
+      tutorial on LLM benchmarking?
+    task: how do I find out whether an LLM evaluation tutorial covers metrics, prompts and
+      human evaluation before I sit through it?
   answered_by:
   - schedule
   - pipeline-view

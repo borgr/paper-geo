@@ -114,89 +114,103 @@ claims:
   evidence: Section 3.6
 qa:
 - ask:
-    unsorted:
-    - Does active learning actually help BERT, or is BERT already good enough with few labels?
-    - Can active learning improve BERT text classification under a tiny annotation budget?
-    - How much does active learning gain over random sampling when fine-tuning BERT?
+    plain: does choosing which examples to label help when there are only a few hundred labels?
+    jargon: how much F1 does active learning gain over random selection when fine-tuning BERT
+      on imbalanced text classification?
+    task: how do I spend a tiny annotation budget on the examples that help a text classifier
+      most?
+    practitioner: I can label 500 examples -- should I choose them with active learning or
+      at random?
   answered_by:
   - practical-gain
   - significance-imbalanced
 - ask:
-    practitioner: Should I pick least confidence or Core-Set for active learning with a transformer
-      classifier?
-    unsorted:
-    - Which active learning strategy works best with BERT?
-    - Is there a clear winner among uncertainty, core-set and discriminative active learning
-      for BERT?
+    plain: which way of choosing examples to label works best with a transformer classifier?
+    jargon: is there a clear winner among uncertainty, core-set and discriminative active
+      learning strategies for BERT?
+    task: how do I pick an acquisition strategy for active learning with BERT?
+    practitioner: which active learning strategy should I implement first?
   answered_by:
   - no-winner
   - runtime
 - ask:
-    practitioner: What happens if I bootstrap a classifier from keyword search results instead
-      of random labeling?
-    unsorted:
-    - Can active learning recover from a biased seed collected with keyword queries?
-    - Does starting from a keyword-query seed permanently hurt classifier quality?
+    plain: can a classifier recover if its first labeled examples all came from one keyword
+      search?
+    jargon: does a keyword-query seed permanently depress BERT classification quality relative
+      to an unbiased positive sample?
+    task: how do I bootstrap a rare-class classifier when the only way to find positives is
+      a keyword query?
+    practitioner: my seed set came from a keyword search -- is my classifier stuck with that
+      bias?
   answered_by:
   - gap-bridged
   - recall-driven
   - practical-scenario-framing
 - ask:
-    unsorted:
-    - Does active learning improve precision or recall for rare-class text classification?
-    - Where does the F1 improvement come from when using active learning on skewed data?
+    plain: does choosing examples to label find more of the rare cases, or judge the found
+      ones better?
+    jargon: does the active learning F1 gain on skewed data come from precision or from recall?
+    task: how do I tell whether active learning is improving coverage of a rare class or its
+      precision?
   answered_by:
   - recall-driven
 - ask:
-    unsorted:
-    - How expensive is each active learning strategy to run per iteration with BERT?
-    - Which active learning selection methods are computationally cheap enough for a transformer?
-    - What is the runtime cost of EGL and Monte Carlo Dropout selection compared to random?
+    plain: how much computation does each way of choosing examples to label cost per round?
+    jargon: what is the per-iteration selection runtime of EGL, Monte Carlo Dropout, DAL,
+      Core-Set and Least Confidence over 7,000 unlabeled examples?
+    task: how do I keep the selection step from costing more than the fine-tuning step?
+    practitioner: which acquisition strategies are cheap enough for me to run every round?
   answered_by:
   - runtime
 - ask:
-    unsorted:
-    - Is BERT fine-tuning stable when trained on 100 randomly labeled examples of a rare class?
-    - What goes wrong when fine-tuning BERT on a small, highly imbalanced labeled seed?
-    - How can a small imbalanced seed set be stabilised without more annotation budget?
+    plain: why does fine-tuning go unstable when a rare class barely appears in the first
+      labeled batch?
+    jargon: what makes BERT fine-tuning unstable at a positive-class prior at or below 15%
+      with a 100-instance random seed, and what stabilised it?
+    task: how do I stabilise fine-tuning on a small, highly imbalanced seed without buying
+      more labels?
+    practitioner: my seed set has almost no positives and training keeps collapsing -- what
+      do I do?
   answered_by:
   - unstable-random-seed
 - ask:
-    unsorted:
-    - Do different active learning strategies pick the same examples?
-    - How much do batches selected by different acquisition functions overlap?
-    - Is there room to combine complementary active learning strategies?
+    plain: do different ways of choosing examples to label end up picking the same ones?
+    jargon: how much do batches selected by different acquisition functions over the same
+      BERT model overlap?
+    task: how do I tell whether combining two acquisition strategies could add anything?
   answered_by:
   - low-overlap
 - ask:
-    unsorted:
-    - Which acquisition strategies select diverse and representative batches?
-    - Does Core-Set pick outliers when used with BERT representations?
-    - How do diversity and representativeness differ across active learning strategies for
-      BERT?
+    plain: which ways of choosing examples cover the data broadly rather than picking oddities?
+    jargon: how do diversity and representativeness differ across acquisition strategies measured
+      in BERT [CLS] space?
+    task: how do I check whether an acquisition strategy is selecting outliers?
   answered_by:
   - diversity-dal
 - ask:
-    practitioner: What should I read first about active learning with pre-trained language
-      models?
-    unsorted:
-    - Is there a good empirical study comparing active learning strategies for text classification?
-    - Which paper established whether active learning helps BERT?
+    plain: what is a good study comparing ways of choosing which text examples to label?
+    jargon: what work systematically compared classical and deep active learning strategies
+      on top of BERT?
+    task: where should I start reading about active learning for text classification with
+      transformers?
+    practitioner: which paper should I cite for whether active learning helps BERT?
   answered_by:
   - first-systematic-bert-al
   - framework-release
 - ask:
-    practitioner: Where can I find an open-source framework for low-resource text classification
-      experiments?
-    unsorted:
-    - Is there code and data available for benchmarking active learning strategies on text
-      classification?
+    plain: is there code and data for trying out example-selection strategies on text classification?
+    jargon: what open-source low-resource text classification framework, datasets and strategy
+      implementations were released?
+    task: how do I benchmark a new acquisition strategy against existing ones without rebuilding
+      a text classification harness from scratch?
+    practitioner: can I plug my own selection strategy into an existing harness?
   answered_by:
   - framework-release
 - ask:
-    unsorted:
-    - How many datasets and runs does the BERT active learning study cover?
-    - What experimental scale backs the claims about active learning with BERT?
+    plain: how many datasets and training runs went into comparing ways of choosing which
+      text examples to label?
+    jargon: how many binary datasets and BERT fine-tuning runs back the active learning comparison?
+    practitioner: is the evidence broad enough for me to rely on these active learning conclusions?
   answered_by:
   - first-systematic-bert-al
   - significance-imbalanced

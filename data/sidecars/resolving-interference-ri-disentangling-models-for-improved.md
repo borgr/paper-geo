@@ -121,94 +121,136 @@ claims:
     unadapted baselines of 75.1% and 76.5%.
 qa:
 - ask:
-    practitioner: How can I reduce interference when merging fine-tuned models without access
-      to the training data?
-    unsorted:
-    - Is there a way to improve model merging when task data is unavailable?
-    - What method fixes merging conflicts using only unlabeled auxiliary images?
+    plain: can fine-tuned models be combined better when none of the original training data
+      is available?
+    jargon: is there a pre-merge adaptation step that reduces cross-task interference using
+      only unlabeled task-agnostic images?
+    task: how do I cut conflicts between expert checkpoints before merging them without touching
+      any task's training or validation set?
+    practitioner: I only have the expert weights and some random unlabeled images -- can I
+      still improve my merge?
   answered_by:
   - no-task-data
   - ri-context-framing
 - ask:
-    practitioner: What should I read about cross-task interference in model merging?
-    unsorted:
-    - Which paper gives a formal definition of interference between merged models?
-    - How is cross-task interference defined and measured?
+    plain: what does it actually mean for two combined models to conflict with each other?
+    jargon: how is cross-task interference between expert models and a merged model formally
+      defined and quantified?
+    task: how do I measure how much a merged model has drifted from each of the experts it
+      was built from?
+    practitioner: where should I start reading if I want a precise definition of interference
+      in model merging rather than a hand-wavy one?
   answered_by:
   - interference-definition
   - ri-context-framing
 - ask:
-    unsorted:
-    - How much accuracy does RI add on top of TIES and Task Arithmetic?
-    - What are the accuracy gains from Resolving Interference on the 20-task vision benchmark?
-    - Does pre-merge adaptation actually improve state-of-the-art merging methods?
+    plain: how much extra accuracy does adapting experts first add when combining many image
+      classifiers?
+    jargon: what average accuracy gain does pre-merge interference resolution give Task Arithmetic,
+      TIES and TSV-M on the 20-task ViT-B/32 benchmark?
+    task: how much can I expect to gain by preparing each expert before merging instead of
+      merging the checkpoints as they are?
+    practitioner: is a pre-merge adaptation step worth adding on top of the best merging method
+      I already use?
   answered_by:
   - vision-benchmark-gains
   - scale-with-tasks
 - ask:
-    unsorted:
-    - Does RI help when merging many tasks or only a few?
-    - Do the benefits of resolving interference grow with the number of merged experts?
-    - Is interference reduction more useful at 20 tasks than at 8?
+    plain: does adapting models before combining them help more when there are lots of models
+      or just a couple?
+    jargon: do gains from resolving cross-task interference scale with the number of merged
+      task vectors from 8 to 20 tasks?
+    task: I need to merge 20 experts rather than 8 -- does interference reduction matter more
+      at that scale?
+    practitioner: my merge only has a handful of tasks in it; should I bother with pre-merge
+      adaptation?
   answered_by:
   - scale-with-tasks
 - ask:
-    unsorted:
-    - Does RI ever fail to help a merging method?
-    - Why doesn't Resolving Interference improve plain weight averaging?
-    - Which merging baseline gets no benefit from pre-merge adaptation?
+    plain: is there any way of combining models that gets no benefit from adapting the experts
+      first?
+    jargon: why does simple weight averaging fail to gain from RI-adapted task vectors, and
+      what does the scaling coefficient sweep show?
+    task: if I merge by plain weight averaging, do I need to retune the merging coefficient
+      after adapting the experts?
+    practitioner: I average my checkpoints rather than using task arithmetic -- will pre-merge
+      interference reduction do anything for me?
   answered_by:
   - averaging-exception
   - averaging-scaling-diagnosis
 - ask:
-    unsorted:
-    - Does merging with interference reduction generalize to unseen domains?
-    - What are the out-of-distribution results on DomainNet for RI?
-    - Do merged models beat their own expert models on unseen image styles?
+    plain: do models combined this way still work on image styles nobody trained on?
+    jargon: how does pre-merge interference resolution affect merged-model accuracy on held-out
+      DomainNet domains?
+    task: how do I get a merged classifier that transfers to domains outside every expert's
+      training split?
+    practitioner: will a merged model beat the individual domain experts on image styles none
+      of them saw?
   answered_by:
   - domainnet-ood
 - ask:
-    unsorted:
-    - Does optimizing on auxiliary data really reduce interference on the real tasks?
-    - Why would unlabeled out-of-task images help a merged model on its own tasks?
-    - How many steps does the RI loss take to converge?
+    plain: how can training on unrelated unlabeled images fix behaviour on the real tasks?
+    jargon: does minimising the interference objective on auxiliary images reduce measured
+      cross-task interference on the in-task distributions, and how many optimisation steps
+      does it take?
+    task: how many optimisation steps should I run the pre-merge adaptation for before the
+      interference stops dropping?
+    practitioner: can I trust an adaptation loss computed on out-of-task images as a proxy
+      for my actual tasks?
   answered_by:
   - aux-loss-transfers
 - ask:
-    unsorted:
-    - What kind of auxiliary data works best for resolving interference?
-    - Can Gaussian noise or synthetic images be used instead of real data for pre-merge adaptation?
-    - How much does the choice of auxiliary dataset matter for RI?
+    plain: what sort of unlabeled images do you need for the pre-merge step, and does the
+      choice matter much?
+    jargon: how sensitive is interference resolution to the auxiliary distribution, from Gaussian
+      noise and synthetic shapes to ImageNet, MSCOCO and OpenImages?
+    task: which unlabeled image source should I feed the pre-merge adaptation if I cannot
+      use in-task data?
+    practitioner: I have no suitable image corpus lying around -- would random noise or synthetic
+      shapes be enough?
   answered_by:
   - aux-source-robustness
 - ask:
-    unsorted:
-    - How expensive is RI to run per expert model?
-    - What is the GPU time and memory cost of resolving interference before merging?
-    - Does pre-merge adaptation scale to 20 experts computationally?
+    plain: how long does the extra preparation step take per model, and how much GPU memory?
+    jargon: what is the per-expert wall-clock and peak GPU memory cost of interference resolution
+      at 2500 steps for ViT-B/32?
+    task: how do I budget compute for adapting 20 experts before merging them?
+    practitioner: can I afford to run the pre-merge adaptation on a single GPU for every expert
+      I have?
   answered_by:
   - compute-cost
 - ask:
-    unsorted:
-    - Which distance function should be used for the interference-reduction loss?
-    - Is KL-divergence better than MSE for distilling expert outputs during merging adaptation?
-    - How much does the distance metric change RI's merging gains?
+    plain: which way of measuring the difference between two models' outputs works best for
+      the pre-merge step?
+    jargon: does KL-divergence outperform cross-entropy and MSE as the distance in the interference-resolution
+      loss?
+    task: which output-distance loss should I pick when aligning an expert's predictions with
+      the merged model?
+    practitioner: is it worth switching my distillation objective from MSE to KL for pre-merge
+      adaptation?
   answered_by:
   - kl-best-metric
 - ask:
-    practitioner: Do I still need to tune merging hyperparameters after applying RI?
-    unsorted:
-    - How sensitive is merging to the scaling coefficient once interference is resolved?
-    - Can merging hyperparameters be tuned without labeled validation data?
+    plain: do you still have to carefully tune the mixing strength when combining models this
+      way?
+    jargon: how does resolving cross-task interference change sensitivity to merging hyperparameters,
+      and can those hyperparameters be tuned on unlabeled auxiliary data?
+    task: how do I pick a merging scaling coefficient when I have no labeled validation data
+      for the tasks?
+    practitioner: can I just use the default merging coefficient instead of sweeping it on
+      task data?
   answered_by:
   - hyperparameter-insensitivity
   - aux-tuning-fails
 - ask:
-    unsorted:
-    - Is it better to adapt experts before merging or distill the merged model afterwards?
-    - Does multitask distillation on auxiliary data work as well as per-expert interference
-      reduction?
-    - Why adapt each expert instead of the single merged model?
+    plain: is it better to fix each model before combining them or to fix the combined model
+      afterwards?
+    jargon: does per-expert pre-merge interference resolution beat distilling the already-merged
+      multitask model on the same auxiliary data?
+    task: given the same unlabeled images, should I spend them adapting each expert or distilling
+      into the merged model?
+    practitioner: I already have a merged checkpoint -- can I just distill it on auxiliary
+      data rather than redoing the experts?
   answered_by:
   - pre-merge-beats-post-merge
 misreadings:

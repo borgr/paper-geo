@@ -121,92 +121,124 @@ claims:
   evidence: Table 2 and Table 1
 qa:
 - ask:
-    unsorted:
-    - Can synthetic LLM-generated question-answering data replace human-written training data?
-    - Do models trained on synthetic grounded QA match models trained on human datasets like
-      ELI5 and ASQA?
-    - How does Genie-generated data compare to human-written LFQA data for training?
+    plain: can question-answer training data written by a large language model replace a human-written
+      dataset?
+    jargon: how do models finetuned on synthetic content-grounded QA compare with models finetuned
+      on ASQA or ELI5 gold data?
+    task: how do I train a long-form QA model when I have documents but no human-written question-answer
+      pairs?
+    practitioner: should I pay for human-annotated long-form QA data or generate it with an
+      LLM instead?
   answered_by:
   - lfqa-parity
   - reward-vs-gold
   - faithfulness-gain
 - ask:
-    unsorted:
-    - Are automatically generated questions distinguishable from human-written ones?
-    - How natural do synthetic questions look to human annotators compared with Reddit or
-      Google-search questions?
-    - Did Genie pass a Turing-style test on question naturalness?
+    plain: can people tell an automatically generated question from one a person actually
+      wrote?
+    jargon: how do LLM-generated questions fare in a forced-choice naturalness comparison
+      against Reddit-sourced and search-log questions?
+    task: how do I check whether the questions in my generated dataset read like real user
+      questions?
+    practitioner: will reviewers or annotators notice that the questions in my synthetic QA
+      set were machine-written?
   answered_by:
   - naturalness-turing
 - ask:
-    unsorted:
-    - Does filtering synthetic data actually improve its quality, and by how much?
-    - What do NLI-faithfulness and reward-model filters buy when generating synthetic QA data?
-    - How much does Genie's filtering stage change human quality ratings?
+    plain: does throwing away the bad examples from generated training data actually make
+      it better, and by how much?
+    jargon: what do faithfulness and reward-model filters contribute to the human-rated quality
+      of generated content-grounded QA?
+    task: how do I raise the quality of an LLM-generated QA dataset without rewriting examples
+      by hand?
+    practitioner: is it worth adding a filtering stage to my synthetic data pipeline, or can
+      I train on the raw generations?
   answered_by:
   - filter-effect
   - clean-content-better
 - ask:
-    unsorted:
-    - Is synthetic training data more or less faithful to the grounding document than human
-      data?
-    - Does training on generated grounded QA reduce hallucination relative to ELI5 and ASQA?
-    - How do k-Precision and ANLI faithfulness scores compare across human and synthetic training
-      sets?
+    plain: do answers in machine-generated training data stick to the source document better
+      than answers in human-written datasets?
+    jargon: how do k-Precision and ANLI faithfulness scores of models trained on synthetic
+      grounded QA compare with ASQA- and ELI5-trained models?
+    task: how do I pick training data that makes a grounded generation model stop making things
+      up?
+    practitioner: if hallucination is my main problem, should I train on generated grounded
+      data or on an existing human QA dataset?
   answered_by:
   - faithfulness-gain
   - summarization-mixed
 - ask:
-    practitioner: Do I need in-domain synthetic data for medical question answering, or will
-      general-domain data do?
-    unsorted:
-    - Does generating training data in the target domain help on PubMed long-form QA?
-    - Is domain-matched synthetic data worth it for content-grounded generation?
+    plain: does it help to build the generated training data from documents in the same subject
+      area as the task?
+    jargon: how much does domain-matched synthetic grounded QA gain over out-of-domain synthetic
+      data on PubMed-QA?
+    task: how do I get a grounded QA model working on medical documents when there is no medical
+      training set?
+    practitioner: do I need to generate data from my own domain's documents, or will generated
+      data from Wikipedia passages do?
   answered_by:
   - out-of-domain-medical
 - ask:
-    unsorted:
-    - How much cheaper is generating a grounded QA dataset with an LLM than paying annotators?
-    - What does it cost to build 300K content-grounded examples synthetically?
-    - How fast is automatic content-grounded dataset creation compared with crowdsourcing?
+    plain: how much money and time does it take to build a large question-answer dataset with
+      a language model instead of paying people?
+    jargon: what is the per-example API cost of synthesising content-grounded QA relative
+      to expert annotation rates?
+    task: how do I budget for creating a few hundred thousand grounded training examples?
+    practitioner: can I afford to generate a grounded QA dataset myself rather than commissioning
+      annotators?
   answered_by:
   - cost
 - ask:
-    unsorted:
-    - Is synthetic data less lexically diverse than human-written data?
-    - How large and how varied are the released Wish-QA and Wish-Summarization datasets?
-    - Does automatically generated grounded data collapse into repetitive vocabulary?
+    plain: does text generated by a language model end up repetitive and narrower in vocabulary
+      than text written by people?
+    jargon: how does the vocd-D lexical diversity of synthesised grounded datasets compare
+      with their human-written counterparts?
+    task: how do I tell whether my generated dataset has collapsed into a few repeated phrasings?
+    practitioner: should I worry that a 300K-example generated dataset will be less varied
+      than a small human one?
   answered_by:
   - diversity-scale
 - ask:
-    unsorted:
-    - Does the Genie recipe work for summarization and information extraction, not just QA?
-    - Can one generate-and-filter pipeline cover several content-grounded tasks?
-    - What tasks besides long-form QA has Genie been applied to?
+    plain: does the same recipe for generating training data work for summarising documents
+      and pulling facts out of them, not just answering questions?
+    jargon: does a generate-then-filter synthetic data pipeline transfer across content-grounded
+      tasks such as summarization and information extraction?
+    task: how do I create training data for document summarisation and information extraction
+      from the same set of documents?
+    practitioner: if I already generate synthetic QA this way, can I reuse the pipeline for
+      my summarisation task by swapping the few-shot examples?
   answered_by:
   - summarization-mixed
   - ie-generality
   - context-contribution
 - ask:
-    practitioner: What should I read about generating synthetic training data grounded in
-      documents?
-    unsorted:
-    - Which paper introduced a general pipeline for building content-grounded datasets for
-      RAG-style tasks?
-    - Where does Genie sit relative to Self-Instruct and Unnatural Instructions?
+    plain: what work should I read on automatically building training sets for tasks that
+      must stay grounded in supplied documents?
+    jargon: which paper extends instruction-generation pipelines from model-knowledge instructions
+      to content-grounded data synthesis?
+    task: where do I start reading about generating training data for retrieval-augmented
+      and document-grounded tasks?
   answered_by:
   - context-contribution
 - ask:
-    unsorted:
-    - Is ASQA or ELI5 the better long-form QA dataset to train on?
-    - What evidence is there that ELI5 is noisier than carefully annotated LFQA datasets?
-    - Which human LFQA dataset transfers better across test sets, ASQA or ELI5?
+    plain: of the two popular long-form question answering datasets built from Reddit and
+      from search queries, which one is better to train on?
+    jargon: which long-form QA training set transfers better across test sets, ASQA or ELI5?
+    task: how do I choose between ASQA and ELI5 as the training set for a long-form answer
+      generator?
+    practitioner: should I train my long-form answer model on ELI5 or on ASQA?
   answered_by:
   - context-asqa-eli5
 - ask:
-    unsorted:
-    - Which LLMs were used to generate the synthetic data, and does the choice matter?
-    - Does a purely pretrained generator like Falcon-40B work as well as an aligned Llama-2-70B?
+    plain: does it matter which large language model is used to generate the training data,
+      and does an aligned model beat a plain pretrained one?
+    jargon: how sensitive is content-grounded data synthesis to the choice of generator LLM,
+      aligned versus purely pretrained?
+    task: how do I pick which model to use as the generator when synthesising grounded training
+      data?
+    practitioner: can I run a synthetic grounded data pipeline with an open pretrained model,
+      or do I need an instruction-aligned one?
   answered_by:
   - context-contribution
   - lfqa-parity

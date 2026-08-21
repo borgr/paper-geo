@@ -134,95 +134,125 @@ claims:
     the measured compression ratios of top-downloaded models, not a measured saving.
 qa:
 - ask:
-    unsorted:
-    - Can neural network weights be compressed without losing any accuracy?
-    - Is lossless compression of model files actually worth it, or are weights high-entropy?
-    - How much smaller can a model file get with lossless compression?
+    plain: can a model file be made smaller without changing the weights at all?
+    jargon: do BF16 and FP32 neural network weights carry enough redundancy for lossless entropy
+      coding to pay off?
+    task: how do I shrink the download size of a model checkpoint without quantizing or pruning
+      it?
+    practitioner: is it worth storing my models compressed, or are the weights too close to
+      random to gain anything?
   answered_by:
   - exponent-skew
   - bf16-savings
   - context-lossless
 - ask:
-    unsorted:
-    - Why are floating-point model weights compressible at all?
-    - What part of a float32 parameter carries the redundancy in model weights?
-    - Where does the compressibility of neural network parameters come from?
+    plain: why are the numbers inside a trained model compressible when they look random?
+    jargon: which byte of an FP32 or BF16 parameter carries the redundancy that entropy coders
+      exploit, the sign, exponent or mantissa?
+    task: how do I work out which part of a weight tensor to target for compression?
+    practitioner: should I expect gains from compressing the mantissa bits of my checkpoints?
   answered_by:
   - exponent-skew
   - lz-only-useless
 - ask:
-    unsorted:
-    - How much does ZipNN beat zstd by on Llama 3?
-    - Does a model-specific compressor do better than a general-purpose one like Zstd?
-    - What compression ratio and speed does ZipNN get versus zstd?
+    plain: is a compressor built for model files better than a general-purpose one on a big
+      language model?
+    jargon: how do ZipNN compression ratio and throughput compare with Zstd at its default
+      level on BF16 and FP32 checkpoints?
+    task: how do I get better than gzip- or zstd-level compression on the model files I ship?
+    practitioner: I already zstd my checkpoints in the storage pipeline, would switching to
+      a model-aware compressor gain me anything?
   answered_by:
   - vs-zstd
   - clean-speedup
 - ask:
-    unsorted:
-    - Why does ZipNN skip Lempel-Ziv and use Huffman coding only?
-    - Do LZ4 or Snappy compress model weights?
-    - Is repetition removal useful on model tensors?
+    plain: does looking for repeated byte patterns help when compressing model weights?
+    jargon: is the Lempel-Ziv stage worth keeping over Huffman-only entropy coding on floating-point
+      model tensors?
+    task: how do I pick a compression algorithm for weight tensors when speed matters as much
+      as ratio?
+    practitioner: can I just use LZ4 or Snappy on my model files since they are the fastest
+      option?
   answered_by:
   - huffman-only
   - lz-only-useless
 - ask:
-    unsorted:
-    - Which models compress much better than a third off, and why?
-    - What are clean models in the context of lossless model compression?
-    - Why do RoBERTa and T5 compress far better than Llama?
+    plain: why do some trained models shrink much more than others when compressed losslessly?
+    jargon: why do checkpoints that were rounded or cast between parameter types compress
+      below the exponent-entropy limit?
+    task: how do I predict how well a given checkpoint will compress before running a compressor
+      over it?
+    practitioner: my model was saved after converting from FP32, should I expect better than
+      the usual one-third saving?
   answered_by:
   - clean-models
 - ask:
-    unsorted:
-    - How fast can lossless model decompression run on a many-core server?
-    - What decompression throughput is achievable when loading compressed models?
-    - Does compressed model loading become a bottleneck at multi-GB/s?
+    plain: is decompressing a model fast enough that it does not hold up loading?
+    jargon: what compression and decompression throughput is reachable with multi-worker NUMA-aware
+      chunking on model files?
+    task: how do I saturate a network link or GPU load path while decompressing model weights
+      on the fly?
+    practitioner: if I keep my served models compressed on disk, will startup time get worse?
   answered_by:
   - throughput
   - serving-overhead
 - ask:
-    unsorted:
-    - Can gradients and optimizer states be losslessly compressed too?
-    - Do optimizer states compress better or worse than model weights?
-    - Is there anything to gain from compressing FSDP gradient traffic?
+    plain: do gradients and optimizer state shrink as well as the model weights during training?
+    jargon: how do compression ratios for optimizer states and gradients compare with the
+      model checkpoint in RoBERTa fine-tuning?
+    task: how do I cut the volume of gradient and optimizer traffic in distributed fine-tuning
+      without lossy tricks?
+    practitioner: is compressing the optimizer state in my training pipeline worth the CPU
+      cost?
   answered_by:
   - gradients-optimizers
 - ask:
-    unsorted:
-    - Is delta compression worth it for training checkpoints?
-    - How much space can be saved storing consecutive checkpoints as deltas?
-    - Does storing a periodic full base ruin delta compression of checkpoints?
+    plain: is it cheaper to store a training checkpoint as the difference from an earlier
+      one?
+    jargon: how does delta compression of training checkpoints hold up when the base checkpoint
+      is several epochs back?
+    task: how do I store a long series of training checkpoints without keeping a full copy
+      of each one?
+    practitioner: I save a checkpoint every epoch, should I keep periodic full bases and deltas
+      in between?
   answered_by:
   - delta-checkpoints
   - auto-selection
 - ask:
-    unsorted:
-    - Can many fine-tunes of the same base model be stored cheaply together?
-    - How much do sibling fine-tuned models compress against each other?
-    - Is it cheaper to store model variants as deltas from a shared base?
+    plain: can many fine-tuned versions of the same base model be stored cheaply together?
+    jargon: how much do sibling fine-tunes of one pretrained backbone compress as pairwise
+      deltas versus standalone?
+    task: how do I cut the storage cost of hosting dozens of fine-tunes of the same backbone?
+    practitioner: I host several task-specific fine-tunes of one base model, should I store
+      them as deltas from each other?
   answered_by:
   - sibling-models
 - ask:
-    practitioner: What should I read about reducing storage and bandwidth cost for model hubs?
-    unsorted:
-    - Which paper argues for lossless compression of AI models rather than quantization?
-    - Where should I start reading about compressing model files without changing the weights?
+    plain: what should I read first about making model files smaller without touching the
+      weights?
+    jargon: which work argues for lossless compression of model repositories rather than quantization
+      or pruning?
+    task: where do I start reading if I want to cut model hub storage and bandwidth costs
+      losslessly?
   answered_by:
   - context-lossless
   - context-hub-scale
 - ask:
-    unsorted:
-    - How much network traffic could model compression save Hugging Face?
-    - How large is model download traffic at a big model hub?
-    - What is the claimed ExaByte-per-year saving from compressing model downloads?
+    plain: how much download traffic do the big model-sharing sites actually move?
+    jargon: what storage footprint and daily request volume does Hugging Face report, and
+      what bandwidth could lossless compression avoid?
+    practitioner: is the bandwidth saving from compressing model downloads big enough to justify
+      changing a hub's pipeline?
   answered_by:
   - context-hub-scale
 - ask:
-    unsorted:
-    - Does storing models compressed slow down inference server startup?
-    - What is the load time penalty when a Granite BF16 model is kept compressed on disk?
-    - Can vLLM load a compressed model without extra latency?
+    plain: does keeping a model compressed on disk make the server slower to start?
+    jargon: what is the end-to-end load latency for a compressed BF16 checkpoint read from
+      a clustered file system to GPU memory?
+    task: how do I load a compressed model into GPU memory without adding latency to inference
+      server startup?
+    practitioner: can I store my 16GB served model compressed without paying for it at load
+      time?
   answered_by:
   - serving-overhead
 misreadings:

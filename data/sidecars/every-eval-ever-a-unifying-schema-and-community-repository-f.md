@@ -143,107 +143,154 @@ claims:
   evidence: Section 3.1 and Appendix E.1
 qa:
 - ask:
-    practitioner: Where can I find a shared format for LLM evaluation metadata?
-    unsorted:
-    - Is there a standard format for reporting AI benchmark results?
-    - What schema standardizes evaluation results across leaderboards and harnesses?
+    plain: is there an agreed way to write down the details of a benchmark run so other people
+      can reuse the score?
+    jargon: what schema unifies evaluation result records across harnesses, leaderboards and
+      reporting formats?
+    task: how do I publish my benchmark results in a format other people can aggregate with
+      theirs?
+    practitioner: should I log my eval runs into a shared schema instead of my own CSV columns?
   answered_by:
   - context-standardization-gap
   - schema-design-partial-records
 - ask:
-    practitioner: What should I read about why the same model gets different benchmark scores?
-    unsorted:
-    - Is there a good paper on cross-framework comparability of LLM evaluations?
-    - Where do I start reading about evaluation reproducibility and metadata?
+    plain: what should I read first about why the same benchmark score means different things
+      in different tools?
+    jargon: which work covers cross-framework comparability and metadata provenance for LLM
+      evaluation results?
+    task: where do I start reading if I need to compare scores reported by different evaluation
+      pipelines?
+    practitioner: I keep getting different numbers than a published leaderboard, is there
+      a paper that explains what to check?
   answered_by:
   - context-entry-point
   - context-standardization-gap
 - ask:
-    unsorted:
-    - How big is the Every Eval Ever dataset?
-    - How many models and benchmarks are covered by the crowdsourced evaluation datastore?
-    - How many evaluation formats have been unified into one schema?
+    plain: how many models and tests are covered by the big crowdsourced collection of AI
+      evaluation results?
+    jargon: what is the scale of the Every Eval Ever datastore in models, benchmarks and reporting
+      formats?
+    task: where can I find already-collected benchmark scores for thousands of models instead
+      of running them?
+    practitioner: is the collection large enough that my model or my benchmark is likely already
+      in it?
   answered_by:
   - datastore-scale
 - ask:
-    unsorted:
-    - How often do leaderboards report which inference platform or API was used?
-    - Is temperature usually reported alongside published benchmark scores?
-    - Which evaluation metadata fields are most often missing in practice?
+    plain: when people publish benchmark scores, which run details do they usually leave out?
+    jargon: what are the field fill rates for inference platform, decoding temperature and
+      parameter count across evaluation reporting formats?
+    task: which metadata do I need to chase down myself before I can trust a reported score?
+    practitioner: can I tell from a published leaderboard entry what serving stack and sampling
+      settings produced the number?
   answered_by:
   - inference-platform-unreported
   - metadata-fill-rates
 - ask:
-    unsorted:
-    - Why do reported WikiText perplexity numbers differ between papers?
-    - Does token versus word normalization change perplexity a lot?
-    - Can perplexity numbers from lm-eval-harness be compared to GPTQ script numbers?
+    plain: why do two papers report different perplexity numbers on the same WikiText text
+      and the same model?
+    jargon: how much does token-level versus word-level normalization shift WikiText perplexity
+      for Llama-2-7B?
+    task: how do I make my perplexity number comparable to one reported by a different codebase?
+    practitioner: my perplexity is higher than the published one for the same model, is the
+      normalization denominator the reason?
   answered_by:
   - perplexity-normalization
 - ask:
-    unsorted:
-    - How closely can HELM results be reproduced locally at the instance level?
-    - What is the per-instance agreement between official HELM records and local reruns?
-    - How reproducible are published evaluation harness scores?
+    plain: if I rerun a published evaluation myself, how close do the per-example results
+      come out?
+    jargon: what per-instance agreement do local reruns of official HELM records achieve across
+      comparable scenarios?
+    task: how do I check whether my local rerun of a public benchmark actually matches the
+      official record?
+    practitioner: can I trust the official numbers for a model, or should I rerun the benchmark
+      myself?
   answered_by:
   - helm-reproduction-agreement
   - helm-mismatch-causes
 - ask:
-    unsorted:
-    - What causes mismatches when rerunning a public evaluation?
-    - Can instance-level records explain why two runs of the same benchmark disagree?
-    - What kinds of reproducibility bugs show up in HELM reruns?
+    plain: when two runs of the same benchmark disagree, what is usually going wrong?
+    jargon: what concrete failure modes explain instance-level disagreement between official
+      and reproduced HELM runs?
+    task: how do I debug why my rerun of a public benchmark gives different scores from the
+      released ones?
+    practitioner: my rerun disagrees with the official record on a handful of items, is that
+      a real difference or a pipeline bug?
   answered_by:
   - helm-mismatch-causes
 - ask:
-    unsorted:
-    - Does the choice of agent scaffold change cost without changing accuracy?
-    - How much cheaper is Codex than OpenClaw on CocoaBench at the same accuracy?
-    - Is agent accuracy enough to compare coding agents?
+    plain: do two coding agents that solve the same fraction of tasks cost the same money
+      and time?
+    jargon: how do agentic scaffolds with an identical backbone differ in cost and wall-clock
+      latency at matched accuracy on CocoaBench?
+    task: how do I choose between two coding agent harnesses when their accuracy is the same?
+    practitioner: is accuracy enough for me to pick a coding agent, or do I need the dollars-per-task
+      numbers too?
   answered_by:
   - agentic-scaffold-cost
   - scaffold-backbone-interaction
 - ask:
-    practitioner: Can I pick an agent scaffold independently of the underlying LLM?
-    unsorted:
-    - Does the best agent scaffold depend on which model backbone it runs on?
-    - Do scaffold rankings flip between Claude Opus versions on CORE-Bench Hard?
+    plain: does the best agent wrapper change depending on which underlying model you plug
+      into it?
+    jargon: do scaffold rankings on CORE-Bench Hard invert across Claude Opus backbone versions?
+    task: how do I pick an agent scaffold when I plan to swap the backbone model later?
+    practitioner: if I upgrade my backbone model, will the agent framework I already chose
+      still be the better one?
   answered_by:
   - scaffold-backbone-interaction
 - ask:
-    unsorted:
-    - What can Item Response Theory tell us about benchmark difficulty?
-    - Which benchmark has harder and more variable items, GPQA Diamond or Wordle Arena?
-    - How much instance-level data is needed to fit a 1PL IRT model across benchmarks?
+    plain: can you tell which benchmark has harder individual questions rather than just lower
+      average scores?
+    jargon: what does a 1PL IRT fit to instance-level records show about item difficulty and
+      its spread across GPQA Diamond, JudgeBench and Wordle Arena?
+    task: how do I compare benchmarks at the item level instead of comparing their headline
+      accuracies?
+    practitioner: do I have enough per-item results across models to fit an item-difficulty
+      model on my benchmark?
   answered_by:
   - irt-instance-level
 - ask:
-    unsorted:
-    - How much would it cost to rerun all these collected evaluations?
-    - What is the estimated inference cost of reproducing 230,000 model-benchmark pairs?
-    - Is reusing published evaluation results actually cheaper than rerunning them?
+    plain: how much would it cost in API bills to rerun every collected model-and-benchmark
+      evaluation from scratch?
+    jargon: what is the estimated inference spend to reproduce roughly 230,000 model-benchmark
+      evaluation pairs, with and without an LLM judge?
+    task: how do I justify reusing published evaluation results instead of budgeting to rerun
+      them?
+    practitioner: is it cheaper for me to reuse aggregated published eval results than to
+      rerun the benchmarks myself?
   answered_by:
   - reproduction-cost
 - ask:
-    unsorted:
-    - Which models and benchmarks dominate reported AI evaluations?
-    - Is evaluation activity concentrated on a few commercial models?
-    - How long is the tail of benchmarks that get evaluated?
+    plain: are reported AI benchmark results spread across many systems, or piled onto a few
+      popular ones?
+    jargon: how concentrated is evaluation activity across models and benchmarks in aggregated
+      evaluation records?
+    task: how do I find out whether the model or benchmark I care about has any reported results
+      at all?
+    practitioner: if my model is not from a big lab, should I expect to find published evaluations
+      of it?
   answered_by:
   - evaluation-concentration
 - ask:
-    unsorted:
-    - Does a records format require complete metadata to accept a result?
-    - What happens to conflicting or duplicate evaluation records in a shared repository?
-    - How does Every Eval Ever handle runs with missing generation parameters?
+    plain: can a shared collection of benchmark results accept a run that is missing some
+      of its settings?
+    jargon: how does a minimal-required-field schema with per-run UUIDs handle partial, duplicate
+      and conflicting evaluation records?
+    task: how do I contribute an old evaluation run when I no longer know the temperature
+      or the serving platform?
+    practitioner: my logs are incomplete, will my results be rejected from a shared evaluation
+      repository?
   answered_by:
   - schema-design-partial-records
   - schema-community-process
 - ask:
-    unsorted:
-    - How was the Every Eval Ever schema designed and who decided the fields?
-    - What criteria decided which metadata fields go in an evaluation reporting schema?
-    - Who governs changes to a community evaluation schema?
+    plain: who decided which run details a shared benchmark-reporting format should ask for?
+    jargon: what inclusion criteria and community feedback process determined the fields of
+      the Every Eval Ever schema?
+    task: how do I decide which metadata fields to require when designing an evaluation reporting
+      format?
+    practitioner: can I trust that a shared evaluation schema asks for fields my group actually
+      needs, and can I get one added?
   answered_by:
   - schema-community-process
 misreadings:

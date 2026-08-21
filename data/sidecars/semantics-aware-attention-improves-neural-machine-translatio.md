@@ -125,88 +125,123 @@ claims:
   evidence: Table 4 and Section 3
 qa:
 - ask:
-    unsorted:
-    - How can semantic structure be added to a Transformer machine translation model?
-    - Is there a way to inject semantics into NMT attention without adding parameters?
-    - What does scene-aware attention do in a translation Transformer?
+    plain: how can meaning structure from a sentence analysis be built into a machine translation
+      model?
+    jargon: how is UCCA scene structure injected into Transformer NMT self-attention without
+      extra parameters?
+    task: how do I add semantic structure to my Transformer translation model without changing
+      its size or inference code?
+    practitioner: is there a way to use a semantic parser to improve my translation system
+      without training extra parameters?
   answered_by:
   - parameter-free
   - sasa-beats-transformer
 - ask:
-    unsorted:
-    - Does adding semantics actually improve BLEU in neural machine translation?
-    - How much does scene-aware self-attention improve translation quality?
-    - What BLEU gains does SASA get over a vanilla Transformer?
+    plain: does giving a translation model sentence-meaning structure actually produce better
+      translations?
+    jargon: what BLEU improvement does scene-masked self-attention give over a vanilla Transformer
+      baseline across language pairs?
+    task: how much translation quality can I expect to gain by masking one attention head
+      with semantic scene structure?
+    practitioner: are the BLEU gains from semantics-aware attention big and consistent enough
+      to be worth adopting?
   answered_by:
   - sasa-beats-transformer
   - sasa-sign-test
 - ask:
-    unsorted:
-    - Is semantic structure more useful than syntactic structure for Transformer MT?
-    - Does UCCA-based masking beat dependency-based masking like PASCAL?
-    - 'Semantics versus syntax for structure-aware neural machine translation: which wins?'
+    plain: for translation models, is it better to feed in grammar structure or meaning structure?
+    jargon: does UCCA scene masking outperform dependency-based attention masking such as
+      PASCAL and UDISCAL in Transformer NMT?
+    task: I already mask attention with parse trees for translation — would switching to semantic
+      scenes help more?
+    practitioner: should I use a semantic graph or a syntactic parse to guide attention in
+      my translation model?
   answered_by:
   - sasa-beats-syntax
   - semantics-higher-layers
 - ask:
-    unsorted:
-    - Does combining syntax and semantics in the same translation model help?
-    - When is it worth using both a UD mask and a UCCA scene mask?
-    - Do typologically distant language pairs benefit more from combined syntactic and semantic
-      masks?
+    plain: does using both grammar structure and meaning structure together help a translation
+      model more than either alone?
+    jargon: does combining a UD-based syntactic attention mask with a UCCA scene mask improve
+      BLEU over either mask alone, and for which typologies?
+    task: how do I decide whether to stack a syntactic mask and a semantic mask in the same
+      encoder for my language pair?
+    practitioner: my target language is typologically far from English — would combining syntactic
+      and semantic attention masks pay off?
   answered_by:
   - combination-distant-languages
   - combination-margin
 - ask:
-    unsorted:
-    - Can source-side semantics be injected through the decoder rather than the encoder?
-    - What is scene-aware cross-attention and does it help translation?
-    - Is encoder or decoder injection better for semantic structure in NMT?
+    plain: can meaning structure from the input sentence be fed into the part of a translation
+      model that writes the output?
+    jargon: does injecting source-side UCCA scene structure through decoder cross-attention
+      improve BLEU compared with encoder self-attention masking?
+    task: where do I attach a source semantic mask, encoder self-attention or decoder cross-attention?
+    practitioner: should I put the scene mask on the encoder or the decoder side of my translation
+      model?
   answered_by:
   - sacra-decoder
   - sasa-beats-transformer
 - ask:
-    unsorted:
-    - Should an attention mask be hard binary or softly scaled by graph distance?
-    - Does allowing some out-of-scene attention through help scene-aware masking?
-    - Which mask shape works best for UCCA scene masking in a Transformer?
+    plain: when you restrict what a translation model can look at, is a strict on-off restriction
+      better than a gentle one?
+    jargon: for scene-based attention masking, does a hard binary mask beat a scaled mask
+      or a Gaussian over graph distance?
+    task: how do I choose the mask shape when constraining an attention head with semantic
+      scene boundaries?
+    practitioner: should I let some out-of-scene attention leak through my mask, or zero it
+      out completely?
   answered_by:
   - binary-mask-best
 - ask:
-    unsorted:
-    - How many attention heads and which layer should a linguistic mask be applied to?
-    - Does masking all encoder layers work better than masking one for scene-aware attention?
-    - Where in the encoder should UCCA scene information be injected?
+    plain: how much of a translation model should be changed to feed in sentence structure,
+      and which part of it?
+    jargon: how many attention heads and which encoder layer should carry a UCCA scene mask
+      in Transformer NMT?
+    task: how do I pick the layer and number of heads to apply a linguistic attention mask
+      to?
+    practitioner: do I need to mask every encoder layer, or is one head in one layer enough?
   answered_by:
   - one-head-one-layer
   - semantics-higher-layers
 - ask:
-    unsorted:
-    - Does scene-aware attention specifically fix long-distance dependency errors in translation?
-    - How does SASA perform on challenge sets with long dependencies?
-    - Are the gains from semantic masking concentrated on syntactically hard sentences?
+    plain: do meaning-based translation improvements come mainly from handling very long sentences
+      with far-apart words?
+    jargon: are scene-masked attention gains concentrated on challenge sets with long-distance
+      dependencies?
+    task: how do I check whether a semantics-aware translation gain comes from long-distance
+      dependency resolution?
+    practitioner: my inputs have lots of long-range dependencies — is that where semantic
+      attention masking pays off most?
   answered_by:
   - long-dependency-challenge
 - ask:
-    unsorted:
-    - Does splitting sentences into semantic scenes before translating help BLEU?
-    - How does the SemSplit sentence-splitting pipeline compare to a plain Transformer?
-    - Is UCCA-based preprocessing at inference time a good idea for NMT?
+    plain: is it a good idea to break a sentence into smaller meaning units and translate
+      each one separately?
+    jargon: how does a UCCA-based scene-splitting inference pipeline compare with a vanilla
+      Transformer on BLEU?
+    task: how do I translate long sentences — split them into semantic clauses first, or feed
+      them whole?
+    practitioner: should I preprocess my source sentences by splitting them into semantic
+      scenes before translating?
   answered_by:
   - semsplit-negative
 - ask:
-    practitioner: What work should I read on incorporating linguistic structure into neural
-      machine translation?
-    unsorted:
-    - Which paper first put semantic graphs into a Transformer MT model?
-    - Where should I start reading about semantics-aware neural machine translation?
+    plain: what should I read first about using sentence-meaning structure in machine translation?
+    jargon: which work first injected semantic graph structure, rather than syntax, into a
+      Transformer NMT model?
+    task: where do I start reading if I want to bring semantic representations into neural
+      translation?
   answered_by:
   - first-semantic-transformer-nmt
   - parameter-free
 - ask:
-    unsorted:
-    - What kind of translation errors does scene-aware attention fix?
-    - Does semantic scene information help word-sense disambiguation in translation?
+    plain: what kinds of translation mistakes get fixed when a model is given the meaning
+      structure of the sentence?
+    jargon: which error types account for the BLEU gains from UCCA scene-masked attention
+      in Transformer NMT?
+    practitioner: will semantics-aware attention fix the specific errors I see, or just move
+      average BLEU?
   answered_by:
   - long-dependency-challenge
   - sasa-beats-transformer

@@ -95,79 +95,108 @@ one_liner: A statistical framework for game-based LLM evaluation that splits eac
   and games.
 qa:
 - ask:
-    practitioner: What should I read about turning game or arena outcomes into interpretable
-      model skills?
-    unsorted:
-    - Is there work on statistical models of LLM performance in two-player games?
-    - How can invalid moves and timeouts be used in LLM evaluation instead of being thrown
-      away?
+    plain: is there research on scoring language models by how often they crash or break the
+      rules of a game, not just who wins?
+    jargon: what statistical framework separates reliability (timeouts, illegal moves) from
+      proficiency (win/draw/loss) in LLM two-player game evaluation?
+    task: how do I turn logged game matches with timeouts and rule violations into an evaluation
+      signal instead of dropping those matches?
+    practitioner: should I keep the forfeited and timed-out matches in my model-vs-model game
+      evaluation?
   answered_by:
   - reliability-vs-proficiency
   - invalid-moves-as-signal
 - ask:
-    unsorted:
-    - How many latent dimensions are needed to model LLM game outcomes?
-    - How was the number of skill dimensions chosen in the TextArena skill model?
-    - What skill-space dimensionality did the game-based LLM evaluation framework select?
+    plain: how many separate abilities do you need to explain who wins language-model games?
+    jargon: how was the latent dimensionality d selected for the multidimensional TextArena
+      game-outcome model?
+    task: how do I pick the number of latent skill factors when fitting a game-outcome model
+      to match records?
+    practitioner: if I fit a latent skill model to my own match logs, how many dimensions
+      should I start with?
   answered_by:
   - four-dimensions
 - ask:
-    unsorted:
-    - How much data does it take to fit a latent-skill model of arena outcomes?
-    - How large is the TextArena dataset used for game-based LLM evaluation?
-    - How many models, games and matches are in the TextArena traces?
+    plain: how many models and recorded games went into fitting the skill model of language-model
+      matches?
+    jargon: what is the scale of the TextArena trace corpus used to fit the multidimensional
+      game-outcome model, and what match-count filter is applied per game?
+    task: how much match data do I need before a latent skill model of LLM games can be fit?
+    practitioner: can I rely on existing public TextArena traces instead of running thousands
+      of my own matches?
   answered_by:
   - dataset-scale
 - ask:
-    practitioner: Can I compare two LLMs by their skill profile?
-    unsorted:
-    - Which models are most similar to deepseek-r1 in game-playing behaviour?
-    - How do you measure similarity between LLMs' latent skills from match data?
+    plain: which language models play games in the most similar way to deepseek-r1?
+    jargon: which models have the closest cosine similarity in fitted 4-dimensional latent
+      skill space to deepseek-r1?
+    task: how do I find which models are behavioural near-neighbours of a given model using
+      only game match records?
+    practitioner: can I use game-derived skill profiles to pick a cheaper stand-in for deepseek-r1?
   answered_by:
   - skill-profile-similarity
 - ask:
-    unsorted:
-    - Do the latent skills learned from game outcomes mean anything interpretable?
-    - What do rotated skill dimensions in the TextArena model correspond to?
-    - Can a factor rotation separate avoiding timeouts from avoiding invalid moves?
+    plain: do the hidden abilities found from game results correspond to anything a person
+      can name?
+    jargon: after geomin rotation, what do the axes of the 4-dimensional latent skill space
+      correspond to, and does rotation affect model fit?
+    task: how do I make latent factors from game outcomes interpretable as timeout-avoidance
+      and rule-following?
+    practitioner: if I fit factors to my match data, can I actually read off which axis means
+      following instructions?
   answered_by:
   - geomin-interpretable-axes
   - rotation-invariance
 - ask:
-    unsorted:
-    - Are the latent skills in a multidimensional game model uniquely identified?
-    - Does rotating the skill space change predictions or fit quality?
-    - What identifiability problems affect latent skill models of match outcomes?
+    plain: if a model of game results uses several hidden abilities, are those abilities pinned
+      down uniquely?
+    jargon: are latent skills in a multidimensional game-outcome model identified only up
+      to an orthogonal rotation, and does the rotation change predictive performance?
+    task: how should I handle rotational indeterminacy when reporting latent skill scores
+      estimated from match outcomes?
   answered_by:
   - rotation-invariance
 - ask:
-    unsorted:
-    - Does instruction-following skill in games predict math benchmark performance?
-    - How do TextArena-derived skills correlate with MATH and IFEval?
-    - Can game-based evaluation predict performance on mathematical problem solving?
+    plain: does being good at following game rules go together with being good at math?
+    jargon: how does the TextArena-derived complex instruction-following skill correlate with
+      unidimensional IRT abilities fit to MATH versus IFEval?
+    task: how do I check whether a skill estimated from game play tracks a math benchmark
+      or an instruction-following benchmark?
+    practitioner: can I use game-based scores as a proxy for math benchmark performance instead
+      of running MATH?
   answered_by:
   - math-vs-ifeval
 - ask:
-    unsorted:
-    - Can a game-based evaluation framework rank LLMs by how well they follow complex instructions?
-    - How do you rank models by reliability rather than win rate?
-    - What does the instruction-following ranking from TextArena outcomes measure?
+    plain: can you rank language models by how reliably they follow complicated instructions,
+      using only game results?
+    jargon: what does the rotated Skill 1 axis rank the 57 TextArena models on, and how does
+      it relate to invalid-move avoidance?
+    task: how do I rank models by instruction-following reliability rather than by raw win
+      rate?
+    practitioner: which model should I pick if I care most about it not emitting malformed
+      or illegal actions?
   answered_by:
   - model-ranking
   - geomin-interpretable-axes
 - ask:
-    unsorted:
-    - Does one skill explain LLM performance across all text games?
-    - Do different games depend on different latent skills?
-    - What do the per-game loadings in the TextArena game-outcome model show?
+    plain: do different text games test different abilities, or is one general ability enough?
+    jargon: what do the fitted per-game valid-play loadings show about which latent dimensions
+      govern win/draw/loss outcomes across games?
+    task: how do I tell which games in a suite probe which latent skill before choosing an
+      evaluation set?
+    practitioner: can I evaluate a model on one game and assume the ranking carries over to
+      the rest?
   answered_by:
   - game-loadings
 - ask:
-    unsorted:
-    - Does the TextArena game-outcome model account for first-mover advantage in two-player
-      games?
-    - How are draws and position bias handled when modelling LLM matches?
-    - Is the advantage of moving first estimated in game-based LLM evaluation?
+    plain: does going first give an advantage in language-model games, and is that taken into
+      account?
+    jargon: are first-mover position-bias terms and a per-game draw margin estimated in the
+      premature-termination and win/draw/loss components?
+    task: how do I control for who moved first when estimating model skill from two-player
+      match records?
+    practitioner: do I need to alternate which model moves first, or can the model correct
+      for it?
   answered_by:
   - position-bias
 terminology:

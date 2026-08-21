@@ -113,78 +113,105 @@ claims:
     topic explicitly, are missed by design.
 qa:
 - ask:
-    unsorted:
-    - How precise can an automatic argument retrieval system be over a very large news corpus?
-    - What top-k precision does corpus-wide evidence retrieval achieve?
-    - Can argument mining reach usable precision for the first few retrieved arguments?
+    plain: how accurate are the top results when a computer searches a huge news archive for
+      arguments about a debate topic?
+    jargon: what top-k precision does an end-to-end evidence retrieval pipeline achieve over
+      a 400-million-article newspaper corpus?
+    task: how do I get a shortlist of usable supporting evidence sentences for a controversial
+      motion out of a large news archive?
+    practitioner: if I run corpus-wide argument retrieval for a motion, can I trust the first
+      few dozen sentences it hands me without reading everything below them?
   answered_by:
   - e2e-precision-vlc
 - ask:
-    unsorted:
-    - Does retrieving argumentative sentences directly just return sentences from a handful
-      of documents?
-    - How diverse are the sources of top-ranked evidence sentences in sentence-level retrieval?
-    - Is sentence-level argument retrieval different in practice from document-level retrieval?
+    plain: when a system pulls single sentences about a topic out of millions of articles,
+      do they all come from the same few articles?
+    jargon: does sentence-level evidence retrieval over a newspaper corpus degenerate into
+      document-level retrieval in the top-ranked candidates?
+    task: how do I check that the evidence sentences I retrieve for one motion span many different
+      source articles?
+    practitioner: should I bother with sentence-level argument retrieval, or will document
+      retrieval plus a sentence picker give me the same spread of sources?
   answered_by:
   - sentence-level-diversity
 - ask:
-    practitioner: How do I build a balanced training set when relevant arguments are extremely
-      rare in a massive newspaper corpus?
-    unsorted:
-    - What is Retrospective Labeling in argument mining?
-    - How can class imbalance be handled when labeling data for a precision-oriented retrieval
-      system?
+    plain: how do you build a labeled training set when the sentences you actually want are
+      a tiny fraction of a huge collection?
+    jargon: how is retrospective labeling used as a precision-oriented active-learning strategy
+      for class-imbalanced sentence retrieval?
+    task: how do I collect enough positive examples to train an evidence detector when positives
+      are rare in the corpus?
+    practitioner: is it worth hand-labeling my current classifier's top-ranked predictions
+      instead of labeling a random sample of sentences?
   answered_by:
   - context-retrospective-labeling
   - dataset-vld
 - ask:
-    unsorted:
-    - Is a bigger out-of-domain training set better than a smaller in-domain one for evidence
-      detection?
-    - Does training on newspaper sentences help when testing on Wikipedia sentences?
-    - Why do evidence detection models trained on Wikipedia underperform?
+    plain: for finding evidence sentences, is a large training set from newspapers better
+      than a smaller one from the same source as the test data?
+    jargon: does a 154K-pair newspaper-corpus training set beat a smaller Wikipedia training
+      set on a Wikipedia evidence benchmark?
+    task: which labeled corpus should I train an evidence-detection classifier on if I plan
+      to run it on Wikipedia sentences?
+    practitioner: I already have a small in-domain evidence set for Wikipedia -- should I
+      switch to a much larger newspaper-sourced one instead?
   answered_by:
   - train-on-large-corpus
   - blendnet-accuracy
 - ask:
-    unsorted:
-    - Does masking the topic token in a sentence help transformer models detect evidence?
-    - Is topic masking useful for BERT-based argument classification?
-    - How much does adding the motion text as input improve evidence detection accuracy?
+    plain: when a model looks for sentences relevant to a debate topic, does hiding the topic
+      word from the input help or hurt?
+    jargon: does masking the topic token improve BERT-based evidence classification, or only
+      BiLSTM-with-attention architectures?
+    task: should I replace the motion's topic term with a mask token when feeding sentence-motion
+      pairs to an evidence classifier?
+    practitioner: I am fine-tuning BERT on sentence-plus-motion input for evidence detection
+      -- do I mask the topic or leave it in?
   answered_by:
   - bert-masking
   - blendnet-accuracy
 - ask:
-    practitioner: Where can I download an IBM Debater evidence detection dataset?
-    unsorted:
-    - What labeled datasets exist for context-dependent evidence detection?
-    - How large are the annotated evidence datasets from corpus-wide argument mining?
+    plain: where can I find labeled sentences marked as evidence for and against debate topics?
+    jargon: which annotated context-dependent evidence datasets are released for sentence-level
+      argument mining, and at what scale?
+    task: how do I get labeled sentence-motion pairs to train and evaluate an evidence detector
+      without annotating my own?
+    practitioner: are the labeled evidence sets from corpus-wide argument mining big enough
+      and balanced enough to train on?
   answered_by:
   - dataset-vld
   - dataset-wiki
 - ask:
-    unsorted:
-    - Does a model trained to find study and expert evidence generalize to general argument
-      detection?
-    - How well does an evidence classifier transfer to the UKP-TUDA argumentative sentence
-      benchmark?
-    - Why does an evidence-trained classifier get low recall on argumentativeness benchmarks?
+    plain: does a model trained to spot study and expert evidence also recognise argumentative
+      sentences in general?
+    jargon: how does an evidence-trained BERT S+M classifier transfer to the UKP-TUDA argumentativeness
+      benchmark across decision thresholds?
+    task: can I reuse an evidence-detection classifier to score general argumentativeness
+      instead of training a new one for that label?
+    practitioner: my task is finding argumentative sentences, not just study or expert evidence
+      -- will an evidence-trained classifier be enough, and what threshold do I set?
   answered_by:
   - ukp-transfer
   - ukp-ranking-order
 - ask:
-    practitioner: What should I read first about corpus-wide argument retrieval?
-    unsorted:
-    - Which paper established end-to-end argument mining over a massive corpus?
-    - What is a good paper on retrieving arguments for a controversial topic at scale?
+    plain: which paper should I read first about automatically finding arguments on a topic
+      across a massive text collection?
+    jargon: what work established end-to-end corpus-wide sentence-level argument retrieval
+      beyond Wikipedia-scale corpora?
+    practitioner: I need a starting reference for building topic-relevant argument retrieval
+      at scale -- which paper covers it end to end?
   answered_by:
   - context-first-e2e
   - context-supervised-vs-weak
 - ask:
-    unsorted:
-    - What are the limits of query-based sentence retrieval for arguments?
-    - What kinds of arguments does a query-driven evidence retrieval pipeline miss?
-    - Is supervised learning or weak supervision better for sentence-level argument mining?
+    plain: is keyword search enough to find arguments about a topic, or do you need a trained
+      classifier on top?
+    jargon: for topic-relevant sentence-level argument mining, is fully supervised learning
+      preferable to weak supervision over query-retrieved candidates?
+    task: how do I go beyond query-based sentence retrieval when collecting arguments for
+      a controversial motion?
+    practitioner: should I train a fully supervised evidence classifier, or rely on weak supervision
+      and query heuristics for argument retrieval?
   answered_by:
   - context-supervised-vs-weak
 misreadings:

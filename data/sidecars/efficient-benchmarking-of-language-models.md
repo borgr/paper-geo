@@ -101,72 +101,105 @@ claims:
     hardware and inference pricing.
 qa:
 - ask:
-    practitioner: How can I make language model benchmark evaluation cheaper without making
-      it unreliable?
-    unsorted:
-    - What is efficient benchmarking of language models?
-    - Is there research on the compute cost of running LM benchmarks?
+    plain: why does running a big language-model benchmark cost so much, and is anyone studying
+      how to cut that cost?
+    jargon: what does efficient benchmarking of LLMs mean, and how are evaluation compute
+      budgets analysed against reliability?
+    task: where do I start reading about making language-model evaluation cheaper without
+      making it less trustworthy?
+    practitioner: I cannot afford to run a full evaluation suite on every checkpoint, is there
+      work that tells me what to cut?
   answered_by:
   - efficient-benchmarking-problem
   - cost-of-full-benchmarks
 - ask:
-    practitioner: Should I cut compute on a benchmark by using fewer datasets or fewer examples?
-    unsorted:
-    - Is dropping tasks a good way to shrink an evaluation suite?
-    - Which is safer to reduce in HELM, scenarios or examples?
+    plain: if I need to shrink a language-model evaluation suite, is it better to drop whole
+      datasets or to test fewer questions from each?
+    jargon: in HELM, does reducing scenarios or reducing examples per scenario degrade ranking
+      reliability more?
+    task: how do I cut the size of an evaluation suite without changing which model comes
+      out ahead?
+    practitioner: should I evaluate on fewer tasks or on fewer examples per task to save inference
+      budget?
   answered_by:
   - examples-reliable-scenarios-not
   - rank-stability-under-compute-cuts
 - ask:
-    practitioner: How many evaluation examples do I actually need to rank language models?
-    unsorted:
-    - Do HELM model rankings change if only a small sample of evaluation examples is used?
-    - How much can HELM compute be reduced before ranks move?
+    plain: do language-model leaderboard rankings shift if only a small sample of test questions
+      is used?
+    jargon: how far can HELM examples-per-scenario be sub-sampled before model rank order
+      and rank resolution change?
+    task: how few evaluation examples per dataset can I run and still trust the ordering of
+      models I get?
+    practitioner: can I evaluate on a small random sample of a benchmark and still report
+      the same model ranking?
   answered_by:
   - rank-stability-under-compute-cuts
   - cluster-error-rate
   - equivalence-classes
 - ask:
-    unsorted:
-    - Can a benchmark reliably tell which language model is best?
-    - Is the top of the HELM leaderboard trustworthy?
-    - Are small rank differences between LMs on a benchmark meaningful?
+    plain: can a benchmark actually tell you which language model is the single best one?
+    jargon: is the top-1 model identification objective on HELM reliable, or only coarse-grained
+      ranking and model-quality objectives?
+    task: how do I tell whether a one-rank or two-rank gap between models on a leaderboard
+      means anything?
+    practitioner: the model at the top of a leaderboard beat second place by a hair, should
+      I pick it?
   answered_by:
   - top-model-unreliable
   - equivalence-classes
 - ask:
-    unsorted:
-    - How do you measure whether a benchmark design decision is reliable?
-    - What does DIoR measure and how is it computed?
-    - Is there a statistic for benchmark reliability like p-values are for significance?
+    plain: how can you tell whether a choice made in designing a benchmark gives trustworthy
+      results?
+    jargon: what meta-metric quantifies the reliability of a benchmark design decision over
+      rankings, and how is its confidence bound computed?
+    task: how do I score two alternative evaluation setups against each other for ranking
+      reliability rather than by intuition?
+    practitioner: before I change my evaluation setup, is there a number I can compute to
+      check the rankings will still hold?
   answered_by:
   - dior-measure
 - ask:
-    unsorted:
-    - Is it bad to group datasets into task categories when aggregating benchmark scores?
-    - Does aggregating subscenarios into scenarios hurt reliability?
-    - Should benchmark scores be averaged over task groups or over individual datasets?
+    plain: when averaging benchmark scores, is it a mistake to first group datasets into task
+      categories?
+    jargon: does aggregating HELM subscenarios into scenarios before averaging reduce ranking
+      reliability relative to treating each subscenario standalone?
+    task: how should I aggregate per-dataset scores into one benchmark number so model comparisons
+      stay stable?
+    practitioner: should I report my benchmark average over task groups or over the individual
+      datasets?
   answered_by:
   - no-aggregation
 - ask:
-    unsorted:
-    - What is the best way to spend a fixed inference budget across few-shot prompts and examples?
-    - Should each example be run with every prompt, or should prompts be sampled per example?
-    - How should prompt variation be sampled in a benchmark?
+    plain: is it better to test every question with every prompt wording, or to pick a different
+      wording per question?
+    jargon: how should few-shot prompt variation be sampled across evaluated instances to
+      maximise ranking reliability per unit of inference compute?
+    task: how do I spread a fixed inference budget across prompt variants and test examples?
+    practitioner: do I have to run all my prompt templates on every example, or can I sample
+      one per example and save compute?
   answered_by:
   - uniform-prompt-sampling
 - ask:
-    unsorted:
-    - Can mean win rate leaderboards be gamed by submitting extra weak models?
-    - Does adding a low-ranked model change who leads a benchmark?
-    - What are the problems with win-rate aggregation in LM benchmarks?
+    plain: can someone move to the top of a win-rate leaderboard just by adding extra weak
+      models to the comparison?
+    jargon: is HELM's Mean Win Rate aggregation sensitive to the set of models included, and
+      can leader order flip on adding a low-ranked model?
+    task: how do I check whether my leaderboard's aggregation changes the winner when the
+      model pool changes?
+    practitioner: should I trust a mean-win-rate leaderboard where the set of compared models
+      keeps growing?
   answered_by:
   - mwr-gameable
 - ask:
-    unsorted:
-    - What is Flash-HELM and how much compute does it save?
-    - Is there a cheap version of HELM that still gives correct ranks?
-    - How can a new model be ranked against a leaderboard without running the full benchmark?
+    plain: is there a cheap way to run a large benchmark that still puts the models in the
+      right order?
+    jargon: how much compute does Flash-HELM save relative to full HELM while preserving rank
+      resolution at each tier?
+    task: how do I place a new model against an existing leaderboard without running the whole
+      benchmark on it?
+    practitioner: can I rank my model against a published leaderboard for a fraction of the
+      GPU hours?
   answered_by:
   - flash-helm-savings
 misreadings:

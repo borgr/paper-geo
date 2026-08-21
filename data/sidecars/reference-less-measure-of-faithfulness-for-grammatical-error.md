@@ -83,85 +83,117 @@ claims:
     to AMR or other schemes is a design argument, not a measured result.
 qa:
 - ask:
-    practitioner: How can I evaluate a grammatical error correction system without reference
-      corrections?
-    unsorted:
-    - Is there a reference-less metric for GEC?
-    - What metric measures whether a correction preserved the original meaning?
+    plain: is there a way to check whether a grammar correction changed the writer's meaning,
+      without comparing to a human-written correction?
+    jargon: what reference-less evaluation measures meaning preservation rather than grammaticality
+      in grammatical error correction?
+    task: how do I score a corrected sentence for faithfulness to the source when I have no
+      gold correction to compare against?
+    practitioner: I have no reference corrections for my GEC outputs — can I still measure
+      whether they preserved the original meaning?
   answered_by:
   - context-faithfulness-gap
   - context-scheme-agnostic
 - ask:
-    unsorted:
-    - What is USim?
-    - How does a semantic faithfulness score compare a correction with its source sentence?
-    - What does the USim measure for grammatical error correction compute?
+    plain: how can two sentences be compared for whether they still say the same thing after
+      one has been edited for grammar?
+    jargon: how does a semantic-graph similarity score quantify meaning preservation between
+      a source sentence and its correction?
+    task: how do I compute a faithfulness score between an ungrammatical sentence and its
+      corrected version?
+    practitioner: what would I actually be measuring if I adopted a semantic similarity score
+      for grammar correction output?
   answered_by:
   - context-scheme-agnostic
   - context-faithfulness-gap
 - ask:
-    unsorted:
-    - Does a valid human correction get a high semantic similarity score to the ungrammatical
-      source?
-    - What USim score do NUCLE reference corrections get against their sources?
-    - Does a meaning-preservation metric unfairly penalise correct edits?
+    plain: do genuinely good grammar corrections score high on a meaning-preservation measure,
+      or do legitimate edits get punished?
+    jargon: what USim values do human NUCLE reference corrections receive against their source
+      sentences, relative to the inter-annotator ceiling?
+    task: how do I check that a faithfulness measure does not penalise valid corrections before
+      I trust it on system output?
+    practitioner: if I score my corrections for meaning preservation, will heavy but correct
+      rewriting be marked down?
   answered_by:
   - valid-correction-usim
   - not-length-of-edit
 - ask:
-    unsorted:
-    - Can semantic annotation be applied consistently to ungrammatical learner text?
-    - What is inter-annotator agreement for UCCA on learner language?
-    - Is UCCA annotation reliable on text written by language learners?
+    plain: can people annotate the meaning of essays written by language learners consistently,
+      even when the grammar is broken?
+    jargon: what inter-annotator agreement does UCCA semantic annotation achieve on learner-language
+      essays compared with standard English text?
+    task: how do I get reliable semantic structure annotation over ungrammatical, non-native
+      writing?
+    practitioner: should I expect usable annotation quality if I have annotators mark semantic
+      structure on learner essays?
   answered_by:
   - ucca-iaa-learner-language
   - context-semantic-annotation-of-ll
 - ask:
-    unsorted:
-    - Does a semantic faithfulness metric for GEC need human annotation, or can a parser do
-      it?
-    - How well does automatic UCCA parsing work inside USim?
-    - Is a fully automatic version of USim reliable?
+    plain: can a parser stand in for human annotation when scoring whether a correction kept
+      the meaning?
+    jargon: how much does substituting TUPA parses for gold UCCA annotation degrade the USim
+      faithfulness score?
+    task: how do I run a semantic faithfulness metric for grammatical error correction fully
+      automatically?
+    practitioner: can I trust the parser-based version of a meaning-preservation score on
+      my own correction outputs?
   answered_by:
   - automatic-usim-parser
   - error-type-failure-modes
 - ask:
-    unsorted:
-    - Does USim actually give low scores to bad corrections?
-    - How were low-quality GEC outputs scored by USim on JFLEG?
-    - Can a faithfulness metric distinguish unfaithful corrections from references?
+    plain: does a meaning-preservation score actually give low marks to bad grammar corrections?
+    jargon: does automatic USim separate partially trained GEC systems from human references
+      on JFLEG?
+    task: how do I test whether a faithfulness measure discriminates unfaithful system output
+      from human corrections?
+    practitioner: will a semantic similarity score flag the corrections from my undertrained
+      model as unfaithful?
   answered_by:
   - sensitivity-low-quality
   - not-length-of-edit
 - ask:
-    unsorted:
-    - Which grammatical error types does an automatic UCCA-based faithfulness score handle
-      badly?
-    - Where does the USim faithfulness measure fail?
-    - What are the known failure modes of parser-based USim?
+    plain: which kinds of grammar mistakes trip up an automatic meaning-preservation score?
+    jargon: which error types produce the largest USim shifts under parser-based semantic
+      graph comparison?
+    task: which correction types should I be careful about when interpreting an automatic
+      faithfulness score?
+    practitioner: my system mostly fixes word order and pronoun reference — is a parser-based
+      faithfulness score reliable for that?
   answered_by:
   - error-type-failure-modes
 - ask:
-    unsorted:
-    - Are UCCA structures stable under grammatical error correction?
-    - How much do UCCA category counts change between a source sentence and its correction?
-    - Is semantic structure as robust to error correction as it is to translation?
+    plain: how much does the meaning structure of a sentence shift when someone fixes its
+      grammar?
+    jargon: how do UCCA category distributions differ between source and corrected sentences
+      relative to translation pairs?
+    task: how do I tell whether semantic structure is stable enough across error correction
+      to build a faithfulness measure on it?
+    practitioner: is semantic structure stable enough under grammar editing for me to rely
+      on it as an evaluation signal?
   answered_by:
   - distsim-comparable-translation
   - ucca-iaa-learner-language
 - ask:
-    unsorted:
-    - Can USim replace GLEU or M2 for ranking GEC systems?
-    - Does USim discriminate between current state-of-the-art GEC systems?
-    - Should a faithfulness measure be used on its own to evaluate correction quality?
+    plain: is a meaning-preservation score enough on its own to rank grammar correction systems?
+    jargon: can reference-less USim substitute for GLEU or M2 in ranking GEC systems, or only
+      complement grammaticality measures?
+    task: how should I combine a faithfulness score with a grammaticality score when evaluating
+      correction systems?
+    practitioner: should I report a semantic faithfulness score instead of GLEU for my grammar
+      correction system?
   answered_by:
   - context-faithfulness-gap
   - sensitivity-low-quality
 - ask:
-    unsorted:
-    - Does USim only work with UCCA?
-    - Could a faithfulness measure like USim be built on AMR instead?
-    - Why was UCCA chosen as the semantic scheme for measuring faithfulness?
+    plain: does a meaning-comparison score have to use one particular way of representing
+      sentence meaning?
+    jargon: is USim tied to UCCA, or can it be instantiated over AMR or other semantic representations?
+    task: how do I build a faithfulness measure over a semantic representation I already have
+      parsers for?
+    practitioner: I already work with AMR — can I use a semantic faithfulness measure for
+      correction without switching to UCCA?
   answered_by:
   - context-scheme-agnostic
 key: choshen2018reference

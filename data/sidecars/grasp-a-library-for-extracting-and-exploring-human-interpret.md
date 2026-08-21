@@ -122,82 +122,121 @@ claims:
     output from other pattern-extraction algorithms if formatted into the required JSON schema.
 qa:
 - ask:
-    practitioner: Where should I start reading about learning interpretable patterns from
-      text?
-    unsorted:
-    - What tools exist for exploring a text dataset beyond word clouds and n-gram counts?
-    - Is there a library that extracts human-readable linguistic patterns from labelled text?
+    plain: is there software that finds recurring word patterns in a labelled text dataset,
+      beyond counting words?
+    jargon: which open-source library extracts human-readable linguistic attribute patterns
+      from labelled text corpora?
+    task: how do I explore a labelled text collection at the pattern level instead of by word
+      frequency?
+    practitioner: I want to inspect what distinguishes my positive and negative examples —
+      is there a ready-made pattern-mining tool I can install?
   answered_by:
   - exploration-tool-context
   - first-public-impl
 - ask:
-    unsorted:
-    - Does removing dataset artifacts actually improve out-of-distribution accuracy?
-    - How much does filtering artifact-matching training examples help generalization on 20Newsgroups?
-    - What was the out-of-distribution gain from GrASP-based artifact removal?
+    plain: if you delete training examples that contain misleading shortcut phrases, does
+      the model do better on data from elsewhere?
+    jargon: does filtering artifact-matching training instances improve out-of-distribution
+      accuracy and macro F1 on a 20Newsgroups-to-Religion transfer?
+    task: how do I use pattern-flagged spurious cues to clean a training set for better generalization?
+    practitioner: should I drop artifact-matched examples from my training data if I care
+      about performance on a different distribution?
   answered_by:
   - artifact-filtering-ood
   - artifact-filtering-indomain
 - ask:
-    unsorted:
-    - Does deleting artifact-matched training examples hurt in-domain accuracy?
-    - What is the in-domain cost of filtering a training set with GrASP patterns?
+    plain: does throwing away training examples with shortcut phrases cost accuracy on the
+      original test set?
+    jargon: what is the in-domain accuracy and macro F1 penalty from artifact-pattern-based
+      training set filtering on 20Newsgroups?
+    practitioner: if I remove artifact-matched examples, am I trading away in-domain accuracy
+      to get it?
   answered_by:
   - artifact-filtering-indomain
 - ask:
-    unsorted:
-    - How much human effort does it take to label patterns as dataset artifacts?
-    - How many GrASP patterns did an annotator flag as artifacts in 20Newsgroups?
+    plain: how much reading does a person have to do to decide which extracted phrase patterns
+      are misleading shortcuts?
+    jargon: how many candidate high-precision patterns does an annotator have to review to
+      identify dataset artifacts in a 20Newsgroups topic task?
+    task: how do I get a human to sort mined patterns into meaningful signal versus dataset
+      artifact?
+    practitioner: how many patterns should I budget for an annotator to label as artifacts
+      before I start filtering?
   answered_by:
   - human-annotation-throughput
 - ask:
-    unsorted:
-    - Can pattern mining find annotation artifacts in SNLI?
-    - What artifacts does GrASP find in SNLI hypotheses, and with what precision?
-    - Do hypothesis-only artifacts in natural language inference show up as linguistic patterns?
+    plain: do the giveaway phrases people found in the Stanford natural language inference
+      data show up as automatically mined patterns?
+    jargon: can pattern mining over SNLI entailment and contradiction hypotheses recover known
+      hypothesis-only annotation artifacts, and at what precision?
+    task: how do I check whether my crowdsourced inference hypotheses contain label-revealing
+      cues?
+    practitioner: would running pattern extraction on SNLI hypotheses tell me anything the
+      artifact papers did not already report?
   answered_by:
   - snli-artifact-precision
 - ask:
-    practitioner: Can pattern extraction tell me which inputs a machine translation model
-      handles well?
-    unsorted:
-    - How were easy and hard MT inputs characterized with GrASP on WMT19 English-German?
-    - Are hard-to-translate sentences harder to characterize with patterns than easy ones?
+    plain: can you describe what makes a sentence easy or hard to translate using recurring
+      patterns?
+    jargon: what does pattern extraction over the top and bottom quartiles of WMT19 English-German
+      quality-estimation data reveal about easy versus hard source inputs?
+    task: how do I characterize which source sentences my translation system will struggle
+      with?
+    practitioner: if I mine patterns from quality-estimation scores, will I get a usable profile
+      of hard-to-translate input or only of easy input?
   answered_by:
   - mt-quality-patterns
   - mt-known-hurdles
 - ask:
-    unsorted:
-    - Does GrASP rediscover things experts already know about argumentative text?
-    - What did pattern mining reveal on the topic-dependent argument mining corpus?
-    - Which single feature was most indicative of evidence sentences in argument mining?
+    plain: does automatic pattern mining find the same cues in argumentative sentences that
+      experts already knew about?
+    jargon: on a topic-dependent argument mining corpus, which extracted pattern is most indicative
+      of argumentative sentences?
+    task: how do I check that a pattern-extraction run on argument mining data agrees with
+      known expert indicators?
+    practitioner: can I trust mined patterns as a sanity check by seeing whether they rediscover
+      established argument indicators?
   answered_by:
   - argument-mining-rediscovery
 - ask:
-    unsorted:
-    - What does a GrASP pattern actually look like?
-    - How can one pattern match spam messages that share no words?
-    - What is an example of an attribute-sequence pattern for SMS spam?
+    plain: how can a single rule match two spam texts that have almost no words in common?
+    jargon: what does an attribute-sequence pattern over sentiment, part-of-speech and gap
+      constraints look like on an SMS spam corpus?
+    task: how do I write or find a pattern that generalizes across differently-worded spam
+      messages?
+    practitioner: will mined patterns actually group paraphrased spam together, or just cluster
+      shared keywords?
   answered_by:
   - pattern-generalization
 - ask:
-    unsorted:
-    - How are extracted linguistic patterns made readable for non-experts?
-    - Can attribute patterns be translated into plain English?
+    plain: if a tool outputs patterns full of linguistic tags, how does a non-linguist read
+      them?
+    jargon: how are extracted attribute patterns with hypernym and POS constraints converted
+      into natural-language descriptions?
+    task: how do I present mined linguistic patterns to annotators or domain experts who do
+      not know POS tags?
+    practitioner: can I hand pattern-mining output to teammates without linguistics training
+      and expect them to interpret it?
   answered_by:
   - pattern2text
 - ask:
-    practitioner: How do I add my own domain-specific attributes to GrASP pattern extraction?
-    unsorted:
-    - What does the GrASP library add over the original 2017 algorithm?
-    - Can I change the criterion used to rank extracted patterns?
+    plain: what extra features does the released pattern-mining library have compared with
+      the algorithm first described in 2017?
+    jargon: which extensions does the GrASP library add to the 2017 algorithm — custom attributes,
+      selection criteria, gap limits, coverage thresholds?
+    task: how do I plug in my own domain attributes or change how mined patterns are ranked?
+    practitioner: can I adapt the library's pattern-selection criterion to my own dataset
+      instead of using the default?
   answered_by:
   - custom-attributes-extensions
 - ask:
-    practitioner: Can I browse extracted patterns and their matches in a dataset visually?
-    unsorted:
-    - What does the GrASP web interface show?
-    - Can the web viewer display patterns from a different pattern-extraction algorithm?
+    plain: what does the browser-based viewer for mined text patterns actually display?
+    jargon: what report views does the GrASP web interface render, and how do pattern-centric
+      and example-centric views differ?
+    task: how do I browse mined patterns alongside the examples they match and the words they
+      highlight?
+    practitioner: if I have patterns and matched examples from my own extractor, can I use
+      the web viewer to inspect them?
   answered_by:
   - four-report-views
 misreadings:

@@ -110,88 +110,121 @@ claims:
   evidence: Section 2.3
 qa:
 - ask:
-    unsorted:
-    - Does a high score on public benchmark tasks predict performance on unseen held-out tasks?
-    - How well did open-evaluation leaderboard scores transfer to hidden tasks in the NeurIPS
-      2023 LLM efficiency competition?
-    - Is there evidence that fine-tuned LLMs overfit the benchmarks used to develop them?
+    plain: if a fine-tuned language model tops a public task list, will it still do well on
+      tasks nobody showed it?
+    jargon: how strongly did open-set mean-win-rate correlate with held-out closed-set mean-win-rate
+      in the NeurIPS 2023 LLM Efficiency Challenge?
+    task: how do I tell whether my fine-tuned model's leaderboard gain is real or just fitted
+      to the public evaluation tasks?
+    practitioner: should I trust a public benchmark score when picking a fine-tuned model
+      for tasks it has never seen?
   answered_by:
   - open-closed-disagreement
   - winners-not-top-on-open
 - ask:
-    unsorted:
-    - What did the winning teams of the NeurIPS 2023 LLM fine-tuning competition actually
-      do?
-    - Which techniques won a 24-hour single-GPU LLM fine-tuning contest?
-    - Was data curation or custom training code more important for the top competition entries?
+    plain: what did the teams that won the NeurIPS 2023 one-GPU language model fine-tuning
+      contest actually spend their time on?
+    jargon: which base checkpoints and instruction-tuning data mixtures did the winning entries
+      of the NeurIPS 2023 LLM Efficiency Challenge use?
+    task: if I have one GPU and a day, where should I put my effort to fine-tune a strong
+      open model?
+    practitioner: is it worth writing my own training code, or should I copy the winners and
+      curate data instead?
   answered_by:
   - data-curation-not-code
   - winners-not-top-on-open
 - ask:
-    unsorted:
-    - Which open-source libraries do practitioners use most for single-GPU LLM fine-tuning?
-    - What tooling appeared most often in NeurIPS 2023 LLM efficiency competition submissions?
-    - How common were PEFT and Transformers in competition fine-tuning entries?
+    plain: which software packages do people reach for when fine-tuning a language model on
+      one GPU?
+    jargon: what was the library frequency distribution across the 225 submissions to the
+      NeurIPS 2023 LLM Efficiency Challenge?
+    task: which fine-tuning libraries should I learn first if I want to follow common practice
+      for single-GPU LLM training?
+    practitioner: is HuggingFace PEFT the default choice for parameter-efficient fine-tuning,
+      or do most people use something else?
   answered_by:
   - library-usage
 - ask:
-    unsorted:
-    - How reproducible were the code submissions to an LLM fine-tuning competition?
-    - Why did submitted Dockerfiles fail to build in the NeurIPS 2023 LLM efficiency challenge?
-    - What software-quality problems show up in ML competition submissions?
+    plain: when a machine learning contest collects everyone's code, how much of it actually
+      runs again later?
+    jargon: what was the Docker build failure rate for training submissions to the NeurIPS
+      2023 LLM Efficiency Challenge, and what caused it?
+    task: how do I package a fine-tuning submission so it still builds months after I submit
+      it?
+    practitioner: do I need to pin my dependency versions before shipping a fine-tuning container,
+      or is a plain requirements file fine?
   answered_by:
   - reproducibility-failures
 - ask:
-    unsorted:
-    - What does it cost to fine-tune an open LLM on a single GPU?
-    - How long did top NeurIPS 2023 competition entries take to fine-tune within a 24-hour
-      budget?
-    - Is single-GPU LLM fine-tuning affordable for individuals?
+    plain: how much money and time does it take to fine-tune an open language model on a single
+      graphics card?
+    jargon: what wall-clock and dollar cost did reproduced top-10 entries of the NeurIPS 2023
+      LLM Efficiency Challenge incur under a 24-hour single-GPU budget?
+    task: how do I budget compute for fine-tuning an open 7B-14B model on one rented GPU?
+    practitioner: can I afford to fine-tune a competitive open language model myself on a
+      4090 or a single A100?
   answered_by:
   - cost-of-finetuning
 - ask:
-    unsorted:
-    - Does the best model overall win on every evaluation scenario?
-    - How much do HELM scenario rankings disagree about which fine-tuned model is best?
-    - Should model selection rely on a single aggregate benchmark score?
+    plain: does the model that comes first on an overall evaluation score also come first
+      on each individual task?
+    jargon: how much do per-scenario HELM rankings disagree with the aggregate ranking of
+      fine-tuned submissions?
+    task: how should I choose between fine-tuned models when their per-task rankings and their
+      overall average disagree?
+    practitioner: can I pick a model from one aggregate leaderboard number, or do I need to
+      look at each task separately?
   answered_by:
   - scenario-rank-disagreement
   - coarse-fine-scatter
 - ask:
-    practitioner: What should I read about benchmark overfitting in fine-tuned language models?
-    unsorted:
-    - Is there a good paper on the limits of leaderboard-based LLM evaluation?
-    - Where can I start reading about whether LLM benchmark rankings generalize to unseen
-      tasks?
+    plain: what should I read about whether leaderboard rankings of language models mean anything
+      on new tasks?
+    jargon: which study documents benchmark overfitting in fine-tuned LLMs at competition
+      scale with paired open and closed task sets?
+    task: where do I start reading if I want evidence on how far fine-tuning leaderboard rank
+      transfers to unseen tasks?
   answered_by:
   - context-benchmark-overfitting
 - ask:
-    practitioner: Where can I download the entries and evaluation code from the NeurIPS 2023
-      LLM efficiency competition?
-    unsorted:
-    - Are there public datasets of real fine-tuning submissions for studying reproducibility?
-    - What artifacts did the NeurIPS 2023 LLM fine-tuning competition release?
+    plain: are there public collections of real fine-tuning code and models submitted by many
+      different teams?
+    jargon: what artifacts, including Dockerfiles and a forked HELM harness, did the NeurIPS
+      2023 LLM Efficiency Challenge organizers release?
+    task: where can I get a corpus of real submissions to study reproducibility and overfitting
+      in LLM fine-tuning?
+    practitioner: can I reuse the NeurIPS 2023 LLM efficiency competition's evaluation setup
+      and entries for my own study?
   answered_by:
   - context-artifacts
 - ask:
-    unsorted:
-    - Did reducing the number of evaluation samples per task change competition rankings?
-    - How reliable are sparse or subsampled HELM evaluations compared with full ones?
-    - Is it safe to evaluate LLMs on fewer problems per task to save compute?
+    plain: if a language model is tested on fewer questions per task to save time, do the
+      results still come out the same?
+    jargon: how closely do subsampled Sparse HELM scores track full-sample scores across competition
+      submissions and sub-scenarios?
+    task: how many problems per task do I need to evaluate to rank fine-tuned models reliably?
+    practitioner: can I cut my evaluation set down to save compute without changing which
+      model looks best?
   answered_by:
   - coarse-fine-scatter
 - ask:
-    unsorted:
-    - What made submissions fail besides low accuracy in the NeurIPS 2023 LLM efficiency challenge?
-    - How often did slow inference or out-of-memory errors sink competition entries?
-    - Do inference-time limits affect LLM competition scores?
+    plain: besides getting answers wrong, what else made competition entries lose points in
+      a language model contest?
+    jargon: how often did runtime timeouts and out-of-memory errors during inference cost
+      submissions points in the NeurIPS 2023 LLM Efficiency Challenge?
+    task: how do I keep my model from timing out or running out of memory while answering
+      a whole evaluation suite?
+    practitioner: should I worry more about inference latency and memory than about accuracy
+      when entering an LLM efficiency contest?
   answered_by:
   - inference-time-failures
 - ask:
-    unsorted:
-    - Did the two hardware tracks of the NeurIPS 2023 LLM competition behave the same under
-      evaluation?
-    - How did A100 and 4090 track submissions differ in benchmark score agreement?
+    plain: did the two different graphics-card divisions of the NeurIPS 2023 language model
+      contest give equally consistent evaluation results?
+    jargon: how did full-versus-hidden evaluation set correlation compare between the A100
+      and 4090 tracks of the NeurIPS 2023 LLM Efficiency Challenge?
+    practitioner: if I read results from one hardware track of an LLM efficiency competition,
+      can I assume the other track behaved the same?
   answered_by:
   - full-hidden-agreement
 misreadings:

@@ -124,89 +124,126 @@ claims:
     and token count fields; all data permits academic research.
 qa:
 - ask:
-    practitioner: Where can I find child-language-style pretraining data for languages other
-      than English?
-    unsorted:
-    - Is there a multilingual version of the BabyLM training corpus?
-    - What dataset provides developmentally plausible pretraining data across many languages?
-    - What should I read first about multilingual developmentally plausible language modeling?
+    plain: is there a version of the child-language training data collection that covers languages
+      other than English?
+    jargon: which resource provides developmentally plausible pretraining corpora and evaluation
+      across many languages?
+    task: where do I start if I want to pretrain a small language model on child-directed
+      text in a language other than English?
+    practitioner: I work on a non-English language and want child-language pretraining data
+      plus a baseline model, is there something I can use off the shelf?
   answered_by:
   - coverage-45-languages
   - living-resource
 - ask:
-    unsorted:
-    - How many languages does BabyBabelLM cover and how much data does each have?
-    - What are the data tiers in BabyBabelLM?
-    - How are token budgets made comparable across languages with different scripts?
+    plain: how many languages does BabyBabelLM cover, and how much text is there per language?
+    jargon: how are the BabyBabelLM data tiers defined, and how are token budgets normalised
+      to English-equivalent counts?
+    task: how do I find out how much training data is available for my language in the multilingual
+      BabyLM corpora?
+    practitioner: will my language have enough tokens in BabyBabelLM to train on, or am I
+      stuck at the smallest budget?
   answered_by:
   - tier-distribution
   - padding-share
 - ask:
-    unsorted:
-    - How much of a multilingual child-language corpus is actually child-directed data rather
-      than filler?
-    - Do all 45 BabyBabelLM languages have genuinely child-oriented sources?
-    - Which languages in BabyBabelLM rely only on generic multilingual resources?
+    plain: in a multilingual collection of child-language corpora, how much of the text is
+      really speech and books for children rather than filler added to hit a size target?
+    jargon: what share of each BabyBabelLM language's tier budget comes from padding data,
+      and which languages have no language-specific child-oriented sources?
+    task: how do I check whether the corpus for my language is genuinely child-directed before
+      I train on it?
+    practitioner: if I train on the corpus for Korean or Turkish, am I actually training on
+      child-oriented text?
   answered_by:
   - padding-share
   - sixteen-multilingual-only
 - ask:
-    unsorted:
-    - How well do small language models trained on ~100M words of child-language data do on
-      grammar tests?
-    - What accuracy do BabyBabelLM baselines reach on MultiBLiMP?
-    - Does data size affect subject-verb agreement performance in tiny multilingual LMs?
+    plain: how well do small models trained on roughly 100 million words of child-language
+      text handle basic grammar tests?
+    jargon: what MultiBLiMP subject-verb agreement accuracies do the 17.1M-parameter GPT-2
+      baselines reach on Tier 1 languages?
+    task: how do I tell whether a tiny model trained on limited child-language data has learned
+      agreement in my language?
+    practitioner: if I pretrain on the largest BabyBabelLM budget for my language, should
+      I expect the model to get agreement right?
   answered_by:
   - multiblimp-tier1
 - ask:
-    unsorted:
-    - Can models trained on 1M-100M tokens do reasoning or knowledge benchmarks?
-    - Why are the BabyBabelLM baselines near chance on commonsense and knowledge tasks?
-    - Do tiny developmentally plausible language models learn in-context learning?
+    plain: can models trained on 1 million to 100 million words answer commonsense or knowledge
+      questions at all?
+    jargon: do the BabyBabelLM monolingual baselines exceed chance on functional-competence
+      benchmarks such as XCOPA, ARC and HellaSwag, and does zero-shot prompting work at that
+      scale?
+    task: how should I evaluate a model pretrained on under 100 million tokens if prompting
+      gives nothing above chance?
+    practitioner: is it worth running reasoning or QA benchmarks on my tiny child-language
+      model, or do I need to finetune first?
   answered_by:
   - near-chance-functional
   - in-context-limit
 - ask:
-    unsorted:
-    - Is one multilingual model better than separate per-language models at this data scale?
-    - Does a multilingual BabyLM beat monolingual BabyLMs on grammar minimal pairs?
-    - How does BabyBabelLM's multilingual model compare to the monolingual ones?
+    plain: at very small data sizes, is it better to train one model on many languages or
+      a separate model per language?
+    jargon: does the 111M-parameter multilingual BabyBabelLM model beat the monolingual baselines
+      on MultiBLiMP minimal pairs?
+    task: how do I decide between pooling all my low-resource languages into one pretraining
+      run and training each separately?
+    practitioner: should I train one multilingual child-language model or per-language models
+      if I care about grammatical competence?
   answered_by:
   - mono-beats-multi
 - ask:
-    unsorted:
-    - How do tiny developmentally plausible models compare to an off-the-shelf small multilingual
-      LLM?
-    - Does Qwen3-0.6B beat BabyBabelLM models?
-    - Are BabyBabelLM baselines competitive with web-scale-trained small models?
+    plain: how do tiny models trained on child-directed text compare with a small off-the-shelf
+      model trained on web data?
+    jargon: how does Qwen3-0.6B compare with the BabyBabelLM multilingual baseline on MultiBLiMP
+      and Belebele across languages?
+    task: how do I set a realistic upper bound for a small child-language model by comparing
+      it against a web-scale small LLM?
+    practitioner: if a 0.6B web-trained multilingual model already exists, is there any reason
+      to use a BabyBabelLM baseline instead?
   answered_by:
   - qwen-comparison
 - ask:
-    unsorted:
-    - Does adding English to a low-resource pretraining corpus help downstream performance?
-    - What happens when a BabyLM is trained bilingually with English?
-    - Does bilingual training change syntactic competence in small language models?
+    plain: does mixing in English text help a model trained on a smaller amount of data in
+      another language?
+    jargon: what happens to zero-shot benchmark and minimal-pair scores when a Tier 1 BabyBabelLM
+      model is pretrained bilingually with English?
+    task: how do I improve downstream accuracy for a low-resource pretraining run without
+      collecting more data in that language?
+    practitioner: should I add English to my pretraining mix for a low-resource language,
+      or does it dilute the grammar my model learns?
   answered_by:
   - bilingual-gains
 - ask:
-    unsorted:
-    - Does the BabyLM 2024 winning architecture transfer to other languages?
-    - How does GPT-BERT compare to GPT-2 on multilingual developmentally plausible data?
-    - Which architecture works best on BabyBabelLM corpora?
+    plain: does an architecture that won an English child-language modelling competition also
+      work best in other languages?
+    jargon: does GPT-BERT transfer its 2024 BabyLM Challenge advantage over GPT-2 to the multilingual
+      BabyBabelLM corpora?
+    task: which architecture should I pick for pretraining on a small non-English child-language
+      corpus?
+    practitioner: should I use GPT-BERT rather than a plain small GPT-2 for my non-English
+      child-language pretraining run?
   answered_by:
   - gpt-bert-underperforms
 - ask:
-    unsorted:
-    - What evaluation benchmarks exist for developmentally plausible models across many languages?
-    - Which benchmark covers the most languages in the BabyBabelLM suite?
-    - What are the limits of multilingual evaluation for small child-language models?
+    plain: what tests exist for judging small models trained on child-language data in languages
+      other than English?
+    jargon: which benchmark in the BabyBabelLM evaluation suite approaches full language coverage,
+      and how patchy is coverage elsewhere?
+    task: how do I assemble an evaluation suite for a small pretrained model in a language
+      with few benchmarks?
+    practitioner: can I evaluate my language with the same benchmarks as the others, or will
+      I need to build my own datasets?
   answered_by:
   - evaluation-gap
 - ask:
-    practitioner: How can I contribute a new language to BabyBabelLM?
-    unsorted:
-    - Is the multilingual BabyLM dataset extensible by the community?
-    - What metadata do BabyBabelLM documents carry?
+    plain: can outside contributors add a new language or more text to the multilingual child-language
+      data collection?
+    jargon: what pipeline and document-level schema does BabyBabelLM expose for community
+      contributions of new languages?
+    task: how do I contribute a corpus for a language that BabyBabelLM does not yet include?
+    practitioner: if my language is missing from BabyBabelLM, can I add it myself and how?
   answered_by:
   - living-resource
 misreadings:

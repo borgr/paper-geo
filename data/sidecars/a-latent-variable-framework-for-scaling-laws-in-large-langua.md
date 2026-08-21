@@ -103,74 +103,104 @@ claims:
     data from other models in the same family; as of the 2025 preprint.
 qa:
 - ask:
-    unsorted:
-    - Do different LLM skills scale differently with model size versus training data?
-    - Is math ability more data-hungry than common-sense reasoning?
-    - Which benchmarks improve with more parameters and which with more tokens?
+    plain: does making a language model bigger help the same skills that feeding it more text
+      helps?
+    jargon: do benchmark-specific scaling coefficients on log parameters and log tokens differ
+      across skill dimensions such as mathematics and common-sense reasoning?
+    task: how do I work out whether adding parameters or adding training tokens will improve
+      the particular capability I care about?
+    practitioner: my model needs better math more than better common-sense answers, so should
+      I spend my next run on more data or a bigger network?
   answered_by:
   - skills-scale-differently
   - compute-optimal-differs-by-skill
 - ask:
-    unsorted:
-    - How many latent skills are needed to explain LLM benchmark scores?
-    - How is the latent dimension chosen in a latent-skill scaling law?
-    - Do a handful of factors explain performance across 12 leaderboard benchmarks?
+    plain: how many underlying abilities are enough to explain how language models score across
+      a dozen benchmarks?
+    jargon: how is the latent dimension K selected in a factor model of LLM benchmark scores,
+      and where does the AIC curve flatten?
+    task: how do I decide how many latent factors to fit when summarising leaderboard scores
+      for hundreds of models?
+    practitioner: can I get away with tracking a few skill axes instead of all 12 leaderboard
+      benchmarks?
   answered_by:
   - four-skills-suffice
 - ask:
-    unsorted:
-    - Why doesn't instruction-following performance improve much with pretraining scale?
-    - Does IFEval scale with parameters and tokens?
-    - Which skill scales worst with compute in the Open LLM Leaderboard data?
+    plain: why does a model's ability to follow instructions barely improve when it is pretrained
+      on more data or made bigger?
+    jargon: what are the log-parameter and log-token scaling coefficients for the IFEval-anchored
+      latent skill relative to the other dimensions?
+    task: how do I improve instruction following if scaling pretraining size and tokens does
+      not move it much?
+    practitioner: should I expect a bigger pretraining run to fix my model's instruction-following
+      scores?
   answered_by:
   - ifeval-weak-scaling
 - ask:
-    unsorted:
-    - Can a scaling law give prediction intervals rather than point forecasts for an untrained
-      model?
-    - How accurate are forecasts for held-out large models like Llama-3-70B and Qwen-2-72B?
-    - Which benchmarks are hardest to predict from compute?
+    plain: can a scaling model say how uncertain its forecast of an untested model's benchmark
+      score is, instead of giving a single number?
+    jargon: do 95% prediction intervals from a latent variable scaling law cover held-out
+      LLM benchmark scores, and which benchmarks show the widest intervals?
+    task: how do I put error bars on a predicted benchmark score for a model that has not
+      been evaluated yet?
+    practitioner: can I trust a predicted leaderboard score for a 70B-scale model I have not
+      run, and how wide is the range?
   answered_by:
   - prediction-intervals-cover
   - context-intervals
 - ask:
-    unsorted:
-    - Are there statistical guarantees for latent-skill scaling law estimators?
-    - Is the maximum likelihood estimator of a latent variable scaling law consistent?
-    - Where do standard errors on scaling-law coefficients come from?
+    plain: is there any mathematical proof that fitting a skill-based scaling model recovers
+      the right numbers as more model families are added?
+    jargon: is the marginal maximum likelihood estimator of a latent variable scaling law
+      consistent and asymptotically normal in the number of LLM families?
+    task: how do I get standard errors for the size and token coefficients in a latent-skill
+      scaling law fit?
+    practitioner: should I report confidence intervals from a latent-skill scaling fit, or
+      are the estimates only descriptive?
   answered_by:
   - consistency-and-normality
   - context-guarantees-gap
 - ask:
-    practitioner: What should I read about scaling laws for downstream benchmarks rather than
-      validation loss?
-    unsorted:
-    - Which work models heterogeneity across LLM families in a scaling law?
-    - Where should I start reading about latent skills and LLM evaluation?
-    - What is a good paper on statistical modelling of LLM benchmark performance?
+    plain: what should I read first about using statistics to model how language model benchmark
+      scores grow with scale?
+    jargon: which work formulates a latent variable scaling law with family-level random abilities
+      and benchmark loadings, with identifiability constraints established?
+    task: where do I start if I want to model differences between LLM families rather than
+      fit one global scaling curve?
+    practitioner: is there a paper I can cite for family-specific, skill-specific scaling
+      laws on downstream benchmarks?
   answered_by:
   - context-framework
   - context-guarantees-gap
 - ask:
-    practitioner: How can I compare two model families on a specific skill?
-    unsorted:
-    - Does instruction tuning hurt mathematical reasoning?
-    - What does a chat variant change relative to its base family?
+    plain: does turning a base language model into a chat model trade away its maths ability?
+    jargon: how do posterior family latent ability densities differ between a chat-tuned variant
+      and its base family across instruction-following and reasoning dimensions?
+    task: how do I tell which skill dimensions instruction tuning actually moved in a model
+      family?
+    practitioner: if I switch from a base checkpoint to its chat version, what will I gain
+      and what might I lose?
   answered_by:
   - chat-family-comparison
 - ask:
-    unsorted:
-    - Are LLM latent skills independent of each other?
-    - How correlated are family-level abilities across benchmarks?
-    - Do factor-analytic LLM skills have to be orthogonal?
+    plain: are the different abilities of language models separate from each other, or do
+      they rise and fall together?
+    jargon: are family-level latent abilities in a factor-analytic scaling model orthogonal,
+      or correlated across benchmark-anchored dimensions?
+    task: how do I interpret skill dimensions if they are not independent of one another?
+    practitioner: can I treat reasoning, maths and common-sense scores as separate axes when
+      comparing model families?
   answered_by:
   - correlated-skills
 - ask:
-    unsorted:
-    - How should a fixed FLOPs budget be split between parameters and tokens for math versus
-      reasoning?
-    - Is Chinchilla-style allocation the same for every capability?
-    - What is compute-optimal for a specific skill?
+    plain: if I have a fixed compute budget, is the best split between model size and training
+      data the same for every ability?
+    jargon: does the compute-optimal parameter-token allocation under a fixed FLOPs budget
+      vary by skill dimension rather than following one Chinchilla frontier?
+    task: how do I allocate a fixed FLOPs budget between parameters and tokens when I care
+      mainly about mathematical performance?
+    practitioner: should I follow the standard compute-optimal ratio, or change it because
+      my target capability is maths?
   answered_by:
   - compute-optimal-differs-by-skill
 terminology:

@@ -135,100 +135,133 @@ claims:
     implementation is alpha and the connectors are proposed deliverables.
 qa:
 - ask:
-    practitioner: How can I run one agent across many different agent benchmarks without writing
-      a wrapper for each?
-    unsorted:
-    - Is there a standard interface for agent benchmarks so they work on any evaluation platform?
-    - What does CUBE propose for unifying agent benchmarks?
+    plain: is there a common interface that lets an AI agent benchmark run on any evaluation
+      platform without custom glue code?
+    jargon: what interface contract does CUBE specify for agentic benchmarks across task,
+      benchmark, package and registry layers?
+    task: how do I make my agent benchmark runnable by many harnesses without writing a wrapper
+      for each one?
+    practitioner: should I package my agent benchmark against a shared standard instead of
+      maintaining per-platform adapters?
   answered_by:
   - integration-tax-position
   - four-layer-separation
   - mcp-gym-fusion
 - ask:
-    practitioner: What should I read about fragmentation in agent benchmark infrastructure?
-    unsorted:
-    - Which paper argues for a common standard for agent evaluation environments?
-    - Where should I start reading about the integration burden of agentic benchmarks?
+    plain: which write-up argues that setting up agent benchmarks is too much work and proposes
+      a shared standard?
+    jargon: what position paper frames the integration cost of agentic evaluation environments
+      and its relation to existing agent platforms?
+    task: where do I start reading about why integrating agentic benchmarks costs so much
+      engineering effort?
+    practitioner: I want the background argument before committing my team to an agent evaluation
+      standard — what should I read?
   answered_by:
   - integration-tax-position
   - complementary-not-competing
 - ask:
-    unsorted:
-    - How many agentic benchmarks are there right now?
-    - Is the number of agent benchmarks expected to grow?
-    - How many agent benchmarks does the CUBE position paper count?
+    plain: how many benchmarks for AI agents exist today, and is that number still climbing?
+    jargon: what is the current count and projected growth of agentic benchmarks?
+    practitioner: is the agent benchmark landscape stable enough to pick a few, or will it
+      keep expanding on me?
   answered_by:
   - benchmark-count-forecast
 - ask:
-    unsorted:
-    - Why combine MCP with the Gym API instead of just using Gym?
-    - How does CUBE handle asynchronous, non-blocking tool calls that a blocking step function
-      cannot?
-    - What methods does the CUBE task-level API define?
+    plain: why bolt a tool-calling protocol onto the usual reset-and-step loop instead of
+      picking one of them?
+    jargon: why does CUBE extend MCP with Gym-style reset, step and evaluate methods rather
+      than using Gym alone?
+    task: how do I let an agent make tool calls that do not block while still driving an episode
+      step by step?
+    practitioner: if my agent already speaks MCP, do I have to rewrite it to use a Gym-style
+      benchmark API?
   answered_by:
   - mcp-gym-fusion
 - ask:
-    unsorted:
-    - How do you support benchmarks like WebArena or OSWorld that need one shared server or
-      VM across all tasks?
-    - Which agent frameworks can manage shared infrastructure spanning multiple tasks?
-    - Why do OpenEnv and Harbor struggle with WebArena and OSWorld?
+    plain: how do you run benchmarks that need one shared web server or virtual machine behind
+      all their tasks?
+    jargon: how is benchmark-level shared infrastructure lifecycle handled for environments
+      like WebArena's micro-internet or OSWorld's desktop VM?
+    task: how do I spin up a persistent VM or server once and hand each task a handle to it?
+    practitioner: can I run WebArena or OSWorld through a standard benchmark interface, or
+      does shared infrastructure break it?
   answered_by:
   - shared-infrastructure-lifecycle
   - infrastructure-heterogeneity
 - ask:
-    unsorted:
-    - Why is integrating agent benchmarks so much work — what actually differs between them?
-    - How much RAM does OSWorld need per agent?
-    - What are the infrastructure differences between WebArena, SWE-bench, OSWorld and GAIA?
+    plain: what actually differs between agent benchmarks that makes each one so much work
+      to set up?
+    jargon: how do SWE-bench, WebArena, OSWorld and GAIA differ on containerization, VM requirements
+      and hardware footprint?
+    task: how do I budget RAM, disk and container setup for running several different agent
+      benchmarks?
+    practitioner: how much machine do I need per agent to run a desktop-OS benchmark like
+      OSWorld?
   answered_by:
   - infrastructure-heterogeneity
 - ask:
-    unsorted:
-    - Can an evaluation harness get ground-truth answers or the grading code to help an LLM
-      judge?
-    - What is privileged information in the CUBE benchmark protocol?
-    - How can judge-based failure analysis be made more accurate on agent benchmarks?
+    plain: can a grading harness see the answer key or the scoring code to explain why an
+      agent failed?
+    jargon: how does CUBE expose privileged environment state and ground truth to LLM judges
+      and to policy distillation?
+    task: how do I get ground-truth answers and evaluator source code out of a benchmark to
+      diagnose agent failures?
+    practitioner: I want my judge to explain agent failures more reliably — can a benchmark
+      hand me the grading code?
   answered_by:
   - privileged-info
 - ask:
-    practitioner: How do I test that a wrapped agent benchmark actually works without paying
-      for LLM calls?
-    unsorted:
-    - Can agent benchmarks be checked in a CI pipeline?
-    - What is a CUBE debug agent for?
+    plain: how can you tell an agent benchmark still works without paying for a language model
+      run?
+    jargon: how does CUBE support deterministic end-to-end episode testing of a benchmark
+      package in CI?
+    task: how do I add a benchmark to continuous integration and assert a full episode still
+      scores correctly?
+    practitioner: can I regression-test my agent environment on every commit without LLM API
+      calls?
   answered_by:
   - debug-agent-ci
 - ask:
-    practitioner: How would I discover agent benchmarks that fit my available GPU, RAM and
-      container runtime?
-    unsorted:
-    - Does the CUBE registry host benchmark code or data?
-    - What metadata does a registered CUBE benchmark have to publish?
+    plain: does a catalogue of agent benchmarks store the benchmarks themselves, or just point
+      at where they live?
+    jargon: what metadata fields does the CUBE Registry record, and does it host benchmark
+      code or data?
+    task: how do I find an agent benchmark whose runtime, hardware needs and licence fit what
+      I can run?
+    practitioner: before I list my benchmark in a registry, what do I have to declare about
+      licences and copyrighted content?
   answered_by:
   - registry-no-hosting
 - ask:
-    unsorted:
-    - How does CUBE compare with NeMo Gym, OpenEnv, Harbor, AgentBeats and HAL?
-    - How many benchmarks does CUBE currently wrap compared with other agent platforms?
-    - Which agent benchmark platform wraps the most environments — NeMo Gym, OpenEnv, Harbor
-      or AgentBeats?
+    plain: how many environments does each of the agent evaluation platforms cover, and how
+      do they relate to each other?
+    jargon: how does CUBE's wrapped-benchmark coverage compare with NeMo Gym, AgentBeats,
+      OpenEnv, Harbor and HAL?
+    task: how do I choose between the available agent evaluation platforms when I need broad
+      benchmark coverage?
+    practitioner: if another platform already wraps far more environments, why would I adopt
+      a benchmark packaging standard as well?
   answered_by:
   - coverage-comparison
   - complementary-not-competing
 - ask:
-    unsorted:
-    - Do the CUBE authors claim their API design is the right one?
-    - What objections to the CUBE design do its own authors acknowledge?
-    - Is there an argument against adding a new agent benchmark standard at all?
+    plain: do the people proposing a new agent benchmark standard think their design is the
+      correct one?
+    jargon: what design objections to CUBE's layered RPC and MCP-plus-Gym API do its own authors
+      concede?
+    practitioner: I would rather have explicit async primitives and fewer abstraction layers
+      — has that objection to CUBE been addressed?
   answered_by:
   - design-not-optimal
 - ask:
-    unsorted:
-    - How does a new benchmark standard get adopted when platforms and benchmark authors each
-      wait for the other?
-    - What is the plan for getting CUBE adopted, and by when?
-    - Which platforms are getting CUBE reference connectors?
+    plain: how does a new benchmark standard get off the ground when platforms and benchmark
+      authors each wait for the other to move first?
+    jargon: what adoption strategy does CUBE propose to break the two-sided network effect
+      between platforms and benchmark authors?
+    task: how do I get a proposed evaluation standard adopted when neither side will move
+      first?
+    practitioner: which platforms are committing to CUBE connectors, and by when should I
+      expect to see them?
   answered_by:
   - two-sided-adoption
 misreadings:

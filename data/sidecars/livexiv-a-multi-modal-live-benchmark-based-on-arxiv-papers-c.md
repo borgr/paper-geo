@@ -117,104 +117,142 @@ claims:
     constructed for this stress test and is not part of the live benchmark rotation.
 qa:
 - ask:
-    practitioner: Where should I start reading about live, contamination-free evaluation of
-      large multi-modal models?
-    unsorted:
-    - What is a good benchmark for testing multi-modal models on data they were not trained
-      on?
-    - Which benchmarks avoid test set contamination for vision-language models?
+    plain: which test sets for image-and-text models are built from material too recent for
+      the models to have memorised?
+    jargon: which multi-modal benchmarks mitigate train-test contamination by sourcing items
+      from newly published scientific papers?
+    task: how do I evaluate a vision-language model on questions it cannot have seen during
+      pretraining?
+    practitioner: I do not trust my model's ChartQA score because of leakage, is there a live
+      benchmark I can run instead?
   answered_by:
   - livexiv-what-it-is
   - no-human-in-loop
 - ask:
-    unsorted:
-    - How big is LiveXiv and where do its questions come from?
-    - How many questions does the first version of LiveXiv contain?
-    - How large is a benchmark auto-generated from figures and tables in ArXiv papers?
+    plain: how many questions are in the LiveXiv benchmark, and what are they made from?
+    jargon: what is the item count and source-paper composition of the LiveXiv v1 VQA and
+      TQA splits?
+    task: how many figure and table questions do I get if I download the first LiveXiv release?
+    practitioner: is a benchmark auto-generated from scientific figures and tables large enough
+      to give me a stable score?
   answered_by:
   - v1-size
   - livexiv-what-it-is
 - ask:
-    unsorted:
-    - Which model performs best on LiveXiv?
-    - How do GPT-4o and Claude compare on scientific figure and table question answering?
-    - What are the top accuracies on LiveXiv v1?
+    plain: which image-and-text model answers scientific figure and table questions best?
+    jargon: which LMM tops the LiveXiv v1 leaderboard on VQA and TQA mean accuracy?
+    task: which multi-modal model should I pick for reading charts and tables out of research
+      papers?
+    practitioner: should I use Claude, GPT-4o or Qwen2-VL for extracting answers from figures
+      and tables in papers?
   answered_by:
   - claude-leads
 - ask:
-    unsorted:
-    - Do model rankings change when you evaluate on fresh data instead of static benchmarks?
-    - Is there evidence that ChartQA, DocVQA and AI2D scores are inflated by contamination?
-    - Which models drop in ranking on LiveXiv compared to established benchmarks?
+    plain: do model leaderboards reorder when the test questions come from documents published
+      after training?
+    jargon: how do LMM rankings on LiveXiv compare with rankings averaged over ChartQA, DocVQA
+      and AI2D?
+    task: how do I tell whether a model's chart-QA leaderboard position is inflated by contaminated
+      test data?
+    practitioner: my model looks strong on DocVQA and AI2D, will it keep that standing on
+      freshly collected questions?
   answered_by:
   - ranking-shift
 - ask:
-    unsorted:
-    - Are automatically generated VQA benchmarks reliable, or do they contain too many wrong
-      answers?
-    - How much does LiveXiv accuracy differ from a human-verified subset?
-    - What is the labeling error rate of automatically generated question-answer pairs in
-      LiveXiv?
+    plain: can you trust scores from a question set that a model wrote instead of a person?
+    jargon: how large is the accuracy gap between automatically generated LiveXiv items and
+      a human-verified subset?
+    task: how do I check how much labelling noise an auto-generated multiple-choice VQA set
+      adds to my measured accuracy?
+    practitioner: is an automatically generated visual QA benchmark accurate enough that I
+      can report its numbers?
   answered_by:
   - manual-verification-gap
   - blind-test-filtering
 - ask:
-    practitioner: How can I avoid re-evaluating every model each time a benchmark is updated?
-    unsorted:
-    - How many models must be re-run to estimate the rest of a leaderboard on new data?
-    - How much compute does the LiveXiv efficient evaluation method save?
+    plain: how few models do you have to re-test to keep a leaderboard current on a new batch
+      of questions?
+    jargon: how many LMMs must be re-evaluated per benchmark version for the IRT Rasch estimate
+      to recover the rest of the leaderboard?
+    task: how do I refresh a leaderboard on new benchmark data without re-running every model?
+    practitioner: can I skip re-running most of my models each time the benchmark updates?
   answered_by:
   - efficient-eval-savings
 - ask:
-    unsorted:
-    - How accurate is Item Response Theory at predicting unseen model accuracy per domain?
-    - What is the prediction error when estimating model scores without re-evaluating them?
-    - How well does the LiveXiv efficient evaluation predict per-domain accuracy?
+    plain: how close are predicted scores for models that were never re-tested on the new
+      questions?
+    jargon: what mean absolute error and Spearman correlation does the Rasch-based estimate
+      reach per ArXiv domain on LiveXiv v4?
+    task: how do I know the error I take on by estimating rather than measuring a model's
+      accuracy per subject area?
+    practitioner: if I estimate scores for the models I did not rerun, how wrong will my per-domain
+      numbers be?
   answered_by:
   - per-domain-mae
   - efficient-eval-savings
 - ask:
-    unsorted:
-    - How are questions that can be answered without looking at the image removed?
-    - What filtering keeps an automatically generated VQA set truly multi-modal?
-    - Does LiveXiv check for hallucinated ground-truth answers?
+    plain: how do you throw out questions about an image that can be answered without ever
+      seeing the image?
+    jargon: what blind-LLM and cross-model agreement filtering removes text-only-answerable
+      items and wrong ground truth from generated VQA pairs?
+    task: how do I make sure my generated visual questions actually require the figure to
+      answer?
+    practitioner: can I rely on an automatic filter to strip text-only-solvable and mislabelled
+      items from questions I generate?
   answered_by:
   - blind-test-filtering
 - ask:
-    unsorted:
-    - What kinds of questions do multi-modal models fail most on scientific tables?
-    - Are arithmetic questions harder for LMMs than reading or attribute questions?
-    - Which question category is the weakest for large multi-modal models on table QA?
+    plain: what kind of table question do image-and-text models get wrong most often?
+    jargon: which TQA question category yields the lowest mean accuracy across LMMs on LiveXiv
+      v1, arithmetic, attribute or reasoning?
+    task: can I trust a multi-modal model to compute differences and totals from a table in
+      a paper?
+    practitioner: should I let a vision-language model do the arithmetic on my extracted tables,
+      or only the lookups?
   answered_by:
   - arithmetic-weakest
 - ask:
-    unsorted:
-    - Which type of scientific figure is hardest for vision-language models?
-    - Do LMMs do better on charts or on block diagrams?
-    - How does LMM accuracy vary by figure type in LiveXiv?
+    plain: which sort of picture in a research paper is hardest for image-and-text models
+      to answer about?
+    jargon: how does LMM VQA accuracy break down by figure type on LiveXiv v1, charts versus
+      block diagrams versus qualitative examples?
+    task: which figure types should I expect a vision-language model to misread when I parse
+      papers?
+    practitioner: my pipeline reads plots and architecture diagrams, which of those will hurt
+      my accuracy more?
   answered_by:
   - charts-hardest-figure-type
 - ask:
-    unsorted:
-    - Does using one model to generate questions and another to filter them bias an auto-generated
-      VQA benchmark?
-    - Is a benchmark generated by GPT-4o unfair to GPT-4o or to Claude?
-    - What happens to LiveXiv rankings when the generator and filter models swap roles?
+    plain: does a question set written by one model quietly favour that model when it is graded?
+    jargon: does swapping the generator and filter LMMs change LiveXiv rankings, and does
+      the generating model gain an advantage?
+    task: how do I check whether a model I used to build my eval set is scoring itself too
+      high?
+    practitioner: if GPT-4o wrote my benchmark questions, can I still compare GPT-4o against
+      Claude on it?
   answered_by:
   - role-swap-robust
   - claude-leads
 - ask:
-    unsorted:
-    - Does the IRT efficient evaluation approach work on benchmarks other than LiveXiv?
-    - Can performance prediction from a few re-evaluated models transfer to another live benchmark?
-    - Was the efficient evaluation method tested on MM-LiveBench?
+    plain: does the trick of re-testing only a handful of models work on question sets other
+      than the one it was built for?
+    jargon: does the IRT Rasch performance-prediction transfer to MM-LiveBench with only 5
+      of 13 LMMs re-evaluated?
+    task: can I apply few-model score prediction to a live benchmark that is not derived from
+      ArXiv papers?
+    practitioner: can I cut my evaluation cost by scoring only a subset of models and estimating
+      the rest, on a benchmark other than LiveXiv?
   answered_by:
   - transfer-to-mm-livebench
 - ask:
-    unsorted:
-    - Does performance prediction survive a large distribution shift between benchmark versions?
-    - What happens to the IRT estimates when the source papers are 10 years apart?
-    - Was LiveXiv efficient evaluation stress-tested on older ArXiv papers?
+    plain: does score prediction still work when the new questions come from documents a decade
+      older?
+    jargon: do the Rasch item estimates remain valid across a 10-year temporal distribution
+      shift between LiveXiv v0 and v1?
+    task: how do I know few-model score prediction will survive a big change in question distribution
+      between versions?
+    practitioner: my benchmark versions will not look alike, can I still estimate scores from
+      a few re-run models?
   answered_by:
   - v0-temporal-shift
   - efficient-eval-savings

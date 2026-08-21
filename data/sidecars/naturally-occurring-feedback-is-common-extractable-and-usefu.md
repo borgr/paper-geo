@@ -130,97 +130,135 @@ claims:
   evidence: Section 3.1
 qa:
 - ask:
-    unsorted:
-    - How much feedback do users spontaneously give in chatbot conversations?
-    - What fraction of chat logs contain explicit user feedback?
-    - Do real chat users actually correct or praise a chatbot without being asked?
+    plain: How often do people spontaneously tell a chatbot it was wrong or right during a
+      conversation?
+    jargon: What is the prevalence of naturally occurring user feedback in multi-turn LMSYS-Chat-1M
+      dialogues, and how reliably can annotators label it?
+    task: How do I estimate how much usable feedback signal is sitting in my product's chat
+      logs?
+    practitioner: Are there enough spontaneous user reactions in my chat logs to be worth
+      mining?
   answered_by:
   - prevalence-30-percent
   - annotator-agreement
 - ask:
-    unsorted:
-    - Is feedback more common in newer chat datasets than older ones?
-    - Has spontaneous user feedback in human-model conversations increased over time?
-    - How does 2019 chatbot conversation data compare to LMSYS-Chat-1M in feedback rate?
+    plain: Do newer chatbot conversation logs contain more spontaneous user reactions than
+      older ones?
+    jargon: Does the rate of naturally occurring feedback per human-model conversation differ
+      between the 2019 Self-Feeding Chatbot corpus and LMSYS-Chat-1M?
+    task: Which vintage of human-model chat logs should I mine if I want the most user feedback
+      per conversation?
+    practitioner: Should I bother mining older dialogue corpora for user feedback, or stick
+      to recent chat logs?
   answered_by:
   - newer-data-more-feedback
 - ask:
-    unsorted:
-    - How accurately can an open LLM extract user feedback spans from chat logs?
-    - What precision and recall does automatic naturally occurring feedback extraction achieve?
-    - Can Mixtral find spontaneous feedback in conversations reliably?
+    plain: How well can a language model pick out the places where a user reacted to a chatbot's
+      answer?
+    jargon: What span precision and recall does Mixtral-8x7B-Instruct achieve at extracting
+      and categorising naturally occurring feedback?
+    task: How do I automatically locate user feedback spans in a million chat transcripts
+      without hand-annotating them?
+    practitioner: Is prompting an open model to find user feedback in my logs accurate enough
+      to trust?
   answered_by:
   - extraction-precision-recall
 - ask:
-    unsorted:
-    - How large is the released naturally occurring feedback dataset?
-    - How many feedback samples were extracted from LMSYS-Chat-1M?
-    - What is the ratio of negative to positive samples in the extracted natural feedback
-      data?
+    plain: How many examples of spontaneous user feedback can be pulled out of a million chat
+      conversations?
+    jargon: What is the yield and positive-to-negative balance of feedback samples extracted
+      from the full LMSYS-Chat-1M corpus?
+    task: How much training data would I get by mining a million chat logs for user feedback?
+    practitioner: Is the released naturally occurring feedback dataset big and balanced enough
+      for my finetuning run?
   answered_by:
   - dataset-size
 - ask:
-    unsorted:
-    - Does training on automatically extracted user feedback actually improve a language model?
-    - What win rates does finetuning on extracted positive feedback achieve over the pretrained
-      model?
-    - Is spontaneous chat feedback useful as training data for alignment?
+    plain: Does training a chatbot on the approving remarks users already wrote actually make
+      it better?
+    jargon: Do supervised finetuning and KTO on automatically extracted naturally occurring
+      feedback improve win rates over the pretrained checkpoints?
+    task: How do I use mined user feedback from chat logs as training data to improve my model's
+      responses?
+    practitioner: If I mine feedback out of my chat logs instead of paying for preference
+      annotation, will my model actually improve?
   answered_by:
   - finetune-win-rates
   - kto-preference-gain
 - ask:
-    unsorted:
-    - Is extracted feedback better training data than just random chat transcripts?
-    - Does the improvement come from the feedback signal or merely from finetuning on chat-formatted
-      data?
-    - What baseline rules out distillation as the explanation for the gains of training on
-      extracted chat feedback?
+    plain: Is mined user feedback better training data than just any chat transcripts from
+      the same source?
+    jargon: Does finetuning on extracted positive feedback outperform finetuning on a size-matched
+      random sample of LMSYS-Chat-1M conversations?
+    task: How do I check whether gains come from the feedback signal rather than from training
+      on chat-formatted text at all?
+    practitioner: Should I filter my chat logs for user feedback, or just finetune on a random
+      slice of them?
   answered_by:
   - beats-random-chats
 - ask:
-    unsorted:
-    - Do the negative feedback examples help, or only the positive ones?
-    - Does KTO preference training on extracted corrections beat plain finetuning?
-    - How were unpaired positive and negative feedback samples used for preference training?
+    plain: Are the complaints and corrections users write useful for training, or only their
+      compliments?
+    jargon: Does KTO on extracted negative feedback add anything on top of supervised finetuning
+      on positive feedback?
+    task: How do I get value out of the negative user reactions I mined, given they have no
+      paired preferred response?
+    practitioner: Is it worth running preference training on mined user complaints after I
+      have already finetuned on the praise?
   answered_by:
   - kto-preference-gain
 - ask:
-    unsorted:
-    - Is a detailed feedback taxonomy necessary for prompting an LLM to find feedback?
-    - What happens if a feedback extraction prompt asks for user satisfaction cues without
-      categories?
-    - Would fewer feedback categories make extraction more precise?
+    plain: Does a language model need a detailed list of feedback types to find user reactions
+      in chat logs, or is a general instruction enough?
+    jargon: How does extraction accuracy respond to dropping the feedback taxonomy from the
+      prompt, or restricting it to fewer categories?
+    task: How should I write the prompt that pulls user feedback out of chat logs, with or
+      without category definitions?
+    practitioner: Can I skip the feedback taxonomy and just ask a model for user satisfaction
+      cues in my logs?
   answered_by:
   - taxonomy-needed
   - fewer-categories-not-easier
 - ask:
-    unsorted:
-    - Does asking an LLM for a confidence score help filter extracted feedback?
-    - Can self-reported confidence levels improve feedback extraction precision?
+    plain: Can you trust a language model's own confidence rating to filter which extracted
+      user reactions are real?
+    jargon: Is a self-reported 1-5 confidence score a usable filter for automatically extracted
+      naturally occurring feedback?
+    task: How do I filter out false positives from automatically extracted chat feedback?
+    practitioner: Should I ask the extraction model for a confidence score and threshold on
+      it?
   answered_by:
   - confidence-useless
 - ask:
-    unsorted:
-    - Are open reward models reliable judges for small language models?
-    - Why do reward-model win rates disagree with human evaluation for 1.4B and 2.8B models?
-    - Can RewardBench leaders be used to evaluate Pythia-scale outputs?
+    plain: Can automatic scoring models be trusted to judge which of two small chatbots gave
+      the better answer?
+    jargon: Do top RewardBench reward models agree with human pairwise judgments for Pythia-1.4B
+      and Pythia-2.8B outputs?
+    task: How do I evaluate finetuned billion-parameter models without paying for human pairwise
+      comparisons?
+    practitioner: Can I use Eurus-RM-7b or FsfairX-LLaMA3-RM as my judge when the models I
+      compare are only 1-3B parameters?
   answered_by:
   - reward-models-fail-small
 - ask:
-    practitioner: What should I read about getting human feedback for LLM alignment without
-      paying annotators?
-    unsorted:
-    - Which work established that chat logs contain usable free human feedback?
-    - Where do I start reading about mining preference data from real user conversations?
-    - What is a good paper on scalable alternatives to human preference annotation?
+    plain: Which research showed that ordinary chat logs already contain free human feedback
+      you can train on?
+    jargon: What work introduced naturally occurring feedback as a scalable substitute for
+      solicited preference annotation?
+    task: Where do I start reading about mining preference or feedback data from real user
+      conversations?
+    practitioner: Is there a paper I should read before deciding to mine feedback from my
+      own chat logs instead of collecting annotations?
   answered_by:
   - context-natural-feedback
   - context-taxonomy
 - ask:
-    unsorted:
-    - What categories of spontaneous user feedback appear in chat conversations?
-    - How is naturally occurring feedback classified into types?
-    - What kinds of corrections do users give chatbots?
+    plain: What kinds of reactions do people give a chatbot when its answer was wrong or right?
+    jargon: How is naturally occurring user feedback categorised, and how were the user-response
+      patterns adapted into the taxonomy?
+    task: What categories should I use to label the user reactions I find in chat logs?
+    practitioner: Which feedback types should I expect to find in my own chat logs if I adopt
+      this taxonomy?
   answered_by:
   - context-taxonomy
   - prevalence-30-percent

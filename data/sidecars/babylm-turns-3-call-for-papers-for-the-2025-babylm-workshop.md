@@ -116,88 +116,115 @@ claims:
     comparisons, and multimodal modeling.
 qa:
 - ask:
-    practitioner: Where should I start reading about sample-efficient language model pretraining
-      on child-scale data?
-    unsorted:
-    - What is BabyLM and what question does it try to answer?
-    - Which shared task connects language acquisition research with small language models?
+    plain: what is BabyLM and what question about learning language from limited input does
+      it try to answer?
+    jargon: which venue brings together child language acquisition research and sample-efficient
+      language model pretraining?
+    task: where do I submit work that sits between cognitive science and small-data language
+      modeling?
+    practitioner: should I send my paper to BabyLM if I do not want to enter a competition
+      track?
   answered_by:
   - field-entry-point
   - workshop-turn
 - ask:
-    unsorted:
-    - What changed in the 2025 data-efficient pretraining competition compared with its 2024
-      edition?
-    - How did the third BabyLM edition change its rules?
-    - What changed between the 2nd and 3rd BabyLM competitions?
+    plain: what is new in the 2025 round of the small-data language model competition compared
+      with the previous year?
+    jargon: which rule changes did the 3rd BabyLM Challenge introduce over the 2nd, in tracks,
+      data budget and checkpointing?
+    task: I entered the earlier BabyLM challenge, what do I need to change to submit in 2025?
+    practitioner: if I already have a BabyLM-style pretraining pipeline, is it still eligible
+      under the 2025 rules?
   answered_by:
   - interaction-track
   - epoch-cap
   - checkpoints
   - dataset-unchanged
 - ask:
-    unsorted:
-    - How does a competition track for learning language from a teacher model and interactive
-      feedback work?
-    - Can a small language model learn from a large teacher model under BabyLM competition
-      rules?
-    - What are the rules for using a pretrained teacher model in BabyLM 2025?
+    plain: can a small language model be trained by a bigger model giving it feedback in a
+      limited-data competition?
+    jargon: how does the BabyLM Interaction track constrain teacher-student setups and the
+      student's own generated tokens?
+    task: how do I use a large pretrained teacher to train a 100M-word budget model without
+      breaking the entry rules?
+    practitioner: am I allowed to distil from an off-the-shelf pretrained model in my BabyLM
+      2025 entry?
   answered_by:
   - interaction-track
   - synthetic-data-accounting
 - ask:
-    unsorted:
-    - Is there a limit on the number of training epochs in the 2025 data-efficient pretraining
-      competition?
-    - How much repeated data exposure is allowed for BabyLM competition entries?
-    - Why did BabyLM start restricting the number of passes over the training data?
+    plain: how many times can a model see the same training text in the small-data pretraining
+      competition, and why is there a cap?
+    jargon: what epoch or multiple-exposure budget applies to BabyLM 2025 leaderboard eligibility,
+      and what motivated it?
+    task: how long can I keep training on the 100M-word corpus before my run stops being eligible?
+    practitioner: if more compute keeps improving my scores, can I just train for more epochs
+      and still submit?
   answered_by:
   - epoch-cap
   - epoch-cap-motivation
 - ask:
-    practitioner: What data can I train on for the 100M-word strict pretraining track?
-    unsorted:
-    - How large is the BabyLM pretraining corpus and what is in it?
-    - Which datasets make up the 100M-word BabyLM corpus?
+    plain: how big is the training text used for the small-data language model challenge and
+      what is in it?
+    jargon: what are the composition and sizes of the Strict, Strict-small and Multimodal
+      BabyLM pretraining corpora?
+    task: where do I get the pretraining data for a developmentally plausible language model,
+      and how much of it is there?
+    practitioner: do I need to build my own corpus for BabyLM 2025 or can I reuse the earlier
+      release?
   answered_by:
   - dataset-unchanged
 - ask:
-    practitioner: Do I have to submit intermediate training checkpoints to enter the 2025
-      sample-efficient pretraining competition?
-    unsorted:
-    - At what intervals does BabyLM require model checkpoints?
-    - How does BabyLM measure learning dynamics over training?
+    plain: do entrants to the small-data language model challenge have to save models partway
+      through training?
+    jargon: what intermediate checkpoint schedule does BabyLM 2025 require entrants to publish
+      for learning-dynamics analysis?
+    task: how often should I save and upload checkpoints during a 100M-word pretraining run
+      to stay eligible?
+    practitioner: how much extra storage and uploading am I committing to if I enter BabyLM
+      2025?
   answered_by:
   - checkpoints
 - ask:
-    unsorted:
-    - How are BabyLM models evaluated in 2025?
-    - Is there an award for cognitively human-like language models?
-    - Does BabyLM evaluate reading-time prediction or other psychometric fit?
+    plain: is a model judged on how human-like it is, or only on how well it does language
+      tasks, in the small-data challenge?
+    jargon: does the BabyLM 2025 evaluation pipeline include psychometric measures such as
+      reading-time prediction alongside NLP benchmarks?
+    task: how do I get credit for a model that fits human reading behaviour rather than topping
+      accuracy benchmarks?
+    practitioner: my model is not the most accurate but fits human data well, is there a category
+      I can win?
   answered_by:
   - human-likeness-award
 - ask:
-    unsorted:
-    - What baseline models are released for the 2025 data-efficient pretraining competition?
-    - Which model won the 2024 BabyLM challenge and is it a baseline now?
-    - What are the baseline systems for learning from teacher feedback in BabyLM 2025?
+    plain: which starter models are provided for the 2025 small-data language model challenge?
+    jargon: what pretrained and Interaction-track baselines does BabyLM 2025 release, including
+      the winning 2024 submission and the multimodal ones?
+    task: what should I compare my limited-data pretrained model against, and where do the
+      teacher-feedback baselines come from?
+    practitioner: is there a released baseline I can fork rather than training a BabyLM entry
+      from scratch?
   answered_by:
   - strict-baselines
   - interaction-baselines
 - ask:
-    practitioner: Can I use synthetic data or an off-the-shelf tokenizer under a 100M-word
-      pretraining data budget?
-    unsorted:
-    - Does data generated by another model count against the BabyLM word budget?
-    - Are external POS taggers or parsers allowed in BabyLM entries?
+    plain: if I use another model or an existing tagger to prepare training text, does that
+      text count against the word limit?
+    jargon: how does BabyLM's closed-system data accounting treat tokenizers, parsers and
+      auxiliary LMs used for augmentation?
+    task: can I augment my 100M-word corpus with synthetic text or off-the-shelf preprocessing
+      tools and stay within budget?
+    practitioner: is an external POS tagger or pretrained parser going to disqualify my BabyLM
+      submission?
   answered_by:
   - synthetic-data-accounting
 - ask:
-    practitioner: Can I submit a paper to the BabyLM workshop without entering the competition?
-    unsorted:
-    - How hard is it to get a competition-entry paper accepted at a sample-efficient pretraining
-      workshop?
-    - What is the review process for BabyLM workshop submissions?
+    plain: how strict is reviewing for papers describing entries to the small-data language
+      modeling challenge?
+    jargon: what acceptance criteria apply to BabyLM competition-entry papers versus its archival
+      research submissions?
+    task: what do I need to include in a BabyLM entry paper so it is not rejected?
+    practitioner: is it worth writing up a BabyLM submission if my results are not competitive?
   answered_by:
   - lenient-review
   - workshop-turn

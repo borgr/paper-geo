@@ -108,96 +108,128 @@ claims:
   evidence: Section 4.1 and Limitations
 qa:
 - ask:
-    unsorted:
-    - Does prompting a model in a different language help it recall facts it gets wrong in
-      the original language?
-    - Can translating a question into another language improve factual accuracy of an LLM?
-    - How much does cross-lingual prompting improve knowledge transfer?
+    plain: if a chatbot gets a fact wrong when asked in Hindi, can asking it in another language
+      get the right answer?
+    jargon: how much cross-lingual knowledge transfer does inference-time language switching
+      recover on multilingual factual benchmarks?
+    task: how do I get better factual answers out of a multilingual model without fine-tuning
+      it or adding retrieval?
+    practitioner: should I translate my users' non-English questions into other languages
+      before answering them?
   answered_by:
   - kt-gain
   - language-not-reasoning
 - ask:
-    practitioner: Should I always translate non-English queries into English before asking
-      an LLM?
-    unsorted:
-    - Is English always the best language to reason in for factual questions?
-    - Does an English pivot beat letting the model pick its own language?
+    plain: is English the best language for a model to think in when answering factual questions
+      from other languages?
+    jargon: does pivoting queries through English beat autonomous or source-language-oracle
+      language selection for parametric fact recall?
+    task: which language should I make a multilingual model reason in for a non-English factual
+      question?
+    practitioner: should I force English reasoning, or let the model pick the language it
+      explores in?
   answered_by:
   - english-pivot-not-optimal
   - autonomous-beats-oracle
 - ask:
-    unsorted:
-    - Are the gains from multilingual prompting just the effect of extra reasoning tokens?
-    - How do you separate chain-of-thought benefits from language-switching benefits?
-    - Is the improvement due to the language shift or to thinking longer?
+    plain: when a model answers better after switching languages, is that just because it
+      wrote more words?
+    jargon: are cross-lingual gains separable from the effect of additional reasoning tokens
+      at matched budget?
+    task: how do I tell whether extra tokens or the change of language is what improved factual
+      accuracy?
+    practitioner: if I already let my model reason at length in the user's language, is there
+      anything left to gain from switching languages?
   answered_by:
   - language-not-reasoning
   - pareto
 - ask:
-    unsorted:
-    - Does sampling several languages and voting beat a single well-chosen language?
-    - Is multi-path multilingual answering worth the extra compute?
-    - How much does aggregating 13 language paths add over one path?
+    plain: is it better to ask a model the same fact in many languages and combine the answers,
+      or in one good language?
+    jargon: does aggregating multiple autonomous cross-lingual generation paths outperform
+      a single origin-aware path for parametric knowledge recall?
+    task: how many language paths should I sample and combine to raise factual accuracy on
+      multilingual questions?
+    practitioner: is sampling a dozen languages per question worth the extra inference cost
+      over one well-chosen language?
   answered_by:
   - multipath-gain
   - aggregation-bottleneck
 - ask:
-    unsorted:
-    - What limits multilingual ensembling of factual answers?
-    - Why does the realized accuracy fall far below the best-of-N ceiling in multilingual
-      prompting?
-    - How large is the gap between potential and realized gains in cross-lingual exploration?
+    plain: if at least one language gets a fact right, how often does combining answers actually
+      pick that one?
+    jargon: how large is the gap between oracle best-of-N ceiling and realised gain when aggregating
+      multilingual answer candidates?
+    task: how do I find out whether my multilingual ensemble is limited by coverage or by
+      the answer-selection step?
+    practitioner: if I ensemble answers across languages, should I expect to capture most
+      of the achievable gain?
   answered_by:
   - aggregation-bottleneck
   - aggregation-choice
 - ask:
-    practitioner: Should I use majority voting or something else to combine answers from different
-      languages?
-    unsorted:
-    - Which aggregation rule works best for localized cultural facts across languages?
-    - Is majority vote the right choice when only one language knows the answer?
+    plain: when only one language out of many knows a local fact, does a simple vote across
+      languages still work?
+    jargon: does majority voting or minority-aware selection aggregate multilingual answer
+      candidates better on localized versus broadly-represented facts?
+    task: which voting rule should I use to combine answers across languages for culturally
+      localized facts?
+    practitioner: should I switch from majority vote to something that trusts a lone dissenting
+      language?
   answered_by:
   - aggregation-choice
 - ask:
-    unsorted:
-    - Does switching languages several times within one chain of thought help?
-    - Is it useful to reason in English and then in another language in the same response?
-    - Does sequential language switching inside a single path add anything?
+    plain: does it help if a model changes language partway through its own reasoning?
+    jargon: does sequential intra-path language switching yield additional parametric knowledge
+      retrieval over a single-language generation path?
+    task: should I prompt a model to reason in one language and then continue in another within
+      the same response?
+    practitioner: is mid-generation language switching worth the extra tokens it costs me?
   answered_by:
   - sequential-switching-null
 - ask:
-    unsorted:
-    - Is multilingual prompting a cost-effective way to spend inference compute?
-    - How does cross-lingual exploration compare to just sampling more answers in the query
-      language?
-    - What is the accuracy-versus-token-cost tradeoff of multilingual exploration?
+    plain: if I have a fixed compute budget, is asking in other languages a better use of
+      it than asking more times in the original language?
+    jargon: how does the accuracy-versus-token-cost Pareto frontier of cross-lingual exploration
+      compare to native-language test-time scaling?
+    task: how should I spend an inference-time compute budget on multilingual factual questions?
+    practitioner: should I buy accuracy with more samples in the user's language or with samples
+      in other languages?
   answered_by:
   - pareto
 - ask:
-    unsorted:
-    - Does multilingual prompting make a model's answers more consistent across languages,
-      or just more accurate?
-    - How can consistency gains be separated from accuracy gains in cross-lingual evaluation?
-    - Is there an intrinsic cross-lingual consistency improvement from exploring multiple
-      languages?
+    plain: does asking in several languages make a model's answers agree with each other across
+      languages, or only more often correct?
+    jargon: is there an intrinsic cross-lingual consistency gain from multilingual exploration
+      beyond what the accuracy improvement predicts?
+    task: how do I make a model give the same factual answer no matter which language the
+      user asks in?
+    practitioner: if I care about giving consistent answers across languages, not just accurate
+      ones, will multilingual exploration help?
   answered_by:
   - intrinsic-consistency
   - singlepath-consistency
 - ask:
-    practitioner: What should I read about accessing hidden factual knowledge in multilingual
-      language models?
-    unsorted:
-    - Which paper frames multilingual inference-time prompting as a design space?
-    - Where should I start reading about cross-lingual knowledge transfer at inference time?
-    - What work studies whether facts unreachable in one language are reachable in another?
+    plain: what should I read first about getting a model to answer facts it only knows in
+      another language?
+    jargon: which work frames multilingual inference-time prompting as a design space over
+      language selection, routing, aggregation and budget?
+    task: where do I start if I want to study whether facts unreachable in one language are
+      reachable in another?
+    practitioner: is there a paper that maps out the options before I build a multilingual
+      prompting pipeline?
   answered_by:
   - design-space
   - entry-point
 - ask:
-    unsorted:
-    - Which models and languages were tested for cross-lingual factual recall?
-    - What benchmarks measure cross-lingual knowledge transfer for parametric facts?
-    - How broad is the evaluation of cross-lingual exploration?
+    plain: how many languages and models were tested for whether asking in another language
+      recovers missing facts?
+    jargon: which multilingual factual benchmarks and model families were evaluated for cross-lingual
+      parametric knowledge transfer?
+    task: how do I check whether cross-lingual prompting results would carry over to my languages
+      and my model?
+    practitioner: has cross-lingual prompting been tested broadly enough that I should expect
+      it to work on my language pair?
   answered_by:
   - entry-point
   - kt-gain

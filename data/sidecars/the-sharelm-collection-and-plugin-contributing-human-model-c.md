@@ -97,89 +97,124 @@ claims:
   evidence: Section 3.2 and Section 8
 qa:
 - ask:
-    practitioner: Where can I find a large open dataset of real conversations between people
-      and language models?
-    unsorted:
-    - What dataset should I read about first for human-LLM chat logs?
-    - Is there an openly licensed collection of human-chatbot conversations?
+    plain: where should I start reading about openly available logs of people chatting with
+      chatbots?
+    jargon: which resource should be read first for open human-model dialogue corpora with
+      permissive licensing?
+    task: how do I find a growing, openly licensed corpus of real human-chatbot conversations
+      to train or study on?
+    practitioner: I need real human-chatbot dialogue data for my project, which public collection
+      should I pick up first?
   answered_by:
   - collection-size
   - living-dataset-context
 - ask:
-    unsorted:
-    - How many conversations are in the ShareLM collection and from how many models?
-    - How large is the biggest unified open collection of human-model chat datasets?
-    - What is the size of the ShareLM chat dataset?
+    plain: how many real chatbot conversations are in the ShareLM collection, and from how
+      many chatbots?
+    jargon: what is the conversation count and model coverage of the ShareLM human-model dialogue
+      collection?
+    task: how do I tell whether a unified collection of human-chatbot chat logs is big enough
+      for finetuning?
+    practitioner: is the ShareLM conversation collection large enough to be worth downloading
+      for my training run?
   answered_by:
   - collection-size
 - ask:
-    practitioner: Is there a browser extension for sharing my LLM chats with the research
-      community?
-    unsorted:
-    - How can users donate their own chatbot conversations for open research?
-    - How do I contribute my ChatGPT or Gradio demo conversations to an open dataset?
+    plain: how can ordinary people hand over their own chatbot conversations so researchers
+      can use them?
+    jargon: what mechanism lets end users donate human-model dialogues into an openly licensed
+      corpus?
+    task: how do I share the conversations I have with ChatGPT or a Gradio demo into a public
+      dataset?
+    practitioner: I want my own chatbot chats to end up in an open dataset, what do I install
+      and where do they go?
   answered_by:
   - platform-coverage
   - open-license-release
 - ask:
-    practitioner: What stops me from accidentally sharing a private conversation with a chat-donation
-      plugin?
-    unsorted:
-    - How does the ShareLM plugin let users delete a chat before it is uploaded?
-    - What is delayed upload in conversation collection extensions?
+    plain: if a browser add-on records my chatbot conversations, can I take one back before
+      it is sent anywhere?
+    jargon: how does a conversation-donation extension implement a local retention window
+      before server upload?
+    task: how do I make sure a chat I regret never reaches the collection server?
+    practitioner: do I get a chance to review and delete a recorded chat before it is uploaded,
+      and do people actually use it?
   answered_by:
   - delayed-upload
   - study-popup-use
 - ask:
-    unsorted:
-    - Which chat platforms does the ShareLM plugin support?
-    - Can a chat-sharing extension record conversations from platforms other than ChatGPT?
-    - Does the plugin work with Gradio and ChatUI demos?
+    plain: which chatbot websites can a conversation-recording browser extension capture chats
+      from?
+    jargon: how does XML element matching in the page let a chat-collection extension stay
+      model- and serving-platform agnostic?
+    task: how do I collect conversations from a Gradio demo or a hosted chat UI without wiring
+      up an API?
+    practitioner: will a chat-donation extension work with the demo I host, or only with ChatGPT?
   answered_by:
   - platform-coverage
 - ask:
-    unsorted:
-    - How is human feedback collected on donated LLM conversations?
-    - Can users rate individual model responses as well as whole conversations?
-    - Does ShareLM collect thumbs-up/down preference signals?
+    plain: can people mark whether a chatbot reply was good or bad while their conversations
+      are being collected?
+    jargon: at what granularities are thumbs-up/down preference signals gathered alongside
+      donated human-model dialogues?
+    task: how do I get per-response as well as per-conversation quality ratings out of real
+      user chats?
+    practitioner: if I use ShareLM data, do I get response-level human feedback or only whole-conversation
+      ratings?
   answered_by:
   - two-feedback-granularities
 - ask:
-    unsorted:
-    - Was the ShareLM plugin evaluated with real users?
-    - How usable did participants find the chat-donation extension?
-    - What did the ShareLM user study find about installation and UI?
+    plain: did real people try out the chat-donation browser extension, and how easy did they
+      find it?
+    jargon: what did the ShareLM usability study report on installation, first use and interface
+      ratings?
+    task: how do I know whether asking volunteers to install a chat-recording extension is
+      realistic?
+    practitioner: can I expect ordinary users to install and actually operate a conversation-donation
+      plugin?
   answered_by:
   - user-study-install
   - study-popup-use
 - ask:
-    practitioner: What metadata does the ShareLM plugin collect about me?
-    unsorted:
-    - How is privacy handled when human-model chats are publicly released?
-    - Are donated conversations anonymized before publication?
+    plain: what happens to personal details in chatbot conversations before they are published?
+    jargon: what anonymization and metadata-minimization are applied to donated human-model
+      dialogues prior to release?
+    task: how do I release donated chat logs without exposing names, addresses or user identities?
+    practitioner: if I donate my chats through ShareLM, what identifying information about
+      me is kept?
   answered_by:
   - anonymization
 - ask:
-    unsorted:
-    - Why is a continuously growing chat dataset better than a one-time crowdsourced one?
-    - What is the argument for living rather than static human-model conversation datasets?
-    - How does ShareLM differ from ShareGPT and Chatbot Arena?
+    plain: why keep collecting chatbot conversations continuously instead of running one crowdsourcing
+      round?
+    jargon: what is the case for treating human-model dialogue corpora as living artifacts
+      rather than static one-time collections?
+    task: how do I build a chat dataset that keeps growing as new models and platforms appear?
+    practitioner: should I fund a one-off collection of human-chatbot chats or a continuous
+      donation pipeline?
   answered_by:
   - living-dataset-context
   - platform-coverage
 - ask:
-    practitioner: Can I ask for my conversations to be removed from the ShareLM dataset?
-    unsorted:
-    - Who owns the data in a conversation-donation system?
-    - What design principles guide user control in chat data collection tools?
+    plain: who is in charge of a conversation once someone donates their chatbot chats?
+    jargon: what user-ownership guarantees govern consent, pausing and removal in a data-donation
+      pipeline for dialogue?
+    task: how do I design chat data collection so the person who had the conversation keeps
+      control of it?
+    practitioner: if I donate conversations, can I later pause recording or get my chats taken
+      out?
   answered_by:
   - user-ownership-context
   - delayed-upload
 - ask:
-    unsorted:
-    - Under what license are ShareLM plugin conversations published?
-    - Where is the ShareLM data and plugin code available?
-    - Is the collected chat data openly licensed?
+    plain: can the donated chatbot conversations be used freely, and where do you download
+      them?
+    jargon: under what licensing terms are ShareLM plugin conversations released, and is the
+      extension code open?
+    task: how do I check the license and get hold of both the chat data and the recording
+      extension?
+    practitioner: am I allowed to train a commercial model on the donated conversations in
+      the ShareLM collection?
   answered_by:
   - open-license-release
 misreadings:

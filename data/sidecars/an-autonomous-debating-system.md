@@ -109,81 +109,113 @@ claims:
     programme.
 qa:
 - ask:
-    unsorted:
-    - Can an AI system hold a competitive debate against a human?
-    - Has any computer program debated expert human debaters?
-    - How well does Project Debater perform against human debaters?
+    plain: can a computer argue a debate topic well enough to hold its own against a skilled
+      human debater?
+    jargon: how does an autonomous debating system's speech quality compare with that of expert
+      human debaters under crowd evaluation?
+    task: how do I find out whether machine-generated debate speeches are judged as good as
+      human ones?
+    practitioner: if I want a system that can debate live against a person, is machine-generated
+      argumentation good enough yet?
   answered_by:
   - opening-speech-vs-baselines
   - decent-performance-rate
   - public-debut
 - ask:
-    unsorted:
-    - How does Project Debater compare to GPT-2 or summarization systems at writing a debate
-      speech?
-    - What baselines were used to evaluate an automatically generated opening speech?
-    - Does an argument-mining debate system beat a language model at speech generation?
+    plain: is a debate speech built by retrieving real arguments better than one written by
+      a text-generating language model?
+    jargon: how do argument-mining opening speeches score against GPT-2 generation, multi-document
+      summarization and retrieval baselines?
+    task: how do I pick between generating a persuasive speech with a language model and assembling
+      one from mined arguments?
+    practitioner: should I generate my argumentative speeches with a neural language model
+      or mine and arrange existing arguments?
   answered_by:
   - opening-speech-vs-baselines
 - ask:
-    unsorted:
-    - How often does an autonomous debating system produce an acceptable speech?
-    - What fraction of debate motions did Project Debater handle decently?
-    - How was Project Debater's full-debate performance scored by annotators?
+    plain: how often does an automatic debating system actually produce a speech people find
+      acceptable?
+    jargon: on what proportion of motions did crowd annotators rate the autonomous debating
+      system's full-debate performance as decent?
+    task: how do I judge how reliable an automatic debate speech generator is across many
+      different topics?
+    practitioner: if I run an automatic debater on a new motion, what are the odds it produces
+      something usable?
   answered_by:
   - decent-performance-rate
 - ask:
-    unsorted:
-    - Are the speeches of Project Debater just canned templates?
-    - How much of an automatically generated debate speech is boilerplate text?
-    - Where does the content in Project Debater's speeches come from?
+    plain: are the speeches an automatic debating system gives mostly pre-written filler,
+      or real arguments about the topic?
+    jargon: what is the breakdown of an autonomous debating speech between canned text, mined
+      arguments, a curated argument knowledge base and rebuttal?
+    task: how do I tell how much of a machine-written debate speech is boilerplate and how
+      much is topic-specific content?
+    practitioner: if I adopt an argument-mining pipeline for speech writing, how much of the
+      output will I have to hand-author as templates?
   answered_by:
   - canned-text-share
   - corpus-scale
 - ask:
-    unsorted:
-    - Why do automatic debate speeches fail on some topics?
-    - What makes an autonomous debating system perform badly on a motion?
-    - What kinds of errors does Project Debater make?
+    plain: why does an automatic debating system do badly on some debate topics and well on
+      others?
+    jargon: what distinguishes low-scoring from high-scoring motions in an autonomous debating
+      system, and how do local errors differ from extensive ones?
+    task: how do I diagnose why an argument-mining debate system produces a weak speech on
+      a particular motion?
+    practitioner: before I run an automatic debater on my topic, what should I check to avoid
+      a bad speech?
   answered_by:
   - content-quantity-drives-quality
   - error-taxonomy
 - ask:
-    unsorted:
-    - What is the architecture of Project Debater?
-    - How is an autonomous debating system built without an end-to-end neural model?
-    - What modules does a computational argumentation debate system need?
+    plain: how do you build a machine that debates without training one big model to do it
+      all?
+    jargon: what module decomposition and corpus indexing underlie an autonomous debating
+      system built without an end-to-end model?
+    task: how do I put together a debating pipeline from argument mining, a curated argument
+      knowledge base and rebuttal components?
+    practitioner: if I want to build a debating agent, do I need an end-to-end neural model
+      or a set of narrow components?
   answered_by:
   - modular-not-end-to-end
   - corpus-scale
 - ask:
-    practitioner: What should I read first about computational argumentation and debate technologies?
-    unsorted:
-    - Which paper established autonomous debating as an AI challenge?
-    - Is there a good paper on why debating is harder for AI than board games?
+    plain: what should I read first about why arguing is a harder test for a computer than
+      winning at chess?
+    jargon: which work framed competitive debate as a grand challenge outside the tractable-game
+      paradigm of classical AI?
+    task: where do I start reading about breaking an open-ended human cognitive activity into
+      narrow, solvable AI tasks?
   answered_by:
   - debate-outside-comfort-zone
   - composite-ai-framing
   - tasks-opened
 - ask:
-    unsorted:
-    - Why is debate a harder AI grand challenge than chess or Go?
-    - How does debating with humans differ from beating humans at games?
-    - What does 'outside the AI comfort zone' mean for language tasks?
+    plain: why is arguing a debate topic harder for a computer than winning at chess or Go?
+    jargon: what properties of competitive debate place it outside the comfort zone of game-playing
+      AI grand challenges?
+    practitioner: if my team beat humans at a board game, why would a debating task be a different
+      kind of problem for us?
   answered_by:
   - debate-outside-comfort-zone
 - ask:
-    practitioner: Can I get access to IBM's debating technology datasets and services?
-    unsorted:
-    - Are argument mining components from Project Debater available to researchers?
-    - Which argumentation research tasks came out of the Project Debater effort?
+    plain: can researchers get access to the argument-mining components behind IBM's debating
+      system?
+    jargon: which computational argumentation tasks, such as context-dependent claim and evidence
+      detection, were formulated during the debating-system effort?
+    task: how do I get argument mining and evidence detection services for my own argumentation
+      research?
+    practitioner: can I use IBM's debating-system capabilities as cloud services for an academic
+      project?
   answered_by:
   - tasks-opened
 - ask:
-    unsorted:
-    - What motion did Project Debater debate in its 2019 public debut, and who won?
-    - Was the audience vote a fair measure of the IBM debating system's performance?
-    - Did the debut debate topic appear in Project Debater's training data?
+    plain: what topic did IBM's debating computer argue in its live 2019 event against a champion
+      debater?
+    jargon: what was the motion and the pre-debate audience vote in the autonomous debating
+      system's February 2019 public debut?
+    practitioner: was the live debut motion something the debating system had already been
+      trained on, or genuinely new to it?
   answered_by:
   - public-debut
 misreadings:

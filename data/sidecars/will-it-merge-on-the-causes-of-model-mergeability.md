@@ -112,82 +112,112 @@ claims:
   evidence: Section 3
 qa:
 - ask:
-    unsorted:
-    - Why do some finetuned models merge well and others badly?
-    - What determines whether model merging succeeds or fails?
-    - What predicts which LoRA adapters survive merging?
+    plain: why do some fine-tuned models combine cleanly with others while some lose their
+      new skill?
+    jargon: what property of a LoRA update predicts whether its task performance survives
+      merging with other adapters?
+    task: how do I predict in advance which of my LoRA adapters will keep working after being
+      merged?
+    practitioner: before I merge a batch of adapters, can I tell which ones will break?
   answered_by:
   - base-knowledge-popqa
   - base-knowledge-lots-of-loras
   - context-first-causes
 - ask:
-    unsorted:
-    - Is mergeability a real property of a model update or just noise?
-    - How can you tell mergeability is not random variation across merges?
-    - What evidence is there that individual updates differ systematically in how well they
-      merge?
+    plain: is how well a fine-tuned update combines with others a stable trait of that update,
+      or just luck of the draw?
+    jargon: do per-update mergeability scores for LoRA adapters deviate from a binomial null
+      with a constant success rate?
+    task: how do I check that the merge success rate I measured for an adapter is not sampling
+      noise?
+    practitioner: if one adapter of mine survived 8 out of 10 merges, should I trust that
+      as a property of the adapter?
   answered_by:
   - mergeability-exists
   - score-stability
 - ask:
-    practitioner: Can I look at adapter weights to guess whether merging will work?
-    unsorted:
-    - Does the size or norm of a LoRA update predict how well it merges?
-    - Do weight-level properties like Frobenius norm and top singular value correlate with
-      merging success?
+    plain: does how big a fine-tuning update is tell you anything about whether it will merge
+      well?
+    jargon: do Frobenius norm and top singular value of the effective LoRA update correlate
+      with merge survival?
+    task: can I screen adapters for merge readiness just by inspecting their weight matrices?
+    practitioner: is it enough to look at my adapters' weight norms to decide which to merge?
   answered_by:
   - weights-no-correlation
   - lowest-bin-weights
 - ask:
-    practitioner: If I merge a good adapter with bad ones, does the good one degrade?
-    unsorted:
-    - Does mergeability depend on which other adapters you merge with?
-    - Is merging success a property of the merge set or of the individual update?
+    plain: does whether a fine-tuned update survives merging depend on which other updates
+      it is mixed with?
+    jargon: is mergeability a local property of a single update or a property of the merge
+      set?
+    task: do I need to re-measure merge success for every new combination of adapters I try?
+    practitioner: if I swap out my merge partners, will my good adapter suddenly stop working?
   answered_by:
   - mergeability-is-local
 - ask:
-    unsorted:
-    - How does the choice of merging algorithm change measured mergeability?
-    - Do Knots, TIES and simple weight averaging give different mergeability distributions?
-    - Does a stronger LoRA merging method produce more perfectly mergeable examples?
+    plain: if a merging recipe is worse at preserving skills, does it look like more updates
+      merged perfectly?
+    jargon: how do TIES, KnOTS and simple mean averaging differ in the distribution of per-example
+      merge success they induce?
+    task: how do I compare merging algorithms without the weaker one looking better on a per-example
+      success count?
+    practitioner: should I pick the merging algorithm that gives me the most perfectly preserved
+      examples?
   answered_by:
   - algorithm-tradeoff
 - ask:
-    practitioner: How can I stop merging from wiping out tasks the base model is weak on?
-    unsorted:
-    - Does weighting adapters by base model accuracy improve merging?
-    - Is there a simple fix that preserves low-accuracy tasks when merging adapters?
+    plain: can giving more weight to the tasks a model is worst at rescue them when combining
+      fine-tuned updates?
+    jargon: does weighting adapters inversely to base model task accuracy improve retained
+      finetuned performance for low-base-accuracy tasks?
+    task: how do I stop my hardest task from being wiped out when I merge its adapter with
+      others?
+    practitioner: my adapters cover tasks of very different difficulty — should I weight them
+      unequally when merging?
   answered_by:
   - weighted-merging
 - ask:
-    practitioner: What should I read about why model merging works or fails?
-    unsorted:
-    - Which paper studies the causes of merging success rather than proposing a new merging
-      algorithm?
-    - Where does research link a base model's pre-training knowledge to merging outcomes?
+    plain: what research asks why merging fine-tuned models works instead of proposing yet
+      another merging recipe?
+    jargon: which study links base model knowledge of the finetuning data to merge outcomes
+      at both example and task granularity?
+    task: where do I start reading if I want to understand the causes of merge failure rather
+      than more merging algorithms?
+    practitioner: which paper should I read to diagnose why my model merges keep failing?
   answered_by:
   - context-first-causes
   - context-two-granularities
 - ask:
-    unsorted:
-    - Does training data difficulty affect how mergeable an adapter is?
-    - Do perplexity and context length of the finetuning data predict mergeability?
-    - Are harder finetuning examples less mergeable?
+    plain: are harder or longer fine-tuning examples less likely to survive being merged with
+      others?
+    jargon: do finetuning-data properties such as perplexity and context length predict per-update
+      mergeability?
+    task: can I use difficulty statistics of my training data to pick which adapters to merge?
+    practitioner: should I expect my adapters trained on hard examples to merge worse?
   answered_by:
   - weights-no-correlation
   - context-two-granularities
 - ask:
-    unsorted:
-    - Are the examples that are easiest to fix by finetuning also the most stable under merging?
-    - What is the relationship between how much finetuning improves an example and how well
-      it merges?
+    plain: are the cases fine-tuning fixes most easily also the ones that hold up best after
+      models are combined?
+    jargon: how does post-finetuning gain in correct-answer probability relate to per-example
+      mergeability on PopQA?
+    task: how do I tell which of the factual errors I fixed by finetuning will still be fixed
+      after merging?
+    practitioner: if finetuning gave a big improvement on an example, is that example safe
+      to merge?
   answered_by:
   - trained-gap-inversion
   - base-knowledge-popqa
 - ask:
-    unsorted:
-    - How many trials and merge partners are needed to estimate a mergeability score reliably?
-    - Do mergeability scores change if you vary the number of merged adapters?
+    plain: how many repeat merges do you need to run before a per-update merge success rate
+      settles down?
+    jargon: how sensitive is the mergeability score to the number of trials N and the merge-set
+      size M?
+    task: how do I set the number of trials and merge partners when measuring merge success
+      for an adapter?
+    practitioner: can I get away with fewer merge trials and smaller merge sets to score my
+      adapters?
   answered_by:
   - score-stability
 terminology:

@@ -148,91 +148,128 @@ claims:
   evidence: Ethical Considerations and Limitations, Dataset Contamination
 qa:
 - ask:
-    practitioner: What benchmark should I read about first for evaluating what language models
-      know about grammar and linguistics?
-    unsorted:
-    - Is there a benchmark that tests linguistic knowledge of LLMs without prompting?
-    - Where can I find a large consolidated collection of probing datasets for language models?
-    - What work consolidated the probing literature into an evaluation suite?
+    plain: is there a way to test how much grammar a language model actually knows without
+      asking it questions in a prompt?
+    jargon: which benchmark consolidates the probing literature into a single linguistic competence
+      suite for English language models?
+    task: where do I get a large collection of ready-made probing datasets covering morphology,
+      syntax, semantics, reasoning and discourse?
+    practitioner: should I use a consolidated probing benchmark instead of assembling probing
+      datasets from individual papers myself?
   answered_by:
   - holmes-benchmark
   - probing-fragmented
 - ask:
-    unsorted:
-    - Does prompting a language model about syntax tell you the same thing as probing its
-      representations?
-    - Can prompting-based benchmarks replace probing for measuring linguistic knowledge?
-    - How well do HELM's BLiMP prompting results agree with probing results?
+    plain: if a language model answers grammar questions correctly, does that mean its internal
+      representations really encode grammar?
+    jargon: how closely do probing-based rankings on BLiMP agree with prompting-based rankings
+      from HELM and the OpenLLM leaderboard?
+    task: can I skip probing and just prompt models on linguistic minimal pairs to rank their
+      linguistic ability?
+    practitioner: I already have leaderboard scores for my models -- do I still need probing
+      to know their linguistic competence?
   answered_by:
   - prompting-not-substitute
   - openllm-correlation
 - ask:
-    unsorted:
-    - Do encoder models understand language better than decoder-only LLMs?
-    - Does architecture matter for how well a model encodes part-of-speech and agreement?
-    - Can a 70B decoder model match BERT on token-level linguistic probing?
+    plain: do older BERT-style models capture grammar better inside than much bigger chat-style
+      models?
+    jargon: how do encoder and decoder architectures compare on classifier probing for part-of-speech
+      and agreement phenomena at matched parameter counts?
+    task: which architecture should I pick to extract reliable part-of-speech and syntactic
+      features from hidden states?
+    practitioner: if I need strong token-level linguistic representations, is a 70B decoder
+      model worth it over a small encoder?
   answered_by:
   - encoder-beats-decoder
 - ask:
-    unsorted:
-    - Does instruction tuning improve a model's internal grasp of linguistic phenomena?
-    - What effect does RLHF-style instruction tuning have on syntax and semantics probing
-      scores?
-    - Is instruction tuning only a superficial alignment when it comes to linguistic competence?
+    plain: does teaching a model to follow instructions change how much grammar and meaning
+      it encodes internally?
+    jargon: what is the effect of instruction tuning on probing scores across morphology,
+      syntax, semantics, reasoning and discourse?
+    task: should I probe the base checkpoint or the instruction-tuned checkpoint if I care
+      about linguistic phenomena?
+    practitioner: will switching to the instruction-tuned version of my model improve its
+      internal handling of syntax and semantics?
   answered_by:
   - instruction-tuning-mixed
 - ask:
-    unsorted:
-    - Does linguistic competence in language models scale with parameter count?
-    - At what model size do probing scores for morphology and syntax jump?
-    - How do T5 and Pythia compare as they get bigger on linguistic probing?
+    plain: do bigger language models really encode more grammar than smaller ones from the
+      same family?
+    jargon: how does probing performance on morphological and syntactic phenomena scale with
+      parameter count within the Pythia and T5 families?
+    task: how big a model do I need before probing scores on syntax and morphology start to
+      improve noticeably?
+    practitioner: is it worth moving up to a larger checkpoint in the same family if I want
+      better linguistic representations?
   answered_by:
   - scaling
 - ask:
-    unsorted:
-    - Which linguistic phenomena are language models good and bad at internally?
-    - Are semantics and discourse harder for language models than syntax?
-    - What is the difference between formal and functional linguistic phenomena in model probing
-      results?
+    plain: which parts of language are models good at internally, and which parts do they
+      handle poorly?
+    jargon: how do probing scores differ between formal phenomena such as morphology and syntax
+      and functional ones such as semantics, reasoning and discourse?
+    task: which linguistic phenomena should I test if I want to find where a language model's
+      representations are weakest?
+    practitioner: can I assume a model that scores well on syntax probing will also handle
+      discourse and semantics well?
   answered_by:
   - formal-vs-functional
   - phenomena-correlations
 - ask:
-    unsorted:
-    - Are classifier-probing results stable enough to build a benchmark on?
-    - How much do probing scores vary across random seeds compared to prompt variation?
-    - What reliability checks did the Holmes benchmark run on its probes?
+    plain: are probing scores stable enough to trust, or do they bounce around depending on
+      how you run them?
+    jargon: how much do classifier probing results vary across random seeds compared with
+      the variance from prompt paraphrasing?
+    task: how many seeds do I need to run before probing numbers are reliable enough to compare
+      models?
+    practitioner: should I trust a probing-based ranking of my models, or will it change if
+      I rerun it?
   answered_by:
   - probing-reliable
 - ask:
-    unsorted:
-    - How expensive is it to evaluate a new large language model on a full probing benchmark?
-    - Is there a cheap version of Holmes for evaluating a new model?
-    - How much compute does FlashHolmes save and at what cost in ranking accuracy?
+    plain: how much computing time does it take to run a full battery of internal linguistic
+      tests on a large language model?
+    jargon: what is the compute cost of encoding 208 probing datasets for a 70B model, and
+      how much does a subsampled variant save?
+    task: how do I evaluate a newly released model on a large probing suite without spending
+      GPU days on encoding?
+    practitioner: on a small compute budget, can I use a cheap subsampled probing run and
+      still get the same model ordering?
   answered_by:
   - flashholmes
 - ask:
-    unsorted:
-    - How fragmented is existing probing research on language models?
-    - How many tasks and models does the probing literature actually cover jointly?
-    - Which probing method dominates the published literature?
+    plain: how much do published studies of what language models know about language actually
+      overlap in the tasks and models they test?
+    jargon: how many probing tasks and language models does the probing literature jointly
+      cover, and what share uses classifier-based versus mask-based probing?
+    task: how do I find out whether the probing task I care about has already been evaluated
+      on the models I use?
+    practitioner: can I rely on published probing papers to tell me about my model, or do
+      they each cover too few models?
   answered_by:
   - probing-fragmented
   - classifier-probing-dominant
 - ask:
-    unsorted:
-    - Is a probing benchmark affected by benchmark contamination in pretraining data?
-    - Why would evaluating internal representations be more robust to data leakage?
-    - Does Holmes control for the possibility that OntoNotes was in a model's pretraining
-      corpus?
+    plain: if a test set ended up in a model's training data, does that ruin an evaluation
+      of its internal linguistic knowledge?
+    jargon: why is probing internal representations argued to remain valid under benchmark
+      contamination in pretraining corpora?
+    task: how do I evaluate linguistic competence when I cannot rule out that the evaluation
+      datasets were seen during pretraining?
+    practitioner: should I worry about data leakage if I evaluate my model with probing classifiers
+      rather than prompts?
   answered_by:
   - contamination-robust
 - ask:
-    unsorted:
-    - How many language models and datasets does a linguistic probing benchmark like Holmes
-      cover?
-    - What does the Holmes benchmark measure about language models?
-    - Which linguistic phenomena are covered by a large probing benchmark for language models?
+    plain: what exactly does a large linguistic probing benchmark measure about a language
+      model, and how much does it cover?
+    jargon: which linguistic phenomena and dataset counts make up the Holmes probing suite,
+      and what does it find about formal versus functional competence?
+    task: what will I learn about my model's linguistic abilities if I run it through a broad
+      probing benchmark?
+    practitioner: is a broad linguistic probing benchmark measuring the phenomena I care about
+      before I commit to running it?
   answered_by:
   - holmes-benchmark
   - formal-vs-functional

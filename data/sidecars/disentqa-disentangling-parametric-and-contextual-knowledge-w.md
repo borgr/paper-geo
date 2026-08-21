@@ -104,95 +104,128 @@ claims:
   kind: result
 qa:
 - ask:
-    practitioner: How can a QA model tell me whether its answer came from the retrieved passage
-      or from what it memorized?
-    unsorted:
-    - Is there a way to separate a language model's memorized facts from the passage it was
-      given at inference time?
-    - What is DisentQA?
+    plain: can a question answering system tell me whether its answer came from the document
+      or from what it already knew?
+    jargon: how can a generative reader disentangle contextual knowledge from parametric knowledge
+      at inference time?
+    task: how do I get a QA model to return both a passage-grounded answer and a memory-based
+      answer for the same question?
+    practitioner: if my retrieval QA system contradicts the retrieved passage, can I see which
+      answer came from the model's own memory?
   answered_by:
   - paradigm
 - ask:
-    practitioner: What should I read about knowledge conflicts between a retrieved document
-      and a model's memory?
-    unsorted:
-    - Which paper established a way to evaluate whether QA answers are grounded in context
-      or in parameters?
-    - Where should I start reading about parametric versus contextual knowledge in question
-      answering?
+    plain: what should I read first about question answering models trusting their own memory
+      instead of the document they are given?
+    jargon: which work introduced a framework for separating parametric and contextual knowledge
+      in generative open-domain QA?
+    task: where do I start reading about knowledge conflicts between a retrieved passage and
+      a model's memorized facts?
+    practitioner: is there a paper I can cite when I argue that a QA model should expose whether
+      an answer came from the passage or from pretraining?
   answered_by:
   - paradigm
 - ask:
-    unsorted:
-    - Does counterfactual data augmentation make QA models follow the passage instead of their
-      memory?
-    - How much does robustness to knowledge conflicts improve with counterfactual training
-      on Natural Questions?
-    - What accuracy do DisentQA models get on counterfactual contexts?
+    plain: does training on passages with edited facts make a QA model follow the document
+      instead of its memory?
+    jargon: how much does counterfactual augmentation on Natural Questions improve contextual
+      answer accuracy under knowledge conflict?
+    task: how do I make a reader model stick to the retrieved passage when the passage contradicts
+      what the model memorized?
+    practitioner: should I add counterfactually edited passages to my fine-tuning data to
+      stop my QA model ignoring retrieved evidence?
   answered_by:
   - robustness
   - complementary
 - ask:
-    unsorted:
-    - Does asking a QA model for two answers hurt its normal accuracy?
-    - Is there a cost on standard grounded QA to also predicting a parametric answer?
-    - How does the multi-answer model compare to a vanilla T5 QA model on factual Natural
-      Questions?
+    plain: does making a question answering model give two answers instead of one make it
+      worse at normal questions?
+    jargon: what is the accuracy penalty on the standard factual NQ test set for a multi-answer
+      decoder versus a single-answer baseline?
+    task: how do I add a memory-based answer to my QA output without losing accuracy on ordinary
+      grounded questions?
+    practitioner: if I switch my QA model to predict two answers, what do I give up on my
+      regular benchmark numbers?
   answered_by:
   - no-cost
 - ask:
-    unsorted:
-    - How well can a QA model say 'unanswerable' when the passage is irrelevant?
-    - Does training on unanswerable examples alone teach a model to abstain?
-    - What abstention accuracy does DisentQA reach on random contexts?
+    plain: can a question answering model recognise that the passage it was given has nothing
+      to do with the question?
+    jargon: what unanswerable-prediction rate is reached on random contexts, and does answerability
+      augmentation alone suffice for abstention?
+    task: how do I train a reader to abstain when the retrieved passage is irrelevant to the
+      question?
+    practitioner: if I only add unanswerable examples to my training data, will my QA model
+      learn to say it cannot answer?
   answered_by:
   - answerability
   - complementary
 - ask:
-    unsorted:
-    - Do the two augmentations in DisentQA each work on their own, or are both needed?
-    - Is counterfactual augmentation enough for disentanglement without answerability examples?
-    - Why does DisentQA use both counterfactual and unanswerable training examples?
+    plain: when training a QA model to separate document facts from remembered facts, is one
+      kind of extra training data enough or are two needed?
+    jargon: are counterfactual and answerability augmentations complementary or redundant
+      for disentangling contextual and parametric answers?
+    task: which training augmentations do I need to combine to get both source separation
+      and reliable abstention from one reader model?
+    practitioner: can I skip the counterfactual passages and just train on unanswerable examples,
+      or do I need both?
   answered_by:
   - complementary
   - separation
 - ask:
-    unsorted:
-    - How often do the contextual and parametric answers actually differ when the passage
-      is altered?
-    - How is disentanglement measured in DisentQA, and what score does the best model get?
-    - What is answer separation on counterfactual Natural Questions examples?
+    plain: when the passage has been edited to say something false, how often does a two-answer
+      QA model give the same answer twice?
+    jargon: how is answer disentanglement quantified on counterfactual NQ, and what identical-answer
+      rate does the best T5-11B configuration reach?
+    task: how do I check whether a model's two answers are genuinely coming from different
+      knowledge sources rather than being copies?
+    practitioner: how do I know the memory-based answer my model outputs is not just a duplicate
+      of the passage-grounded one?
   answered_by:
   - separation
 - ask:
-    unsorted:
-    - Is the parametric answer any good compared with a closed-book QA model?
-    - How accurate are memory-based answers from a model trained to output two answers?
-    - Does DisentQA's parametric answer beat a closed-book T5 baseline on Natural Questions?
+    plain: is the answer a model gives from memory as good as one from a model trained only
+      to answer without any document?
+    jargon: how does empty-context parametric accuracy on NQ compare with a closed-book fine-tuned
+      T5 baseline?
+    task: how do I get usable closed-book answers out of the same model I use for reading
+      passages?
+    practitioner: if I want closed-book answers too, can one two-answer model replace a separate
+      closed-book QA model?
   answered_by:
   - parametric-quality
 - ask:
-    unsorted:
-    - Does the parametric answer stay the same regardless of the passage given?
-    - Can the provided context leak into a model's supposedly memory-based answer?
-    - Why do DisentQA parametric answers change across empty, random and counterfactual contexts?
+    plain: does the answer a model gives from memory stay the same no matter which passage
+      you show it?
+    jargon: is the parametric prediction of a disentangled reader actually independent of
+      the input context?
+    task: how do I test whether the passage I supply is leaking into the answer that is supposed
+      to come from the model's memory?
+    practitioner: can I treat the memory-based answer from my two-answer QA model as a context-independent
+      probe of what the model knows?
   answered_by:
   - context-leakage
 - ask:
-    unsorted:
-    - How much of a QA model's parametric accuracy is just answers repeated from fine-tuning
-      data?
-    - What happens to parametric answer accuracy on questions whose answers never appear in
-      training?
-    - Does answer overlap inflate closed-book QA results on Natural Questions?
+    plain: how much of a QA model's memory-based accuracy is just repeating answers it saw
+      during training?
+    jargon: how much parametric accuracy on NQ survives on a no-answer-overlap subset, and
+      what fraction of parametric predictions are unseen answers?
+    task: how do I tell real memorized knowledge from answer-string overlap when I evaluate
+      closed-book accuracy?
+    practitioner: should I trust my closed-book Natural Questions numbers, or check for answer
+      overlap with fine-tuning data first?
   answered_by:
   - answer-overlap
   - unseen-answers
 - ask:
-    unsorted:
-    - Does model size matter for disentangling contextual and parametric knowledge?
-    - How do T5-Large and T5-11B compare on DisentQA's disentanglement metrics?
-    - Is 770M parameters enough to learn to output separate contextual and parametric answers?
+    plain: do you need a very large model to keep the document-based and memory-based answers
+      apart?
+    jargon: do the disentanglement trends hold at 770M parameters, or do contextual and parametric
+      accuracies degrade with model scale?
+    task: how small a T5 can I fine-tune and still get separate passage-grounded and memory-based
+      answers?
+    practitioner: I can only afford a 770M-parameter model, will it still learn to output
+      two distinct answers?
   answered_by:
   - model-size
 misreadings:

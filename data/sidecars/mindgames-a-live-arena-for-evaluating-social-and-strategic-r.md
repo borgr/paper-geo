@@ -128,107 +128,154 @@ claims:
   evidence: Table 17
 qa:
 - ask:
-    practitioner: What benchmark should I read about evaluating social reasoning in multi-agent
-      LLMs?
-    unsorted:
-    - Is there a benchmark where LLM agents play multiple social games against each other?
-    - Where can I find a live arena for theory-of-mind and strategic reasoning in LLM agents?
+    plain: where can I find a benchmark where language model agents play social games against
+      each other?
+    jargon: is there a live multi-environment arena for evaluating theory-of-mind and strategic
+      reasoning in LLM agents?
+    task: how do I evaluate an LLM agent on social reasoning against other agents rather than
+      on a static test set?
+    practitioner: which arena should I put my agent in if I want to measure its deception
+      and opponent-modeling ability?
   answered_by:
   - arena-context
   - dataset-scale
 - ask:
-    practitioner: Where can I get turn-level trajectories of LLMs playing Mafia and Codenames?
-    unsorted:
-    - Is there a large public dataset of LLM agents playing multi-agent games?
-    - How many games and trajectories does the MindGames dataset contain?
+    plain: is there a big public collection of recorded games played by language model agents?
+    jargon: what scale of multi-agent trajectory data with turn-level observations, actions
+      and rewards is publicly released for LLM game play?
+    task: where do I get game trajectories to fine-tune an agent on social deduction and negotiation
+      play?
+    practitioner: is there enough released game data to train on, or do I have to generate
+      my own self-play?
   answered_by:
   - dataset-scale
 - ask:
-    unsorted:
-    - How often do LLM agents break the rules in text-based games?
-    - What fraction of MindGames competition games contained invalid actions?
-    - Is rule adherence or strategy the bigger bottleneck for LLM game-playing agents?
+    plain: how often do language model agents break the rules of a text game instead of losing
+      on strategy?
+    jargon: what share of LLM agent games contain invalid actions, and is format compliance
+      or strategic play the binding constraint?
+    task: how do I tell whether my agent is losing because of bad strategy or malformed actions?
+    practitioner: should I spend my effort on action-format reliability or on smarter play
+      for my game-playing agent?
   answered_by:
   - error-rates-stage2
   - error-improvement
 - ask:
-    unsorted:
-    - Can a leaderboard in a social deduction arena be confounded by opponent failures?
-    - What is the error-survival confound in Secret Mafia rankings?
-    - Do top-ranked Mafia agents win by playing well or by surviving other agents' errors?
+    plain: can a ranking in a social deduction game be decided by other players making mistakes
+      rather than by skill?
+    jargon: to what extent does Secret Mafia leaderboard position reflect robustness to opponent
+      forfeits rather than social-deduction ability?
+    task: how do I check whether my agent's rank in a Mafia-style arena came from opponents
+      crashing out?
+    practitioner: can I trust a top spot on a social deduction leaderboard as evidence my
+      agent actually plays well?
   answered_by:
   - error-survival-confound
   - termination-depth
 - ask:
-    practitioner: How can I tell whether a multi-agent leaderboard measures strategic skill?
-    unsorted:
-    - What diagnostics detect when arena rankings reflect robustness to opponent errors?
-    - Which MindGames environments give interpretable rankings and which do not?
+    plain: how can you tell whether a game leaderboard is measuring skill or just measuring
+      who avoids mistakes?
+    jargon: which environment-level validity diagnostics flag when arena rankings are dominated
+      by opponent error rather than strategic skill?
+    task: what should I measure about my own agent arena to know its rankings are interpretable?
+    practitioner: which of the social-reasoning game environments can I actually report rankings
+      from?
   answered_by:
   - validity-diagnostic
   - error-survival-confound
 - ask:
-    practitioner: Should I report Elo-style ratings or total reward when ranking agents in
-      an arena?
-    unsorted:
-    - Do TrueSkill ratings and cumulative reward agree for LLM game agents?
-    - Can metric choice reverse the ranking of LLM agents in a game benchmark?
+    plain: do skill ratings and total points agree when ranking game-playing language models?
+    jargon: how far do TrueSkill ratings and cumulative reward diverge as ranking metrics
+      for LLM agents in a multi-game arena?
+    task: which metric should I rank my agents by after running a round-robin of games?
+    practitioner: if I report TrueSkill instead of total reward for my agent, does the ordering
+      change?
   answered_by:
   - trueskill-reward-divergence
 - ask:
-    unsorted:
-    - Does the assigned role bias win rates in Mafia and Codenames with LLM players?
-    - Is the Mafia role inherently advantaged in LLM social deduction games?
-    - Should benchmark scores in social deduction be reported per role?
+    plain: do language model players win more just because of which role they were dealt in
+      Mafia or Codenames?
+    jargon: is role assignment a confound in win rates for LLM social deduction, and does
+      the same hold for cooperative word games?
+    task: how should I report win rates for a social deduction agent so the role draw does
+      not distort the number?
+    practitioner: do I need to break my agent's scores out per role, or is an overall win
+      rate fine?
   answered_by:
   - role-advantage
 - ask:
-    unsorted:
-    - Does adding memory or reflection modules improve LLM agent performance?
-    - Why did cognitive scaffolding hurt an 8B model in social deduction?
-    - Do memory layers for LLM agents need fine-tuning to help?
+    plain: does bolting memory and reasoning modules onto a language model agent actually
+      make it play better?
+    jargon: can cognitive scaffolding degrade an LLM agent's social deduction win rate without
+      fine-tuning to use it?
+    task: how do I get an 8B agent to actually use a memory and deduction module instead of
+      being hurt by it?
+    practitioner: should I add a memory and reflection layer to my small open-weight agent,
+      or fine-tune it on game traces first?
   answered_by:
   - scaffolding-backfires
 - ask:
-    unsorted:
-    - Is fine-tuning or prompting scaffolding better for LLM game agents?
-    - What design patterns did winning agents in the MindGames competition use?
-    - Can an 8B open-weight agent beat prompted frontier models at strategy games?
+    plain: for a language model playing strategy games, is training on past games better than
+      clever prompting?
+    jargon: how does the balance between training-time adaptation and inference-time scaffolding
+      shift with parameter budget for LLM game agents?
+    task: I have a 9B open-weight model and a frontier API model to enter in a game competition,
+      which one do I fine-tune?
+    practitioner: under a small parameter budget, should I fine-tune on trajectories or invest
+      in prompting structure for my agent?
   answered_by:
   - training-vs-scaffolding
 - ask:
-    unsorted:
-    - Can a small non-LLM policy beat LLM agents at Colonel Blotto?
-    - How well does a distilled graph network play resource-allocation games?
-    - Are LLMs better used as teachers than as game-playing policies?
+    plain: can a tiny specialised network beat language models at a resource-allocation game?
+    jargon: how well does a distilled graph attention policy perform against LLM opponents
+      in Colonel Blotto compared with plain PPO?
+    task: how do I use a language model to train a small game policy instead of deploying
+      the language model as the player?
+    practitioner: should I deploy an LLM as my Blotto player or distill it into a small policy
+      network?
   answered_by:
   - non-llm-policy
 - ask:
-    unsorted:
-    - Which side is harder for LLMs in Mafia, the informed mafia or the villagers?
-    - Do architectural improvements help the villager role more than the mafia role?
-    - Why do baseline LLMs do better as mafia than as deducing villagers?
+    plain: in Mafia, which side is harder for language models, the ones who know the secret
+      or the ones who must deduce it?
+    jargon: do architectural improvements to LLM agents raise Village-side win rates more
+      than Mafia-side win rates in social deduction?
+    task: which side should I measure to see whether my Mafia agent's deduction actually improved?
+    practitioner: if I improve my agent's architecture, where should I expect the gain to
+      show up in a hidden-role game?
   answered_by:
   - villager-asymmetry
 - ask:
-    practitioner: How can I evaluate a new agent against the MindGames 2025 competition entrants
-      without a live server?
-    unsorted:
-    - What is MG-Ref and how many games does the offline tournament run?
-    - Is there a reproducible offline protocol for scoring LLM agents against a frozen reference
-      pool?
+    plain: is there a repeatable way to score a new game-playing agent against last year's
+      competitors without rerunning the competition?
+    jargon: what offline protocol scores a new agent against a frozen pool of prior top-ranked,
+      low-error submissions with role-conditioned and error-attribution reporting?
+    task: how do I compare my new agent to a published cohort of agents on the same games
+      without a live ladder?
+    practitioner: can I benchmark my agent against the 2025 competition entrants after the
+      competition has closed?
   answered_by:
   - mgref-protocol
 - ask:
-    unsorted:
-    - How much did error rates improve over the course of the MindGames competition?
-    - Did LLM agents become more rule-compliant between the online ladder and the final evaluation?
+    plain: did language model agents get better at following game rules as a competition went
+      on?
+    jargon: how did game-level invalid-action rates change between the open ladder and the
+      final evaluation stage of an LLM agent competition?
+    task: how much of an agent's invalid-action rate can I expect to remove with iteration
+      on prompting and parsing?
+    practitioner: is rule-following in text game agents a solved problem yet, or should I
+      budget engineering for it?
   answered_by:
   - error-improvement
 - ask:
-    unsorted:
-    - How quickly do LLM agent games end in failure in social deduction?
-    - Do forfeited Mafia games last long enough for strategy to matter?
+    plain: when a language model agent forfeits a social deduction game, does the game get
+      far enough for strategy to matter?
+    jargon: how does median termination depth in forfeited Secret Mafia games compare with
+      expected game length?
+    task: how do I check whether my agent's losses happened before any real strategic interaction
+      took place?
+    practitioner: should I discard forfeited games from my agent's evaluation, or do they
+      still say something about play?
   answered_by:
   - termination-depth
 misreadings:

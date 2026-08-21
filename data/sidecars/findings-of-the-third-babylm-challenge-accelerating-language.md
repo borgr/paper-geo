@@ -108,87 +108,127 @@ claims:
     dataset.
 qa:
 - ask:
-    practitioner: Where should I start reading about sample-efficient pretraining shared tasks?
-    unsorted:
-    - What is a good paper to read about training language models on human-scale amounts of
-      data?
-    - Which paper documents the BabyLM Challenge results?
+    plain: Where can I read about what happens when language models are trained on only as
+      much text as a child hears?
+    jargon: Which report documents the shared task on sample-efficient pretraining under a
+      100M-word budget and its winning systems?
+    task: What should I read first before entering a data-efficient language model pretraining
+      competition?
+    practitioner: I want a single reference for small-data pretraining results in 2025 --
+      which write-up covers the tracks, corpora and winners?
   answered_by:
   - what-it-is
   - objective-arch-win
 - ask:
-    unsorted:
-    - What was new in the 2025 BabyLM Challenge compared with earlier years?
-    - How does the BabyLM interaction track work?
-    - Can a small model learn from a bigger teacher model under the BabyLM rules?
+    plain: Can a small language model be taught by a bigger model instead of just reading
+      text, and did that work?
+    jargon: How does the interaction track let a student model learn from teacher-model feedback,
+      and which teachers are permitted?
+    task: How do I train a small model using feedback from a larger instruct model within
+      a fixed word budget?
+    practitioner: If I train a small model with a larger teacher giving it feedback, will
+      it actually beat passive text training on human-likeness?
   answered_by:
   - new-interaction-track
   - interaction-winner-numbers
 - ask:
-    unsorted:
-    - Does curriculum learning actually help when pretraining on 100M words?
-    - What kinds of methods won the third BabyLM Challenge?
-    - Which approaches worked best under a fixed small data budget?
+    plain: When you can only use a small amount of text, does feeding it in an easy-to-hard
+      order actually help?
+    jargon: Did curriculum learning submissions win any track of the 2025 data-efficient pretraining
+      shared task, and which objectives and architectures did?
+    task: Which training objective and architecture should I pick for pretraining on 100M
+      words or less?
+    practitioner: Should I spend my effort on curriculum ordering or on the model architecture
+      and objective for a small-data pretraining run?
   answered_by:
   - objective-arch-win
   - gpt-bert-backbone
 - ask:
-    unsorted:
-    - Did any 2025 BabyLM submission beat the previous year's winning baseline?
-    - How did submissions compare with the GPT-BERT baselines?
-    - Were the BabyLM baselines beaten in the strict and strict-small tracks?
+    plain: Did anyone training on a tiny text budget in 2025 actually beat the organizers'
+      own reference models?
+    jargon: How did strict, strict-small and interaction track submissions score against the
+      GPT-BERT and SimPO baselines on human-likeness and NLP metrics?
+    task: How do I tell whether a small-data pretraining recipe genuinely improves on the
+      published reference models?
+    practitioner: Is any 2025 100M-word submission worth adopting over the provided baseline
+      checkpoints?
   answered_by:
   - strictsmall-beats-baseline
   - strict-winners-numbers
   - interaction-winner-numbers
 - ask:
-    unsorted:
-    - Does spending more compute improve BabyLM scores?
-    - Is there a relationship between training FLOPs and performance for small-data language
-      models?
-    - Did the BabyLM organizers find a compute-performance correlation in 2025?
+    plain: If you spend more computing power training a small-data model, do the scores get
+      better?
+    jargon: Is macro average score correlated with training FLOPs across submissions in the
+      strict, strict-small and interaction tracks?
+    task: Should I buy more GPU hours to raise scores when my training corpus is capped at
+      100M words?
+    practitioner: My data budget is fixed -- is throwing more compute at the run likely to
+      pay off?
   answered_by:
   - flops-not-predictive
 - ask:
-    unsorted:
-    - Do models that look human-like on cognitive tasks also do well on linguistic benchmarks?
-    - Is cognitive modeling performance correlated with BLiMP and GLUE performance?
-    - Do human-likeness and NLP task scores go together for BabyLM models?
+    plain: Do the models that behave most like humans also score best on grammar and language
+      tests?
+    jargon: Are cognitive modeling scores and linguistic benchmark scores positively correlated
+      across 100M-word pretrained submissions?
+    task: Can I use linguistic benchmark scores as a proxy for how well a small-data model
+      predicts human reading behaviour?
+    practitioner: If I optimize my small-data model for BLiMP-style linguistic scores, am
+      I also improving its fit to human data?
   answered_by:
   - cog-ling-correlation
 - ask:
-    unsorted:
-    - How close are 100M-word models to large language models on grammaticality judgments?
-    - Can a model trained on 100M words match Llama 70B on BLiMP?
-    - Where do small-data language models still fall short of humans?
+    plain: Can a model trained on a child-sized amount of text judge grammar as well as a
+      huge model?
+    jargon: How do 100M-word submissions compare with a 70B Llama skyline on BLiMP and on
+      GLUE?
+    task: Which evaluations should I expect a 100M-word model to be competitive on, and which
+      will it lose?
+    practitioner: If I pretrain on 100M words instead of using a 70B model, where will I actually
+      lose accuracy?
   answered_by:
   - blimp-vs-llama70b
 - ask:
-    unsorted:
-    - How do BabyLM abilities emerge over the course of pretraining?
-    - When do morphological generalization abilities appear as words seen increases?
-    - Does entity tracking improve monotonically with pretraining data?
+    plain: As a language model reads more and more text, which abilities show up early and
+      which appear suddenly?
+    jargon: How do BLiMP, EWoK, wug past-tense and entity-tracking scores evolve across intermediate
+      checkpoints as words seen increases?
+    task: How many words of training do I need before morphological generalization starts
+      working in a small model?
+    practitioner: Should I keep checkpointing and evaluating throughout a small-data pretraining
+      run, or will scores just rise smoothly?
   answered_by:
   - training-dynamics
 - ask:
-    unsorted:
-    - Can GLUE-style evaluation of BabyLM models be done zero-shot instead of by finetuning?
-    - Why does the BabyLM evaluation pipeline still require finetuning?
-    - Do 100M-word models show in-context learning?
+    plain: Can you test a small language model by just prompting it, instead of fine-tuning
+      it on each task?
+    jargon: Do 100M-word models support robust in-context learning well enough to replace
+      finetuning-based (Super)GLUE evaluation with zero-shot prompting?
+    task: How should I evaluate a 100M-word model on GLUE-style tasks -- prompt it or finetune
+      it?
+    practitioner: Can I skip the finetuning step and prompt my small pretrained model to get
+      comparable task scores?
   answered_by:
   - zero-shot-glue-failed
 - ask:
-    unsorted:
-    - Why are there so few multimodal BabyLM submissions?
-    - How did vision-language models do in the 2025 BabyLM Challenge?
-    - What is being changed about the BabyLM multimodal track?
+    plain: Did anyone submit an image-and-text model trained on a tiny data budget, and how
+      did it do?
+    jargon: How many multimodal-track submissions were received, and how did the vision average
+      compare with the Flamingo and GIT baselines?
+    task: Is it worth entering the vision-language part of a data-efficient pretraining challenge?
+    practitioner: Should I expect a small-data vision-language model to reach the provided
+      multimodal baselines?
   answered_by:
   - multimodal-track-thin
 - ask:
-    unsorted:
-    - Which model architecture performs best when pretraining on 10M-100M words?
-    - Is GPT-BERT still the strongest backbone for small-data pretraining?
-    - Which backbones lead on the BabyLM evaluation suite?
+    plain: Which kind of model works best when you only have 10 to 100 million words of training
+      text?
+    jargon: Which backbone architectures give the strongest cognitive, linguistic and macro
+      average scores at 10M-100M word budgets?
+    task: Which backbone should I start from for pretraining on 10M to 100M words?
+    practitioner: Should I pick a GPT-BERT style hybrid backbone or a plain masked or causal
+      transformer for my small-data run?
   answered_by:
   - gpt-bert-backbone
 terminology:

@@ -139,84 +139,111 @@ claims:
     training on held-out data, without numbers.
 qa:
 - ask:
-    practitioner: What dataset should I use to study which argument is more convincing?
-    unsorted:
-    - Is there a benchmark for comparing the persuasiveness of two pieces of evidence?
-    - Where can I get labeled pairs of arguments ranked by convincingness?
-    - What is IBM-EviConv?
+    plain: is there a public collection of sentence pairs labeled for which one argues more
+      convincingly?
+    jargon: what corpus provides pairwise convincingness annotations over Wikipedia evidence
+      sentences with argument type and length controlled?
+    task: where do I get training data for a model that picks the more persuasive of two evidence
+      sentences?
+    practitioner: can I train a persuasiveness ranker on IBM-EviConv, and how many labeled
+      pairs would I have?
   answered_by:
   - eviconv-dataset
   - eviconv-size
 - ask:
-    unsorted:
-    - Why is argument length such a strong predictor of convincingness on existing datasets?
-    - Does simply preferring the longer argument work for predicting persuasiveness?
-    - How well does a length baseline do on UKPConvArgStrict?
+    plain: can you predict which of two arguments is more persuasive just by picking the longer
+      one?
+    jargon: how much of UKPConvArgStrict accuracy is recoverable by a character-length heuristic,
+      and does it transfer to evidence-sentence pairs?
+    task: how do I check whether my argument convincingness data is confounded by length before
+      I trust a model on it?
+    practitioner: should I worry that my convincingness model is only learning to prefer longer
+      arguments?
   answered_by:
   - length-baseline-ukp
   - length-baseline-eviconv
 - ask:
-    unsorted:
-    - How accurate is a Siamese network at picking the more convincing argument?
-    - Does EviConvNet beat Gaussian process preference learning on convincingness?
-    - What accuracy do neural models reach on evidence convincingness?
+    plain: how often can a neural network correctly pick the more convincing of two arguments?
+    jargon: how does a Siamese BiLSTM convincingness ranker compare with Gaussian process
+      preference learning on UKPConvArgStrict, UKPConvArgRank and evidence pairs?
+    task: how do I rank arguments by convincingness without building thousands of hand-crafted
+      linguistic features?
+    practitioner: is a neural pairwise ranker accurate enough to use for argument convincingness,
+      or should I stay with feature-based Gaussian process models?
   answered_by:
   - eviconvnet-eviconv
   - eviconvnet-ukp-strict
   - eviconvnet-ukp-rank
 - ask:
-    unsorted:
-    - Can a model trained on pairwise preferences assign a convincingness score to a single
-      argument?
-    - How do you get pointwise argument quality scores from pairwise training labels?
-    - Does convincingness prediction require hand-engineered linguistic features?
+    plain: if a model only ever saw pairs of arguments during training, can it still give
+      one argument a persuasiveness score on its own?
+    jargon: how is a pointwise convincingness score derived at inference from a Siamese network
+      trained on pairwise preference labels?
+    task: how do I score a single piece of evidence for convincingness when my labels are
+      only pairwise comparisons?
+    practitioner: can I use a pairwise-trained convincingness model to rank a whole list of
+      candidate evidence sentences one at a time?
   answered_by:
   - pointwise-scoring
 - ask:
-    unsorted:
-    - How much do humans agree on which argument is more convincing?
-    - What is the inter-annotator agreement for convincingness labeling?
-    - Is judging persuasiveness reliable for crowd workers?
+    plain: do people actually agree on which of two pieces of evidence is more convincing?
+    jargon: what pairwise Cohen's Kappa do crowd and expert annotators reach on evidence convincingness,
+      and are the resulting preferences transitive?
+    task: how many annotators do I need before convincingness labels on evidence pairs are
+      usable?
+    practitioner: can I trust crowdsourced judgments of which argument is more convincing?
   answered_by:
   - annotation-agreement
   - transitivity
 - ask:
-    unsorted:
-    - Is it harder to compare arguments from opposite sides of a debate?
-    - Does training on cross-stance argument pairs help predict which side was more convincing?
-    - Does stance matter for convincingness classification?
+    plain: is it harder to compare two arguments when they take opposite sides of the same
+      topic?
+    jargon: does cross-stance versus same-stance pairing affect convincingness prediction
+      accuracy, and does cross-stance training data help?
+    task: do I need to collect cross-stance argument pairs to train a convincingness model
+      that compares opposing evidence?
+    practitioner: should I bother annotating pro-versus-con evidence pairs, or will same-stance
+      pairs train an equally good convincingness model?
   answered_by:
   - stance-null-result
 - ask:
-    unsorted:
-    - Does training on length-matched argument pairs hurt performance on real pairs of different
-      lengths?
-    - Will a convincingness model trained on balanced-length evidence generalize to unbalanced
-      pairs?
+    plain: if a persuasiveness model was trained only on arguments of similar length, does
+      it still work when one argument is much longer?
+    jargon: how does a convincingness ranker trained on length-balanced evidence pairs perform
+      on out-of-distribution pairs with over 30% length difference?
+    task: how do I stop length-controlled training data from breaking my convincingness model
+      on real pairs of unequal length?
+    practitioner: will a model trained on length-matched evidence pairs hold up on my data,
+      where lengths vary a lot?
   answered_by:
   - length-generalization
 - ask:
-    unsorted:
-    - What kinds of argument quality can a neural convincingness model detect, and what does
-      it miss?
-    - Where does a Siamese convincingness model fail relative to a length baseline?
-    - Which annotator reasons for preferring an argument are hardest to model?
+    plain: which reasons for finding an argument more convincing can a neural model pick up,
+      and which does it get wrong?
+    jargon: on which annotator-cited convincingness reasons does a Siamese ranker beat a length
+      baseline, and where is its error rate higher?
+    task: how do I find out what aspects of argument quality my convincingness model is actually
+      missing?
+    practitioner: if I need a model that spots balanced, objective coverage of viewpoints,
+      is a neural convincingness ranker the wrong tool?
   answered_by:
   - reason-analysis
 - ask:
-    unsorted:
-    - Do harder convincingness datasets leave more room for better methods?
-    - Why build a new argument convincingness dataset instead of using UKPConvArg?
-    - How much headroom over baselines exists on evidence convincingness versus earlier data?
+    plain: why build a new dataset of convincing arguments when one already exists?
+    jargon: how much relative headroom over a length baseline separates IBM-EviConv from UKPConvArg
+      for successive convincingness methods?
+    task: which argument convincingness benchmark should I evaluate on if I want method improvements
+      to show up?
+    practitioner: is it worth switching my convincingness experiments to evidence-sentence
+      pairs instead of the older UKPConvArg data?
   answered_by:
   - headroom-gap
   - eviconv-dataset
 - ask:
-    practitioner: Where should I start reading about computational assessment of argument
-      quality?
-    unsorted:
-    - What are good starting papers on argument convincingness and persuasiveness in NLP?
-    - Who introduced evidence convincingness as a task?
+    plain: what should I read first about judging how convincing an argument is?
+    jargon: which work introduced evidence convincingness as a pairwise ranking task in computational
+      argumentation?
+    task: where do I start if I want to build a system that ranks evidence by persuasiveness?
   answered_by:
   - eviconv-dataset
   - pointwise-scoring

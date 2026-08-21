@@ -89,85 +89,125 @@ claims:
   evidence: Section 6
 qa:
 - ask:
-    unsorted:
-    - What is DOVE?
-    - What does the DOVE prompt perturbation dataset contain?
-    - Is there a large public dataset of LLM predictions across many prompt variants?
+    plain: is there a big public collection of language model answers to the same questions
+      written many different ways?
+    jargon: what does the DOVE corpus of multi-dimensional prompt perturbations and model
+      outputs cover?
+    task: where can I get pre-computed model predictions across thousands of prompt variants
+      instead of generating them myself?
+    practitioner: can I download an existing prompt-variation evaluation dataset rather than
+      running my own sweep?
   answered_by:
   - dove-dataset
   - holistic-joint-perturbation
 - ask:
-    practitioner: What should I read about prompt sensitivity in LLM evaluation?
-    unsorted:
-    - Which paper shows that single-prompt benchmark scores are unreliable?
-    - Where can I start reading about how arbitrary prompt formatting affects benchmark results?
+    plain: which research showed that scoring a model with one fixed prompt gives a misleading
+      benchmark number?
+    jargon: what work should I read first on prompt sensitivity undermining single-prompt
+      benchmark evaluation?
+    task: how do I justify to reviewers that a single-template benchmark score is not enough?
+    practitioner: should I stop trusting leaderboard numbers that come from one prompt template
+      per benchmark?
   answered_by:
   - dove-dataset
   - sensitivity-persists
   - original-prompt-divergence
 - ask:
-    unsorted:
-    - How much can accuracy change just from changing the prompt format?
-    - How big is prompt sensitivity on multiple-choice benchmarks?
-    - Does prompt sensitivity disappear when you evaluate at a very large scale?
+    plain: how much can a model's score move if you only reword the question or shuffle the
+      answer options?
+    jargon: what is the magnitude of accuracy variance across intent-preserving prompt perturbations
+      on multiple-choice benchmarks?
+    task: how do I find out how wide the accuracy range for my model is across formatting
+      variants of the same task?
+    practitioner: if I evaluate at a much larger scale, will prompt sensitivity average out?
   answered_by:
   - sensitivity-persists
   - marginalized-dimensions
 - ask:
-    unsorted:
-    - Do different LLMs prefer different answer enumerators?
-    - Is there one prompt format that is best for all models?
-    - Do roman numerals or letters work better as multiple-choice labels?
+    plain: do different language models do best with different answer labels like A/B/C, roman
+      numerals or greek letters?
+    jargon: are optimal enumerator choices model-specific or is there a universally best multiple-choice
+      format?
+    task: how do I pick answer-option labels for a multiple-choice task across several models
+      at once?
+    practitioner: can I reuse the prompt format that worked well for one model on a different
+      model?
   answered_by:
   - model-specific-preferences
 - ask:
-    practitioner: How do I pick a good prompt on a limited inference budget?
-    unsorted:
-    - Is it better to tune each prompt dimension separately or search whole prompts?
-    - What is the most sample-efficient way to choose a prompt format for a multiple-choice
-      task?
+    plain: is it better to pick the single best prompt you tried, or to choose each formatting
+      choice separately?
+    jargon: does dimension-wise marginal selection beat argmax over observed prompts for prompt-format
+      optimization?
+    task: how do I choose a prompt format for a multiple-choice task with as few trial runs
+      as possible?
+    practitioner: I can only afford a few hundred prompt trials, how should I use them to
+      settle on a format?
   answered_by:
   - dimension-wise-selection
   - best-observed-needs-data
 - ask:
-    unsorted:
-    - Do few-shot examples reduce prompt sensitivity?
-    - Does five-shot prompting make benchmark scores more stable than zero-shot?
-    - Can adding demonstrations solve the prompt sensitivity problem?
+    plain: does showing a few worked examples in the prompt make a model's score less dependent
+      on wording?
+    jargon: does 5-shot prompting reduce accuracy variance across prompt perturbations relative
+      to 0-shot?
+    task: how do I make benchmark scores more stable across formatting changes?
+    practitioner: if I switch to few-shot prompting, do I still need to worry about prompt
+      sensitivity?
   answered_by:
   - fewshot-reduces-variance
 - ask:
-    unsorted:
-    - How can you tell which benchmark questions are genuinely hard for a model?
-    - What is an inherently hard instance in prompt-perturbation analysis?
-    - Are there examples that models get wrong no matter how the prompt is phrased?
+    plain: how can you tell which test questions a model gets wrong no matter how you ask
+      them?
+    jargon: how are success-rate distributions over prompt perturbations used to identify
+      inherently hard instances?
+    task: how do I separate genuinely difficult benchmark items from ones my model fails only
+      for formatting reasons?
+    practitioner: should I spend effort on prompt engineering for the items my model keeps
+      failing, or are they hopeless?
   answered_by:
   - inherently-hard-instances
 - ask:
-    unsorted:
-    - Is the original prompt shipped with a benchmark representative of average model performance?
-    - How far off is the default MMLU prompt from the average across prompt variations?
+    plain: is the prompt that ships with a benchmark like MMLU typical of how a model does
+      on average?
+    jargon: how far does accuracy under a benchmark's original template diverge from the mean
+      over intent-preserving prompts?
+    task: how do I check whether the default template I am evaluating with is flattering my
+      model?
+    practitioner: should I report the default MMLU prompt score or an average over prompt
+      variants?
   answered_by:
   - original-prompt-divergence
 - ask:
-    unsorted:
-    - How expensive is it to run a large multi-prompt evaluation?
-    - How many GPU hours did building the DOVE dataset take?
-    - What does it cost to evaluate thousands of prompt perturbations per instance?
+    plain: how much compute and money does it take to test one model on thousands of reworded
+      versions of every question?
+    jargon: what GPU-hour and cloud budget was needed to generate over 250M prompt perturbation
+      outputs?
+    task: how do I budget for an evaluation that sweeps thousands of prompt variants per instance?
+    practitioner: can I afford to run a full multi-prompt sensitivity evaluation on my own
+      hardware?
   answered_by:
   - scale-cost
 - ask:
-    unsorted:
-    - Which prompt dimensions does DOVE vary?
-    - How many prompt perturbations are there per benchmark instance in DOVE?
-    - What kinds of intent-preserving prompt changes are covered in this perturbation dataset?
+    plain: which parts of a prompt get changed in a large prompt-variation dataset, and how
+      many versions of each question are there?
+    jargon: which perturbation dimensions does DOVE vary, and what is the per-instance perturbation
+      count from their Cartesian product?
+    task: how do I build a prompt sweep that varies separators, option order and instruction
+      phrasing together instead of one at a time?
+    practitioner: does a prompt-variation dataset cover the formatting axes I actually care
+      about, like demonstrations and option order?
   answered_by:
   - holistic-joint-perturbation
 - ask:
-    practitioner: Can I contribute my own model's predictions to DOVE?
-    unsorted:
-    - Is the DOVE dataset being extended to more models and languages?
-    - How do research groups add evaluation data to a shared prompt-sensitivity repository?
+    plain: can other research groups contribute their own model outputs to a shared prompt-variation
+      dataset?
+    jargon: is the DOVE resource maintained as a living benchmark with a standardized schema
+      for contributed evaluation data?
+    task: how do I add predictions from my own model to a shared prompt-sensitivity dataset
+      without re-running everything?
+    practitioner: if I contribute my evaluation runs, will they be usable alongside the existing
+      prompt perturbation data?
   answered_by:
   - living-benchmark
 one_liner: DOVE (Dataset Of Variation Evaluation) is a public dataset of over 250M LLM predictions

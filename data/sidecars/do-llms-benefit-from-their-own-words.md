@@ -115,82 +115,113 @@ claims:
     but not measured.
 qa:
 - ask:
-    unsorted:
-    - Do language models actually need their own previous replies in the conversation history?
-    - Does deleting past assistant turns from a chat hurt answer quality?
-    - What happens if you only keep the user turns in a multi-turn LLM conversation?
+    plain: If you delete a chatbot's own earlier replies from the conversation history, do
+      its later answers get worse?
+    jargon: How does assistant-turn omission in the dialogue history affect judged response
+      quality and on-topic rate across instruction-tuned LLMs?
+    task: How do I trim assistant turns out of a multi-turn prompt without degrading the next
+      response?
+    practitioner: Should I keep past model replies in my chat history, or send only the user
+      turns?
   answered_by:
   - ao-quality-parity
   - judge-context-sensitivity
 - ask:
-    unsorted:
-    - How much context can you save by dropping assistant replies from chat history?
-    - How much does omitting assistant turns shrink the prompt in long conversations?
-    - Is user-turn-only prompting cheaper in context length?
+    plain: How many characters of prompt do you save in a long chat by keeping only what the
+      user wrote?
+    jargon: What context-length reduction does user-turn-only prompting yield over full dialogue
+      history by round 8?
+    task: How do I cut token spend on a growing chat history without truncating or summarizing?
+    practitioner: Will dropping assistant turns actually make my multi-turn requests meaningfully
+      cheaper?
   answered_by:
   - context-length-reduction
 - ask:
-    unsorted:
-    - What fraction of turns in real chat logs depend on the previous assistant response?
-    - How many user prompts in WildChat conversations are self-contained?
-    - Are real multi-turn conversations really multi-turn dependent?
+    plain: In real conversations with a chatbot, how often is a person's next message a brand-new
+      request rather than a follow-up?
+    jargon: What proportion of non-initial user turns in in-the-wild human-LLM logs are self-contained
+      versus dependent on prior assistant output?
+    task: How do I tell whether a multi-turn chat corpus really tests long-context multi-turn
+      reasoning?
+    practitioner: Can I trust WildChat-style logs as a benchmark for multi-turn context dependence?
   answered_by:
   - self-contained-fraction
   - context-benchmark-implication
 - ask:
-    unsorted:
-    - Which kinds of user prompts still need the assistant's earlier answer?
-    - Do follow-up prompts break when assistant history is removed?
-    - Is omitting assistant history safer for new questions than for follow-ups?
+    plain: Which kinds of user messages still need the chatbot's earlier answer in the history,
+      and which do not?
+    jargon: Does the benefit of retaining assistant history differ between new-ask turns and
+      follow-up turns?
+    task: How do I decide per turn whether a user message needs the assistant's prior response?
+    practitioner: If most of my users ask follow-up questions, is stripping assistant history
+      still safe for me?
   answered_by:
   - new-ask-vs-followup
   - self-contained-fraction
 - ask:
-    unsorted:
-    - What is context pollution in multi-turn LLM conversations?
-    - How do a model's own earlier mistakes propagate into later turns?
-    - Can keeping past model outputs in context introduce new bugs or hallucinations?
+    plain: Can a chatbot's own earlier mistakes in the conversation get repeated into later
+      answers?
+    jargon: What does context pollution from retained assistant turns look like in multi-turn
+      LLM conversations?
+    task: How do I stop a wrong assumption or hallucination from an earlier reply carrying
+      into later turns?
+    practitioner: Is keeping my model's previous outputs in the prompt risking repeated hallucinations
+      and stale code?
   answered_by:
   - context-pollution-examples
 - ask:
-    unsorted:
-    - Can you learn when to keep and when to drop assistant history per turn?
-    - Does a classifier that selectively omits assistant responses save context without losing
-      quality?
-    - How well does adaptive context filtering of assistant turns work on GPT-5.2?
+    plain: Can a small model learn when to keep the chatbot's earlier replies and when to
+      throw them away?
+    jargon: Can a per-turn classifier select between full and assistant-omitted context, and
+      is judge preference predictable from turn features?
+    task: How do I build a per-turn policy that drops assistant history only when it is safe?
+    practitioner: Is adaptive per-turn context filtering worth implementing, or will I lose
+      quality against always sending full history?
   answered_by:
   - adaptive-classifier
   - prediction-is-weak
 - ask:
-    unsorted:
-    - Is summarizing past assistant responses better than keeping them verbatim?
-    - Does replacing model replies with one-sentence summaries help multi-turn quality?
-    - How does summarized context compare with full context in multi-turn chat?
+    plain: Is it better to replace a chatbot's past answers with one-sentence summaries than
+      to keep them in full?
+    jargon: How does one-sentence self-summarization of assistant turns compare with full
+      history and with full omission on Lost-in-Conversation and WildChat?
+    task: How do I compress assistant turns in a chat history instead of deleting them outright?
+    practitioner: Should I summarize my model's earlier replies rather than dropping them
+      or keeping them verbatim?
   answered_by:
   - summarization-beats-full
 - ask:
-    unsorted:
-    - How reliable is the LLM-as-judge evaluation of full-context versus assistant-omitted
+    plain: How much can you trust a big model's scoring of which chat answer is better, and
+      does what it sees change its verdict?
+    jargon: How well does the GPT-5 judge agree with manual annotation, and does restricting
+      the judge to user-side turns flip the preference between context conditions?
+    task: How do I set up an LLM judge for comparing responses under different context conditions
+      without biasing it toward the longer history?
+    practitioner: Can I rely on LLM-as-judge results comparing full-context and assistant-omitted
       responses?
-    - Was the GPT-5 judge checked against human annotation?
-    - Does judge context change which prompting configuration wins?
   answered_by:
   - judge-alignment
   - judge-context-sensitivity
 - ask:
-    practitioner: What should I read about context management in multi-turn chat and agents?
-    unsorted:
-    - Which paper questions whether keeping past model outputs in context is worth it?
-    - Is there work on context pruning evaluated on real human-LLM conversations instead of
-      synthetic ones?
+    plain: Is there a study that asks whether keeping a chatbot's own past replies in the
+      prompt is actually worth it?
+    jargon: What work evaluates assistant-history retention on in-the-wild human-LLM logs
+      rather than synthetic multi-turn dialogues?
+    task: What should I read before designing context management for a multi-turn chat or
+      agent system?
+    practitioner: Which paper should I cite if I want to argue that real chat logs are weak
+      multi-turn benchmarks?
   answered_by:
   - context-contribution
   - context-benchmark-implication
 - ask:
-    unsorted:
-    - Are frontier models also misled by their own past responses, or just small models?
-    - Does GPT-5.2 suffer from over-conditioning on its earlier turns?
-    - Which models were tested for the effect of removing assistant history?
+    plain: Do big commercial chatbots get thrown off by their own earlier replies, or is that
+      only a small-model problem?
+    jargon: Which models were evaluated for assistant-turn omission, and does over-conditioning
+      on prior assistant output appear in frontier models too?
+    task: How do I check whether the model I use is being misled by its own earlier turns?
+    practitioner: I run a frontier model in production, is over-conditioning on its own past
+      answers something I have to worry about?
   answered_by:
   - ao-quality-parity
   - context-pollution-examples

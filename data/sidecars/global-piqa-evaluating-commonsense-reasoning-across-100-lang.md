@@ -130,108 +130,153 @@ claims:
   evidence: Section 1 and Section 3.2
 qa:
 - ask:
-    practitioner: What benchmark should I use to test commonsense reasoning in low-resource
-      languages?
-    unsorted:
-    - Is there a multilingual commonsense reasoning dataset that is not translated from English?
-    - Where should I start reading about culturally-specific LLM evaluation across many languages?
+    plain: Is there a commonsense question dataset written directly in hundreds of languages
+      rather than translated from English?
+    jargon: which multilingual commonsense benchmark uses natively authored items instead
+      of a translated English source corpus?
+    task: where do I start reading about culturally grounded evaluation of language models
+      across many languages?
+    practitioner: I need an evaluation set that is not an English dataset in disguise for
+      my multilingual model, is there one?
   answered_by:
   - non-translated-design
   - participatory
   - coverage
 - ask:
-    unsorted:
-    - How many languages does Global PIQA cover?
-    - Which language families and writing systems are represented in Global PIQA?
-    - How broad is the language coverage of a hand-written multilingual commonsense benchmark?
+    plain: How many languages, scripts and language families does Global PIQA include?
+    jargon: what is the typological and orthographic coverage of Global PIQA in ISO 639-3
+      codes, writing systems and Glottolog families?
+    task: how do I find out whether a hand-written multilingual commonsense benchmark includes
+      the language varieties I care about?
+    practitioner: will a multilingual commonsense benchmark cover enough scripts and language
+      families to be worth adding to my eval suite?
   answered_by:
   - coverage
 - ask:
-    unsorted:
-    - How was Global PIQA constructed?
-    - Who wrote the examples in Global PIQA, and were they paid annotators?
-    - How do you organise a benchmark written by hundreds of native speakers?
+    plain: Who actually wrote the questions in Global PIQA, and were they volunteers or hired
+      annotators?
+    jargon: how was the Global PIQA corpus authored under a participatory, co-authorship-based
+      data collection model?
+    task: how do I run a benchmark-building effort with hundreds of native-speaker contributors
+      across many countries?
+    practitioner: if I want native speakers to write evaluation data for my languages, can
+      I recruit them as co-authors instead of paying annotators?
   answered_by:
   - participatory
   - manual-methods
 - ask:
-    unsorted:
-    - How much of Global PIQA is actually culturally specific?
-    - What fraction of examples reference local foods, customs or traditions?
-    - Were LLMs used to write the Global PIQA examples?
+    plain: How many of the questions in Global PIQA are really about local food, festivals
+      or customs, and were chatbots used to write them?
+    jargon: what proportion of Global PIQA items are annotated culturally-specific, and what
+      share of item drafting involved LLM assistance?
+    task: how do I check whether a multilingual benchmark's items are culturally grounded
+      rather than generic or model-generated?
+    practitioner: can I trust that a multilingual commonsense benchmark is human-written and
+      locally grounded before I report scores on it?
   answered_by:
   - cultural-specificity
   - manual-methods
 - ask:
-    unsorted:
-    - How was data quality verified in a benchmark built by hundreds of volunteers?
-    - Were the Global PIQA examples checked by native speakers?
-    - Do the Global PIQA examples come with English translations?
+    plain: How was the quality of Global PIQA checked when hundreds of different people contributed
+      questions?
+    jargon: what native-speaker validation and English gloss coverage does the Global PIQA
+      non-parallel split have?
+    task: how do I verify data quality in a crowd-authored multilingual evaluation set before
+      using it?
+    practitioner: should I worry about noisy items in a volunteer-written multilingual benchmark,
+      or has every example been checked by a native speaker?
   answered_by:
   - native-validation
 - ask:
-    practitioner: How can I compare LLM accuracy directly across languages on commonsense
-      reasoning?
-    unsorted:
-    - What is the difference between the parallel and non-parallel splits of Global PIQA?
-    - How many examples are in the Global PIQA parallel split?
+    plain: In a commonsense reasoning test covering over 100 languages, what is the difference
+      between the questions written locally and the ones translated into every language?
+    jargon: how do the parallel and non-parallel splits of Global PIQA differ in item authoring
+      and size?
+    task: which split of Global PIQA do I use if I want scores that are comparable across
+      languages?
+    practitioner: for cross-lingual comparison of my model, do I need the parallel split of
+      Global PIQA or the natively written one?
   answered_by:
   - parallel-split
   - non-translated-design
 - ask:
-    unsorted:
-    - How much do machine translations of commonsense questions need correcting for low-resource
-      languages?
-    - Which languages required the heaviest edits to machine-translated benchmark examples?
-    - Is machine translation good enough for building multilingual benchmarks?
+    plain: How much does machine-translated text need fixing when building test questions
+      in low-resource languages?
+    jargon: what is the post-editing rate on machine-translated Global PIQA parallel-split
+      items, and which languages required the heaviest edits?
+    task: can I machine translate an English commonsense set into low-resource languages and
+      how much native-speaker correction should I budget for?
+    practitioner: is machine translation plus native-speaker review good enough for building
+      my multilingual evaluation data?
   answered_by:
   - translation-edits
   - parallel-split
 - ask:
-    unsorted:
-    - How well do frontier LLMs do on multilingual commonsense reasoning?
-    - What accuracy do GPT-5.4, Claude and Gemini get on Global PIQA?
-    - Is Global PIQA already saturated by closed models?
+    plain: How well do the newest commercial chatbots answer everyday commonsense questions
+      in many languages?
+    jargon: what mean per-language accuracy do frontier closed systems reach on the Global
+      PIQA parallel and non-parallel splits?
+    task: how do I tell whether a multilingual commonsense benchmark still has headroom for
+      frontier systems?
+    practitioner: is Global PIQA already saturated by the top proprietary models, or worth
+      running on my system?
   answered_by:
   - closed-model-aggregate
   - worst-languages
 - ask:
-    unsorted:
-    - What is the best open-weight model on multilingual commonsense reasoning?
-    - How big is the gap between open-weight models and proprietary systems on Global PIQA?
-    - Does scaling open-weight model size keep improving multilingual commonsense accuracy?
+    plain: Which openly available model does best on everyday commonsense questions across
+      languages, and how far behind the commercial ones is it?
+    jargon: what is the open-weight to closed-system accuracy gap on Global PIQA, and where
+      does open-weight accuracy plateau with parameter count?
+    task: how do I choose an open-weight model for multilingual commonsense tasks, and does
+      going bigger help?
+    practitioner: if I can only deploy open-weight models, how much multilingual commonsense
+      accuracy am I giving up versus a paid API?
   answered_by:
   - open-weight-gap
 - ask:
-    unsorted:
-    - How large is the accuracy gap between high- and low-resource languages on commonsense
-      reasoning?
-    - Do LLMs perform worse on Sub-Saharan African languages than European ones?
-    - What accuracy disparity across regions does Global PIQA reveal?
+    plain: Do language models answer everyday questions much worse in African languages than
+      in European ones?
+    jargon: what accuracy disparity across regions and resource tiers does Global PIQA measure
+      for the best open-weight model?
+    task: how do I estimate the accuracy drop I should expect when serving low-resource language
+      users?
+    practitioner: my users speak Sub-Saharan African languages, should I expect a large accuracy
+      penalty on everyday commonsense questions?
   answered_by:
   - region-gap
   - worst-languages
 - ask:
-    unsorted:
-    - Which languages do LLMs handle worst on Global PIQA?
-    - Are there languages where even the best model scores under 80% on commonsense questions?
-    - How badly do models do on Ekpeye and Idoma?
+    plain: Are there languages where even the strongest model still gets everyday questions
+      wrong most of the time?
+    jargon: which Global PIQA language varieties remain below 80% accuracy under a best-model-per-language
+      skyline?
+    task: how do I find the languages where no current model is usable for simple commonsense
+      questions?
+    practitioner: is any model good enough for languages like Ekpeye or Idoma, or should I
+      not deploy there yet?
   answered_by:
   - worst-languages
 - ask:
-    unsorted:
-    - Can a benchmark separate a model's cultural knowledge from its linguistic ability in
-      a language?
-    - Which languages show weaker cultural knowledge than linguistic competence in LLMs?
-    - What does the drop from the parallel to the non-parallel split of Global PIQA mean?
+    plain: Can a test tell apart whether a model lacks local cultural knowledge or just lacks
+      fluency in a language?
+    jargon: how does comparing parallel and non-parallel split accuracy in Global PIQA separate
+      cultural knowledge from linguistic competence?
+    task: how do I diagnose whether my model's failures in a language are cultural or linguistic?
+    practitioner: my model handles a language fluently but still fails local questions, how
+      do I confirm that it is missing cultural knowledge?
   answered_by:
   - cultural-vs-linguistic
   - parallel-split
 - ask:
-    unsorted:
-    - Is everyday commonsense still a weakness of LLMs, or only expert reasoning?
-    - What does Global PIQA claim about where multilingual LLMs still fail?
-    - Why evaluate commonsense knowledge rather than complex reasoning across languages?
+    plain: Is basic everyday knowledge still a weak point for language models, or only hard
+      expert reasoning?
+    jargon: what does Global PIQA argue about physical commonsense as a remaining failure
+      mode in multilingual LLMs?
+    task: why should I evaluate everyday commonsense across languages instead of only hard
+      reasoning benchmarks?
+    practitioner: should my multilingual evaluation include simple everyday-knowledge questions,
+      or is that already solved?
   answered_by:
   - everyday-knowledge-framing
   - region-gap

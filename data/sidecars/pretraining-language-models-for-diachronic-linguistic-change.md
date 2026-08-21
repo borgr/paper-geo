@@ -120,82 +120,116 @@ claims:
   evidence: Appendix C
 qa:
 - ask:
-    unsorted:
-    - Does finetuning a large model on historical text keep it from knowing later language?
-    - Can LoRA or DoRA finetuning restrict a model to one time period?
-    - Do period-finetuned Llama models leak future word senses?
+    plain: if a big language model is trained further on writing from one century, will it
+      forget words invented after that century?
+    jargon: does parameter-efficient finetuning of Llama3-8B on a period corpus prevent recall
+      of post-period word senses?
+    task: how do I keep a language model from using vocabulary that did not exist in the period
+      I am studying?
+    practitioner: can I just DoRA-finetune Llama3-8B on my historical corpus, or do I need
+      to pretrain from scratch to keep later language out?
   answered_by:
   - leakage
   - cholera-example
   - context-pretraining-as-method
 - ask:
-    unsorted:
-    - How well do small models pretrained on one time slice stay inside their period?
-    - Do time-sliced pretrained language models show period-specific perplexity?
-    - Which respects historical corpus boundaries better, pretraining or finetuning?
+    plain: do small models trained only on books from one era actually prefer text from that
+      era?
+    jargon: do time-sliced pretrained models show period-specific perplexity minima, and does
+      finetuning reproduce them?
+    task: how do I check whether a model I trained on one historical period really stays inside
+      its period boundaries?
+    practitioner: for period-restricted language modelling, should I pretrain a small model
+      per era or finetune one large model?
   answered_by:
   - pretrain-period-specific-ppl
   - leakage
 - ask:
-    unsorted:
-    - How much worse are 10M-token period models than a finetuned Llama3-8B on grammar benchmarks?
-    - What BLiMP accuracy do BabyLlama-2 models trained on 10 million tokens reach?
-    - Are tiny domain-pretrained models still usable models of language?
+    plain: is a model trained on only 10 million words of old books still good enough at English
+      grammar to trust?
+    jargon: what BLiMP aggregate accuracy do 345M-parameter BabyLlama-2 models trained on
+      10M-token period slices reach against a DoRA-finetuned Llama3-8B?
+    task: how do I tell whether my tiny period-specific pretrained model has learned enough
+      syntax to use for linguistic analysis?
+    practitioner: is a 10M-token period model grammatical enough for my study, or will I lose
+      too much against a finetuned 8B model?
   answered_by:
   - blimp-aggregate
 - ask:
-    unsorted:
-    - Can a language model detect grammatical change over time, not just lexical change?
-    - How was diachronic change in negative polarity item licensing measured with language
-      models?
-    - Do period models show a shift in preference for "only...ever" over "even...ever"?
+    plain: can models trained on different centuries reveal changes in grammar rather than
+      just changes in word meaning?
+    jargon: can minimal-pair acceptability judgements across period models detect diachronic
+      change in NPI licensing?
+    task: how do I use language models to find grammatical or morphological change over time
+      instead of lexical semantic change?
+    practitioner: if I want to study syntactic change, will a battery of period-pretrained
+      models show me anything a word-sense method cannot?
   answered_by:
   - npi-change
   - context-nonlexical-change
 - ask:
-    unsorted:
-    - Is pretraining a small model cheaper than parameter-efficient finetuning of an 8B model?
-    - How long does it take to train one BabyLlama-2 period model on an A100?
-    - What is the compute cost of the diachronic model battery?
+    plain: how long does it take on one GPU to train a small language model for a single historical
+      period?
+    jargon: what is the wall-clock cost of the BabyLlama-2 distillation recipe on a 10M-token
+      slice versus DoRA finetuning of Llama3-8B?
+    task: how do I budget GPU time for training one language model per time period in my corpus?
+    practitioner: with a single A100, is pretraining a small period model cheaper for me than
+      parameter-efficient finetuning of an 8B model?
   answered_by:
   - training-cost
 - ask:
-    unsorted:
-    - How can publication dates be assigned to Project Gutenberg works at scale?
-    - How accurate is an open-weight LLM at guessing when a book was written?
-    - Can Llama3.3-70B replace GPT-4o for work-date attribution?
+    plain: how accurate is a large language model at guessing the year a book was written?
+    jargon: what within-1-year and within-10-year agreement does zero-shot work-date attribution
+      by a 4-bit quantized Llama3.3-70B reach against hand-annotated dates?
+    task: how do I assign composition dates to thousands of Project Gutenberg texts so I can
+      split them into periods?
+    practitioner: can I use an open-weight 70B model instead of GPT-4o to date the works in
+      my corpus?
   answered_by:
   - date-attribution
 - ask:
-    unsorted:
-    - How do you find candidate words for sense change using perplexity across periods?
-    - Can a battery of period language models separate two senses of the same word?
-    - What does the "station" example show about tracking sense trajectories?
+    plain: can models trained on different eras show when a word picked up a new meaning,
+      like railway "station"?
+    jargon: can normalized per-word perplexity trajectories across period models separate
+      synchronically distinct senses of a single word?
+    task: how do I find candidate words whose senses shifted, and then tell the senses apart
+      across periods?
+    practitioner: if I want to date a specific sense of a word, will period-model perplexity
+      curves give me a usable trajectory?
   answered_by:
   - sense-trajectories
 - ask:
-    unsorted:
-    - Can a model trained only on old text anticipate a sense that appears later?
-    - What is the "end of the line" example evidence for?
-    - Do earlier usages of a word prefigure later constructions?
+    plain: can a model trained only on old books still rank a phrase that was not coined until
+      much later?
+    jargon: do period-pretrained models assign high completion probability to constructions
+      first attested after their slice, absent from their training data?
+    task: how do I tell whether an early model's high ranking of a later idiom is data leakage
+      or genuine prefiguration?
+    practitioner: should I treat a period model's preference for a later-attested phrase as
+      contamination or as evidence about earlier usage?
   answered_by:
   - prefiguration
 - ask:
-    practitioner: What should I read about using language models for historical linguistics?
-    unsorted:
-    - Which paper argues for domain-restricted pretraining instead of finetuning in the digital
-      humanities?
-    - Where do I start on language models for diachronic change discovery?
-    - Is there work on training separate LMs per time period for humanities research?
+    plain: what should I read about training separate language models on different historical
+      periods for humanities research?
+    jargon: which work argues for domain-restricted pretraining over finetuning or model editing
+      to guarantee corpus-bounded weights?
+    task: where do I start if I want to build language models that only know one era of text
+      for discovering language change?
+    practitioner: is there a paper I can cite for using per-period pretrained models rather
+      than a finetuned large model in a diachronic study?
   answered_by:
   - context-pretraining-as-method
   - context-nonlexical-change
 - ask:
-    practitioner: Is there released code for training time-sliced language models on my own
-      corpus?
-    unsorted:
-    - Where can I get the OED-based word sense cloze evaluation set?
-    - How do I reuse the diachronic pretraining pipeline on a different corpus division?
+    plain: where can I download the code and the word-meaning fill-in-the-blank test set for
+      models trained on separate eras?
+    jargon: is the date-attribution, slicing, pretraining and OED-derived sense cloze evaluation
+      pipeline released?
+    task: how do I reuse an existing diachronic pretraining pipeline on my own corpus split
+      into different periods?
+    practitioner: can I take the historical-perspectival-lm release and run it on my own period
+      divisions?
   answered_by:
   - context-pipeline
 misreadings:

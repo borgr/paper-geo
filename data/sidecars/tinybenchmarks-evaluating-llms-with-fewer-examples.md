@@ -125,94 +125,113 @@ claims:
   evidence: Section 4.2
 qa:
 - ask:
-    practitioner: Can I estimate MMLU accuracy without running all 14K questions?
-    unsorted:
-    - How many examples do you actually need to evaluate an LLM on MMLU?
-    - Does tinyMMLU reproduce full MMLU scores?
+    plain: how many questions does it take to score a language model on MMLU accurately?
+    jargon: how closely does a 100-example tinyMMLU subset reproduce full 14K-example MMLU
+      accuracy?
+    task: how do I evaluate a model on MMLU without running all 14K questions?
+    practitioner: can I trust a 100-question MMLU score for my own model?
   answered_by:
   - mmlu-100-examples
   - cost-reduction-factor
 - ask:
-    unsorted:
-    - How accurate are 100-example subsets of LLM benchmarks?
-    - What is the estimation error when evaluating LLMs on tiny benchmark subsets?
-    - Do small curated benchmark subsets give the same scores as the full benchmark?
+    plain: how accurate is a score measured on a hundred benchmark questions instead of thousands?
+    jargon: what is the estimation error of 100-example curated subsets on the Open LLM Leaderboard,
+      MMLU, HELM Lite and AlpacaEval 2.0?
+    task: how do I know how much error I take on by evaluating a model on a subset?
+    practitioner: is a two-percent error small enough for me to report a subset score?
   answered_by:
   - two-percent-four-benchmarks
   - worst-case-error
 - ask:
-    unsorted:
-    - Is random subsampling of benchmark examples as good as curated selection?
-    - How many randomly sampled examples equal a curated 100-example subset?
-    - Why not just sample benchmark examples at random?
+    plain: why not just pick benchmark questions at random instead of curating them?
+    jargon: how many stratified randomly sampled examples are needed to match IRT++ at 100
+      examples?
+    task: how do I subsample a benchmark -- randomly, or with curated anchor examples?
+    practitioner: should I bother with curated subsets when random sampling is easier?
   answered_by:
   - random-sampling-cost
 - ask:
-    unsorted:
-    - Do efficient benchmark subsets still work for domain-specialized or fine-tuned models?
-    - What happens to small evaluation subsets when a model has unusual strengths?
-    - Which way of picking anchor examples is more robust to distribution shift?
+    plain: do small evaluation sets still work for a model specialised in one domain like
+      maths or code?
+    jargon: how do IRT-embedding anchor points compare with correctness-clustered anchors
+      on domain-specialised LLMs?
+    task: how do I evaluate a fine-tuned domain model cheaply without the subset misjudging
+      it?
+    practitioner: my model is fine-tuned for one domain -- will a tiny benchmark misjudge
+      it?
   answered_by:
   - irt-anchors-robust-specialized
   - tinymmlu-weights
 - ask:
-    unsorted:
-    - Do curated benchmark subsets still work for newly released models?
-    - Does a tiny benchmark go stale as LLMs improve?
-    - How well do IRT-based estimates extrapolate to future LLMs?
+    plain: do small curated evaluation sets go stale as new models come out?
+    jargon: how far into the future do IRT++ error rates hold as the LLM test set is extended?
+    task: how do I know whether a curated benchmark subset still applies to a model released
+      after it?
+    practitioner: tinyMMLU was built before my model existed -- is a tinyMMLU estimate still
+      valid for a model released later?
   answered_by:
   - longer-horizon
   - two-percent-four-benchmarks
 - ask:
-    unsorted:
-    - What is item response theory used for in LLM evaluation?
-    - How does psychometrics help make LLM benchmarking cheaper?
-    - What does the gp-IRT correction add over just averaging the selected examples?
+    plain: how does a technique from educational testing make model evaluation cheaper?
+    jargon: what does item response theory contribute to LLM performance estimation, and what
+      does the gp-IRT correction add over averaging the selected examples?
+    task: how do I turn per-question correctness into an estimate of a full benchmark score?
   answered_by:
   - irt-for-performance-estimation
   - gpirt-never-hurts
 - ask:
-    practitioner: What should I read first about efficient LLM benchmarking?
-    unsorted:
-    - Which paper established that LLM benchmarks can be cut to a hundred examples?
-    - Good starting paper on reducing the cost of evaluating language models?
+    plain: what is a good paper on cutting the cost of evaluating language models?
+    jargon: what work established item response theory as a performance estimator for LLM
+      benchmarking?
+    task: where should I start reading if I want to evaluate models on fewer examples?
+    practitioner: which paper should I cite for evaluating language models on a hundred examples?
   answered_by:
   - irt-for-performance-estimation
   - released-artifacts
 - ask:
-    practitioner: Where can I download tiny versions of popular LLM benchmarks?
-    unsorted:
-    - Are there ready-made small versions of MMLU and the Open LLM Leaderboard?
-    - Is there a package for estimating LLM benchmark scores from 100 examples?
+    plain: are there ready-made small versions of the popular language model benchmarks?
+    jargon: which tiny benchmark datasets and pre-trained IRT parameters does tinyBenchmarks
+      release?
+    task: how do I install something that estimates a full benchmark score from 100 examples?
+    practitioner: can I get a full-benchmark estimate for my model on CPU in seconds?
   answered_by:
   - released-artifacts
   - gpirt-never-hurts
 - ask:
-    unsorted:
-    - Can cheap evaluation subsets be used to compare prompt templates?
-    - Does efficient benchmarking extend to prompt engineering?
-    - How well can few examples predict an LLM's score under a new instruction template?
+    plain: can a small set of examples predict how a model behaves under a different prompt
+      wording?
+    jargon: do IRT-based estimators predict LLM performance under unseen promptsource instruction
+      templates?
+    task: how do I compare prompt templates without running the full evaluation for each one?
+    practitioner: should I use a tiny benchmark to choose between my prompt templates?
   answered_by:
   - prompt-evaluation
 - ask:
-    unsorted:
-    - Is adaptive test-item selection better than a fixed curated subset for LLM evaluation?
-    - Would computerized adaptive testing improve tiny LLM benchmarks?
-    - What is the runtime cost of adaptive IRT evaluation on MMLU?
+    plain: is it better to choose evaluation questions adaptively as a language model answers
+      them?
+    jargon: does adaptive IRT item selection beat a fixed pre-selected subset on MMLU, and
+      at what runtime?
+    task: how do I decide between adaptive item selection and a fixed curated subset?
+    practitioner: is adaptive testing worth five minutes per model over a subset that runs
+      in seconds?
   answered_by:
   - adaptive-testing-cost
 - ask:
-    unsorted:
-    - Is there any theoretical guarantee for the p-IRT performance estimator?
-    - Does the IRT-based LLM score estimator converge?
-    - What does Proposition 4.1 of tinyBenchmarks prove?
+    plain: is there any mathematical guarantee behind estimating a benchmark score from a
+      sample?
+    jargon: what consistency result is proved for the p-IRT performance estimator?
+    practitioner: do I have a theoretical reason to trust a p-IRT estimate, or only empirical
+      ones?
   answered_by:
   - pirt-consistency
 - ask:
-    unsorted:
-    - How much cheaper is evaluating on a curated subset than on a full benchmark?
-    - What cost reduction factor do tiny benchmarks achieve?
-    - How few examples per scenario does the Open LLM Leaderboard need?
+    plain: how much cheaper is scoring a model on a curated subset than on a whole benchmark?
+    jargon: what cost reduction factor do tinyBenchmarks subsets achieve on MMLU and the Open
+      LLM Leaderboard?
+    task: how do I cut my evaluation compute bill by two orders of magnitude?
+    practitioner: how much evaluation compute would I actually save by switching to a tiny
+      benchmark?
   answered_by:
   - cost-reduction-factor
   - random-sampling-cost
