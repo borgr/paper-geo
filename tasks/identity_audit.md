@@ -21,8 +21,7 @@ which is why it can be re-run — the fixes all need one.
 | Wikidata item complete | 0 gaps | ok |
 | Wikidata paper items | 111 of 113 | optional |
 | HF pages indexed | 105 of 105 | ok |
-| HF pages claimed | 103 of 105 claimable | ok |
-| HF claims in moderation | 2 | waiting |
+| HF pages claimed | 105 of 105 claimable | ok |
 | arXiv records misspelling your name | 0 | ok |
 | arXiv records omitting you | 0 | ok |
 | ORCID works we cannot place | 2 | **check** |

@@ -52,12 +52,12 @@ and all of them are personal data you would then be maintaining.
 - [Q141029652](https://www.wikidata.org/wiki/Q141029652) — Will it Blend? Blending Weak and Strong Labeled Data in a Neural Netwo
 - [Q141029653](https://www.wikidata.org/wiki/Q141029653) — Corpus Wide Argument Mining - A Working Solution
 - [Q141029654](https://www.wikidata.org/wiki/Q141029654) — DORA The Explorer: Directed Outreaching Reinforcement Action-Selection
+- [Q141029658](https://www.wikidata.org/wiki/Q141029658) — Efficient Benchmarking (of Language Models)
 - [Q141029655](https://www.wikidata.org/wiki/Q141029655) — Elements of World Knowledge (EWoK): A Cognition-Inspired Framework for
 - [Q141029657](https://www.wikidata.org/wiki/Q141029657) — A Survey on Model MoErging: Recycling and Routing Among Specialized Ex
-- [Q141029658](https://www.wikidata.org/wiki/Q141029658) — Efficient Benchmarking (of Language Models)
+- [Q141029660](https://www.wikidata.org/wiki/Q141029660) — Findings of the Second BabyLM Challenge: Sample-Efficient Pretraining 
 - [Q131458005](https://www.wikidata.org/wiki/Q131458005) — ColD Fusion: Collaborative Descent for Distributed Multitask Finetunin
 - [Q141029659](https://www.wikidata.org/wiki/Q141029659) — Let's Agree to Agree: Neural Networks Share Classification Order on Re
-- [Q141029660](https://www.wikidata.org/wiki/Q141029660) — Findings of the Second BabyLM Challenge: Sample-Efficient Pretraining 
 - [Q141029661](https://www.wikidata.org/wiki/Q141029661) — NumeroLogic: Number Encoding for Enhanced LLMs' Numerical Reasoning
 - [Q141029662](https://www.wikidata.org/wiki/Q141029662) — The Grammar-Learning Trajectories of Neural Language Models
 - [Q141029663](https://www.wikidata.org/wiki/Q141029663) — [Call for Papers] The 2nd BabyLM Challenge: Sample-efficient pretraini
@@ -70,24 +70,25 @@ and all of them are personal data you would then be maintaining.
 - [Q141029670](https://www.wikidata.org/wiki/Q141029670) — Bigger is not always better: The importance of human-scale language mo
 - [Q141029671](https://www.wikidata.org/wiki/Q141029671) — Learning to combine Grammatical Error Corrections
 - [Q141029672](https://www.wikidata.org/wiki/Q141029672) — Where to start? Analyzing the potential value of intermediate models
-- [Q141029673](https://www.wikidata.org/wiki/Q141029673) — Deductive Closure Training of Language Models for Coherence, Accuracy,
 - [Q141029674](https://www.wikidata.org/wiki/Q141029674) — Compress then Serve: Serving Thousands of LoRA Adapters with Little Ov
+- [Q141029673](https://www.wikidata.org/wiki/Q141029673) — Deductive Closure Training of Language Models for Coherence, Accuracy,
 - [Q131458863](https://www.wikidata.org/wiki/Q131458863) — Cluster & Tune: Boost Cold Start Performance in Text Classification
 - [Q141029675](https://www.wikidata.org/wiki/Q141029675) — Sloth: scaling laws for LLM skills to predict multi-benchmark performa
 - [Q141029676](https://www.wikidata.org/wiki/Q141029676) — The Language of Legal and Illegal Activity on the Darknet
+- [Q141029682](https://www.wikidata.org/wiki/Q141029682) — ZipNN: Lossless Compression for AI Models
+- [Q141029680](https://www.wikidata.org/wiki/Q141029680) — Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluati
 - [Q141029677](https://www.wikidata.org/wiki/Q141029677) — Data Contamination Report from the 2024 CONDA Shared Task
 - [Q141029678](https://www.wikidata.org/wiki/Q141029678) — Classifying Syntactic Errors in Learner Language
+- [Q141029688](https://www.wikidata.org/wiki/Q141029688) — When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation
 - [Q141029679](https://www.wikidata.org/wiki/Q141029679) — A Hitchhiker's Guide to Scaling Law Estimation
-- [Q141029680](https://www.wikidata.org/wiki/Q141029680) — Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluati
-- [Q141029682](https://www.wikidata.org/wiki/Q141029682) — ZipNN: Lossless Compression for AI Models
+- [Q141029685](https://www.wikidata.org/wiki/Q141029685) — Benchmark Agreement Testing Done Right: A Guide for LLM Benchmark Eval
 - [Q141029683](https://www.wikidata.org/wiki/Q141029683) — DOVE: A Large-Scale Multi-Dimensional Predictions Dataset Towards Mean
 - [Q141029684](https://www.wikidata.org/wiki/Q141029684) — ComPEFT: Compression for Communicating Parameter Efficient Updates via
-- [Q141029685](https://www.wikidata.org/wiki/Q141029685) — Benchmark Agreement Testing Done Right: A Guide for LLM Benchmark Eval
 - [Q141029687](https://www.wikidata.org/wiki/Q141029687) — Label Sleuth: From Unlabeled Text to a Classifier in a Few Hours
-- [Q141029688](https://www.wikidata.org/wiki/Q141029688) — When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation
 - [Q141029689](https://www.wikidata.org/wiki/Q141029689) — Automatically Extracting Challenge Sets for Non-Local Phenomena in Neu
 - [Q141029690](https://www.wikidata.org/wiki/Q141029690) — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content
 - [Q141029691](https://www.wikidata.org/wiki/Q141029691) — Beneath the Surface of Consistency: Exploring Cross-lingual Knowledge 
+- [Q141029699](https://www.wikidata.org/wiki/Q141029699) — Findings of the Third BabyLM Challenge: Accelerating Language Modeling
 - [Q141029692](https://www.wikidata.org/wiki/Q141029692) — The Future of Open Human Feedback
 - [Q141029693](https://www.wikidata.org/wiki/Q141029693) — Label-Efficient Model Selection for Text Generation
 - [Q141029694](https://www.wikidata.org/wiki/Q141029694) — Fuse to Forget: Bias Reduction and Selective Memorization through Mode
@@ -95,7 +96,6 @@ and all of them are personal data you would then be maintaining.
 - [Q141029696](https://www.wikidata.org/wiki/Q141029696) — Mediators in Determining what Processing BERT Performs First
 - [Q141029697](https://www.wikidata.org/wiki/Q141029697) — Lossless and Near-Lossless Compression for Foundation Models
 - [Q141029698](https://www.wikidata.org/wiki/Q141029698) — Unsupervised Expressive Rules Provide Explainability and Assist Human 
-- [Q141029699](https://www.wikidata.org/wiki/Q141029699) — Findings of the Third BabyLM Challenge: Accelerating Language Modeling
 - [Q141029702](https://www.wikidata.org/wiki/Q141029702) — Naturally Occurring Feedback is Common, Extractable and Useful
 - [Q141029708](https://www.wikidata.org/wiki/Q141029708) — The Mighty ToRR: A Benchmark for Table Reasoning and Robustness
 - [Q141029715](https://www.wikidata.org/wiki/Q141029715) — Semantics-aware Attention Improves Neural Machine Translation
@@ -115,8 +115,8 @@ and all of them are personal data you would then be maintaining.
 - [Q141029767](https://www.wikidata.org/wiki/Q141029767) — ComSum: Commit Messages Summarization and Meaning Preservation
 - [Q141029769](https://www.wikidata.org/wiki/Q141029769) — Do LLMs Benefit From Their Own Words?
 - [Q141029770](https://www.wikidata.org/wiki/Q141029770) — ErrorMap and ErrorAtlas: Charting the Failure Landscape of Large Langu
-- [Q141029772](https://www.wikidata.org/wiki/Q141029772) — Pretraining Language Models for Diachronic Linguistic Change Discovery
 - [Q141029773](https://www.wikidata.org/wiki/Q141029773) — BabyBabelLM: A Multilingual Benchmark of Developmentally Plausible Tra
+- [Q141029772](https://www.wikidata.org/wiki/Q141029772) — Pretraining Language Models for Diachronic Linguistic Change Discovery
 - [Q141029774](https://www.wikidata.org/wiki/Q141029774) — Unforgettable Generalization in Language Models
 - [Q141029775](https://www.wikidata.org/wiki/Q141029775) — CUBE: A Standard for Unifying Agent Benchmarks
 - [Q141029776](https://www.wikidata.org/wiki/Q141029776) — Mediocrity is the key for LLM as a Judge Anchor Selection

@@ -451,7 +451,15 @@ def wikidata_papers_qs(cov: dict, cfg) -> tuple[str | None, int]:
     construction.
     """
     items = [i for i in (paper_item(p, cfg) for p in (cov.get("absent") or [])) if i]
+    path = os.path.join(TASKS, "wikidata_papers.qs")
     if not items:
+        # Deleted, not left alone. This file is a paste-into-QuickStatements batch of
+        # CREATEs, so a stale copy is not merely out of date -- pasting it creates a
+        # second item for every paper that has since been imported. The batch from
+        # 2026-08-12 carried 108 CREATEs and survived every run after coverage reached
+        # 111 of 113, because returning early skipped the write instead of clearing it.
+        if os.path.exists(path):
+            os.remove(path)
         return None, 0
     L: list[str] = []
     for it in items:
@@ -468,7 +476,6 @@ def wikidata_papers_qs(cov: dict, cfg) -> tuple[str | None, int]:
         for a in it["authors"]:
             val = a["qid"] if a["pid"] == "P50" else '"%s"' % a["name"]
             L.append(f'LAST\t{a["pid"]}\t{val}\tP1545\t"{a["ordinal"]}"')
-    path = os.path.join(TASKS, "wikidata_papers.qs")
     with open(path, "w") as f:
         f.write("\n".join(L) + "\n")
     return path, len(items)
@@ -1383,6 +1390,13 @@ def main() -> None:
         wd_qs, _ = wikidata_papers_qs(wd_cov, cfg)
         if wd_gaps:
             wd_path = wikidata_followup_file(wd_gaps, cfg, wd_cov, wd_qs)
+        else:
+            # Same reason the QS batch is deleted rather than skipped: once the item
+            # is complete this file describes gaps that are closed, and nothing in it
+            # says which run it came from.
+            stale = os.path.join(TASKS, "wikidata_followup.md")
+            if os.path.exists(stale):
+                os.remove(stale)
     # --no-hf means "leave the HF artifacts alone", not "regenerate them from cache".
     # Writing the cached view here would silently overwrite a freshly-checked
     # worklist with older numbers, which is worse than not writing at all.
