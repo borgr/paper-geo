@@ -31,14 +31,14 @@ gets copied to other people's installs — so drift here propagates.
       list** — Q1 natural-vs-query, Q2 what varies between paraphrases, Q3 person,
       Q5 field names, Q8 minimum share of general questions. The formatter pair D1/D4
       is now decided against, below.
-- [ ] **Re-draft the 17 stale drafts, or delete them.** Every one was written before
-      `kind`, the bands and the no-invented-number check existed: none has a `context`
-      claim, so `--accept` refuses each of them, and `pending()` skips any paper that
-      already has a draft — so no run will replace them. `draft_sidecars.py --all`
-      re-queues them. **The design hole behind it:** nothing marks a draft as written
-      under superseded rules, so a stale draft is indistinguishable from a fresh one
-      until an accept fails. A rules-version stamp in the draft header would make it
-      mechanical.
+- [x] **The 17 stale drafts, and the design hole behind them. Done.** The hole was
+      that nothing marked a draft as written under superseded rules, so a stale draft
+      was indistinguishable from a fresh one until an accept failed. `spec_sha()` is
+      that stamp: it hashes the rules block, the JSON schema and the source of the
+      four shape checkers, so editing any of them stales every draft as "spec moved"
+      and `--restamp` clears it once the checks re-pass. All 113 drafts were
+      redrafted, rerouted, mended and promoted under the current spec; the drafts
+      directory is empty.
 - [ ] **Finish the shape enforcement** the schema cannot express. Field length bands,
       claim-count bands and claims with no `qa` pointing at them are now
       `check_sidecar_shape()` in `validate.py`; key order, list order, id casing and
@@ -53,7 +53,7 @@ gets copied to other people's installs — so drift here propagates.
 ## Next — the papers themselves
 
 - [ ] Verify the drafts. Counted in `WORKLIST.md`, so no list here.
-- [ ] Draft the remaining 93. The `draft` step does 10 a run; it finishes itself.
+- [x] Draft the remaining 93. Done — 113 of 113 papers have a promoted sidecar.
 
 - [ ] Generate the README/model-card claim snippet from the sidecar. [RULES.md
       §5](docs/RULES.md#5-say-the-same-thing-the-same-way) requires the canonical
@@ -77,12 +77,14 @@ Deferred with a release condition in [`data/declines.yaml`](data/declines.yaml),
 
 ## Blocked, not forgotten
 
-- [ ] The four queued Wikidata edits on Q140867203. Credentials are installed and
-      the dry run is clean; the sandbox classifier blocks the write from here, so it
-      is one command for a human:
-      `python scripts/wikidata_apply.py --apply`.
-- [ ] `sweep_github.py apply` and `build_site.py --deploy` — both wait on an
-      explicit go-ahead by design, not by accident.
+- [x] The queued Wikidata edits on Q140867203. Applied — the item now matches
+      `config.yaml` with 0 gaps, and every paper carrying a DOI or an arXiv id has an
+      item. What is left there is not queued work: the two papers with neither
+      identifier cannot be created safely, because without a resolvable id the dedup
+      cannot tell a new item from a duplicate.
+- [ ] `sweep_github.py apply` waits on an explicit go-ahead by design, not by
+      accident. `build_site.py --deploy` has run: the live site serves the
+      four-route questions.
 
 ## Decided against, with the measurement
 

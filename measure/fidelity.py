@@ -331,9 +331,21 @@ def main() -> None:
               f"{len(unanswered)} paper(s) produced no answer at all (a gateway error, "
               "usually).", ""]
         L += [f"- `{s}`" for s in unanswered] + [""]
-    L += ["## Worst first", "", "| paper | engine | claim | score | note |",
-          "|---|---|---|---|---|"]
-    for slug, eng, cid, score, note in sorted(rows, key=lambda r: r[3]):
+    # At the floor every authored claim scored 0 for the same reason, so a row per claim
+    # is 1200 lines saying "not recognised" -- 375KB restating the section above. The
+    # invented claims are the exception: they differ from each other, and they are the
+    # only part of a floor run that carries information, because they show what the
+    # model says instead. So the table narrows to them and states how many rows it
+    # dropped; a cap that does not announce itself reads as "this is everything".
+    shown = [r for r in rows if r[2] == "(invented)"] if floor else rows
+    dropped = len(rows) - len(shown)
+    L += ["## What it said instead" if floor else "## Worst first", ""]
+    if floor:
+        L += [f"Only the invented claims. The other {dropped} rows score the corpus "
+              f"against a model that",
+              "does not know it, so their order carries nothing to work down.", ""]
+    L += ["| paper | engine | claim | score | note |", "|---|---|---|---|---|"]
+    for slug, eng, cid, score, note in sorted(shown, key=lambda r: r[3]):
         L.append(f"| {slug} | {eng} | {cid} | {score} | {note.replace('|', '/')} |")
     L += ["", "## Before trusting these numbers", "",
           "Hand-check a stratified 20% of the scores. The grader is the measurement",
