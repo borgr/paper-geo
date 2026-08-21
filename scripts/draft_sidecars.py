@@ -494,6 +494,19 @@ def emit_tasks(pairs: list[tuple[dict, str]], cfg) -> str:
         t = {"slug": p["slug"], "title": p.get("title_display") or p["title"],
              "evidence": ev, "sidecar": fm}
         if fm is not None:
+            # A group still in `unsorted` is not a clean group: it is a group written
+            # before `ask` had named roles, exempted from the shape checks only so
+            # migrating 1263 of them did not require guessing which route each phrasing
+            # took. So it produces no finding, and saying "already clean" here would
+            # send the one job a redraft exists to do back as nothing to do.
+            legacy = sum(1 for g in (fm.get("qa") or [])
+                         if isinstance(g.get("ask"), dict) and g["ask"].get("unsorted"))
+            if legacy:
+                found = found + [
+                    f"{legacy} of {len(fm['qa'])} qa groups still hold their phrasings in "
+                    f"`ask.unsorted` -- rewrite each group's `ask` as the roles "
+                    f"(`plain` required, plus every other role that is a real question) "
+                    f"and delete `unsorted`. Change no claim."]
             t["findings"] = found
             t["job"] = ("repair" if found else "already clean -- leave it alone")
         tasks.append(t)
