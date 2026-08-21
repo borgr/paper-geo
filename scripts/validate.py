@@ -836,9 +836,18 @@ _UNBOUND = re.compile(
     r"|\bthe authors?\b(?!\s+of\b)"
     r"|\bhere\b\s*\??$"
     # Expletive `it` is not a reference: "is it enough to train only B" has no antecedent
-    # to want, and the adjective-plus-infinitive frame is what tells them apart.
+    # to want, and the infinitive it anticipates is what tells them apart -- so the
+    # exemption keys on that adjective rather than on the infinitive sitting flush against
+    # it. "Is it worth the extra bookkeeping to keep every checkpoint's loss?" is the same
+    # dummy subject with a noun phrase in between, and requiring `<adj> to` adjacent
+    # flagged 21 of those across the corpus. Reaching forward for the `to` instead would
+    # have exempted "does it generalize to new tasks", which is a real reference to nothing
+    # and has to keep failing -- so the list of predicates is closed and short.
     r"|^(?:is|are|was|were|does|do|did|has|have|can|could|would|will|should)\s+"
-    r"(?:it|they|its|their)\b(?!\s+\w+\s+(?:to|that)\b)", re.I)
+    r"(?:it|they|its|their)\b(?!\s+\w+\s+that\b)"
+    r"(?!\s+(?:worth|better|best|enough|possible|feasible|safe|true|ok|okay|necessary"
+    r"|useful|worthwhile|harder|easier|hard|cheaper|faster|fine|reasonable|realistic"
+    r"|practical|advisable|common|normal|standard|sensible|risky|wise)\b)", re.I)
 
 # The same failure one step subtler, and the one the demonstrative rules miss entirely:
 # a definite noun phrase whose referent is the paper the reader is not looking at.

@@ -3536,3 +3536,37 @@ class TestAQuestionGroupIsAFormNotAList(unittest.TestCase):
             self.assertIn(f"`{role}`", block, f"the prompt never names the {role} route")
         self.assertIn("Never emit `unsorted`", block)
         self.assertNotIn("2–4 paraphrases", block)
+
+    def test_a_dummy_it_is_not_an_unbound_reference(self):
+        """The self-containment check exists to catch a reference with nothing on screen
+        to point at. Expletive `it` points at nothing by construction -- the infinitive
+        that follows is the subject -- and the corpus pass flagged 21 of those because
+        the exemption required the adjective to sit flush against the `to`."""
+        from validate import _UNBOUND
+        for q in ("Is it worth keeping every checkpoint's loss to fit a scaling law?",
+                  "Is it better to train several small models or fewer large ones?",
+                  "Is it true that merging always beats ensembling?"):
+            self.assertIsNone(_UNBOUND.search(q), q)
+        for q in ("Does it generalize to new tasks?", "Do they overlap?",
+                  "Does it work on the models that I merge?"):
+            self.assertIsNotNone(_UNBOUND.search(q), q)
+
+    def test_the_task_role_is_asked_not_described(self):
+        """The rules block has to ask `task` for a question, because it is read as an order.
+
+        It used to gloss the role as "someone describing what they are trying to do", and
+        72 of the first rerouted groups obliged with a description ending in a period --
+        a sentence about a person, which nobody types into a search box. The role rules
+        live in one place, so this is the one place that can be wrong.
+        """
+        from common import rules_block
+        block = rules_block("docs/SIDECAR.md")
+        self.assertNotIn("someone describing what they are trying to do", block)
+        self.assertIn("natural question, ending in `?`", block)
+        self.assertIn("period is a statement", block)
+
+    def test_the_reroute_prompt_keeps_no_copy_of_the_question_rules(self):
+        """`--reroute` reads the same block, so the two can never disagree."""
+        import draft_sidecars as D
+        self.assertIn("{rules}", D.ROUTES)
+        self.assertNotIn("ending in `?`", D.ROUTES.replace("{rules}", ""))

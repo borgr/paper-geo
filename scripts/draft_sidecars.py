@@ -1169,6 +1169,125 @@ PATCH_SCHEMA = {
 }
 
 
+ROUTES = """Below is one paper's claims and its question groups. Every group's phrasings
+were written before `ask` had named roles, so they sit in `unsorted`: two or three
+rewordings of one sentence, most of them third person and built around the paper's own
+vocabulary. Rewrite each group's `ask` as the roles.
+
+You are not writing new questions. Each group already asks something, and its answer is
+fixed -- the claims listed under `answered_by`. Keep asking that, in four vocabularies.
+
+CLAIMS (the answers, and the only things a question may be answered by):
+{claims}
+
+GROUPS TO REROUTE (JSON):
+{groups}
+
+Rules for your answer:
+- One entry per group, with `index` copied exactly as given.
+- `plain` is required. Fill every other role that is a real question for that group, and
+  leave a role out rather than padding it with a reworded copy of another -- an empty role
+  is the honest answer where no such person exists.
+- Keep the subject. A group answered by a claim about out-of-domain generalization must
+  still be about out-of-domain generalization in all four roles.
+- The existing phrasings are given as evidence of what the group asks, not as text to
+  edit. A role that reads as a light rewording of one of them has done nothing.
+- Never state an answer, a magnitude, or a claim. These are queries.
+
+The question rules the phrasings are judged by follow, from {doc}. Only those apply to
+you: you are changing no claim, and the schema accepts nothing but `ask` roles.
+
+{rules}
+"""
+
+ROUTES_SCHEMA = {
+    "type": "object", "additionalProperties": False, "required": ["groups"],
+    "properties": {"groups": {
+        "type": "array", "items": {
+            "type": "object", "additionalProperties": False,
+            "required": ["index", "plain"],
+            "properties": {
+                "index": {"type": "integer",
+                          "description": "The group index, copied exactly as given."},
+                "plain": {"type": "string",
+                          "description": "Someone who has not read the paper, in their "
+                                         "own words: no jargon, no coined name."},
+                "jargon": {"type": "string",
+                           "description": "A specialist, in the field's own terms."},
+                # "Someone describing what they are trying to do" is what this said, and
+                # 59 replies obliged with a description: "I am choosing sizes for my
+                # preliminary runs and want to know how large the biggest one needs to be."
+                # A field description is an instruction, so it has to ask for the question.
+                "task": {"type": "string",
+                         "description": "The same question asked in terms of what they "
+                                        "are trying to do -- still one question, ending "
+                                        "in '?', never a statement of what they are "
+                                        "doing."},
+                "practitioner": {"type": "string",
+                                 "description": "Someone deciding, in the first person. "
+                                                "Leave out if there is no such question."},
+            }}}},
+}
+
+
+def reroute(slug: str, again, source: str = "a model") -> tuple[int, int]:
+    """Rewrite one live sidecar's `ask` blocks as the named roles. Nothing else moves.
+
+    The narrowest possible redraft, and narrow on purpose. A full redraft of an accepted
+    sidecar is a claim rewrite -- run once on `fusing-finetuned-models`, it returned 9
+    claims where the author had verified 11, with a different `one_liner` and different
+    misreadings. Migrating 113 papers that way would discard every figure that has been
+    checked against its paper and ask for all of it to be checked again, to fix questions.
+
+    So the model never sees the paper here: the claims *are* the answers, the group already
+    says what it asks, and what is missing is only the vocabulary each kind of person would
+    have typed. Returns `(groups rerouted, findings left on the draft)`.
+    """
+    # The draft when one exists, since that is what `--accept` will promote; the live file
+    # otherwise.
+    fm = next((front_matter(path) for path in (os.path.join(DRAFTS, f"{slug}.md"),
+                                              os.path.join(SIDECARS, f"{slug}.md"))
+               if os.path.exists(path)), None)
+    if not fm:
+        return 0, 0
+    groups = fm.get("qa") or []
+    todo = [i for i, g in enumerate(groups)
+            if isinstance(g.get("ask"), dict) and g["ask"].get("unsorted")]
+    if not todo:
+        return 0, 0
+    claims = "\n".join(f"[{c['id']}] ({c.get('kind')}) {oneline(c.get('text'))}"
+                       for c in (fm.get("claims") or []))
+    pieces = json.dumps([{"index": i, "answered_by": groups[i].get("answered_by"),
+                          "asks_now": groups[i]["ask"]["unsorted"]} for i in todo],
+                        ensure_ascii=False, indent=1)
+    got = again(ROUTES.format(claims=claims, groups=pieces, doc=RULES_DOC,
+                             rules=rules_block(RULES_DOC)), f"{slug} reroute",
+                ROUTES_SCHEMA)
+    back = (got or {}).get("groups")
+    if not isinstance(back, list):
+        print(f"    reroute: no usable reply, leaving {slug} as it stands")
+        return 0, 0
+    done = 0
+    for item in back:
+        if not isinstance(item, dict) or item.get("index") not in todo:
+            continue
+        ask = {r: " ".join(str(item[r]).split()) for r in QA_ROLES
+               if isinstance(item.get(r), str) and item[r].strip()}
+        # `plain` missing means the one required route did not come back, and a group with
+        # only `jargon` filled is worse than the legacy group it would replace: legacy is
+        # exempt from the shape checks, so the file would go from passing to failing while
+        # losing the phrasings it had. Leave those groups in `unsorted` for the next pass.
+        if "plain" not in ask:
+            continue
+        groups[item["index"]]["ask"] = ask
+        done += 1
+    if not done:
+        return 0, 0
+    write_draft(slug, fm, source + " + rerouted questions")
+    errs, qual = validate_draft(os.path.join(DRAFTS, f"{slug}.md"), note=False)
+    return done, len(errs) + len(qual)
+
+
 def where(finding: str, fm: dict | None = None) -> str | None:
     """The single field a finding is about, as a locus, or None if it is about no one field.
 
@@ -2593,6 +2712,12 @@ def main() -> None:
                          "rewrites back, and keep them only if the count dropped. No slugs "
                          "means every draft that still carries a finding. api and openai "
                          "modes")
+    ap.add_argument("--reroute", nargs="*", metavar="SLUG",
+                    help="rewrite live sidecars' question groups as the named `ask` roles "
+                         "and nothing else: the model is shown the claims and what each "
+                         "group already asks, never the paper, so no claim can move. No "
+                         "slugs means every sidecar still holding phrasings in "
+                         "`ask.unsorted`. api and openai modes")
     ap.add_argument("--repair", type=int, default=0, metavar="N",
                     help="after drafting, show the model its own findings and ask it to "
                          "fix them, up to N times. Stops early when a round stops "
@@ -2639,6 +2764,45 @@ def main() -> None:
         # Regenerated here rather than left for the next full run: a draft that exists
         # and a review page that does not know about it is the one state where reading
         # the page would silently miss work.
+        print(f"Read them: file://{write_review_page(papers)}")
+        return
+
+    if args.reroute is not None:
+        mode = args.mode or cfg["llm"]["mode"]
+        if mode not in ("api", "openai"):
+            sys.exit("--reroute needs a model it can call: --mode api or --mode openai")
+        if args.effort:
+            cfg["llm"]["effort"] = args.effort
+        legacy = []
+        for f in sorted(glob.glob(os.path.join(SIDECARS, "*.md"))):
+            fm = front_matter(f) or {}
+            if any(isinstance(g.get("ask"), dict) and g["ask"].get("unsorted")
+                   for g in (fm.get("qa") or [])):
+                legacy.append(os.path.basename(f)[:-3])
+        want = args.reroute or legacy
+        unknown = [s for s in want if s not in legacy]
+        if unknown:
+            print(f"nothing to reroute in: {', '.join(unknown)}", file=sys.stderr)
+        todo = [s for s in want if s in legacy]
+        if not todo:
+            print("Nothing to reroute: no sidecar still holds phrasings in `ask.unsorted`.")
+            return
+        caller = call_api if mode == "api" else call_openai
+        # No paper text is fetched at all -- see `reroute`. Over 113 papers that is the
+        # difference between a pass that takes minutes and one that re-resolves every PDF.
+        _, how, asker = caller([], cfg)
+        print(f"rerouting {len(todo)} sidecar(s) with {how}")
+        moved = clean = 0
+        for slug in todo:
+            done, found = reroute(slug, asker, how)
+            if not done:
+                print(f"  --  {slug[:56]:56} nothing usable came back")
+                continue
+            moved += done
+            clean += not found
+            print(f"  {'ok ' if not found else '   '} {slug[:56]:56} {done} group(s)"
+                  + (f", {found} finding(s) to fix" if found else ""))
+        print(f"\n{moved} group(s) rerouted; {clean} of {len(todo)} draft(s) clean")
         print(f"Read them: file://{write_review_page(papers)}")
         return
 

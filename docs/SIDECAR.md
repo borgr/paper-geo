@@ -334,7 +334,7 @@ real questions. The roles are not four wordings of one sentence — each is a di
 |---|---|
 | `plain` | someone who has not read the paper, in their own words: no jargon, no coined name |
 | `jargon` | a specialist, in the field's own terms |
-| `task` | someone describing what they are trying to do — *"how do I merge two adapters without retraining"* |
+| `task` | the same question asked in terms of what they are trying to do — *"how do I merge two adapters without retraining?"*. Asked, never described: *"I am trying to merge two adapters without retraining."* is a sentence about a person, and no one types it into anything |
 | `practitioner` | someone deciding, in the first person — *"should I use this for my model"*. The highest-intent phrasing, and the one a person asks an assistant |
 
 Engines fan one query into many synthetic sub-queries and you cannot know which
@@ -343,7 +343,7 @@ populations; three rewordings of one sentence reach one. What is *never* paraphr
 a claim: a restated claim is a second, drifting copy of the author's own finding, and
 the two then compete for the same citation.
 
-**Every role is a natural question, ending in `?`.** Never a keyword string
+**Every role is a natural question, ending in `?`.** Setting the scene first is fine, and is often what a real person types — *"I have ten fine-tuning runs of one task, should I merge them or ensemble them?"* — but a role that ends in a period is a statement of what someone is doing, not a query anyone issues. Never a keyword string
 (*"ties merging retraining required"*): the phrasing is published as visible page text
 and as a `Question.name`, both of which are read, and a keyword string in either place
 is the pattern search engines have penalised for twenty years.
