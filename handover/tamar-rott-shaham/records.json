@@ -1,0 +1,140 @@
+{
+ "name": "Tamar Rott Shaham",
+ "semantic_scholar": [
+  {
+   "authorId": "3459255",
+   "externalIds": {
+    "DBLP": [
+     "Tamar Rott Shaham"
+    ]
+   },
+   "name": "Tamar Rott Shaham",
+   "homepage": null,
+   "paperCount": 28,
+   "citationCount": 1562,
+   "hIndex": 13
+  },
+  {
+   "authorId": "2223799647",
+   "externalIds": {},
+   "name": "Tamar Rott Shaham",
+   "homepage": null,
+   "paperCount": 1,
+   "citationCount": 31,
+   "hIndex": 1
+  }
+ ],
+ "dblp_name": "Tamar Rott Shaham",
+ "dblp_pid": "185/7904",
+ "orcid": [
+  {
+   "orcid": "0000-0002-1455-2266",
+   "name": "Tamar Rott Shaham",
+   "institutions": [
+    "Massachusetts Institute of Technology",
+    "Technion \u2013 Israel Institute of Technology"
+   ]
+  }
+ ],
+ "paper_count": 29,
+ "arxiv_count": 23,
+ "keyword_candidates": [
+  "evaluating interpretability",
+  "dual mechanisms",
+  "human brain",
+  "variable binding",
+  "visual representations"
+ ],
+ "top_papers": [
+  {
+   "year": 2019,
+   "citations": 959,
+   "arxiv": "1905.01164",
+   "title": "SinGAN: Learning a Generative Model From a Single Natural Image"
+  },
+  {
+   "year": 2024,
+   "citations": 139,
+   "arxiv": "2402.14811",
+   "title": "Fine-Tuning Enhances Existing Mechanisms: A Case Study on Entity Tracking"
+  },
+  {
+   "year": 2020,
+   "citations": 91,
+   "arxiv": "2012.02992",
+   "title": "Spatially-Adaptive Pixelwise Networks for Fast Image Translation"
+  },
+  {
+   "year": 2024,
+   "citations": 69,
+   "arxiv": "2404.14394",
+   "title": "A Multimodal Automated Interpretability Agent"
+  },
+  {
+   "year": 2017,
+   "citations": 65,
+   "arxiv": "1711.06445",
+   "title": "xUnit: Learning a Spatial Activation Function for Efficient Image Restoration"
+  },
+  {
+   "year": 2024,
+   "citations": 48,
+   "arxiv": "2401.01862",
+   "title": "A Vision Check-up for Language Models"
+  },
+  {
+   "year": 2024,
+   "citations": 38,
+   "arxiv": "2411.17673",
+   "title": "SketchAgent: Language-Driven Sequential Sketch Generation"
+  },
+  {
+   "year": 2023,
+   "citations": 38,
+   "arxiv": "2309.03886",
+   "title": "FIND: A Function Description Benchmark for Evaluating Interpretability Methods"
+  },
+  {
+   "year": 2025,
+   "citations": 34,
+   "arxiv": "2505.14685",
+   "title": "Language Models use Lookbacks to Track Beliefs"
+  },
+  {
+   "year": 2023,
+   "citations": 34,
+   "arxiv": "2307.03637",
+   "title": "Discovering Variable Binding Circuitry with Desiderata"
+  },
+  {
+   "year": 2026,
+   "citations": 33,
+   "arxiv": "2602.20021",
+   "title": "Agents of Chaos"
+  },
+  {
+   "year": 2021,
+   "citations": 29,
+   "arxiv": "2106.06426",
+   "title": "Catch-A-Waveform: Learning to Generate Audio from a Single Short Example"
+  },
+  {
+   "year": 2018,
+   "citations": 16,
+   "arxiv": "1804.04593",
+   "title": "Deformation Aware Image Compression"
+  },
+  {
+   "year": 2021,
+   "citations": 10,
+   "arxiv": null,
+   "title": "Deep Self-Dissimilarities as Powerful Visual Fingerprints"
+  },
+  {
+   "year": 2016,
+   "citations": 8,
+   "arxiv": null,
+   "title": "Visualizing Image Priors"
+  }
+ ]
+}

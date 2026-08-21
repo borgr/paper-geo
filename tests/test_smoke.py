@@ -3283,3 +3283,67 @@ class TestAForkKeepsTheCommentsAndDropsTheDecisions(unittest.TestCase):
                 self.assertIn(key, doc, f"data/{name}: {key} no longer exists")
                 self.assertIsInstance(doc[key], type(blank),
                                       f"data/{name}: {key} is not a {type(blank).__name__}")
+
+
+class TestAHandoverBundleDecidesNothing(unittest.TestCase):
+    """The bundle exists to do a colleague's lookups, not to make their choices.
+
+    The dangerous field is `site.repo`: `build_site.py --deploy` writes the whole repo, so
+    a guessed Pages repo replaces whatever page is already served there. The obvious guess
+    -- the homepage they already have -- is exactly the wrong one.
+    """
+
+    FOUND = {
+        "name": "Ada Example Lovelace",
+        "semantic_scholar": [{"authorId": "1", "paperCount": 9, "citationCount": 40},
+                             {"authorId": "2", "paperCount": 1, "citationCount": 3}],
+        "dblp_name": "Ada Example Lovelace", "dblp_pid": "999/1234",
+        "orcid": [{"orcid": "0000-0001-0000-0001", "name": "Ada Example Lovelace",
+                   "institutions": ["Somewhere"]}],
+        "paper_count": 10, "arxiv_count": 7,
+        "keyword_candidates": ["analytical engine"], "top_papers": [],
+    }
+
+    def _cfg(self):
+        import yaml
+        from handover import config_text
+        return yaml.safe_load(config_text(self.FOUND["name"], self.FOUND,
+                                          "adaex", "https://adaex.github.io"))
+
+    def test_the_deploy_target_is_never_guessed(self):
+        self.assertIsNone(self._cfg()["site"]["repo"])
+
+    def test_a_found_record_is_filled_in_rather_than_asked_for(self):
+        cfg = self._cfg()
+        self.assertEqual(cfg["ids"]["semantic_scholar"], ["1", "2"])
+        self.assertEqual(cfg["ids"]["semantic_scholar_primary"], "1")
+        self.assertEqual(cfg["ids"]["dblp_pid"], "999/1234")
+        self.assertEqual(cfg["identity"]["orcid"], "0000-0001-0000-0001")
+
+    def test_a_multiword_surname_keeps_its_words_together(self):
+        """`Rott Shaham, Tamar` is the citation form; `Rott, Shaham, Tamar` is two people."""
+        self.assertIn("Rott Shaham, Tamar", self._variants("Tamar Rott Shaham"))
+
+    def _variants(self, name):
+        import yaml
+        from handover import config_text
+        found = dict(self.FOUND, name=name)
+        return yaml.safe_load(config_text(name, found, None, None))["identity"]["name_variants"]
+
+    def test_keyword_candidates_are_suggestions_not_keywords(self):
+        """Emitted commented out: a keyword is a phrase someone types, not a frequent one."""
+        from handover import config_text
+        text = config_text(self.FOUND["name"], self.FOUND, None, None)
+        self.assertIn("#   - analytical engine", text)
+        self.assertEqual(self._cfg()["identity"]["keywords"], [])
+
+    def test_ambiguous_orcid_becomes_a_question(self):
+        import yaml
+        from handover import config_text
+        found = dict(self.FOUND, orcid=[{"orcid": "0000-0001-0000-0001", "name": "x",
+                                         "institutions": []},
+                                        {"orcid": "0000-0001-0000-0002", "name": "x",
+                                         "institutions": []}])
+        text = config_text(found["name"], found, None, None)
+        self.assertIsNone(yaml.safe_load(text)["identity"]["orcid"])
+        self.assertIn("0000-0001-0000-0002", text)
