@@ -354,16 +354,12 @@ class PageFacts:
         # not exist", permanently, with no run ever asking again. Three of the 103 probes
         # in this cache were exactly that, one of them a page that is plainly up.
         definite = isinstance(fact.get("status"), int) and fact["status"] < 500
-        # Deliberately not recorded in the health ledger. These URLs are lifted out of
-        # paper full text, so "does it resolve" is the question being asked, not a
-        # precondition for asking it -- a page that does not exist is this probe
-        # succeeding. The ledger disagreed: one paper writes `iclrgithub.io` where it
-        # means `iclr.github.io`, and a typo in someone's related-work section became a
-        # permanent entry reading "never once answered -- check the URL", against a
-        # host that has never existed and never will. `source_key` collapses per-record
-        # identifiers, but it cannot collapse a hostname, so every mangled URL in the
-        # corpus would earn its own line forever. The GitHub API this step also calls
-        # *is* a source and is still recorded, below.
+        # Deliberately not recorded in the health ledger. These URLs are lifted out of paper
+        # full text, so "does it resolve" is the question being asked, not a precondition for
+        # asking it -- a 404 is this probe succeeding. Recorded, one paper's `iclrgithub.io`
+        # typo becomes a permanent ledger line reading "never once answered", and `source_key`
+        # cannot collapse a hostname, so every mangled URL earns its own line forever. The
+        # GitHub API this step also calls *is* a source and is still recorded, below.
         if definite:
             self.cache[url] = fact
         return fact
@@ -579,16 +575,14 @@ def deduce(papers: list[dict], only: str | None, facts: RepoFacts,
         verdict = "none"
         if top and top["score"] >= ACCEPT and top.get("exists"):
             runner = cands[1]["score"] if len(cands) > 1 else -99
-            # A paper that released two things named two repos, and which of them is
-            # *the* code link is a judgment call about what a reader wants first --
-            # the BabyLM findings paper released a dataset preprocessor, an evaluation
-            # pipeline and a submissions archive. Deciding that by score would be
-            # guessing with a number attached.
-            # Two tells for "more than one repo": two release sentences, or two live
-            # repos under the same owner. The second catches the case the first misses
-            # -- the BabyLM findings paper names four `babylm/*` repos and writes a
-            # release sentence for only one of them, which is not a reason to believe
-            # that one is the link a reader wants first.
+            # Which of two released repos is *the* code link is a judgment call about what a
+            # reader wants first -- the BabyLM findings paper released a preprocessor, an
+            # evaluation pipeline and a submissions archive. Deciding it by score is guessing
+            # with a number attached, so two repos means review.
+            #
+            # Two tells: two release sentences, or two live repos under one owner. The second
+            # catches what the first misses -- BabyLM names four `babylm/*` repos and writes a
+            # release sentence for one of them.
             owners: dict[str, int] = {}
             for c in cands:
                 if c.get("exists") and c["score"] >= 0:

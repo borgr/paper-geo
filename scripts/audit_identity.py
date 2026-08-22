@@ -102,18 +102,11 @@ def orcid_public(orcid: str) -> dict:
             t = ((s.get("title") or {}).get("title") or {}).get("value")
             if not t:
                 continue
-            # Every work in the group, not just the first, and each with the ids *it*
-            # carries rather than the group's union. Reading only `i == 0` was hiding a
-            # whole class of error: ORCID groups on shared identifiers, so a work that
-            # carries the wrong DOI lands inside another paper's group and its title is
-            # never looked at. The live case is put-code 222829712, "Resolving
-            # Interference (RI): Disentangling Models for Improved Model Merging" (2026),
-            # filed under TIES-Merging's `10.48550/ARXIV.2306.01708`. The group resolved
-            # to TIES, RI's own arXiv id `2603.13467` appears nowhere on the record as an
-            # identifier, and the audit therefore reported RI as *missing from ORCID*
-            # while it was sitting on the record the whole time. Own ids over group ids
-            # for the same reason: the union would resolve every work in a group to
-            # whichever paper the group is about, which is what made the error invisible.
+            # Every work in the group, not just the first, and each tagged with the ids *it*
+            # carries rather than the group's union. ORCID groups on shared identifiers, so a
+            # work carrying the wrong DOI lands in another paper's group; reading only `i == 0`,
+            # or resolving from the union, reports that work as missing from ORCID while it sits
+            # on the record.
             own = [((e.get("external-id-type") or "").lower(), e.get("external-id-value") or "")
                    for e in ((s.get("external-ids") or {}).get("external-id") or [])]
             # The group index rides along because it is the difference between a real
@@ -1355,17 +1348,14 @@ def main() -> None:
     missing_edu = [e["institution"] for e in (ident.get("education") or [])
                    if not any(_org_match(e["institution"], r["org"] or "")
                               for r in orc["education_rows"])]
-    # An education row with no role-title states an institution but not a degree, and
-    # one with no end year still reads as *enrolled* -- which, next to a postdoc
-    # employment, is a record contradicting itself about what you are.
+    # An education row with no role-title states an institution but not a degree, and one
+    # with no end year still reads as *enrolled* -- next to a postdoc employment, a record
+    # contradicting itself.
     #
-    # Split by who asserted it, because the fix is different and only one of the two is
-    # a fix at all. A self-asserted row is editable in place. An institution-asserted
-    # row is not: ORCID shows no *Edit* control on it, only *Delete*, so "add the degree
-    # to the Role field" is an instruction that cannot be followed. Those are reported
-    # separately, as a decision (leave it, or delete and re-add your own) rather than as
-    # an open task -- and an institution-asserted row is *better* evidence than anything
-    # you could type, which is the argument for leaving it alone.
+    # Split by who asserted the row, because only one of the two is fixable. A self-asserted
+    # row is editable in place. An institution-asserted row shows no *Edit* control in ORCID,
+    # only *Delete*, so those are reported as a decision (leave it, or delete and re-add your
+    # own) rather than as an open task -- and institution-asserted is the better evidence.
     def _incomplete(r):
         return not r["role"] or not r["end"]
 

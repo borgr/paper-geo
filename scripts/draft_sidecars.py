@@ -401,25 +401,17 @@ def call_api(pairs: list[tuple[dict, str]], cfg,
     client = anthropic.Anthropic()
     sch, out, sys_prompt = schema(), {}, system_prompt()
     eff = cfg["llm"].get("effort", "medium")
-    # What the request adds, and how the sidecar comes back out of the reply. Tried in
-    # order; the rung that works is remembered for the rest of the run.
+    # Four ways to guarantee the reply's shape, tried in order; the rung that works is
+    # remembered for the rest of the run. api.anthropic.com accepts the first, and a
+    # gateway in front of the same model may not -- a proxy behind `ANTHROPIC_BASE_URL`
+    # answered `output_config.format: Extra inputs are not permitted` with a 400. A forced
+    # tool call is schema enforcement by another route and proxies pass it through; rung 3
+    # is for an endpoint that rejects `output_config` outright; the last rung asks in the
+    # prompt and parses, which is a weaker result and is labelled as one in the header.
     #
-    # api.anthropic.com accepts the first. A gateway in front of the same model may not:
-    # `ANTHROPIC_BASE_URL` pointed at a proxy answered `output_config.format: Extra inputs
-    # are not permitted` with a 400. Hence a ladder rather than one fallback -- a forced
-    # tool call is schema enforcement by another route, it predates structured output by
-    # two years, and proxies pass it through, so a researcher whose access runs through one
-    # still gets a decoded sidecar rather than whatever the model felt like emitting.
-    #
-    # `effort` rides along on every rung that will take it, because it is orthogonal to how
-    # the shape is guaranteed and it is the setting that decides how hard the model thinks
-    # about nine coupled fields. It was on the first rung only, which meant the rung that
-    # actually carried the first live run silently dropped it and drafted at whatever the
-    # endpoint defaults to -- the configured value applying on the one path that did not
-    # work. Rung 3 exists for an endpoint that rejects `output_config` outright rather than
-    # just its `format`, so losing effort costs the tool call rather than the other way
-    # round. The last rung asks in the prompt and parses, which is a real result and is
-    # labelled as one in the draft header.
+    # `effort` rides along on every rung that will take it: it is orthogonal to how the
+    # shape is guaranteed, and it decides how hard the model thinks about nine coupled
+    # fields. Leave it off a rung and that rung silently drafts at the endpoint's default.
     def rungs_for(want: dict, name: str, what: str) -> list:
         """The same four rungs around whichever shape this call asks for.
 
@@ -567,10 +559,9 @@ def shape(sc: dict, field: str) -> str:
     return str(len(v)) if isinstance(v, list) else f"{type(v).__name__}, not a list of"
 
 
-# An OpenAI-compatible backend, for gateways and open-weight models. Three env vars
-# rather than config keys, and that split is deliberate: `config.yaml` is committed and
-# public, while an inference gateway's URL may be internal to whoever is running this.
-# So the endpoint is env-only and nothing about it can be committed by accident.
+# An OpenAI-compatible backend, for gateways and open-weight models. Env vars rather than
+# config keys because `config.yaml` is committed and public, while an inference gateway's
+# URL may be internal to whoever runs this -- so it cannot be committed by accident.
 #
 #   PAPER_GEO_LLM_BASE_URL   the /v1 base, e.g. https://<gateway>/<model-slug>/v1
 #   PAPER_GEO_LLM_MODEL      the model id the body must carry (often vendor-prefixed)

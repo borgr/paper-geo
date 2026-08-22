@@ -553,30 +553,23 @@ def check_sidecars(entries: list[tuple[str, dict]]) -> list[str]:
 
 # ------------------------------------------------------------------- shape tier
 #
-# The bands in docs/SIDECAR.md §2 rule 9, which JSON Schema cannot express: they are
-# about how many of a thing there are and how they relate to each other, not about
-# types. Non-fatal on purpose -- a page with 22 claims renders correctly and is merely
-# worse, and the 19 existing drafts predate the bands. `--accept` is where it bites.
+# The bands in docs/SIDECAR.md §2 rule 9: how many of a thing there are and how they
+# relate, which JSON Schema cannot express. Non-fatal -- a page with 22 claims renders
+# correctly and is merely worse -- so they bite at `--accept`, not at `--strict`.
 #
-# Two kinds of number live here. `CLAIMS` and `ROLES_FILLED` are design decisions from §2,
-# and the current drafts are meant to violate them: a paper has a handful of findings, so
-# 17 claims is one finding split three ways and the fix is redrafting, not a wider band.
-# The length and count caps are the opposite -- each is the 90th percentile of what the
-# 317 already-drafted claims do, because a cap set through the middle of honest practice
-# is one the author learns to ignore, and then the bands stop being read at all.
+# `CLAIMS` and `ROLES_FILLED` are design decisions from §2 that the existing drafts are
+# meant to violate. Every length and count cap is instead the 90th percentile of what the
+# already-drafted claims do: a cap set through the middle of honest practice is one the
+# author learns to ignore.
 
 CLAIMS = (5, 15)
 CLAIM_TEXT = (60, 450)
-# The scope floor was 80, and rule 31 is what showed 80 to be wrong. It was set from a
-# corpus whose scopes all carried a trailing "..., demonstrating robust performance"; with
-# that clause deleted as the rule asks, 18 scopes in the corpus fall between 47 and 74
-# chars and every one of them is a real single-clause condition -- "Llama3-8B models
-# finetuned with LoRA on NLI tasks", "LoRA ranks ranging from 4 to 768 on the per-task
-# vision benchmark". So the two rules together demanded the padding back, which is
-# exactly the failure decision C2 in docs/SIDECAR.md rejected a scope *template* to
-# avoid. 40 is under the shortest honest scope in the corpus and above the vacuous ones
-# the floor was for ("Further research is needed", "Vision encoders only"), and the
-# content of a bad scope is caught by rule 22 and rule 31 rather than by its length.
+# 40, not 80. The old floor came from a corpus whose scopes all carried a trailing
+# "..., demonstrating robust performance"; with that clause deleted as rule 31 asks, 18
+# scopes fall between 47 and 74 chars and every one is a real single-clause condition
+# ("Llama3-8B models finetuned with LoRA on NLI tasks"). 40 is under the shortest honest
+# scope and above the vacuous ones the floor was for ("Further research is needed"), and a
+# bad scope is caught by rules 22 and 31 rather than by its length.
 CLAIM_SCOPE = (40, 800)
 # Deliberately generous: a question group is query surface, and more real phrasings of a
 # real question is the whole point. The ceiling only catches a run of invented questions.
@@ -751,18 +744,15 @@ def check_sidecar_shape(entries: list[tuple[str, dict]]) -> list[str]:
 
 # -------------------------------------------------------------- readability tier
 #
-# The ways a well-formed sidecar is still a bad passage to retrieve, each one measured
-# over the drafted corpus before being written down. They are not in the shape tier, and
-# the reason is which files each tier reaches: `validate.py` globs `data/sidecars/*.md`,
-# so the shape tier judges the author's *published* words, and `--strict` makes it
-# fatal. These findings are about what to write next, not about retracting what is
-# already out, so they run at `--accept` -- where the author can still take the note or
-# override it with `--anyway` -- and on the review page, where he reads the draft.
+# The ways a well-formed sidecar is still a bad passage to retrieve. Separate from the
+# shape tier because of which files each reaches: the shape tier globs
+# `data/sidecars/*.md`, the author's published words, and `--strict` makes it fatal. These
+# are about what to write next, so they run at `--accept` -- overridable with `--anyway`
+# -- and on the review page.
 #
-# A sentence limit rather than only the character band, because the band measures the
-# wrong thing: 450 chars admits one 79-word sentence, and that is the actual defect.
-# Splitting it costs no content, so unlike the character ceilings these are not the
-# 90th percentile of current practice -- current practice fails them, by design.
+# Unlike the character ceilings these are not the 90th percentile of current practice:
+# current practice fails them, by design. A 450-char band admits one 79-word sentence,
+# which is the actual defect, and splitting it costs no content.
 
 CLAIM_SENTENCES = 2
 CLAIM_SENTENCE_WORDS = 32
@@ -779,16 +769,12 @@ CLAIM_SEPARATORS = 1
 # 348-character claim. Three conditions is the ceiling because a fourth means the claim
 # was stated more broadly than it holds, and narrowing the claim is the better fix.
 SCOPE_SENTENCES = 3
-# Below this a scope cannot be the thing the ratio rule guards against. The rule is that a
-# scope must not be longer than its claim, because the published `FAQPage` answer is the
-# claim then "Holds for:" then all of the scope, and the measured pathology was scopes of
-# 426-798 chars at a median 1.5x their claim -- an answer that is mostly caveat. Read
-# without a floor it also fires on 103 chars against 91, which is not that pathology, and
-# combined with the 80-char band floor it leaves an 11-character target on a short claim:
-# unhittable, so a model told to shorten oscillates between the two rules and a reviewer
-# reads "scope too short" and "scope too long" about the same field on consecutive runs.
-# Measured across all 344 claims in the live sidecars and drafts, the floor excuses 6 and
-# still flags 237 of 243 -- every one of the 30 in the two published files included.
+# Below this a scope is too short to be the pathology the ratio rule guards against
+# (scopes of 426-798 chars at a median 1.5x their claim -- an answer that is mostly
+# caveat). Without a floor the rule also fires on 103 chars against 91, and combined with
+# the 40-char band floor it can leave an unhittable target on a short claim, so a reviewer
+# reads "too short" and "too long" about the same field on consecutive runs. Across all
+# 344 live and drafted claims this floor excuses 6 and still flags 237 of 243.
 SCOPE_RATIO_FLOOR = 160
 
 # Half of a page's `result` claims must state a figure. A number is what makes a passage
@@ -823,17 +809,11 @@ _UNBOUND = re.compile(
     r"|\bthe authors?\b(?!\s+of\b)"
     r"|\bhere\b\s*\??$"
     # Expletive `it` is not a reference: "is it enough to train only B" has no antecedent
-    # to want, and the infinitive it anticipates is what tells them apart -- so the
-    # exemption keys on that adjective rather than on the infinitive sitting flush against
-    # it. "Is it worth the extra bookkeeping to keep every checkpoint's loss?" is the same
-    # dummy subject with a noun phrase in between, and requiring `<adj> to` adjacent
-    # flagged 21 of those across the corpus. Reaching forward for the `to` instead would
-    # have exempted "does it generalize to new tasks", which is a real reference to nothing
-    # and has to keep failing -- so the list of predicates is closed and short.
-    # The same dummy subject takes a verb rather than an adjective in "does it matter
-    # whether you compare benchmarks by rank order or by raw scores" -- 12 of those, and
-    # the complement clause (`whether`/`if`/`which`) is what marks the `it` as expletive
-    # rather than a reference, so the exemption asks for the clause and not just the verb.
+    # to want. Two exemptions, both keyed on what marks the `it` as a dummy subject: an
+    # adjective (`<adj> to`, which must be adjacent -- reaching forward for the `to` would
+    # exempt "does it generalize to new tasks", a real reference to nothing), and a verb
+    # taking a complement clause ("does it matter whether ..."). Both predicate lists are
+    # closed and short for that reason.
     r"|^(?:is|are|was|were|does|do|did|has|have|can|could|would|will|should)\s+"
     r"(?:it|they|its|their)\b(?!\s+\w+\s+that\b)"
     r"(?!\s+(?:matter|help|hurt|pay|change|make)\b[^?]*?\b(?:whether|if|which|when|that)\b)"
@@ -851,22 +831,17 @@ _UNBOUND = re.compile(
     r"|other\b|another\b|different\b|any\b|some\b|more\b|most\b|all\b|every\b|each\b"
     r"|higher\b|lower\b|larger\b|smaller\b|bigger\b|longer\b|shorter\b)[a-z]+\b)", re.I)
 
-# The same failure one step subtler, and the one the demonstrative rules miss entirely:
-# a definite noun phrase whose referent is the paper the reader is not looking at.
-# "Is there a guarantee that the estimator is correct?" contains no demonstrative and no
-# pronoun, and is still unanswerable and unmatchable -- *which* estimator is the whole
-# question. Only the bare form counts, `the` immediately followed by the role noun: a
-# qualifier in between is what makes it specific, so "the anchor-point method" and "the
-# best active-learning strategy" are exactly the phrasings this must leave alone.
-# The list is nouns that can only mean *this paper's* one of them. It used to carry the
-# generic-domain nouns too -- model, models, task, corpus, dataset, benchmark, game,
-# score -- and on the roles corpus that fired 68 times on phrasings that are ordinary
-# English: "does training only one of a low-rank adapter's two matrices help the model
-# generalize?" means *a* model, names its subject, and is exactly what the `plain` role is
-# for. Worse, the exemption below keys on a capitalised token, which `plain` is forbidden
-# to contain, so the two rules pulled against each other by construction. "the method" and
-# "the estimator" stay, because a question containing them is asking about a specific one
-# the reader cannot see.
+# The same failure the demonstrative rules miss: a definite noun phrase whose referent is
+# the paper the reader is not looking at. "Is there a guarantee that the estimator is
+# correct?" has no demonstrative and no pronoun and is still unmatchable -- *which*
+# estimator is the whole question.
+#
+# Only the bare form counts, `the` immediately followed by the noun; a qualifier in
+# between makes it specific, so "the anchor-point method" must pass. The nouns are ones
+# that can only mean *this paper's*. Generic-domain nouns (model, task, dataset,
+# benchmark, score) are deliberately absent: they fired 68 times on ordinary English, and
+# the capitalised-token exemption below cannot rescue the `plain` role, which is forbidden
+# to contain one.
 _BARE_DEFINITE = re.compile(
     r"\bthe\s+(?:estimator|correction|method|approach|framework|algorithm"
     r"|pipeline|metric|technique|procedure|suite|study"
@@ -937,22 +912,17 @@ _CLASSIFIES = re.compile(
     r"characterisation|characterization|judgement|judgment)\b"
     r"|the\s+(?:paper's|claim|point)\s+)", re.I)
 
-# A scope clause that restates what the result shows instead of bounding it. Rule 3 has
-# always ruled this out in prose -- "a restatement of the finding does not belong here" --
-# and nothing enforced it, so the class survived every check: "merging 2 to 11 tasks,
-# showing consistent performance improvements" bounds the claim in its first half and then
-# asserts it again in the second, published after "Holds for:" as if it were a condition.
+# A scope clause that restates what the result shows instead of bounding it -- "merging 2
+# to 11 tasks, showing consistent performance improvements" bounds the claim, then asserts
+# it again after "Holds for:" as if it were a condition. Rule 3 has always ruled this out
+# in prose; nothing enforced it.
 #
-# Two shapes, measured across the 344 live and drafted scopes. The trailing participial
-# comment (", demonstrating ...") is 18 of them, all in drafts from one model, which is
-# why it reads as a habit rather than as English a scope needs. The participles are
-# restricted to *reporting* verbs and to the -ing form on purpose: three near misses in
-# the corpus are real conditions using the same verbs in a finite or past form -- "which
-# was pretrained with decay, showed less of the adverse effect", "shown as two heatmaps
-# per model rather than a table", "established before any merging happens". The second
-# shape is a showing verb plus an upshot noun anywhere in the field, for the same clause
-# written without the comma; its noun list is closed so that "shows no effect below 1B",
-# which is the condition the rule is asking for, cannot match.
+# Two shapes. The trailing participial comment (", demonstrating ...") is 18 of the 344
+# live and drafted scopes. Its participles are restricted to *reporting* verbs in the -ing
+# form because near misses use the same verbs finite or past ("shown as two heatmaps per
+# model rather than a table"). The second shape is a showing verb plus an upshot noun
+# anywhere in the field, for the same clause without the comma; the noun list is closed so
+# "shows no effect below 1B" -- the condition the rule asks for -- cannot match.
 _UPSHOT_PARTICIPLE = (r"showing|demonstrating|highlighting|illustrating|underscoring"
                       r"|confirming|indicating|proving|emphasi[sz]ing|reflecting"
                       r"|suggesting|validating|establishing|revealing")
@@ -1002,19 +972,15 @@ _ABOUT_PAPER = re.compile(
 _FIRST_PERSON = re.compile(r"\b(?:we|our)\b", re.I)
 
 # A `result` claim that describes how a component is built instead of asserting what was
-# found. "Q² works in three steps: mark every named entity..." is true, is in the paper,
-# and answers no question a reader arrives with -- it is a method section compressed, and
-# retrieved on its own it gives a summariser machinery to paraphrase and nothing to quote.
+# found. "Q² works in three steps: mark every named entity..." is a method section
+# compressed: retrieved on its own it gives a summariser machinery to paraphrase and
+# nothing to quote.
 #
-# Deliberately a small allowlist of construction frames rather than the absence of a
-# finding, because the absence test cannot be made to work: measured over every sidecar
-# and draft, "no figure and no comparative word" flags 12 claims of which 5 are findings
-# (a proved consistency theorem, "expert labelers named source reliability first"). The
-# frames below flag 8 and all 8 are descriptions. The cost is recall, and the loss is
-# knowable: a description carrying a contrast escapes, because "rather than" trips
-# `_ASSERTS`. So this catches the clear cases and rule 2 of `docs/SIDECAR.md` carries the
-# rest -- which is the right split, since the judgement is what a reader wanted to know
-# and no regex holds that.
+# A small allowlist of construction frames rather than the absence of a finding, because
+# the absence test does not work: "no figure and no comparative word" flags 12 claims of
+# which 5 are findings, while these frames flag 8 of which all 8 are descriptions. The
+# cost is recall -- a description carrying a contrast escapes via `_ASSERTS` -- and rule 2
+# of `docs/SIDECAR.md` carries the rest.
 _DESCRIBES = re.compile(
     r"\bworks? by\b|\bin (?:two|three|four|five|2|3|4|5) steps\b|\bconsists? of\b"
     r"|\b(?:is|are) (?:implemented|distributed as|formatted|computed|defined|structured"
@@ -1032,17 +998,14 @@ _ASSERTS = re.compile(
     r"|exceed\w*|proved|proves|shows?|showed|found|find|no|not|never|only|enough"
     r"|suffice\w*)\b", re.I)
 
-# A definition or a correction that points at the page around it. Terminology is
-# published as a schema.org `DefinedTerm` inside a `DefinedTermSet`, so the definition
-# travels with nothing but the term beside it: "the metric for every merging table here"
-# then defines nothing. A misreading renders as a bare list item and an llms.txt bullet,
-# with the same consequence. 30% of drafted definitions and 15% of misreadings dangle.
+# A definition or a correction that points at the page around it. Terminology publishes as
+# a schema.org `DefinedTerm` inside a `DefinedTermSet`, so the definition travels with
+# nothing but the term beside it: "the metric for every merging table here" then defines
+# nothing. 30% of drafted definitions and 15% of misreadings dangle.
 #
-# The two patterns differ on purpose. A definition has no business naming the paper at
-# all -- the enclosing set is already titled "Terminology in <paper title>", so
-# "This paper's shorthand for..." is both dangling and redundant. A misreading legitimately
-# says what the paper does and does not state ("the paper does not say whether human
-# matches were used"), so only the words with no possible referent are barred there.
+# A definition has no business naming the paper at all -- the enclosing set is already
+# titled "Terminology in <paper title>". A misreading legitimately says what the paper does
+# and does not state, so only the words with no possible referent are barred there.
 _DEIXIS_TERM = re.compile(
     r"\bhere\b|\b(?:we|our)\b|\bth(?:is|e)\s+(?:paper|work|study)(?:'s)?\b"
     r"|\bthe\s+authors?\b", re.I)
@@ -1606,16 +1569,15 @@ def check_claim_evidence(entries: list[tuple[str, dict]]) -> tuple[list[str], li
     return errs, skipped
 
 
-# Every place the docs state the size of the corpus itself, as a format string over
-# the live counts. Subset counts ("50 papers with no Hugging Face page", "60 of the 90
-# repos are forks") are deliberately absent: those describe one finding at one moment,
-# while these describe the corpus and so go stale on any run that merges a duplicate or
-# picks up a new paper. Three of them were still claiming 135 papers at 115.
+# Every place the docs state the size of the corpus itself, as a format string over the
+# live counts. Subset counts ("50 papers with no Hugging Face page") are deliberately
+# absent: those describe one finding at one moment, while these go stale on any run that
+# merges a duplicate or picks up a paper.
 #
-# A reword breaks this check rather than silently disabling it, which is the intended
-# trade: the fix is to update the sentence or update this list, and either way somebody
-# has looked. Lines carrying arithmetic derived from the count are marked -- swapping
-# the number there without redoing the sum produces a confidently wrong page.
+# A reword breaks this check rather than silently disabling it: the fix is to update the
+# sentence or update this list, and either way somebody has looked. Lines whose arithmetic
+# derives from the count are marked -- swapping the number without redoing the sum
+# produces a confidently wrong page.
 DOC_COUNTS = (
     ("README.md", "corpus ({papers} papers, {repos} repos)", ""),
     ("SKILL.md", "{papers} papers and {repos} repos", ""),

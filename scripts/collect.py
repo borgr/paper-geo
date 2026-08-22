@@ -527,17 +527,13 @@ def merge_arxiv(papers: list[dict]) -> None:
     for p in papers:
         if p.get("arxiv"):
             p.update(meta.get(p["arxiv"], {}))
-            # HTML exists for LaTeX submissions from late 2023 on, and arXiv is
-            # gradually backfilling older ones -- so False means "not yet", not
-            # "never". There is no author-facing way to request it; the only lever is
-            # a submission whose LaTeX converts. ar5iv covers the gap meanwhile.
+            # HTML exists for LaTeX submissions from late 2023 on, and arXiv is backfilling
+            # older ones -- so False means "not yet", not "never". There is no author-facing way
+            # to request it; ar5iv covers the gap meanwhile.
             #
-            # Asked once per paper, and only while the answer can still change. A build
-            # that exists is not un-built, so `True` is kept without re-asking; `False`
-            # and missing are re-probed every run because backfill lands. That is what
-            # takes this from 321 requests a run to the few dozen that are still open
-            # questions -- and 321 unpaced requests was itself the finding, recorded in
-            # the health ledger as 86 failures against a source that was working.
+            # Asked only while the answer can still change: `True` is kept without re-asking,
+            # `False` and missing are re-probed every run because backfill lands. That is the
+            # difference between 321 requests a run and the few dozen still open.
             if not p.get("arxiv_html"):
                 p["arxiv_html"] = bool(get(f"https://arxiv.org/html/{p['arxiv']}",
                                            retries=3))

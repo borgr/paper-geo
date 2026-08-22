@@ -109,8 +109,8 @@ authored claims do not support."""
 #           be scored on reading comprehension instead of on what it knows.
 #   grade   the answer plus the authored claims, held to SCORE_SCHEMA.
 #
-# So `--answer-model` and `--grade-model` are separate flags. Pointing both at one model
-# lets it mark its own homework; the report says which model played which role.
+# Hence separate `--answer-model` and `--grade-model`. Pointing both at one model lets it
+# mark its own homework; the report says which model played which role.
 
 
 def _chat(client, model: str, msgs: list[dict], label: str, want: dict | None = None):

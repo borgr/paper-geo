@@ -274,19 +274,15 @@ PLAN = (
      "one paste per paper into the Add Papers form, highest-citation first; every URL "
      "is in the section"),
 )
-# Headings that are not work: context, containers, and the parked list. Named so that a
-# section added later cannot quietly miss the plan -- the test asserts every heading is
-# in one list or the other.
+# Headings that are not work: context, containers, and the parked list. Every heading must
+# appear here or in the plan -- the test asserts it, so a section added later cannot
+# quietly miss the plan.
 #
-# `Due now` is here rather than in the plan because it is a clock, not a task. Its items
-# are dated pointers into the sections below, so ranking it too lists the same work
-# twice -- live case: the followup that came due *is* the Wikidata batch, same command,
-# and the plan had it at 1 and again at 2.
+# `Due now` is a clock, not a task: its items are dated pointers into the sections below,
+# so ranking it too lists the same work twice.
 #
-# `Sidecars not yet drafted` is not a step either, and that is a correction: drafting is
-# the *agent's* job under `CLAUDE.md`'s code > agent > human ranking, so a plan that told
-# the author to run it was handing back work that should never have reached them. What is
-# theirs is the draft that comes out, which has its own section above it.
+# `Sidecars not yet drafted` is the agent's job under `CLAUDE.md`'s code > agent > human
+# ranking. What is the author's is the draft that comes out, one section above it.
 NOT_STEPS = ("Due now", "Waiting on the outside world", "Coverage:", "Identity surfaces",
              "Deferred", "Artifacts with no citation route", "Sidecars not yet drafted",
              "Repo labels awaiting your review")
@@ -495,16 +491,13 @@ def apply_declines(lines: list[str]) -> list[str]:
             dropped_secs.append(head.lstrip("# ").strip() + " — every item declined")
             del out[i:j]
 
-    # A heading that counts its own list ("3 papers absent from the source
-    # bibliography") over a list of one. The outer heading dropped its total for this
-    # reason -- see `scholar_gaps` -- but a subsection's count is the emitter's `pl(n)`
-    # and cannot be dropped: it is what tells you the size of the job before you read
-    # it. So recount it here, where what survived is known. Live case: two of the three
-    # missing bibliography entries are declined, and the heading went on saying three.
+    # A subsection heading that counts its own list ("3 papers absent from the source
+    # bibliography") over a list some of whose items were declined. The count is the
+    # emitter's `pl(n)` and cannot just be dropped -- it is what tells you the size of the
+    # job before reading it -- so recount it here, where what survived is known.
     #
-    # Only when the number *was* the length of the list. A heading that happens to open
-    # with a digit meaning something else ("2 of your 5 repos") is not a count of the
-    # bullets under it, and rewriting it would turn a correct sentence into a wrong one.
+    # Only when the number *was* the length of the list: a heading opening with a digit that
+    # means something else ("2 of your 5 repos") is not a count of the bullets under it.
     for head, cut in cut_n.items():
         m = re.match(r"(#+ )(\d+) ([A-Za-z]+)(?= |$)", head)
         if not m or int(m.group(2)) != seen_n.get(head):

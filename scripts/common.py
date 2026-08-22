@@ -236,29 +236,14 @@ def health_report() -> list[str]:
     return out
 
 
-# Minimum seconds between two requests to one host, enforced here rather than at each
-# call site. `collect.py` and `scholar_check.py` sleep between their own requests and
-# `fulltext.py` does not, so the same corpus was polite from two steps and a burst from
-# the third -- and the ledger showed exactly that, with the S2 paper endpoint at zero
-# successes while the author endpoint next to it answered every time. Pacing per host is
-# the only place that can be right, because the limit belongs to the host and no single
-# caller can see the others.
+# Minimum seconds between two requests to one host, applied inside `get` rather than at
+# the call sites: the limit belongs to the host, and no single caller can see the others.
 #
-# 1.05s for Semantic Scholar: their introductory limit is one request per second on all
-# endpoints, shared across the whole key (or, with no key, across every anonymous caller
-# on the internet), so the margin is deliberate. An API key raises the ceiling; it does
-# not remove it, which is why the key alone would not have fixed this.
-# 3s for arXiv: their own stated delay for programmatic access, and already the number
-# `collect.py` sleeps between API pages -- which is the point, because the sleep was in
-# the one place that did not need it. `export.arxiv.org` is a different host and keeps
-# its own explicit sleep; the burst was on `arxiv.org` itself, from two callers neither
-# of which could see the other. `collect.py` probes `arxiv.org/html/<id>` once per paper
-# in a tight loop, and `fulltext.py` then downloads that same URL for every paper it can,
-# unpaced, at 90s timeouts. The ledger recorded 86 failures against that one path shape
-# while every other arXiv path answered every time, which is the shape of a rate limiter
-# rather than a broken source: probed one at a time by hand, the same URLs answer 200 or
-# 404 without complaint. Probing only what is still an open question (see `collect.py`)
-# cuts the count; pacing makes what remains polite.
+#   1.05s  Semantic Scholar's introductory limit is one request per second across all
+#          endpoints, shared across the whole key -- or, keyless, across every anonymous
+#          caller. A key raises the ceiling; it does not remove it.
+#   3s     arXiv's stated delay for programmatic access. `export.arxiv.org` is a
+#          different host and keeps its own explicit sleep.
 PACE = {"api.semanticscholar.org": 1.05, "arxiv.org": 3.0}
 _last_hit: dict[str, float] = {}
 
@@ -462,19 +447,12 @@ _LATEX_CMD = re.compile(r"\\[a-zA-Z]+\s*")
 _LATEX_PUNCT = re.compile(r"[{}$\\]")
 _NONWORD = re.compile(r"[^a-z0-9]+")
 
-# Upstream damage, not LaTeX: one entry's title holds `{ extdollar}` where
-# `{\textdollar}` was meant. Whatever wrote the .bib interpreted the `\t` as a tab, so
-# two characters were lost at once -- the backslash AND the command's leading `t` --
-# and `_parse_fields` then collapsed the tab to a space. What survives is the word
-# `extdollar`, not `textdollar`; a pattern written for the latter matches nothing,
-# which is how this got missed on the first attempt. `_LATEX` cannot help either,
-# since with no backslash there is no command left to recognise. It reached a URL:
-# the slug for that paper was `extdollar-q2-extdollar-evaluating-...`. Stripped here
-# rather than special-cased at each call site, because the same string has to vanish
-# from the slug, from the display title and from the matching key or the three
-# disagree about the paper. The `\\?t?` accepts the intact `{\textdollar}` too, so a
-# repaired bibliography keeps working. The real fix is upstream; this makes it
-# harmless meanwhile.
+# Upstream damage, not LaTeX: a title holds `{ extdollar}` where `{\textdollar}` was
+# meant, because whatever wrote the .bib read the `\t` as a tab and lost the backslash and
+# the command's leading `t` with it. Stripped here rather than at each call site, so the
+# token vanishes from the slug, the display title and the matching key together -- strip
+# it in one place only and the three disagree about the paper. `\\?t?` matches the intact
+# `{\textdollar}` too, so a repaired bibliography keeps working.
 _MANGLED = re.compile(
     r"\{\s*\\?t?ext(dollar|backslash|asciitilde|asciicircum|underscore)\s*\}")
 
@@ -573,28 +551,16 @@ def authors_truncated(bibtex_author: str | None) -> bool:
 
 # Every external id we hold, mapped to the Wikidata property that is *typed* for it.
 #
-# The point of the table is that none of these belong in `official website` (P856).
-# P856 takes exactly one value -- the canonical URL -- and a profile URL dropped in
-# beside it does not become queryable, it just adds a second candidate homepage. The
-# typed property is strictly better: it renders as a link anyway, it is validated
-# against a format constraint, tools like Scholia and Author Disambiguator traverse
-# it, and a SPARQL query can hop from the id to the record. So "should arXiv go in
-# too?" resolves to: yes, but as an identifier, and only where a property exists.
+# None of these belong in `official website` (P856), which takes exactly one value. A
+# typed identifier renders as a link anyway, is validated against a format constraint, is
+# traversed by Scholia and Author Disambiguator, and can be reached from SPARQL.
 #
-# arXiv is the instructive exception. P4594 exists but its format is the *legacy*
-# author id (`choshen_l_1`); neither plausible legacy id resolves for this account,
-# because arXiv's current author identity is the ORCID link. P496 already carries it,
-# and arxiv.org/a/<orcid> is derived from that -- so there is nothing to add.
+# arXiv has no row: P4594 wants the *legacy* author id (`choshen_l_1`), and arXiv's
+# current author identity is the ORCID link P496 already carries.
 #
-# Social handles are in the table for a different reason than the scholarly ids, and
-# the difference decides whether to bother. The scholarly ids are what a
-# disambiguation model consumes. A handle is a *join key*: it is what lets a machine
-# connect the account that announced a paper to the author of the paper, which is
-# otherwise a guess from a display name. That is worth stating once, in the one place
-# built to be queried -- and it is the whole of the value, so only accounts you
-# actually control and post research from belong here. A handle you are unsure of is
-# strictly worse than a missing one: Wikidata statements are read as assertions of
-# fact, and this one would assert that a stranger speaks for your work.
+# Social handles are here as join keys -- what connects the account that announced a paper
+# to the author of the paper. Only accounts you control and post research from: a
+# statement here asserts as fact that this account speaks for your work.
 WD_IDENTIFIERS = [
     ("P496", "ORCID iD", lambda c: c["identity"]["orcid"]),
     ("P1960", "Google Scholar author ID", lambda c: c["ids"]["google_scholar"]),
@@ -744,21 +710,11 @@ def paper_doi(p: dict) -> str | None:
 _MATH = {r"\({}^{\mbox{2}}\)": "\u00b2", r"\({}^{\mbox{3}}\)": "\u00b3",
          r"$^2$": "\u00b2", r"$^3$": "\u00b3"}
 
-# LaTeX accents -> Unicode. Two separate ways a name was getting mangled:
-#
-#   `Garc{\'{\i}}a{-}Ferrero` -> `Garc\'a-Ferrero`   the *letter* disappeared
-#   `Aky{\"{u}}rek`           -> `Aky\"urek`         the backslash survived
-#
-# The first is the worse one. `\i` is dotless i, which exists only so an accent can
-# sit on top of it, and it is a letter command -- so the stray-`\command` rule in
-# clean_latex deleted it and took the vowel with it. The second is just that `\'`
-# and `\"` are punctuation commands that no rule there matched.
-#
-# These are co-author names, and they are published in JSON-LD `author.name`, in
-# `citation_author` highwire tags, and in the page body -- so this misspelt real
-# people on every surface at once, which is the one error this repo should not be
-# making. Accents are resolved here, before any command-stripping runs, so the
-# letter is already safe by the time deletion happens.
+# LaTeX accents -> Unicode, resolved before any command-stripping runs. `\i` is dotless i,
+# a letter command, so clean_latex's stray-`\command` rule would delete it and take the
+# vowel with it (`Garc{\'{\i}}a` -> `Garca`); `\'` and `\"` are punctuation commands no
+# rule there matches. These are co-author names, published in JSON-LD `author.name`, in
+# `citation_author` tags and in the page body.
 _LATEX_LETTERS = {"i": "i", "j": "j", "l": "\u0142", "L": "\u0141", "o": "\u00f8",
                   "O": "\u00d8", "ss": "\u00df", "aa": "\u00e5", "AA": "\u00c5",
                   "ae": "\u00e6", "AE": "\u00c6", "oe": "\u0153", "OE": "\u0152",
@@ -1107,21 +1063,17 @@ def declined(text: str | None) -> str | None:
 
 # ------------------------------------------------------------------ question groups
 #
-# A question group is a form, not a list. `q: [a, b, c]` said "2-4 paraphrases, and vary
-# them" -- a rule that names what to cover and then leaves the drafter to decide whether it
-# did, which is how the corpus ended up with 3692 phrasings that are 90% third person and
-# mostly syntactic rewrites of one wording. Named roles ask for the thing directly: each
-# role is a different *lexical* route to the same answer, and a missing route is a visibly
-# empty field rather than a rule someone believes they satisfied.
+# A question group is a form, not a list: each named role is a different *lexical* route
+# to the same answer, so a missing route is a visibly empty field rather than a rule the
+# drafter believes it satisfied.
 #
 #   plain         someone who has not read the paper, in their own words
 #   jargon        the field's vocabulary, the way a specialist would type it
 #   task          the thing they are trying to do ("how do I merge two adapters")
 #   practitioner  first person, deciding ("should I use this for my model")
 #
-# `unsorted` is the legacy bucket: phrasings written before the roles existed, migrated
-# without guessing which route each one took. A draft may not emit it, and a redraft of any
-# paper empties it -- so it shrinks and never grows.
+# `unsorted` is the legacy bucket: phrasings written before the roles existed. A draft may
+# not emit it, and a redraft of any paper empties it -- so it shrinks and never grows.
 
 QA_ROLES = ("plain", "jargon", "task", "practitioner")
 

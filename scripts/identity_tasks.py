@@ -474,22 +474,14 @@ def openalex_merge(cfg) -> str:
 
 # ------------------------------------------------------------------ arXiv journal-ref
 #
-# Asked first whether a library could fill this form instead of a human. It cannot, and
-# the three reasons are worth writing down because they are each individually final:
+# No code can fill this form, for three independently final reasons: arXiv's public API
+# has no metadata-update endpoint at any access level; their robots.txt disallows `/user`,
+# which is the only page mapping an arXiv id to the submission id `/jref` needs; and
+# `/jref` itself is not a paste-an-identifier form.
 #
-#   1. There is no write API. arXiv's public API is search and metadata retrieval; there
-#      is no submission or metadata-update endpoint at any access level.
-#   2. Their robots.txt says `Disallow: /user`, and `/user` is the only page that maps an
-#      arXiv id to the submission id the jref form needs. A scraper here would be doing
-#      precisely the thing arXiv asked automated clients not to do -- to a service that
-#      hosts the papers for free.
-#   3. `/jref` is not a paste-an-identifier form. Unauthenticated it redirects to login;
-#      authenticated it is the articles list, and each row's own link carries the id.
-#
-# So the division of labour is: the author signs in and saves that one page, code reads
-# the local file, and no request is ever made on his behalf. `--user-page` is that path.
-# Without it the file still works -- it just links to the abs page and says to find the
-# row -- because the list is useful before anyone gets around to saving anything.
+# So the author signs in and saves that one page, code reads the local file, and no
+# request is made on his behalf -- `--user-page` is that path. Without it the file still
+# works; it just links to the abs page and says to find the row.
 
 # A trailing comma-segment worth keeping. DBLP writes booktitles as
 # `<name>, <ACRO> <year>, <city>, <country>, <dates>[, Volume N: Long Papers]`, so the
