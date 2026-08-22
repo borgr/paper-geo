@@ -69,6 +69,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import yaml  # noqa: E402
 
+from llm import decodable, first_json, with_retries  # noqa: E402
+from llm import client as llm_client  # noqa: E402
 from common import (BUILD, DATA, QA_ROLES, ROOT, answered_by, get,  # noqa: E402
                     has_live_sidecar, load_config, phrasings, qa_loci, read_yaml,
                     rules_block)
@@ -530,49 +532,6 @@ API_MAX_TOKENS = 32000
 # gateway turns out to reject `output_config.format`.
 JSON_ONLY = "\n\nReturn one JSON object matching the schema. No prose, no fence."
 
-# How many times a dropped connection is retried before the paper is given up on. Small
-# because a real outage should surface as a failure rather than as a run that appears to
-# hang: three tries spaced 5s, 10s, 15s covers a blip and nothing longer.
-TRANSIENT_TRIES = 3
-
-# The failures worth retrying: the connection died, the request timed out, or the endpoint
-# said "busy". Matched by type name because the transport errors arrive unwrapped from
-# httpx on a streamed request -- `RemoteProtocolError` is not an `anthropic` class -- and
-# by status code for the server-side ones, since a 400 must never be retried.
-_TRANSIENT_NAMES = {"APIConnectionError", "APITimeoutError", "RemoteProtocolError",
-                    "ReadError", "ReadTimeout", "WriteError", "ConnectError",
-                    "ConnectTimeout", "RemoteDisconnected", "IncompleteRead",
-                    "InternalServerError", "RateLimitError", "OverloadedError"}
-_TRANSIENT_STATUS = {408, 409, 429, 500, 502, 503, 504, 529}
-
-
-def _transient(e: Exception) -> bool:
-    if type(e).__name__ in _TRANSIENT_NAMES:
-        return True
-    if getattr(e, "status_code", None) in _TRANSIENT_STATUS:
-        return True
-    # httpx wraps the socket error in its own class; the cause is where the name lives.
-    return type(e.__cause__).__name__ in _TRANSIENT_NAMES if e.__cause__ else False
-
-
-def with_retries(call, label: str):
-    """Run one request, retrying only the failures that are the connection's fault.
-
-    Re-raises whatever the last attempt raised rather than returning None, so each
-    caller's own handling -- climbing the dialect ladder, dropping to an unenforced
-    request -- still runs on a failure that retrying cannot fix.
-    """
-    for tries in range(TRANSIENT_TRIES + 1):
-        try:
-            return call()
-        except Exception as e:                        # noqa: BLE001 -- re-raised below
-            if not _transient(e) or tries >= TRANSIENT_TRIES:
-                raise
-            wait = (tries + 1) * 5
-            print(f"  {label}: {type(e).__name__} -- retry {tries + 1} of "
-                  f"{TRANSIENT_TRIES} in {wait}s", file=sys.stderr)
-            time.sleep(wait)
-
 # How each rung of the Anthropic ladder gets its shape guarantee, in the words the draft
 # header and the retry line both use. "the model was told to" is the one that is not a
 # guarantee, and it says so.
@@ -706,9 +665,9 @@ def call_api(pairs: list[tuple[dict, str]], cfg,
                       file=sys.stderr)
             return sc
         text = next((b.text for b in msg.content if b.type == "text"), "")
-        # `_first_json` rather than `json.loads` even on the enforced rung: it reads a bare
+        # `llm.first_json` rather than `json.loads` even on the enforced rung: it reads a bare
         # object identically, and on an unenforced one the object arrives inside a fence.
-        sc = _first_json(text)
+        sc = first_json(text)
         if sc is None:
             print(f"  no JSON object in the reply: {label} ({len(text)} chars)",
                   file=sys.stderr)
@@ -775,63 +734,6 @@ def shape(sc: dict, field: str) -> str:
 #   PAPER_GEO_LLM_API_KEY    the key, if the gateway wants one
 #   PAPER_GEO_LLM_KEY_HEADER optional header name to send the key under, for gateways
 #                            that authenticate on a custom header instead of Bearer
-ENV_BASE, ENV_MODEL = "PAPER_GEO_LLM_BASE_URL", "PAPER_GEO_LLM_MODEL"
-ENV_KEY, ENV_HEADER = "PAPER_GEO_LLM_API_KEY", "PAPER_GEO_LLM_KEY_HEADER"
-
-
-def _first_json(text: str):
-    """The first complete JSON object in a response, or None.
-
-    Needed because a model without enforced decoding wraps the object in a ``` fence,
-    or prefaces it, or emits a reasoning trace first. Brace-matching rather than a
-    regex, since claim text legitimately contains braces.
-    """
-    start = text.find("{")
-    while start != -1:
-        depth, instr, esc = 0, False, False
-        for i in range(start, len(text)):
-            c = text[i]
-            if esc:
-                esc = False
-            elif c == "\\":
-                esc = True
-            elif c == '"':
-                instr = not instr
-            elif not instr and c == "{":
-                depth += 1
-            elif not instr and c == "}":
-                depth -= 1
-                if depth == 0:
-                    try:
-                        return json.loads(text[start:i + 1])
-                    except json.JSONDecodeError:
-                        break
-        start = text.find("{", start + 1)
-    return None
-
-
-# Keywords a constrained-decoding backend cannot compile. vLLM's grammar backends accept
-# a `response_format` containing them and then quietly decode unguided, which is the worst
-# available outcome: measured against Granite 3.3 8B, the full schema produced claims keyed
-# `statement`/`magnitude`/`unit` -- invented fields, valid JSON, nothing the repo can read
-# -- while the same request with these keywords removed produced the schema's own keys.
-#
-# Nothing is lost by dropping them here. The only conditional in the sidecar schema is
-# "a `result` claim needs `evidence`", and that is a schema-tier rule `validate.py`
-# enforces on the draft afterwards, where a violation is a finding rather than a token
-# the decoder should never have been allowed to emit.
-_UNDECODABLE = ("allOf", "anyOf", "oneOf", "not", "if", "then", "else")
-
-
-def decodable(node):
-    """The schema with conditional keywords removed, for guided decoding only."""
-    if isinstance(node, dict):
-        return {k: decodable(v) for k, v in node.items() if k not in _UNDECODABLE}
-    if isinstance(node, list):
-        return [decodable(x) for x in node]
-    return node
-
-
 def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
     """One chat completion per paper against an OpenAI-compatible endpoint.
 
@@ -847,18 +749,7 @@ def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
     model produced a valid sidecar" and "the decoder could not produce anything else"
     are different results.
     """
-    try:
-        from openai import OpenAI
-    except ImportError:
-        sys.exit("pip install openai, or set llm.mode: skill in config.yaml")
-    base = os.environ.get(ENV_BASE)
-    model = os.environ.get(ENV_MODEL) or cfg["llm"].get("model_openai")
-    if not base or not model:
-        sys.exit(f"llm.mode: openai needs ${ENV_BASE} and ${ENV_MODEL} in the "
-                 f"environment (the endpoint is never committed -- see call_openai)")
-    key = os.environ.get(ENV_KEY, "unused")
-    headers = {os.environ[ENV_HEADER]: key} if os.environ.get(ENV_HEADER) else None
-    client = OpenAI(base_url=base, api_key=key, default_headers=headers)
+    client, model = llm_client(model_default=cfg["llm"].get("model_openai"))
 
     # A hosted open-weight model has a context window the request has to fit inside, and
     # unlike the Anthropic path `max_tokens` is not a budget but part of that sum: Qwen
@@ -921,7 +812,7 @@ def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
                   f"(now {req['max_tokens']})", file=sys.stderr)
             return None
         text = ch.message.content or ""
-        sc = _first_json(text)
+        sc = first_json(text)
         if sc is None:
             print(f"  no JSON object in the reply: {label} ({len(text)} chars)",
                   file=sys.stderr)

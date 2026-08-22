@@ -43,6 +43,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "scripts"))
 from common import BUILD, DATA, ROOT, load_config, read_yaml  # noqa: E402
+from llm import client, decodable, first_json, with_retries  # noqa: E402
 
 TASKS = os.path.join(BUILD, "fidelity_tasks.json")
 REPORT = os.path.join(HERE, "fidelity_report.md")
@@ -103,55 +104,23 @@ authored claims do not support."""
 
 # --------------------------------------------------------------------- the gateway
 #
-# The same env-only contract as `draft_sidecars.call_openai`, imported rather than
-# restated so there is one place a gateway is configured. `config.yaml` is committed and
-# public; an inference gateway's URL may not be, so none of it is ever a config key.
-#
-# Two calls per paper, and the separation between them is the whole measurement:
+# Two calls per paper, and the separation between them is the measurement:
 #
 #   answer  the title and nothing else. The model must not see the sidecar, or it would
 #           be scored on reading comprehension instead of on what it knows.
 #   grade   the answer plus the authored claims, held to SCORE_SCHEMA.
 #
 # So `--answer-model` and `--grade-model` are separate flags. Pointing both at one model
-# lets it mark its own homework, which is worth knowing about rather than forbidding:
-# the report says which model played which role.
-
-
-def _client(spec: str | None):
-    """An OpenAI-compatible client and the model id to send, or exit saying what is missing.
-
-    `spec` is `MODEL_ID` or `MODEL_ID@BASE_URL`. The second form is needed more often than
-    it looks: a per-model gateway carries the model in the URL path, and the path slug is
-    not derivable from the body id (`granite-3-3-8b-instruct` in the path,
-    `ibm-granite/granite-3.3-8b-instruct` in the body), so a second model means a second
-    base URL and guessing it would fail silently -- the worst outcome here, since the run
-    would then quietly grade with the wrong model.
-    """
-    from draft_sidecars import ENV_BASE, ENV_MODEL, ENV_KEY, ENV_HEADER
-    try:
-        from openai import OpenAI
-    except ImportError:
-        sys.exit("pip install openai")
-    model, _, override = (spec or "").partition("@")
-    base = override or os.environ.get(ENV_BASE)
-    model = model or os.environ.get(ENV_MODEL)
-    if not base or not model:
-        sys.exit(f"--mode api needs ${ENV_BASE} and ${ENV_MODEL} in the environment "
-                 f"(never committed -- see draft_sidecars.call_openai)")
-    key = os.environ.get(ENV_KEY, "unused")
-    headers = {os.environ[ENV_HEADER]: key} if os.environ.get(ENV_HEADER) else None
-    return OpenAI(base_url=base, api_key=key, default_headers=headers), model
+# lets it mark its own homework; the report says which model played which role.
 
 
 def _chat(client, model: str, msgs: list[dict], label: str, want: dict | None = None):
     """One completion. Returns text, or the parsed object when `want` is a schema.
 
-    Schema enforcement is attempted and not required, for the same reason as the drafting
-    path: a gateway that rejects `response_format` would otherwise be unusable, and the
-    open models this exists to try are exactly the ones behind such gateways.
+    Schema enforcement is attempted and not required: a gateway that rejects
+    `response_format` would otherwise be unusable, and the open models this exists to try
+    are exactly the ones behind such gateways.
     """
-    from draft_sidecars import _first_json, decodable, with_retries
     req = dict(model=model, messages=msgs, max_tokens=2048, temperature=0.0, seed=48)
     if want is not None:
         rf = {"type": "json_schema",
@@ -164,13 +133,13 @@ def _chat(client, model: str, msgs: list[dict], label: str, want: dict | None = 
     else:
         r = with_retries(lambda: client.chat.completions.create(**req), label)
     text = r.choices[0].message.content or ""
-    return _first_json(text) if want is not None else text
+    return first_json(text) if want is not None else text
 
 
 def run_api(tasks: list[dict], answer_model: str | None, grade_model: str | None) -> None:
     """Fill `answer` and `score` on every task in place, one paper at a time."""
-    ac, am = _client(answer_model)
-    gc, gm = _client(grade_model) if grade_model else (ac, am)
+    ac, am = client(answer_model)
+    gc, gm = client(grade_model) if grade_model else (ac, am)
     for t in tasks:
         try:
             t["answer"] = _chat(ac, am, [{"role": "user", "content": t["ask"]}], t["slug"])

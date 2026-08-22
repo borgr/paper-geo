@@ -1244,8 +1244,9 @@ class TestEveryBackendCanBeRepaired(unittest.TestCase):
             models=types.SimpleNamespace(list=lambda: []))
         import draft_sidecars as D
         self._fake("openai", types.SimpleNamespace(OpenAI=lambda **k: client))
-        for var, val in ((D.ENV_BASE, "https://example.invalid/v1"),
-                         (D.ENV_MODEL, "some/model")):
+        import llm
+        for var, val in ((llm.ENV_BASE, "https://example.invalid/v1"),
+                         (llm.ENV_MODEL, "some/model")):
             old = os.environ.get(var)
             os.environ[var] = val
             self.addCleanup(lambda v=var, o=old: os.environ.__setitem__(v, o)
@@ -3170,8 +3171,8 @@ class TestADroppedConnectionIsNotARefusal(unittest.TestCase):
     """One `RemoteProtocolError` mid-stream used to spend a paper's whole repair budget."""
 
     def setUp(self):
-        import draft_sidecars as D
-        self.D = D
+        import llm
+        self.L = llm
         # Named, not imported: `httpx` is not a CI requirement -- it arrives with the
         # `anthropic` SDK, which only the api backend needs -- and the predicate matches on
         # the type's *name* precisely so it need not import the transport library. Standing
@@ -3180,11 +3181,11 @@ class TestADroppedConnectionIsNotARefusal(unittest.TestCase):
                     for n in ("RemoteProtocolError", "ConnectError", "ConnectTimeout",
                               "ReadError")}
         self.slept = []
-        self._real = D.time.sleep
-        D.time.sleep = self.slept.append
+        self._real = llm.time.sleep
+        llm.time.sleep = self.slept.append
 
     def tearDown(self):
-        self.D.time.sleep = self._real
+        self.L.time.sleep = self._real
 
     def test_a_transport_error_is_retried_and_then_succeeds(self):
         calls = []
@@ -3195,7 +3196,7 @@ class TestADroppedConnectionIsNotARefusal(unittest.TestCase):
                 raise self.err["RemoteProtocolError"]("incomplete chunked read")
             return "a reply"
 
-        self.assertEqual(self.D.with_retries(flaky, "a-paper repair 1"), "a reply")
+        self.assertEqual(self.L.with_retries(flaky, "a-paper repair 1"), "a reply")
         self.assertEqual(len(calls), 3)
         self.assertEqual(self.slept, [5, 10])         # backs off, does not hammer
 
@@ -3207,7 +3208,7 @@ class TestADroppedConnectionIsNotARefusal(unittest.TestCase):
             raise ValueError("400: unknown field `output_config`")
 
         with self.assertRaises(ValueError):
-            self.D.with_retries(refused, "a-paper")
+            self.L.with_retries(refused, "a-paper")
         self.assertEqual(len(calls), 1)               # the ladder gets to climb immediately
         self.assertEqual(self.slept, [])
 
@@ -3219,18 +3220,18 @@ class TestADroppedConnectionIsNotARefusal(unittest.TestCase):
             raise self.err["ConnectError"]("no route to host")
 
         with self.assertRaises(self.err["ConnectError"]):
-            self.D.with_retries(dead, "a-paper")
-        self.assertEqual(len(calls), self.D.TRANSIENT_TRIES + 1)
+            self.L.with_retries(dead, "a-paper")
+        self.assertEqual(len(calls), self.L.TRANSIENT_TRIES + 1)
 
     def test_which_failures_count_as_the_connections_fault(self):
         wrapped = RuntimeError("stream died")
         wrapped.__cause__ = self.err["ReadError"]("peer went away")
         for e in (self.err["RemoteProtocolError"]("x"), self.err["ConnectTimeout"]("x"), wrapped,
                   type("Busy", (Exception,), {"status_code": 529})()):
-            self.assertTrue(self.D._transient(e), f"{type(e).__name__} should be retried")
+            self.assertTrue(self.L._transient(e), f"{type(e).__name__} should be retried")
         for e in (ValueError("bad schema"), KeyError("claims"),
                   type("Bad", (Exception,), {"status_code": 400})()):
-            self.assertFalse(self.D._transient(e), f"{type(e).__name__} must not be retried")
+            self.assertFalse(self.L._transient(e), f"{type(e).__name__} must not be retried")
 
 
 class TestACountIsAMagnitudeForCoverage(unittest.TestCase):
