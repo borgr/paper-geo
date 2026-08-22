@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Audit the identity surfaces you do not control, against what they should say.
 
-Everything else in this repo checks *our* artifacts. This checks the five external
-surfaces that decide whether a retrieval system can resolve you to one person, by
-reading their public APIs -- no login, no key, read-only:
+Everything else in this repo checks *our* artifacts. This reads the five external
+surfaces that decide whether a retrieval system can resolve you to one person, over
+their public APIs -- no login, no key, read-only:
 
     ORCID          public works count, researcher URLs, name variants, keywords
     arXiv          which papers your account is actually registered as author on
@@ -12,12 +12,9 @@ reading their public APIs -- no login, no key, read-only:
     Semantic Sch.  how the corpus is split across author records
     arXiv metadata whether its author list spells your name right at all
 
-The arXiv check is the one worth the network round-trip. Linking ORCID to arXiv
-gives you a public list at arxiv.org/a/<orcid> built from arXiv's *authority
-records* -- papers your account is registered as an author on. For a co-authored
-corpus that is usually a fraction of your papers, and it is also the gate on
-editing them: you cannot add a journal-ref to a paper you do not own. So this
-diff is a prerequisite list, not a vanity metric.
+arxiv.org/a/<orcid> is built from arXiv's *authority records*, and being on one is the
+gate on editing a paper: you cannot add a journal-ref to a paper you do not own. So the
+arXiv diff is a prerequisite list, not a vanity metric.
 
 Writes tasks/identity_audit.md, tasks/arxiv_ownership.md, tasks/hf_worklist.md and
 tasks/arxiv_name_fixes.md.
@@ -278,16 +275,11 @@ CREATED = os.path.join(DATA, "wikidata_created.yaml")
 def created_items() -> dict:
     """slug -> QID for every Wikidata item this repo created, read from `data/`.
 
-    Committed, and the only file under `data/` that is neither derived nor a decision.
-    It is a receipt: what an edit did, on a wiki, at a time when nothing else could tell
-    you. Two reasons it cannot live in `build/`, which is where observed state belongs.
-    A CI runner starts from a clone, so a gitignored ledger is always empty there and
-    every scheduled run would look like the first one. And re-deriving it is exactly
-    what fails -- the query service lags behind the edit, which is the whole problem it
-    exists to solve.
-
-    So it is never hand-edited either, and a stale line here is self-correcting rather
-    than dangerous: coverage would already have found the item by its DOI.
+    Committed, and never hand-edited: it is a receipt for an edit on a wiki, and it cannot
+    be re-derived because the query service lags behind the edit, which is the problem it
+    exists to solve. Under `build/` it would be empty on every CI clone, so every scheduled
+    run would look like the first. A stale line is self-correcting -- coverage would have
+    found the item by its DOI anyway.
     """
     return (read_yaml(CREATED) or {}).get("items") or {}
 
@@ -311,21 +303,18 @@ def wikidata_paper_coverage(papers, chunk: int = 50) -> dict:
     """How many of your papers exist as Wikidata items -- measured, not assumed.
 
     Returns {} when the endpoint does not answer, so a timeout never reads as evidence of
-    absence. Coverage on this corpus was 3 of 122, which inverts the standard advice: the
-    work is creating items, not relinking strings.
+    absence. Matching is on DOI (P356) and arXiv id (P818), never name; DOIs go in twice, as
+    given and uppercased, since Wikidata's convention is uppercase and SPARQL string match
+    is not.
 
-    Matching is on DOI (P356) and arXiv id (P818), never name -- exact keys, so a hit is
-    the paper and not a paper citing it. DOIs go in twice, as given and uppercased, since
-    Wikidata's convention is uppercase and SPARQL string match is not.
+    The endpoint must be query-scholarly, not `query.wikidata.org`: scholarly articles have
+    their own graph now, and the main endpoint answers a publication query with zero rows
+    and HTTP 200.
 
-    The endpoint must be query-scholarly, not `query.wikidata.org`. Wikidata moved
-    scholarly articles into their own graph, so a publication query against the main
-    endpoint returns zero rows with HTTP 200 -- verified against Q30249683.
-
-    Items this repo created are folded in from `data/wikidata_created.yaml` whatever the
-    query says: the scholarly endpoint can take hours to index a new item, and without the
-    ledger a second run inside that window recreates the batch. A duplicate publication
-    item is the one failure here that somebody else has to merge.
+    Items from `data/wikidata_created.yaml` are folded in whatever the query says. The
+    scholarly endpoint can take hours to index a new item, and a second run inside that
+    window would recreate the batch -- a duplicate publication item is the one failure here
+    that somebody else has to merge.
     """
     keys: dict[str, dict] = {}
     for p in papers:
@@ -371,23 +360,19 @@ def wikidata_paper_coverage(papers, chunk: int = 50) -> dict:
 def paper_item(p: dict, cfg) -> dict | None:
     """The Wikidata item one paper should become -- one description, two renderers.
 
-    Returns None for a paper carrying neither a DOI nor an arXiv id. That is not a
-    formatting convenience: an external identifier anyone can resolve is what makes a
-    publication item uncontroversially in scope, and it is also the key coverage was
-    measured on, so an item without one could be a duplicate of an item already there
-    and nothing would be able to tell.
+    Returns None for a paper carrying neither a DOI nor an arXiv id: a resolvable external
+    identifier is what makes a publication item uncontroversially in scope, and it is the
+    key coverage is measured on, so an item without one could be a duplicate nothing can
+    detect.
 
-    This exists as a function because there are now two ways to create these items --
-    the QuickStatements batch below, and `wikidata_apply.py --papers` through the API --
-    and the failure mode of two emitters is not that one is wrong. It is that they
-    disagree, so the file you read to check the batch describes items other than the
-    ones the API path creates. One dict, rendered twice, cannot do that.
+    One dict, rendered by both creators -- the QuickStatements batch below and
+    `wikidata_apply.py --papers` -- so the file you read to check the batch cannot describe
+    different items from the ones the API path creates.
 
-    Co-authors go in as `author name string` (P2093) with a series-ordinal qualifier,
-    not as `author` (P50). Pointing P50 at a guessed person item is the error that takes
-    someone else's item and welds it to your paper -- the same asymmetry that governs
-    the authorship gate in the collector. Strings are what the Crossref importers
-    themselves deposit, and a later disambiguator upgrades them safely.
+    Co-authors go in as `author name string` (P2093) with a series-ordinal qualifier, not as
+    `author` (P50): pointing P50 at a guessed person item welds someone else's item to your
+    paper. Strings are what the Crossref importers deposit, and a later disambiguator
+    upgrades them safely.
     """
     if not (p.get("doi") or p.get("arxiv")):
         return None
@@ -427,15 +412,10 @@ def paper_item(p: dict, cfg) -> dict | None:
 def wikidata_papers_qs(cov: dict, cfg) -> tuple[str | None, int]:
     """QuickStatements batch that creates items for the papers Wikidata lacks.
 
-    Only generated because the measurement came back low. If coverage had been the
-    "dozens already imported" the usual advice assumes, the job would be relinking
-    author name strings and this file would be the wrong tool.
-
-    Kept alongside `wikidata_apply.py --papers`, which does the same work through the
-    API and needs no autoconfirmed account, because the two fail differently: a paste
-    into QuickStatements needs no credential stored anywhere, and it is the fallback if
-    the bot password is ever revoked. Both render `paper_item`, so they agree by
-    construction.
+    Kept alongside `wikidata_apply.py --papers`, which does the same work through the API,
+    because the two fail differently: a paste into QuickStatements needs no autoconfirmed
+    account and no stored credential, so it is the fallback if the bot password is ever
+    revoked. Both render `paper_item`, so they agree by construction.
     """
     items = [i for i in (paper_item(p, cfg) for p in (cov.get("absent") or [])) if i]
     path = os.path.join(TASKS, "wikidata_papers.qs")
@@ -480,16 +460,15 @@ def hf_state(papers, me: str, variants, requested=()) -> dict[str, list]:
 
         missing    no page at all -- visit it while logged in
         unclaimed  page exists, your name is in the author list, no user linked
-        pending    you are linked but status is not yet verified -- wait, do not redo
-        blocked    no author string resembles your name, so there is no claim control
-                   to press: the upstream metadata is wrong and that is the real task
+        pending    you are linked but not yet verified -- wait, do not redo
+        blocked    no author string resembles your name, so there is no claim control to
+                   press: the upstream metadata is wrong and that is the real task
         claimed    done
 
     `requested` (data/overrides.yaml -> hf_claim_requested) is the one thing here that
-    cannot be read from outside: HF exposes the `user` link only after moderation grants
-    the claim, so a request submitted an hour ago is indistinguishable over the API from
-    one never made. Which action you took is a durable fact, so it is declared, and those
-    pages move to `pending`.
+    cannot be read from outside: HF exposes the `user` link only after moderation, so a
+    request sent an hour ago looks over the API like one never made. Those pages move to
+    `pending`.
 
     Live rather than read from papers.yaml, because this list is worked by hand over days
     and a stale copy sends you back to pages you already did.
@@ -803,28 +782,24 @@ def orcid_strays(orc: dict, papers) -> list[tuple]:
     """Works on the ORCID record that are not in your corpus.
 
     Returns `(strays, duplicate_groups, matched_slugs, misfiled, merged_versions)`.
+    Matching is identifier first, then exact title, then content-word set (`title_tokens`),
+    which is the pass that places a paper of the author's own that was retitled.
 
-    Matching is identifier first, then exact title, then content-word set
-    (`title_tokens`) -- the last pass because the first two read word order as content,
-    so a retitled paper of the author's own reads as unplaceable.
-
-    Each stray is tagged `confirmed` (the collector also rejected it on author name),
-    `declined` (`data/declines.yaml` records its absence as a decision, so it is not a
-    question to ask again), or `unknown` -- as likely a paper missing from the
-    bibliography as an error.
+    Each stray is tagged `confirmed` (the collector rejected it on author name too),
+    `declined` (`data/declines.yaml` records its absence as a decision), or `unknown`.
 
     The three duplicate classes are separate because only two are problems:
 
         duplicate_groups  one corpus paper in two ORCID groups -- two profile entries,
                           double-counted downstream
         merged_versions   two works in one group -- one entry, already unified
-        misfiled          a work whose identifier belongs to a different paper, so it
-                          sits inside that paper's group and its own title is never
-                          compared. Detected only on exact title disagreement; looser
-                          disagreement is ordinary preprint/proceedings drift.
+        misfiled          a work whose identifier belongs to a different paper, so it sits
+                          inside that paper's group and its own title is never compared.
+                          Detected on exact title disagreement only; looser disagreement is
+                          ordinary preprint/proceedings drift.
 
-    `matched_slugs` is the other direction: which corpus papers the record lacks. A
-    works count cannot answer that, since missing and listed-twice both move it.
+    `matched_slugs` is the other direction: which corpus papers the record lacks, which a
+    works count cannot answer, since missing and listed-twice both move it.
     """
     ARXIV_DOI = re.compile(r"10\.48550/arxiv\.(.+)$", re.I)
     by_doi = {p["doi"].lower(): p for p in papers if p.get("doi")}
@@ -975,16 +950,13 @@ def orcid_missing_files(missing: list[dict], orcid: str) -> list[str]:
 def dup_pairs(dups: dict, papers: list[dict]) -> list[dict]:
     """One row per ORCID duplicate: which entry to keep, which folds in, what to paste.
 
-    Split out of the table in `orcid_remove_file` so `build/identity_state.json` carries
-    the same three values, because the worklist could not say any of them. It had the
-    count and a pointer to this file -- "ORCID lists 1 of your papers twice", then four
-    numbered steps, and no title and no put-code anywhere on the page. A section naming
-    nothing reads as a section with nothing in it.
-
     Which to keep is derived, not judged: the preprint entry is the one whose DOI carries
-    arXiv's DataCite prefix, so the published entry is simply the other one. When that
-    does not hold -- neither DOI is arXiv's, or there are more than two entries -- the
-    row says so and names every entry rather than guessing, and `doi` is None.
+    arXiv's DataCite prefix, so the published entry is the other one. When that does not
+    hold -- neither DOI is arXiv's, or there are more than two entries -- the row says so
+    and names every entry rather than guessing, and `doi` is None.
+
+    Split out of `orcid_remove_file`'s table so build/identity_state.json carries the same
+    title, put-code and DOI, which is what the worklist item needs to be workable in place.
     """
     by_slug = {p["slug"]: p for p in papers}
     arx = re.compile(r"^10\.48550/arxiv\.", re.I)
@@ -1153,13 +1125,11 @@ def arxiv_author_strings(ids: list[str], batch: int = 50) -> dict[str, list[str]
 def arxiv_name_file(papers, variants) -> tuple[str, list, list]:
     """Papers whose arXiv author list misspells or omits your name.
 
-    Worth a dedicated check because arXiv metadata is *upstream* of nearly every
-    index in this repo: Hugging Face, Semantic Scholar, OpenAlex and Google Scholar
-    all read it. A one-character typo there does not degrade gracefully -- it creates
-    a second author who owns that paper's citations and cannot be merged with you,
-    and no amount of work on the pages downstream repairs it.
+    arXiv metadata is upstream of nearly every index here -- Hugging Face, Semantic Scholar,
+    OpenAlex and Google Scholar all read it -- and a one-character typo creates a second
+    author who owns that paper's citations and cannot be merged with you.
 
-    Two failure modes, different fixes, so they are reported separately:
+    Two failure modes, reported separately because the fixes differ:
       typo    a near-miss author string -- correct it in the arXiv metadata
       absent  no resembling string at all -- the submitter left you off the paper
     """

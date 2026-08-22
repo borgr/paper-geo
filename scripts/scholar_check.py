@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Diff your Google Scholar profile against the corpus, to catch silent drops.
 
-The pipeline's input is one bibliography file, so a paper missing from that file is
-invisible to every check downstream -- as is a paper the authorship gate dropped.
-Scholar is the only list maintained by a different process, so it is the only one
-capable of disagreeing. Titles in, diff out: its metadata is too poor to copy (truncated
-author lists, venues that are sometimes an arXiv id), so nothing here writes to `data/`.
+The pipeline's input is one bibliography file, so a paper missing from it -- or dropped
+by the authorship gate -- is invisible to every check downstream. Scholar is the only
+list maintained by a different process, so it is the only one capable of disagreeing.
+Titles in, diff out: its metadata is too poor to copy (truncated author lists, venues
+that are sometimes an arXiv id), so nothing here writes to `data/`.
 
 Three outcomes per Scholar row, worst first:
 
@@ -17,13 +17,12 @@ Three outcomes per Scholar row, worst first:
                       per paper, so the human act is pasting one.
     present           Matched a corpus record.
 
-And the other direction: corpus records with no Scholar row. Usually just indexing lag,
-but a cited paper missing from your profile is a retrieval loss.
+And the other direction: corpus records with no Scholar row, usually indexing lag.
 
-Read-only, no login. Google serves this profile to a browser User-Agent; a challenge
-page makes the check say so and exit 0 -- it is an audit, not a gate. Every unattended
-run gets challenged, and then the Semantic Scholar half still runs `attributed_gaps`,
-which asks a narrower version of the same question and finds strictly less.
+Read-only, no login. Google serves this profile to a browser User-Agent; a challenge page
+makes the check say so and exit 0 -- it is an audit, not a gate. Every unattended run
+gets challenged, and the Semantic Scholar half then still runs `attributed_gaps`, a
+narrower version of the same question.
 
 Set `S2_API_KEY` if you have one -- the anonymous pool refuses often, and that is the
 difference between resolving a missing paper and reporting that nobody indexes it.
@@ -110,13 +109,9 @@ def text(s: str) -> str:
 def fetch(uid: str, start: int) -> str:
     """One page of the profile, or "" -- recorded either way in the health ledger.
 
-    This does not go through `common.get`, because Scholar needs the browser header
-    and no backoff, so it was also the one HTTP source outside the ledger. It is the
-    worst one to leave out: Scholar is the only list of these papers built by a
-    process this pipeline does not control, so it is the only check that can see a
-    paper the pipeline never received -- and when it stops working the symptom is a
-    whole section quietly missing from the worklist, which reads as "nothing to
-    report". A line on stderr during a ten-step run is not a signal anybody sees.
+    Not through `common.get`, because Scholar needs the browser header and no backoff. In the
+    ledger anyway: when this source stops working the symptom is a whole worklist section
+    quietly absent, which reads as "nothing to report".
     """
     url = PROFILE.format(uid=uid, start=start)
     req = urllib.request.Request(url, headers=BROWSER)
@@ -209,17 +204,14 @@ def head(t: str) -> str:
 def variant_score(a: str, b: str) -> tuple[float, str] | None:
     """Whether two titles are plausibly one paper renamed, and on what evidence.
 
-    Retitles between a preprint and its published version are common enough that
-    without this the same paper is reported twice -- once as "Scholar has a paper you
-    do not" and once as "you have a paper Scholar does not" -- and the two lines are
-    nowhere near each other. Reported as a question, not a fact, so a loose threshold
-    is the right side to err on: a wrong pair costs one line a human dismisses, and a
-    missed pair costs a duplicated public page.
+    Two signals, either sufficient. Word overlap catches a reworded subtitle; an identical
+    coined name before the colon catches a fully rewritten one, which overlap cannot --
+    "LLM Hypnosis: Exploiting User Feedback ..." and "LLM Hypnosis: Characterizing the
+    Fragility of RLHF ..." share four words out of fifteen.
 
-    Two signals, either sufficient. Word overlap catches a reworded subtitle; an
-    identical coined name before the colon catches a fully rewritten one, which
-    overlap cannot -- "LLM Hypnosis: Exploiting User Feedback ..." and "LLM Hypnosis:
-    Characterizing the Fragility of RLHF ..." share four words out of fifteen.
+    Reported as a question, not a fact, so a loose threshold is the right side to err on: a
+    wrong pair costs one line a human dismisses, and a missed pair costs a duplicated public
+    page plus the same paper reported twice, in two distant sections.
     """
     ha, hb = head(a), head(b)
     if ha and ha == hb and len(ha) >= 8:
@@ -255,22 +247,16 @@ def same_work(a: str, b: str) -> bool:
 
     `same_paper` compares two titles already known to be yours, so a wrong pair costs one
     dismissed line. An index answers from every paper ever published, where the same
-    threshold costs a stranger's paper pasted into your bibliography under your name.
+    threshold costs a stranger's paper pasted into your bibliography under your name -- word
+    overlap alone accepted "Attention is all you need" against "Tensor Product Attention Is
+    All You Need", and "An autonomous debating system" against "A superpersuasive autonomous
+    policy debating system".
 
-    Word overlap alone accepted both of these:
-
-        Attention is all you need      ->  Tensor Product Attention Is All You Need
-        An autonomous debating system  ->  A superpersuasive autonomous policy
-                                           debating system
-
-    What separates them is where the extra words went. Legitimate variants keep their
-    opening -- a dropped subtitle, a venue retitle that appends. Words *prepended* change
-    the subject.
-
-    The cost is a title rearranged across the colon ("Tie the KnOTS: Model Merging with
-    SVD" against "Model Merging with SVD to Tie the KnOTS"), which stops resolving
-    automatically and comes back as a near-miss line to confirm. The right direction to
-    fail in.
+    What separates those is where the extra words went: legitimate variants keep their
+    opening (a dropped subtitle, an appended venue retitle), while prepended words change the
+    subject. The cost is a title rearranged across the colon ("Tie the KnOTS: Model Merging
+    with SVD" against "Model Merging with SVD to Tie the KnOTS"), which comes back as a
+    near-miss line to confirm instead of resolving on its own. The right direction to fail in.
     """
     if norm_title(a) == norm_title(b):
         return True
@@ -295,17 +281,15 @@ def arxiv_titles() -> dict[str, str]:
 def stale_side(scholar: str, p: dict, diffs: dict[str, str]) -> tuple[str, str]:
     """Which of the two titles is out of date, on arXiv's evidence.
 
-    One paper under two titles reads like a judgement call, and mostly is not one:
-    arXiv holds the current title and a run has already fetched it. Three outcomes, of
-    which only the last is a decision.
+    arXiv holds the current title and a run has already fetched it, so this is mostly not the
+    judgement call it looks like. Three outcomes, of which only the last is a decision:
 
-        bib      arXiv states the Scholar title, so the bibliography entry is behind.
-                 This is the same finding `collect.py` reports as `title differs from
-                 arXiv`, arrived at from the other side, and the fix is one edit
-                 upstream rather than an override here.
-        scholar  arXiv states our title, so the Scholar row kept an earlier one.
-                 Nothing to fix: editing the row on your profile changes what it
-                 displays, not which citations Scholar clusters under it.
+        bib      arXiv states the Scholar title, so the bibliography entry is behind. The
+                 same finding `collect.py` reports as `title differs from arXiv`, and the
+                 fix is one edit upstream rather than an override here.
+        scholar  arXiv states our title, so the Scholar row kept an earlier one. Nothing to
+                 fix: editing the row changes what it displays, not which citations Scholar
+                 clusters under it.
         open     no arXiv record, or arXiv agrees with neither. Yours to decide.
     """
     says = diffs.get(p.get("slug") or "")
@@ -328,16 +312,14 @@ def searchable(title: str) -> str:
 def run_len(a: str, b: str) -> int:
     """Longest run of consecutive words two titles share.
 
-    The near-miss gate, and it has to be stricter than `variant_score`. That one pairs
-    two titles already known to be yours -- a corpus paper against a Scholar row -- so
-    a loose word-overlap threshold costs at worst a line you dismiss. An index answers
-    from the whole literature, and there 4 of 9 shared words is *Framework-based
-    Roguelike Game for AI/ML Education* against *A Statistical Framework for Game-Based
-    AI Evaluation*: a stranger's paper, offered to you as "the same paper renamed?".
+    The near-miss gate against an index, stricter than `variant_score` because an index
+    answers from the whole literature: there, 4 of 9 shared words is *Framework-based
+    Roguelike Game for AI/ML Education* against *A Statistical Framework for Game-Based AI
+    Evaluation*, a stranger's paper offered as "the same paper renamed?".
 
-    A run separates them on the real cases. The genuine rename in this corpus keeps
-    five words in order ("... Building LLMs Efficiently through Merging"); the
-    Roguelike paper shares no two adjacent words with anything of yours.
+    A run separates them on the real cases. The genuine rename in this corpus keeps five
+    words in order ("... Building LLMs Efficiently through Merging"); the Roguelike paper
+    shares no two adjacent words with anything of yours.
     """
     wa, wb = re.findall(r"[a-z0-9]+", a.lower()), re.findall(r"[a-z0-9]+", b.lower())
     best = 0
@@ -364,13 +346,11 @@ S2_FIELDS = "title,year,venue,authors,externalIds,publicationTypes,paperId"
 def s2_mine(cfg: dict) -> list[dict] | None:
     """Every paper Semantic Scholar attributes to you, or None if it did not answer.
 
-    The author endpoint, not the search endpoint. Search costs one request per title
-    and answers 429 to an unauthenticated caller often enough to be useless -- three
-    titles in a row, through the shared backoff, on the run that prompted this. The
-    author endpoint is two requests for the whole check, it is the one `collect.py`
-    already depends on every run, and it answers a better question: a paper on your
-    author record is one S2 attributes to *you*, so a hit resolves "is it yours" at
-    the same time as it resolves the metadata.
+    The author endpoint, not search: two requests for the whole check instead of one per
+    title, already depended on by `collect.py` every run, and it answers a better question --
+    a paper on your author record is one S2 attributes to *you*, so a hit resolves "is it
+    yours" at the same time as the metadata. Unauthenticated search answers 429 too often to
+    be usable here.
     """
     out: list[dict] = []
     for aid in (cfg.get("ids") or {}).get("semantic_scholar") or []:
@@ -387,24 +367,21 @@ def attributed_gaps(attributed: list[dict], papers: list[dict], corpus: dict[str
                     gated: dict[str, str]) -> tuple[list[dict], list[dict]]:
     """Papers an index attributes to you that the corpus has never received.
 
-    Returns `(gaps, unverifiable)`: the rows worth acting on, and the rows S2 holds with
-    no external identifier, which are counted on stderr and written to
+    Returns `(gaps, unverifiable)`: the rows worth acting on, and the rows S2 holds with no
+    external identifier, which are counted on stderr and written to
     `build/scholar_diff.json` but not listed.
 
-    The same question as the Scholar leg's `not_in_corpus`, asked of an endpoint that
-    answers unattended -- Google serves a datacenter IP a challenge page. It is a floor,
-    not a substitute: on this corpus the Scholar leg finds three absent papers and this
-    leg finds none of them, because S2's author record does not hold them. What it does
-    catch is a *new* paper that reached an index and not the bibliography, which is where
-    delay costs something.
+    The same question as the Scholar leg's `not_in_corpus`, asked of an endpoint that answers
+    unattended -- Google serves a datacenter IP a challenge page. A floor, not a substitute:
+    on this corpus the Scholar leg finds three absent papers and this leg finds none of them,
+    because S2's author record does not hold them. What it does catch is a *new* paper that
+    reached an index and not the bibliography.
 
-    An identifier is required. Without one a row cannot be added to a bibliography from
-    this list anyway, and in practice the identifier-less rows are S2's citation-derived
-    stubs -- a journal name in the title field, a v1 title since renamed past all
-    similarity. Patents and proceedings volumes are dropped for the same reason the
-    Scholar leg drops them: "add it to the bibliography" is wrong for a patent and
-    harmful for a volume, which would enter as a paper whose every claim is somebody
-    else's.
+    An identifier is required, since a row without one cannot be added to a bibliography from
+    this list anyway; in practice those are S2's citation-derived stubs. Patents and
+    proceedings volumes are dropped for the reason the Scholar leg drops them: "add it to the
+    bibliography" is wrong for a patent and harmful for a volume, which would enter as a
+    paper whose every claim is somebody else's.
     """
     ids = {v.lower() for p in papers for v in
            (p.get("arxiv"), (p.get("doi") or "").removeprefix("doi:")) if v}
@@ -528,20 +505,15 @@ CROSSREF = ("https://api.crossref.org/works?rows=5&select=title,author,issued,DO
 
 
 def from_crossref(title: str) -> tuple[dict | None, str, bool]:
-    """The Crossref record for a title, the nearest title offered, and whether it
-    replied.
+    """The Crossref record for a title, the nearest title offered, and whether it replied.
 
-    Neither of the first two resolvers can answer for a paper that was never
-    preprinted and never landed on your author record, which is most of what goes
-    missing: competition reports, workshop papers, proceedings-only papers. Crossref
-    holds those, because the publisher registered the DOI -- and the DOI is the field
-    that makes a BibTeX entry worth pasting, since it is what ORCID and every citation
-    manager group on.
+    Covers what the first two resolvers cannot: a paper never preprinted and not on your
+    author record, which is most of what goes missing -- competition reports, workshop papers,
+    proceedings-only papers. The publisher registered the DOI, and the DOI is the field that
+    makes a BibTeX entry worth pasting, being what ORCID and every citation manager group on.
 
-    Its ranking is fuzzy: an unmatched query returns five plausible strangers rather
-    than nothing, which is why the `same_work` filter decides and the query only
-    proposes. Verified against three known ACL entries from the corpus -- all three
-    came back with the exact registered DOI.
+    Its ranking is fuzzy -- an unmatched query returns five plausible strangers rather than
+    nothing -- so the query proposes and `same_work` decides.
     """
     d = get_json(CROSSREF + urllib.parse.quote(searchable(title)), retries=2)
     if d is None:
@@ -581,19 +553,17 @@ def val(c: dict, k: str):
 def published(c: dict) -> bool:
     """Did this OpenReview note actually get in anywhere.
 
-    OpenReview hosts the submission, not only the paper, so a title match there says
-    less than a title match anywhere else: "A superpersuasive autonomous policy debating
-    system" is a real note with seven real authors and a venue reading *ICLR 2026
-    Conference Withdrawn Submission*. Cited as `@inproceedings{booktitle = {ICLR 2026}}`
-    that is a claim the paper appeared at ICLR, which it did not and now never will.
+    OpenReview hosts the submission, not only the paper: "A superpersuasive autonomous policy
+    debating system" is a real note with seven real authors whose venue reads *ICLR 2026
+    Conference Withdrawn Submission*, and citing that as `@inproceedings{booktitle = {ICLR
+    2026}}` claims it appeared there.
 
-    One rule covers every rejected state, because OpenReview names them all the same
-    way: a note that did not get in lives in a group whose last path segment ends in
-    `Submission` -- `Withdrawn_Submission`, `Desk_Rejected_Submission`,
-    `Rejected_Submission`, or plain `Submission` while review is still running. An
-    accepted paper's `venueid` is the venue's own group and ends in `Conference`,
-    `Workshop`, or the workshop's name. `Submitted to ...` catches the venues that put
-    the state in the display string and leave the id off.
+    One rule covers every rejected state, because OpenReview names them all the same way: a
+    note that did not get in lives in a group whose last path segment ends in `Submission` --
+    `Withdrawn_Submission`, `Desk_Rejected_Submission`, `Rejected_Submission`, or plain
+    `Submission` while review is still running. An accepted paper's `venueid` is the venue's
+    own group and ends in `Conference`, `Workshop`, or the workshop's name. `Submitted to ...`
+    catches the venues that put the state in the display string and leave the id off.
     """
     vid, venue = (val(c, "venueid") or "").strip(), (val(c, "venue") or "").strip()
     if venue.lower().startswith("submitted to") or venue.lower().endswith("submission"):
@@ -602,24 +572,18 @@ def published(c: dict) -> bool:
 
 
 def from_openreview(title: str) -> tuple[dict | None, str, bool]:
-    """The OpenReview record for a title, the nearest title offered, and whether it
-    replied.
+    """The OpenReview record for a title, the nearest title offered, and whether it replied.
 
-    The three resolvers above share a blind spot, and it is a whole publication venue
-    rather than an edge case: a workshop paper. It is not preprinted (so not on arXiv),
-    the publisher never registers a DOI (so not on Crossref), and it reaches Semantic
-    Scholar late or never. Which is exactly what left "A Statistical Framework for
-    Game-Based AI Evaluation" sitting in `bib_missing.md` as an UNRESOLVED `@misc{TODO}`
-    stub -- a real paper of yours, whose full author list and venue were one request
-    away, on the site the workshop actually ran on.
+    The resolvers above share a blind spot the size of a publication venue: a workshop paper
+    is not preprinted, gets no registered DOI, and reaches Semantic Scholar late or never.
 
-    Three filters, all load-bearing. `same_work` decides, as everywhere an index
-    answers: this endpoint reports thousands of matches for any query and ranks loosely,
-    so it proposes and never decides. A note is only accepted if it carries an author
-    list -- reviews and comments are notes too, they come back from the same search, and
-    a review's title is sometimes the paper's, so a title match alone would produce an
-    entry whose authors are the reviewers, which is to say nobody. And `published`
-    refuses a submission that was withdrawn, rejected, or is still under review.
+    Three filters, all load-bearing. `same_work` decides, as everywhere an index answers:
+    this endpoint reports thousands of loosely ranked matches for any query, so it proposes
+    and never decides. A note is accepted only if it carries an author list -- reviews and
+    comments are notes too and come back from the same search, and a review's title is
+    sometimes the paper's, so a title match alone would produce an entry whose authors are
+    the reviewers. And `published` refuses a submission that was withdrawn, rejected, or is
+    still under review.
     """
     d = get_json(OPENREVIEW + urllib.parse.quote(searchable(title)), retries=2)
     if d is None:
@@ -666,13 +630,11 @@ def from_openreview(title: str) -> tuple[dict | None, str, bool]:
 def from_s2_search(title: str) -> tuple[dict | None, str, bool]:
     """S2's title search, last and deliberately impatient.
 
-    It is the only index that held the one genuinely resolvable paper here -- a
-    competition report that is on nobody's arXiv and on no author record, indexed under
-    a longer title than Scholar displays. So it is worth asking. But unauthenticated
-    search answers 429 from a pool shared with the world, and it did so on every
-    attempt of the run that added this, while the *author* endpoint above answered
-    both times. Three tries at the shared backoff is ~12s per paper: enough to win when
-    the pool is free, short enough that a rate-limited day costs the audit half a minute
+    The only index that held the one genuinely resolvable paper here -- a competition report
+    on nobody's arXiv and on no author record, indexed under a longer title than Scholar
+    displays -- so it is worth asking. But unauthenticated search answers 429 from a pool
+    shared with the world. Three tries at the shared backoff is ~12s per paper: enough to win
+    when the pool is free, short enough that a rate-limited day costs the audit half a minute
     and says so rather than stalling it.
     """
     q = urllib.parse.quote(searchable(title))
@@ -755,17 +717,13 @@ def bib_payload(rows: list[dict], bib_url: str, mine: list[dict] | None,
                 ruled_out: list[dict] | None = None) -> tuple[str, int, int, int]:
     """Write `tasks/bib_missing.md`: (path, papers, resolved, worth retrying).
 
-    Absent when there is nothing missing, on the same principle as the worklist's
-    sections -- a file that says "none" is one more thing to read and disbelieve. That
-    holds when everything missing was declined, too: `ruled_out` is named at the foot of
-    the page when there is a page, and nothing resurrects the page to report it.
+    Absent when nothing is missing, and absent when everything missing was declined -- a file
+    that says "none" is one more thing to read and disbelieve. `ruled_out` is named at the
+    foot of the page when there is a page.
 
-    A near miss is printed rather than pasted. The indexes routinely hold a paper under
-    a title that is close but not the same -- a competition report renamed for the
-    proceedings -- and that is exactly the case where an automatic match would write
-    somebody else's paper into a bibliography under a citation key that looks checked.
-    Naming the candidate leaves the judgement where it belongs and still saves the
-    search.
+    A near miss is printed rather than pasted: the indexes routinely hold a paper under a
+    close-but-different title, which is exactly where an automatic match would write somebody
+    else's paper into a bibliography under a citation key that looks checked.
     """
     path = os.path.join(TASKS, "bib_missing.md")
     if not rows:
