@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import subprocess
 import time
 import unicodedata
 import urllib.error
@@ -336,6 +337,42 @@ def get_json(url: str, **kw) -> dict | list | None:
         return None
     try:
         return json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+
+
+# ---------------------------------------------------------------- the gh CLI
+
+def gh(*args: str, check: bool = False, timeout: int = 60) -> tuple[int, str]:
+    """Run `gh` and return (exit code, output) -- stdout when it worked, stderr when not.
+
+    Goes through the CLI rather than the REST API so it inherits the user's login and
+    rate limit. `check=True` raises RuntimeError instead of returning a non-zero code.
+    """
+    try:
+        r = subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        if check:
+            raise RuntimeError(f"gh {' '.join(args)}: {type(e).__name__}") from e
+        return 1, f"{type(e).__name__}: {e}"
+    if r.returncode and check:
+        raise RuntimeError(r.stderr.strip() or f"gh {' '.join(args)} failed")
+    return r.returncode, (r.stdout if r.returncode == 0 else r.stderr)
+
+
+def gh_text(*args: str, timeout: int = 60) -> str:
+    """`gh` stdout, or "" for any failure -- for reads where absent and broken are the same."""
+    code, out = gh(*args, timeout=timeout)
+    return "" if code else out
+
+
+def gh_json(*args: str, timeout: int = 60):
+    """Parsed `gh api` output, or None if the call failed or the body was not JSON."""
+    code, out = gh(*args, timeout=timeout)
+    if code:
+        return None
+    try:
+        return json.loads(out)
     except json.JSONDecodeError:
         return None
 

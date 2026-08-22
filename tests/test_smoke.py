@@ -32,6 +32,7 @@ import json
 import contextlib
 import copy
 import io
+import glob
 import os
 import re
 import shutil
@@ -3606,3 +3607,43 @@ class TestAQuestionGroupIsAFormNotAList(unittest.TestCase):
         import draft_sidecars as D
         self.assertIn("{rules}", D.ROUTES)
         self.assertNotIn("ending in `?`", D.ROUTES.replace("{rules}", ""))
+
+
+class TestAFailedGhReadIsNotAnEmptyOne(unittest.TestCase):
+    """The three `gh` failure policies stay distinct, and none of them invents an answer.
+
+    There were four hand-written `subprocess.run(["gh", ...])` wrappers, each with its own
+    idea of failure: one returned `""`, one returned `None`, one raised, one handed back the
+    exit code. Consolidating them is only safe if the policies survive, and the dangerous
+    direction is the write path silently reading nothing -- `list_repos` returning `[]` on a
+    failed page reads as "you own no repos" and a sweep over that changes nothing while
+    reporting success.
+    """
+
+    def test_the_read_helpers_report_absence_and_the_write_path_raises(self):
+        import common
+        import sweep_github
+        real = common.gh
+        common.gh = lambda *a, **kw: (_ for _ in ()).throw(
+            RuntimeError("boom")) if kw.get("check") else (1, "404")
+        try:
+            self.assertEqual(common.gh_text("api", "x"), "")
+            self.assertIsNone(common.gh_json("api", "x"))
+            with self.assertRaises(RuntimeError):
+                sweep_github.gh("api", "x")
+            with self.assertRaises(RuntimeError):
+                sweep_github.list_repos({"ids": {"github": "nobody"}})
+        finally:
+            common.gh = real
+
+    def test_only_common_runs_the_gh_binary(self):
+        """One implementation, so a timeout or a policy change lands everywhere at once."""
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        offenders = []
+        for path in sorted(glob.glob(os.path.join(root, "scripts", "*.py"))
+                           + glob.glob(os.path.join(root, "measure", "*.py"))):
+            if os.path.basename(path) in ("common.py", "build_site.py"):
+                continue          # build_site clones a repo, it does not read the API
+            if re.search(r'subprocess\.\w+\(\s*\[\s*"gh"', open(path).read()):
+                offenders.append(os.path.basename(path))
+        self.assertEqual(offenders, [], "re-implements common.gh")

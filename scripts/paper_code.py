@@ -58,14 +58,14 @@ import argparse
 import json
 import os
 import re
-import subprocess
 import sys
 import time
 import urllib.error
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import DATA, ROOT, load_config, note_fetch, read_yaml, write_yaml  # noqa: E402
+from common import (DATA, ROOT, gh_json, load_config, note_fetch,  # noqa: E402
+                    read_yaml, write_yaml)
 from fulltext import resolve as resolve_fulltext  # noqa: E402
 
 BUILD = os.path.join(ROOT, "build")
@@ -188,21 +188,6 @@ PAGE_FILE_RX = re.compile(
     r"pptx?|docx?|mp4|wav|bin|ckpt|pt|h5)$", re.I)
 
 
-def gh_json(path: str) -> dict | None:
-    """One GitHub API read through `gh`, so it inherits the user's rate limit."""
-    try:
-        out = subprocess.run(["gh", "api", path], capture_output=True, text=True,
-                             timeout=60)
-    except (OSError, subprocess.TimeoutExpired):
-        return None
-    if out.returncode != 0:
-        return None
-    try:
-        return json.loads(out.stdout)
-    except json.JSONDecodeError:
-        return None
-
-
 class RepoFacts:
     """GitHub's answer about one `owner/name`, cached across runs."""
 
@@ -221,7 +206,7 @@ class RepoFacts:
     def get(self, full: str) -> dict:
         if full in self.cache:
             return self.cache[full]
-        d = gh_json(f"repos/{full}")
+        d = gh_json("api", f"repos/{full}")
         if d is None:
             fact = {"exists": False}
         else:
@@ -248,7 +233,7 @@ class RepoFacts:
         key = f"readme:{full}"
         if key in self.cache:
             return self.cache[key]
-        d = gh_json(f"repos/{full}/readme")
+        d = gh_json("api", f"repos/{full}/readme")
         text = ""
         if d and d.get("content"):
             import base64

@@ -30,11 +30,11 @@ import argparse
 import base64
 import json
 import os
-import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import BUILD, DATA, load_config, read_yaml, rules_block, write_yaml  # noqa: E402
+from common import (BUILD, DATA, gh_text, load_config, read_yaml,  # noqa: E402
+                    rules_block, write_yaml)
 
 SCHEMA = {
     "type": "object",
@@ -101,24 +101,19 @@ def system_prompt() -> str:
     return FRAMING.format(doc=RULES_DOC) + rules_block(RULES_DOC)
 
 
-def gh(*args: str) -> str:
-    r = subprocess.run(["gh", *args], capture_output=True, text=True)
-    return "" if r.returncode else r.stdout
-
-
 def evidence(repo: dict) -> str:
     """Assemble what the model gets to see. Kept small and factual."""
     name = repo["repo"]
     readme = ""
     for fn in ("README.md", "README.rst", "readme.md", "README.txt"):
-        b64 = gh("api", f"repos/{name}/contents/{fn}", "-q", ".content")
+        b64 = gh_text("api", f"repos/{name}/contents/{fn}", "-q", ".content")
         if b64:
             try:
                 readme = base64.b64decode(b64).decode("utf-8", "replace")[:6000]
                 break
             except Exception:
                 pass
-    files = gh("api", f"repos/{name}/contents", "-q", ".[].name") or ""
+    files = gh_text("api", f"repos/{name}/contents", "-q", ".[].name") or ""
     parts = [
         f"repo name: {name.split('/')[-1]}",
         f"current description: {repo.get('current_description') or '(none)'}",

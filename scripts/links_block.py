@@ -26,12 +26,11 @@ import argparse
 import base64
 import os
 import re
-import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from build_site import LINK_LABELS, read_sidecar  # noqa: E402
-from common import BUILD, DATA, load_config, read_yaml  # noqa: E402
+from common import BUILD, DATA, gh, load_config, read_yaml  # noqa: E402
 
 START = "<!-- paper-geo:links:start -->"
 END = "<!-- paper-geo:links:end -->"
@@ -40,11 +39,6 @@ ORDER = ["paper_page", "arxiv", "html", "doi", "acl_anthology", "publisher",
          "huggingface", "semantic_scholar", "alphaxiv", "arxiv_pdf", "code",
          "data", "models", "project", "video", "slides", "poster", "leaderboard",
          "demo"]
-
-
-def gh(*args: str) -> tuple[int, str]:
-    r = subprocess.run(["gh", *args], capture_output=True, text=True)
-    return r.returncode, (r.stdout if r.returncode == 0 else r.stderr)
 
 
 def render(p: dict, sc: dict, cfg) -> str:

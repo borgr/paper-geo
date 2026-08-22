@@ -19,15 +19,14 @@ from __future__ import annotations
 
 import argparse
 import base64
-import json
 import os
 import re
-import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, ROOT, clean_latex, load_config,  # noqa: E402
-                    norm_title, paper_doi, read_yaml, write_yaml)
+from common import (BUILD, DATA, ROOT, clean_latex, gh_json, gh_text,  # noqa: E402
+                    load_config, norm_title, paper_doi, read_yaml, write_yaml)
+from common import gh as common_gh  # noqa: E402
 
 # Topics and descriptions are decided in `propose_topics.py`, not here. A keyword
 # vocabulary used to live at this spot and matched substrings against name + description
@@ -40,16 +39,13 @@ from common import (BUILD, DATA, ROOT, clean_latex, load_config,  # noqa: E402
 
 
 def gh(*args: str) -> str:
-    r = subprocess.run(["gh", *args], capture_output=True, text=True)
-    if r.returncode:
-        raise RuntimeError(r.stderr.strip() or f"gh {' '.join(args)} failed")
-    return r.stdout
+    """`gh` stdout. Raises on any failure -- this module writes, so a silent no-op lies."""
+    return common_gh(*args, check=True)[1]
 
 
 def gh_or_none(*args: str) -> str | None:
     """`gh` output, or None where a 404 is the answer rather than a failure."""
-    r = subprocess.run(["gh", *args], capture_output=True, text=True)
-    return r.stdout.strip() or None if not r.returncode else None
+    return gh_text(*args).strip() or None
 
 
 def gh_topics_args(topics: list[str]) -> list[str]:
@@ -61,19 +57,13 @@ def gh_topics_args(topics: list[str]) -> list[str]:
     return args
 
 
-def gh_json(path: str, jq: str | None = None):
-    args = ["api", path]
-    if jq:
-        args += ["-q", jq]
-    return gh(*args)
-
-
 def list_repos(cfg) -> list[dict]:
     user = cfg["ids"]["github"]
     out, page = [], 1
     while True:
-        raw = gh_json(f"users/{user}/repos?per_page=100&page={page}")
-        batch = json.loads(raw)
+        batch = gh_json("api", f"users/{user}/repos?per_page=100&page={page}")
+        if batch is None:
+            raise RuntimeError(f"gh api users/{user}/repos page {page} failed")
         if not batch:
             break
         out += batch
