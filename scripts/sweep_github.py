@@ -28,14 +28,11 @@ from common import (BUILD, DATA, ROOT, clean_latex, gh_json, gh_text,  # noqa: E
                     load_config, norm_title, paper_doi, read_yaml, write_yaml)
 from common import gh as common_gh  # noqa: E402
 
-# Topics and descriptions are decided in `propose_topics.py`, not here. A keyword
-# vocabulary used to live at this spot and matched substrings against name + description
-# + README; it was replaced by the labeller and then sat unused for long enough that the
-# deletion is worth a note, because a reader auditing "how does a public topic get
-# chosen?" opens this file first and the dead table answered confidently and wrongly.
-# Substring matching was also the wrong tool: `merg` matched *emergent*, `interpret`
-# matched *interpreter*, `annotat` matched *type annotations*, and `training` matched
-# every ML README there is.
+# Topics and descriptions are decided in `propose_topics.py`, not here. A reader auditing
+# "how does a public topic get chosen?" opens this file first, which is why the note
+# outlives the keyword table that used to sit here -- substring matching over name +
+# description + README was also the wrong tool: `merg` matched *emergent*, `interpret`
+# matched *interpreter*, and `training` matched every ML README there is.
 
 
 def gh(*args: str) -> str:
@@ -249,13 +246,10 @@ def phase_propose(cfg) -> None:
     linked = link_papers(repos, papers)
     site = cfg["site"]["base_url"]
     proposal, added, gone = [], [], []
-    # By name, not by stars. Row *order* keyed on a live counter is observed state stored
-    # positionally instead of as a field -- which the loop below already refuses to do,
-    # dropping `stars` a dozen lines down for exactly that reason. The cost was visible:
-    # one repo gaining a star relative to its neighbour rewrites the file as a 30-line
-    # move, so `git log data/repos.yaml` cannot answer "what changed about my repos"
-    # any more than it could if the count were written in. Nothing reads these rows
-    # positionally -- build_site, links_block, propose_topics and validate all iterate.
+    # By name, not by stars. Row *order* keyed on a live counter stores observed state
+    # positionally, which the loop below already refuses to do when it drops `stars`. One repo
+    # gaining a star rewrites the file as a 30-line move, so `git log data/repos.yaml` can no
+    # longer answer "what changed about my repos". Nothing reads these rows positionally.
     for r in sorted(repos, key=lambda r: r["full_name"].lower()):
         name = r["full_name"]
         entry = dict(prior.get(name) or {})
@@ -296,12 +290,9 @@ def phase_propose(cfg) -> None:
     print(f"  reviewed (frozen):  {sum(1 for r in proposal if r.get('reviewed'))}")
     zpath, nz = zenodo_candidates(cfg)
     print(f"  artifacts with no citation route: {nz} -> {os.path.relpath(zpath, ROOT)}")
-    # Reviewed and skipped rows are excluded, or the count could never reach zero. The
-    # three early-exploratory repos that used to sit here -- nothing in them to describe,
-    # labeller returned empty topics at low confidence, which was the right answer -- are
-    # now `skip: true` with the reason in `notes`. That is what this comment used to
-    # predict and it took a while to act on: a settled "nothing to say" reported as an
-    # open item forever is how a number stops being read.
+    # Reviewed and skipped rows are excluded, or the count could never reach zero. A settled
+    # "nothing to say" -- the three early-exploratory repos, now `skip: true` with the reason
+    # in `notes` -- reported as an open item forever is how a number stops being read.
     need = [r["repo"] for r in proposal
             if not r.get("reviewed") and not r.get("skip")
             and (not r.get("topics") or not r.get("description"))]

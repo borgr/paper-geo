@@ -197,12 +197,10 @@ What to check, in the order it pays:
 -->
 """
 _PROMOTE_NEW = "Then promote it:  python scripts/draft_sidecars.py --accept {slug}\n"
-# Accepting over a reviewed sidecar is the one destructive path in this script, so the
-# banner is at the top of the file rather than something the reader discovers from an
-# error at accept time -- and the diff is named before the checklist, because here the
-# comparison *is* the review. A live sidecar may be worded by the author, and a model's
-# version being more complete does not make it better where the author was already
-# right.
+# Accepting over a reviewed sidecar is the one destructive path here, so the banner sits
+# at the top of the file rather than in an error at accept time -- and the diff comes
+# before the checklist, because here the comparison *is* the review. A live sidecar may be
+# worded by the author, and a more complete draft is not better where he was already right.
 _BANNER_REPLACE = """
 THIS PAPER ALREADY HAS A LIVE SIDECAR, and this draft would replace it. Start here:
 
@@ -395,15 +393,12 @@ def validate_draft(path: str, note: bool = True) -> tuple[list[str], list[str]]:
     from validate import (check_claim_evidence, check_claim_numbers, check_readability,
                           check_sidecar_shape)
     entry = [(os.path.basename(path), fm)]
-    # Each check runs inside its own guard, and a check that cannot read the draft becomes
-    # one finding instead of taking the tier down with it. Two failures got here the long
-    # way round. First, a draft with `terminology` as a list made `readability` raise
-    # AttributeError, and a check that crashes reports nothing at all. Then the fix for
-    # that -- skip the quality tier whenever the schema rejected the document -- turned out
-    # far worse than the crash: four drafts in a live run carried one schema error each and
-    # nine or ten readability findings, reported one finding, were repaired against that
-    # one, and got stamped `checks=1`. A tier that goes quiet is more dangerous than a tier
-    # that dies, because the count it reports is believable.
+    # Each check runs inside its own guard, so a check that cannot read the draft becomes one
+    # finding instead of taking the tier down with it. Not the same as skipping the quality
+    # tier when the schema rejected the document: four drafts with one schema error and ten
+    # readability findings each then reported one finding, were repaired against it, and were
+    # stamped `checks=1`. A tier that goes quiet is worse than one that dies, because the
+    # count it reports is believable.
     quality, no_text = [], False
     for run in (lambda: check_sidecar_shape(entry),
                 lambda: check_readability(entry),

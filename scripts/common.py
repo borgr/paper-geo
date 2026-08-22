@@ -94,15 +94,11 @@ DEAD_DAYS = 6
 # that moved, an endpoint that now needs a key, or a config field nobody filled. No
 # point waiting a week to say so, but one bad afternoon should not say it either.
 NEVER_DAYS = 2
-# Consecutive recorded failures, with no success in between, before a source counts as
-# failing rather than busy. Both thresholds above are measured in days, which is the right
-# clock for "has it come back" and the wrong one for "is it working" -- a source that
-# answered yesterday and has refused every call since clears both of them. Deliberately
-# small, because a recorded failure is not one request: `get` retries six times with
-# exponential backoff before writing one down, so three of these is ~18 attempts across
-# several minutes of waiting with nothing succeeding between them. And a success resets
-# the counter, so a mid-run hiccup that recovered reads as 0 at report time, which is the
-# distinction the day-based thresholds could not draw.
+# Consecutive recorded failures, with no success between them, before a source counts as
+# failing rather than busy. The thresholds above are in days, which is the right clock
+# for "has it come back" and the wrong one for "is it working". Deliberately small: `get`
+# retries six times with exponential backoff before recording one failure, so three of
+# these is ~18 attempts, and any success resets the counter.
 FAILING_NOW = 3
 
 
@@ -151,24 +147,19 @@ def note_fetch(url: str, ok: bool, why: str = "") -> None:
                            "last_ok": None, "last_fail": None})
     r["ok" if ok else "fail"] += 1
     r["last_ok" if ok else "last_fail"] = today
-    # Consecutive failures since the last success. `ok` and `fail` are cumulative over all
-    # time, and a ratio built from them cannot tell "broken an hour ago" from "flaky in
-    # March": it fires on arxiv.org/html/* (449 ok, 86 old fails, healthy today) and stays
-    # silent on a source refusing every call since yesterday. This counter answers the
-    # question the other two cannot -- is it failing *now* -- and it self-populates, so a
-    # ledger written before it existed reads as 0 rather than as an alarm.
+    # Consecutive failures since the last success -- the only one of the three counters that
+    # answers "is it failing *now*". A ratio over the cumulative `ok`/`fail` fires on
+    # arxiv.org/html/* (449 ok, 86 old fails, healthy today) and stays silent on a source
+    # refusing every call since yesterday. Self-populating, so an older ledger reads as 0.
     r["since_ok"] = 0 if ok else r.get("since_ok", 0) + 1
     if not ok and why:
         r["last_error"] = why
     elif ok:
-        # Cleared on success. `last_error` answers "what would fix this source", and a
-        # source that just answered has nothing to fix -- but the field used to outlive
-        # its own truth, because nothing ever unset it. Measured: after a run that made
-        # three clean calls to `graph/v1/paper/*` and failed zero times, the ledger still
-        # read `last_error: 429`, which is worse than saying nothing. A ledger that is
-        # silent gets checked; one that is confidently wrong gets believed. No reader
-        # loses information -- both uses of this field in `health_report` sit inside the
-        # `not r["ok"]` branch, which no success can reach.
+        # Cleared on success: `last_error` answers "what would fix this source", and a source
+        # that just answered has nothing to fix. Left set, the ledger reported `last_error: 429`
+        # after a run of three clean calls and no failures -- a ledger that is silent gets
+        # checked, one that is confidently wrong gets believed. Nothing is lost, since both
+        # readers of the field sit inside `health_report`'s `not r["ok"]` branch.
         r.pop("last_error", None)
     try:
         os.makedirs(BUILD, exist_ok=True)
@@ -290,14 +281,11 @@ def get(url: str, timeout: int = 40, retries: int = 6, accept: str | None = None
                 time.sleep(delay)
                 delay *= 2
                 continue
-            # A 404 or 410 on a URL naming one record is the server answering a question
-            # about that record -- "no, not here" -- and the source is working perfectly
-            # when it says so. Counting it as a failure makes the ledger call a host
-            # broken as soon as a run asks about a few papers the host does not index,
-            # which is the ordinary case for arXiv, HF and Crossref alike. On a URL with
-            # no identifier in it, the same code means the endpoint itself is gone, and
-            # that is exactly what the ledger exists to notice. `source_key` already
-            # draws that line: an identifier is the part it collapses to `*`.
+            # A 404 or 410 on a URL naming one record is the server answering the question about
+            # that record -- the source is working when it says so, and counting it as a failure
+            # calls a host broken as soon as a run asks about papers it does not index. On a URL
+            # with no identifier in it the same code means the endpoint is gone, which is what the
+            # ledger exists to notice. `source_key` draws that line: identifiers collapse to `*`.
             note_fetch(url, e.code in (404, 410) and "*" in source_key(url), str(e.code))
             return b""
         except Exception as e:

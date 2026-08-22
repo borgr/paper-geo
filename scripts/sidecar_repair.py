@@ -122,12 +122,11 @@ def repair(slug: str, rounds: int, again, evidence: str = "",
         if sc is None:
             print(f"    round {r + 1}: no usable reply, keeping the draft as it stands")
             break
-        # Deleting the content is the cheapest way to satisfy a checker, and the loop had no
-        # defence against it: one round answered 17 findings with a sidecar holding none of
-        # the paper's 12 claims and none of its 8 question groups, scored 2, and was kept
-        # because 2 < 17. A round may merge or split claims; it may not drop the sidecar on
-        # the floor. Refused before it is written, so the draft on disk never passes through
-        # the collapsed state.
+        # Deleting the content is the cheapest way to satisfy a checker: one round answered 17
+        # findings with a sidecar holding none of the paper's 12 claims and none of its 8 question
+        # groups, and was kept because 2 < 17. A round may merge or split claims; it may not drop
+        # the sidecar on the floor. Refused before it is written, so the draft on disk never
+        # passes through the collapsed state.
         gone = shrunk(fm, sc)
         if gone:
             print(f"    round {r + 1}: the reply dropped {gone} -- refused, kept the "
@@ -142,12 +141,11 @@ def repair(slug: str, rounds: int, again, evidence: str = "",
         write_draft(slug, sc, f"{source} + {r + 1} repair {rnd}")
         after = sum(len(x) for x in validate_draft(path, note=False))
         if after > n:
-            # Keep the better draft. The early stop above only skips the *next* round, so
-            # a final round that overshoots still landed on disk and replaced the draft it
-            # was meant to improve -- live case: 15 -> 7 -> 4 -> 6, and the 6 was what was
-            # left for the reviewer. The overshoot is the loop's characteristic failure
-            # rather than bad luck: told a scope is too long it cuts, and cutting past the
-            # floor trades one finding for another, so the round both fixes and breaks.
+            # Keep the better draft. The early stop above only skips the *next* round, so a final
+            # round that overshoots still lands on disk and replaces what it was meant to improve
+            # (15 -> 7 -> 4 -> 6, and the 6 is what the reviewer gets). Overshoot is the loop's
+            # characteristic failure: told a scope is too long it cuts, and cutting past the floor
+            # trades one finding for another.
             open(path, "w", encoding="utf-8").write(was)
             print(f"    round {r + 1}: {n} finding(s) -> {after}, worse -- kept the "
                   f"{n}-finding draft")
@@ -565,11 +563,9 @@ def mend(slug: str, again, evidence: str = "", source: str = "a model") -> int:
     singles = {locus: value for locus, value in new.items() if locus in jobs}
     bulk = {locus: value for locus, value in new.items() if locus in crowd}
     # Each field's rewrite stands or falls on its own, spliced and checked one at a time.
-    # Accepting or rejecting the patch as a whole loses both ways: it threw away five good
-    # fixes because a sixth traded one finding for another, and it kept five rewrites that
-    # changed nothing because a sixth happened to help. Live case: 6 fields rewritten, 1
-    # finding cleared, 5 of the rewrites pointless churn in a draft a human then has to
-    # re-read.
+    # Judging the patch whole loses both ways: it discards five good fixes because a sixth
+    # traded one finding for another, and keeps five rewrites that changed nothing because a
+    # sixth happened to help -- churn in a draft a human then has to re-read.
     kept, undone, count = [], [], before
     for locus, value in singles.items():
         snapshot, held = open(path, encoding="utf-8").read(), at(fm, locus)

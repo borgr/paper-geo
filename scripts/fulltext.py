@@ -75,12 +75,10 @@ EXTRACTOR = 3
 # PDF is a title page or a scan that extracted nothing.
 MIN_PDF_CHARS = 1200
 
-# What arXiv's abstract landing page says and a rendered paper never does. Length alone
-# could not separate them: this page carries the title, the full abstract, the author list
-# and the site chrome, which for one paper in the corpus came to 4,344 characters and so
-# cleared MIN_CHARS by 344 -- and the sidecar drafted from it could state no result,
-# because there were none in it to state. Raising the threshold would start rejecting real
-# short papers, so the test is what the page *is*, not how long it is.
+# What arXiv's abstract landing page says and a rendered paper never does. Length cannot
+# separate them: with title, abstract, author list and chrome, one abs page came to 4,344
+# characters and cleared MIN_CHARS -- and the sidecar drafted from it could state no
+# result, because none were in it. So the test is what the page *is*, not how long.
 _LANDING = "View a PDF of the paper titled"
 
 
@@ -490,13 +488,10 @@ def resolve(p: dict, cfg: dict | None = None, limit: int = LIMIT,
         with open(path) as f:
             cached = f.read()
         src = source_of(p["slug"])
-        # Long-and-unattributed is honoured too, for the caches written before this file
-        # recorded a source. Re-fetching 105 papers to learn what we already have would
-        # be the rude version of a migration -- and the attribution is not a guess: the
-        # implementation that wrote those files could read one field and no other, so a
-        # long cache with no recorded source came from links.html. Labelled `inferred`
-        # regardless, because a reader should be able to tell a reconstruction from a
-        # fetch that actually happened.
+        # Long-and-unattributed caches are honoured too, from before this file recorded a
+        # source. Not a guess: the implementation that wrote them could read one field and no
+        # other, so a long cache with no source came from links.html. Labelled `inferred`
+        # anyway, so a reader can tell a reconstruction from a fetch that happened.
         if cached and len(cached) >= MIN_CHARS and not found(src):
             url = (p.get("links") or {}).get("html")
             src = f"arxiv-html {url} (inferred)" if url else "(unrecorded)"

@@ -654,13 +654,11 @@ def dedupe(papers: list[dict], prefer: list[str] | None = None) -> tuple[list[di
             x = parent[x]
         return x
 
-    # Identifiers first, and without consulting the titles at all. One arXiv id is one
-    # paper and one DOI is one paper, however differently two sources spell them: a
-    # retitled preprint ("All Neural Networks are Created Equal" -> "Let's Agree to
-    # Agree") shares 1905.10854 but scores nowhere near the title threshold below, so
-    # the similarity pass cannot see the pair and the corpus carried both -- two pages
-    # for one paper, with its citations split across them. This is not a judgment call,
-    # which is why it runs before the band that needs one.
+    # Identifiers first, without consulting titles at all: one arXiv id is one paper,
+    # however differently two sources spell it. A retitled preprint ("All Neural Networks
+    # are Created Equal" -> "Let's Agree to Agree") shares 1905.10854 and scores nowhere
+    # near the title threshold below, so the similarity pass cannot see the pair. This is
+    # not a judgment call, which is why it runs before the band that needs one.
     for field in ("arxiv", "doi"):
         seen: dict[str, int] = {}
         for i, p in enumerate(papers):
@@ -740,12 +738,10 @@ def apply_overrides(papers: list[dict], ov: dict) -> list[dict]:
     dropped: set[int] = set()
     for group in ov.get("force_merge") or []:
         members = [by_norm.get(norm_title(t)) for t in group]
-        # Two aliases can resolve to the SAME record -- either dedupe already merged
-        # them, or a normalization fix made their titles fold together. Without this
-        # de-duplication by identity, the record ends up in `members[1:]` as well as
-        # being the base, so it is merged into itself and then dropped: the entire
-        # paper vanishes from the corpus, silently, because a human wrote down a
-        # correct merge. Seen for real once, on the `{ extdollar}` pair.
+        # Two aliases can resolve to the SAME record, when dedupe already merged them or a
+        # normalization fix folded their titles together. Without de-duplicating by identity
+        # the record lands in `members[1:]` as well as being the base, so it is merged into
+        # itself and dropped -- the paper vanishes because a human wrote down a correct merge.
         uniq: list[dict] = []
         for m in members:
             if m is not None and not any(m is u for u in uniq):
@@ -808,12 +804,10 @@ def apply_overrides(papers: list[dict], ov: dict) -> list[dict]:
             # Sorted set, not append: on the `--offline` path the record already carries
             # the list from the previous run, and appending would grow it every rerun.
             p["overridden_fields"] = sorted(set(p.get("overridden_fields") or []) | {k})
-        # Overriding a field only reaches the things derived from it if they are derived
-        # after this point. `venue_display` and `title_display` are, so they pick the
-        # correction up on their own; `links` is not -- it is built while the record is,
-        # long before any of this runs. So an overridden `url` silently did nothing,
-        # which is the worst way for a hand correction to fail. Re-derive that one link
-        # here, on the same condition the original build uses.
+        # An override only reaches what is derived after this point. `venue_display` and
+        # `title_display` are, so they pick the correction up; `links` is built with the record,
+        # long before this runs, so an overridden `url` silently did nothing. Re-derive that one
+        # link here, on the same condition the original build uses.
         if "url" in (p.get("overridden_fields") or []) and p.get("url"):
             L = p.setdefault("links", {})
             if p["url"] not in L.values():
@@ -994,13 +988,11 @@ def main() -> None:
 
     if args.offline:
         papers = (read_yaml(out) or {}).get("papers", [])
-        # Hand decisions have to be re-applied here too. overrides.yaml promises that a
-        # judgment call recorded in it survives every rerun, and `--offline` is a rerun:
-        # without this, editing `fields` and re-deriving looks like it worked -- the
-        # collector prints its usual summary -- while papers.yaml comes out byte for byte
-        # unchanged. The merge and drop passes are no-ops on already-merged records
-        # (a force_merge group resolves to a single record, which the identity check in
-        # pass 1 skips), so only the field corrections actually bite.
+        # Hand decisions are re-applied on this path too: `--offline` is a rerun, and
+        # overrides.yaml promises a judgment call survives every rerun. Without this, editing
+        # `fields` and re-deriving prints the usual summary while papers.yaml comes out byte
+        # for byte unchanged. The merge and drop passes are no-ops on already-merged records,
+        # so only the field corrections bite.
         papers = apply_overrides(papers, read_yaml(os.path.join(DATA, "overrides.yaml")) or {})
     else:
         print("bibtex ...", file=sys.stderr)

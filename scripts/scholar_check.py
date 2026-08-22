@@ -134,13 +134,11 @@ def scholar_rows(uid: str) -> list[dict]:
             break
         rows = ROW.findall(page)
         if not rows and start == 0:
-            # Rows absent from a page that did load: a challenge, a renamed class, or
-            # a profile that went private. All three mean "no data", and none of them
-            # means "you have no papers", so the count is never reported as zero.
-            # Also recorded as a failed fetch even though the HTTP call succeeded: a
-            # 200 carrying no data is the failure this source will actually have, and
-            # a ledger that only counts transport errors would call it healthy for
-            # months while the coverage check silently checked nothing.
+            # Rows absent from a page that did load: a challenge, a renamed class, or a profile
+            # gone private. All three mean "no data" and none means "you have no papers", so the
+            # count is never reported as zero. Recorded as a failed fetch even though the HTTP call
+            # succeeded -- a 200 carrying no data is the failure this source actually has, and a
+            # ledger counting only transport errors would call it healthy for months.
             note_fetch(PROFILE.format(uid=uid, start=start), False)
             print("scholar: the page loaded but has no citation rows -- a challenge "
                   "page, or the profile is private. Nothing checked.", file=sys.stderr)
@@ -853,12 +851,10 @@ def main() -> None:
             missing.append(r)
 
     absent = [p for p in papers if norm_title(p.get("title")) not in seen]
-    # Pair every leftover Scholar row against the corpus before reporting it as a gap,
-    # and against the whole corpus rather than only the unmatched part -- because which
-    # side the pair lands on decides who has the work. A pair with an unmatched paper
-    # is one paper under two titles and the question is which is current. A pair with a
-    # paper that already matched some other row means Scholar itself lists it twice,
-    # which nothing in this repo can fix.
+    # Pair every leftover Scholar row against the whole corpus, not just its unmatched part,
+    # because which side the pair lands on decides who has the work: paired with an unmatched
+    # paper it is one paper under two titles, and paired with a paper that already matched
+    # another row it is Scholar listing the same work twice, which nothing here can fix.
     variants, dupes, taken = [], [], set()
     unmatched = {p["slug"]: p for p in absent}
     for r in sorted(missing, key=lambda r: -r["citations"]):
@@ -978,12 +974,11 @@ def main() -> None:
               f"-- ignored on purpose", file=sys.stderr)
     if absent:
         cited = [p for p in absent if (p.get("citations") or 0) > 0]
-        # "with no Scholar row" is the measurement; "worth adding to your profile" was an
-        # inference this check cannot make and which was wrong for all five of the papers
-        # it named. The profile listing shows one title per record, so a paper Scholar has
-        # merged into another record is indistinguishable here from one Scholar does not
-        # have -- and adding a merged paper by hand splits its future citations across two
-        # records. Checked on this corpus: all five were merges.
+        # "with no Scholar row" is the measurement; "worth adding to your profile" is an
+        # inference this check cannot make. The profile lists one title per record, so a paper
+        # Scholar merged into another record is indistinguishable from one it does not have --
+        # and adding a merged paper by hand splits its future citations. All five cases the
+        # stronger wording named were merges.
         print(f"  {len(absent)} corpus paper(s) whose title is not in the Scholar listing"
               + (f", {len(cited)} of them cited -- check for a merge before adding any"
                  if cited else " (Scholar indexes on its own schedule)"),

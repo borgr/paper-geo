@@ -43,13 +43,11 @@ OUT = os.path.join(TASKS, "wikipedia.md")
 # the few actionable items are handed over as data. `tasks/wikipedia.md` stays the full read.
 STATE = os.path.join(ROOT, "build", "wikipedia_state.json")
 
-# A coined name that is also an ordinary word makes any search meaningless -- "Genie" and
-# "Choice" match thousands of articles about nothing to do with this corpus. Case-sensitive
-# matching (below) catches most of these; these are the ones it cannot.
-# Two kinds of unusable name: an ordinary word ("Genie", "Choice"), and a coinage that
-# collides with an established term from another field. `E-values` here is a reinforcement
-# learning quantity from DORA; on Wikipedia it is the statistics notion, so every match is a
-# false positive and no filter downstream can tell them apart.
+# Names no search can use, which case-sensitive matching below cannot rescue. Two kinds:
+# an ordinary word ("Genie", "Choice"), matching thousands of unrelated articles; and a
+# coinage colliding with an established term from another field -- `E-values` is a
+# reinforcement-learning quantity in DORA and the statistics notion on Wikipedia, so every
+# match is a false positive and nothing downstream can tell them apart.
 AMBIGUOUS = re.compile(r"^(genie|choice|version|fusing|cube|sloth|e-values|dora)$", re.I)
 
 

@@ -276,12 +276,9 @@ def promote(repos: list[dict], fresh: list[str]) -> int:
             print(f"  low confidence, not promoted: {r['repo']}")
             continue
         if p.get("topics"):
-            # `declined_topics` is the only durable record of a topic a human rejected.
-            # Deleting it from `topics` is not, and that gap was live: `nlp-free` was
-            # invented for DORA, correctly removed, and still sitting in that row's
-            # proposal waiting for the next ingest to put it back. A deletion cannot be
-            # distinguished from a topic that was never proposed, so the rejection has to
-            # be written down somewhere the next run reads.
+            # `declined_topics` is the only durable record of a topic a human rejected. Deleting it
+            # from `topics` is not: a deletion cannot be distinguished from a topic never proposed,
+            # so the next ingest puts it back -- which happened to `nlp-free` on DORA.
             declined = set(r.get("declined_topics") or [])
             keep = sorted(set(p["topics"]) - declined)[:12]
             for t in sorted(set(p["topics"]) & declined):

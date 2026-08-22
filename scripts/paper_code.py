@@ -110,23 +110,21 @@ SKIP_OWNERS = {
 SKIP_NAMES = {"transformers", "datasets", "tokenizers", "peft", "trl", "accelerate",
               "lm-evaluation-harness", "evaluate", "diffusers"}
 
-# A URL a paper published *for review*, not for readers. Under double-blind these are
-# the release sentence's whole content -- "our code is available at
-# anonymous.4open.science/r/xyz" -- so they score exactly like the real thing and are
-# the one class of candidate that is certain to be wrong: the mirror is deleted after
-# the review cycle, and linking it from a permanent record publishes a URL that is
-# already dead or soon will be. The camera-ready names the real repo; if the extracted
-# text is a preprint that predates it, no link is the correct answer.
+# A URL a paper published *for review*, not for readers. Under double-blind these are the
+# release sentence's whole content ("our code is available at anonymous.4open.science/r/
+# xyz"), so they score exactly like the real thing while being certain to be wrong: the
+# mirror is deleted after the review cycle. The camera-ready names the real repo; if the
+# extracted text predates it, no link is the correct answer.
 ANON_RX = re.compile(r"anonymous|4open\.science|double[-\s]?blind|anon\.github", re.I)
 
 # ---- project pages -----------------------------------------------------------------
-# The other link HF stores. It matters for a different reason than the repo: a paper
+# The other link HF stores, and it matters for a different reason than the repo: a paper
 # whose artifact is a website, a leaderboard or a dataset viewer has no repo worth
-# linking, and the page is where a reader who believes the result actually goes.
+# linking, and the page is where a reader who believes the result goes.
 #
-# There is no `gh api` for the open web, so the confirmation is the page itself: fetch
-# it and require that it names the paper. That is a stronger check than the repo path
-# gets, and it has to be, because the candidate space is every URL in the document.
+# There is no `gh api` for the open web, so the confirmation is the page itself -- fetch
+# it and require that it names the paper. A stronger check than the repo path gets, and it
+# has to be, because the candidate space is every URL in the document.
 PAGE_CACHE = os.path.join(BUILD, "project_pages.json")
 PAGE_RX = re.compile(r"https?://([\w.-]+\.[a-z]{2,})(/[^\s)\]}>,;\"'\\]*)?", re.I)
 

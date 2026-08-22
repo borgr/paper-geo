@@ -48,13 +48,10 @@ def run(argv: list[str], cwd: str | None = None) -> int:
 def step_collect(cfg, args) -> None:
     """Rebuild data/papers.yaml from bibliography + S2 + arXiv + HF."""
     if args.refresh_bib:
-        # This used to run `python update.py` inside the publications checkout. That
-        # repo's pipeline commits and pushes -- to GitHub and to Overleaf -- so a GEO
-        # run with one extra flag published to a repo this project does not own, on
-        # somebody else's schedule, with the GEO output as its only visible purpose.
-        # The bibliography has one owner and it is not this pipeline. What remains is
-        # the half that was actually wanted: read the checkout on disk rather than the
-        # last copy pushed to GitHub, so a refresh done over there is visible here.
+        # The bibliography checkout is read on disk, never run. Its own pipeline commits and
+        # pushes -- to GitHub and to Overleaf -- so driving it from here would publish to a repo
+        # this project does not own. Reading the working copy rather than the last pushed version
+        # is the half that was wanted: a refresh done over there is visible here immediately.
         path = cfg["sources"].get("publications_path")
         if path and os.path.isdir(path):
             print(f"  reading the bibliography from {path} (its working tree, not the\n"
@@ -472,12 +469,10 @@ def apply_declines(lines: list[str]) -> list[str]:
                 continue
         out.append(ln)
 
-    # A section that lost its last item goes with it. Declining all five "not on your
-    # Scholar profile" papers left the heading, four paragraphs of instructions and a
-    # citation total standing over an empty list -- which reads as an open task, and is
-    # the one thing a file of open items must not contain. Only for sections that *had*
-    # items: a heading whose body is prose and a pointer is a section with nothing to
-    # count, and dropping those would take most of the page.
+    # A section that lost its last item goes with it: a heading, four paragraphs of
+    # instructions and a citation total standing over an empty list reads as an open task,
+    # which is the one thing this file must not contain. Only sections that *had* items -- a
+    # heading whose body is prose and a pointer has nothing to count.
     for head in emptied:
         try:
             i = out.index(head)
@@ -643,12 +638,10 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
     gate, miss = sc.get("gate_dropped") or [], sc.get("not_in_corpus") or []
     miss = [r for r in miss if (r.get("kind") or "paper") == "paper"]
     dup = sc.get("scholar_duplicates") or []
-    # A title variant is only work when nobody has already decided it. arXiv holds the
-    # current title and the run has already fetched it, so `stale` says which side is
-    # behind: `bib` is one edit upstream, `open` is a judgement, and `scholar` is
-    # neither -- Scholar kept an older title, and editing that row changes what it
-    # displays, not which citations cluster under it. Counting all three as open items
-    # is how a worklist teaches you to skim it.
+    # A title variant is only work when nobody has already decided it. arXiv holds the current
+    # title and the run has fetched it, so `stale` says which side is behind: `bib` is one edit
+    # upstream, `open` is a judgement, and `scholar` is neither -- editing that row changes
+    # what Scholar displays, not which citations cluster under it.
     var = sc.get("title_variants") or []
     fix = [v for v in var if v.get("stale") == "bib"]
     call = [v for v in var if v.get("stale") not in ("bib", "scholar")]
@@ -666,12 +659,10 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
     def cites(n) -> str:
         return f"{n or 0} cite{'s' * ((n or 0) != 1)}"
 
-    # No total in the heading. It summed six buckets, and `declines.yaml` filters this
-    # file *after* it is built -- so declining a whole bucket left a heading counting
-    # papers that were no longer under it, with no way for the post-filter to recount an
-    # ad-hoc phrasing. The two numbers in the body are measurements of Scholar rather
-    # than of this list, so nothing downstream can make them wrong, and each subsection
-    # already carries its own count.
+    # No total in the heading: it summed six buckets, and `declines.yaml` filters this file
+    # *after* it is built, so declining a bucket left a heading counting papers no longer under
+    # it and no way to recount an ad-hoc phrasing. The two numbers in the body measure Scholar
+    # rather than this list, and each subsection carries its own count.
     L = ["## Coverage: Google Scholar and the corpus disagree",
          "",
          f"Scholar lists **{sc.get('scholar_rows')}** works and matched "
@@ -1123,14 +1114,13 @@ def step_worklist(cfg, args) -> None:
         (bool(state.get("wikidata_papers_creatable")),
          f"### Wikidata — {state.get('wikidata_papers_creatable')} of your papers "
          f"have no item",
-         # Listed under "only you can do this" for the decision, not the labour: the
-         # labour is the command below. What is yours is that these are permanent pages
-         # on a wiki that is not yours, and the undo is a deletion request rather than a
-         # click -- the one place on this page where that is true.
+         # Listed under "only you can do this" for the decision, not the labour -- these are
+         # permanent pages on a wiki that is not yours, and the undo is a deletion request
+         # rather than a click.
          #
-         # The count is `creatable`, not `absent`: a paper with neither a DOI nor an
-         # arXiv id is absent and stays absent, and a heading of 109 over a command that
-         # creates 108 is the same defect as a heading counting a list it does not match.
+         # The count is `creatable`, not `absent`: a paper with neither a DOI nor an arXiv id
+         # stays absent, and a heading of 109 over a command that creates 108 is a count that
+         # does not match its list.
          ["Same bot password, and the same statements as the QuickStatements batch in",
           "`tasks/wikidata_papers.qs` — which is now only the fallback. This is where",
           f"`{state.get('wikidata') or 'your author item'}` gets the incoming author",
@@ -1354,12 +1344,10 @@ def step_worklist(cfg, args) -> None:
             lines += [f"**{blocked} of these are marked (blocked)**: you are not a registered",
                       "author on them, so the form will refuse. Claim ownership first (above).",
                       ""]
-        # The two field values, inline, rather than a pointer to `tasks/arxiv_jref.md`.
-        # A row that says only "-> ACL 2025" leaves the reader to work out what arXiv
-        # wants in a field it calls `Journal-ref:`, and the answer is a full citation
-        # string this code already builds from the publisher's bibtex. Held in one file
-        # and pointed at from the other is the failure that costs the most here: the
-        # section they are working from is not the section that knows what to type.
+        # The two field values inline rather than a pointer to `tasks/arxiv_jref.md`. A row
+        # saying only "-> ACL 2025" leaves the reader to work out what arXiv wants in a field it
+        # calls `Journal-ref:`, and the answer is a citation string this code already builds from
+        # the publisher's bibtex. The section they work from has to be the one that knows it.
         from identity_tasks import journal_doi, journal_ref  # noqa: E402
         subs = read_yaml(os.path.join(DATA, "arxiv_submissions.yaml")) or {}
         for p in missing_jr:
@@ -1540,12 +1528,10 @@ def step_worklist(cfg, args) -> None:
                          f"{(p.get('title_display') or p['title'])[:56]}")
         lines.append("")
 
-    # Papers whose text no fetcher can reach. Upstream of the two sidecar sections
-    # above: a sidecar is drafted from a paper's own full text, so a paper with none
-    # can never be drafted and would otherwise sit in "not yet drafted" for ever,
-    # looking like a queue that had not got to it yet. The distinction worth drawing
-    # is between a paper the pipeline has not read and one it cannot -- the second is
-    # a task, and the whole task is putting a file somewhere.
+    # Papers whose text no fetcher can reach, upstream of the two sidecar sections above: a
+    # sidecar is drafted from full text, so these can never be drafted and would otherwise sit
+    # in "not yet drafted" looking like a queue. A paper the pipeline cannot read is a task,
+    # and the whole task is putting a file somewhere.
     starved = []
     for p in papers:
         if os.path.exists(os.path.join(ROOT, "data", "sidecars", f"{p['slug']}.md")):

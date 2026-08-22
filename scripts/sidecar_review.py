@@ -63,15 +63,12 @@ def checked(slug: str) -> dict | str:
     have, vals = (figures_in(text), values_in(text)) if text else (set(), [])
     flat = re.sub(r"\s+", " ", text)
 
-    # Which questions retrieve each claim, joined this way round on purpose. A published
-    # answer is a question followed by claim text and scope, so the reader's instinct is
-    # to review it grouped by question -- but 212 of 318 claims across the live sidecars
-    # and drafts answer more than one, so that page renders two thirds of them twice and
-    # invites accepting a claim in one place while flagging the same words in another.
-    # Claim-major with its questions attached shows the same pairing, once per claim.
-    #
-    # Only each question's first phrasing, which is the canonical one: the paraphrase set
-    # is its own check and stays in the questions section, where the axes are comparable.
+    # Which questions retrieve each claim, joined claim-major on purpose. A published answer
+    # is a question followed by claim text and scope, so the instinct is to group by question
+    # -- but 212 of 318 claims answer more than one, so that page renders two thirds of them
+    # twice and invites accepting a claim in one place while flagging the same words in
+    # another. Only each question's canonical first phrasing: the paraphrase set is its own
+    # check, in the questions section, where the axes are comparable.
     asks: dict = {}
     for gi, g in enumerate(fm.get("qa") or []):
         first = (phrasings(g) or [None])[0]
@@ -373,14 +370,12 @@ def review_page(papers: list[dict]) -> str:
         out.append("<div class=cmd>python scripts/draft_sidecars.py --accept "
                    + e(slug) + (" --replace" if has_live_sidecar(slug) else "") + "</div>")
 
-        # One question, then the claims published as its answer, then the next question.
-        # Each claim is rendered once: a claim answering three questions used to print its
-        # three question lines above itself, and with two thirds of claims shared that
-        # made a page of near-identical blocks differing by one line -- and the same
-        # question reappeared above claims far apart, since sorting by a claim's *first*
-        # question cannot group its second. Under a later question a claim already shown
-        # is a one-line link to it, which is the fact the reader needs there (this answer
-        # is also carrying that question) at the size that fact deserves.
+        # One question, then the claims published as its answer, then the next -- each claim
+        # rendered once. Printing a claim's question lines above itself made a page of
+        # near-identical blocks differing by one line, and sorting by a claim's *first* question
+        # cannot group its second, so the same question reappeared far apart. Under a later
+        # question an already-shown claim is a one-line link: this answer also carries that
+        # question, at the size that fact deserves.
         def claim_html(c) -> list[str]:
             bad_here = (any(sn is None for _, sn in c["figures"])
                         or any(not ok for _, ok in c["pointers"]) or c["prose"])
@@ -569,14 +564,12 @@ def write_review_page(papers: list[dict]) -> str:
 
 
 # A claim can only say these if the paper earned them: each asserts standing relative to
-# other work or a proof, neither of which any table can settle, and a model reaches for them
-# when it is summarising an abstract's ambition instead of a result.
+# other work, or a proof, which no table can settle -- and a model reaches for them when
+# it is summarising an abstract's ambition instead of a result.
 #
-# Deliberately narrow, after reading what a wider list caught. `always`, `never`, `any` and
-# `guarantee` were in it and every hit was ordinary English -- "essentially the 0.54 of always
-# picking the first candidate" describes a majority baseline, and a claim that calls a proved
-# theorem a guarantee is paraphrasing correctly. Words like those turn the ranking into a
-# list of every page, which is the same as no ranking.
+# Deliberately narrow. `always`, `never`, `any` and `guarantee` were in the list and every
+# hit was ordinary English ("essentially the 0.54 of always picking the first candidate").
+# Words like those flag every page, which is the same as no ranking.
 LOUD = re.compile(r"\b(first|best|state[- ]of[- ]the[- ]art|sota|novel|prove[nsd]?"
                   r"|optimal|universal|unprecedented)\b", re.I)
 

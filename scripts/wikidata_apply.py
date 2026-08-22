@@ -187,15 +187,14 @@ def plan(gaps: dict, cfg: dict) -> list[dict]:
     steps = []
     if gaps.get("bad_aliases") or gaps.get("want_aliases"):
         keep = [a for a in gaps.get("aliases") or [] if a not in gaps["bad_aliases"]]
-        # Every name variant config asks for, not just the ones the audit calls
-        # missing. Those two sets differ in the case this step exists to handle: a
-        # backticked alias holding "L. Choshen" normalises to the same string a real
-        # alias would, so "missing" reads 0 while the useful alias is absent. Building
-        # the final list from config makes the outcome independent of that.
-        # Plus the known misspellings. This is the only surface they are published to,
-        # and the reason is that a Wikidata alias is a lookup key rather than a claim
-        # about spelling -- so it can absorb the one form nothing upstream will ever
-        # fix, a typo already set in another author's reference list.
+        # Every name variant config asks for, not just the ones the audit calls missing: a
+        # backticked alias holding "L. Choshen" normalises to the string a real alias would,
+        # so "missing" reads 0 while the useful alias is absent. Building the list from config
+        # makes the outcome independent of that.
+        #
+        # Plus the known misspellings, published nowhere else. A Wikidata alias is a lookup key
+        # rather than a claim about spelling, so it can absorb the one form nothing upstream will
+        # fix -- a typo already set in another author's reference list.
         want = [v for v in (list(cfg["identity"]["name_variants"])
                             + list(cfg["identity"].get("name_typos") or []))
                 if v != cfg["identity"]["name"]]

@@ -470,13 +470,10 @@ def call_api(pairs: list[tuple[dict, str]], cfg,
                 worked = True
                 break
             except Exception as e:                    # noqa: BLE001 -- any 4xx means no
-                # Whatever reaches here either is not the connection's fault or has
-                # already been retried, so it is a real refusal.
-                #
-                # Only ever climb down before the first success. Once one request has gone
-                # through, the endpoint's dialect is settled and a failure is a failure --
-                # retrying it unenforced would quietly turn a rate limit into an
-                # undecoded draft.
+                # Whatever reaches here either is not the connection's fault or has already been
+                # retried, so it is a real refusal. Only ever climb down before the first success:
+                # once one request has gone through the endpoint's dialect is settled, and retrying
+                # unenforced would turn a rate limit into an undecoded draft.
                 if worked or rung + 1 >= len(ladder):
                     print(f"  failed: {label} -- {type(e).__name__}: {str(e)[:200]}",
                           file=sys.stderr)
@@ -585,12 +582,11 @@ def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
     client, model = llm_client(model_default=cfg["llm"].get("model_openai"),
                                context="llm.mode: openai")
 
-    # A hosted open-weight model has a context window the request has to fit inside, and
-    # unlike the Anthropic path `max_tokens` is not a budget but part of that sum: Qwen
-    # 2.5 72B at 32768 rejected the whole batch outright, because a paper's evidence runs
-    # ~10.6k tokens and the reply was asked to reserve 32000. So ask the endpoint what it
-    # can hold and reserve what is left. `/v1/models` is the only source for it, it is one
-    # call, and a gateway that does not answer just leaves the configured number alone.
+    # A hosted open-weight model's context window has to hold prompt and reply together --
+    # unlike the Anthropic path, `max_tokens` is part of that sum, and Qwen 2.5 72B at 32768
+    # rejected a batch outright because a paper's evidence runs ~10.6k tokens against a
+    # 32000-token reservation. So ask `/v1/models` what the window is and reserve what is
+    # left; a gateway that does not answer leaves the configured number alone.
     window = None
     try:
         window = max((getattr(m, "max_model_len", None) or 0) for m in client.models.list())

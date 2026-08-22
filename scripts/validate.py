@@ -54,10 +54,9 @@ TOPIC_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,49}$")
 
 # ---------------------------------------------------------------- regressions
 #
-# One check per bug that has actually shipped. These run UNCONDITIONALLY: the
-# original design put them in a jsonschema-absent fallback, so installing
-# jsonschema silently skipped them -- which is why a duplicate slug reached
-# production and quietly cost one paper its page.
+# One check per bug that has actually shipped. These run UNCONDITIONALLY: put behind a
+# jsonschema-absent fallback, installing jsonschema silently skipped them, and a duplicate
+# slug reached production and cost one paper its page.
 
 _LATEX_RESIDUE = re.compile(r"[{}$\\]")
 _PRIVATE_BIB = re.compile(r"^\s*pretitle\s*=", re.M)
@@ -262,12 +261,11 @@ def selftest() -> list[str]:
         if venue_is_conference(venue, typ) != want:
             errs.append(f"common.venue_is_conference({venue!r}, {typ!r}) is "
                         f"{not want} -- Scholar would file this under the wrong tag")
-    # An affiliation may be a name or a mapping, and the two readers of it must not
-    # disagree. `org_name` feeds the byline, the ORCID employment diff and the Wikidata
-    # P108 lookup, so a mapping leaking through it publishes `{'name': 'IBM Research'}`
-    # as visible text and breaks the ORCID comparison at the same time; `org_ld` feeds
-    # JSON-LD, where a dropped identifier is invisible on the page and the whole reason
-    # the mapping form exists. Neither failure is visible in the config file.
+    # An affiliation may be a name or a mapping, and its two readers must not disagree.
+    # `org_name` feeds the byline, the ORCID employment diff and the Wikidata P108 lookup, so
+    # a mapping leaking through it publishes `{'name': 'IBM Research'}` as visible text;
+    # `org_ld` feeds JSON-LD, where a dropped identifier is invisible and is the whole reason
+    # the mapping form exists. Neither failure shows up in the config file.
     from common import org_name
     from build_site import org_ld
     aff = {"name": "Weizmann Institute of Science", "url": "https://www.weizmann.ac.il/",
@@ -760,14 +758,12 @@ CLAIM_SENTENCE_WORDS = 32
 # on rather than made its own claim. One is the normal "finding: the number".
 CLAIM_SEPARATORS = 1
 
-# The `FAQPage` answer `build_site.py` publishes is the claim, then the literal words
-# "Holds for:", then the whole scope. So a scope longer than its claim makes the answer
-# mostly caveat -- and it fails in both directions at once, since an extractive
-# summariser quotes the front and drops exactly the part that was there to protect the
-# claim, while the embedding of the whole answer drifts toward hedging vocabulary. 290 of
-# 325 drafted scopes are longer than their claim; one runs 14 sentences against a
-# 348-character claim. Three conditions is the ceiling because a fourth means the claim
-# was stated more broadly than it holds, and narrowing the claim is the better fix.
+# The published `FAQPage` answer is the claim, the literal words "Holds for:", then the
+# whole scope -- so a scope longer than its claim is an answer that is mostly caveat, and
+# it fails both ways at once: an extractive summariser quotes the front and drops the part
+# that protected the claim, while the embedding drifts toward hedging vocabulary. 290 of
+# 325 drafted scopes are longer than their claim. Three conditions is the ceiling, because
+# a fourth means the claim was stated more broadly than it holds.
 SCOPE_SENTENCES = 3
 # Below this a scope is too short to be the pathology the ratio rule guards against
 # (scopes of 426-798 chars at a median 1.5x their claim -- an answer that is mostly
@@ -784,20 +780,17 @@ SCOPE_RATIO_FLOOR = 160
 # one: `check_claim_numbers` would catch that, and it is fatal at `--accept`.
 RESULT_FIGURES = 0.5
 
-# A paper cannot be asked for magnitudes it never reported. SERRANT is an
-# annotation-scheme paper: one distinct figure in its entire text, against a median of
-# 154 across the corpus and 18 for the next-lowest paper. Its claims say what the tool
-# does to an edit -- demonstrated, so `result`, but with nothing measured -- and the
-# coverage rule was therefore unsatisfiable there by any honest means. Years are
-# excluded from the count because every paper's citation list carries dozens of them.
+# A paper cannot be asked for magnitudes it never reported: SERRANT, an annotation-scheme
+# paper, has one distinct figure in its whole text against a corpus median of 154, so the
+# coverage rule is unsatisfiable there by honest means. Years are excluded from the count
+# because every citation list carries dozens.
 PAPER_FIGURES_FLOOR = 10
 
-# A reference with no antecedent on screen. Both halves of a question's job fail on
-# one: nobody queries "a model like this", and a `FAQPage` answer is extracted with no
-# page around it, so the words have nothing to point at. Deliberately narrow -- a
-# pronoun bound to a noun inside the same question ("compare models by their skill
-# profile") is ordinary English and must not fire, so only two shapes count: a
-# demonstrative that no noun precedes, and `it`/`they` as the opening subject.
+# A reference with no antecedent on screen fails both halves of a question's job: nobody
+# queries "a model like this", and a `FAQPage` answer is extracted with no page around it.
+# Deliberately narrow -- a pronoun bound to a noun inside the same question ("compare
+# models by their skill profile") is ordinary English -- so only two shapes count: a
+# demonstrative no noun precedes, and `it`/`they` as the opening subject.
 _UNBOUND = re.compile(
     r"\blike th(?:is|ese|ose)\b"
     r"|\bth(?:is|ese|ose)\s+(?:paper|work|study|method|approach|framework|model|"
@@ -820,13 +813,11 @@ _UNBOUND = re.compile(
     r"(?!\s+(?:worth|better|best|enough|possible|feasible|safe|true|ok|okay|necessary"
     r"|useful|worthwhile|harder|easier|hard|cheaper|faster|fine|reasonable|realistic"
     r"|practical|advisable|common|normal|standard|sensible|risky|wise)\b)"
-    # ...and an adjective list cannot be closed: "is it a bad idea to clip gradients",
-    # "is it wasteful to build a huge benchmark", "does it help to build the data from
-    # documents in the same area" are all the same dummy subject with a different
-    # predicate. What they share is the infinitive the `it` anticipates, so ask for that
-    # instead -- with a bare verb after `to`, since "does it generalize to new tasks" is a
-    # reference to nothing and has to keep failing, and what tells the two apart is that a
-    # to-infinitive does not start with a determiner or a comparative.
+    # ...and the adjective list cannot be closed ("is it a bad idea to clip gradients", "is
+    # it wasteful to build a huge benchmark"). What those share is the infinitive the `it`
+    # anticipates, so ask for that instead, with a bare verb after `to`: a to-infinitive does
+    # not open with a determiner or a comparative, which is what separates it from "does it
+    # generalize to new tasks" -- a reference to nothing, which has to keep failing.
     r"(?!\s+[^?]*?\bto\s+(?!the\b|a\b|an\b|my\b|your\b|our\b|their\b|its\b|new\b"
     r"|other\b|another\b|different\b|any\b|some\b|more\b|most\b|all\b|every\b|each\b"
     r"|higher\b|lower\b|larger\b|smaller\b|bigger\b|longer\b|shorter\b)[a-z]+\b)", re.I)
@@ -933,15 +924,13 @@ _SHOWS_UPSHOT = re.compile(
     rf"|\b(?:show\w*|demonstrat\w+|highlight\w+|illustrat\w+)\s+"
     rf"(?:the\s+|that\s+|its\s+|their\s+)?(?:{_UPSHOT_NOUN})\b", re.I)
 
-# A `result` claim's scope naming the analysis instead of its conditions: "the analysis of
-# sign conflicts and their impact on merging" as the bound on "resolving sign conflicts is
-# crucial". It parses after "Holds for:" and it is falsifiable by nothing -- and what it
-# does say is already in `evidence`, which is the field for where in the paper the result
-# lives. The real bound for that claim is the sweep: which models, which values of k.
-# 8 of 344 scopes open this way, 5 of them on `result` claims; the other 3 are `context`
-# claims reading "the context of merging LoRA models, as of publication in 2025", which is
-# left alone because a `context` claim has no measurement to state conditions on and §2
-# names the publication date as its honest bound.
+# A `result` claim's scope naming the analysis instead of its conditions -- "the analysis
+# of sign conflicts and their impact on merging" as the bound on "resolving sign conflicts
+# is crucial". It parses after "Holds for:", is falsifiable by nothing, and what it does
+# say belongs in `evidence`. The real bound is the sweep: which models, which values of k.
+# 8 of 344 scopes open this way, 5 on `result` claims; the other 3 are `context` claims
+# ("the context of merging LoRA models, as of publication in 2025"), left alone because a
+# `context` claim has no measurement and §2 names the publication date as its bound.
 _NAMES_THE_ANALYSIS = re.compile(
     r"^\s*(?:the\s+)?(?:analys[ei]s|study|experiments?|evaluation|investigation|discussion"
     r"|examination|ablation)\s+(?:of|in|on)\b", re.I)
@@ -952,13 +941,12 @@ _NAMES_THE_ANALYSIS = re.compile(
 _PREFIX_DOUBLED = re.compile(r"^\s*(?:holds?\s+(?:for|only|in|when|under|true)"
                              r"|applies\s+(?:to|only|when|in|under))\b", re.I)
 
-# Claim text that opens by talking about the paper instead of naming its object. Rule 2
-# has said since the file existed that a claim may not lean on "we" or "this paper";
-# nothing enforced it, and 8% of drafts open exactly that way -- "The paper proves...",
-# "The contribution is a frame as much as a method". Extracted alone that says nothing
-# about *which* paper, and it spends the quotable front on commentary. Only the
-# unambiguous heads are listed: "the prevailing practice -- reading a hidden
-# representation directly --" names its subject in the appositive and must not fire.
+# Claim text that opens by talking about the paper instead of naming its object -- "The
+# paper proves...", "The contribution is a frame as much as a method" -- which rule 2 has
+# always forbidden and nothing enforced, in 8% of drafts. Extracted alone it says nothing
+# about *which* paper and spends the quotable front on commentary. Only unambiguous heads
+# are listed: "the prevailing practice -- reading a hidden representation directly --"
+# names its subject in the appositive and must not fire.
 _ABOUT_PAPER = re.compile(
     r"^\s*(?:th(?:e|is)\s+(?:paper|study|authors?)(?:'s)?\b"
     r"|the\s+(?:contribution|diagnosis|takeaway|framing|point)\b"
@@ -1048,13 +1036,11 @@ def sentences(s) -> list[str]:
     parts = [x for x in re.split(r"(?<=[.;!?])\s+", str(s or "").strip()) if x]
     out: list[str] = []
     for part in parts:
-        # What follows decides as much as what precedes. A period before something that
-        # cannot open a sentence is an abbreviation the list above has not heard of:
-        # "Non-term. < Dep. < SRL < RC < NER < Co-ref. < SPR." is one ordering of seven
-        # task names and it split into four, so a two-sentence claim was reported as five
-        # with no rewording available short of renaming the tasks. Only after a period --
-        # a semicolon genuinely separates the conditions a scope lists, and the scope
-        # checks are built on counting them.
+        # What follows decides as much as what precedes: a period before something that cannot
+        # open a sentence is an abbreviation this list has not heard of. "Non-term. < Dep. < SRL
+        # < RC < NER < Co-ref. < SPR." is one ordering of seven task names, and split four ways
+        # it reported a two-sentence claim as five with no rewording available. Only after a
+        # period -- a semicolon genuinely separates the conditions a scope lists.
         after_dot = out and out[-1].endswith((".", "!", "?"))
         # A quotation mark still open carries the punctuation inside it. Papers are named
         # in a claim by their titles, and a title ending in a question mark -- "Will it
@@ -1306,12 +1292,11 @@ def outdated_live(entries: list[tuple[str, dict]]) -> dict[str, int]:
 
 _GROUPED = r"\d{1,3}(?:,\d{3})+"
 _PLAIN = r"\d+(?:\.\d+)?"
-# A figure as an author writes one. The grouped form comes first so `1,600` is one
-# figure rather than the pair (1, 600), and the two lookbehinds drop digits that belong
-# to a name rather than to a measurement: `T5` glues to a letter, and `ViT-L/14`,
-# `Llama3-8B` and `top-5` glue on through a hyphen or slash. Those are things the paper
-# refers to, not quantities it reports, and checking them fills the review with lines
-# whose answer is always yes.
+# A figure as an author writes one. The grouped form comes first so `1,600` is one figure
+# rather than the pair (1, 600), and the two lookbehinds drop digits belonging to a name
+# rather than a measurement: `T5` glues to a letter, `ViT-L/14`, `Llama3-8B` and `top-5`
+# through a hyphen or slash. Those are things a paper refers to, not quantities it
+# reports, and checking them fills the review with lines whose answer is always yes.
 _FIGURE = re.compile(rf"(?<![A-Za-z0-9.])(?<![A-Za-z0-9][-/])({_GROUPED}|{_PLAIN})")
 
 

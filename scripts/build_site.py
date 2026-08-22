@@ -343,11 +343,9 @@ def person_jsonld(cfg) -> dict:
         # under identity.education land here.
         "alumniOf": [{"@type": "CollegeOrUniversity", "name": e["institution"]}
                      for e in (ident.get("education") or []) if e.get("institution")],
-        # The same list that goes into ORCID's Keywords and Scholar's five interests.
-        # knowsAbout is the schema.org field for it, and this is the one surface where
-        # we control the markup completely -- so if the phrases are worth choosing at
-        # all, leaving them out here is the cheapest omission on the list. It is also
-        # the honest place for the full set: Scholar takes five, and the other six say
+        # The same list that goes into ORCID's Keywords and Scholar's five interests, in the
+        # schema.org field for it. This is the one surface where the markup is entirely ours,
+        # and the honest place for the full set: Scholar takes five, and the rest say
         # something true about the corpus that would otherwise go unstated anywhere.
         "knowsAbout": list(ident.get("keywords") or []),
         "sameAs": same,
@@ -779,12 +777,10 @@ def build(cfg) -> dict:
     home = [f"<h1>{E(ident['name'])}</h1>",
             f'<p class="sub">{E(ident["job_title"])} · '
             f'{E(", ".join(org_name(a) for a in ident["affiliations"]))}</p>']
-    # The canonical URL is the machine anchor, so it is the URL in every registry --
-    # including the ones a human clicks, like Scholar's Homepage field. That decision
-    # is only defensible if the first thing on this page sends a person onward, since
-    # otherwise the field that a human follows lands them on a machine-facing index.
-    # One link, above the fold, costs the machine anchor nothing and costs the visitor
-    # one hop; rel="me" makes it an identity statement too, not just navigation.
+    # The canonical URL is the machine anchor and therefore the URL in every registry,
+    # including fields a human clicks like Scholar's Homepage. That is only defensible if
+    # the first thing on the page sends a person onward. One link above the fold costs the
+    # machine anchor nothing; `rel="me"` makes it an identity statement as well.
     home.append(human_note(ident, box=True))
     home += [f'<p class="meta">ORCID <a rel="me" href="https://orcid.org/{ident["orcid"]}">'
              f'{ident["orcid"]}</a> · <a href="mailto:{E(ident["email"])}">'
@@ -804,13 +800,11 @@ def build(cfg) -> dict:
         home.append('<p class="meta">'
                     + " · ".join(f'<a rel="me" href="{E(u)}">{E(_host(u))}</a>'
                                  for u in rel_me) + "</p>")
-    # Every paper, not a top ten. The readers this page is built for fetch exactly one
-    # URL far more often than they crawl: this one, because it is the canonical anchor in
-    # ORCID, Scholar, arXiv and every sameAs. A ten-item list left the other 103 papers
-    # reachable only by a second hop a single-fetch reader never takes -- and truncation
-    # is the one thing on a page this small that has a real cost, since the whole list is
-    # 12 KB. Ordered newest-first here and most-cited-first at /papers/, so the two
-    # complete lists answer two different questions instead of restating one.
+    # Every paper, not a top ten: the readers this page is built for fetch this one URL far
+    # more often than they crawl, because it is the canonical anchor in ORCID, Scholar,
+    # arXiv and every sameAs, and a truncated list leaves the rest reachable only by a
+    # second hop they never take. The whole list is 12 KB. Newest-first here and
+    # most-cited-first at /papers/, so the two lists answer different questions.
     home.append(f'<h2>Papers</h2><p class="meta">All {len(papers)} papers, newest first. '
                 f'<a href="/papers/">The same list by citation count</a> · '
                 f'<a href="/llms.txt">the same list with a one-line summary of each</a></p>')
@@ -946,15 +940,11 @@ def submit_indexnow(cfg) -> None:
         note_fetch("https://api.indexnow.org/IndexNow", True)
         print(f"indexnow: submitted {len(urls)} URLs (HTTP {code})")
     except urllib.error.HTTPError as e:
-        # 403 was read as "Pages has not published the key file yet, retry after the
-        # deploy". It never cleared, and it never will: the key file serves 200 and
-        # matches, and IndexNow still answers UserForbiddedToAccessSite, because the
-        # host is a github.io subdomain and github.io belongs to GitHub -- the single-URL
-        # endpoint refuses it too. So this is not a transient state to retry, and saying
-        # "retry" hid a permanent condition behind a message that looked temporary.
-        # The two real routes out are named here rather than in a doc nobody reads at
-        # this moment; the sitemap is submitted regardless, which is how Bing gets these
-        # URLs today.
+        # A 403 here is permanent, not a state to retry: the key file serves 200 and matches,
+        # and IndexNow refuses the host because github.io belongs to GitHub. The single-URL
+        # endpoint refuses it too. The two real routes out are named here rather than in a doc
+        # nobody reads at this moment; the sitemap is submitted regardless, which is how Bing
+        # gets these URLs today.
         body = ""
         try:
             body = json.loads(e.read() or b"{}").get("errorCode") or ""

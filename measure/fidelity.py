@@ -266,12 +266,10 @@ def main() -> None:
               f"({100*tally.get(1,0)/total:.0f}%)  ← the cell sidecars exist to move",
               f"- **0 — claim wrong or misattributed:** {tally.get(0,0)} "
               f"({100*tally.get(0,0)/total:.0f}%)", ""]
-    # Near-zero recall changes what the table below is. With a handful of papers recalled,
-    # the scores rank papers by how badly they are described and the ranking is the
-    # product. With almost none, every paper scores the same 0 and the ranking carries no
-    # information -- what the run measured is that this engine has no knowledge of the
-    # corpus at all. Saying so is the difference between a floor and a worklist; a report
-    # that calls this a worklist invites a reader to work down a list ordered by noise.
+    # What the table below is depends on recall. With papers recognised, the scores rank
+    # them by how badly they are described and that ranking is the product. With almost
+    # none, every paper scores the same 0 and the ranking is noise -- so the report has to
+    # say it measured a floor rather than hand over a worklist ordered by nothing.
     floor = graded and recalled <= max(2, 0.05 * graded)
     if floor:
         L += ["## This is a floor, not a worklist", "",
@@ -299,12 +297,10 @@ def main() -> None:
               f"{len(unanswered)} paper(s) produced no answer at all (a gateway error, "
               "usually).", ""]
         L += [f"- `{s}`" for s in unanswered] + [""]
-    # At the floor every authored claim scored 0 for the same reason, so a row per claim
-    # is 1200 lines saying "not recognised" -- 375KB restating the section above. The
-    # invented claims are the exception: they differ from each other, and they are the
-    # only part of a floor run that carries information, because they show what the
-    # model says instead. So the table narrows to them and states how many rows it
-    # dropped; a cap that does not announce itself reads as "this is everything".
+    # At the floor a row per claim is ~1200 lines saying "not recognised". The invented
+    # claims differ from each other and are the only part of such a run that carries
+    # information, so the table narrows to them -- and states how many rows it dropped,
+    # because a cap that does not announce itself reads as "this is everything".
     shown = [r for r in rows if r[2] == "(invented)"] if floor else rows
     dropped = len(rows) - len(shown)
     L += ["## What it said instead" if floor else "## Worst first", ""]

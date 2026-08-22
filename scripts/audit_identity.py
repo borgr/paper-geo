@@ -80,20 +80,15 @@ def orcid_public(orcid: str) -> dict:
     # works that were in the source file by mistake -- and nothing on ORCID will ever
     # tell you, because the record has no idea what you meant to claim.
     titles = []
-    # Who asserted each work, tallied. This is the only public evidence that the
-    # Crossref and DataCite auto-update permissions are live: a work those add carries
-    # their name in `source`, while everything you imported yourself carries yours. The
-    # distinction is invisible in the works list unless you open a work and read the
-    # *Source* line, and it is the difference between "the pipeline is running" and "I
-    # clicked through a wizard and nothing was granted".
+    # Who asserted each work, tallied: the only public evidence that the Crossref and
+    # DataCite auto-update permissions are live. A work they added carries their name in
+    # `source`; anything imported by hand carries the author's. In the works list the
+    # distinction is only visible by opening a work and reading its *Source* line.
     sources = {}
     for gidx, g in enumerate(((act.get("works") or {}).get("group") or [])):
-        # The group's external ids are what ORCID itself groups on, and they are the
-        # only reliable key back to the corpus: a title changes between preprint and
-        # proceedings ("Transition based Graph Decoder" -> "Enhancing the Transformer
-        # Decoder with Transition-based Syntax") and a subtitle gets dropped
-        # ("TIES-Merging: Resolving Interference" -> "Resolving Interference"), and
-        # both then look like works we have never heard of. Identifiers do not drift.
+        # The group's external ids are what ORCID groups on and the only reliable key back to
+        # the corpus. Titles drift between preprint and proceedings ("TIES-Merging: Resolving
+        # Interference" -> "Resolving Interference") and then look like unknown works.
         ids = [((e.get("external-id-type") or "").lower(), e.get("external-id-value") or "")
                for e in ((g.get("external-ids") or {}).get("external-id") or [])]
         for s in (g.get("work-summary") or []):
@@ -109,12 +104,10 @@ def orcid_public(orcid: str) -> dict:
             # on the record.
             own = [((e.get("external-id-type") or "").lower(), e.get("external-id-value") or "")
                    for e in ((s.get("external-ids") or {}).get("external-id") or [])]
-            # The group index rides along because it is the difference between a real
-            # duplicate and a cosmetic one. Two works in *different* groups show on the
-            # profile as two works, and every service counting output counts both. Two
-            # works in the *same* group are one entry with "2 versions" -- ORCID already
-            # unified them, and nothing downstream double-counts. Same slug reached twice,
-            # two different severities, so they cannot share a report section.
+            # The group index rides along because it separates a real duplicate from a cosmetic
+            # one. Two works in *different* groups show as two works and every service counting
+            # output counts both; two in the *same* group are one entry with "2 versions". Same
+            # slug, two severities, so they cannot share a report section.
             titles.append((t, s.get("put-code"), own or ids, gidx))
     affs = {}
     for sect in ("employments", "educations"):
@@ -858,13 +851,11 @@ def orcid_strays(orc: dict, papers) -> list[tuple]:
     for title, put, ids, gidx in orc.get("work_titles") or []:
         hid = by_ids(ids)
         tid, how = by_titles(title)
-        # The identifier normally wins -- titles drift between preprint and proceedings
-        # and identifiers do not. The exception is the whole reason this branch exists: an
-        # identifier pointing at paper A while the title is character-for-character paper
-        # B is not drift, it is the wrong DOI typed into the work. Trusting the id there
-        # silently merges two different papers, and the *absorbed* one then reports as
-        # missing from a record that holds it. Only `exact` overrides, because a loose
-        # match is exactly the drift the identifier is there to survive.
+        # The identifier normally wins, since titles drift and identifiers do not. The
+        # exception this branch exists for: an identifier pointing at paper A while the title
+        # is character-for-character paper B is a wrong DOI typed into the work, and trusting
+        # the id there merges two papers and reports the absorbed one as missing. Only an
+        # `exact` title match overrides -- a loose match is the drift the id survives.
         if hid is not None and tid is not None and hid["slug"] != tid["slug"]:
             if how == "exact":
                 misfiled.append((title, put, ids, tid, hid))
@@ -1805,13 +1796,10 @@ def main() -> None:
                   # over an empty section. Both put-codes and the one DOI to paste travel
                   # with the count now, so the summary can say the whole job in a line.
                   "orcid_duplicate_pairs": dup_pairs(o_dups, papers),
-                  # `should_carry` as well as `should_be`: the slug says which paper the
-                  # work is, and the reader needs the string to paste. Two clicks on
-                  # ORCID and a copy from a second file is what having only the slug cost.
-                  # `carried_*` so the worklist can link the wrong DOI and name the paper
-                  # it belongs to. That link is the evidence for the whole item -- following
-                  # the identifier on your own record and landing on somebody else's paper
-                  # -- and without it the instruction is "trust us, replace this".
+                  # `should_carry` as well as `should_be`, so the worklist can name the paper and give
+                  # the string to paste; `carried_*` so it can link the wrong DOI. That link is the
+                  # evidence for the item -- following the identifier on your own record and landing on
+                  # somebody else's paper -- and without it the instruction is "trust us, replace this".
                   "orcid_misfiled_ids": [{"put": put, "should_be": right["slug"],
                                           "should_carry": paper_doi(right),
                                           "carries": [f"{t}:{v}" for t, v in ids],
@@ -1836,12 +1824,11 @@ def main() -> None:
                                               else None),
                   "wikidata_papers_absent": (len(wd_cov["absent"]) if wd_cov
                                              else None),
-                  # How many of the absent ones can actually be created, which is a
-                  # smaller number: a paper with neither a DOI nor an arXiv id has no key
-                  # to deduplicate against, so nothing will mint an item for it. The
-                  # worklist heads its section with this rather than with `absent`,
-                  # because a heading saying 109 over a command that creates 108 is the
-                  # count-does-not-match-the-list failure in a new place.
+                  # How many of the absent ones can actually be created, which is smaller: a paper with
+                  # neither a DOI nor an arXiv id has no key to deduplicate against, so nothing will
+                  # mint an item for it. The worklist heads its section with this rather than `absent`,
+                  # because a heading saying 109 over a command that creates 108 is a count that does
+                  # not match its list.
                   "wikidata_papers_creatable": (
                       sum(1 for p in wd_cov["absent"] if paper_item(p, cfg))
                       if wd_cov else None)})

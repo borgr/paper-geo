@@ -54,13 +54,10 @@ def write_manifest(cfg, papers: list[dict]) -> str:
     base = cfg["site"]["base_url"].rstrip("/") + cfg["site"]["papers_path"]
     claims = []
     for p in papers:
-        # We only claim what we actually own and can serve a page for -- which this used
-        # to say while accepting `owner: None` too, so a corpus with no owners set
-        # published 111 claims. That is the assertion the whole protocol exists to
-        # prevent: a coauthor reading it is told this domain maintains the canonical page
-        # for papers nobody agreed we own, including ones where the configured
-        # `default_owner_rule: first_author` points at somebody else. Unclaimed has to
-        # mean unclaimed, and the report right below this said so all along: "ours: 0".
+        # Only papers actually owned, and `owner: None` is not one of them -- accepted, a corpus
+        # with no owners set published 111 claims that this domain maintains the canonical page
+        # for papers nobody agreed it owns, including ones where `default_owner_rule:
+        # first_author` points at somebody else. Unclaimed has to mean unclaimed.
         if p.get("owner") != me:
             continue
         if p.get("canonical_page"):

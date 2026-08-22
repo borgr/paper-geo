@@ -126,11 +126,11 @@ def first_json(text: str):
 
 
 # Keywords a constrained-decoding backend cannot compile. vLLM's grammar backends accept a
-# `response_format` containing them and then quietly decode unguided, which is the worst
-# available outcome: measured against Granite 3.3 8B, the full schema produced claims keyed
-# `statement`/`magnitude`/`unit` -- invented fields, valid JSON, nothing the repo can read.
-# Nothing is lost by dropping them, because the only conditional in the sidecar schema is
-# "a `result` claim needs `evidence`", which `validate.py` enforces on the draft afterwards.
+# `response_format` containing them and then decode unguided, which is the worst outcome
+# available: against Granite 3.3 8B the full schema produced claims keyed
+# `statement`/`magnitude`/`unit` -- valid JSON, invented fields, nothing readable here.
+# Nothing is lost by dropping them: the schema's only conditional is "a `result` claim
+# needs `evidence`", which `validate.py` enforces on the draft afterwards.
 _UNDECODABLE = ("allOf", "anyOf", "oneOf", "not", "if", "then", "else")
 
 
