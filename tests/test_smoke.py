@@ -3644,6 +3644,16 @@ class TestAFailedGhReadIsNotAnEmptyOne(unittest.TestCase):
         finally:
             common.gh = real
 
+    def test_a_missing_gh_binary_raises_even_on_a_read(self):
+        """No `gh` installed is not an answer, so it stops the run instead of reading empty."""
+        import common
+        with mock.patch("subprocess.run", side_effect=FileNotFoundError("gh")):
+            for call in (lambda: common.gh("api", "x"),
+                         lambda: common.gh_text("api", "x"),
+                         lambda: common.gh_json("api", "x")):
+                with self.assertRaises(RuntimeError):
+                    call()
+
     def test_only_common_runs_the_gh_binary(self):
         """One implementation, so a timeout or a policy change lands everywhere at once."""
         root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

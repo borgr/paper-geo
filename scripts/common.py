@@ -348,9 +348,13 @@ def gh(*args: str, check: bool = False, timeout: int = 60) -> tuple[int, str]:
 
     Goes through the CLI rather than the REST API so it inherits the user's login and
     rate limit. `check=True` raises RuntimeError instead of returning a non-zero code.
+    No `gh` on PATH always raises, whatever `check` says: an empty answer would read as
+    "GitHub says no" and callers act on that.
     """
     try:
         r = subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout)
+    except FileNotFoundError as e:
+        raise RuntimeError("gh is not installed -- see https://cli.github.com") from e
     except (OSError, subprocess.TimeoutExpired) as e:
         if check:
             raise RuntimeError(f"gh {' '.join(args)}: {type(e).__name__}") from e

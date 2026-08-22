@@ -138,8 +138,8 @@ def _chat(client, model: str, msgs: list[dict], label: str, want: dict | None = 
 
 def run_api(tasks: list[dict], answer_model: str | None, grade_model: str | None) -> None:
     """Fill `answer` and `score` on every task in place, one paper at a time."""
-    ac, am = client(answer_model)
-    gc, gm = client(grade_model) if grade_model else (ac, am)
+    ac, am = client(answer_model, context="--mode api")
+    gc, gm = client(grade_model, context="--grade-model") if grade_model else (ac, am)
     for t in tasks:
         try:
             t["answer"] = _chat(ac, am, [{"role": "user", "content": t["ask"]}], t["slug"])

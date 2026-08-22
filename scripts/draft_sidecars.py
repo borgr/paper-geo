@@ -613,7 +613,8 @@ def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
     model produced a valid sidecar" and "the decoder could not produce anything else"
     are different results.
     """
-    client, model = llm_client(model_default=cfg["llm"].get("model_openai"))
+    client, model = llm_client(model_default=cfg["llm"].get("model_openai"),
+                               context="llm.mode: openai")
 
     # A hosted open-weight model has a context window the request has to fit inside, and
     # unlike the Anthropic path `max_tokens` is not a budget but part of that sum: Qwen

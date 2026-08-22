@@ -68,13 +68,16 @@ def with_retries(call, label: str):
             time.sleep(wait)
 
 
-def client(spec: str | None = None, model_default: str | None = None):
+def client(spec: str | None = None, model_default: str | None = None,
+           context: str = ""):
     """An OpenAI-compatible client and the model id to send, or exit saying what is missing.
 
     `spec` is `MODEL_ID` or `MODEL_ID@BASE_URL`. The second form is needed because a
     per-model gateway carries the model in the URL path and the slug is not derivable from
     the body id (`granite-3-3-8b-instruct` in the path, `ibm-granite/granite-3.3-8b-instruct`
     in the body), so naming a second model means naming its base URL too.
+
+    `context` names the flag or mode that asked, so the exit message says what to drop.
     """
     try:
         from openai import OpenAI
@@ -84,8 +87,8 @@ def client(spec: str | None = None, model_default: str | None = None):
     base = override or os.environ.get(ENV_BASE)
     model = want or os.environ.get(ENV_MODEL) or model_default
     if not base or not model:
-        sys.exit(f"needs ${ENV_BASE} and ${ENV_MODEL} in the environment "
-                 f"(never committed -- see scripts/llm.py)")
+        sys.exit(f"{context}{' ' if context else ''}needs ${ENV_BASE} and ${ENV_MODEL} "
+                 f"in the environment (never committed -- see scripts/llm.py)")
     key = os.environ.get(ENV_KEY, "unused")
     headers = {os.environ[ENV_HEADER]: key} if os.environ.get(ENV_HEADER) else None
     return OpenAI(base_url=base, api_key=key, default_headers=headers), model
