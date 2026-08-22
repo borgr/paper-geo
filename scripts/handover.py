@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 """Build a starter bundle so a colleague can fork this and run it on their own corpus.
 
-The repetitive part of "can you do this for X too?" is not the setup, it is the lookup:
-which Semantic Scholar records are theirs, whether those records are split, what their
-DBLP pid is, whether an ORCID already exists under that name. All of that is public and
-none of it needs the colleague present, so it is code's job -- and the residue, the values
-only they can answer, is what the bundle asks for.
+The repetitive part of "can you do this for X too?" is the lookup, not the setup: which
+Semantic Scholar records are theirs, whether those records are split, what their DBLP pid is,
+whether an ORCID already exists under that name. All public, none of it needing the colleague
+present -- so the bundle asks only for the residue nobody else can answer.
 
-    python scripts/handover.py "Tamar Rott Shaham" --github tamarott \
+    python scripts/handover.py "Tamar Rott Shaham" --github tamarott \\
         --homepage https://tamarott.github.io
 
-Reads `handover/<slug>/facts.yaml` if it exists, and merges it over what the lookup found.
-Some facts are only on a homepage or a co-author's Scholar page and no API returns them; put
-them there rather than editing the output, or the next run silently reverts them.
+Reads `handover/<slug>/facts.yaml` if it exists and merges it over what the lookup found. Some
+facts are only on a homepage or a co-author's Scholar page; put them there rather than editing
+the output, which the next run reverts.
 
 Writes `handover/<slug>/`:
 
@@ -20,14 +19,12 @@ Writes `handover/<slug>/`:
                   with a `# CONFIRM` comment naming who can answer it
     README.md     what to do with it, in order, with the two commands inline
     MESSAGE.md    the note to send them with it, counts filled in from the lookup
-    records.json  what was actually fetched, so a wrong guess in config.yaml can be
-                  traced to the record it came from rather than re-litigated by hand
+    records.json  what was fetched, so a wrong guess in config.yaml can be traced to
+                  the record it came from
 
-**It decides nothing.** Every field it cannot derive from a public record is `null`. The
-one field that is a judgement rather than a lookup -- `site.repo`, because deploying over
-an existing GitHub Pages site replaces that site -- is `null` with the consequence spelled
-out, not filled with the obvious guess. Guessing it wrong overwrites a colleague's
-homepage on the first `--deploy`.
+**It decides nothing.** Every field it cannot derive from a public record is `null` --
+including `site.repo`, where deploying over an existing GitHub Pages site replaces that site,
+so the consequence is spelled out rather than filled with the obvious guess.
 """
 from __future__ import annotations
 
@@ -275,15 +272,14 @@ github_sweep:
 def dry_run(bundle: str, name: str) -> str | None:
     """Run the whole pipeline against their ids in a scratch tree; keep its worklist.
 
-    The bundle otherwise says what paper-geo *would* find. This runs it and shows what it
-    *does* find, which is the difference between an offer and a result: they open one file
-    and read their own gap list -- which arXiv submissions have no journal-ref, which
-    Hugging Face paper pages are unclaimed -- before deciding whether any of this is worth
-    their afternoon.
+    The bundle otherwise says what paper-geo *would* find. This shows what it does find, so
+    they open one file and read their own gap list -- which arXiv submissions have no
+    journal-ref, which Hugging Face paper pages are unclaimed -- before deciding whether this
+    is worth their afternoon.
 
-    Everything happens under `build/`, which is gitignored and disposable. `bootstrap_fork`
-    empties the previous author's judgement out of the copy first, so nothing in the scratch
-    tree can leak one person's decisions into another person's worklist.
+    Everything happens under `build/`, gitignored and disposable. `bootstrap_fork` empties the
+    previous author's judgement out of the copy first, so nothing can leak one person's
+    decisions into another person's worklist.
     """
     import shutil
     import subprocess

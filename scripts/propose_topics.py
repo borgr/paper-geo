@@ -144,21 +144,18 @@ def pending(repos: list[dict], do_all: bool) -> list[dict]:
 def declined_to_guess(repos: list[dict]) -> list[str]:
     """Repos still missing a label that the labeller refused to invent one for.
 
-    Missing *either* topics or a description, matching `sweep_github.py`'s own count of
-    what needs labelling -- not both. Two of the three live cases have a description and
-    no topics, so requiring both wrong-counted them as done and reported one repo where
-    there are three.
+    Missing *either* topics or a description, matching `sweep_github.py`'s own count of what
+    needs labelling. Two of the three live cases have a description and no topics, so
+    requiring both reported one repo where there are three.
 
-    These are stuck, and stuck by two correct decisions meeting: `pending()` skips a row
-    that already has a proposal, and `promote()` refuses a `confidence: low` one -- so the
-    row keeps its non-answer, stops being asked about, and stays bare. Neither half is
-    wrong. Going quiet about the result is: `propose` printed "nothing to propose" while
-    three repos had no topics and no description, which reads as finished.
+    They are stuck where two correct decisions meet: `pending()` skips a row that already has
+    a proposal, and `promote()` refuses a `confidence: low` one -- so the row keeps its
+    non-answer and stays bare. Neither half is wrong; going quiet about the result is, since
+    `propose` printed "nothing to propose" while three repos had no label at all.
 
-    Deliberately not fixed by re-proposing them every run. The model's answer was that the
-    evidence does not support a label, and the evidence is a README -- asking the same
-    question of the same page gets the same answer while spending a call each time. The
-    fix is upstream and it is a paragraph of prose, same shape as `tasks/bib_missing.md`.
+    Deliberately not fixed by re-proposing them. The model's answer was that the evidence does
+    not support a label, and the evidence is a README, so asking again costs a call for the
+    same answer. The fix is upstream and it is a paragraph of prose.
     """
     return [r["repo"] for r in repos
             if not r.get("skip") and not r.get("reviewed")
@@ -256,25 +253,19 @@ def ingest(repos: list[dict]) -> list[str]:
 def promote(repos: list[dict], fresh: list[str]) -> int:
     """Copy a just-arrived llm_proposal into the fields the sweep actually applies.
 
-    Only the repos named in `fresh` -- the ones whose proposal changed in the run
-    calling this. Promotion used to re-run over every row on every ingest, which
-    silently undid hand edits: deleting a wrong topic from repos.yaml left
-    `llm_proposal` untouched, so the next ingest of some unrelated repo copied it
-    straight back, and the second time it happened the file looked haunted. Editing the
-    file is the cheapest way to correct a label and it has to survive with no
-    bookkeeping; `reviewed: true` remains the way to freeze a row against future
-    proposals, which is a different thing than keeping today's edit.
+    Only the repos named in `fresh` -- the ones whose proposal changed in this run. Promoting
+    every row on every ingest silently undid hand edits: deleting a wrong topic from
+    repos.yaml left `llm_proposal` untouched, so the next unrelated ingest copied it back.
+    Editing the file is the cheapest way to correct a label and has to survive with no
+    bookkeeping; `reviewed: true` freezes a row against future proposals, which is a different
+    thing.
 
     Never overwrites a reviewed repo, and never blanks an existing value with an empty
-    proposal -- so a bad or partial model answer degrades to "no change".
+    proposal, so a bad or partial answer degrades to "no change".
 
-    `confidence: low` is not promoted. The schema has always required the field and until
-    now nothing read it, which meant the model's one channel for saying "the README is
-    thin, I am guessing" was collected and discarded. It costs nothing today -- the three
-    low-confidence repos returned no topics, so promotion was already a no-op for them --
-    and it is the difference between that being lucky and being the rule. A low proposal
-    still lands in `llm_proposal`, so the row keeps showing up as needing a label instead
-    of quietly acquiring a guessed one.
+    `confidence: low` is not promoted -- it is the model's one channel for saying "the README
+    is thin, I am guessing". The proposal still lands in `llm_proposal`, so the row keeps
+    showing up as needing a label instead of quietly acquiring a guessed one.
     """
     want, n = set(fresh), 0
     for r in repos:

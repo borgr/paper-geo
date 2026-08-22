@@ -182,18 +182,14 @@ ZENODO_KINDS = {"tool", "guide"}
 def zenodo_candidates(cfg) -> tuple[str, int]:
     """Repos worth a Zenodo DOI, which is a narrower set than "repos".
 
-    The useful question is not "is this good work" but "if someone wanted to cite
-    this, what would they cite". For a repo attached to a paper the answer already
-    exists. For a tool or a guide with no paper there is no answer at all, and a
-    Zenodo DOI is what creates one: a fixed version, an archived snapshot that
-    survives the repo being renamed or deleted, and a DataCite record that
-    propagates into OpenAlex and ORCID -- which is the part that matters here,
-    because it puts the artifact in the same graph as your papers instead of in a
-    separate one that only GitHub can see.
+    The question is not "is this good work" but "if someone wanted to cite this, what would
+    they cite". For a repo attached to a paper the answer exists. For a tool or guide with no
+    paper there is none, and a Zenodo DOI creates one: a fixed version, an archived snapshot
+    surviving a rename or deletion, and a DataCite record that propagates into OpenAlex and
+    ORCID -- which puts the artifact in the same graph as the papers.
 
-    Deliberately not automated further. Zenodo's GitHub integration only archives a
-    *release*, so the human step is tagging one, and a repo you would not tag is a
-    repo you should not archive.
+    Not automated further: Zenodo's GitHub integration only archives a *release*, so the human
+    step is tagging one, and a repo you would not tag is a repo you should not archive.
     """
     repos = (read_yaml(os.path.join(DATA, "repos.yaml")) or {}).get("repos", [])
     cand = [r for r in repos
@@ -239,11 +235,10 @@ def zenodo_candidates(cfg) -> tuple[str, int]:
 def phase_propose(cfg) -> None:
     """Refresh the repo LIST; store intent only.
 
-    Observed GitHub state (stars, current description, current topics) is
-    deliberately NOT stored. It already lives on GitHub, it changes constantly --
-    so storing it makes every run produce a noisy diff -- and a stored copy goes
-    stale, which means `diff` would compare against a snapshot instead of reality.
-    `diff` fetches live state at the moment it runs.
+    Observed GitHub state (stars, current description, current topics) is deliberately not
+    stored: it already lives on GitHub, it changes constantly so storing it makes every run
+    produce a noisy diff, and a stored copy goes stale -- `diff` would compare against a
+    snapshot instead of reality. `diff` fetches live state when it runs.
 
     Re-runnable: new repos get a fresh entry, existing entries keep their edits.
     """

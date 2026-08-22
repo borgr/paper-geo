@@ -63,14 +63,12 @@ EMPLOYER_Q = {"MIT-IBM Watson AI Lab": Q["MIT-IBM Watson AI Lab"],
 def employer_q(a) -> str:
     """The Q-number for one `identity.affiliations` entry, or "" to leave blank.
 
-    An affiliation carrying its own `wikidata` wins over this file's table, for the
-    reason stated below about the identifier list: two places holding the same QID is
-    how one of them silently lags. The table stays as the fallback for a bare-name
-    entry, and because a config that has not been upgraded should keep working.
+    An affiliation carrying its own `wikidata` wins over this file's table -- two places
+    holding the same QID is how one of them silently lags. The table is the fallback for a
+    bare-name entry, and for a config that has not been upgraded.
 
-    Returning "" rather than guessing is the same rule as `SCHOOL_Q`: an unresolved
-    employer is a row you autocomplete by hand, while a wrong one asserts that he works
-    somewhere he does not.
+    Returning "" rather than guessing, as with `SCHOOL_Q`: an unresolved employer is a row you
+    autocomplete by hand, while a wrong one asserts he works somewhere he does not.
     """
     if isinstance(a, dict) and a.get("wikidata"):
         return str(a["wikidata"])
@@ -106,15 +104,13 @@ def _with_doi_field(entry: str, doi: str) -> str:
 def orcid_files(cfg, papers) -> tuple[str, str, int]:
     """BibTeX + DOI list for populating ORCID.
 
-    The BibTeX file is the *primary* route, not the fallback it was written as: it is
-    one upload for the whole backlog against one form submission per paper. The usual
-    warning against it -- that self-asserted works are lower trust and duplicate what
-    auto-update later adds -- only bites for entries with no identifier, because ORCID
-    groups works that share one. So the fix is to make sure every entry carries a DOI
-    (see _with_doi_field), after which the objection mostly evaporates.
+    The BibTeX file is the primary route: one upload for the whole backlog against one form
+    submission per paper. The usual warning against it -- self-asserted works are lower trust
+    and duplicate what auto-update later adds -- only bites for entries with no identifier,
+    since ORCID groups works that share one, so `_with_doi_field` puts a DOI on every entry.
 
-    Auto-update still comes first in time, but it only covers works whose *deposited
-    metadata already contains your iD* -- it fixes the future, not the backlog.
+    Auto-update still comes first in time, but only covers works whose deposited metadata
+    already contains your iD: it fixes the future, not the backlog.
     """
     # Every paper, not only the ones with entry text. A paper discovered on arXiv or
     # Semantic Scholar has no `bibtex` field, and filtering on that field is how 16 of
@@ -157,26 +153,20 @@ def orcid_files(cfg, papers) -> tuple[str, str, int]:
 def wikidata_qs(cfg, papers) -> str:
     """QuickStatements v1 commands for the author item.
 
-    Deliberately minimal: identity plus external identifiers. No claims about
-    importance, no unsourced biography -- the item exists to be a stable anchor
-    that other statements can point at, which is what Wikidata's structural-need
-    criterion covers.
+    Deliberately minimal: identity plus external identifiers. No claims about importance, no
+    unsourced biography -- the item exists to be a stable anchor other statements can point
+    at, which is what Wikidata's structural-need criterion covers.
 
-    Targets the existing item when `ids.wikidata` names one, and only falls back to
-    `CREATE` when it does not. That branch is the whole point of this docstring: the
-    batch used to open with an unconditional `CREATE`, so once the item existed --
-    which is the normal state, and is recorded in config -- running the file the
-    worklist pointed at would have made a *second* person on Wikidata. Duplicate items
-    are a public mess to undo, needing a merge request rather than an edit, and
-    QuickStatements gives no warning because from its side a second create is a valid
-    request. Addressed to the QID the same statements become a safe top-up:
-    QuickStatements skips a statement that is already there, so the batch is a no-op
-    when the item is complete and adds exactly the gaps when it is not.
+    Targets the existing item when `ids.wikidata` names one, and only falls back to `CREATE`
+    when it does not. An unconditional `CREATE` would make a *second* person on Wikidata once
+    the item exists, which is the normal state; duplicates need a merge request rather than an
+    edit, and QuickStatements gives no warning because from its side a second create is
+    valid. Addressed to the QID the same statements are a safe top-up -- QuickStatements
+    skips a statement already present.
 
-    NOTE: QuickStatements requires an *autoconfirmed* Wikidata account (4 days old,
-    50 edits), so this file is unusable from a fresh account and the error message
-    does not explain why. wikidata_manual() below is the route that works on day
-    one; this stays for later runs and for anyone who already edits Wikidata.
+    NOTE: QuickStatements requires an *autoconfirmed* Wikidata account (4 days old, 50
+    edits), so this file is unusable from a fresh account and the error does not explain why.
+    `wikidata_manual` below is the route that works on day one.
     """
     ident, ids = cfg["identity"], cfg["ids"]
     qid = ids.get("wikidata")
@@ -230,15 +220,13 @@ def wikidata_qs(cfg, papers) -> str:
 def wikidata_manual(cfg) -> str:
     """The by-hand route, because QuickStatements is gated on autoconfirmed.
 
-    QuickStatements requires an *autoconfirmed* Wikidata account: 4 days old and 50
-    edits. A researcher creating an account for this has neither, so the .qs file is
-    unusable on day one and the tool fails with an authorisation error rather than
-    an explanation. Creating an item by hand has no such gate, so that is the
-    primary route and the batch file is the shortcut for later.
+    A researcher creating an account for this has neither 4 days nor 50 edits, so the .qs file
+    fails with an authorisation error rather than an explanation. Creating an item by hand has
+    no such gate, so that is the primary route and the batch file is the shortcut for later.
 
-    Statements are emitted as (label to type, value to type) because the Wikidata
-    editor autocompletes on labels, not P/Q numbers -- the numbers are here only so
-    you can confirm the autocomplete picked the right one.
+    Statements are emitted as (label to type, value to type) because the Wikidata editor
+    autocompletes on labels, not P/Q numbers -- the numbers are here only so you can confirm
+    the autocomplete picked the right one.
     """
     ident, ids = cfg["identity"], cfg["ids"]
     rows = [("instance of", "P31", "human", "Q5"),
@@ -643,18 +631,16 @@ def save_submissions(path: str, subs: dict) -> None:
 def arxiv_jref(cfg, papers, subs: dict) -> tuple[str, int, int]:
     """The papers whose arXiv listing does not say where they were published.
 
-    Two fields, tracked separately, because they go missing separately: the API reports
-    both `journal_ref` and the author-entered `doi` for every listing, and a paper can
-    easily have one and not the other. Listing only the papers with no journal-ref at
-    all would have missed the DOI-shaped half of the same visit to the same form.
+    Two fields, tracked separately because they go missing separately: the API reports both
+    `journal_ref` and the author-entered `doi`, and a paper can have one and not the other.
+    Listing only the no-journal-ref papers would miss the DOI-shaped half of the same visit to
+    the same form.
 
-    Held back rather than listed: a paper with no publisher DOI whose venue year has not
-    passed. arXiv's help page is explicit that "to appear in" and "accepted for
-    publication in" are not appropriate journal references, and a minted DOI is the
-    cheapest available proof that the version of record exists rather than being
-    scheduled. That test is deliberately weak in the safe direction -- it holds back a
-    published paper sometimes, and the section says so, but it never puts a promise on
-    a listing.
+    Held back: a paper with no publisher DOI whose venue year has not passed. arXiv's help
+    page is explicit that "to appear in" is not an appropriate journal reference, and a minted
+    DOI is the cheapest proof the version of record exists rather than being scheduled. Weak
+    in the safe direction -- it holds back a published paper sometimes, and the section says
+    so, but never puts a promise on a listing.
     """
     year_now = datetime.date.today().year
     ready, wait = [], []
