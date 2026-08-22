@@ -310,35 +310,22 @@ def record_created(slug: str, qid: str) -> None:
 def wikidata_paper_coverage(papers, chunk: int = 50) -> dict:
     """How many of your papers exist as Wikidata items -- measured, not assumed.
 
-    This function exists because the assumption was wrong. The standard advice for a
-    new author item is "your papers are already on Wikidata as Crossref imports, so
-    linking them is nearly free", and Author Disambiguator reinforces it: the tool
-    only ever shows you items that already exist, so a short list looks like a short
-    job rather than like thin coverage. Measured here, coverage was 3 of 122. Which
-    inverts the advice -- the work is creating items, not relinking strings.
+    Returns {} when the endpoint does not answer, so a timeout never reads as evidence of
+    absence. Coverage on this corpus was 3 of 122, which inverts the standard advice: the
+    work is creating items, not relinking strings.
 
-    Matching is on DOI (P356) and arXiv id (P818), never on name. Those are exact
-    keys, so a hit is the paper and not a paper that cites it. DOIs go in twice, as
-    given and uppercased, because Wikidata's convention is uppercase and SPARQL
-    string match is case-sensitive.
+    Matching is on DOI (P356) and arXiv id (P818), never name -- exact keys, so a hit is
+    the paper and not a paper citing it. DOIs go in twice, as given and uppercased, since
+    Wikidata's convention is uppercase and SPARQL string match is not.
 
-    The endpoint is the one detail here that will silently produce a wrong answer.
-    Wikidata split its query service: scholarly articles were moved out of the main
-    graph into their own, and `query.wikidata.org` serves the main one. So a paper
-    query against the usual endpoint returns zero rows with HTTP 200 -- verified
-    against "Attention is all you need" (Q30249683), which the scholarly endpoint
-    finds by arXiv id and the main endpoint does not. Any SPARQL over publications,
-    here or by hand, needs query-scholarly.
+    The endpoint must be query-scholarly, not `query.wikidata.org`. Wikidata moved
+    scholarly articles into their own graph, so a publication query against the main
+    endpoint returns zero rows with HTTP 200 -- verified against Q30249683.
 
-    Returns {} when the endpoint does not answer. An empty result and a failed query
-    must not be indistinguishable, or a timeout silently becomes evidence of absence.
-
-    Items this repo created itself are folded in from `data/wikidata_created.yaml`
-    regardless of what the query says, because the query lags: the scholarly endpoint
-    can take hours to index a new item, and until it does, an item created an hour ago
-    reads as absent. Without the ledger, a second run inside that window creates the
-    whole batch again -- and a duplicate publication item is the one failure here that
-    somebody else has to merge.
+    Items this repo created are folded in from `data/wikidata_created.yaml` whatever the
+    query says: the scholarly endpoint can take hours to index a new item, and without the
+    ledger a second run inside that window recreates the batch. A duplicate publication
+    item is the one failure here that somebody else has to merge.
     """
     keys: dict[str, dict] = {}
     for p in papers:
@@ -489,8 +476,7 @@ HF_CLAIM_DONE = {"claimed_verified", "admin_assigned"}
 def hf_state(papers, me: str, variants, requested=()) -> dict[str, list]:
     """Live per-paper Hugging Face state, by what you can actually do about it.
 
-    Five buckets, because "not claimed" was hiding three different situations and
-    only one of them is a click:
+    Five buckets, because "not claimed" hid three situations and only one is a click:
 
         missing    no page at all -- visit it while logged in
         unclaimed  page exists, your name is in the author list, no user linked
@@ -499,22 +485,14 @@ def hf_state(papers, me: str, variants, requested=()) -> dict[str, list]:
                    to press: the upstream metadata is wrong and that is the real task
         claimed    done
 
-    `requested` (data/overrides.yaml -> hf_claim_requested) is the one thing here
-    that cannot be read from outside. Hugging Face only exposes the `user` link once
-    moderation has granted the claim, so a request you submitted an hour ago is
-    indistinguishable over the API from one you never made -- and the worklist then
-    tells you to go and do it again. Which action you took is a durable fact about
-    you, not observed state, so it is declared in overrides.yaml and the audit moves
-    those pages to `pending`.
+    `requested` (data/overrides.yaml -> hf_claim_requested) is the one thing here that
+    cannot be read from outside: HF exposes the `user` link only after moderation grants
+    the claim, so a request submitted an hour ago is indistinguishable over the API from
+    one never made. Which action you took is a durable fact, so it is declared, and those
+    pages move to `pending`.
 
-    Splitting out `pending` stops the worklist from re-listing claims already in
-    moderation, which reads as "your click did not work". Splitting out `blocked`
-    matters more: those pages cannot be claimed at all, so leaving them among the
-    clicks makes the list end in three items that never complete.
-
-    Deliberately live rather than read from papers.yaml. This list is worked by
-    hand over days, and a stale copy sends you back to pages you already did --
-    which is exactly what happened the first time.
+    Live rather than read from papers.yaml, because this list is worked by hand over days
+    and a stale copy sends you back to pages you already did.
     """
     me = me.lower()
     out = {k: [] for k in ("missing", "unclaimed", "pending", "blocked", "claimed")}
@@ -824,69 +802,29 @@ def _write_followup(L: list[str]) -> str:
 def orcid_strays(orc: dict, papers) -> list[tuple]:
     """Works on the ORCID record that are not in your corpus.
 
-    A bulk BibTeX import is one click; removing 13 works is 13. That asymmetry is why
-    this check exists rather than being left to care at import time. The specific
-    failure it caught: the bibliography we import from is a CV bibliography, so it
-    also holds the works the CV *cites*, and the record ended up asserting authorship
-    of "Attention is all you need". Nothing on ORCID will ever flag that -- the record
-    cannot know what you meant to claim -- and every service that trusts ORCID
-    (Semantic Scholar, OpenAlex, publisher lookups) reads it as your claim.
-
-    Each stray is tagged `confirmed` when the collector also rejected it on author
-    name, `declined` when `data/declines.yaml` says its absence from the bibliography
-    was a decision, and `unknown` otherwise -- a title we simply do not have, which is
-    as likely to be a real paper missing from the bibliography as an error.
-
-    The `declined` tag is not a shade of `unknown`; it is its opposite. "Check before
-    deleting" over a work whose absence *is* the decision asks the reader to redo the
-    thinking that produced the decline, and the live case is a competition report the
-    author ruled out on purpose -- a legitimate ORCID entry that this corpus will never
-    hold, so nothing but a recorded decision can ever stop the question coming back.
-
-    Matching is by identifier first and title only as a fallback, because titles drift
-    and identifiers do not. Every "unknown" this check ever reported turned out to be
-    a title-drift artefact: a paper retitled between preprint and proceedings, or a
-    subtitle dropped by whoever typed the entry. Three works, all the author's own, all
-    already in the corpus -- and the file said *check before deleting* about papers
-    there was never any reason to doubt.
-
-    Title matching runs in three widening passes, and the third exists because the first
-    two share a blind spot: both read word *order* as content. "Tie the KnOTS: Model
-    Merging with SVD" against a corpus holding "Model merging with SVD to tie the Knots"
-    is not an equal string, and once the words move across the colon neither string
-    contains the other either -- so the widest check on offer still called a paper of the
-    author's own a work it could not place. The third pass compares content-word sets
-    (`title_tokens`), which is exactly and only insensitive to arrangement.
-
     Returns `(strays, duplicate_groups, matched_slugs, misfiled, merged_versions)`.
 
-    `duplicate_groups` and `merged_versions` are both "this paper appears more than once"
-    and they are split because only one of them is a problem. Two works in *different*
-    ORCID groups show on the profile as two works and every service counting output counts
-    both; two works in the *same* group are one profile entry with "N versions", which
-    ORCID has already unified and nothing downstream double-counts.
+    Matching is identifier first, then exact title, then content-word set
+    (`title_tokens`) -- the last pass because the first two read word order as content,
+    so a retitled paper of the author's own reads as unplaceable.
 
-    `misfiled` is the class that hid behind all of this: a work whose identifier belongs
-    to a *different* paper. ORCID groups on shared identifiers, so such a work is filed
-    inside another paper's group, and reading one title per group meant its own title was
-    never compared to anything. The absorbed paper then reports as missing from a record
-    that has held it all along — and the fix the report offered, adding it, would have
-    produced a second copy. It is detected by disagreement: the identifier resolves to
-    one corpus paper while the title matches another *exactly*. Nothing looser counts,
-    because looser disagreement is the ordinary preprint/proceedings drift that
-    identifier-first matching exists to survive.
+    Each stray is tagged `confirmed` (the collector also rejected it on author name),
+    `declined` (`data/declines.yaml` records its absence as a decision, so it is not a
+    question to ask again), or `unknown` -- as likely a paper missing from the
+    bibliography as an error.
 
-    `duplicate_groups` is what identifier matching exposes on the way: two ORCID work
-    groups resolving to one corpus paper, which is the same paper listed twice. ORCID
-    groups works that share an identifier, so a record holding both the publisher DOI
-    and arXiv's `10.48550/arXiv.<id>` DOI for one paper gets two groups, not one.
-    `orcid_import.bib` fills missing DOIs from arXiv, so importing it over a record
-    that already had publisher DOIs is exactly how this happens.
+    The three duplicate classes are separate because only two are problems:
 
-    `matched_slugs` is the direction nothing else measures: which of your papers the
-    record does *not* hold. A works count cannot answer that -- 105 works against a
-    117-paper corpus can be twelve papers missing, or sixteen missing and four listed
-    twice, and those are different fixes.
+        duplicate_groups  one corpus paper in two ORCID groups -- two profile entries,
+                          double-counted downstream
+        merged_versions   two works in one group -- one entry, already unified
+        misfiled          a work whose identifier belongs to a different paper, so it
+                          sits inside that paper's group and its own title is never
+                          compared. Detected only on exact title disagreement; looser
+                          disagreement is ordinary preprint/proceedings drift.
+
+    `matched_slugs` is the other direction: which corpus papers the record lacks. A
+    works count cannot answer that, since missing and listed-twice both move it.
     """
     ARXIV_DOI = re.compile(r"10\.48550/arxiv\.(.+)$", re.I)
     by_doi = {p["doi"].lower(): p for p in papers if p.get("doi")}

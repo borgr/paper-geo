@@ -1,31 +1,30 @@
 #!/usr/bin/env python3
 """The "C" diagnostic from docs/EVIDENCE.md: is the work described correctly?
 
-Not an experiment. Asked as "which of my papers are engines currently getting
-wrong?", this produces a ranked worklist, which is actionable whether or not the
-improvement can be attributed to anything.
+Not an experiment. It answers "which of my papers are engines currently getting wrong?"
+and produces a ranked worklist.
 
-For each paper with a sidecar, ask a model what the paper found and under what
-conditions it holds, then score against the sidecar's claims:
+For each paper with a sidecar, ask a model what the paper found and under what conditions
+it holds, then score against the sidecar's claims:
 
     2  claim correct AND scope correct
     1  claim correct, scope dropped or overstated
     0  claim wrong, or attributed to the wrong finding
 
-The 1s are the cell that matters. LLM summaries overstate scientific conclusions
-about 5x more often than human ones, so claim-right-scope-gone is the modal
-failure and the thing a sidecar exists to fix.
+The 1s are the cell that matters: LLM summaries overstate scientific conclusions about 5x
+more often than human ones, so claim-right-scope-gone is the modal failure and the thing a
+sidecar exists to fix.
 
-The grader is the instrument, so hand-check a stratified 20% of its scores before
-trusting any of them.
+The grader is the instrument. Hand-check a stratified 20% of its scores before trusting
+any of them.
 
 Two modes:
-    skill (default)  writes build/fidelity_tasks.json to fill in by hand -- the only
-                     way to measure the engines this project exists to influence, since
-                     AI Overviews and AI Mode have no API
+    skill (default)  writes build/fidelity_tasks.json to fill in by hand -- the only way
+                     to measure the engines this project targets, since AI Overviews and
+                     AI Mode have no API
     api              asks and grades through the gateway in $PAPER_GEO_LLM_*, unattended.
-                     Measures open-weight model knowledge rather than a search engine's
-                     answer, which is a weaker proxy for the target and a real baseline.
+                     Measures open-weight model knowledge, a weaker proxy and a real
+                     baseline.
 
 Usage:
     python measure/fidelity.py                    # emit tasks (or call the API)

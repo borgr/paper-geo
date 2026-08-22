@@ -1,59 +1,32 @@
 #!/usr/bin/env python3
 """Diff your Google Scholar profile against the corpus, to catch silent drops.
 
-Every other check in this repo validates the corpus against itself: the schema says
-the fields are well-formed, `validate.py` says the ids resolve, the authorship gate
-says each record carries your name. None of them can see a paper that never arrived.
 The pipeline's input is one bibliography file, so a paper missing from that file is
-invisible everywhere downstream -- and so is a paper the authorship gate dropped,
-because after the gate it does not exist.
+invisible to every check downstream -- as is a paper the authorship gate dropped.
+Scholar is the only list maintained by a different process, so it is the only one
+capable of disagreeing. Titles in, diff out: its metadata is too poor to copy (truncated
+author lists, venues that are sometimes an arXiv id), so nothing here writes to `data/`.
 
-Scholar is the one list that is maintained by a different process (Google's crawler
-plus your own profile edits) and is therefore capable of disagreeing. That makes it
-worth exactly one thing: an independent count of what should be there. It is a poor
-source of *metadata* -- truncated author lists, venue strings that are sometimes the
-arXiv id -- so nothing here is copied into `data/`. Titles in, diff out.
+Three outcomes per Scholar row, worst first:
 
-Three outcomes per Scholar row, in descending order of how much they should worry
-you:
+    gate dropped it   Scholar attributes it to you and `build/not_mine.json` says the
+                      gate excluded it. Either fix the gate (or add the title under
+                      `also_mine` in overrides.yaml), or delete the Scholar row.
+    not in the bib    Absent from the source bibliography -- add it there, not to the
+                      output. `tasks/bib_missing.md` carries a resolved BibTeX entry
+                      per paper, so the human act is pasting one.
+    present           Matched a corpus record.
 
-    gate dropped it   Scholar attributes the paper to you and `build/not_mine.json`
-                      says the gate excluded it. Either the gate is wrong (fix it, or
-                      add the title under `also_mine` in overrides.yaml) or Scholar
-                      is (a namesake's paper merged into your profile -- delete it
-                      there, since a wrong Scholar row also misleads every human).
-    not in the bib    The paper reached neither -- it is absent from the source
-                      bibliography. Add it there; the bibliography is the input, and
-                      patching the output would be undone on the next run. The check
-                      does the citation lookup for you: `tasks/bib_missing.md` gets a
-                      BibTeX entry per paper, resolved from your Semantic Scholar
-                      author record, arXiv or Crossref, so the human act is reading
-                      one entry and pasting it rather than finding it.
-    present           Matched a corpus record. The expected case.
+And the other direction: corpus records with no Scholar row. Usually just indexing lag,
+but a cited paper missing from your profile is a retrieval loss.
 
-And one in the other direction: corpus records with no Scholar row. Usually benign
--- Scholar indexes on its own schedule and a week-old preprint may not be there yet
--- but a *cited* paper of yours missing from your profile is a retrieval loss, since
-Scholar is where most humans look you up.
+Read-only, no login. Google serves this profile to a browser User-Agent; a challenge
+page makes the check say so and exit 0 -- it is an audit, not a gate. Every unattended
+run gets challenged, and then the Semantic Scholar half still runs `attributed_gaps`,
+which asks a narrower version of the same question and finds strictly less.
 
-Read-only and no login anywhere. Two requests to Scholar, two to your Semantic
-Scholar author record, and -- only when a paper turns out to be missing -- up to three
-lookups for that one paper. Google serves this profile to a browser User-Agent; if it
-ever answers with a challenge instead, the check says so and exits 0. It is an audit,
-not a gate: no run should stop because Google felt crawled, or because an index was
-busy.
-
-When Google does refuse -- which is every unattended run, because a datacenter IP gets
-a challenge page -- the author-record half still runs and asks a narrower version of
-the same question: papers an index attributes to you that the corpus has never received
-(`attributed_gaps`). It finds strictly less than Scholar does, by a margin measured in
-that function's docstring, so it does not replace running this from a desk. What it
-changes is that an unattended run stops being silent, and silence and "nothing is
-wrong" are not the same claim.
-
-Set `S2_API_KEY` in the environment if you have one. Semantic Scholar's anonymous
-pool is shared with the world and refuses often; the key is what makes the difference
-between resolving a missing paper and reporting that nobody indexes it.
+Set `S2_API_KEY` if you have one -- the anonymous pool refuses often, and that is the
+difference between resolving a missing paper and reporting that nobody indexes it.
 
 Writes build/scholar_diff.json and tasks/bib_missing.md.
 
@@ -278,35 +251,26 @@ def first_word(t: str) -> str:
 
 
 def same_work(a: str, b: str) -> bool:
-    """Are these the same paper, where one title came from the whole literature.
+    """`same_paper`, plus the same first content word. For pairing against an index.
 
-    `same_paper` compares two titles that are both already yours, so a wrong pair costs
-    one line a human dismisses. An index answers from every paper ever published, and
-    there the same threshold costs a stranger's paper pasted into your bibliography
-    under your name -- a public page asserting authorship you do not have, which is the
-    worst thing this file can produce.
+    `same_paper` compares two titles already known to be yours, so a wrong pair costs one
+    dismissed line. An index answers from every paper ever published, where the same
+    threshold costs a stranger's paper pasted into your bibliography under your name.
 
-    Two real acceptances, both from the loose gate alone, before this existed:
+    Word overlap alone accepted both of these:
 
         Attention is all you need      ->  Tensor Product Attention Is All You Need
         An autonomous debating system  ->  A superpersuasive autonomous policy
                                            debating system
 
-    Word overlap cannot separate those -- the query's words really are all present, 5 of
-    7 and 3 of 5. What separates them is *where* the extra words went. Every legitimate
-    variant of a title keeps its opening: a dropped subtitle, a venue retitle that
-    appends, the competition report indexed as "LLM Merging Competition: Building LLMs
-    Efficiently through Merging" against Scholar's "Llm merging: Building llms
-    efficiently ..." -- all still start at "llm". Words *prepended* to a title do not
-    qualify it, they change its subject: "Tensor Product Attention" is not "Attention",
-    and that is what both false positives did.
+    What separates them is where the extra words went. Legitimate variants keep their
+    opening -- a dropped subtitle, a venue retitle that appends. Words *prepended* change
+    the subject.
 
-    So: the same first content word, on top of the loose gate. The cost is a title
-    genuinely rearranged across the colon ("Tie the KnOTS: Model Merging with SVD" one
-    side, "Model Merging with SVD to Tie the KnOTS" the other), which stops resolving
-    automatically and comes back as a near-miss line asking whether it is the same
-    paper. That is the right direction to fail in: the question takes ten seconds and
-    the wrong entry takes a retraction.
+    The cost is a title rearranged across the colon ("Tie the KnOTS: Model Merging with
+    SVD" against "Model Merging with SVD to Tie the KnOTS"), which stops resolving
+    automatically and comes back as a near-miss line to confirm. The right direction to
+    fail in.
     """
     if norm_title(a) == norm_title(b):
         return True
@@ -423,40 +387,24 @@ def attributed_gaps(attributed: list[dict], papers: list[dict], corpus: dict[str
                     gated: dict[str, str]) -> tuple[list[dict], list[dict]]:
     """Papers an index attributes to you that the corpus has never received.
 
-    Returns (gaps, unverifiable): the rows worth acting on, and the rows S2 holds with
-    no external identifier, which are counted but not listed. See below for why that
-    split and not some other one.
+    Returns `(gaps, unverifiable)`: the rows worth acting on, and the rows S2 holds with
+    no external identifier, which are counted on stderr and written to
+    `build/scholar_diff.json` but not listed.
 
-    The same question the Scholar leg's `not_in_corpus` answers, asked of an endpoint
-    that answers from anywhere. It exists because the Scholar leg cannot run unattended
-    at all -- Google serves a datacenter IP a challenge page rather than a profile, so
-    the one check that can see a paper the pipeline never received was also the only
-    check that ran solely when somebody remembered to run it from a desk.
+    The same question as the Scholar leg's `not_in_corpus`, asked of an endpoint that
+    answers unattended -- Google serves a datacenter IP a challenge page. It is a floor,
+    not a substitute: on this corpus the Scholar leg finds three absent papers and this
+    leg finds none of them, because S2's author record does not hold them. What it does
+    catch is a *new* paper that reached an index and not the bibliography, which is where
+    delay costs something.
 
-    Measurably the weaker source, and worth being exact about how much weaker, because
-    the temptation is to read a quiet CI run as an all-clear. On this corpus the Scholar
-    leg finds three papers absent from the bibliography and this leg finds none of the
-    three: S2's author record does not contain them at all (125 records, 117 with an
-    identifier, and none of those three among them). So it is not a substitute, it is a
-    floor -- what it catches is a *new* paper that reached an index and not the
-    bibliography, which is the case where the delay costs something, and the case a
-    monthly unattended run is actually for. A paper missing for three years is one the
-    author already knows about.
-
-    **An identifier is required, and that is the whole design.** A row is reported only
-    if S2 gives it an arXiv id or a DOI. Measured on this author's record, that rule is
-    what makes the check worth reading: the first live run reported six absent papers and
-    every one of the six carried neither identifier. They are S2's citation-derived
-    stubs -- one is a journal name in the title field, one is the v1 title of a corpus
-    paper since renamed to something with no words in common, so no title-similarity
-    rule could have paired them either. Six rows of judgement work and nothing to act on
-    is how an unattended warning teaches its reader to skip it.
-
-    Nothing is lost by the rule that matters. A paper new enough to have gone missing has
-    an arXiv id, and a paper with no identifier anywhere cannot be added to a
-    bibliography from this list regardless -- the reader would have to go find it, which
-    is the local Scholar run's job. The suppressed rows are still counted on stderr and
-    written to `build/scholar_diff.json`, so this is a ranking, not a deletion.
+    An identifier is required. Without one a row cannot be added to a bibliography from
+    this list anyway, and in practice the identifier-less rows are S2's citation-derived
+    stubs -- a journal name in the title field, a v1 title since renamed past all
+    similarity. Patents and proceedings volumes are dropped for the same reason the
+    Scholar leg drops them: "add it to the bibliography" is wrong for a patent and
+    harmful for a volume, which would enter as a paper whose every claim is somebody
+    else's.
     """
     ids = {v.lower() for p in papers for v in
            (p.get("arxiv"), (p.get("doi") or "").removeprefix("doi:")) if v}

@@ -1,29 +1,15 @@
 #!/usr/bin/env python3
 """Apply the Wikidata author-item diff through the API instead of by hand.
 
-`audit_identity.py` already measures the difference between the live item and what
-`config.yaml` says it should carry: identifiers absent, one identifier holding the
-wrong value, statements added twice, aliases pasted as a single string. Everything it
-reports is mechanical -- a property id and a value -- so nothing about it needed a
-human except the credential.
+`audit_identity.py` measures the difference between the live item and what `config.yaml`
+says it should carry -- identifiers absent or wrong, statements added twice, aliases
+pasted as one string. All of it is a property id and a value, so the only thing missing
+was the credential.
 
-That was the actual blocker, and it is worth being precise about which credential.
-Two are often confused:
-
-- **Autoconfirmed** (4 days old AND 50 edits) is a *QuickStatements* requirement, not
-  a MediaWiki one. QuickStatements imposes it as its own policy because it runs
-  unattended batches under your name.
-- **A bot password** (Special:BotPasswords) is a scoped second password for the
-  account you already have. `action=wbcreateclaim` and friends accept it immediately.
-  No autoconfirmed, no bot flag, no community approval -- those are needed to run an
-  *unattended bot account*, which this is not: it is your account, editing your own
-  item, when you run the script.
-
-So neither the item's statements nor the paper items ever had to wait for the 50 edits.
-`--papers` creates a publication item per call of `wbeditentity`, which the same bot
-password authorises, so the QuickStatements batch in `tasks/wikidata_papers.qs` is now
-a fallback rather than the route: something to paste if the bot password is revoked, or
-if you would rather watch a batch run than trust a script.
+A **bot password** (Special:BotPasswords) is a scoped second password for your own
+account, and `wbcreateclaim`/`wbeditentity` accept it immediately. Autoconfirmed (4 days
++ 50 edits) is a *QuickStatements* policy, not a MediaWiki one, so nothing here waits on
+it. The batch in `tasks/wikidata_papers.qs` is a fallback for a revoked password.
 
 Setup, once:
 
@@ -36,8 +22,7 @@ Setup, once:
     export WIKIDATA_BOT_PASSWORD='<the long string>'
 
 Or put those two lines in `.wikidata_bot` in the repo root -- gitignored, and read
-automatically. Never in `config.yaml`: that file is committed and is the one place
-this project asks you to put things about yourself in public.
+automatically. Never in `config.yaml`, which is committed and public.
 
     python scripts/wikidata_apply.py                  # dry run: exactly what would change
     python scripts/wikidata_apply.py --apply          # do it
@@ -46,15 +31,13 @@ this project asks you to put things about yourself in public.
     python scripts/wikidata_apply.py --papers --apply --limit 5   # create five of them
 
 Dry run is the default and prints one line per intended edit with the API action it
-would call. Read-only until `--apply`, like everything else here.
+would call. Read-only until `--apply`.
 
-`--papers` is the one part of this that creates rather than corrects, so it is also the
-one part with a memory. Every item it creates is recorded in
-`data/wikidata_created.yaml` before the next one starts, and the coverage query treats
-that file as ground truth -- because the scholarly query service lags hours behind an
-edit, and without the ledger a second run inside that window would create all 108 items
-again. `--max-new N` refuses to run when more than N items are missing, which is what
-makes an unattended run safe: a backlog is a decision, one new paper is not.
+`--papers` creates rather than corrects, so it keeps a ledger: every item is recorded in
+`data/wikidata_created.yaml` before the next one starts, and the coverage query trusts
+that file over the query service, which lags hours behind an edit. `--max-new N` refuses
+to run when more than N items are missing -- a backlog is a decision, one new paper is
+not.
 """
 from __future__ import annotations
 

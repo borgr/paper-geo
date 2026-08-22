@@ -6,18 +6,14 @@
     python update.py --apply         # additionally write the approved repo and link changes
     python update.py --step collect  # run a single step
 
-Setting this up was the one-time cost. The steady state is this command: code
-refreshes everything derivable, a model drafts what needs judgement, and the run
-ends by handing one link to a human. Who does what, and why:
+Who does what:
 
   * Code, no human in it: collect, repos, links, ownership, audit, validate, render.
-    All of it is re-derived from public sources, so a human in the loop would be a
-    human retyping what a fetch already knows.
-  * A model's judgement, handed back rather than published: propose (repo labels)
-    and draft (sidecars). Both write to places nothing reads until promoted.
-  * Reserved for the author, and only these two: accepting a sidecar draft, which
-    publishes an assertion under the author's name, and any write that leaves
-    this machine.
+    All re-derived from public sources.
+  * A model's judgement, handed back rather than published: propose (repo labels) and
+    draft (sidecars). Both write where nothing reads until promoted.
+  * Reserved for the author: accepting a sidecar draft, which publishes an assertion
+    under their name, and any write that leaves this machine.
 
 Design rules, because this is meant to be re-run for years:
 
@@ -25,11 +21,8 @@ Design rules, because this is meant to be re-run for years:
   * Idempotent. Every step is safe to run twice; steps that would clobber a human
     decision read data/overrides.yaml (papers) or the `reviewed` flag (repos).
   * Degrading, not failing. A source outage costs one field, not the run.
-  * New work surfaces itself. New papers and new repos appear in the report with
-    what they still need, so a rerun months from now tells you what changed.
-
-Mirrors the convention of borgr/publications/update.py: one master script that
-runs the steps in order and then tells you what a human still has to do.
+  * New work surfaces itself. New papers and new repos appear in the report with what
+    they still need.
 """
 from __future__ import annotations
 
@@ -356,30 +349,22 @@ def next_steps(lines: list[str]) -> list[str]:
 def stamp_payloads(off: dict[str, str], later: dict[str, dict]) -> list[str]:
     """Put the decision at the top of the payload file a hidden section pointed at.
 
-    `apply_declines` takes a section out of `WORKLIST.md`, and the `tasks/` file that
-    section handed you is written by an earlier step that knows nothing about the
-    decision. So the file stays in the repo -- committed and browsable, which is the
-    point of `tasks/` -- telling a reader to go fill in a form the author ruled out.
-    That is the same failure `common.declined` closed for `items:`, one level up: a
-    generated file asking for what was already decided is what `declines.yaml` exists
-    to prevent, and `tasks/openalex_merge.md` is the live case.
+    `apply_declines` takes a section out of `WORKLIST.md`, but the `tasks/` file that
+    section handed you was written by an earlier step that knows nothing about the
+    decision -- so it stays in the repo telling a reader to fill in a form the author ruled
+    out. `tasks/openalex_merge.md` is the live case.
 
-    The decision-to-payload link is not written down here, because the worklist already
-    states it: every section that has a payload names the file in its own body, so the
-    paths come out of the text that was hidden. A section declined in future gets this
-    with no wiring, and one that hands you nothing needs none.
+    The paths come out of the hidden text itself: every section with a payload names its
+    file in its own body, so a section declined in future needs no wiring.
 
-    Not a deletion. The routes and identifiers in those files are the work, the decision
-    can be revisited, and `deferred:` means it will be. Re-derived every run like
-    everything else, so deleting the line in `declines.yaml` removes the banner on the
-    next one -- and the marker makes a second worklist run replace the banner rather
-    than stack another copy on top of it.
+    Not a deletion -- the routes and identifiers are the work, and `deferred:` means the
+    decision will be revisited. Re-derived every run, so deleting the line in
+    `declines.yaml` removes the banner on the next one, and the marker makes a second run
+    replace the banner rather than stack a copy on it.
 
-    Only the `sections:` and `deferred:` paths reach here. A section that vanished because
-    every *item* in it was declined is not stamped, and should not be: `common.declined`
-    already filters those generators row by row, which is the finer and better answer --
-    the payload keeps whatever was not decided instead of carrying a banner over a list
-    that is now partly open.
+    Only `sections:` and `deferred:` paths reach here. A section that vanished because
+    every *item* in it was declined is not stamped: `common.declined` already filters those
+    row by row, so the payload keeps whatever was not decided.
     """
     done = []
     for path, why in [*((p, ("off", w)) for p, w in off.items()),
@@ -413,43 +398,29 @@ def stamp_payloads(off: dict[str, str], later: dict[str, dict]) -> list[str]:
 def apply_declines(lines: list[str]) -> list[str]:
     """Drop what data/declines.yaml says has been decided against.
 
-    The worklist is generated from live state, which means it cannot tell "not done
-    yet" from "looked at and declined" -- so a decision to skip something reappears
-    every run as though it were still open. Two of the sections are like this by
-    design: the 64 missing journal-refs are worth doing for the top dozen and not the
-    tail, and the OpenAlex duplicates are best left to resolve themselves. A list that
-    keeps asking for what you have already ruled out is a list you stop reading.
+    The worklist is generated from live state, so it cannot tell "not done yet" from
+    "looked at and declined", and a skipped decision reappears every run as though it
+    were open.
 
-    A post-filter over the rendered markdown rather than a check inside each of the
-    fifteen emitters: one place to read, and a decline is matched on the text the
-    reader saw, so what it removes is exactly what was there.
+    A post-filter over the rendered markdown rather than a check in each of the fifteen
+    emitters: one place to read, and a decline matches the text the reader saw.
 
       sections: ["OpenAlex"]        # any heading containing this, and its body
       items:    ["2306.01708"]      # any list item containing this
       deferred: [{match: "Repo labels", until: "the papers are settled"}]
 
-    `items` matches any bullet, not only `- [ ]` ones. It used to require the checkbox,
-    which quietly meant the sections that list papers rather than tasks -- the drafting
-    queue, the dated waiting list -- could not be declined at all: the decision had
-    nowhere to go, so the line came back every run.
+    `items` matches any bullet, not only `- [ ]` ones, so the sections that list papers
+    rather than tasks can be declined too.
 
-    `deferred` is the third state, and it needs to exist because "not now" is neither
-    "open" nor "declined": the section is real work that will be done, just not
-    before something else. Dropping it loses the reminder, leaving it at the top
-    competes with the work that comes first. So it moves to the bottom, intact, under
-    the condition that releases it -- still generated from live state, so it stays
-    accurate while it waits, and no session has to stay alive to remember it.
+    `deferred` is a third state: real work, not before something else. The section moves
+    to the bottom intact, under the condition that releases it, still generated from live
+    state so it stays accurate while it waits.
 
-    What was hidden is reported at the bottom of the file rather than silently
-    dropped: a decline is a decision, and a decision that leaves no trace is
-    indistinguishable from a bug that ate a task.
-
-    Patterns that matched nothing are reported for the mirror-image reason. Matching the
-    rendered text is what makes a decline exact, and it is also what makes it brittle:
-    the emitters truncate a long title, so a pattern aimed at the tail of one silently
-    does nothing and the item comes back every run looking un-decided. A pattern can also
-    go quiet because the work got done, which is worth knowing too -- either way the
-    honest report is "this line is no longer doing anything", not silence.
+    Two things are reported rather than done silently. What was hidden, because a decision
+    that leaves no trace is indistinguishable from a bug that ate a task. And patterns
+    that matched nothing -- matching rendered text is what makes a decline exact and also
+    what makes it brittle, since the emitters truncate long titles, so a dead pattern
+    means either a typo or work that got done.
     """
     d = read_yaml(os.path.join(DATA, "declines.yaml")) or {}
     secs = [s for s in (d.get("sections") or []) if s]
@@ -852,32 +823,19 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
 
 
 def upstream_gaps(papers: list[dict], cfg) -> list[str]:
-    """Papers the corpus has only because an override names them.
+    """Papers the corpus has only because an override put them there.
 
-    Its own section rather than a line in the Scholar block above, because it is not a
-    disagreement between two surfaces -- both surfaces are right. The bibliography really
-    does not have these, and the corpus really does, and the only reason they are not
-    reported as missing is that an override put them in.
+    `extra_arxiv` and `extra_openreview` are stopgaps covering the interval before the
+    entry lands in the bibliography, and both files say to delete the line after. Nothing
+    else can report them: the Scholar block finds missing papers by diffing Scholar against
+    the corpus, and an override closes exactly that gap.
 
-    Which is why this exists at all. `extra_arxiv` and `extra_openreview` are stopgaps
-    with a stated lifetime: they cover the interval before the entry lands upstream, and
-    both files say to delete the line after. Nothing enforced that, and the Scholar block
-    cannot -- it finds papers missing from the bibliography by diffing Scholar against the
-    corpus, so an override closes the gap it would have reported. The stopgap goes silent
-    at the moment it starts being permanent.
+    The `_override` marker is provenance, not a decision -- `collect.py` sets it on records
+    it adds from an override, and it disappears once the bibliography's own entry merges.
+    So a paper still carrying it is still absent upstream.
 
-    The marker is provenance, not a decision: `collect.py` sets it on the records it adds
-    from an override, and it disappears when the bibliography's own entry merges with the
-    record. So a paper still carrying it is still absent upstream, and a paste that
-    already happened cannot be reported here.
-
-    Which is the second half, and the reason this function reads `overrides.yaml` as well
-    as the corpus. The moment the paste lands, the paper stops being reported above --
-    correctly, the gap is closed -- and the line that covered the interval is left behind
-    with nothing pointing at it. `collect.py` says so on stderr, once, in the middle of a
-    five-minute run nobody watches to the end; the id sitting in `extra_arxiv` today got
-    there that way. A stopgap whose removal is only ever announced in scrollback is a
-    permanent stopgap, so it gets a line in the file that is read instead.
+    The second half reads `overrides.yaml` as well as the corpus, for the override lines
+    left behind after the paste lands. `collect.py` says so on stderr, once, mid-run.
     """
     L = []
     pend = sorted((p for p in papers if p.get("_override")),

@@ -1,56 +1,32 @@
 #!/usr/bin/env python3
 """Resolve a paper's full text from whatever source actually has it.
 
-The first version of this read one field, `links.html` -- arXiv's LaTeXML rendering,
-with ar5iv behind it. That covers 105 of 117 papers and produces nothing at all for the
-other 12, so a sidecar for `active-learning-for-bert-an-empirical-study` (244 citations)
-was drafted from 1568 characters of metadata while an open-access PDF of the paper sat
-one URL away on the ACL Anthology. "No full text" was a property of the code, not of
-the paper.
-
-So this is a chain, tried in order, stopping at the first source that returns something
-long enough to be a paper:
+A chain, tried in order, stopping at the first source long enough to be a paper. Each
+covers a different slice of one person's corpus, and a hole here means a sidecar
+drafted from a title:
 
   0. data/fulltext/<slug>.pdf|.txt   a file you put there yourself
-  1. links.html                     arXiv LaTeXML / ar5iv -- real HTML, best text
-  2. ACL Anthology PDF              from links.acl_anthology, or derived from a
-                                    10.18653/... DOI
-  3. links.arxiv_pdf                when the HTML rendering is missing or a stub
-  4. Unpaywall best_oa_location     the OA aggregator publishers report to
-  5. Semantic Scholar openAccessPdf a second aggregator, different coverage
-  6. Europe PMC full text           for the biomedical-indexed ones
-  7. OpenReview PDF                 last, because it 403s every non-browser client
-                                    (checked: any UA, no cookie). Kept in the chain
-                                    anyway -- it costs one request that is not
-                                    retried, it is the only source for a few
-                                    workshop papers, and the block is theirs to
-                                    lift, not a bug here.
+  1. links.html                      arXiv LaTeXML / ar5iv -- real HTML, best text
+  2. ACL Anthology PDF               from links.acl_anthology, or a 10.18653/... DOI
+  3. links.arxiv_pdf                 when the HTML rendering is missing or a stub
+  4. Unpaywall best_oa_location      what publishers have deposited
+  5. Semantic Scholar openAccessPdf  a second crawler, different coverage
+  6. Europe PMC full text            the biomedical-indexed ones
+  7. OpenReview PDF                  403s every non-browser client, so last. One
+                                     unretried request, and the only source for a few
+                                     workshop papers.
 
-Local first on purpose. A file in `data/fulltext/` is a deliberate act: it means the
-public chain came up short and the author, who holds the PDF, decided to supply it.
-That directory is gitignored -- a publisher PDF is not ours to redistribute, and what
+`data/fulltext/` is gitignored: a publisher PDF is not ours to redistribute, and what
 gets published from it is a distillation, never the text.
 
-Why so many sources rather than one good one: each covers a different slice, and the
-slices are the shape of one person's corpus. ACL Anthology has the *ACL papers and
-nothing else. Unpaywall knows what publishers have deposited and misses preprints in
-odd places. Semantic Scholar's crawler finds PDFs Unpaywall has no record of. Europe
-PMC has the Nature paper's abstract that nobody else exposes. Any single one of them
-leaves a hole, and a hole here means a sidecar drafted from a title.
+What comes back is the paper minus its bibliography, up to LIMIT characters. Two things
+to know before trusting a draft built on it:
 
-What comes back is the whole paper minus its bibliography, up to LIMIT characters. Two
-things about that are worth knowing before trusting a draft built on it:
-
-  * arXiv's HTML renders every formula three times over -- MathML glyphs, a spelled-out
-    screen-reader gloss, and the TeX source. html_to_text keeps the TeX and drops the
-    other two, which cut the corpus's 90th percentile from 150,471 characters to 127,891
-    and one paper from 397,744 to 225,958. Caches written before that carry an
-    `extractor` version and are refetched once, one paper at a time as each is read.
-  * A paper over the limit keeps its beginning and its end with the gap marked in place,
-    because the tables a claim's magnitude has to be checked against are at the back. It
-    used to keep only the beginning, at 60,000 characters, which cut more than half the
-    corpus before its results section and produced ten sidecars drafted from papers whose
-    experiments the model never saw.
+  * arXiv HTML renders every formula three times (MathML, screen-reader gloss, TeX
+    source). html_to_text keeps the TeX. Caches carry an `extractor` version and are
+    refetched once when it moves.
+  * A paper over the limit keeps its beginning and its end with the gap marked in
+    place, because the tables a claim's magnitude needs are at the back.
 
 Two entry points:
 

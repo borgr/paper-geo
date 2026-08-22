@@ -34,14 +34,13 @@ def checked(slug: str) -> dict | str:
     """A draft with every claim already checked against the paper, or why it cannot be.
 
     The one review a human owes is asserting each line in public, and what makes that a
-    minutes-long job rather than an hour is having the claim, its scope, the pointer it
-    cites and the paper's own sentence for each figure in one place -- otherwise
-    reviewing means holding the PDF open in another window, which is the friction that
-    left 116 of 117 papers without a sidecar.
+    minutes-long job is having the claim, its scope, the pointer it cites and the paper's
+    own sentence for each figure in one place -- rather than the PDF open in another window,
+    which is the friction that left 116 of 117 papers without a sidecar.
 
-    Returns the checking, not a rendering of it, because there are two readers: a
-    terminal (`show`) and a browser (`review_page`). Two renderers over one check is the
-    only arrangement where the page and the command cannot disagree about a number.
+    Returns the checking, not a rendering of it, because there are two readers: a terminal
+    (`show`) and a browser (`review_page`). Two renderers over one check is the only
+    arrangement where they cannot disagree about a number.
     """
     path, live = draft_path(slug), False
     if not os.path.exists(path):
@@ -285,16 +284,15 @@ def _flags(d: dict) -> list[str]:
 
 
 def at_sentence(links: dict, phrase: str) -> str:
-    """The paper's own HTML, scrolled to the phrase — or "" if it cannot be linked.
+    """The paper's own HTML, scrolled to the phrase -- or "" if it cannot be linked.
 
     A text fragment rather than a section anchor, because the anchor ids of an arXiv or
     ar5iv rendition are generated and change between versions, while the sentence is the
-    thing being checked. A fragment that fails to match costs nothing: the browser opens
-    the paper at the top, which is where a "read the paper" link would have gone anyway.
+    thing being checked. A fragment that fails to match costs nothing: the browser opens the
+    paper at the top.
 
-    Only the review page links these. On a published page the same link, repeated once
-    per claim, would add no retrievable fact to a passage that already carries the
-    citation -- the paper is linked once, canonically, and that is the useful count.
+    Only the review page links these. On a published page the same link once per claim adds
+    no retrievable fact to a passage that already carries the citation.
     """
     url = links.get("html") or links.get("arxiv_pdf") or links.get("publisher")
     if not url or "/html/" not in url:

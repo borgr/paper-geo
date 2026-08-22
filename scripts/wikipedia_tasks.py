@@ -1,23 +1,14 @@
 #!/usr/bin/env python3
 """Where Wikipedia already talks about this work, and whether it gets it right.
 
-Wikipedia carries roughly half the citations in ChatGPT answers, which makes it the
-highest-leverage surface in the project and the one where acting on that leverage directly
-is forbidden:
+Wikipedia carries roughly half the citations in ChatGPT answers, and is the one surface
+where acting on that leverage directly is forbidden:
 
     WP:COI       you do not edit an article you have a stake in.
     WP:SELFCITE  you do not add citations to your own work. Excessive self-citation is
                  spam whether or not the work is good.
 
-An earlier version of this script drafted talk-page requests to *insert* a mention of each
-coined term into the nearest field article. That was dropped, and the reason is worth
-keeping: nothing large turns on those citations. A one-line mention of a benchmark inside a
-general article is the least likely edit to be accepted, the least likely to be read, and
-the most likely to make the next request from the same account look like promotion. The
-leverage argument is real and it does not license asking for a mention that nobody
-independent thought was due.
-
-So the scope here is corrections only. Everything asked for depends on someone else having
+So the scope is corrections only. Everything asked for depends on someone else having
 written about the work first:
 
     1. articles that mention the author        -- check the description is right

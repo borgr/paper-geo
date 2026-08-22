@@ -47,16 +47,14 @@ REPAIR_REPLY_TOKENS = 8000       # room a rewritten sidecar needs, measured on a
 def fits(evidence: str, sidecar: str, window: int) -> str:
     """As much of the paper as leaves the model room to answer, head and tail.
 
-    A repair prompt is the only one here that carries the paper *and* a full sidecar, and
-    on a 32k window those two do not both fit: TIES-Merging's text is 74k chars, which
-    left 2048 tokens for a reply that needs about four thousand, so round one came back
-    truncated and the loop dutifully kept the draft it had been asked to fix. Silent, and
-    it looked like a model that had nothing to add.
+    A repair prompt is the only one carrying the paper *and* a full sidecar, which on a 32k
+    window do not both fit: TIES-Merging's text is 74k chars, leaving 2048 tokens for a
+    reply needing about four thousand, so round one came back truncated and the loop kept
+    the draft it was asked to fix.
 
     Head and tail rather than the first N chars, because the findings that need the paper
-    are the ones asking for a magnitude, and magnitudes are in the tables -- which are at
-    the end, exactly where a front-truncation cuts. The middle is the related work and the
-    method prose, which the claims are already written from.
+    ask for a magnitude, and magnitudes are in the tables at the end. The middle is related
+    work and method prose, which the claims are already written from.
     """
     if not evidence or not window:
         return evidence
@@ -89,29 +87,20 @@ def repair(slug: str, rounds: int, again, evidence: str = "",
            source: str = "a model") -> int:
     """Re-ask the model to fix what the checker found, up to `rounds` times.
 
-    This is the answer to "can a smaller model do this if the job is broken up". It can,
-    and the split that pays is not nine calls for nine fields -- it is one draft plus a
-    critique it did not write. Measured on Qwen 2.5 72B, one paper: 20 findings, then 5,
-    then 2 after two rounds, with no rule reworded. The remaining two are the honest ones,
-    where the fix is a magnitude from a table the model will not invent.
-
-    `again(prompt_extra)` is the caller's own one-paper call, so this function knows
-    nothing about which backend it is driving.
+    `again(prompt_extra)` is the caller's own one-paper call, so this knows nothing about
+    which backend it drives.
 
     `evidence` is the same paper text the draft was written from, and it is what decides
-    which findings are fixable. Without it the loop can only re-word what it already
-    wrote, so every finding that asks for a fact -- a magnitude a claim dropped, the real
-    conditions behind a scope that came out under the length floor -- was unfixable by
-    construction, and the loop's honest answer was to leave it. Measured on the two
-    published sidecars: the residue after three blind rounds was 3 and 5 findings, and
-    all of it was of that kind.
+    which findings are fixable: without it the loop can only re-word what it already wrote,
+    so a finding asking for a fact -- a dropped magnitude, the real conditions behind a
+    thin scope -- is unfixable by construction. Measured on Qwen 2.5 72B, one paper: 20
+    findings, then 5, then 2. The residue is the honest kind, where the fix is a number from
+    a table the model will not invent.
 
-    Stops early when a round stops helping, because a round that does not reduce the count
-    is a round spending tokens to reword: the loop optimises against proxies, and past the
-    point where it is still fixing things, what it does instead is satisfy them. The
-    shared-scope check in `validate.py` exists because this loop found that edge -- it
-    converged on one scope that cleared the wording rules and pasted it across eight
-    claims, which is a fix to the checker's eye and a regression to a reader's.
+    Stops when a round stops reducing the count, because past that point the loop optimises
+    against the proxies rather than fixing anything -- it once converged on one scope that
+    cleared the wording rules and pasted it across eight claims, which is why
+    `validate.py` now checks for shared scopes.
     """
     path = draft_path(slug)
     best = None
@@ -272,14 +261,13 @@ ROUTES_SCHEMA = {
 def reroute(slug: str, again, source: str = "a model") -> tuple[int, int]:
     """Rewrite one live sidecar's `ask` blocks as the named roles. Nothing else moves.
 
-    The narrowest possible redraft, and narrow on purpose. A full redraft of an accepted
-    sidecar is a claim rewrite -- run once on `fusing-finetuned-models`, it returned 9
-    claims where the author had verified 11, with a different `one_liner` and different
-    misreadings. Migrating 113 papers that way would discard every figure that has been
-    checked against its paper and ask for all of it to be checked again, to fix questions.
+    Narrow on purpose. A full redraft of an accepted sidecar is a claim rewrite -- run once
+    on `fusing-finetuned-models`, it returned 9 claims where the author had verified 11,
+    with a different `one_liner` and different misreadings. Migrating 113 papers that way
+    would discard every figure already checked against its paper, to fix questions.
 
-    So the model never sees the paper here: the claims *are* the answers, the group already
-    says what it asks, and what is missing is only the vocabulary each kind of person would
+    So the model never sees the paper: the claims *are* the answers and the group already
+    says what it asks, so what is missing is only the vocabulary each kind of person would
     have typed. Returns `(groups rerouted, findings left on the draft)`.
     """
     # The draft when one exists, since that is what `--accept` will promote; the live file
@@ -331,22 +319,18 @@ def where(finding: str, fm: dict | None = None) -> str | None:
     """The single field a finding is about, as a locus, or None if it is about no one field.
 
     A locus is `claim/<id>/text`, `claim/<id>/scope`, `qa/<i>/ask/<role>`,
-    `qa/<i>/ask/unsorted/<j>`, `misreadings/<i>` or
-    `term/<name>` -- a path whose leaf is always a string, which is what lets the patch
-    schema stay a flat list of replacements with no union in it.
+    `qa/<i>/ask/unsorted/<j>`, `misreadings/<i>` or `term/<name>` -- a path whose leaf is
+    always a string, which is what lets the patch schema stay a flat list of replacements.
 
-    Two kinds of finding are addressable, and they say so differently. Most name their
-    field: `claim 'x': ...`, `term 'y': ...` -- and one of them, the invented-figure check,
-    without the colon (`claim 'x' states 29`), which is why the separator is optional here;
-    while it was not, three drafts kept a finding a single rewrite would have cleared. The
-    self-containment checks instead open with the offending string itself, followed by ` -- `
-    and the complaint, so those are located by looking the string up in the draft -- which
-    needs `fm`, and without it they come back None rather than guessed at.
+    Two kinds of finding are addressable. Most name their field (`claim \'x\': ...`), with
+    the colon optional because the invented-figure check omits it (`claim \'x\' states 29`).
+    The self-containment checks instead open with the offending string, then ` -- `, then
+    the complaint, so those are located by looking the string up in `fm` -- and without
+    `fm` they return None rather than a guess.
 
-    None is the useful half of this function: a finding about the whole set of claims -- band
-    counts, an orphan claim -- must not be answered by rewriting whichever claim it was
-    handed. Where the set itself is computable, `spread` names it instead, and the caller
-    sends those fields over as one group.
+    None is the useful half: a finding about the whole set of claims -- band counts, an
+    orphan claim -- must not be answered by rewriting whichever claim it was handed. Where
+    the set is computable, `spread` names it instead.
     """
     m = re.match(r"^claim '([^']+)'(?:: | )(.*)", finding)
     if m:
@@ -380,13 +364,12 @@ TOGETHER = ("this claim states no magnitude, and fewer than half of this page's 
 def spread(finding: str) -> list[str]:
     """The fields a page-level finding is about, when the set of them is computable.
 
-    `where` returns None for the figure floor because no single claim is at fault, and that
-    was read as "not mendable" for too long: the *set* is exactly known -- every `result`
-    claim that states no figure -- and it is the largest family left in the corpus, 9 of the
-    18 drafts still carrying findings. Handing them over together is safe here for a reason
-    that does not generalise: a number invented to satisfy this is caught by
-    `check_claim_numbers` against the paper's own text, and mend reverts the whole group
-    when the count does not fall.
+    `where` returns None for the figure floor because no single claim is at fault, but the
+    set is exactly known -- every `result` claim stating no figure -- and it is the largest
+    family left in the corpus. Handing them over together is safe here for a reason that
+    does not generalise: a number invented to satisfy this is caught by
+    `check_claim_numbers` against the paper's text, and mend reverts the whole group when
+    the count does not fall.
     """
     m = re.match(r"^only \d+ of \d+ result claims state a figure.*?Number-free: (.+)$",
                  finding, re.S)
@@ -516,13 +499,10 @@ def limits(locus: str) -> str:
 def mend(slug: str, again, evidence: str = "", source: str = "a model") -> int:
     """Fix what is fixable one field at a time, and keep the result only if it helped.
 
-    The difference from `repair` is what the model is shown and what it is allowed to
-    return. `repair` hands over the whole sidecar and takes a whole sidecar back, so a round
-    can regress a claim it was not asked about while fixing the one it was -- measured as
-    the plateau this loop stops on, where the count stops falling because each round trades
-    one finding for another. Here the model sees only the offending strings, and the reply
-    is a list of `(locus, new value)` pairs that are spliced back into the draft the rest of
-    which cannot move.
+    `repair` hands over the whole sidecar and takes a whole sidecar back, so a round can
+    regress a claim it was not asked about -- which is the plateau that loop stops on. Here
+    the model sees only the offending strings and returns `(locus, new value)` pairs spliced
+    into a draft the rest of which cannot move.
 
     Returns the finding count the draft is left with, mended or not.
     """

@@ -1,27 +1,19 @@
 #!/usr/bin/env python3
 """Draft a sidecar per paper from the paper itself, for a human to verify.
 
-A sidecar is the one per-paper input nothing else in this repo can derive: the claims
-in quotable form, the scope conditions each holds under, the terms of art used in a
-non-obvious sense, and the misreadings worth pre-empting. It is also what decides
-whether an engine describes the work *correctly* rather than merely finds it.
+A sidecar is the one per-paper input nothing else here can derive: the claims in quotable
+form, the scope conditions each holds under, the terms of art used in a non-obvious
+sense, and the misreadings worth pre-empting. It is what decides whether an engine
+describes the work *correctly* rather than merely finds it.
 
-The earlier framing of this file was that only the author could supply that, so 116 of
-117 papers had none and the worklist asked for ten minutes each -- nineteen hours of
-work that would never be done. That framing was wrong in a specific way: a claim with
-its magnitude, a scope condition, and a definition of a coined term are all *in the
-paper*. What the author uniquely holds is the judgement about whether a draft got them
-right, and which misreading is the one that actually keeps happening.
+The claims, magnitudes, scope conditions and coined terms are all in the paper, so this
+drafts them. What the author uniquely holds is whether a draft got them right, and which
+misreading actually keeps happening -- so the author verifies.
 
-So this drafts, and the human verifies. That is a different task and a much smaller
-one: reading a page of extracted claims and correcting them is minutes, and it starts
-from the paper's own numbers rather than from a blank file.
-
-Drafts land in `data/sidecars/drafts/<slug>.md`, never in `data/sidecars/`. Nothing
-reads the drafts directory -- the site, the validator, the fidelity check and the
-coverage count all glob `data/sidecars/*.md` one level up. An unverified draft
-therefore cannot reach a published page by accident, which is the property that makes
-drafting safe to do in bulk. Promotion is explicit:
+Drafts land in `data/sidecars/drafts/<slug>.md`, never in `data/sidecars/`. Nothing reads
+the drafts directory: the site, the validator, the fidelity check and the coverage count
+all glob `data/sidecars/*.md` one level up. An unverified draft therefore cannot reach a
+published page by accident, which is what makes bulk drafting safe. Promotion is explicit:
 
     python scripts/draft_sidecars.py                    # queue drafts for the 20 most cited
     python scripts/draft_sidecars.py --ingest            # fold agent answers into drafts/
@@ -39,15 +31,14 @@ Three modes, and `--mode` overrides the configured one for a single run:
                               model. Endpoint and model come from the environment and
                               never from config.yaml, which is committed and public.
 
-The nine drafting steps are sections of one prompt, not nine turns: every mode above
-sends the same system prompt and the same schema and reads back one object. Nothing
-here needs tool use or a multi-turn agent, which is why `api` and `openai` exist.
+The nine drafting steps are sections of one prompt, not nine turns: every mode sends the
+same system prompt and schema and reads back one object. Nothing here needs tool use or a
+multi-turn agent.
 
-`--repair N` is available in both `api` and `openai` mode, and it is the difference
-between a draft and an acceptable one: the loop hands the model back what the checks
-found, with the paper, up to N times, stopping as soon as a round stops reducing the
-count. Measured on one paper: 20 findings, then 5, then 2. `skill` mode has no
-equivalent, because the second pass there is the agent session reading `--review`.
+`--repair N` (api and openai) hands the model back what the checks found, with the paper,
+up to N times, stopping as soon as a round stops reducing the count. Measured on one
+paper: 20 findings, then 5, then 2. In `skill` mode the second pass is the agent session
+reading `--review`.
 """
 from __future__ import annotations
 
@@ -176,18 +167,13 @@ def _runs(nums) -> str:
 def inventory(text: str) -> str:
     """What the paper's own numbering contains, lifted out of the text ahead of drafting.
 
-    Two jobs, both of them code doing work the model was doing badly by hand.
+    Section and figure numbers, so `evidence:` can cite one that exists -- a Limitations
+    claim citing Section 7 of a paper whose last section is 6 is the error class `validate`
+    makes fatal at `--accept`, and discovering it at review time is a round trip.
 
-    The pointer list is the one that pays. `evidence:` is a citation into the paper, and a
-    citation to a section that does not exist is the error class `validate` makes fatal at
-    `--accept` -- caught once already, a Limitations claim citing Section 7 of a paper
-    whose last section is 6. Discovering that at review time is a round trip; handing over
-    the real numbering costs nothing and removes the guess.
-
-    The captions are lifted because they are where magnitudes live and because the full
-    text is *truncated* -- beginning and end kept -- so a caption in the middle of a long
-    paper is exactly what the model never sees. Half of a page's result claims must state
-    a figure, and this is the densest source of them in any paper.
+    Captions too, because they are where magnitudes live and because the full text is
+    truncated head-and-tail -- so a caption in the middle of a long paper is exactly what
+    the model never sees. Half of a page's result claims must state a figure.
 
     Approximate, and safe in the direction it errs: PDF text loses column order, so a
     caption can arrive scrambled and a heading can be missed. Nothing here is authority --
@@ -266,18 +252,14 @@ def evidence(p: dict, cfg: dict, no_fulltext: bool = False) -> str:
 def pending(papers: list[dict], do_all: bool, limit: int | None) -> list[dict]:
     """Papers with no live sidecar and no current draft, most cited first.
 
-    A draft written against an acceptability spec that has since moved counts as no
-    draft. It was written to different rules, `--accept` refuses it, and until this
-    check existed nothing in the pipeline noticed -- which is how 17 drafts came to sit
-    in that directory, not one of them acceptable, with no run ever replacing them.
+    A draft written against an acceptability spec that has since moved counts as no draft:
+    `--accept` refuses it, and until this check existed nothing noticed, which is how 17
+    unacceptable drafts came to sit in that directory with no run replacing them.
 
-    And a *live* sidecar that today's checks would refuse counts the same way, for the
-    same reason and with more at stake: it is the file the site builds from. Excluding
-    every paper with a live sidecar made acceptance permanent, so the two accepted before
-    the scope rules existed were the only two files in the repo that no run could reach
-    and no check would ever look at again. The draft that comes back is marked as
-    replacing the live one and needs `--accept --replace`, which is machinery that
-    already existed with nothing able to reach it.
+    A *live* sidecar today's checks would refuse counts the same way, and it is the file the
+    site builds from. Excluding every paper with a live sidecar made acceptance permanent,
+    so the two accepted before the scope rules existed were the only files no run could
+    reach. The replacement draft is marked as such and needs `--accept --replace`.
     """
     live = {os.path.basename(f)[:-3] for f in live_paths()}
     from validate import outdated_live, read_sidecars
@@ -295,17 +277,16 @@ def with_evidence(cands: list[dict], cfg, no_fulltext: bool,
                   limit: int | None) -> tuple[list[tuple[dict, str]], list[dict]]:
     """Resolve evidence in citation order; take the first `limit` papers that have text.
 
-    The skip is the point. A paper no open source will give us has nothing to draft from
-    but its title, and a sidecar written from a title is a page of confident guesses
-    published under the author's name -- the one output here that is worse than no page.
+    The skip is the point. A paper no open source will give us has nothing to draft from but
+    its title, and a sidecar written from a title is a page of confident guesses published
+    under the author's name.
 
-    Applying the limit *after* the text check rather than before is what keeps the batch
-    moving: filter-then-limit would let the same handful of unreachable papers fill every
-    batch forever, so the reachable ones behind them would never get drafted.
+    The limit applies *after* the text check: filter-then-limit would let the same handful of
+    unreachable papers fill every batch forever.
 
-    Nothing is remembered as hopeless. Each is retried on the next run, because a source
-    added to fulltext.py today should rescue a paper that came up empty yesterday, and
-    `data/fulltext/<slug>.pdf` should take effect the moment it appears.
+    Nothing is remembered as hopeless. Each is retried next run, so a source added to
+    fulltext.py rescues yesterday's empty paper, and `data/fulltext/<slug>.pdf` takes effect
+    the moment it appears.
     """
     ok: list[tuple[dict, str]] = []
     skipped: list[dict] = []
@@ -336,17 +317,15 @@ CONTRACT = [
 def standing(slug: str) -> tuple[dict | None, list[str]]:
     """The text already written for this paper, and what today's checks say about it.
 
-    A paper re-queued by `--all` almost always has something on disk: a draft nobody has
-    accepted, or a live sidecar that a rule written after it was accepted now finds
-    fault with. Handed an empty `sidecar` field, the only job available is to write the
-    paper up again from scratch -- so a live file whose single finding is one sentence
-    leaning on "The study" would be replaced wholesale, throwing away ten claims a
-    person had already read and checked to fix a phrase. Seeded with the standing text
-    and the findings against it, the job is the repair the `api` path has always had
-    (`REPAIR`), and the review that has been done survives it.
+    A paper re-queued by `--all` usually has something on disk: an unaccepted draft, or a
+    live sidecar a later rule now finds fault with. Handed an empty `sidecar` field the only
+    job available is writing the paper up from scratch, so a live file whose single finding
+    is one sentence leaning on "The study" gets replaced wholesale, discarding ten claims a
+    person had already checked. Seeded with the standing text and the findings against it,
+    the job is a repair instead.
 
-    The draft is preferred over the live file when both exist: the draft is the newer of
-    the two, and it is the one `--ingest` will overwrite.
+    The draft is preferred over the live file when both exist: it is newer, and it is the one
+    `--ingest` will overwrite.
     """
     for path in (draft_path(slug),
                  live_path(slug)):
@@ -601,17 +580,16 @@ def shape(sc: dict, field: str) -> str:
 def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
     """One chat completion per paper against an OpenAI-compatible endpoint.
 
-    Returns (answers, provenance). The same prompt and the same schema as the Anthropic
-    path -- the point of this backend is that the rules are the variable under test and
-    the model is not, so nothing here may reword anything.
+    Returns (answers, provenance). The same prompt and schema as the Anthropic path -- the
+    rules are the variable under test and the model is not, so nothing here rewords
+    anything.
 
-    Schema enforcement is attempted and not required. vLLM-backed gateways accept
-    `response_format: json_schema` and decode against it; others reject the field with a
-    400, and refusing to run on those would make this backend useless for exactly the
-    open models it exists to try. So: enforce if the endpoint allows it, otherwise ask
-    in the prompt and parse what comes back -- and say which happened, because "the
-    model produced a valid sidecar" and "the decoder could not produce anything else"
-    are different results.
+    Schema enforcement is attempted, not required: vLLM-backed gateways accept
+    `response_format: json_schema`, others reject it with a 400, and refusing to run on those
+    would rule out the open models this backend exists to try. So enforce if allowed,
+    otherwise ask in the prompt and parse what comes back -- and record which happened,
+    because "the model produced a valid sidecar" and "the decoder could not produce anything
+    else" are different results.
     """
     client, model = llm_client(model_default=cfg["llm"].get("model_openai"),
                                context="llm.mode: openai")

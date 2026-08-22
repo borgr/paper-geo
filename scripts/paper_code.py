@@ -1,56 +1,43 @@
 """Deduce each paper's own code repo and project page, and publish both to HF.
 
-A code link is the single most useful thing a paper page can carry that a citation
-cannot: it is what a reader who believes the result reaches for next, and what an
-assistant answering "is there an implementation?" needs to find. The site already
-renders one -- `links.code` in build_site.py -- but it is fed from exactly one place,
-Hugging Face's `githubRepo` field, which was set on 19 of 105 arXiv papers. Every
-other paper's repo was sitting in its own full text, unread.
+The site renders `links.code`, but it was fed from one place -- Hugging Face's
+`githubRepo`, set on 19 of 105 arXiv papers. Every other paper's repo is in its own full
+text: the paper says where its code is, in first person ("we release our code at"). That
+phrasing is the whole signal, and it is what separates the paper's own repo from the ten
+it cites -- `huggingface/transformers` appears in a BabyLM footnote too.
 
-So: read it. The paper says where its code is, in the abstract or a first-page
-footnote, in first person ("we release our code at"). That phrasing is the whole
-signal, and it is what separates the paper's own repo from the ten others it cites
--- `huggingface/transformers` appears in a BabyLM footnote too, and linking that
-would be worse than linking nothing.
-
-Three passes, and only the first is allowed to decide on its own:
+Three passes, and only the first may decide on its own:
 
   1. `github.com/...` in the full text with a first-person release phrase in front of
-     it, confirmed by GitHub returning 200. Two independent corroborations are
-     available and both are checked: whether the repo owner's login looks like one of
-     the authors, and whether the repo's own description or README names the paper.
-  2. Anything weaker -- a URL with no release phrase, or several candidates with
-     equal claim -- goes to the report for a human, never to Hugging Face.
-  3. Papers where the text names no repo at all are listed too. Silence in a report
-     reads as "covered", and most of these genuinely have no public code.
+     it, confirmed by GitHub returning 200. Two corroborations are also checked: the
+     repo owner's login against the author list, and the description or README against
+     the paper title.
+  2. Anything weaker -- no release phrase, or several equal candidates -- goes to the
+     report for a human, never to Hugging Face.
+  3. Papers whose text names no repo are listed too, since silence in a report reads as
+     "covered".
 
-Hugging Face stores a second link, `projectPage`, and a paper whose artifact is a
-website, a leaderboard or a dataset viewer has no repo worth linking but does have a
-page. Those are deduced by the same three passes over the same window, with one
-difference forced by the medium: there is no `gh api` for the open web, so the
-confirmation is the page itself -- it has to be reachable and it has to name the
-paper. The two decisions are independent; a paper can get a page and no repo.
+`projectPage` is deduced the same way, for papers whose artifact is a website,
+leaderboard or dataset viewer. There is no `gh api` for the open web, so confirmation is
+the page itself: reachable, and naming the paper. The two decisions are independent.
 
-Two whole classes of URL are dropped before scoring rather than argued with. A
-double-blind review mirror (`anonymous.4open.science/r/...`) is the release
-sentence's entire content, so it scores like the real repo and is certain to be
-wrong -- the mirror is deleted after review. And every paper links to arXiv, the
-venue, and the licence regardless of what it released; none of those is a project
-page. See ANON_RX and PAGE_SKIP_HOSTS.
+Two classes of URL are dropped before scoring, because both would score like the real
+repo: a double-blind review mirror (`anonymous.4open.science/r/...`), which is deleted
+after review, and the arXiv/venue/licence links every paper carries. See ANON_RX and
+PAGE_SKIP_HOSTS.
 
-Decisions land in data/paper_code.yaml, committed and hand-editable, so a correction
-outlives the run that made it and `--apply` stays idempotent. Setting `reviewed: true`
-on a row freezes it *and* makes its `repo` and `project_page` the URLs that get pushed,
-so a hand-written link beats anything deduced, and deleting the key means "no link, on
-purpose". Nothing reaches Hugging Face without `--apply`.
+Decisions land in data/paper_code.yaml, committed and hand-editable, so `--apply` stays
+idempotent. `reviewed: true` freezes a row *and* makes its `repo`/`project_page` the
+URLs that get pushed, so a hand-written link wins and deleting the key means "no link,
+on purpose". Nothing reaches Hugging Face without `--apply`.
 
     python scripts/paper_code.py                # deduce, write the yaml, print a diff
     python scripts/paper_code.py --apply        # POST the accepted links to HF
     python scripts/paper_code.py --slug <slug>  # one paper, verbosely
 
-HF's endpoint is POST /api/papers/{arxiv_id}/links, which the docs describe as taking
-a "paper object ID"; the arXiv id is what works, and it is the only id any read
-endpoint exposes. Writing needs a token whose user is a confirmed author on the paper.
+HF's endpoint is POST /api/papers/{arxiv_id}/links -- the arXiv id is the "paper object
+ID" that works, and the only id any read endpoint exposes. Writing needs a token whose
+user is a confirmed author on the paper.
 """
 from __future__ import annotations
 

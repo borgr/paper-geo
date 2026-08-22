@@ -1,34 +1,27 @@
 #!/usr/bin/env python3
 """Reset a fork so it holds a new researcher's corpus and none of the old one's judgement.
 
-`config.yaml` says a fork has to replace two things: itself, and `data/`. That is only
-half a procedure, because `data/` is three kinds of file and they need three different
-treatments -- and getting the third one wrong is the failure this script exists to
-prevent:
+`data/` is three kinds of file needing three different treatments:
 
     derived    papers.yaml, repos.yaml, fulltext/  -- rebuilt from public sources on the
-               first run. Deleting them costs one slow run and nothing else.
+               first run. Deleting them costs one slow run.
     receipts   slug_history.yaml, wikidata_created.yaml, arxiv_submissions.yaml -- true
                statements about someone else's records. Kept, they would redirect your
                URLs to their retired slugs and skip creating items you do not have.
-    judgement  paper_code.yaml, overrides.yaml, declines.yaml, followups.yaml,
-               sidecars/ -- one researcher's decisions about their own work, several of
-               them decisions to publish or not publish something. Inherited, they
-               publish that person's judgement under your name, silently, because
-               nothing downstream can tell an inherited decision from yours.
+    judgement  paper_code.yaml, overrides.yaml, declines.yaml, followups.yaml, sidecars/
+               -- one researcher's decisions about their own work, several of them
+               decisions to publish or not. Inherited, they publish that person's
+               judgement under your name, and nothing downstream can tell the difference.
 
-So every one of them is emptied, and the documentation comments at the head of each file
-are kept: they are how a fork learns what the file means, and they are the one part that
-is not about a particular person.
+All three are emptied. The documentation comments at the head of each file are kept --
+they are how a fork learns what the file means.
 
     python scripts/bootstrap_fork.py --check   # what still names the previous author
     python scripts/bootstrap_fork.py --yes     # empty the data, then --check
 
-`--check` is the half worth running twice. It greps `config.yaml` for the values the
-previous author's identity is made of and prints each line still carrying one, because a
-fork that empties `data/` but keeps `orcid:` produces a site that asserts your papers are
-theirs -- and no other check in the repo can catch it, since for the author those values
-are correct.
+`--check` greps `config.yaml` for the values the previous author's identity is made of and
+prints each line still carrying one. No other check can catch this, since for the original
+author those values are correct.
 """
 from __future__ import annotations
 

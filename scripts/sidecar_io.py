@@ -57,13 +57,14 @@ def live_paths() -> list[str]:
 def spec_sha() -> str:
     """Short hash of everything that decides whether a draft is acceptable.
 
-    Not the rules doc alone. The rule that rejected all 17 drafts this repo had
-    accumulated -- every sidecar needs at least one `kind: context` claim -- lives in
-    `validate.check_sidecar_shape`, in code, with the prose untouched. A stamp over the
-    prose would have moved on a typo fix and held still through the one change that
-    mattered. So: the rules the model is sent, the schema it fills, and the source of
-    every function that judges the result -- `readability` included, because a draft
-    written before the sentence caps existed is exactly a draft `--accept` now refuses.
+    The rules the model is sent, the schema it fills, and the *source* of every function
+    that judges the result -- `readability` included, because a draft written before the
+    sentence caps existed is exactly a draft `--accept` now refuses.
+
+    Not the rules doc alone: the rule that rejected all 17 accumulated drafts (every sidecar
+    needs a `kind: context` claim) lives in `validate.check_sidecar_shape`, in code, with
+    the prose untouched. A stamp over the prose would move on a typo and hold still through
+    that.
     """
     from validate import (check_claim_evidence, check_claim_numbers, check_sidecar_shape,
                           readability)
@@ -113,16 +114,12 @@ def uncommitted(path: str) -> bool:
 def edited(path: str) -> bool:
     """Has a person changed this draft since the drafter wrote it?
 
-    The question that decides whether a re-draft may overwrite it, and the reason the
-    stamp carries a body hash at all. Their edits are the review this whole step exists
-    to collect; a queue that silently replaced them would destroy the only thing here
-    that cannot be re-derived.
+    Decides whether a re-draft may overwrite it. Their edits are the review this whole step
+    exists to collect, and the only thing here that cannot be re-derived.
 
-    An unstamped draft has to be answered from outside the file, and git answers it: a
-    committed draft nobody has touched since is the drafter's own output, and replacing
-    it costs a `git checkout` to undo. Treating unstamped as edited instead would have
-    been the safe-looking choice and the wrong one -- it would freeze exactly the 17
-    drafts this check exists to unfreeze.
+    An unstamped draft is answered from git instead: a committed draft nobody has touched is
+    the drafter's own output, and replacing it costs a `git checkout` to undo. Treating
+    unstamped as edited would freeze exactly the 17 drafts this exists to unfreeze.
     """
     st = stamp_of(path)
     if st is None:
@@ -222,17 +219,15 @@ def unstructure(value, spec: dict):
     """Put a reply back into the shape the schema asked for, where that is lossless.
 
     A forced tool call over-structures. `misreadings` is declared as an array of plain
-    strings, and in one live pass three drafts came back with it as an array of objects:
-    `[{"text": "The 0.77 accuracy ..."}]` in one, and a string exploded character by
-    character into `{"0": "T", "1": "h", "2": "e", ...}` in two more. Every one of those is
-    a string wearing an object, every one converts back exactly, and left alone each costs
-    a schema error -- which, before the tier was isolated, silently suppressed nine other
-    findings on the same draft.
+    strings; one live pass returned it as `[{"text": "The 0.77 accuracy ..."}]` in one draft
+    and as a string exploded character by character (`{"0": "T", "1": "h", ...}`) in two
+    more. Each is a string wearing an object, each converts back exactly, and left alone
+    each costs a schema error.
 
-    So this is deliberately narrow: it only ever turns an object into the string the schema
-    already required, and only when the object holds nothing the string does not. Anything
-    else is returned untouched, because a shape the schema rejects and code cannot
-    unambiguously recover is a finding for the author, not a guess for the code.
+    Deliberately narrow: it only turns an object into the string the schema already
+    required, and only when the object holds nothing the string does not. Anything else is
+    returned untouched -- a shape code cannot unambiguously recover is a finding for the
+    author, not a guess.
     """
     if not isinstance(spec, dict):
         return value
@@ -301,18 +296,14 @@ def write_draft(slug: str, sidecar: dict, source: str) -> str:
 def restamp(slugs: list[str] | None = None) -> tuple[list[str], list[tuple[str, str]]]:
     """Re-check drafts as they stand and rewrite their stamps. Returns (done, refused).
 
-    The operation that was missing, and the gap was structural: `spec_sha` hashes the
-    source of every function that judges a draft, so editing any check -- even adding a
-    rule that the drafts already satisfy -- marks all of them "spec moved". The only way
-    back was `--ingest`, which rewrites front matter from the task file and destroys the
-    author's review, which is the one thing here that cannot be re-derived. So a checker
-    edit either cost the review or left the drafts parked; this is the third option.
+    `spec_sha` hashes the source of every function that judges a draft, so editing any
+    check -- even adding a rule the drafts already satisfy -- marks all of them "spec
+    moved". The only way back was `--ingest`, which rewrites front matter from the task file
+    and destroys the author's review. This is the third option.
 
-    It refuses a draft that does not currently pass, and that restriction is the whole
-    safety property. A stamp is what makes `pending` skip a slug and `held` keep it, so
-    stamping a failing draft would park it where nothing queues it and nothing reports it.
-    A draft that fails the new rules should stay stale until somebody fixes it or replaces
-    it -- which is what `held` already says out loud.
+    It refuses a draft that does not currently pass, and that restriction is the safety
+    property: a stamp is what makes `pending` skip a slug and `held` keep it, so stamping a
+    failing draft would park it where nothing queues it and nothing reports it.
     """
     spec, done, refused = spec_sha(), [], []
     for f in draft_paths():

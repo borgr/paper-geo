@@ -163,33 +163,25 @@ CARRIED = ("owner", "owner_source", "canonical_page", "owner_conflict")
 def carry_claims(papers: list[dict], papers_path: str) -> int:
     """Keep the ownership fields this file does not derive, across the rewrite.
 
-    Everything else in `papers.yaml` is re-derived from live sources every run, which is
-    the point -- and it is why `owner_source: self` cannot survive here on its own.
-    `ownership.py` recovers our claim by reading the value already in the file
-    (`p.get("owner") == me or p.get("owner_source") == "self"`), so a rewrite that drops
-    the field does not merely blank it: the next reconcile finds nothing to recover, sets
-    the paper back to `unclaimed`, and the manifest we publish for peers -- the file they
-    read to avoid building a second canonical page for the same paper -- loses the claim
-    permanently. A decision destroyed by the next scheduled run, silently, which is
-    exactly what `overrides.yaml` exists to prevent for hand-made judgments.
+    Four keys, from the working copy of papers.yaml rather than the committed one, since a
+    claim made and not yet committed is still a claim. Both halves are re-derived by the
+    next `ownership.py` run, so carrying them is at worst one run stale -- but unlike
+    citation counts they cannot be re-fetched.
 
-    The peer half is carried for the sibling reason: `canonical_page` is what `render`
-    reads to link to a co-author's page instead of publishing a competing one, so between
-    a collect and the next ownership run its absence is a duplicate page, which is the
-    harm the whole mechanism exists to prevent. Both are re-derived by the next
-    `ownership.py` run, so carrying them forward is at worst one run stale -- the same
-    contract as citation counts, and unlike them these cannot be re-fetched.
+    `owner`/`owner_source`: `ownership.py` recovers our claim by reading the value already
+    in the file, so a rewrite that drops the field leaves the next reconcile with nothing
+    to recover -- the paper goes back to `unclaimed` and the manifest peers read to avoid
+    building a competing canonical page loses the claim permanently.
 
-    Keyed by slug, from the working copy rather than the committed one: a claim made and
-    not yet committed is still a claim.
+    `canonical_page`: what `render` reads to link to a co-author's page instead of
+    publishing a competing one, so its absence between a collect and the next ownership
+    run is a duplicate page.
 
-    The key is carried even when its value is null, which is the difference between a
-    clean diff and a 113-line one. `owner: null` is not a claim, but it is what
-    `ownership.py` writes for `unclaimed`, so dropping it and letting the next step put
-    it back makes every collect-only run rewrite a line per paper for no change in
-    meaning. Presence of the key, not truthiness of the value, is therefore the test --
-    safe because nothing in this file ever sets one of these four, so `k not in p` is the
-    same question as "did collect derive this".
+    Presence of the key is the test, not truthiness of the value: `owner: null` is what
+    `ownership.py` writes for `unclaimed`, so dropping it makes every collect-only run
+    rewrite a line per paper for no change in meaning. Safe because nothing in this file
+    ever sets one of the four, so `k not in p` is the same question as "did collect derive
+    this".
     """
     prev = {p["slug"]: p for p in (read_yaml(papers_path) or {}).get("papers") or []
             if p.get("slug")}
@@ -937,33 +929,26 @@ def arxiv_authors(ax: str) -> list[str]:
 def authorship_gate(papers: list[dict], cfg: dict, ov: dict) -> list[dict]:
     """Keep only papers whose author list contains some form of your name.
 
-    The pipeline began by assuming `bibtex_url` holds your publications. It does not:
-    a CV bibliography is one file, and this one also carries the works the CV *cites*
-    -- "Attention is all you need", "Sapiens", a euthanasia survey. Without this gate
-    every consumer inherits the mistake, and they inherit it in the worst direction:
-    a canonical page published on your domain for someone else's paper, an
-    `orcid_import.bib` that asserts you wrote it, and an arXiv ownership request that
-    a human at arXiv then has to reject.
+    `bibtex_url` is a CV bibliography, so it also carries the works the CV *cites* --
+    "Attention is all you need", "Sapiens", a euthanasia survey. Without this gate every
+    consumer inherits them: a canonical page on your domain for someone else's paper, an
+    `orcid_import.bib` asserting you wrote it, an arXiv ownership request a human has to
+    reject.
 
-    Excluding is the safe default because the two errors are not symmetric. A missed
-    paper of yours costs you one page. A claimed paper of someone else's is a false
-    authorship assertion in a public registry, which is expensive to retract and
-    embarrassing in a way a missing page is not.
+    Excluding is the safe default because the errors are not symmetric. A missed paper of
+    yours costs one page; a claimed paper of someone else's is a false authorship
+    assertion in a public registry.
 
-    So: no name match -> dropped, and listed in build/not_mine.json for review. Where
-    the bibliography's author list is merely *incomplete* -- a truncated list, a
-    consortium paper, "et al." in the source -- record the title under `also_mine` in
-    overrides.yaml and it is kept regardless. That is a decision, so it lives in the
-    one hand-edited file rather than being re-guessed every run.
+    No name match -> dropped, and listed in build/not_mine.json for review. Where the
+    bibliography's author list is merely *incomplete* -- truncated, a consortium entry,
+    "et al." in the source -- record the title under `also_mine` in overrides.yaml and it
+    is kept regardless.
 
-    Before rejecting anything that has an arXiv id, ask arXiv. This used to be
-    conditional on `authors_truncated`, which meant it only fired when the *source*
-    admitted the list was short -- and a consortium deposit does not: "MINDGAMES
-    Organizer & Participation Teams" is one complete author entry, so the gate dropped
-    a 53-author paper of yours with no signal. The condition is now the rejection
-    itself, because the request is only spent on papers about to be dropped (5 of 179
-    entries here) and the alternative is a heuristic that guesses which lists are
-    incomplete. Guessing is what produced the bug.
+    Anything with an arXiv id is checked against arXiv before rejection, not before every
+    decision: the request is only spent on papers about to be dropped (5 of 179 here). The
+    condition is the rejection itself rather than an `authors_truncated` flag, because a
+    consortium deposit does not admit its list is short -- "MINDGAMES Organizer &
+    Participation Teams" is one complete author entry.
     """
     variants = cfg["identity"]["name_variants"]
     keep_norm = {norm_title(t) for t in (ov.get("also_mine") or [])}
