@@ -27,8 +27,8 @@ worth making.
 
 ## 2. Identity: assert it once, everywhere, identically
 
-The highest-leverage category, and it is shared because it is about the person
-rather than the artifact.
+The highest-leverage category, and the one that is about the person rather than the
+artifact.
 
 - **One canonical URL.** The same string in ORCID, Semantic Scholar, arXiv,
   GitHub, LinkedIn, and every JSON-LD `sameAs`. Changing it later costs more than
@@ -138,16 +138,13 @@ these writes land on public records that other people's tooling reads.
 
 ## 9. Duplication: which kind helps, which kind hurts
 
-The answer is not uniform, and the two cases point in opposite directions.
-
 **Duplicating a claim across owners helps.** Retrieval systems weight assertions
 that recur across independent sources. A co-author's README carrying the same
 canonical claim sentence is genuine independent corroboration, as is the model
 card, the project site, and the talk abstract. More owners makes it stronger —
 **provided the wording is identical.** Two co-authors independently paraphrasing
 one finding produces two competing near-duplicates, which is §5's fragmentation
-problem multiplied by author count. That is the real risk of this spreading, and
-it is a wording problem, not a duplication problem.
+problem multiplied by author count — a wording problem, not a duplication problem.
 
 **Duplicating a canonical page across owners hurts.** N personal sites each
 hosting a landing page for the same paper splits authority: duplicate-content
@@ -170,10 +167,8 @@ When a co-author owns a paper's page, `canonical_page` on that paper
 competitor. If a page must be mirrored anyway, `rel=canonical` points at the
 original.
 
-A collaborator forking this tool and running it on *their* corpus is unambiguously
-good — they are labelling their own repos and asserting their own identity graph.
-The only collision is per-paper pages for shared papers, and `canonical_page`
-resolves it.
+A collaborator forking this tool and running it on *their* corpus is fine: the only
+collision is per-paper pages for shared papers, and `canonical_page` resolves it.
 
 ---
 
@@ -277,13 +272,12 @@ the sidecar:
 
 ## 11. Repositories
 
-The papers track fights for position in surfaces someone else owns. This track
-owns its surface completely, and GitHub is a top-5 AI-cited domain — so the
-ceiling is higher and the work is cheaper. The catch is that almost none of it is
-about papers: **only 1 of 31 repos maps to a paper.** Paper code lives in
+You own this surface completely and GitHub is a top-5 AI-cited domain, so the
+ceiling is higher and the work is cheaper than the papers track. Almost none of it is
+about papers, though: **only 1 of 31 repos maps to a paper.** Paper code lives in
 collaborators' and organisations' accounts (`prateeky2806/ties-merging`,
-`ibm-research/*`), so planning this track around "the code for the papers" would
-mis-target nearly all of it.
+`ibm-research/*`), so planning this track around "the code for the papers"
+mis-targets nearly all of it.
 
 ### 11.1 The three kinds that need different treatment
 
@@ -380,9 +374,8 @@ under 120 characters. No marketing. If the name is coined, lead with the plain
 phrasing.
 <!-- prompt:end -->
 
-A repo with no description is invisible to GitHub search regardless of its topics,
-and this account started with zero topics on every repo — GitHub topics are its
-primary discovery facet.
+GitHub topics are the account's primary discovery facet, and a repo with no
+description is invisible to GitHub search regardless of its topics.
 
 ### 11.3 Desired state only
 
@@ -391,13 +384,11 @@ that flag is the whole idempotency story for this track: re-running `propose` ad
 newly created repos and refreshes paper links while carrying forward every field
 you or the model set.
 
-You do not need the flag to correct one label, though, and requiring it would be a
-trap: a proposal is promoted into the applied fields only in the run where that
-proposal *changed*, so deleting a wrong topic survives every run in between. It does
-not survive the run where the proposal changes, which is the part this section used
-to get wrong. Nothing distinguishes a topic you deleted from one never proposed, so
-**a deletion you mean to keep goes in `declined_topics`**, next to `topics` on the
-same row:
+You do not need the flag to correct one label. A proposal is promoted into the
+applied fields only in the run where that proposal *changed*, so deleting a wrong
+topic survives every run in between — but not the run where the proposal changes, and
+nothing distinguishes a topic you deleted from one never proposed. So **a deletion you
+mean to keep goes in `declined_topics`**, next to `topics` on the same row:
 
 ```yaml
 topics:
@@ -407,14 +398,13 @@ declined_topics:
 ```
 
 `promote()` subtracts that list from every future proposal and says so when it does.
-This is the same rule as everywhere else here — a decision is recorded, not
-remembered — and repo labels were the one place it was broken. Use `reviewed: true`
-for the other thing: freezing a whole row against answers not yet written.
+Use `reviewed: true` for the other thing: freezing a whole row against answers not yet
+written.
 
 `repos.yaml` holds **desired state only** — no stars, no `current_*` mirrors of
-GitHub. Those duplicate data that already lives on GitHub, churn the file on every
-run, and go stale between runs. `diff` fetches live state at the moment it runs, so
-it always compares intent against reality rather than against a snapshot.
+GitHub, which would churn the file on every run and go stale between them. `diff`
+fetches live state at the moment it runs, so it compares intent against reality rather
+than against a snapshot.
 
 ### 11.4 What pays first
 
@@ -440,9 +430,9 @@ co-authorships beat a hundred (§12).
 ## 12. Co-authors
 
 Exactly one party owns each paper's canonical page and its sidecar; everyone else
-links to it (§9). The protocol for agreeing on that is deliberately dumb — no
-server, no registry, no accounts. Each participant publishes a static JSON file at
-a stable URL saying which papers they claim:
+links to it (§9). The protocol for agreeing on that has no server, no registry and no
+accounts: each participant publishes a static JSON file at a stable URL saying which
+papers they claim:
 
 ```
 https://borgr.github.io/paper-geo.json
@@ -476,10 +466,9 @@ run reconciles:
 | Nobody claims it | left unclaimed, with a suggested owner. **We never auto-claim** |
 | Two parties claim it | **flagged, never auto-resolved** — this is the exact harm being prevented |
 
-Not auto-claiming is the important default: silently claiming a paper a co-author
-is about to claim is precisely how two canonical pages come to exist. A peer who
-does not run this tool can hand-write six lines of JSON and participate, which is
-the point of keeping the format this thin.
+Not auto-claiming is the important default: silently claiming a paper a co-author is
+about to claim is how two canonical pages come to exist. A peer who does not run this
+tool can hand-write six lines of JSON and participate.
 
 **Who should own a paper** — advisory, and the tool only ever suggests: the first
 or corresponding author usually, since they wrote the claims and can rank which
@@ -498,16 +487,14 @@ and not publish their own page for it. One sidecar per paper, one owner, shared
 rather than forked — a co-author who wants to contribute claims PRs the owner's
 sidecar.
 
-**How much this beats "one person runs the code" —** for coverage, not at all. If
-you run it across your whole corpus and no collaborator ever runs anything, every
-paper already has a canonical page. The gains are elsewhere, and they are real:
-a 5-author paper's page linked from 5 independent accounts and domains instead of
-1 (independent mentions correlate with AI-Overview visibility at 0.664 vs 0.218
-for backlinks, and you cannot post in someone else's README); N co-authors
-asserting the *identical* claim sentence, which needs coordination precisely
-because it needs the same words; and preventing the harm, which may be the biggest
-— without an agreement the failure mode is not inaction, it is a co-author
-spinning up a competing page for the same paper.
+**What co-authors add beyond you running the code alone —** nothing for coverage:
+run it across your whole corpus and every paper already has a canonical page. The
+gains are a 5-author paper's page linked from 5 independent accounts and domains
+instead of 1 (independent mentions correlate with AI-Overview visibility at 0.664 vs
+0.218 for backlinks, and you cannot post in someone else's README); N co-authors
+asserting the *identical* claim sentence, which needs coordination because it needs
+the same words; and preventing a co-author from spinning up a competing page for the
+same paper.
 
 So use it for multi-author flagship papers with active co-authors, the top of
 `WORKLIST.md`. Do not negotiate over the long tail; claim those yourself and move
@@ -517,9 +504,8 @@ on. Ten negotiated papers is a good outcome.
 
 ## 13. What is actually enforced
 
-Anything stated as a rule and not checked gets violated without anyone noticing,
-so this table is part of the rules rather than an appendix. The right-hand column
-is the truth; the prose above is the explanation.
+The right-hand column is the truth; the prose above is the explanation. A rule with
+nothing in that column is in bold at the bottom.
 
 | Condition | Enforced by |
 |---|---|

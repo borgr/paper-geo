@@ -6,17 +6,11 @@ from public sources each run and therefore cannot drift. This one can, and has.
 
 **§2 is the drafting prompt.** Not a description of it: `scripts/draft_sidecars.py`
 reads the block between the markers and sends it to the model, so editing §2 changes
-what the drafter is told in the same commit. That is the one-source rule this file
-used to violate.
+what the drafter is told in the same commit.
 
-Who does what: a model drafts, the author accepts. Nothing else in the pipeline can
-read a draft — the site, the validator, the fidelity check and the coverage count
-all glob `data/sidecars/*.md` non-recursively, and drafts sit in `drafts/` one level
-down. See [../RUN.md](../RUN.md).
-
-Two halves, deliberately separate: **§2–§4 are settled** and enforced where the
-last column of §4 says so. **§6 is open** — each row is a decision nobody has made,
-with the real options and what ships if we keep not deciding.
+A model drafts, the author accepts ([../RUN.md](../RUN.md)). **§2–§4 are settled**,
+enforced where the last column of §4 says so. **§6 is open** — each row is a decision
+nobody has made, with the real options and what ships if we keep not deciding.
 
 ## How a draft is made
 
@@ -32,8 +26,9 @@ and it is the only stage whose output is not reproducible from public sources.
 | 5 | **Drafts are ingested and checked.** Structural checks against the schema, then the quality tier — claim length, numbers traceable to the text, pointers that exist, questions that stand alone. Each draft is stamped with a hash of the rules that judged it, so a later rule change marks it stale rather than silently passing | `--ingest`, `validate_draft()`, `--restamp` |
 | 6 | **The author reviews and accepts.** `--review` builds one page with every flag and every claim linked into the paper's own sentence; `--accept <slug>` promotes it out of `drafts/` and is the only step a human must perform | `build/sidecar_review.html` |
 
-Between 5 and 6 nothing is published: the site, the validator and the coverage count
-all glob `data/sidecars/*.md` non-recursively and cannot see `drafts/`.
+Between 5 and 6 nothing is published: the site, the validator, the fidelity check and
+the coverage count all glob `data/sidecars/*.md` non-recursively and cannot see
+`drafts/`.
 
 ---
 
@@ -44,19 +39,18 @@ which are thin. Each task in `build/sidecar_tasks.json` carries the same answer 
 the first line of its `evidence` field: the source it came from and whether the text
 was truncated.
 
-A paper with no available text gets **no draft at all**. That is a stop, not a
-degraded mode — a sidecar written from a title and an abstract is a page of
-confident guesses published under an author's name, which is worse than a missing
-page in every way that matters. Drop the paper's PDF into `data/fulltext/<slug>.pdf`
-(gitignored, checked first) and re-run, or leave it in the thin list.
+A paper with no available text gets **no draft at all** — a sidecar written from a
+title and an abstract is a page of confident guesses published under an author's name.
+Drop the paper's PDF into `data/fulltext/<slug>.pdf` (gitignored, checked first) and
+re-run, or leave it in the thin list.
 
 ## 2. The rules
 
-Nine steps, written in the order the fields depend on each other. The index below is
-what each step is *for* and the one emphasis that dominates it — it is a way into the
-block, not a second copy of it: the rules themselves are stated once, in the block,
-and §4 says what enforces each. A test asserts this table has a row per step, so a
-tenth step cannot be added without appearing here.
+Nine steps, in the order the fields depend on each other. The index below gives what
+each step is *for* and the one emphasis that dominates it — a way into the block, not a
+second copy of it. The rules themselves are stated once, in the block; §4 says what
+enforces each. A test asserts this table has a row per step, so a tenth step cannot be
+added without appearing here.
 
 | Step | Writes | The emphasis it is built around |
 |---|---|---|
@@ -465,10 +459,9 @@ complete and smooth.
 
 Front matter is the machine-readable part. The body below the closing `---` is
 optional author prose, rendered on the paper page and in its `llms.txt` under
-"Notes from the author" — it is where a sentence in the author's own voice goes, and
-the reason this is a `.md` file rather than a `.yaml`. It is escaped, not parsed as
-markdown: blank lines split paragraphs and nothing else is interpreted. The drafter
-never writes it; it is the one part of the file a model has no business filling.
+"Notes from the author" — a sentence in the author's own voice, which is why this is a
+`.md` file rather than a `.yaml`. It is escaped, not parsed as markdown: blank lines
+split paragraphs and nothing else is interpreted. The drafter never writes it.
 
 ```yaml
 ---
@@ -530,20 +523,19 @@ strings carry the *reasoning* for each field.
 
 ## 4. The rules in checkable form
 
-Everything above as a validator takes it. Anything stated as a rule and not enforced
-gets violated without anyone noticing, so the last column is part of the rule.
+Everything above as a validator takes it. The last column is part of the rule.
 
-Three tiers, and which tier a rule is in is itself a decision. **Schema** rules are
-structural: a violation breaks something downstream, so it exits 1 and stops the run.
-**Shape** rules are the bands in §2 §9 and the coverage rules: a violation is a
-quality problem on a page that still renders, so `validate.py` reports it and exits 0
-(`--strict` makes it fatal) — but `--accept` refuses, because accepting is the moment
-the author asserts it in public. **Accept-time** rules run only at `--accept` and on
-the review page, either because they need the paper's full text (a build artifact that
-may be absent) or because they are about what to write next rather than about
-retracting what is already published: `validate.py` reads `data/sidecars/*.md`, which
-is the author's live words, so a readability finding there would make `--strict` demand
-he retract a page over a long sentence. `--anyway` overrides the whole tier.
+Three tiers. **Schema** rules are structural: a violation breaks something downstream,
+so it exits 1 and stops the run. **Shape** rules are the bands in §2 §9 and the
+coverage rules: a violation is a quality problem on a page that still renders, so
+`validate.py` reports it and exits 0 (`--strict` makes it fatal) — but `--accept`
+refuses, because accepting is the moment the author asserts it in public.
+**Accept-time** rules run only at `--accept` and on the review page, either because
+they need the paper's full text (a build artifact that may be absent) or because they
+are about what to write next rather than about retracting what is already published —
+`validate.py` reads the author's live words in `data/sidecars/*.md`, so a readability
+finding there would make `--strict` demand a page be retracted over a long sentence.
+`--anyway` overrides the whole tier.
 
 | | Rule | Tier | Enforced by |
 |---|---|---|---|
@@ -585,8 +577,7 @@ he retract a page over a long sentence. `--anyway` overrides the whole tier.
 
 ## 5. What the drift actually looks like
 
-Measured across the 19 drafts plus the one accepted sidecar. This is the evidence
-for §6 existing, and the reason to distrust any rule not in the table above.
+Measured across the 19 drafts plus the one accepted sidecar.
 
 | | min | median | max |
 |---|---|---|---|
@@ -616,9 +607,8 @@ Separately: `build_site.py` emits `ScholarlyArticle` JSON-LD but no `FAQPage` /
 
 ### Measured and left to prose
 
-A hypothesis that failed is worth recording here at the same weight as one that
-shipped, because without the count each of these gets re-proposed as an obvious check
-the next time somebody rereads a draft.
+Each of these looks like an obvious check and is not. The count is here so it does
+not get re-proposed.
 
 | Class | Measured | Why no check |
 |---|---|---|
@@ -632,12 +622,10 @@ the next time somebody rereads a draft.
 
 ## 6. The open decisions
 
-Each row is answerable as it stands. "If we do nothing" is what ships otherwise — a
-real outcome in every case, which is why leaving these open is itself a choice.
+Each row is answerable as it stands. "If we do nothing" is what ships otherwise.
 Tracked in [../BACKLOG.md](../BACKLOG.md).
 
-**Settled, and where the answer went.** Kept as a list rather than deleted, because a
-decision with no record of having been made gets re-litigated.
+**Settled, and where the answer went.**
 
 | | Was | Decided |
 |---|---|---|
@@ -677,8 +665,8 @@ and each rule below is now a field that is either filled or visibly empty.
 | Q5 | field names | **`ask` / `answered_by`**, and `q` / `answers` are gone. Asked as "what would we pick with no technical debt" the answer is not close: `ask` holds a mapping of roles and `answered_by` holds claim ids, and both say what they hold. The debt was one mechanical rewrite of 113 files, done in the same commit as the roles |
 | Q8 | a minimum *share* of general questions | **no share rule.** ≥1 group answered by a `context` claim stays the requirement (rule 15). A share would be a quota on a number the paper decides: a paper with four findings and eight groups does not owe the field three entry points, and the only way to meet a quota on a page that has one honest general question is to invent the other two — which is the padding failure C2 and rule 31 already exist to stop |
 
-**The scenario classes**, as decided in Q6. Kept because the rejections are the
-useful half: two of these are things we could write and have chosen not to.
+**The scenario classes**, as decided in Q6. Two of them are things we could write and
+have chosen not to.
 
 | # | Scenario | Query looks like | Where it goes |
 |---|---|---|---|

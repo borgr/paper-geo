@@ -1,7 +1,7 @@
 # The evidence, and how to tell whether it worked
 
-Why the rules in [RULES.md](RULES.md) are what they are, and what instruments exist
-to check them. Read rarely, and never during a run — nothing here is a procedure.
+The evidence behind the rules in [RULES.md](RULES.md), and the instruments that check
+them. Nothing here is a procedure.
 
 Grading used throughout: **[A]** controlled experiment or authoritative platform
 documentation · **[B]** large observational study · **[C]** vendor-stated or
@@ -194,16 +194,15 @@ scholarly PDFs met no accessibility criteria (Kumar & Wang 2024).
 The failure mode for a well-known paper is not being unfindable, it is being
 findable and then described wrongly — overstated, mis-scoped, credited to the wrong
 sub-claim. Publishing your own claims and scope conditions is the only lever on
-that, and it is one no index or publisher can pull for you. It is also the part of
-this project with the least direct evidence, which is stated again in §7.
+that, and no index or publisher can pull it for you. It is also the part of this
+project with the least direct evidence (§7).
 
 ## 6. The baseline: what the corpus looked like before any of this
 
-A dated snapshot, kept because it is the only "before" measurement that will ever
-exist. Taken from both Semantic Scholar author records; 122 unique papers then, 112
-after duplicate merging. The standalone script that produced it has been deleted --
-`scripts/collect.py` superseded it, and a second copy of the same fetching was the
-kind of dead code that reads as a live tool. The numbers below are the record.
+A dated snapshot, and the only "before" measurement that will ever exist. Taken from
+both Semantic Scholar author records; 122 unique papers then, 112 after duplicate
+merging. The script that produced it is gone (`scripts/collect.py` superseded it), so
+these numbers are the record.
 
 ```
 papers                             122
@@ -230,13 +229,12 @@ papers                             122
 Web surfaces then: the canonical homepage per S2, ORCID, LinkedIn and GitHub was a
 `wixsite.com` subdomain with `<html lang="he">`, zero JSON-LD, a meta description
 reading "NLP Publications, scientific interests and a surprise", and no per-paper
-pages — the one surface fully under his control was the least machine-readable one
-he owned. `borgr.github.io` was live and unused, already carrying `Person` JSON-LD
-with a placeholder email. `github.com/borgr` had 90 public repos with **zero topics
-on every one**, several with no description, and no `CITATION.cff` in any of the 9
-flagship repos checked. And `github.com/borgr/publications` already held the whole
-bibliography pipeline — the Scholar scrape, the arXiv→published-BibTeX resolver, and
-`enhanced.bib` with abstracts — so nothing here had to be built from scratch.
+pages. `borgr.github.io` was live and unused, already carrying `Person` JSON-LD with a
+placeholder email. `github.com/borgr` had 90 public repos with **zero topics on every
+one**, several with no description, and no `CITATION.cff` in any of the 9 flagship
+repos checked. `github.com/borgr/publications` already held the whole bibliography
+pipeline — the Scholar scrape, the arXiv→published-BibTeX resolver, and `enhanced.bib`
+with abstracts.
 
 One sentence: **the scholarly-graph layer was in good shape wherever someone else
 curates it (DBLP, ACL, Scholar) and broken wherever it depended on him asserting his
@@ -278,8 +276,7 @@ fill.
 # Can we tell whether it worked?
 
 Three questions. Two are cheaply and reliably measurable. One — the causal one — is
-close to unanswerable at 113 papers, and this section says so rather than dressing
-up an underpowered design.
+close to unanswerable at 113 papers.
 
 | | Question | Instrument | Verdict |
 |---|---|---|---|
@@ -292,17 +289,16 @@ task. Most published GEO case studies stop at A and present it as B.
 
 ## A. Structural checks — built, and unconditional
 
-Cheap, deterministic, and they verify the work exists and *stays* existing, which is
-a real class of failure: metadata gets reverted, pages 404, an index re-splits a
-profile. Already printed by every `update.py` run: the coverage counters
+Cheap, deterministic, and they verify the work exists and *stays* existing: metadata
+gets reverted, pages 404, an index re-splits a profile. Already printed by every
+`update.py` run: the coverage counters
 (journal-ref, HTML surface, HF page, sidecar, verbatim BibTeX), `scripts/validate.py`
 against `schema/*.json`, and the cross-checks JSON Schema cannot express.
 
 **Regression policy: every bug that has shipped gets one check, and those checks run
-*unconditionally*.** That last word is the lesson. The original design put them in a
-branch that only executed when `jsonschema` was absent, so installing `jsonschema`
-silently skipped them — which is how a duplicate slug reached production and quietly
-cost one paper its page. A check behind a conditional is not a check.
+*unconditionally*.** A check behind a conditional is not a check — these once sat in a
+branch that only ran when `jsonschema` was absent, which is how a duplicate slug
+reached production and cost one paper its page.
 
 | Shipped bug | Guard |
 |---|---|
@@ -330,14 +326,12 @@ Worth adding, all mechanical:
 | One canonical page per paper, no duplicate titles across our own surfaces | Scholar's documented duplicate-title drop |
 | Claim text identical across page, README and model card | corroboration fragmenting through drift |
 
-That last one is the interesting structural test: it enforces "say it the same way"
-mechanically instead of by discipline.
+The last one enforces "say it the same way" mechanically instead of by discipline.
 
 ## C. Claim fidelity — a diagnostic, not an experiment
 
-**C does not need to be an experiment to be useful.** Asked as "which of my papers
-are currently described wrongly?", it produces a ranked worklist, actionable
-regardless of attribution.
+Asked as "which of my papers are currently described wrongly?", C produces a ranked
+worklist, actionable regardless of attribution — no experiment required.
 
 Method: for each paper with a sidecar, ask each engine *"What did <paper> find, and
 under what conditions does it hold?"* and score against the sidecar's `claims` — 2 =
@@ -401,16 +395,14 @@ uninterpretable is a right call, not a gap.
 
 ### What the experiment costs, if the treatment works
 
-The naive cost — "half the questions uncovered for the duration" — sounds like
-forfeiting half the benefit, and is not, for four reasons. Only the marginal layer is
-withheld: every paper still gets its page, JSON-LD, links map, abstract, canonical
-claim sentence and misreadings, and the randomised element is only *which questions
-get explicit Q&A coverage*. Spillover means the control arm is partial-treatment,
-not zero. It is a delay rather than a forfeit — you add the rest afterwards, and
-against papers with 5–20 year lifespans a one-quarter delay is a rounding error. And
-it rides a rollout that is happening anyway: sidecars get written incrementally over
-months regardless, so partial coverage exists whether or not you call it an
-experiment.
+"Half the questions uncovered for the duration" is not half the benefit forfeited.
+Only the marginal layer is withheld — every paper still gets its page, JSON-LD, links
+map, abstract, canonical claim sentence and misreadings, and the randomised element is
+only *which questions get explicit Q&A coverage*. Spillover makes the control arm
+partial-treatment rather than zero. It is a delay, not a forfeit: you add the rest
+afterwards, and against papers with 5–20 year lifespans a one-quarter delay is a
+rounding error. And sidecars get written incrementally over months regardless, so
+partial coverage exists whether or not you call it an experiment.
 
 Put a number on it: ~113 papers × ~4 months × half coverage ≈ 226 paper-months of
 half-coverage against a corpus lifetime on the order of 14,000 paper-months. **Under

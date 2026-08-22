@@ -19,15 +19,12 @@ actually done rather than what you remember doing.
 
 Several steps below finish somewhere else, days or months later: arXiv staff verify
 an ownership claim by hand, a Wikidata account autoconfirms after four days, ORCID's
-auto-update and the ORCID-driven author merges at Semantic Scholar and OpenAlex run
-on nobody's published schedule. The next action only becomes possible once the wait
-is over, which makes those the easiest items here to lose.
+auto-update and the ORCID-driven author merges at Semantic Scholar and OpenAlex run on
+nobody's published schedule.
 
-Put each one in `data/followups.yaml` with an absolute `due` date, what you are
-waiting for, and what becomes possible when it lands. `update.py` prints anything due
-at the top of `WORKLIST.md`, so the next run is the reminder — no calendar entry, no
-session that has to stay alive, and the reason sits next to the date instead of in
-your memory.
+Put each one in `data/followups.yaml` with an absolute `due` date, what you are waiting
+for, and what becomes possible when it lands. `update.py` prints anything due at the top
+of `WORKLIST.md`, so the next run is the reminder.
 
 ---
 
@@ -55,31 +52,24 @@ themselves — and keeps them fixed after future re-clustering.
 - [ ] **Fill the backlog in ONE upload.** *Works → + Add → Add BibTeX* →
       `tasks/orcid_import.bib`. Do not work through the DOI form 100 times.
 
-      The standard advice prefers *Add DOI* because self-asserted BibTeX works are
-      lower-trust and can duplicate what auto-update later adds. That objection is
-      real but **narrow: it only applies to entries with no identifier**, because
-      ORCID *groups works that share one*. So the generated file removes the failure
-      mode instead of accepting it — every entry that can carry a DOI now does, with
-      missing ones filled from arXiv's own DataCite DOI (`10.48550/arXiv.<id>`, which
-      arXiv registers for **every** paper, back to the oldest ids). DOI-bearing
-      entries come first; the handful with no identifier anywhere are last, and
-      those are the only ones worth importing by hand or skipping.
+      The usual objection to BibTeX import — self-asserted works are lower-trust and
+      can duplicate what auto-update later adds — applies only to entries with **no
+      identifier**, because ORCID *groups works that share one*. So every entry in the
+      generated file that can carry a DOI does, with missing ones filled from arXiv's
+      own DataCite DOI (`10.48550/arXiv.<id>`, registered for **every** arXiv paper
+      back to the oldest ids). DOI-bearing entries come first; the handful with no
+      identifier anywhere are last, and are the only ones worth importing by hand.
       **Once the upload lands**, `audit_identity.py` reads the public works count back
-      and reports it. Two things are worth doing in the same session, because they are
-      the difference between a full record and a *findable* one, and neither is filled
-      by the import: the **canonical URL** in *Websites & social links*, and the
-      **keywords**. A record with a hundred works, no URL and no keywords is a list of
-      papers that resolves to nobody.
+      and reports it. Two fields the import does not fill are worth the same session:
+      the **canonical URL** in *Websites & social links*, and the **keywords**.
 - [ ] **Check the record for works that are not yours** after any bulk import, and
-      after every auto-update window. This is the one place on the list where a
-      mistake is worse than an omission: ORCID is read as *your assertion* by
-      Semantic Scholar, OpenAlex, Crossref and publishers' submission systems, so a
-      stray work is a false authorship claim that propagates. It is also easy to
-      acquire — a CV bibliography contains the works you *cite*, and any import built
-      from one carries them in. `audit_identity.py` diffs the live record against
-      `data/papers.yaml` and writes `tasks/orcid_remove.md` with the put-code for each
-      stray, because *Works → ⋮ → Delete* is one click per work and similar titles are
-      otherwise impossible to tell apart in the UI.
+      after every auto-update window. ORCID is read as *your assertion* by Semantic
+      Scholar, OpenAlex, Crossref and publishers' submission systems, so a stray work
+      is a false authorship claim that propagates — and a CV bibliography contains the
+      works you *cite*, so an import built from one carries them in.
+      `audit_identity.py` diffs the live record against `data/papers.yaml` and writes
+      `tasks/orcid_remove.md` with the put-code for each stray, since similar titles
+      are impossible to tell apart in the *Works → ⋮ → Delete* UI.
 - [ ] `tasks/orcid_dois.txt` is the same works one at a time. Keep it for spot-fixing
       a single record; it is not the bulk route.
 - [ ] *Search & link → Crossref Metadata Search* — the wizard everyone recommends. It
@@ -135,12 +125,10 @@ corpus, because it defaults to whoever pressed submit.
       comes first.
 - [ ] **Share the paper password with all co-authors** on your own future
       submissions. Costs nothing, and saves each of them the claim form.
-- [ ] **HTML rendering: mostly not actionable, and worth knowing why so you don't
-      spend time on it.** arXiv renders LaTeX to HTML for submissions from late 2023
-      on and is *gradually backfilling* the older corpus, so a paper without HTML
-      today may get it later. But there is **no author-facing way to request it** —
-      no form, no button. The only thing that reliably produces HTML is a submission
-      whose LaTeX converts, which means:
+- [ ] **HTML rendering: mostly not actionable.** arXiv renders LaTeX to HTML for
+      submissions from late 2023 on and is *gradually backfilling* the older corpus,
+      but there is **no author-facing way to request it** — no form, no button. The
+      only thing that reliably produces HTML is a submission whose LaTeX converts:
       - **Don't post a new version just to get HTML.** Extra versions fragment
         citation matching, and that costs more than the HTML gains. If you're posting
         a v2 anyway (camera-ready, corrections), preview the HTML while you're there.
@@ -181,15 +169,11 @@ corpus, because it defaults to whoever pressed submit.
          preprint and published records when the journal-ref is missing, which is the
          same root cause as the arXiv work in §2 — fix it there and fewer appear here.
       4. **Homepage = the canonical URL** — the machine anchor (§5), not the
-         site-builder page, even though this is one of the very few identity fields a
-         human actually clicks. It still goes here for two reasons: Scholar is a
-         high-authority domain whose outbound link is crawled and carries weight to
-         whatever it points at, and the entire value of a canonical string is that it
-         is *the same string* everywhere — one sympathetic exception recreates the two
-         competing homepages that §5 exists to prevent. Serve the human case on the
-         page instead: a prominent link to the human site at the top of the canonical
-         one costs a visitor one hop and costs the machine anchor nothing.
-         Affiliation should match ORCID's employment exactly.
+         site-builder page, even though this is one of the few identity fields a human
+         clicks. One sympathetic exception recreates the two competing homepages §5
+         exists to prevent; serve the human case with a prominent link to the human
+         site at the top of the canonical page instead. Affiliation should match
+         ORCID's employment exactly.
       5. Turn on *email alerts for new citations* — not visibility, but it's how you
          notice a mis-attributed paper early, while it's still one record.
 - [ ] **OpenAlex:** check for split profiles. Prefer fixing ORCID over filing
@@ -231,37 +215,31 @@ requirement is accuracy, not distance.
       lands in the site's `sameAs` array.
 - [ ] **Measure how many of your papers are already there before planning any work on
       them.** `audit_identity.py` checks every paper's DOI against Wikidata and reports
-      the count. Do this first, because the standard advice for this step assumes an
-      answer that is often wrong.
+      the count. Do this first: the standard advice for this step assumes an answer
+      that is often wrong.
 
-      The advice says: your papers already exist as items auto-imported from Crossref,
-      carrying your name as a plain *author name string* (`P2093`) rather than a link,
-      and <https://author-disambiguator.toolforge.org> upgrades those to *author*
-      (`P50`) → your Q-number in bulk. When that is true it is the best thing on this
-      page: one edit per paper, it turns isolated items into a hub that resolves, and
-      it earns autoconfirmed status as a side effect rather than as a chore.
+      That advice is that your papers already exist as items auto-imported from
+      Crossref, carrying your name as a plain *author name string* (`P2093`) rather
+      than a link, and that <https://author-disambiguator.toolforge.org> upgrades
+      those to *author* (`P50`) → your Q-number in bulk. Where true it is the best
+      thing on this page: one edit per paper, and it earns autoconfirmed status as a
+      side effect. But Wikidata's coverage of CS literature is **sporadic, not a
+      pipeline** — the systematic Crossref imports ran years ago and publisher DOIs
+      fare far better than arXiv-DataCite-only ones — so a corpus of mostly preprints
+      and ACL-Anthology papers can have single-digit coverage, leaving Author
+      Disambiguator nothing to operate on.
 
-      When it is not true, none of it applies, and the shape of the miss is worth
-      knowing. Wikidata's coverage of CS literature is **sporadic, not a pipeline**:
-      the systematic Crossref imports ran years ago, publisher DOIs fare far better
-      than arXiv-DataCite-only ones, and a recent item is as likely to have been
-      created by one interested human as by a bot. So a corpus that is mostly preprints
-      and ACL-Anthology papers can have single-digit coverage — in which case
-      Author Disambiguator has nothing to operate on, there are no `P2093` strings to
-      upgrade, and 50 edits is a real cost with no by-product.
-      One trap in doing that measurement yourself: Wikidata **split its query
-      service**, moving scholarly articles out of the main graph. A publication query
-      against `query.wikidata.org` now returns zero rows with an HTTP 200 — it looks
-      like an answer, and it reads as "none of my papers are there". Publication
-      SPARQL belongs at `query-scholarly.wikidata.org`. The audit uses that endpoint;
-      any query you write by hand needs to as well.
+      One trap if you measure it yourself: Wikidata **split its query service**,
+      moving scholarly articles out of the main graph. A publication query against
+      `query.wikidata.org` now returns zero rows with an HTTP 200, which reads as
+      "none of my papers are there". Publication SPARQL belongs at
+      `query-scholarly.wikidata.org`. The audit uses that endpoint; so must any query
+      you write.
 - [ ] **Decide about autoconfirmed only after that count.** With low coverage,
       creating items for your own papers is the only route to 50 edits. Worth it if
-      you want a queryable graph of your corpus; not worth it as a means to unlock
-      QuickStatements, since the item's own statements are ~15 minutes by hand and
-      that is the whole of the identity gain. Never pad with make-work edits — they
-      are frowned on and they are also pointless here, because nothing downstream
-      reads edit count.
+      you want a queryable graph of your corpus; not worth it just to unlock
+      QuickStatements, since the author item itself is ~15 minutes by hand. Never pad
+      with make-work edits — nothing downstream reads edit count.
 - [ ] **If you decide yes, the audit writes the batch.** `tasks/wikidata_papers.qs`
       holds one `CREATE` per missing paper with a DOI or arXiv id — title, date,
       identifier, and the author list with you linked and co-authors as strings.
@@ -371,25 +349,19 @@ humans*, and conflating the two is what makes this question feel unanswerable.
       cover?"* Three cases, and only one of them is a clear yes:
 
       - **Artifact with no paper of its own** — a tool, a harness, a dataset loader, a
-        set of trained checkpoints. **Yes, always.** This is where the whole gain sits.
-        Without a DOI this work has no citable form at all: it can only ever appear as
-        a bare URL in someone's footnote, which no index counts, so the citations
-        simply do not exist as data. A DOI is the difference between uncounted and
-        counted.
-      - **Code that implements a paper you also published** — *usually not needed, and
-        the reason is worth understanding.* Minting a second DOI for the same
-        contribution gives citers two things to cite and splits the count, plus a
-        second permanent record to keep correct. Do it anyway when either of these
-        applies: reproducibility depends on the exact code state (people need to cite
-        a *version*, not the paper), or a venue or funder requires a deposited
-        artifact. Then remove the split rather than living with it: set
-        `preferred-citation` in `CITATION.cff` to the **paper**, so GitHub's "Cite this
-        repository" widget hands out the paper citation while the Zenodo DOI stays
-        available for anyone who specifically needs to cite the code. The tool writes
-        that field for you.
+        set of trained checkpoints. **Yes, always.** Without a DOI this work can only
+        appear as a bare URL in someone's footnote, which no index counts, so its
+        citations do not exist as data.
+      - **Code that implements a paper you also published** — *usually not needed*: a
+        second DOI for the same contribution gives citers two things to cite and
+        splits the count. Do it anyway when reproducibility depends on the exact code
+        state (people need to cite a *version*, not the paper), or when a venue or
+        funder requires a deposited artifact. Then set `preferred-citation` in
+        `CITATION.cff` to the **paper**, so GitHub's "Cite this repository" widget
+        hands out the paper citation while the Zenodo DOI stays available for anyone
+        citing the code. The tool writes that field for you.
       - **Scratch, coursework, forks, one-off scripts** — no. Zenodo records are
-        permanent and cannot be withdrawn on a whim; a DOI on abandoned code is a
-        maintenance obligation you took on for no retrieval gain.
+        permanent and cannot be withdrawn on a whim.
 
       You do not have to sort your own repos into those three cases. The sweep does
       it from `kind` and whether a paper is linked, and writes the first case to
@@ -436,9 +408,7 @@ humans*, and conflating the two is what makes this question feel unanswerable.
 
 ## Which link goes where
 
-"Add your links to your profiles" is the advice everywhere and it is useless, because
-the answer is different per field and the differences are the whole point. Four rules
-cover every case below:
+The answer is different per field. Four rules cover every case below:
 
 1. **A field that holds exactly one URL gets the canonical URL. No exceptions.** Its
    value comes from being the same string in every registry; the first sympathetic
@@ -509,12 +479,11 @@ all of them weakly, which is the opposite of the goal. Ten to fifteen is where e
 still carries weight. On the site itself, padding is keyword stuffing, which is
 measured-negative — see [EVIDENCE.md](EVIDENCE.md).
 
-**What you are most likely missing.** Not a phrase — a *cluster*. The gap that
-matters is a group of five or more of your papers that no current keyword covers,
-because that is retrieval you have earned and are not collecting. Work it in two
-passes over your own bibliography: for each keyword, count the papers it plausibly
-covers and cut anything at one; then look for a subject with several papers and no
-keyword pointing at it. Two things to weigh while you are there:
+**What you are most likely missing** is not a phrase but a *cluster*: five or more of
+your papers that no current keyword covers. Two passes over your own bibliography —
+for each keyword, count the papers it plausibly covers and cut anything at one; then
+look for a subject with several papers and no keyword pointing at it. Two things to
+weigh while you are there:
 
 - **Overlap eats the Scholar five.** Near-synonyms are separate facets in ORCID and
   near-duplicates in the Scholar five: if three or four of your list are variations on
@@ -550,10 +519,8 @@ failures actually are:
 
 **Works today, no domain needed:**
 
-These two are the highest-value items left in the whole document, because they are the
-only free way to distinguish **"nobody asks"** from **"nobody can see it"** — opposite
-problems with opposite fixes, indistinguishable from outside. Neither needs a domain.
-Fifteen minutes, once.
+These two are the only free way to distinguish **"nobody asks"** from **"nobody can
+see it"** — opposite problems with opposite fixes. Fifteen minutes, once.
 
 - [ ] **Google Search Console.** <https://search.google.com/search-console>
       1. *Add property* → **URL prefix** (not Domain — Domain verification needs DNS,
@@ -568,12 +535,10 @@ Fifteen minutes, once.
       4. Wait for the deploy (a minute or two), then press *Verify*.
       5. *Sitemaps* → submit `sitemap.xml`. Generated already, so it is one paste.
 
-      **Why through the config and not by hand:** `--deploy` empties the Pages repo
-      before copying `build/site` into it. An HTML file you upload yourself survives
-      until the next deploy and then vanishes, at which point the property silently
-      un-verifies and the reports stop — with nothing connecting the two events weeks
-      apart. Anything that has to persist must be generated. The `--deploy` step is
-      *before* pressing Verify for the same reason: the tag has to be live first.
+      **Through the config, not by hand:** `--deploy` empties the Pages repo before
+      copying `build/site` into it, so an HTML file you upload yourself vanishes at the
+      next deploy and the property silently un-verifies. Deploy *before* pressing
+      Verify — the tag has to be live first.
 
       What you get: *Pages* gives crawled-vs-indexed per URL — the one report that
       would tell you whether every paper page is being crawled and then dropped, which
@@ -590,32 +555,28 @@ Fifteen minutes, once.
       Worth more than Bing's search share suggests: **ChatGPT's search grounding leans
       on Bing's index**, so a page missing here is missing from an answer engine you
       actually care about — and this is the only place that will tell you.
-- [x] **IndexNow — wired, and refused by this host.** Nothing for you to do, and
-      nothing that will work until the site has a custom domain (see below). IndexNow
-      is a push in the other direction: rather
-      than waiting to be crawled, the deploy *tells* Bing, Yandex, Seznam and Naver
-      (not Google — it does not participate) which URLs changed, and they fetch within
-      minutes to days.
+- [x] **IndexNow — wired, and refused by this host.** Nothing for you to do until the
+      site has a custom domain (see below). Instead of waiting to be crawled, the
+      deploy *tells* Bing, Yandex, Seznam and Naver (not Google, which does not
+      participate) which URLs changed, and they fetch within minutes to days.
 
-      There is no account and no application. The key is any 8–128 characters of
-      `[A-Za-z0-9-]` that you pick yourself; what proves control is serving it at
-      `<base_url>/<key>.txt`, which `build_site.py` writes on every build. So
-      `site.indexnow_key` is set in `config.yaml` and committed on purpose — the key
-      is *meant* to be public, and the worst a stranger who copies it can do is ask
-      Bing to recrawl pages that are already yours.
+      No account, no application. The key is any 8–128 characters of `[A-Za-z0-9-]`
+      you pick yourself, and what proves control is serving it at
+      `<base_url>/<key>.txt`, which `build_site.py` writes on every build.
+      `site.indexnow_key` is therefore in `config.yaml` and committed on purpose: the
+      key is *meant* to be public, and the worst a stranger who copies it can do is
+      ask Bing to recrawl pages that are already yours.
 
-      Except that proving control this way is exactly what a `*.github.io` subdomain
-      cannot do, because the domain is GitHub's. The key file serves 200 and matches the
-      configured key, and IndexNow answers `403 UserForbiddedToAccessSite` to the batch
-      endpoint and to the single-URL endpoint alike. `--deploy` says so in one line and
-      carries on; it is not a state to retry. Bing, Yandex and Seznam still reach these
-      URLs from the sitemap, which is slower and is what happens today. A custom domain
-      turns this on with no further work — the key file is already published.
+      A `*.github.io` subdomain cannot prove control that way, because the domain is
+      GitHub's. The key file serves 200 and matches, and IndexNow answers
+      `403 UserForbiddedToAccessSite` to the batch and single-URL endpoints alike.
+      `--deploy` says so in one line and carries on; it is not a state to retry. Bing,
+      Yandex and Seznam still reach these URLs from the sitemap, slower. A custom
+      domain turns this on with no further work — the key file is already published.
 
-      What it buys: a rebuild that adds thirty paper pages at once is precisely the
-      case organic discovery handles worst, because a new sitemap entry on a
-      low-traffic site can sit for weeks. It changes *when* a page becomes eligible,
-      and nothing about how it ranks.
+      What it buys: a rebuild that adds thirty paper pages at once is the case organic
+      discovery handles worst. It changes *when* a page becomes eligible, not how it
+      ranks.
 - [ ] **Analytics won't answer this.** Google Analytics, Plausible, Cloudflare Web
       Analytics are all JavaScript beacons, and the crawlers you care about don't run
       JavaScript — so they are invisible in exactly the tool you'd reach for. Same
