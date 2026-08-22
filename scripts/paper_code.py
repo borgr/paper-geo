@@ -1,43 +1,42 @@
 """Deduce each paper's own code repo and project page, and publish both to HF.
 
-The site renders `links.code`, but it was fed from one place -- Hugging Face's
-`githubRepo`, set on 19 of 105 arXiv papers. Every other paper's repo is in its own full
-text: the paper says where its code is, in first person ("we release our code at"). That
-phrasing is the whole signal, and it is what separates the paper's own repo from the ten
-it cites -- `huggingface/transformers` appears in a BabyLM footnote too.
+The site renders `links.code`, which Hugging Face's `githubRepo` filled on 19 of 105 arXiv
+papers. Every other paper's repo is in its own full text, in first person ("we release our
+code at") -- and that phrasing is what separates the paper's own repo from the ten it cites,
+since `huggingface/transformers` appears in a BabyLM footnote too.
 
 Three passes, and only the first may decide on its own:
 
-  1. `github.com/...` in the full text with a first-person release phrase in front of
-     it, confirmed by GitHub returning 200. Two corroborations are also checked: the
-     repo owner's login against the author list, and the description or README against
-     the paper title.
+  1. `github.com/...` in the full text with a first-person release phrase in front of it,
+     confirmed by GitHub returning 200. Two corroborations are also checked: the repo
+     owner's login against the author list, and the description or README against the
+     paper title.
   2. Anything weaker -- no release phrase, or several equal candidates -- goes to the
      report for a human, never to Hugging Face.
   3. Papers whose text names no repo are listed too, since silence in a report reads as
      "covered".
 
-`projectPage` is deduced the same way, for papers whose artifact is a website,
-leaderboard or dataset viewer. There is no `gh api` for the open web, so confirmation is
-the page itself: reachable, and naming the paper. The two decisions are independent.
+`projectPage` is deduced the same way, for papers whose artifact is a website, leaderboard
+or dataset viewer. There is no `gh api` for the open web, so confirmation is the page
+itself: reachable, and naming the paper. The two decisions are independent.
 
-Two classes of URL are dropped before scoring, because both would score like the real
-repo: a double-blind review mirror (`anonymous.4open.science/r/...`), which is deleted
-after review, and the arXiv/venue/licence links every paper carries. See ANON_RX and
+Two classes of URL are dropped before scoring, because both would score like the real repo:
+a double-blind review mirror (`anonymous.4open.science/r/...`), which is deleted after
+review, and the arXiv/venue/licence links every paper carries. See ANON_RX and
 PAGE_SKIP_HOSTS.
 
 Decisions land in data/paper_code.yaml, committed and hand-editable, so `--apply` stays
-idempotent. `reviewed: true` freezes a row *and* makes its `repo`/`project_page` the
-URLs that get pushed, so a hand-written link wins and deleting the key means "no link,
-on purpose". Nothing reaches Hugging Face without `--apply`.
+idempotent. `reviewed: true` freezes a row *and* makes its `repo`/`project_page` the URLs
+that get pushed, so a hand-written link wins and deleting the key means "no link, on
+purpose". Nothing reaches Hugging Face without `--apply`.
 
     python scripts/paper_code.py                # deduce, write the yaml, print a diff
     python scripts/paper_code.py --apply        # POST the accepted links to HF
     python scripts/paper_code.py --slug <slug>  # one paper, verbosely
 
-HF's endpoint is POST /api/papers/{arxiv_id}/links -- the arXiv id is the "paper object
-ID" that works, and the only id any read endpoint exposes. Writing needs a token whose
-user is a confirmed author on the paper.
+HF's endpoint is POST /api/papers/{arxiv_id}/links -- the arXiv id is the "paper object ID"
+that works, and the only id any read endpoint exposes. Writing needs a token whose user is a
+confirmed author on the paper.
 """
 from __future__ import annotations
 
@@ -674,14 +673,11 @@ def load_decisions() -> dict:
 def save_decisions(papers: list[dict], results: dict, prev: dict) -> None:
     """Write data/paper_code.yaml, preserving anything marked reviewed by hand.
 
-    The decision and the reasoning go to different files on purpose. The row is a
-    decision -- which URL, and whether a person has settled it -- and its history
-    should read as one, so `git log` on it answers "what did we decide about this
-    paper". `score` and `why` are this run's audit trail: they churn whenever a README
-    changes upstream, and having them in the same row meant every run produced a diff
-    that was mostly a machine talking to itself. They land in build/paper_code_why.json
-    instead, regenerated with everything else in `build/`, and still there when the
-    report says "review" and you want to know why.
+    The row is a decision -- which URL, and whether a person has settled it -- so `git log` on
+    this file answers "what did we decide about this paper". `score` and `why` are the run's
+    audit trail and churn whenever a README changes upstream, so they go to
+    build/paper_code_why.json, regenerated with everything else in `build/` and still there when
+    the report says "review" and you want to know why.
     """
     rows, why = {}, {}
     for slug, r in results.items():

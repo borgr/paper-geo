@@ -1,21 +1,18 @@
 #!/usr/bin/env python3
 """Validate data files against schema/*.json.
 
-Runs as the last step of update.py so a malformed hand edit or a bad model
-proposal fails loudly rather than propagating into published metadata.
+Runs as the last step of update.py so a malformed hand edit or a bad model proposal fails
+loudly rather than propagating into published metadata. Falls back to a small built-in
+checker when jsonschema is not installed, so the mistakes that actually happen -- wrong
+type, unknown field, bad topic format -- are still caught without a hard dependency.
 
-Falls back to a small built-in checker when jsonschema is not installed, so the
-pipeline still catches the mistakes that actually happen (wrong type, unknown
-field, bad topic format) without adding a hard dependency.
-
-Two kinds of problem, two exit codes, because they deserve different reactions.
-A *structural* problem -- schema violation, dangling claim id, missing prompt block
--- means something downstream is already broken, so it exits 1 and stops the caller.
-A stale corpus size in a prose sentence, or a sidecar outside the shape bands, exits 0
-and is merely reported: the page still renders correctly, so halting a run over it
-would only teach the author to skip validation. `--strict` collapses the distinction,
-for CI -- and `draft_sidecars.py --accept` treats the shape tier as fatal, because
-accepting is the moment the claims become an assertion under the author's name.
+Two kinds of problem, two exit codes. A *structural* problem -- schema violation, dangling
+claim id, missing prompt block -- means something downstream is already broken, so it exits
+1 and stops the caller. A stale corpus size in a prose sentence, or a sidecar outside the
+shape bands, exits 0 and is merely reported: the page still renders correctly, and halting
+a run over it would only teach the author to skip validation. `--strict` collapses the
+distinction for CI, and `draft_sidecars.py --accept` treats the shape tier as fatal,
+because accepting is the moment the claims become an assertion under the author's name.
 
 Usage:
     python scripts/validate.py [--fix-counts] [--strict]
@@ -393,15 +390,12 @@ def check_overrides() -> list[str]:
 def check_slug_history() -> list[str]:
     """A retired URL must point at a live page or at nothing, never at a dead end.
 
-    `build_site.py` writes a redirect only when the target is live, so a target that
-    left the corpus -- because the paper was dropped, or renamed by hand without
-    re-pointing -- makes the entry inert: no redirect, no error, and a URL that is
-    published and indexed starts 404ing with nothing in the build saying so. The
-    chain re-pointing in `collect.py` repairs this automatically for renames, but only
-    for papers it can still see; a dropped target it cannot.
-
-    `null` is the way to say a 404 is intended, so it passes. Everything else that
-    resolves nowhere is reported, with the two honest fixes named.
+    `build_site.py` writes a redirect only when the target is live, so a target that left the
+    corpus -- the paper dropped, or renamed by hand without re-pointing -- makes the entry
+    inert: no redirect, no error, and a URL that is published and indexed starts 404ing with
+    nothing in the build saying so. `collect.py`'s chain re-pointing repairs renames it can
+    still see; a dropped target it cannot. `null` is how to say a 404 is intended, so it
+    passes, and everything else that resolves nowhere is reported with the two honest fixes.
     """
     hist = (read_yaml(os.path.join(DATA, "slug_history.yaml")) or {}).get("retired")
     papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers") or []
@@ -416,14 +410,11 @@ def check_slug_history() -> list[str]:
 def check_wikidata_created() -> list[str]:
     """The created-item ledger must point at live slugs and look like QIDs.
 
-    A slug that has left the corpus is the failure worth catching. The ledger is what
-    stops `wikidata_apply.py --papers` recreating an item the query service has not
-    indexed yet, and it does that by slug -- so a renamed paper stops matching its own
-    entry and the next run mints a second item for it. Duplicate publication items are
-    the one mistake here that somebody else has to clean up.
-
-    `slug_history.yaml` is honoured, because a rename that went through the chain is
-    exactly the case that must not be reported: the old slug still resolves.
+    A slug that has left the corpus is the failure worth catching. The ledger is what stops
+    `wikidata_apply.py --papers` recreating an item the query service has not indexed yet, and
+    it matches by slug -- so a renamed paper stops matching its own entry and the next run
+    mints a second item for it, which is the one mistake here somebody else has to clean up.
+    `slug_history.yaml` is honoured, since a rename that went through the chain still resolves.
     """
     items = (read_yaml(os.path.join(DATA, "wikidata_created.yaml")) or {}).get("items")
     papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers") or []
@@ -447,14 +438,12 @@ def check_wikidata_created() -> list[str]:
 def check_name_lists() -> list[str]:
     """`name_typos` must stay disjoint from `name_variants`, and both from `name`.
 
-    The lists look interchangeable and are not. `name_variants` are asserted outward --
-    ORCID also-known-as, schema.org alternateName, the Wikidata label -- while
-    `name_typos` are matched and published only as Wikidata aliases. Copying a typo into
-    the variants list would assert a misspelling as a name he goes by, and would also
-    switch off the check that finds it: `name_match` reports a near-miss as a typo to
-    fix upstream, and a listed variant scores `exact` instead. Both failures are silent,
-    and the second one is worse -- the arXiv record stays wrong and stops being
-    reported, which is the whole identity split this repo exists to close.
+    The lists look interchangeable and are not. `name_variants` are asserted outward -- ORCID
+    also-known-as, schema.org alternateName, the Wikidata label -- while `name_typos` are only
+    matched, and published as Wikidata aliases. A typo copied into the variants list asserts a
+    misspelling as a name he goes by, and switches off the check that finds it: `name_match`
+    scores a listed variant `exact` instead of reporting a near-miss to fix upstream, so the
+    arXiv record stays wrong and stops being reported.
     """
     cfg = load_config()
     ident = (cfg or {}).get("identity") or {}
@@ -473,14 +462,12 @@ def check_name_lists() -> list[str]:
 def check_affiliations() -> list[str]:
     """Affiliation entries must be a bare name or `{name, url, ror, wikidata}`.
 
-    The two failure modes are both silent in a way the site only shows after a deploy.
-    A misspelled key -- `wikdata`, `ROR`, `link` -- is dropped by `org_ld` and the
-    identifier simply never appears, so the entry looks upgraded in the config and is
-    still a bare name in the published JSON-LD. And a malformed identifier is worse than
-    a missing one: these values are pasted into `https://ror.org/$1` and
-    `https://www.wikidata.org/wiki/$1`, so a QID with a stray character or a ROR id
-    copied as a full URL builds a `sameAs` that either 404s or, if it resolves, asserts
-    that he belongs to some other organisation. Checked by shape only -- whether Q4182 is
+    Both failure modes are silent until after a deploy. A misspelled key -- `wikdata`, `ROR`,
+    `link` -- is dropped by `org_ld`, so the entry looks upgraded in the config and is still a
+    bare name in the published JSON-LD. A malformed identifier is worse than a missing one: the
+    values are pasted into `https://ror.org/$1` and `https://www.wikidata.org/wiki/$1`, so a
+    QID with a stray character, or a ROR id copied as a full URL, builds a `sameAs` that either
+    404s or asserts that he belongs to some other organisation. Shape only -- whether Q4182 is
     the right institution is a question about the world, not about the file.
     """
     allowed = {"name", "url", "ror", "wikidata"}
@@ -903,17 +890,14 @@ _NAMES_SOMETHING = re.compile(r"\S+\s+.*?\b[A-Z][A-Za-z0-9]*[A-Z0-9][A-Za-z0-9-]
 def _bound_earlier(q: str, m) -> bool:
     """True when the flagged phrase's own head noun already appeared in this question.
 
-    "if a model of game results uses several hidden abilities, are those abilities pinned
-    down uniquely?" is not a reference to something off screen -- the antecedent is eight
-    words to its left, in the same sentence a reader would be quoted. 19 of the rerouted
-    phrasings are that shape, and the regexes cannot see it because a lookbehind cannot
-    ask "does this noun occur anywhere before here".
+    "if a model of game results uses several hidden abilities, are those abilities pinned down
+    uniquely?" refers to nothing off screen -- the antecedent is eight words to its left, in the
+    sentence a reader would be quoted. The regexes cannot see that, because a lookbehind cannot
+    ask whether a noun occurs anywhere before here.
 
-    The head is the last word of the match for a bare definite (`the models`) and the word
-    after it for a demonstrative that matched on its verb (`are those` + `abilities`).
-    Compared on a crude stem so that "abilities"/"ability" and "models"/"model" match,
-    which is enough: this only ever suppresses a complaint about a noun the question has
-    already introduced.
+    The head is the last word of the match for a bare definite (`the models`) and the word after
+    it for a demonstrative that matched on its verb (`are those` + `abilities`), compared on a
+    crude stem so that "abilities"/"ability" and "models"/"model" match.
     """
     before, after = q[:m.start()].lower(), q[m.end():].lower()
     tail = re.findall(r"[a-z][a-z-]+", m.group(0).lower())
@@ -1342,15 +1326,14 @@ def check_readability(entries: list[tuple[str, dict]]) -> list[str]:
 def outdated_live(entries: list[tuple[str, dict]]) -> dict[str, int]:
     """Live sidecars today's accept-time checks would refuse: slug -> finding count.
 
-    The accept tier is fatal at `--accept` and never consulted again, which is right for
-    a draft and leaves a hole behind a published one. A sidecar accepted before a rule
-    existed keeps its old shape for good, and it is the shape the site publishes: both
-    live files predate the scope rules, and between them every one of their 30 scopes is
-    longer than the claim it bounds -- the one thing the `FAQPage` answer is built out of.
+    The accept tier is fatal at `--accept` and never consulted again, which leaves a hole behind
+    a published sidecar: one accepted before a rule existed keeps its old shape for good, and
+    that shape is what the site publishes. Both live files predate the scope rules, and between
+    them every one of their 30 scopes is longer than the claim it bounds.
 
-    Reported and re-queued, not made fatal. The remedy is a re-draft and an accept, and a
-    gate that fails until those happen blocks every unrelated commit; `pending()` reads
-    this instead, so the papers come back round as drafts on their own.
+    Reported and re-queued, not fatal. The remedy is a re-draft and an accept, and a gate that
+    fails until those happen blocks every unrelated commit; `pending()` reads this instead, so
+    the papers come back round as drafts on their own.
     """
     return {slug_of(name): n
             for name, fm in entries if (n := len(readability(fm, slug_of(name))))}
@@ -1391,13 +1374,11 @@ def figures(s: str) -> list[str]:
 def quotable(s: str) -> list[str]:
     """The figures a claim states, counting the bare single digits `figures` drops.
 
-    Two questions, two answers. `figures` feeds `check_claim_numbers`, which asks whether
-    a figure can be checked against the paper, and a bare digit cannot be -- every paper's
-    own text contains all ten. Coverage asks something else: whether the claim carries a
-    magnitude a reader would quote rather than paraphrase. `4 families`, `7
-    embedding-based routers` and `9 modal verbs` are exactly that, and on a survey or an
-    annotation-scheme paper they are the only kind of magnitude there is. One shared
-    definition reported 0 of 9 result claims on two pages whose every claim states a count.
+    Two questions, two answers. `figures` feeds `check_claim_numbers`, which asks whether a
+    figure can be checked against the paper -- a bare digit cannot be, since every paper's own
+    text contains all ten. Coverage asks whether the claim carries a magnitude a reader would
+    quote rather than paraphrase: `4 families`, `7 embedding-based routers` and `9 modal verbs`,
+    which on a survey or an annotation-scheme paper are the only kind of magnitude there is.
     """
     return list(dict.fromkeys(canon(t) for t in _FIGURE.findall(str(s))))
 
@@ -1533,15 +1514,14 @@ def values_in(text: str) -> list[float]:
 def rounds_to(target: str, values: list[float]) -> bool:
     """Whether some figure in the paper rounds to the one the claim states.
 
-    A claim says `74.5` where Table 5 says `74.46`. That is the same number written for
-    a sentence instead of a table, and refusing it would make the check fire on almost
-    every honest claim -- the drafts round routinely, and correctly. Rounding to the
-    claim's own stated precision is the whole tolerance: `74.9` does not round to
-    `74.5`, and neither does a figure the drafter computed rather than read.
+    A claim says `74.5` where Table 5 says `74.46`: the same number written for a sentence
+    instead of a table, and refusing it would fire on almost every honest claim. Rounding to the
+    claim's own stated precision is the whole tolerance -- `74.9` does not round to `74.5`, and
+    neither does a figure the drafter computed rather than read.
 
-    A figure declares its own precision, so trailing zeros count as a claim of
-    approximation in the other direction: `14,000` matches the paper's `14,042`. Only
-    from the hundreds up, because `10` almost always means ten and not twelve.
+    A figure declares its own precision, so trailing zeros count as a claim of approximation in
+    the other direction: `14,000` matches the paper's `14,042`. Only from the hundreds up,
+    because `10` almost always means ten and not twelve.
     """
     try:
         want = float(target)

@@ -294,13 +294,12 @@ def item_json(it: dict) -> dict:
 def papers_plan(cfg: dict, limit: int | None = None) -> list[dict] | None:
     """The paper items Wikidata is missing, measured now rather than read from a file.
 
-    Re-measured on every run instead of reading `tasks/wikidata_papers.qs`, because the
-    batch file is as old as the last `update.py` and the thing being avoided is creating
-    an item that already exists. Coverage folds in `data/wikidata_created.yaml`, so a
+    `tasks/wikidata_papers.qs` is as old as the last `update.py`, and the thing being avoided is
+    creating an item that already exists. Coverage folds in `data/wikidata_created.yaml`, so a
     run minutes after the last one still knows what it did.
 
-    Returns None -- not [] -- when the query service does not answer. "Nothing is
-    missing" and "I could not find out" differ by 108 items.
+    Returns None -- not [] -- when the query service does not answer. "Nothing is missing" and
+    "I could not find out" differ by 108 items.
     """
     from audit_identity import paper_item, wikidata_paper_coverage
     papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers") or []

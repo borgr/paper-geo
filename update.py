@@ -15,14 +15,10 @@ Who does what:
   * Reserved for the author: accepting a sidecar draft, which publishes an assertion
     under their name, and any write that leaves this machine.
 
-Design rules, because this is meant to be re-run for years:
-
-  * Read-only by default. Nothing leaves this machine unless you pass --apply.
-  * Idempotent. Every step is safe to run twice; steps that would clobber a human
-    decision read data/overrides.yaml (papers) or the `reviewed` flag (repos).
-  * Degrading, not failing. A source outage costs one field, not the run.
-  * New work surfaces itself. New papers and new repos appear in the report with what
-    they still need.
+Rules every step keeps, because this is meant to be re-run for years: read-only unless
+--apply; idempotent, with human decisions read from data/overrides.yaml or a `reviewed`
+flag rather than clobbered; a source outage costs one field, not the run; and new papers
+and repos surface themselves in the report with what they still need.
 """
 from __future__ import annotations
 
@@ -116,18 +112,16 @@ def step_ownership(cfg, args) -> None:
 def step_audit(cfg, args) -> None:
     """Live-read the identity surfaces we do not control and regenerate the payloads.
 
-    Runs the Hugging Face pass too, even though collect.py just fetched the same
-    pages. The duplication costs ~30s in a multi-minute run and buys the guarantee
-    that the two hand-worked lists came from one moment in time; deciding at read
-    time which of two differently-aged sources is fresher is how a worklist starts
-    sending you back to pages you already did.
+    Runs the Hugging Face pass again even though collect.py just fetched the same pages: ~30s
+    in a multi-minute run, in exchange for both hand-worked lists coming from one moment in
+    time. Deciding at read time which of two differently-aged sources is fresher is how a
+    worklist starts sending you back to pages you already did.
 
-    The Scholar diff belongs here rather than in `collect`, because it audits the
-    collector's *output* against a list the collector cannot see. Its whole job is to
-    catch what no self-consistency check can: a paper that never entered, and a paper
-    the authorship gate dropped. Report-only, and it never stops the run -- Google has
-    no API for this and answers a crawler with a challenge page often enough that
-    treating a bad afternoon as a failed run would be wrong.
+    The Scholar diff belongs here rather than in `collect`, because it audits the collector's
+    *output* against a list the collector cannot see: a paper that never entered, and a paper
+    the authorship gate dropped. Report-only, and it never stops the run -- Google answers a
+    crawler with a challenge page often enough that treating that as a failed run would be
+    wrong.
     """
     run([sys.executable, "scripts/audit_identity.py"])
     run([sys.executable, "scripts/scholar_check.py"])
@@ -141,15 +135,13 @@ def step_audit(cfg, args) -> None:
 def step_validate(cfg, args) -> None:
     """Fail loudly on a malformed hand edit or a bad model proposal.
 
-    Fixes the corpus sizes stated in the docs rather than reporting them: one new
-    paper made seven prose sentences wrong at once, which is a chore, not a
-    judgement. The three sentences whose count feeds a sum are still reported,
-    because there the arithmetic has to be redone by someone who can read it.
+    Fixes the corpus sizes stated in the docs rather than reporting them -- one new paper made
+    seven prose sentences wrong at once. The three sentences whose count feeds a sum are still
+    only reported, because there the arithmetic has to be redone by someone who can read it.
 
-    The only step that can stop the run, and only on a structural failure: `render`
-    and `worklist` both read `data/` and present it, so a schema violation or a
-    dangling claim id would otherwise become a page that looks reviewable. A stale
-    count in a prose sentence exits 0 and the run continues.
+    The only step that can stop the run, and only on a structural failure: `render` and
+    `worklist` both read `data/` and present it, so a schema violation or a dangling claim id
+    would become a page that looks reviewable. A stale count exits 0 and the run continues.
     """
     if run([sys.executable, "scripts/validate.py", "--fix-counts"]):
         raise SystemExit("\nvalidate failed -- fix the problems above and re-run. "
@@ -172,16 +164,13 @@ def step_render(cfg, args) -> None:
 def due_followups() -> list[str]:
     """Surface anything in data/followups.yaml that has come due.
 
-    The reminder problem, solved the only way that survives: the next run is the
-    reminder. A cron entry or a chat reminder lives in one process and dies with it,
-    and a calendar entry keeps the date but loses the reason -- which for these items
-    is the whole content, since each one is "the wait is over, so now X is possible".
-    Here the date and the reason are in the repo together, and every `update.py`
-    checks them.
+    The next run is the reminder. A cron entry or a chat reminder lives in one process and dies
+    with it, and a calendar entry keeps the date but loses the reason -- which for these items
+    is the whole content, since each one is "the wait is over, so now X is possible". Here the
+    date and the reason are in the repo together.
 
-    Items not yet due are listed too, compactly. Knowing that nothing is due *and*
-    what is coming is the difference between a clear page and a page that is merely
-    silent.
+    Items not yet due are listed too, compactly: knowing that nothing is due *and* what is
+    coming is the difference between a clear page and a page that is merely silent.
     """
     import datetime
     items = (read_yaml(os.path.join(DATA, "followups.yaml")) or {}).get("followups") or []
@@ -306,20 +295,13 @@ NOT_STEPS = ("Due now", "Waiting on the outside world", "Coverage:", "Identity s
 def next_steps(lines: list[str]) -> list[str]:
     """The whole file with an ordered plan inserted at the top.
 
-    Every section here explains itself well and none of them can answer the question the
-    reader actually opens the file with, because none of them knows what else is open:
-    *what do I do next, and can I finish it now?* The ordering constraints existed but
-    were scattered inline -- "do this before the rest of this section", "highest leverage
-    on this page", "the top few and stop" -- so reconstructing the order meant reading
-    all three hundred lines and holding them in your head.
+    No section can answer the question the reader actually opens the file with -- *what do I do
+    next, and can I finish it now?* -- because none of them knows what else is open. Each plan
+    line is the section's own heading, the route into it, and the cost. No instruction is
+    repeated: a second copy of an instruction goes stale while looking authoritative.
 
-    So this is a plan and not a summary: each line is the section's own heading, the
-    route into it, and the cost. No instruction is repeated, because a second copy of an
-    instruction is the thing that goes stale while looking authoritative.
-
-    A post-pass over the rendered text, after `apply_declines`, for the same reason that
-    one is: a declined or deferred section must not be listed here as the next thing to
-    do, and matching what was actually rendered is what guarantees it is not.
+    A post-pass over the rendered text, after `apply_declines`, so a declined or deferred
+    section cannot be listed here as the next thing to do.
     """
     heads = [l for l in lines if re.match(r"##+ \S", l)]
     n, body = 0, []
@@ -349,22 +331,20 @@ def next_steps(lines: list[str]) -> list[str]:
 def stamp_payloads(off: dict[str, str], later: dict[str, dict]) -> list[str]:
     """Put the decision at the top of the payload file a hidden section pointed at.
 
-    `apply_declines` takes a section out of `WORKLIST.md`, but the `tasks/` file that
-    section handed you was written by an earlier step that knows nothing about the
-    decision -- so it stays in the repo telling a reader to fill in a form the author ruled
-    out. `tasks/openalex_merge.md` is the live case.
+    `apply_declines` takes a section out of `WORKLIST.md`, but the `tasks/` file that section
+    handed you was written by an earlier step that knows nothing about the decision -- so it
+    stays in the repo telling a reader to fill in a form the author ruled out.
+    `tasks/openalex_merge.md` is the live case.
 
-    The paths come out of the hidden text itself: every section with a payload names its
-    file in its own body, so a section declined in future needs no wiring.
+    The paths come out of the hidden text itself -- every section with a payload names its file
+    in its own body -- so a section declined in future needs no wiring. Re-derived every run,
+    and the marker makes a second run replace the banner rather than stack a copy on it, so
+    deleting the line in `declines.yaml` removes it again.
 
-    Not a deletion -- the routes and identifiers are the work, and `deferred:` means the
-    decision will be revisited. Re-derived every run, so deleting the line in
-    `declines.yaml` removes the banner on the next one, and the marker makes a second run
-    replace the banner rather than stack a copy on it.
-
-    Only `sections:` and `deferred:` paths reach here. A section that vanished because
-    every *item* in it was declined is not stamped: `common.declined` already filters those
-    row by row, so the payload keeps whatever was not decided.
+    Not a deletion: the routes and identifiers are the work, and `deferred:` means the decision
+    will be revisited. Only `sections:` and `deferred:` paths reach here -- a section that
+    vanished because every *item* in it was declined is not stamped, since `common.declined`
+    already filters those row by row.
     """
     done = []
     for path, why in [*((p, ("off", w)) for p, w in off.items()),
@@ -398,9 +378,8 @@ def stamp_payloads(off: dict[str, str], later: dict[str, dict]) -> list[str]:
 def apply_declines(lines: list[str]) -> list[str]:
     """Drop what data/declines.yaml says has been decided against.
 
-    The worklist is generated from live state, so it cannot tell "not done yet" from
-    "looked at and declined", and a skipped decision reappears every run as though it
-    were open.
+    The worklist is generated from live state, so it cannot tell "not done yet" from "looked at
+    and declined", and a skipped decision reappears every run as though it were open.
 
     A post-filter over the rendered markdown rather than a check in each of the fifteen
     emitters: one place to read, and a decline matches the text the reader saw.
@@ -409,18 +388,14 @@ def apply_declines(lines: list[str]) -> list[str]:
       items:    ["2306.01708"]      # any list item containing this
       deferred: [{match: "Repo labels", until: "the papers are settled"}]
 
-    `items` matches any bullet, not only `- [ ]` ones, so the sections that list papers
-    rather than tasks can be declined too.
+    `items` matches any bullet, not only `- [ ]` ones, so the sections that list papers rather
+    than tasks can be declined too. `deferred` is a third state -- real work, not before
+    something else -- and that section moves to the bottom intact, under the condition that
+    releases it, still generated from live state so it stays accurate while it waits.
 
-    `deferred` is a third state: real work, not before something else. The section moves
-    to the bottom intact, under the condition that releases it, still generated from live
-    state so it stays accurate while it waits.
-
-    Two things are reported rather than done silently. What was hidden, because a decision
-    that leaves no trace is indistinguishable from a bug that ate a task. And patterns
-    that matched nothing -- matching rendered text is what makes a decline exact and also
-    what makes it brittle, since the emitters truncate long titles, so a dead pattern
-    means either a typo or work that got done.
+    Two things are reported rather than done silently: what was hidden, because a decision that
+    leaves no trace is indistinguishable from a bug that ate a task; and patterns that matched
+    nothing, which means either a typo or work that got done.
     """
     d = read_yaml(os.path.join(DATA, "declines.yaml")) or {}
     secs = [s for s in (d.get("sections") or []) if s]
@@ -608,16 +583,13 @@ ASKS = re.compile(r"^\s*(?:- \[ \]|```)")
 def drop_hollow(lines: list[str], say=print) -> list[str]:
     """Remove a section that no longer asks for anything.
 
-    `declines.yaml` filters this file after it is built, item by item, which is the
-    right granularity -- and it leaves a parent heading standing over the hole. The live
-    case: all three subsections under *Coverage: Google Scholar and the corpus disagree*
-    were declined, and what survived was a heading, two measurements, and a pointer to a
-    file in gitignored `build/`. Nothing to do, on a page whose first line promises open
-    items only, which is exactly what makes a reader stop trusting the page.
+    `declines.yaml` filters this file item by item, which is the right granularity, and it
+    leaves a parent heading standing over the hole -- a heading, two measurements and a pointer
+    to a file in gitignored `build/`, on a page whose first line promises open items only.
 
-    Judged on the checkbox, the command or the pasteable payload rather than on prose,
-    because prose is what a hollow section is made of. A parent survives on its
-    children: a `##` whose `###` still asks is not hollow.
+    Judged on the checkbox, the command or the pasteable payload rather than on prose, because
+    prose is what a hollow section is made of. A parent survives on its children: a `##` whose
+    `###` still asks is not hollow.
     """
     blocks: list[tuple[str, list[str]]] = [("", [])]
     for ln in lines:
@@ -825,17 +797,17 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
 def upstream_gaps(papers: list[dict], cfg) -> list[str]:
     """Papers the corpus has only because an override put them there.
 
-    `extra_arxiv` and `extra_openreview` are stopgaps covering the interval before the
-    entry lands in the bibliography, and both files say to delete the line after. Nothing
-    else can report them: the Scholar block finds missing papers by diffing Scholar against
-    the corpus, and an override closes exactly that gap.
+    `extra_arxiv` and `extra_openreview` are stopgaps covering the interval before the entry
+    lands in the bibliography, and both files say to delete the line after. Nothing else can
+    report them: the Scholar block finds missing papers by diffing Scholar against the corpus,
+    and an override closes exactly that gap.
 
-    The `_override` marker is provenance, not a decision -- `collect.py` sets it on records
-    it adds from an override, and it disappears once the bibliography's own entry merges.
-    So a paper still carrying it is still absent upstream.
+    `_override` is provenance, not a decision -- `collect.py` sets it on records it adds from an
+    override, and it disappears once the bibliography's own entry merges, so a paper still
+    carrying it is still absent upstream.
 
-    The second half reads `overrides.yaml` as well as the corpus, for the override lines
-    left behind after the paste lands. `collect.py` says so on stderr, once, mid-run.
+    The second half reads `overrides.yaml` as well as the corpus, for the override lines left
+    behind after the paste lands.
     """
     L = []
     pend = sorted((p for p in papers if p.get("_override")),
@@ -898,15 +870,12 @@ def upstream_gaps(papers: list[dict], cfg) -> list[str]:
 def orcid_missing_items(slugs: list[str], by_slug: dict) -> list[str]:
     """The missing papers, with the entry ORCID will import shown per paper.
 
-    ORCID's BibTeX route takes a *file*, so the payload the reader needs at hand is a
-    path and not text to paste -- but a file they cannot see the inside of is a file
-    they have to open in another tab to know what they are about to put on their record,
-    and the whole point of that record is that it is theirs. So the entry is shown here
-    while the list is short enough for that to be a courtesy rather than a wall: three
-    is the length at which this reads as "check these" instead of "scroll past this".
-
-    Above that, titles and citations only, since the decision has collapsed into one
-    upload and the per-paper detail is what `tasks/orcid_missing.md` is for.
+    ORCID's BibTeX route takes a *file*, so the payload the reader needs at hand is a path --
+    but a file they cannot see the inside of is one they have to open in another tab before
+    putting it on their own record. So up to three entries are shown inline, which is the
+    length at which this reads as "check these" instead of "scroll past this". Above that,
+    titles and citations only: the decision has collapsed into one upload, and
+    `tasks/orcid_missing.md` carries the per-paper detail.
     """
     rows = [by_slug.get(s) or {"slug": s} for s in slugs]
     if len(rows) > 3:
@@ -928,18 +897,13 @@ def orcid_missing_items(slugs: list[str], by_slug: dict) -> list[str]:
 def step_worklist(cfg, args) -> None:
     """Report what still needs the account owner, ranked by leverage.
 
-    Open items only. An earlier version printed the whole evergreen recipe for each
-    identity surface on every run -- the full ORCID import procedure, the Wikidata
-    walkthrough -- regardless of whether any of it was still undone. Two things went
-    wrong with that. It went stale, because a static recipe cannot know that steps 1-4
-    are finished; and it buried the three lines that were actually open in four hundred
-    that were not, so the file stopped being read.
+    Open items only, and gated on live audit state: a section appears while there is something
+    to do, and its absence is the report that it is done. Each item says what is open, why it is
+    worth doing, and which section of `docs/SETUP.md` explains how.
 
-    So the split: **the how-to lives in `docs/SETUP.md`**, which is general, published,
-    and true whoever runs it. This file is generated, personal, and gated on live audit
-    state -- a section appears only while there is something to do, and its absence is
-    the report that it is done. Each item says what is open, why it is worth doing, and
-    which section of SETUP.md explains how.
+    The how-to lives in SETUP.md, which is general, published and true whoever runs it.
+    Printing it here instead went stale -- a static recipe cannot know that steps 1-4 are
+    finished -- and buried the three lines that were open in four hundred that were not.
     """
     papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers", [])
     repos = (read_yaml(os.path.join(DATA, "repos.yaml")) or {}).get("repos", [])
@@ -1308,17 +1272,14 @@ def step_worklist(cfg, args) -> None:
     def subm_ids() -> list[str]:
         """The five-minute step that turns "find the row" into a link, or nothing.
 
-        The submission id the journal-ref form is addressed by appears on exactly one
-        page in the world, your own articles list, and `robots.txt` disallows it -- so
-        the only route is a copy of the page saved by hand, and the only reason to save
-        it is that it removes a search from every one of sixty rows. That was a closing
-        sentence at the end of the recommendation paragraph, which is where a
-        prerequisite goes to be skipped: by the time you read it you have already done
-        the first one the slow way.
+        The submission id the journal-ref form is addressed by appears on exactly one page in the
+        world, your own articles list, and `robots.txt` disallows it -- so the only route is a copy
+        of the page saved by hand, and the only reason to save it is that it removes a search from
+        every one of sixty rows. Stated as a step of its own, rather than as a closing sentence,
+        which is where a prerequisite goes to be skipped.
 
-        Empty once every listed paper has an id, because then there is nothing to say --
-        and empty rather than "all done", which would be one more line asserting that
-        something you cannot see is fine.
+        Empty once every listed paper has an id -- empty rather than "all done", which would be one
+        more line asserting that something you cannot see is fine.
         """
         want = [str(p["arxiv"]) for p in papers if needs_jr(p)]
         have = read_yaml(os.path.join(DATA, "arxiv_submissions.yaml")) or {}
