@@ -2,13 +2,13 @@
 """Build data/papers.yaml: one record per paper, merged from every source.
 
 Sources, in precedence order for any conflicting field:
-  1. orig.bib       (the author's own curated bibliography — venue truth)
-  2. Semantic Scholar (abstracts, citation counts, cross-ids)
-  3. arXiv API      (journal-ref / DOI presence — i.e. what needs fixing)
-  4. Hugging Face   (paper-page existence and authorship claims)
+  1. orig.bib         the author's curated bibliography -- venue truth
+  2. Semantic Scholar abstracts, citation counts, cross-ids
+  3. arXiv API        journal-ref / DOI presence
+  4. Hugging Face     paper-page existence and authorship claims
 
-Everything downstream (site, CITATION.cff, worklist, Wikidata) reads only this
-file, so a source outage degrades one field rather than the whole pipeline.
+Everything downstream -- site, CITATION.cff, worklist, Wikidata -- reads only this
+file, so a source outage costs one field rather than the whole pipeline.
 
 Usage:
     python scripts/collect.py [--offline] [--no-arxiv] [--no-hf]
@@ -46,18 +46,9 @@ _ARXIV_DOI = re.compile(r"^10\.48550/arxiv\.(\d{4}\.\d{4,5})", re.I)
 def unfold_arxiv_dois(papers: list[dict]) -> int:
     """`10.48550/arXiv.2510.24081` in a `doi` field *is* an arXiv id. Store it as one.
 
-    arXiv mints a DataCite DOI for every preprint, and some sources report only that
-    form. Left folded up, the record looks like it has no arXiv id at all, so dedupe
-    cannot merge it with the copy that does and falls back to comparing titles -- which
-    works right up until the titles legitimately differ. Correcting one word of a title
-    upstream split `Global PIQA` into two pages, each with a share of the citations,
-    because the only thing the two records provably had in common was unreadable.
-
-    Not the same as the note in `merge_arxiv` about *not* writing this DOI: that is the
-    derived direction (id -> DOI, computed at the point of use by `paper_doi`). This is
-    the asserted direction. The source did claim this id; it just spelled it as a DOI.
-    The `doi` field is left alone -- it is what the source said -- and a publisher DOI
-    is never overwritten, since only the 10.48550 prefix matches at all.
+    Sets `arxiv` from the DataCite form where it is empty, so dedupe can match on the id
+    instead of falling back to titles, and returns how many were unfolded. `doi` is left
+    as the source gave it; a publisher DOI never matches.
     """
     n = 0
     for p in papers:
@@ -76,14 +67,9 @@ SLUG_HISTORY = os.path.join(DATA, "slug_history.yaml")
 def _slug_identity(p: dict) -> str | None:
     """A key for "the same paper" that survives the title changing.
 
-    Which is the whole point: the common reason a slug moves is that the title it was
-    built from got corrected, so pairing runs by title would pair nothing exactly when
-    it matters. Papers with no stable identifier are skipped rather than guessed at --
-    a wrong pairing would publish a redirect from one paper's URL to another's.
-
-    The DataCite form has to fold into the id form or the same paper gets two different
-    identities in two runs -- which is how `Global PIQA`'s move went unrecorded the
-    first time, leaving a live URL with no successor.
+    `arxiv:<id>`, folding the DataCite DOI form into it, else `doi:` or `key:`, else None
+    for a paper with no stable identifier -- which is then not paired at all rather than
+    paired by title.
     """
     if p.get("arxiv"):
         return f"arxiv:{p['arxiv']}"
@@ -112,17 +98,12 @@ SHRINK_TOLERANCE = 10
 
 
 def coverage_alarms(prev: list[dict], papers: list[dict]) -> tuple[list[str], list[str]]:
-    """Compare this run's coverage to the last committed one. (report, alarms)
+    """This run's per-field coverage against the last committed one. (report, alarms)
 
-    Every field here comes from a live source over the network, and `get` returns b'' on
-    a final failure rather than raising -- deliberately, so one dead source degrades one
-    field instead of killing the run. The cost of that choice is that a bad afternoon at
-    Semantic Scholar looks exactly like success: papers.yaml is rewritten wholesale, the
-    abstracts are simply absent, and the next commit makes the loss permanent. Nothing
-    downstream can tell, because nothing downstream ever sees the previous values.
-
-    So the run is compared against what is committed, and a large drop stops it before
-    it writes. `--allow-shrink` is the override for when the shrink is real.
+    `report` is a line per field that moved; `alarms` is a line per field that fell by
+    more than SHRINK_TOLERANCE, which stops the run before it overwrites papers.yaml
+    (`--allow-shrink` overrides). A dead source returns empty rather than raising, so
+    without this a bad afternoon at one API looks exactly like success.
     """
     report, alarms = [], []
     for label, pred in COVERAGE.items():
@@ -135,17 +116,12 @@ def coverage_alarms(prev: list[dict], papers: list[dict]) -> tuple[list[str], li
 
 
 def _committed_papers(papers_path: str) -> list[dict]:
-    """The last committed papers.yaml, which is the best available "what is published".
+    """The papers list from the last committed papers.yaml -- "what is published".
 
-    Not the working copy. A rerun you never commit or deploy publishes nothing, so
-    pairing against it invents redirects from URLs that never existed -- and, worse,
-    loses real ones: two local runs in a row make the second one's baseline the first
-    one's output, so the URL that is actually live has already been forgotten. That is
-    not hypothetical; it is how `Global PIQA`'s move was missed.
-
-    Deploying is a git push, so git is already required for the workflow that makes a
-    slug public. When it is unavailable, or the file is not committed yet, fall back to
-    the working copy rather than losing the record entirely.
+    Not the working copy: a rerun that is never committed publishes nothing, and two
+    local runs in a row would make the second's baseline the first's output, forgetting
+    the slug that is actually live. Falls back to the working copy when git is
+    unavailable or the file is not committed yet.
     """
     try:
         out = subprocess.run(["git", "show", f"HEAD:{os.path.relpath(papers_path, ROOT)}"],
@@ -163,25 +139,13 @@ CARRIED = ("owner", "owner_source", "canonical_page", "owner_conflict")
 def carry_claims(papers: list[dict], papers_path: str) -> int:
     """Keep the ownership fields this file does not derive, across the rewrite.
 
-    Four keys, from the working copy of papers.yaml rather than the committed one, since a
-    claim made and not yet committed is still a claim. Both halves are re-derived by the
-    next `ownership.py` run, so carrying them is at worst one run stale -- but unlike
-    citation counts they cannot be re-fetched.
+    Copies the CARRIED keys from the working copy of papers.yaml onto records that lack
+    them, and returns how many papers gained one. `ownership.py` re-derives them, but it
+    recovers our own claim by reading the value already there -- so dropping them resets
+    the paper to `unclaimed` and loses the co-author page `render` links to instead of
+    publishing a competing one.
 
-    `owner`/`owner_source`: `ownership.py` recovers our claim by reading the value already
-    in the file, so a rewrite that drops the field leaves the next reconcile with nothing
-    to recover -- the paper goes back to `unclaimed` and the manifest peers read to avoid
-    building a competing canonical page loses the claim permanently.
-
-    `canonical_page`: what `render` reads to link to a co-author's page instead of
-    publishing a competing one, so its absence between a collect and the next ownership
-    run is a duplicate page.
-
-    Presence of the key is the test, not truthiness of the value: `owner: null` is what
-    `ownership.py` writes for `unclaimed`, so dropping it makes every collect-only run
-    rewrite a line per paper for no change in meaning. Safe because nothing in this file
-    ever sets one of the four, so `k not in p` is the same question as "did collect derive
-    this".
+    Presence of the key is the test, not its truth: `owner: null` is `unclaimed`.
     """
     prev = {p["slug"]: p for p in (read_yaml(papers_path) or {}).get("papers") or []
             if p.get("slug")}
@@ -200,18 +164,13 @@ def carry_claims(papers: list[dict], papers_path: str) -> int:
 def record_slug_moves(papers: list[dict], papers_path: str) -> int:
     """Remember every URL this run retires, so build_site.py can redirect it.
 
-    `slugify` is a published-URL function: change it, correct a title upstream, or
-    merge two records, and a page that is linked and indexed silently becomes a 404 on
-    the next deploy. Nothing else in the pipeline notices, because papers.yaml is
-    regenerated wholesale and the old value is simply gone -- the one fact that cannot
-    be recomputed from the sources. So it is committed, here, keyed by identifier
-    rather than by title.
+    Compares the committed papers.yaml with this run by identifier and appends old -> new
+    to data/slug_history.yaml for each slug that moved and is not still live, re-pointing
+    chains so two renames land on a live page. Returns the number of moves.
 
-    This is a record of our own past output, not observed state: it makes slug changes
-    *expressible* instead of forbidden, which is the difference between "never improve
-    slugify" and "improve it and leave a redirect behind". Append-only, and existing
-    entries are re-pointed when their target itself moves, so a chain of two renames
-    still lands on a live page instead of on the intermediate 404.
+    papers.yaml is regenerated wholesale, so the old slug is the one fact that cannot be
+    recomputed from the sources -- and a published URL that stops being generated is a 404
+    on the next deploy.
     """
     prev = _committed_papers(papers_path)
     if not prev:                      # first run, or no committed copy to compare to
@@ -337,19 +296,13 @@ def from_bibtex(cfg) -> list[dict]:
 
 
 def from_arxiv_ids(papers: list[dict], ids: list[str]) -> int:
-    """Add papers by bare arXiv id, for ids the bibliography has not caught up with.
+    """Add papers by bare arXiv id, from `overrides.extra_arxiv`. Returns how many.
 
-    A stopgap with a deliberately narrow job. The bibliography stays the source of
-    truth -- one source per fact -- and the right fix for a missing paper is upstream,
-    in the .bib. But upstream is a separate repo on a separate schedule, and until it
-    lands the paper has no page at all: no canonical URL to cite, nothing in the
-    sitemap, nothing on the entity home. Waiting weeks for that is a worse trade than
-    holding one id in a file, so this exists for the interval and is meant to be
-    emptied, not accumulated.
-
-    The audit surfaces the candidates by itself: `arxiv_stray` in
-    `build/identity_state.json` is every paper arXiv's authority records say you own
-    that the bibliography does not mention -- which is exactly this list.
+    A stopgap for the interval before the bibliography carries the entry, so the paper has
+    a page, a canonical URL and a sitemap entry meanwhile. The record is fetched, never
+    typed. Ids the bibliography has caught up with are reported, so the list gets emptied
+    rather than accumulated -- `arxiv_stray` in build/identity_state.json is where its
+    candidates come from.
     """
     have = {p["arxiv"] for p in papers if p.get("arxiv")}
     # An id the bibliography now carries is the good outcome -- it is what this list is
@@ -409,23 +362,13 @@ def from_arxiv_ids(papers: list[dict], ids: list[str]) -> int:
 
 
 def from_openreview_titles(papers: list[dict], titles: list[str]) -> int:
-    """Add papers by title from OpenReview, for the ones no other index can name.
+    """Add papers by title from OpenReview, from `overrides.extra_openreview`.
 
-    `extra_arxiv`'s sibling, for the papers it cannot express. That list is keyed by
-    arXiv id, which assumes the paper was preprinted; a workshop paper generally was
-    not, and no publisher registered a DOI for it either, so there is no identifier to
-    put in a list at all. What there is, is the site the workshop ran on.
-
-    Keyed by title for that reason, and not by forum id, which would be the better key:
-    OpenReview's `notes` endpoint answers 403 without a token, while `notes/search`
-    answers anyone. So a title is the only handle an unauthenticated run has, and
-    `from_openreview`'s strict matching is what makes it safe to use as one.
-
-    Same narrow job and the same intended lifetime as `extra_arxiv`: it covers the
-    interval before the entry lands in the bibliography, after which the title leaves
-    this list. Nothing is typed by hand -- the record is fetched, so it cannot drift from
-    what OpenReview says, and a withdrawn or still-under-review submission is refused
-    upstream in `from_openreview` rather than published as a paper.
+    `extra_arxiv`'s sibling for papers with no identifier to key on: a workshop paper is
+    often neither preprinted nor given a DOI. Keyed by title because OpenReview's `notes`
+    endpoint needs a token while `notes/search` answers anyone; `from_openreview` matches
+    strictly and refuses a withdrawn or under-review submission. Returns how many were
+    added, and reports titles the bibliography now has.
     """
     have = {p["_norm"] for p in papers if p.get("_norm")}
     n = 0
@@ -467,15 +410,12 @@ def from_openreview_titles(papers: list[dict], titles: list[str]) -> int:
 
 
 def build_links(papers: list[dict]) -> None:
-    """Resolve every surface a paper has into one `links` map.
+    """Resolve every surface a paper has into one `links` map, in place.
 
-    This is what a JSON-LD `sameAs` array consumes, and it is the difference
-    between an engine treating five URLs as five unrelated pages and treating
-    them as one work with five locations. Identifiers stay the source of truth;
-    these are derived from them on every run, so they can never drift.
-
-    `links_extra` in the paper's sidecar is for what cannot be derived: project
-    page, talk video, slides, poster, leaderboard, blog post.
+    Derived from the identifiers on every run, so they cannot drift. This is what the
+    page's JSON-LD `sameAs` consumes -- the difference between five unrelated URLs and one
+    work with five locations. `links_extra` in the sidecar is for what cannot be derived:
+    project page, talk video, slides, poster, leaderboard.
     """
     for p in papers:
         L: dict[str, str] = {}
@@ -505,16 +445,11 @@ def build_links(papers: list[dict]) -> None:
 
 
 def add_deduced_links(papers: list[dict]) -> None:
-    """Fill `code` and `project` from data/paper_code.yaml where they are still empty.
+    """Fill `links.code` and `links.project` from data/paper_code.yaml where still empty.
 
-    Hugging Face is the canonical home for these two links, but reading them back
-    from it takes an online collect, so a repo pushed today would otherwise not
-    reach the site until the next full run. paper_code.yaml holds the same
-    decision locally, so the site can show it immediately -- and offline.
-
-    Only accepted rows, and only where nothing is set already: HF's value wins
-    when it exists, because that is the one a reader can also see on the paper
-    page, and a row still in `review` is by definition undecided.
+    Accepted rows only, and never over a value Hugging Face already gave -- that is the
+    one a reader can also see on the paper page. Lets a repo pushed today reach the site
+    without waiting for an online collect.
     """
     by_slug = (read_yaml(os.path.join(DATA, "paper_code.yaml")) or {}).get("papers") or {}
     for p in papers:
@@ -665,17 +600,12 @@ def backfill_abstracts(papers: list[dict]) -> None:
 
 
 def backfill_abstracts_offarxiv(papers: list[dict]) -> None:
-    """The papers arXiv cannot help with: never preprinted, or preprinted elsewhere.
+    """Fetch abstracts for the papers arXiv has none of, in place.
 
-    Runs after the arXiv pass and only on what it left empty, because arXiv is one batch
-    request for forty papers and these are four APIs for one. Sources in
-    scripts/fulltext.py: Semantic Scholar, Europe PMC, Crossref JATS, OpenAlex.
-
-    Worth the extra calls for a specific pair of papers rather than on principle. The
-    Nature debating-system paper (172 citations) had no abstract at all -- its page was a
-    title, a venue and a citation count, which is thin enough that Scholar may decline to
-    index it and close to unretrievable in embedding search. Europe PMC publishes that
-    abstract. The JML paper is the same story via OpenAlex.
+    Runs after the arXiv pass and only where it left `abstract` empty, because arXiv is
+    one batch request for forty papers and these are four APIs for one. Sources are in
+    scripts/fulltext.py: Semantic Scholar, Europe PMC, Crossref JATS, OpenAlex. Sets
+    `abstract_source` to whichever answered.
     """
     from fulltext import resolve_abstract
     for p in papers:
@@ -927,28 +857,18 @@ def arxiv_authors(ax: str) -> list[str]:
 
 
 def authorship_gate(papers: list[dict], cfg: dict, ov: dict) -> list[dict]:
-    """Keep only papers whose author list contains some form of your name.
+    """Keep only papers whose author list names you in some form. (kept, rejected)
 
-    `bibtex_url` is a CV bibliography, so it also carries the works the CV *cites* --
-    "Attention is all you need", "Sapiens", a euthanasia survey. Without this gate every
-    consumer inherits them: a canonical page on your domain for someone else's paper, an
-    `orcid_import.bib` asserting you wrote it, an arXiv ownership request a human has to
-    reject.
+    `bibtex_url` is a CV bibliography, so it also carries the works the CV *cites*.
+    Without this gate every consumer inherits them: a canonical page for someone else's
+    paper, an `orcid_import.bib` asserting you wrote it, an arXiv ownership request a
+    human has to reject. Excluding is the safe default because the errors are not
+    symmetric -- a missed paper of yours costs one page, a claimed paper of someone
+    else's is a false authorship assertion in a public registry.
 
-    Excluding is the safe default because the errors are not symmetric. A missed paper of
-    yours costs one page; a claimed paper of someone else's is a false authorship
-    assertion in a public registry.
-
-    No name match -> dropped, and listed in build/not_mine.json for review. Where the
-    bibliography's author list is merely *incomplete* -- truncated, a consortium entry,
-    "et al." in the source -- record the title under `also_mine` in overrides.yaml and it
-    is kept regardless.
-
-    Anything with an arXiv id is checked against arXiv before rejection, not before every
-    decision: the request is only spent on papers about to be dropped (5 of 179 here). The
-    condition is the rejection itself rather than an `authors_truncated` flag, because a
-    consortium deposit does not admit its list is short -- "MINDGAMES Organizer &
-    Participation Teams" is one complete author entry.
+    Rejects go to build/not_mine.json for review. A short or consortium author list is
+    checked against arXiv first, and only on papers about to be dropped. To keep one
+    regardless, record its title under `also_mine` in data/overrides.yaml.
     """
     variants = cfg["identity"]["name_variants"]
     keep_norm = {norm_title(t) for t in (ov.get("also_mine") or [])}
@@ -1020,17 +940,10 @@ def reject_confidence(p: dict) -> str:
 def title_diffs(papers: list[dict]) -> list[dict]:
     """Papers whose stored title is not the one arXiv is serving today.
 
-    A difference is not automatically an error, which is why this is a review list and
-    not a `metadata_problems` flag: sometimes ours is the published retitle and arXiv is
-    the stale side. But *someone* is wrong in every row, and the two cases we have both
-    reached published pages -- one bibliography entry had a word the paper never
-    contained, and one carried an arXiv v1 title the authors had already replaced,
-    which additionally split the paper into two pages with the citations divided.
-
-    Both were found by hand, comparing 105 titles one at a time. This is that pass, run
-    on every update for the price of a field we already fetch. Written to `build/` and
-    not to `papers.yaml`: it is a statement about a source at a moment, so committing it
-    would be storing observed state, and it is free to recompute.
+    A review list, not an error: sometimes ours is the published retitle and arXiv is the
+    stale side. Each row carries both titles plus the words unique to each, so a reader
+    can tell a retitle from a typo without diffing long strings by eye. Written to
+    build/, since it is a statement about a source at a moment.
     """
     out = []
     for p in papers:

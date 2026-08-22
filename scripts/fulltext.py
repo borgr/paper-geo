@@ -19,14 +19,10 @@ drafted from a title:
 `data/fulltext/` is gitignored: a publisher PDF is not ours to redistribute, and what
 gets published from it is a distillation, never the text.
 
-What comes back is the paper minus its bibliography, up to LIMIT characters. Two things
-to know before trusting a draft built on it:
-
-  * arXiv HTML renders every formula three times (MathML, screen-reader gloss, TeX
-    source). html_to_text keeps the TeX. Caches carry an `extractor` version and are
-    refetched once when it moves.
-  * A paper over the limit keeps its beginning and its end with the gap marked in
-    place, because the tables a claim's magnitude needs are at the back.
+What comes back is the paper minus its bibliography, shortened to LIMIT characters by
+keeping both ends with the gap marked in place -- the tables a claim's magnitude needs
+are at the back. arXiv HTML renders every formula three times and html_to_text keeps
+the TeX; caches carry an `extractor` version and are refetched once when it moves.
 
 Two entry points:
 
@@ -119,14 +115,10 @@ def _drop_bibliography(s: str) -> str:
     """The bibliography element, removed. Structural, so the appendices survive it.
 
     In LaTeXML's output the bibliography sits *between* the body and the appendices, so
-    cutting the text at the word "References" -- which is what drop_references does, and
-    all this file used to do -- threw away every appendix as well. That is 26,502 of
-    72,892 characters for tinyBenchmarks, and appendices are where the per-scenario
-    tables are, so a claim's magnitude had nothing to be checked against.
-
-    Cut from the section's opening tag to the next `<section`, because LaTeXML puts no
-    nested section inside a bibliography (checked) but does close it with a `</section>`
-    that a naive non-greedy match would find several thousand entries too early.
+    cutting at the word "References" takes every appendix with it -- and the appendices are
+    where the per-scenario tables a claim's magnitude needs live. Cut from the section's
+    opening tag to the next `<section`: a bibliography holds no nested section, but it does
+    end with a `</section>` that a non-greedy match would find thousands of entries early.
     """
     m = _BIB_OPEN.search(s)
     if not m:
@@ -225,18 +217,13 @@ _APPENDIX = re.compile(
 def drop_references(s: str) -> str:
     """Cut the bibliography, which is the largest block of numbers that are not ours.
 
-    Worth doing beyond saving budget: a truncation limit spent on other people's titles
-    is a limit not spent on the appendix tables, and a model reading a reference list
-    can attribute a cited paper's result to this one.
+    Only a heading in the last 40% counts, so a paper with an early section called
+    "References" is not beheaded, and the cut stops at the appendix when one follows the
+    bibliography. Belt-and-braces on the HTML route, where _drop_bibliography has already
+    removed the element structurally; it still carries the PDFs on its own.
 
-    Only a heading in the last 40% counts, so a paper that says "References" in an
-    early section title does not get beheaded.
-
-    And only as far as the appendix, if the paper has one after its bibliography -- which
-    in a two-column preprint is the normal layout. Cutting to the end of the file cost
-    tinyBenchmarks all six of its appendices, including the per-scenario result tables.
-    For the HTML route this is now belt-and-braces: _drop_bibliography has already
-    removed the element structurally. It still carries the PDFs on its own.
+    Worth doing beyond saving budget: a model reading a reference list can attribute a
+    cited paper's result to this one.
     """
     hits = [m.start() for m in _REFS.finditer(s) if m.start() > len(s) * 0.6]
     if not hits:
@@ -458,15 +445,10 @@ LIMIT = 140000
 def fit(text: str, limit: int = LIMIT) -> tuple[str, int]:
     """(text shortened to `limit` keeping both ends, characters cut).
 
-    Head-only truncation was the earlier behaviour and it cut precisely the wrong part.
-    A claim needs a magnitude, the magnitude lives in a results table, and the tables --
-    with the per-task breakdowns a printed average has to be checked against, and the
-    limitations section a claim's scope comes from -- are all at the back. Ten of the
-    first fourteen sidecars were drafted from text cut before the experiments.
-
-    So: three quarters from the front, the rest from the back, and the seam states how
-    much is gone, because a shortened paper that does not say it is shortened reads
-    exactly like a whole one.
+    Three quarters from the front, the rest from the back, with the seam stating how much
+    is gone -- a shortened paper that does not say it is shortened reads exactly like a
+    whole one. Both ends because a claim needs a magnitude, and the results tables, the
+    per-task breakdowns and the limitations section are all at the back.
     """
     if limit <= 0 or len(text) <= limit:
         return text, 0
@@ -495,17 +477,11 @@ def resolve(p: dict, cfg: dict | None = None, limit: int = LIMIT,
     """(text, where it came from) for one paper. Cached under build/fulltext/<slug>.txt.
 
     Cached because a re-draft after a prompt change must not re-download 117 papers, and
-    because arXiv asks for exactly that restraint. A cached *failure* is not honoured:
-    the old code wrote an empty file when a fetch failed and then returned it forever, so
-    every later run skipped the paper it had learned nothing about. A miss is retried,
-    which is what lets a source added today fix a paper that came up empty yesterday.
-
-    A cache written by a superseded extractor is not honoured either -- see _stale. That
-    refetch happens one paper at a time, as each is read, so it never becomes a hundred
-    downloads at once.
-
-    Shortened only if it exceeds `limit`, keeping both ends and saying so. The cache on
-    disk always holds the whole text; the shortening is per-call.
+    because arXiv asks for that restraint. A miss is retried and a cached *failure* is
+    never honoured, so a source added today fixes a paper that came up empty yesterday; a
+    cache written by a superseded extractor is refetched too (see _stale), one paper at a
+    time as each is read. The cache holds the whole text -- shortening to `limit`, keeping
+    both ends and saying so, is per-call.
     """
     cfg = cfg or load_config()
     os.makedirs(CACHE, exist_ok=True)

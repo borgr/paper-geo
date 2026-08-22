@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Generate the published site into build/site/.
 
-Static HTML, no JavaScript. AI crawlers largely do not execute JS, so anything
-that needs a script to appear is invisible to them regardless of how it ranks in
-Google.
+Static HTML, no JavaScript: AI crawlers largely do not execute it, so anything that
+needs a script to appear is invisible to them however well it ranks in Google.
 
 Output:
     index.html                  entity home: Person JSON-LD + sameAs
@@ -79,15 +78,11 @@ def read_sidecar(slug: str) -> dict:
 def verification_meta(cfg) -> str:
     """Search Console / Bing ownership meta tags, on the homepage only.
 
-    Generated rather than pasted, because `--deploy` deletes everything in the Pages
-    repo before copying build/site over it. A verification file dropped in by hand
-    survives until the next run and then silently disappears, at which point the
-    property un-verifies and the reports stop -- with nothing to connect the two
-    events. Anything that must persist has to be produced here.
-
-    The meta-tag method is used for both services in preference to their file
-    methods: one config value each, one place to look, and it cannot be orphaned by
-    a rename.
+    Generated rather than pasted: `--deploy` empties the Pages repo before copying
+    build/site over it, so a verification file dropped in by hand survives until the next
+    run and then disappears, un-verifying the property weeks before anyone notices the
+    reports stopped. The meta-tag method is used for both services because it is one
+    config value each and cannot be orphaned by a rename.
     """
     v = (cfg.get("site") or {}).get("verification") or {}
     out = ""
@@ -130,15 +125,10 @@ def analytics_snippet(cfg) -> str:
     """The one instrument that can show an AI answer sent a real person here.
 
     A referral from `chatgpt.com`, `perplexity.ai` or `claude.ai` is the only ground truth
-    available at this scale: the counters in `measure/` are confounded and slow, and claim
-    fidelity says how a model describes the work, not whether anyone arrived. The asymmetry
-    is worth stating because it decides how the number is read -- AI answers are frequently
-    not clicked at all, so a rise is evidence and a flat line is uninformative.
-
-    What this cannot give you is crawler hits (`GPTBot`, `ClaudeBot`, `PerplexityBot`),
-    which are the earliest possible signal and arrive weeks before any answer. Those are
-    server-side, GitHub Pages publishes no logs, and no script tag can see a bot that never
-    runs JavaScript. That needs a CDN in front of the site, which is a hosting decision.
+    available at this scale, and it is asymmetric: AI answers are frequently not clicked at
+    all, so a rise is evidence and a flat line is uninformative. Crawler hits (`GPTBot`,
+    `ClaudeBot`, `PerplexityBot`) arrive weeks earlier but are invisible to any script tag
+    -- GitHub Pages publishes no logs, so those need a CDN in front of the site.
 
     Left null by default. Three of the four providers set no cookies and need no consent
     banner; `ga4` does, and choosing it is choosing that obligation.
@@ -198,13 +188,10 @@ def venue_of(p: dict) -> str:
 def human_note(ident: dict, *, box: bool) -> str:
     """"You probably wanted the personal site" -- the one thing a person needs from here.
 
-    This site exists to be read by machines: it is the canonical URL in ORCID, Scholar,
-    arXiv and every JSON-LD sameAs, which is exactly why a person following any of those
-    fields lands on it by accident. Answering that with a link styled like navigation was
-    not enough -- it read as one more entry in a list of profiles. So the home page says it
-    in a box, in the words the visitor is already thinking, and every other page repeats it
-    in one line of its footer, because search sends people to a paper page far more often
-    than to a home page.
+    This site is the canonical URL in ORCID, Scholar, arXiv and every JSON-LD `sameAs`,
+    which is exactly why a person following one of those fields lands on it by accident.
+    Said in a box on the home page, and in one line of every other page's footer, because
+    search sends people to a paper page far more often than to a home page.
     """
     pages = ident.get("other_pages") or []
     if not pages:
@@ -272,15 +259,12 @@ def jsonld(obj: dict) -> str:
 def org_ld(a) -> dict:
     """An affiliation as a schema.org Organization, with identifiers when it has them.
 
-    A bare name is a string a disambiguator has to guess at -- "IBM Research" is
-    thousands of people and several legal entities. A name plus a `url`, and better a
-    plus a ROR id, is an entity: ROR is the identifier Crossref, DataCite and OpenAlex
-    use for institutions, so it is the affiliation key that other databases can join on
-    rather than string-match. `sameAs` carries them because that is the property whose
-    meaning is "this URL denotes this thing".
+    A bare name is a string a disambiguator has to guess at -- "IBM Research" is thousands
+    of people and several legal entities. A name plus a `url`, and better a ROR id, is an
+    entity other databases can join on rather than string-match: ROR is the institution
+    identifier Crossref, DataCite and OpenAlex use. Both go in `sameAs`.
 
-    Kept optional per entry. A guessed lab URL is worse than a bare name, on the same
-    logic as the social handles: a wrong identifier asserts a relationship to the wrong
+    Each is optional per entry. A guessed lab URL asserts a relationship to the wrong
     organisation, while a missing one only fails to assert a real one.
     """
     if isinstance(a, str):
@@ -422,15 +406,11 @@ def article_jsonld(p: dict, sc: dict, cfg) -> dict:
 def faq_jsonld(p: dict, sc: dict, cfg) -> dict | None:
     """The questions block as FAQPage, which is the only part of it a parser can read.
 
-    A sidecar carries up to twenty question groups of up to four phrasings each -- the
-    closest thing on the page to the words a reader actually types, and the reason the
-    block exists. Rendered as a <dl> it is prose; as FAQPage it is a question with an
-    answer attached, which is what a retrieval system indexes and what a summariser
-    quotes instead of re-deriving.
-
-    One Question per group rather than per phrasing: the phrasings are the same question
-    asked differently, so they belong in alternateName, and duplicating the node once per
-    wording would inflate the graph with answers that are byte-identical.
+    Rendered as a <dl> the block is prose; as FAQPage each group is a question with an
+    answer attached, which is what a retrieval system indexes and what a summariser quotes
+    instead of re-deriving. One Question per group rather than per phrasing: the phrasings
+    are the same question asked differently, so they belong in `alternateName` instead of
+    duplicating an answer node up to four times.
     """
     claims = {c["id"]: c for c in (sc.get("claims") or []) if c.get("id")}
     base = cfg["site"]["base_url"].rstrip("/") + cfg["site"]["papers_path"]
@@ -667,22 +647,17 @@ def paper_llms_txt(p: dict, sc: dict, cfg) -> str:
 def retired_slugs(papers: list[dict]) -> dict[str, str]:
     """Paper URLs a merge retired -> the slug that replaced them.
 
-    A merge is the moment two pages become one, which is the point of the exercise.
-    But the alias's URL may already be published, linked and indexed, and GitHub
-    Pages has no server-side redirect -- so simply not writing the directory turns a
-    consolidation into a 404 and discards whatever standing the old URL had. That is
-    the opposite of what a merge is for. A zero-delay meta refresh plus a canonical
-    naming the survivor is the redirect a static host can express, and the pair is
-    what crawlers read as one; a bare 404 tells them nothing about the successor.
+    GitHub Pages has no server-side redirect, so a page consolidated away whose URL is
+    already published, linked and indexed becomes a 404 unless something is written at it,
+    which is the opposite of what a merge is for. A zero-delay meta refresh plus a
+    canonical naming the survivor is the redirect a static host can express, and crawlers
+    read the pair as one.
 
-    Derived from the merge record each paper already carries (`merged_from` titles
-    resolved through the same slugify the live pages use), never from what happens to
-    be deployed: the same inputs have to produce the same site on every rerun.
-
-    A merge is not the only way a URL retires, though, and the others cannot be
-    re-derived from anything: correcting a title upstream or improving `slugify` moves
-    a page whose old address exists nowhere in the current inputs. `collect.py` records
-    those as it makes them, so they are read from disk here and unioned in.
+    Derived from each paper's `merged_from` titles through the same slugify the live pages
+    use, never from what happens to be deployed, so the same inputs give the same site.
+    Merges are not the only way a URL retires, though: correcting a title upstream or
+    improving `slugify` moves a page whose old address exists nowhere in the current
+    inputs, so collect.py's recorded moves are read from disk and unioned in.
     """
     live = {p["slug"] for p in papers}
     hist = read_yaml(os.path.join(DATA, "slug_history.yaml")) or {}
@@ -897,18 +872,13 @@ that answers it. The answer and the conditions it holds under are on that page.
 def copy_static() -> int:
     """Copy `static/` into the built site verbatim, last, so it wins any collision.
 
-    This exists because a deploy already destroyed something. `--deploy` empties the
-    Pages repo before copying `build/site` into it, so anything that got there by hand
-    is deleted by the next run: `googlea3fc3aa9969d1cda.html`, the Search Console
-    ownership file, was added by hand on 2026-05-08 and removed by the first deploy
-    after it. Nothing announces that -- verification lapses silently weeks later, and
-    the cause is a commit that looks like every other rebuild.
+    `--deploy` empties the Pages repo before copying build/site into it, so anything that
+    got there by hand is deleted by the next run: the Search Console ownership file added
+    on 2026-05-08 was removed by the first deploy after it, and nothing announced that.
 
-    A generated HTML tag is still the better verification method where a service offers
-    one (`site.verification`), because it needs no file at all. But some services only
-    offer a file, and an author will always eventually be asked to host one. So the
-    rule is: a file the site must serve that this repo does not generate goes in
-    `static/`, and then it is as durable as the generator itself.
+    So the rule is: a file the site must serve that this repo does not generate goes in
+    `static/`, and is then as durable as the generator itself. A generated HTML tag
+    (`site.verification`) is still better where a service offers one, needing no file.
     """
     if not os.path.isdir(STATIC):
         return 0
@@ -926,19 +896,16 @@ def copy_static() -> int:
 
 
 def write_indexnow_key(cfg) -> None:
-    """The `<key>.txt` file IndexNow requires, generated for the same reason the
-    verification tags are: `--deploy` empties the Pages repo, so a file uploaded by
-    hand disappears on the next run and every submission afterwards fails with a
-    403 that names no cause.
+    """The `<key>.txt` file IndexNow requires, generated like the verification tags.
 
-    IndexNow is a push: instead of waiting for a crawler, you tell Bing (and Yandex,
-    Seznam, Naver -- Google does not participate) that a URL changed, and it fetches
-    within minutes to days. Two reasons it is worth the twenty lines here. Bing's
-    index is what ChatGPT's search grounding leans on, so it is the one crawler where
-    faster inclusion reaches an answer engine rather than only a search results page.
-    And a rebuild that adds thirty paper pages at once is exactly the case organic
-    discovery handles worst -- a new sitemap entry on a low-traffic site can wait
-    weeks. Nothing about it affects ranking; it affects *when* the page is eligible.
+    Uploaded by hand it disappears on the next `--deploy`, and every submission afterwards
+    fails with a 403 that names no cause.
+
+    IndexNow is a push: Bing (and Yandex, Seznam, Naver -- Google does not participate) is
+    told a URL changed and fetches within minutes to days. Bing's index is what ChatGPT's
+    search grounding leans on, and a rebuild that adds thirty paper pages at once is the
+    case organic discovery handles worst. It affects when a page becomes eligible, never
+    how it ranks.
     """
     key = ((cfg.get("site") or {}).get("indexnow_key") or "").strip()
     if not key:
