@@ -292,11 +292,11 @@ class TestGeneratedWorklistLinks(unittest.TestCase):
         path = os.path.join(ROOT, "WORKLIST.md")
         if not os.path.exists(path):
             self.skipTest("WORKLIST.md not generated yet")
-        import draft_sidecars
+        import sidecar_review
         text = source(path)
         links = re.findall(r"file://(\S*?)[)>#]", text)
         for got in links:
-            self.assertEqual(got, draft_sidecars.REVIEW_PAGE,
+            self.assertEqual(got, sidecar_review.REVIEW_PAGE,
                              "the worklist links a file:// path that is not the review "
                              "page the drafter writes")
         # Without this the test passes on a worklist that dropped the link entirely,
@@ -434,7 +434,7 @@ class TestOneBadPaperCannotEndTheRun(unittest.TestCase):
 
     def test_a_json_string_array_is_recovered(self):
         sys.path.insert(0, os.path.join(ROOT, "scripts"))
-        import draft_sidecars as D
+        import sidecar_io as D
         claims = [{"id": "a", "kind": "result", "text": "x", "scope": "y",
                    "evidence": "Table 1"}]
         got = D.unstructure({"claims": json.dumps(claims)}, D.schema())
@@ -465,7 +465,7 @@ class TestFindingsCollapseToTheRuleTheyBroke(unittest.TestCase):
 
     def test_one_rule_is_one_row(self):
         sys.path.insert(0, os.path.join(ROOT, "scripts"))
-        from draft_sidecars import rule_of
+        from sidecar_repair import rule_of
         for group in self.SAME:
             got = {rule_of(f) for f in group}
             self.assertEqual(len(got), 1, f"one rule split into {got}")
@@ -795,7 +795,7 @@ class TestARepairRoundCannotAnswerWithAnEmptySidecar(unittest.TestCase):
     """
 
     def test_a_collapsed_reply_is_named_and_refused(self):
-        import draft_sidecars as D
+        import sidecar_repair as D
         full = {"claims": [{"id": str(i)} for i in range(12)],
                 "qa": [{"ask": {"plain": "a?", "jargon": "b?"}} for _ in range(8)]}
         self.assertIsNone(D.shrunk(full, full))
@@ -808,11 +808,12 @@ class TestARepairRoundCannotAnswerWithAnEmptySidecar(unittest.TestCase):
                 self.assertEqual(want, D.shrunk(full, gone))
 
     def test_the_loop_keeps_the_draft_it_was_given(self):
-        import draft_sidecars as D
+        import sidecar_io
+        import sidecar_repair as D
         tmp = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, tmp, True)
-        old, D.DRAFTS = D.DRAFTS, tmp
-        self.addCleanup(lambda: setattr(D, "DRAFTS", old))
+        old, sidecar_io.DRAFTS = sidecar_io.DRAFTS, tmp
+        self.addCleanup(lambda: setattr(sidecar_io, "DRAFTS", old))
         sidecar = copy.deepcopy(TestATargetedRepairTouchesOnlyWhatBroke.SIDECAR)
         path = D.write_draft("a-paper", sidecar, "a fake model")
         was = open(path, encoding="utf-8").read()
@@ -908,12 +909,13 @@ class TestATargetedRepairTouchesOnlyWhatBroke(unittest.TestCase):
              "and absent below 125M parameters.")
 
     def setUp(self):
-        import draft_sidecars as D
+        import sidecar_io
+        import sidecar_repair as D
         self.D = D
         self.tmp = tempfile.mkdtemp()
-        self._drafts = D.DRAFTS
-        D.DRAFTS = self.tmp
-        self.addCleanup(lambda: setattr(D, "DRAFTS", self._drafts))
+        self._drafts = sidecar_io.DRAFTS
+        sidecar_io.DRAFTS = self.tmp
+        self.addCleanup(lambda: setattr(sidecar_io, "DRAFTS", self._drafts))
         self.addCleanup(shutil.rmtree, self.tmp, True)
         self.path = D.write_draft("a-paper", copy.deepcopy(self.SIDECAR), "a fake model")
 
@@ -2305,7 +2307,8 @@ class TestReviewPageShowsEachThingOnce(unittest.TestCase):
         if not os.path.exists(page):
             self.skipTest("build/sidecar_review.html not built")
         sys.path.insert(0, os.path.join(ROOT, "scripts"))
-        from draft_sidecars import DRAFTS, checked
+        from sidecar_io import draft_path
+        from sidecar_review import checked
         with open(page, encoding="utf-8") as fh:
             html = fh.read()
         built = os.path.getmtime(page)
@@ -2319,7 +2322,7 @@ class TestReviewPageShowsEachThingOnce(unittest.TestCase):
             # was built. Comparing a fresh draft against a stale page reports the second as
             # the first -- which it did, twice, during a re-drafting pass. Rebuild with
             # `--review` to bring a skipped paper back under the check.
-            draft = os.path.join(DRAFTS, f"{slug}.md")
+            draft = draft_path(slug)
             if os.path.exists(draft) and os.path.getmtime(draft) > built:
                 continue
             shown = set(re.findall(r"<div class=id>\[[a-z]+\] ([^ <·]+)", sec))
@@ -2964,12 +2967,13 @@ class TestARequeuedPaperIsRepairedNotRewritten(unittest.TestCase):
 
     def test_the_standing_text_and_its_findings_are_handed_over(self):
         import draft_sidecars
+        import sidecar_io
         with tempfile.TemporaryDirectory() as d:
             os.makedirs(os.path.join(d, "drafts"))
             with open(os.path.join(d, "p.md"), "w") as f:
                 f.write("---\none_liner: x\nclaims: []\n---\n")
-            with mock.patch.object(draft_sidecars, "SIDECARS", d), \
-                 mock.patch.object(draft_sidecars, "DRAFTS",
+            with mock.patch.object(sidecar_io, "SIDECARS", d), \
+                 mock.patch.object(sidecar_io, "DRAFTS",
                                    os.path.join(d, "drafts")), \
                  mock.patch.object(draft_sidecars, "validate_draft",
                                    return_value=(["p.md: broken"], ["p.md: too long"])):
@@ -2979,9 +2983,10 @@ class TestARequeuedPaperIsRepairedNotRewritten(unittest.TestCase):
 
     def test_a_paper_with_nothing_on_disk_is_drafted_from_scratch(self):
         import draft_sidecars
+        import sidecar_io
         with tempfile.TemporaryDirectory() as d:
-            with mock.patch.object(draft_sidecars, "SIDECARS", d), \
-                 mock.patch.object(draft_sidecars, "DRAFTS", d):
+            with mock.patch.object(sidecar_io, "SIDECARS", d), \
+                 mock.patch.object(sidecar_io, "DRAFTS", d):
                 self.assertEqual((None, []), draft_sidecars.standing("absent"))
 
 
@@ -3136,7 +3141,7 @@ class TestAQuoteLinksIntoThePaper(unittest.TestCase):
     HTML = {"html": "https://arxiv.org/html/2402.14992v2"}
 
     def test_a_fragment_is_built_for_an_html_paper(self):
-        from draft_sidecars import at_sentence
+        from sidecar_review import at_sentence
         url = at_sentence(self.HTML, "ing examples per scenario are enough to estima")
         self.assertTrue(url.startswith(self.HTML["html"] + "#:~:text="), url)
         # First and last tokens go: a window cut mid-word never matches as a substring.
@@ -3144,22 +3149,24 @@ class TestAQuoteLinksIntoThePaper(unittest.TestCase):
         self.assertIn("scenario", urllib.parse.unquote(url.split("text=")[1]))
 
     def test_a_paper_with_no_html_gets_no_link(self):
-        from draft_sidecars import at_sentence
+        from sidecar_review import at_sentence
         self.assertEqual("", at_sentence({"openreview": "https://openreview.net/f"}, "x y z"))
         self.assertEqual("", at_sentence({"arxiv_pdf": "https://arxiv.org/pdf/1.pdf"}, "x y z"))
         self.assertEqual("", at_sentence(self.HTML, "   "))
 
     def test_only_the_review_page_links_quotes(self):
-        with open(os.path.join(ROOT, "scripts", "draft_sidecars.py"), encoding="utf-8") as fh:
-            tree = ast.parse(fh.read())
         # Module-level functions only, so a call inside a nested helper is attributed to
-        # the function that owns it. The property being protected is which *surface* links
-        # -- `review_page` builds a helper per claim block, and walking every def counted
-        # that helper as a second caller and failed on a refactor that changed no surface.
-        callers = {fn.name for fn in tree.body
-                   if isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef))
-                   for n in ast.walk(fn)
-                   if isinstance(n, ast.Call) and getattr(n.func, "id", "") == "at_sentence"}
+        # the function that owns it: `review_page` builds a helper per claim block, and
+        # walking every def counts that helper as a second caller.
+        callers = set()
+        for path in glob.glob(os.path.join(ROOT, "scripts", "*.py")):
+            with open(path, encoding="utf-8") as fh:
+                tree = ast.parse(fh.read())
+            callers |= {fn.name for fn in tree.body
+                        if isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef))
+                        for n in ast.walk(fn)
+                        if isinstance(n, ast.Call)
+                        and getattr(n.func, "id", "") == "at_sentence"}
         self.assertEqual({"review_page"}, callers)
 
 
@@ -3605,7 +3612,7 @@ class TestAQuestionGroupIsAFormNotAList(unittest.TestCase):
 
     def test_the_reroute_prompt_keeps_no_copy_of_the_question_rules(self):
         """`--reroute` reads the same block, so the two can never disagree."""
-        import draft_sidecars as D
+        import sidecar_repair as D
         self.assertIn("{rules}", D.ROUTES)
         self.assertNotIn("ending in `?`", D.ROUTES.replace("{rules}", ""))
 
@@ -3648,3 +3655,23 @@ class TestAFailedGhReadIsNotAnEmptyOne(unittest.TestCase):
             if re.search(r'subprocess\.\w+\(\s*\[\s*"gh"', open(path).read()):
                 offenders.append(os.path.basename(path))
         self.assertEqual(offenders, [], "re-implements common.gh")
+
+
+class TestASidecarPathHasOneOwner(unittest.TestCase):
+    """`sidecar_io` builds every sidecar path, so repointing one directory moves all four.
+
+    The four modules each hold their own `DRAFTS`, so a second module joining the slug
+    itself reads its own copy: repointing `sidecar_io.DRAFTS` would then leave that
+    module writing into `data/sidecars/drafts/` while everything else used the temp dir.
+    """
+
+    def test_only_sidecar_io_joins_a_slug_onto_a_sidecar_directory(self):
+        joiner = re.compile(r"os\.path\.join\(\s*(DRAFTS|SIDECARS)\b")
+        for path in sorted(glob.glob(os.path.join(ROOT, "scripts", "*.py"))):
+            if os.path.basename(path) == "sidecar_io.py":
+                continue
+            with open(path, encoding="utf-8") as fh:
+                hits = joiner.findall(fh.read())
+            self.assertEqual([], hits,
+                             f"{os.path.basename(path)} builds its own sidecar path -- "
+                             f"use sidecar_io.draft_path/live_path/draft_paths/live_paths")

@@ -1543,7 +1543,8 @@ def step_worklist(cfg, args) -> None:
     # -- re-run the drafter -- and giving it a heading of its own would report the same
     # seventeen papers twice under two different counts.
     sys.path.insert(0, os.path.join(ROOT, "scripts"))
-    from draft_sidecars import held, spec_sha, write_review_page
+    from sidecar_io import held, spec_sha
+    from sidecar_review import write_review_page
     keep = held(spec_sha())
     stale_drafts = [s for s in drafted if s not in keep]
     drafted = [s for s in drafted if s in keep]
@@ -1750,9 +1751,9 @@ def closing(args) -> None:
                      f"ranked by citations")
     # Only the drafts a person could actually accept. Counting the stale ones here is
     # how this line came to promise 17 evenings of work that would each have ended in a
-    # refused `--accept`. See draft_sidecars.held.
+    # refused `--accept`. See sidecar_io.held.
     sys.path.insert(0, os.path.join(ROOT, "scripts"))
-    from draft_sidecars import held, spec_sha
+    from sidecar_io import held, spec_sha
     drafts = [s for s in held(spec_sha()) if s]
     if drafts:
         lines.append(f"  data/sidecars/drafts/    {len(drafts)} sidecar draft"

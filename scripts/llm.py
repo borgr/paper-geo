@@ -131,6 +131,10 @@ def first_json(text: str):
 _UNDECODABLE = ("allOf", "anyOf", "oneOf", "not", "if", "then", "else")
 
 
+# Appended to the user message when the endpoint will not decode against the schema.
+JSON_ONLY = "\n\nReturn one JSON object matching the schema. No prose, no fence."
+
+
 def decodable(node):
     """The schema with conditional keywords removed, for guided decoding only."""
     if isinstance(node, dict):
