@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Propose GitHub topics + one-line descriptions for repos, using a model.
 
-Replaces the keyword matcher, which mislabelled roughly a third of repos
-(grammatical-error-correction tagged `model-merging`, a sentence-similarity
-metric tagged `pretraining`). A wrong topic is worse than no topic: it misleads
-retrieval and reads as careless.
+A wrong topic is worse than no topic: it misleads retrieval and reads as
+careless, so the model is told to omit rather than guess.
 
 Two modes, set by `llm.mode` in config.yaml:
 

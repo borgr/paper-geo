@@ -50,12 +50,12 @@ up. Deliberately not actionable: proposing the mention yourself is the request
 that gets declined, and writing the article yourself is the spam case. They
 become checks in section 2 if someone else ever writes about them.
 
-- tinyBenchmarks — 292 citations
-- BabyLM Challenge — 236 citations
-- Global-MMLU — 188 citations
+- tinyBenchmarks — 294 citations
+- BabyLM Challenge — 238 citations
+- Global-MMLU — 190 citations
 - PkE — 127 citations
 - peakiness effect — 127 citations
-- DisentQA — 119 citations
+- DisentQA — 120 citations
 - RLCR — 100 citations
 - IBM-EviConv — 78 citations
 - BlendNet — 72 citations

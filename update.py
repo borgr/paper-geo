@@ -270,6 +270,9 @@ PLAN = (
     ("Semantic Scholar —", "afternoon",
      "one paste per paper into the Add Papers form, highest-citation first; every URL "
      "is in the section"),
+    ("listed twice on Scholar", "minute",
+     "tick both rows on your Scholar profile and press *Merge*; both titles and the "
+     "link to the second row are in the section"),
 )
 # Headings that are not work: context, containers, and the parked list. Every heading must
 # appear here or in the plan -- the test asserts it, so a section added later cannot
@@ -771,10 +774,17 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
               f"      - corpus:  {(v.get('corpus') or '')[:64]}" for v in call] + [""]
     if dup:
         L += [f"### {pl(len(dup))} listed twice on Scholar", "",
-              "Two rows for one paper splits its citation count. Nothing in this repo can",
-              "fix it: *select both on your profile → Merge*.", ""]
-        L += [f"- [ ] `{d.get('slug')}` — the second row reads "
-              f"{(d.get('scholar') or '')[:52]!r}" for d in dup] + [""]
+              "Two rows for one paper splits its citation count, and nothing here can fix",
+              "it: tick both rows and press *Merge*. Both titles are below, because on the",
+              "profile they sort apart and neither reads as the other's duplicate.", "",
+              "Open <https://scholar.google.com/citations?user="
+              f"{sc.get('scholar_profile')}&view_op=list_works&sortby=title>.", ""]
+        for d in dup:
+            L += [f"- [ ] `{d.get('slug')}`",
+                  f"      - one row: {(d.get('corpus') or '')[:64]}",
+                  f"      - the other: {(d.get('scholar') or '')[:64]}"
+                  + (f" — <{d['scholar_url']}>" if d.get("scholar_url") else "")]
+        L += [""]
     return L
 
 

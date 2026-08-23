@@ -47,7 +47,7 @@ papers:
     \  = {Fri, 01 Mar 2024 00:00:00 +0100},\n  biburl       = {https://dblp.org/rec/conf/nips/YadavTCRB23.bib},\n\
     \  bibsource    = {dblp computer science bibliography, https://dblp.org}\n}"
   s2_author_record: '41019330'
-  citations: 893
+  citations: 897
   acl: null
   s2_corpus_id: 259064039
   arxiv_journal_ref: null
@@ -59,7 +59,7 @@ papers:
   hf_claimed_authors: 3
   hf_claimed_by_me: true
   hf_github_repo: https://github.com/prateeky2806/ties-merging
-  hf_github_stars: 219
+  hf_github_stars: 220
   hf_n_models: 1000
   hf_n_datasets: 0
   links:
@@ -114,7 +114,7 @@ papers:
     \  timestamp    = {Mon, 02 Sep 2024 16:45:29 +0200},\n  biburl       = {https://dblp.org/rec/conf/icml/PoloWCSXY24.bib},\n\
     \  bibsource    = {dblp computer science bibliography, https://dblp.org}\n}"
   s2_author_record: '41019330'
-  citations: 292
+  citations: 294
   acl: null
   s2_corpus_id: 267897919
   arxiv_journal_ref: null
@@ -126,7 +126,7 @@ papers:
   hf_claimed_authors: 5
   hf_claimed_by_me: true
   hf_github_repo: https://github.com/felipemaiapolo/tinyBenchmarks
-  hf_github_stars: 183
+  hf_github_stars: 185
   hf_n_models: 1
   hf_n_datasets: 8
   links:
@@ -257,7 +257,7 @@ papers:
     \ for Computational Linguistics\",\n    url = \"https://aclanthology.org/2023.conll-babylm.1\",\n\
     \    doi = \"10.18653/v1/2023.conll-babylm.1\",\n    pages = \"1--34\",\n}"
   s2_author_record: '41019330'
-  citations: 236
+  citations: 238
   acl: null
   s2_corpus_id: 266182457
   arxiv_journal_ref: 2023. In Proceedings of the BabyLM Challenge at the 27th Conference on Computational
@@ -367,7 +367,7 @@ papers:
     \ sensitive and culturally agnostic to enable a more comprehensive and equitable benchmark for evaluating\
     \ language models across diverse linguistic and cultural contexts.\"\n}"
   s2_author_record: '41019330'
-  citations: 188
+  citations: 190
   acl: null
   s2_corpus_id: 274464561
   arxiv_journal_ref: null
@@ -757,7 +757,7 @@ papers:
     \  biburl       = {https://dblp.org/rec/conf/acl/NeemanAHCSA23.bib},\n  bibsource    = {dblp computer\
     \ science bibliography, https://dblp.org}\n}"
   s2_author_record: '41019330'
-  citations: 119
+  citations: 120
   acl: 2023.acl-long.559
   s2_corpus_id: 253447228
   arxiv_journal_ref: null
@@ -817,7 +817,7 @@ papers:
     several vision and language benchmarks, including our new setting. We release our code at: https://github.com/gstoica27/KnOTS.'
   only_in_s2: true
   s2_author_record: '41019330'
-  citations: 116
+  citations: 117
   acl: null
   s2_corpus_id: 273638541
   arxiv_journal_ref: null
@@ -992,7 +992,7 @@ papers:
   hf_claimed_authors: 2
   hf_claimed_by_me: true
   hf_github_repo: https://github.com/sashayd/mat
-  hf_github_stars: 13
+  hf_github_stars: 14
   hf_n_models: 1
   hf_n_datasets: 0
   links:
@@ -1895,7 +1895,7 @@ papers:
     \ modeling, but community-driven research can yield actionable insights about effective strategies\
     \ for small-scale language modeling.\"\n}"
   s2_author_record: '41019330'
-  citations: 65
+  citations: 66
   acl: null
   s2_corpus_id: 274581556
   arxiv_journal_ref: null
@@ -3404,7 +3404,7 @@ papers:
   hf_claimed_authors: 9
   hf_claimed_by_me: true
   hf_github_repo: https://github.com/ibm/unitxt
-  hf_github_stars: 218
+  hf_github_stars: 217
   hf_n_models: 0
   hf_n_datasets: 2
   links:
@@ -3671,7 +3671,7 @@ papers:
   arxiv_html: true
   hf_indexed: true
   hf_upvotes: 0
-  hf_claimed_authors: 2
+  hf_claimed_authors: 3
   hf_claimed_by_me: true
   hf_github_repo: null
   hf_github_stars: null
@@ -4212,8 +4212,8 @@ papers:
   arxiv_html: true
   hf_indexed: true
   hf_upvotes: 26
-  hf_claimed_authors: 3
-  hf_claimed_by_me: false
+  hf_claimed_authors: 4
+  hf_claimed_by_me: true
   hf_github_repo: https://github.com/nimrodshabtay/livexiv
   hf_github_stars: 14
   hf_n_models: 0
@@ -5833,7 +5833,7 @@ papers:
   hf_claimed_authors: 4
   hf_claimed_by_me: true
   hf_github_repo: https://github.com/Exgentic/exgentic
-  hf_github_stars: 72
+  hf_github_stars: 73
   hf_n_models: 10
   hf_n_datasets: 3
   links:
@@ -5916,6 +5916,73 @@ papers:
     project: https://llm-efficiency-challenge.github.io/
   title_display: NeurIPS 2023 LLM Efficiency Fine-tuning Competition
   venue_display: arXiv
+  has_sidecar: true
+  owner: null
+  owner_source: unclaimed
+- key: DBLP:journals/corr/abs-2404-18923
+  slug: holmes-a-benchmark-to-assess-the-linguistic-competence-of-la
+  title: 'Holmes: {A} Benchmark to Assess the Linguistic Competence of Language Models'
+  authors:
+  - Andreas Waldis
+  - Yotam Perlitz
+  - Leshem Choshen
+  - Yufang Hou
+  - Iryna Gurevych
+  authors_truncated: null
+  year: 2024
+  venue: Trans. Assoc. Comput. Linguistics
+  type: article
+  doi: 10.1162/TACL_A_00718
+  arxiv: '2404.18923'
+  url: https://doi.org/10.1162/tacl_a_00718
+  abstract: We introduce Holmes, a new benchmark designed to assess language models (LMs) linguistic competence
+    - their unconscious understanding of linguistic phenomena. Specifically, we use classifier-based probing
+    to examine LMs'internal representations regarding distinct linguistic phenomena (e.g., part-of-speech
+    tagging). As a result, we meet recent calls to disentangle LMs'linguistic competence from other cognitive
+    abilities, such as following instructions in prompting-based evaluations. Composing Holmes, we review
+    over 270 probing studies and include more than 200 datasets to assess syntax, morphology, semantics,
+    reasoning, and discourse phenomena. Analyzing over 50 LMs reveals that, aligned with known trends,
+    their linguistic competence correlates with model size. However, surprisingly, model architecture
+    and instruction tuning also significantly influence performance, particularly in morphology and syntax.
+    Finally, we propose FlashHolmes, a streamlined version that reduces the computation load while maintaining
+    high-ranking precision.
+  bibtex: "@article{DBLP:journals/corr/abs-2404-18923,author       = {Andreas Waldis and\n           \
+    \       Yotam Perlitz and\n                  Leshem Choshen and\n                  Yufang Hou and\n\
+    \                  Iryna Gurevych},\n  title        = {Holmes: {A} Benchmark to Assess the Linguistic\
+    \ Competence of Language Models},\n  journal      = {Trans. Assoc. Comput. Linguistics},\n  volume\
+    \       = {12},\n  year         = {2024},\n  url          = {https://doi.org/10.1162/tacl\\_a\\_00718},\n\
+    \  doi          = {10.1162/TACL\\_A\\_00718},\n  eprinttype    = {arXiv},\n  eprint       = {2404.18923},\n\
+    \  timestamp    = {Tue, 14 Oct 2025 01:00:00 +0200},\n  biburl       = {https://dblp.org/rec/journals/tacl/WaldisWPCCHG24.bib},\n\
+    \  bibsource    = {dblp computer science bibliography, https://dblp.org},\n  pages        = {1616--1647}\n\
+    }"
+  s2_author_record: '2283849613'
+  citations: 8
+  acl: null
+  s2_corpus_id: 274625741
+  arxiv_journal_ref: null
+  arxiv_doi: null
+  arxiv_comment: null
+  arxiv_html: true
+  hf_indexed: true
+  hf_upvotes: 0
+  hf_claimed_authors: 3
+  hf_claimed_by_me: true
+  hf_github_repo: null
+  hf_github_stars: null
+  hf_n_models: 0
+  hf_n_datasets: 0
+  links:
+    arxiv: https://arxiv.org/abs/2404.18923
+    arxiv_pdf: https://arxiv.org/pdf/2404.18923
+    html: https://arxiv.org/html/2404.18923
+    html_source: arxiv
+    huggingface: https://huggingface.co/papers/2404.18923
+    alphaxiv: https://www.alphaxiv.org/abs/2404.18923
+    doi: https://doi.org/10.1162/TACL\_A\_00718
+    semantic_scholar: https://www.semanticscholar.org/paper/274625741
+    publisher: https://doi.org/10.1162/tacl\_a\_00718
+  title_display: 'Holmes: A Benchmark to Assess the Linguistic Competence of Language Models'
+  venue_display: TACL
   has_sidecar: true
   owner: null
   owner_source: unclaimed
@@ -6353,7 +6420,7 @@ papers:
   arxiv_html: true
   hf_indexed: true
   hf_upvotes: 0
-  hf_claimed_authors: 10
+  hf_claimed_authors: 11
   hf_claimed_by_me: true
   hf_github_repo: https://github.com/commoncrawl/commonlid-eval
   hf_github_stars: 3
@@ -6435,73 +6502,6 @@ papers:
     project: https://www.textarena.ai/
   title_display: TextArena
   venue_display: arXiv
-  has_sidecar: true
-  owner: null
-  owner_source: unclaimed
-- key: DBLP:journals/corr/abs-2404-18923
-  slug: holmes-a-benchmark-to-assess-the-linguistic-competence-of-la
-  title: 'Holmes: {A} Benchmark to Assess the Linguistic Competence of Language Models'
-  authors:
-  - Andreas Waldis
-  - Yotam Perlitz
-  - Leshem Choshen
-  - Yufang Hou
-  - Iryna Gurevych
-  authors_truncated: null
-  year: 2024
-  venue: Trans. Assoc. Comput. Linguistics
-  type: article
-  doi: 10.1162/TACL_A_00718
-  arxiv: '2404.18923'
-  url: https://doi.org/10.1162/tacl_a_00718
-  abstract: We introduce Holmes, a new benchmark designed to assess language models (LMs) linguistic competence
-    - their unconscious understanding of linguistic phenomena. Specifically, we use classifier-based probing
-    to examine LMs'internal representations regarding distinct linguistic phenomena (e.g., part-of-speech
-    tagging). As a result, we meet recent calls to disentangle LMs'linguistic competence from other cognitive
-    abilities, such as following instructions in prompting-based evaluations. Composing Holmes, we review
-    over 270 probing studies and include more than 200 datasets to assess syntax, morphology, semantics,
-    reasoning, and discourse phenomena. Analyzing over 50 LMs reveals that, aligned with known trends,
-    their linguistic competence correlates with model size. However, surprisingly, model architecture
-    and instruction tuning also significantly influence performance, particularly in morphology and syntax.
-    Finally, we propose FlashHolmes, a streamlined version that reduces the computation load while maintaining
-    high-ranking precision.
-  bibtex: "@article{DBLP:journals/corr/abs-2404-18923,author       = {Andreas Waldis and\n           \
-    \       Yotam Perlitz and\n                  Leshem Choshen and\n                  Yufang Hou and\n\
-    \                  Iryna Gurevych},\n  title        = {Holmes: {A} Benchmark to Assess the Linguistic\
-    \ Competence of Language Models},\n  journal      = {Trans. Assoc. Comput. Linguistics},\n  volume\
-    \       = {12},\n  year         = {2024},\n  url          = {https://doi.org/10.1162/tacl\\_a\\_00718},\n\
-    \  doi          = {10.1162/TACL\\_A\\_00718},\n  eprinttype    = {arXiv},\n  eprint       = {2404.18923},\n\
-    \  timestamp    = {Tue, 14 Oct 2025 01:00:00 +0200},\n  biburl       = {https://dblp.org/rec/journals/tacl/WaldisWPCCHG24.bib},\n\
-    \  bibsource    = {dblp computer science bibliography, https://dblp.org},\n  pages        = {1616--1647}\n\
-    }"
-  s2_author_record: '2283849613'
-  citations: 7
-  acl: null
-  s2_corpus_id: 274625741
-  arxiv_journal_ref: null
-  arxiv_doi: null
-  arxiv_comment: null
-  arxiv_html: true
-  hf_indexed: true
-  hf_upvotes: 0
-  hf_claimed_authors: 3
-  hf_claimed_by_me: true
-  hf_github_repo: null
-  hf_github_stars: null
-  hf_n_models: 0
-  hf_n_datasets: 0
-  links:
-    arxiv: https://arxiv.org/abs/2404.18923
-    arxiv_pdf: https://arxiv.org/pdf/2404.18923
-    html: https://arxiv.org/html/2404.18923
-    html_source: arxiv
-    huggingface: https://huggingface.co/papers/2404.18923
-    alphaxiv: https://www.alphaxiv.org/abs/2404.18923
-    doi: https://doi.org/10.1162/TACL\_A\_00718
-    semantic_scholar: https://www.semanticscholar.org/paper/274625741
-    publisher: https://doi.org/10.1162/tacl\_a\_00718
-  title_display: 'Holmes: A Benchmark to Assess the Linguistic Competence of Language Models'
-  venue_display: TACL
   has_sidecar: true
   owner: null
   owner_source: unclaimed
@@ -6886,8 +6886,8 @@ papers:
   arxiv_html: true
   hf_indexed: true
   hf_upvotes: 0
-  hf_claimed_authors: 0
-  hf_claimed_by_me: false
+  hf_claimed_authors: 1
+  hf_claimed_by_me: true
   hf_github_repo: null
   hf_github_stars: null
   hf_n_models: 0
@@ -8258,7 +8258,7 @@ papers:
   arxiv_html: true
   hf_indexed: true
   hf_upvotes: 4
-  hf_claimed_authors: 6
+  hf_claimed_authors: 7
   hf_claimed_by_me: true
   hf_github_repo: null
   hf_github_stars: null

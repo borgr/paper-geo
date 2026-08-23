@@ -274,7 +274,7 @@ the sidecar:
 
 You own this surface completely and GitHub is a top-5 AI-cited domain, so the
 ceiling is higher and the work is cheaper than the papers track. Almost none of it is
-about papers, though: **only 1 of 31 repos maps to a paper.** Paper code lives in
+about papers, though: **only 1 of 33 repos maps to a paper.** Paper code lives in
 collaborators' and organisations' accounts (`prateeky2806/ties-merging`,
 `ibm-research/*`), so planning this track around "the code for the papers"
 mis-targets nearly all of it.

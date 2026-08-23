@@ -105,13 +105,13 @@ and all of them are personal data you would then be maintaining.
 - [Q141029743](https://www.wikidata.org/wiki/Q141029743) — Global PIQA: Evaluating Commonsense Reasoning Across 100+ Languages an
 - [Q141029751](https://www.wikidata.org/wiki/Q141029751) — General Agent Evaluation
 - [Q141029757](https://www.wikidata.org/wiki/Q141029757) — NeurIPS 2023 LLM Efficiency Fine-tuning Competition
+- [Q141029766](https://www.wikidata.org/wiki/Q141029766) — Holmes: A Benchmark to Assess the Linguistic Competence of Language Mo
 - [Q141029760](https://www.wikidata.org/wiki/Q141029760) — Navigating the Modern Evaluation Landscape: Considerations in Benchmar
 - [Q141029761](https://www.wikidata.org/wiki/Q141029761) — Enhancing the Transformer Decoder with Transition-based Syntax
 - [Q141029762](https://www.wikidata.org/wiki/Q141029762) — GrASP: A Library for Extracting and Exploring Human-Interpretable Text
 - [Q141029763](https://www.wikidata.org/wiki/Q141029763) — Reinforcement Learning with Large Action Spaces for Neural Machine Tra
 - [Q141029764](https://www.wikidata.org/wiki/Q141029764) — CommonLID: Re-evaluating State-of-the-Art Language Identification Perf
 - [Q141029765](https://www.wikidata.org/wiki/Q141029765) — TextArena
-- [Q141029766](https://www.wikidata.org/wiki/Q141029766) — Holmes: A Benchmark to Assess the Linguistic Competence of Language Mo
 - [Q141029767](https://www.wikidata.org/wiki/Q141029767) — ComSum: Commit Messages Summarization and Meaning Preservation
 - [Q141029769](https://www.wikidata.org/wiki/Q141029769) — Do LLMs Benefit From Their Own Words?
 - [Q141029770](https://www.wikidata.org/wiki/Q141029770) — ErrorMap and ErrorAtlas: Charting the Failure Landscape of Large Langu

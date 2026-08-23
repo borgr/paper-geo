@@ -479,6 +479,33 @@ url={https://openreview.net/forum?id=ASQ649zdHm}
   bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
 
+@inproceedings{DBLP:conf/naacl/PerlitzBGAESSSC24,author       = {Yotam Perlitz and
+                  Elron Bandel and
+                  Ariel Gera and
+                  Ofir Arviv and
+                  Liat Ein{-}Dor and
+                  Eyal Shnarch and
+                  Noam Slonim and
+                  Michal Shmueli{-}Scheuer and
+                  Leshem Choshen},
+  editor       = {Kevin Duh and
+                  Helena G{\'{o}}mez{-}Adorno and
+                  Steven Bethard},
+  title        = {Efficient Benchmarking (of Language Models)},
+  booktitle    = {Proceedings of the 2024 Conference of the North American Chapter of
+                  the Association for Computational Linguistics: Human Language Technologies
+                  (Volume 1: Long Papers), {NAACL} 2024, Mexico City, Mexico, June 16-21,
+                  2024},
+  pages        = {2519--2536},
+  publisher    = {Association for Computational Linguistics},
+  year         = {2024},
+  url          = {https://doi.org/10.18653/v1/2024.naacl-long.139},
+  doi          = {10.18653/V1/2024.NAACL-LONG.139},
+  timestamp    = {Thu, 29 Aug 2024 17:13:57 +0200},
+  biburl       = {https://dblp.org/rec/conf/naacl/PerlitzBGAESSSC24.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
 @article{DBLP:journals/corr/abs-2405-09605,author       = {Anna A. Ivanova and
                   Aalok Sathe and
                   Benjamin Lipkin and
@@ -525,31 +552,37 @@ url={https://openreview.net/forum?id=u0azVc9Y0y},
 note={Survey Certification}
 }
 
-@inproceedings{DBLP:conf/naacl/PerlitzBGAESSSC24,author       = {Yotam Perlitz and
-                  Elron Bandel and
-                  Ariel Gera and
-                  Ofir Arviv and
-                  Liat Ein{-}Dor and
-                  Eyal Shnarch and
-                  Noam Slonim and
-                  Michal Shmueli{-}Scheuer and
-                  Leshem Choshen},
-  editor       = {Kevin Duh and
-                  Helena G{\'{o}}mez{-}Adorno and
-                  Steven Bethard},
-  title        = {Efficient Benchmarking (of Language Models)},
-  booktitle    = {Proceedings of the 2024 Conference of the North American Chapter of
-                  the Association for Computational Linguistics: Human Language Technologies
-                  (Volume 1: Long Papers), {NAACL} 2024, Mexico City, Mexico, June 16-21,
-                  2024},
-  pages        = {2519--2536},
-  publisher    = {Association for Computational Linguistics},
-  year         = {2024},
-  url          = {https://doi.org/10.18653/v1/2024.naacl-long.139},
-  doi          = {10.18653/V1/2024.NAACL-LONG.139},
-  timestamp    = {Thu, 29 Aug 2024 17:13:57 +0200},
-  biburl       = {https://dblp.org/rec/conf/naacl/PerlitzBGAESSSC24.bib},
-  bibsource    = {dblp computer science bibliography, https://dblp.org}
+@inproceedings{hu-etal-2024-findings,
+  doi          = {10.48550/arXiv.2412.05149},
+    title = "Findings of the Second {B}aby{LM} Challenge: Sample-Efficient Pretraining on Developmentally Plausible Corpora",
+    author = "Hu, Michael Y.  and
+      Mueller, Aaron  and
+      Ross, Candace  and
+      Williams, Adina  and
+      Linzen, Tal  and
+      Zhuang, Chengxu  and
+      Cotterell, Ryan  and
+      Choshen, Leshem  and
+      Warstadt, Alex  and
+      Wilcox, Ethan Gotlieb",
+    editor = "Hu, Michael Y.  and
+      Mueller, Aaron  and
+      Ross, Candace  and
+      Williams, Adina  and
+      Linzen, Tal  and
+      Zhuang, Chengxu  and
+      Choshen, Leshem  and
+      Cotterell, Ryan  and
+      Warstadt, Alex  and
+      Wilcox, Ethan Gotlieb",
+    booktitle = "The 2nd BabyLM Challenge at the 28th Conference on Computational Natural Language Learning",
+    month = nov,
+    year = "2024",
+    address = "Miami, FL, USA",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2024.conll-babylm.1/",
+    pages = "1--21",
+    abstract = "The BabyLM Challenge is a community effort to close the data-efficiency gap between human and computational language learners. Participants compete to optimize language model training on a fixed language data budget of 100 million words or less. This year, we released improved text corpora, as well as a vision-and-language corpus to facilitate research into cognitively plausible vision language models. Submissions were compared on evaluation tasks targeting grammatical ability, (visual) question answering, pragmatic abilities, and grounding, among other abilities. Participants could submit to a 10M-word text-only track, a 100M-word text-only track, and/or a 100M-word and image multimodal track. From 31 submissions employing diverse methods, a hybrid causal-masked language model architecture outperformed other approaches. No submissions outperformed the baselines in the multimodal track. In follow-up analyses, we found a strong relationship between training FLOPs and average performance across tasks, and that the best-performing submissions proposed changes to the training data, training objective, and model architecture. This year{'}s BabyLM Challenge shows that there is still significant room for innovation in this setting, in particular for image-text modeling, but community-driven research can yield actionable insights about effective strategies for small-scale language modeling."
 }
 
 @inproceedings{DBLP:conf/acl/Don-YehiyaVRSC23,author       = {Shachar Don{-}Yehiya and
@@ -591,39 +624,6 @@ note={Survey Certification}
   timestamp    = {Tue, 15 Dec 2020 00:00:00 +0100},
   biburl       = {https://dblp.org/rec/conf/icml/HacohenCW20.bib},
   bibsource    = {dblp computer science bibliography, https://dblp.org}
-}
-
-@inproceedings{hu-etal-2024-findings,
-  doi          = {10.48550/arXiv.2412.05149},
-    title = "Findings of the Second {B}aby{LM} Challenge: Sample-Efficient Pretraining on Developmentally Plausible Corpora",
-    author = "Hu, Michael Y.  and
-      Mueller, Aaron  and
-      Ross, Candace  and
-      Williams, Adina  and
-      Linzen, Tal  and
-      Zhuang, Chengxu  and
-      Cotterell, Ryan  and
-      Choshen, Leshem  and
-      Warstadt, Alex  and
-      Wilcox, Ethan Gotlieb",
-    editor = "Hu, Michael Y.  and
-      Mueller, Aaron  and
-      Ross, Candace  and
-      Williams, Adina  and
-      Linzen, Tal  and
-      Zhuang, Chengxu  and
-      Choshen, Leshem  and
-      Cotterell, Ryan  and
-      Warstadt, Alex  and
-      Wilcox, Ethan Gotlieb",
-    booktitle = "The 2nd BabyLM Challenge at the 28th Conference on Computational Natural Language Learning",
-    month = nov,
-    year = "2024",
-    address = "Miami, FL, USA",
-    publisher = "Association for Computational Linguistics",
-    url = "https://aclanthology.org/2024.conll-babylm.1/",
-    pages = "1--21",
-    abstract = "The BabyLM Challenge is a community effort to close the data-efficiency gap between human and computational language learners. Participants compete to optimize language model training on a fixed language data budget of 100 million words or less. This year, we released improved text corpora, as well as a vision-and-language corpus to facilitate research into cognitively plausible vision language models. Submissions were compared on evaluation tasks targeting grammatical ability, (visual) question answering, pragmatic abilities, and grounding, among other abilities. Participants could submit to a 10M-word text-only track, a 100M-word text-only track, and/or a 100M-word and image multimodal track. From 31 submissions employing diverse methods, a hybrid causal-masked language model architecture outperformed other approaches. No submissions outperformed the baselines in the multimodal track. In follow-up analyses, we found a strong relationship between training FLOPs and average performance across tasks, and that the best-performing submissions proposed changes to the training data, training objective, and model architecture. This year{'}s BabyLM Challenge shows that there is still significant room for innovation in this setting, in particular for image-text modeling, but community-driven research can yield actionable insights about effective strategies for small-scale language modeling."
 }
 
 @inproceedings{schwartz2024numerologic,
@@ -850,6 +850,16 @@ note={Survey Certification}
   bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
 
+@inproceedings{
+gabrielsson2025compress,
+  doi          = {10.48550/arXiv.2407.00066},
+title={Compress then Serve: Serving Thousands of Lo{RA} Adapters with Little Overhead},
+author={Rickard Br{\"u}el Gabrielsson and Jiacheng Zhu and Onkar Bhardwaj and Leshem Choshen and Kristjan Greenewald and Mikhail Yurochkin and Justin Solomon},
+booktitle={Forty-second International Conference on Machine Learning},
+year={2025},
+url={https://openreview.net/forum?id=3XMA8RDJu2}
+}
+
 @inproceedings{DBLP:conf/acl/AkyurekACWA24,
   doi          = {10.48550/arXiv.2401.08574},author       = {Afra Feyza Aky{\"{u}}rek and
                   Ekin Aky{\"{u}}rek and
@@ -870,16 +880,6 @@ note={Survey Certification}
   timestamp    = {Tue, 27 Aug 2024 17:38:11 +0200},
   biburl       = {https://dblp.org/rec/conf/acl/AkyurekACWA24.bib},
   bibsource    = {dblp computer science bibliography, https://dblp.org}
-}
-
-@inproceedings{
-gabrielsson2025compress,
-  doi          = {10.48550/arXiv.2407.00066},
-title={Compress then Serve: Serving Thousands of Lo{RA} Adapters with Little Overhead},
-author={Rickard Br{\"u}el Gabrielsson and Jiacheng Zhu and Onkar Bhardwaj and Leshem Choshen and Kristjan Greenewald and Mikhail Yurochkin and Justin Solomon},
-booktitle={Forty-second International Conference on Machine Learning},
-year={2025},
-url={https://openreview.net/forum?id=3XMA8RDJu2}
 }
 
 @inproceedings{DBLP:conf/acl/ShnarchGHDCAS22,author       = {Eyal Shnarch and
@@ -935,6 +935,44 @@ url={https://openreview.net/forum?id=9GN5Jsa3lv}
   timestamp    = {Fri, 06 Aug 2021 01:00:00 +0200},
   biburl       = {https://dblp.org/rec/conf/acl/ChoshenEHSA19.bib},
   bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+@INPROCEEDINGS{zipnn,
+  author={Hershcovitch, Moshik and Wood, Andrew and Choshen, Leshem and Girmonsky, Guy and Leibovitz, Roy and Ozeri, Or and Ennmouri, Ilias and Malka, Michal and Chin, Peter and Sundararaman, Swaminathan and Harnik, Danny},
+  booktitle={2025 IEEE 18th International Conference on Cloud Computing (CLOUD)}, 
+  title={ZipNN: Lossless Compression for AI Models}, 
+  year={2025},
+  volume={},
+  number={},
+  pages={186-198},
+  keywords={Training;Cloud computing;Computational modeling;Redundancy;Neural networks;Telecommunication traffic;Logic gates;Artificial intelligence;Model compression;Faces;compression;lossless compression;models;AI;language models},
+  doi={10.1109/CLOUD67622.2025.00028}}
+
+@inproceedings{bandel2024unitxt,title = "Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluation for Generative {AI}",
+    author = "Bandel, Elron  and
+      Perlitz, Yotam  and
+      Venezian, Elad  and
+      Friedman, Roni  and
+      Arviv, Ofir  and
+      Orbach, Matan  and
+      Don-Yehiya, Shachar  and
+      Sheinwald, Dafna  and
+      Gera, Ariel  and
+      Choshen, Leshem  and
+      Shmueli-Scheuer, Michal  and
+      Katz, Yoav",
+    editor = "Chang, Kai-Wei  and
+      Lee, Annie  and
+      Rajani, Nazneen",
+    booktitle = "Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 3: System Demonstrations)",
+    month = jun,
+    year = "2024",
+    address = "Mexico City, Mexico",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2024.naacl-demo.21",
+    doi = "10.18653/v1/2024.naacl-demo.21",
+    pages = "207--215",
+    abstract = "In the dynamic landscape of generative NLP, traditional text processing pipelines limit research flexibility and reproducibility, as they are tailored to specific dataset, task, and model combinations. The escalating complexity, involving system prompts, model-specific formats, instructions, and more, calls for a shift to a structured, modular, and customizable solution.Addressing this need, we present Unitxt, an innovative library for customizable textual data preparation and evaluation tailored to generative language models. Unitxt natively integrates with common libraries like HuggingFace and LM-eval-harness and deconstructs processing flows into modular components, enabling easy customization and sharing between practitioners. These components encompass model-specific formats, task prompts, and many other comprehensive dataset processing definitions. The Unitxt Catalog centralizes these components, fostering collaboration and exploration in modern textual data workflows. Beyond being a tool, Unitxt is a community-driven platform, empowering users to build, share, and advance their pipelines collaboratively. Join the Unitxt community at https://github.com/IBM/unitxt",
 }
 
 @inproceedings{DBLP:journals/corr/abs-2407-21530,author       = {Oscar Sainz and
@@ -1006,6 +1044,14 @@ url={https://openreview.net/forum?id=9GN5Jsa3lv}
   bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
 
+@article{akhtar2026ai,
+  doi          = {10.48550/arXiv.2602.16763},
+  title={When {AI} Benchmarks Plateau: A Systematic Study of Benchmark Saturation},
+  author={Mubashara Akhtar and Anka Reuel and Prajna Soni and Sanchit Ahuja and Pawan Sasanka Ammanamanchi and Ruchit Rawal and Vilém Zouhar and Srishti Yadav and Chenxi Whitehouse and Dayeon Ki and Jennifer Mickel and Leshem Choshen and Marek Šuppa and Jan Batzner and Jenny Chim and Jeba Sania and Yanan Long and Hossein A. Rahmani and Christina Knight and Yiyang Nan and Jyoutir Raj and Yu Fan and Shubham Singh and Subramanyam Sahoo and Eliya Habba and Usman Gohar and Siddhesh Pawar and Robert Scholz and Arjun Subramonian and Jingwei Ni and Mykel Kochenderfer and Sanmi Koyejo and Mrinmaya Sachan and Stella Biderman and Zeerak Talat and Avijit Ghosh and Irene Solaiman},
+  journal={International Conference on Machine Learning (ICML) 2026},
+  year={2026}
+}
+
 @inproceedings{choshen2024hitchhiker,
   doi          = {10.48550/arXiv.2410.11840},
   title={A Hitchhiker's Guide to Scaling Law Estimation},
@@ -1015,43 +1061,27 @@ year={2025},
 url={https://openreview.net/forum?id=KugSHTH0c8}
 }
 
-@inproceedings{bandel2024unitxt,title = "Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluation for Generative {AI}",
-    author = "Bandel, Elron  and
-      Perlitz, Yotam  and
-      Venezian, Elad  and
-      Friedman, Roni  and
-      Arviv, Ofir  and
-      Orbach, Matan  and
-      Don-Yehiya, Shachar  and
-      Sheinwald, Dafna  and
-      Gera, Ariel  and
-      Choshen, Leshem  and
-      Shmueli-Scheuer, Michal  and
-      Katz, Yoav",
-    editor = "Chang, Kai-Wei  and
-      Lee, Annie  and
-      Rajani, Nazneen",
-    booktitle = "Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 3: System Demonstrations)",
-    month = jun,
-    year = "2024",
-    address = "Mexico City, Mexico",
-    publisher = "Association for Computational Linguistics",
-    url = "https://aclanthology.org/2024.naacl-demo.21",
-    doi = "10.18653/v1/2024.naacl-demo.21",
-    pages = "207--215",
-    abstract = "In the dynamic landscape of generative NLP, traditional text processing pipelines limit research flexibility and reproducibility, as they are tailored to specific dataset, task, and model combinations. The escalating complexity, involving system prompts, model-specific formats, instructions, and more, calls for a shift to a structured, modular, and customizable solution.Addressing this need, we present Unitxt, an innovative library for customizable textual data preparation and evaluation tailored to generative language models. Unitxt natively integrates with common libraries like HuggingFace and LM-eval-harness and deconstructs processing flows into modular components, enabling easy customization and sharing between practitioners. These components encompass model-specific formats, task prompts, and many other comprehensive dataset processing definitions. The Unitxt Catalog centralizes these components, fostering collaboration and exploration in modern textual data workflows. Beyond being a tool, Unitxt is a community-driven platform, empowering users to build, share, and advance their pipelines collaboratively. Join the Unitxt community at https://github.com/IBM/unitxt",
+@article{DBLP:journals/corr/abs-2407-13696,author       = {Yotam Perlitz and
+                  Ariel Gera and
+                  Ofir Arviv and
+                  Asaf Yehudai and
+                  Elron Bandel and
+                  Eyal Shnarch and
+                  Michal Shmueli{-}Scheuer and
+                  Leshem Choshen},
+  title        = {Benchmark Agreement Testing Done Right: {A} Guide for {LLM} Benchmark
+                  Evaluation},
+  journal      = {CoRR},
+  volume       = {abs/2407.13696},
+  year         = {2024},
+  url          = {https://doi.org/10.48550/arXiv.2407.13696},
+  doi          = {10.48550/ARXIV.2407.13696},
+  eprinttype    = {arXiv},
+  eprint       = {2407.13696},
+  timestamp    = {Thu, 22 Aug 2024 01:00:00 +0200},
+  biburl       = {https://dblp.org/rec/journals/corr/abs-2407-13696.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
-
-@INPROCEEDINGS{zipnn,
-  author={Hershcovitch, Moshik and Wood, Andrew and Choshen, Leshem and Girmonsky, Guy and Leibovitz, Roy and Ozeri, Or and Ennmouri, Ilias and Malka, Michal and Chin, Peter and Sundararaman, Swaminathan and Harnik, Danny},
-  booktitle={2025 IEEE 18th International Conference on Cloud Computing (CLOUD)}, 
-  title={ZipNN: Lossless Compression for AI Models}, 
-  year={2025},
-  volume={},
-  number={},
-  pages={186-198},
-  keywords={Training;Cloud computing;Computational modeling;Redundancy;Neural networks;Telecommunication traffic;Logic gates;Artificial intelligence;Model compression;Faces;compression;lossless compression;models;AI;language models},
-  doi={10.1109/CLOUD67622.2025.00028}}
 
 @inproceedings{habba-etal-2025-dove,
     title = "{DOVE}: A Large-Scale Multi-Dimensional Predictions Dataset Towards Meaningful {LLM} Evaluation",
@@ -1091,28 +1121,6 @@ url={https://openreview.net/forum?id=CovLQwu611},
 note={}
 }
 
-@article{DBLP:journals/corr/abs-2407-13696,author       = {Yotam Perlitz and
-                  Ariel Gera and
-                  Ofir Arviv and
-                  Asaf Yehudai and
-                  Elron Bandel and
-                  Eyal Shnarch and
-                  Michal Shmueli{-}Scheuer and
-                  Leshem Choshen},
-  title        = {Benchmark Agreement Testing Done Right: {A} Guide for {LLM} Benchmark
-                  Evaluation},
-  journal      = {CoRR},
-  volume       = {abs/2407.13696},
-  year         = {2024},
-  url          = {https://doi.org/10.48550/arXiv.2407.13696},
-  doi          = {10.48550/ARXIV.2407.13696},
-  eprinttype    = {arXiv},
-  eprint       = {2407.13696},
-  timestamp    = {Thu, 22 Aug 2024 01:00:00 +0200},
-  biburl       = {https://dblp.org/rec/journals/corr/abs-2407-13696.bib},
-  bibsource    = {dblp computer science bibliography, https://dblp.org}
-}
-
 @inproceedings{DBLP:conf/emnlp/ShnarchHGDKCCEZW22,author       = {Eyal Shnarch and
                   Alon Halfon and
                   Ariel Gera and
@@ -1137,14 +1145,6 @@ note={}
   timestamp    = {Mon, 22 Jul 2024 01:00:00 +0200},
   biburl       = {https://dblp.org/rec/conf/emnlp/ShnarchHGDKCCEZW22.bib},
   bibsource    = {dblp computer science bibliography, https://dblp.org}
-}
-
-@article{akhtar2026ai,
-  doi          = {10.48550/arXiv.2602.16763},
-  title={When {AI} Benchmarks Plateau: A Systematic Study of Benchmark Saturation},
-  author={Mubashara Akhtar and Anka Reuel and Prajna Soni and Sanchit Ahuja and Pawan Sasanka Ammanamanchi and Ruchit Rawal and Vilém Zouhar and Srishti Yadav and Chenxi Whitehouse and Dayeon Ki and Jennifer Mickel and Leshem Choshen and Marek Šuppa and Jan Batzner and Jenny Chim and Jeba Sania and Yanan Long and Hossein A. Rahmani and Christina Knight and Yiyang Nan and Jyoutir Raj and Yu Fan and Shubham Singh and Subramanyam Sahoo and Eliya Habba and Usman Gohar and Siddhesh Pawar and Robert Scholz and Arjun Subramonian and Jingwei Ni and Mykel Kochenderfer and Sanmi Koyejo and Mrinmaya Sachan and Stella Biderman and Zeerak Talat and Avijit Ghosh and Irene Solaiman},
-  journal={International Conference on Machine Learning (ICML) 2026},
-  year={2026}
 }
 
 @inproceedings{DBLP:conf/conll/ChoshenA19,author       = {Leshem Choshen and
@@ -1194,6 +1194,48 @@ url={https://openreview.net/forum?id=SulRfnEVK4}
     url = "https://aclanthology.org/2025.findings-naacl.475/",
     pages = "4630--4644",
     ISBN = "979-8-89176-195-7"
+}
+
+@inproceedings{charpentier-etal-2025-findings,
+    title = "Findings of the Third {B}aby{LM} Challenge: Accelerating Language Modeling Research with Cognitively Plausible Data",
+    author = "Charpentier, Lucas  and
+      Choshen, Leshem  and
+      Cotterell, Ryan  and
+      Gul, Mustafa Omer  and
+      Hu, Michael Y.  and
+      Liu, Jing  and
+      Jumelet, Jaap  and
+      Linzen, Tal  and
+      Mueller, Aaron  and
+      Ross, Candance  and
+      Shah, Raj Sanjay  and
+      Warstadt, Alex  and
+      Wilcox, Ethan Gotlieb  and
+      Williams, Adina",
+    editor = "Charpentier, Lucas  and
+      Choshen, Leshem  and
+      Cotterell, Ryan  and
+      Gul, Mustafa Omer  and
+      Hu, Michael Y.  and
+      Liu, Jing  and
+      Jumelet, Jaap  and
+      Linzen, Tal  and
+      Mueller, Aaron  and
+      Ross, Candace  and
+      Shah, Raj Sanjay  and
+      Warstadt, Alex  and
+      Wilcox, Ethan Gotlieb  and
+      Williams, Adina",
+    booktitle = "Proceedings of the First BabyLM Workshop",
+    month = nov,
+    year = "2025",
+    address = "Suzhou, China",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2025.babylm-main.28/",
+    doi = "10.18653/v1/2025.babylm-main.28",
+    pages = "399--420",
+    ISBN = "TODO",
+    abstract = "This report summarizes the findings from the 3rd BabyLM Challenge and the 1st BabyLM Workshop. The BabyLM Challenge is a shared task aimed at closing the data efficiency gap between human and machine language learners. The goal is to improve the performance of language models given a fixed training budget of no more than 100 million words. This year, the challenge was held as part of an expanded BabyLM Workshop that invited paper submissions on topics relevant to the BabyLM effort, including sample-efficient pretraining and cognitive modeling for LMs. For the challenge, we kept the text-only and text{--}image tracks from previous years, but also introduced a new \textit{interaction} track, where student models are allowed to learn from feedback from larger teacher models. Furthermore, we introduce a new set of evaluation tasks to assess the ``human likeness'' of models on a cognitive and linguistic level, limit the total amount of training compute allowed, and measure performance on intermediate checkpoints. We observe that new training objectives and architectures tend to produce the best-performing approaches, and that interaction with teacher models can yield high-quality language models. The strict and interaction tracks saw submissions that outperformed the best-performing methods from previous years. We do not observe a complete correlation between training FLOPs and performance. {\%}, suggesting that some methods can produce real gains beyond allowing us to spend more compute. This year{'}s BabyLM Challenge shows that there is still room to innovate in a data-constrained setting, and that community-driven research can yield actionable insights for language modeling."
 }
 
 @inproceedings{DonYehiya2024TheFO,
@@ -1340,48 +1382,6 @@ booktitle={Nature Machine Intelligence},
   bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
 
-@inproceedings{charpentier-etal-2025-findings,
-    title = "Findings of the Third {B}aby{LM} Challenge: Accelerating Language Modeling Research with Cognitively Plausible Data",
-    author = "Charpentier, Lucas  and
-      Choshen, Leshem  and
-      Cotterell, Ryan  and
-      Gul, Mustafa Omer  and
-      Hu, Michael Y.  and
-      Liu, Jing  and
-      Jumelet, Jaap  and
-      Linzen, Tal  and
-      Mueller, Aaron  and
-      Ross, Candance  and
-      Shah, Raj Sanjay  and
-      Warstadt, Alex  and
-      Wilcox, Ethan Gotlieb  and
-      Williams, Adina",
-    editor = "Charpentier, Lucas  and
-      Choshen, Leshem  and
-      Cotterell, Ryan  and
-      Gul, Mustafa Omer  and
-      Hu, Michael Y.  and
-      Liu, Jing  and
-      Jumelet, Jaap  and
-      Linzen, Tal  and
-      Mueller, Aaron  and
-      Ross, Candace  and
-      Shah, Raj Sanjay  and
-      Warstadt, Alex  and
-      Wilcox, Ethan Gotlieb  and
-      Williams, Adina",
-    booktitle = "Proceedings of the First BabyLM Workshop",
-    month = nov,
-    year = "2025",
-    address = "Suzhou, China",
-    publisher = "Association for Computational Linguistics",
-    url = "https://aclanthology.org/2025.babylm-main.28/",
-    doi = "10.18653/v1/2025.babylm-main.28",
-    pages = "399--420",
-    ISBN = "TODO",
-    abstract = "This report summarizes the findings from the 3rd BabyLM Challenge and the 1st BabyLM Workshop. The BabyLM Challenge is a shared task aimed at closing the data efficiency gap between human and machine language learners. The goal is to improve the performance of language models given a fixed training budget of no more than 100 million words. This year, the challenge was held as part of an expanded BabyLM Workshop that invited paper submissions on topics relevant to the BabyLM effort, including sample-efficient pretraining and cognitive modeling for LMs. For the challenge, we kept the text-only and text{--}image tracks from previous years, but also introduced a new \textit{interaction} track, where student models are allowed to learn from feedback from larger teacher models. Furthermore, we introduce a new set of evaluation tasks to assess the ``human likeness'' of models on a cognitive and linguistic level, limit the total amount of training compute allowed, and measure performance on intermediate checkpoints. We observe that new training objectives and architectures tend to produce the best-performing approaches, and that interaction with teacher models can yield high-quality language models. The strict and interaction tracks saw submissions that outperformed the best-performing methods from previous years. We do not observe a complete correlation between training FLOPs and performance. {\%}, suggesting that some methods can produce real gains beyond allowing us to spend more compute. This year{'}s BabyLM Challenge shows that there is still room to innovate in a data-constrained setting, and that community-driven research can yield actionable insights for language modeling."
-}
-
 @misc{DBLP:journals/corr/abs-2407-10944,
   doi          = {10.48550/arXiv.2407.10944},
       title={Naturally Occurring Feedback is Common, Extractable and Useful}, 
@@ -1512,6 +1512,25 @@ booktitle={Nature Machine Intelligence},
   year={2025}
 }
 
+@article{DBLP:journals/corr/abs-2404-18923,author       = {Andreas Waldis and
+                  Yotam Perlitz and
+                  Leshem Choshen and
+                  Yufang Hou and
+                  Iryna Gurevych},
+  title        = {Holmes: {A} Benchmark to Assess the Linguistic Competence of Language Models},
+  journal      = {Trans. Assoc. Comput. Linguistics},
+  volume       = {12},
+  year         = {2024},
+  url          = {https://doi.org/10.1162/tacl\_a\_00718},
+  doi          = {10.1162/TACL\_A\_00718},
+  eprinttype    = {arXiv},
+  eprint       = {2404.18923},
+  timestamp    = {Tue, 14 Oct 2025 01:00:00 +0200},
+  biburl       = {https://dblp.org/rec/journals/tacl/WaldisWPCCHG24.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org},
+  pages        = {1616--1647}
+}
+
 @inproceedings{choshen2024navigating,
   doi          = {10.63317/2bh2m233ea9r},title={Navigating the Modern Evaluation Landscape: Considerations in Benchmarks and Frameworks for Large Language Models (LLMs)},
   author={Choshen, Leshem and Gera, Ariel and Perlitz, Yotam and Shmueli-Scheuer, Michal and Stanovsky, Gabriel},
@@ -1640,25 +1659,6 @@ booktitle={Nature Machine Intelligence},
   year={2025}
 }
 
-@article{DBLP:journals/corr/abs-2404-18923,author       = {Andreas Waldis and
-                  Yotam Perlitz and
-                  Leshem Choshen and
-                  Yufang Hou and
-                  Iryna Gurevych},
-  title        = {Holmes: {A} Benchmark to Assess the Linguistic Competence of Language Models},
-  journal      = {Trans. Assoc. Comput. Linguistics},
-  volume       = {12},
-  year         = {2024},
-  url          = {https://doi.org/10.1162/tacl\_a\_00718},
-  doi          = {10.1162/TACL\_A\_00718},
-  eprinttype    = {arXiv},
-  eprint       = {2404.18923},
-  timestamp    = {Tue, 14 Oct 2025 01:00:00 +0200},
-  biburl       = {https://dblp.org/rec/journals/tacl/WaldisWPCCHG24.bib},
-  bibsource    = {dblp computer science bibliography, https://dblp.org},
-  pages        = {1616--1647}
-}
-
 @article{DBLP:journals/corr/abs-2108-10763,
   doi          = {10.48550/arXiv.2108.10763},author       = {Leshem Choshen and
                   Idan Amit},
@@ -1693,14 +1693,6 @@ booktitle={Nature Machine Intelligence},
   year={2026}
 }
 
-@inproceedings{fittschen2025pretraining,
-  doi          = {10.18653/v1/2026.findings-eacl.241},
-  title={Pretraining Language Models for Diachronic Linguistic Change Discovery},
-  author={Fittschen, Elisabeth and Li, Sabrina and Lippincott, Tom and Choshen, Leshem and Messner, Craig},
-  booktitle={EACL},
-  year={2026}
-}
-
 @inproceedings{jumelet2025babybabellm,
   doi          = {10.48550/arXiv.2510.10159},
   title={BabyBabelLM: A Multilingual Benchmark of Developmentally Plausible Training Data},
@@ -1710,6 +1702,14 @@ booktitle={Nature Machine Intelligence},
   eprint={2510.10159},
   archivePrefix={arXiv},
   url={https://api.semanticscholar.org/CorpusID:282058670}
+}
+
+@inproceedings{fittschen2025pretraining,
+  doi          = {10.18653/v1/2026.findings-eacl.241},
+  title={Pretraining Language Models for Diachronic Linguistic Change Discovery},
+  author={Fittschen, Elisabeth and Li, Sabrina and Lippincott, Tom and Choshen, Leshem and Messner, Craig},
+  booktitle={EACL},
+  year={2026}
 }
 
 @inproceedings{zhang2024unforgettable,
@@ -2137,10 +2137,10 @@ booktitle={Nature Machine Intelligence},
   abstract     = {We call for the development of agentic systems that thrive in new environments. Agentic systems, comprising foundation models, tools, and an execution strategy, have demonstrated strong capabilities, yet their development is often constrained by narrow benchmarks and their operation is siloed to limited environments. This paper advocates for developing general, adaptive agents that excel across diverse environments, from terminals and web interfaces to biological and embodied settings. We examine current limitations, explain the potential of increased generality, and identify immediate development priorities. Finally, we argue that protocols and evaluation must prioritize adaptiveness to foster a shared ecosystem for general-purpose agentic systems.},
 }
 
-@inproceedings{polo2025a,
-  author       = {Felipe Maia Polo and Leshem Choshen and Yuekai Sun and Kristjan Greenewald},
-  title        = {A Statistical Framework for Game-Based AI Evaluation},
-  year         = {2025},
-  booktitle    = {NeurIPS 2025 LLM Evaluation Workshop},
-  url          = {https://openreview.net/forum?id=1VWfIsRdZA}
+@inproceedings{polo2025statistical,
+  title = {A Statistical Framework for Game-Based AI Evaluation},
+  author = {Felipe Maia Polo and Leshem Choshen and Yuekai Sun and Kristjan Greenewald},
+  booktitle = {NeurIPS 2025 LLM Evaluation Workshop},
+  year = {2025},
+  url = {https://openreview.net/forum?id=1VWfIsRdZA},
 }

@@ -16,19 +16,19 @@ Highest-citation first, so stopping early still helps most.
 | citations | paper | S2 |
 |---|---|---|
 | 46 | NumeroLogic: Number Encoding for Enhanced LLMs' Numerical Reasoning | https://www.semanticscholar.org/paper/268819308 |
-| 26 | Sloth: scaling laws for LLM skills to predict multi-benchmark performa | https://www.semanticscholar.org/paper/274597594 |
+| 27 | Sloth: scaling laws for LLM skills to predict multi-benchmark performa | https://www.semanticscholar.org/paper/274597594 |
+| 22 | When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation | https://www.semanticscholar.org/paper/285787943 |
 | 22 | A Hitchhiker's Guide to Scaling Law Estimation | https://www.semanticscholar.org/paper/273350789 |
+| 22 | Benchmark Agreement Testing Done Right: A Guide for LLM Benchmark Eval | https://www.semanticscholar.org/paper/287923131 |
 | 21 | DOVE: A Large-Scale Multi-Dimensional Predictions Dataset Towards Mean | https://www.semanticscholar.org/paper/276774995 |
-| 21 | Benchmark Agreement Testing Done Right: A Guide for LLM Benchmark Eval | https://www.semanticscholar.org/paper/287923131 |
-| 20 | When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation | https://www.semanticscholar.org/paper/285787943 |
-| 18 | LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content | https://www.semanticscholar.org/paper/273345528 |
+| 19 | LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content | https://www.semanticscholar.org/paper/273345528 |
 | 16 | Label-Efficient Model Selection for Text Generation | https://www.semanticscholar.org/paper/267627835 |
 | 15 | Lossless and Near-Lossless Compression for Foundation Models | https://www.semanticscholar.org/paper/269197564 |
 | 13 | The Mighty ToRR: A Benchmark for Table Reasoning and Robustness | https://www.semanticscholar.org/paper/276617897 |
 | 8 | NeurIPS 2023 LLM Efficiency Fine-tuning Competition | https://www.semanticscholar.org/paper/277104779 |
+| 8 | Holmes: A Benchmark to Assess the Linguistic Competence of Language Mo | https://www.semanticscholar.org/paper/274625741 |
 | 8 | Navigating the Modern Evaluation Landscape: Considerations in Benchmar | https://www.semanticscholar.org/paper/269804253 |
 | 7 | CommonLID: Re-evaluating State-of-the-Art Language Identification Perf | https://www.semanticscholar.org/paper/285049960 |
-| 7 | Holmes: A Benchmark to Assess the Linguistic Competence of Language Mo | https://www.semanticscholar.org/paper/274625741 |
 | 5 | Do LLMs Benefit From Their Own Words? | https://www.semanticscholar.org/paper/286171698 |
 | 5 | ErrorMap and ErrorAtlas: Charting the Failure Landscape of Large Langu | https://www.semanticscholar.org/paper/284935616 |
 | 5 | Pretraining Language Models for Diachronic Linguistic Change Discovery | https://www.semanticscholar.org/paper/277626991 |

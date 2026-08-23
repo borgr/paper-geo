@@ -216,13 +216,34 @@ repos:
   kind: other
   write_links_block: false
 - repo: borgr/claude-readable-reports
-  description: A Claude Code output style for answer-first, jargon-resolved agent reports
-  topics: []
+  description: 'Claude Code output styles: one that makes an agent''s final report readable, one for co-writing
+    papers and grants.'
+  topics:
+  - ai-agents
+  - claude-code
+  - claude-code-plugin
+  - llm
+  - output-styles
+  - technical-writing
   homepage: null
   write_citation_cff: false
   write_links_block: false
   skip: false
   reviewed: false
+  llm_proposal:
+    description: 'Claude Code output styles: one that makes an agent''s final report readable, one for
+      co-writing papers and grants.'
+    topics:
+    - claude-code
+    - claude-code-plugin
+    - output-styles
+    - llm
+    - ai-agents
+    - technical-writing
+    generic_gloss: ''
+    kind: tool
+    confidence: high
+  kind: tool
 - repo: borgr/DORA
   paper_slug: dora-the-explorer-directed-outreaching-reinforcement-action
   description: Directed exploration in reinforcement learning via E-values; supplementary code for the
@@ -280,6 +301,38 @@ repos:
   kind: paper-code
   generic_gloss: automatically validating grammatical error correction metrics
   write_links_block: false
+- repo: borgr/erc-review
+  description: 'Reviewing kit for ERC Starting/Consolidator proposals: the writing guide, a ten-stage
+    protocol, a checker, a skill.'
+  topics:
+  - claude-code
+  - erc
+  - grant-writing
+  - latex
+  - proposal-review
+  - research-funding
+  - scientific-writing
+  homepage: null
+  write_citation_cff: false
+  write_links_block: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: 'Reviewing kit for ERC Starting/Consolidator proposals: the writing guide, a ten-stage
+      protocol, a checker, a skill.'
+    topics:
+    - erc
+    - grant-writing
+    - research-funding
+    - scientific-writing
+    - proposal-review
+    - latex
+    - claude-code
+    generic_gloss: reviewing European Research Council grant proposals
+    kind: guide
+    confidence: high
+  kind: guide
+  generic_gloss: reviewing European Research Council grant proposals
 - repo: borgr/facultips
   paper_slug: null
   description: 'A guide to applying for tenure-track faculty positions: research and teaching statements,
@@ -797,3 +850,33 @@ repos:
   kind: tool
   generic_gloss: preprocessing scripts for the WIT3 TED-talk translation corpus
   write_links_block: false
+- repo: borgr/Xthread2social
+  description: Republish an X/Twitter thread to your own Bluesky and Mastodon accounts. No API keys, no
+    server, no paid tier.
+  topics:
+  - atproto
+  - bluesky
+  - cli
+  - cross-posting
+  - mastodon
+  - twitter
+  homepage: null
+  write_citation_cff: false
+  write_links_block: false
+  skip: false
+  reviewed: false
+  llm_proposal:
+    description: Republish an X/Twitter thread to your own Bluesky and Mastodon accounts. No API keys,
+      no server, no paid tier.
+    topics:
+    - bluesky
+    - mastodon
+    - atproto
+    - twitter
+    - cross-posting
+    - cli
+    generic_gloss: reposting an X/Twitter thread to Bluesky and Mastodon
+    kind: tool
+    confidence: high
+  kind: tool
+  generic_gloss: reposting an X/Twitter thread to Bluesky and Mastodon

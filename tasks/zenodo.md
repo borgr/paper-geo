@@ -4,7 +4,7 @@
 
 # Zenodo: give the artifacts with no paper a citable identity
 
-13 repos qualify. The filter is `kind` in ['guide', 'tool'] **and** no linked paper: a repo whose paper exists
+16 repos qualify. The filter is `kind` in ['guide', 'tool'] **and** no linked paper: a repo whose paper exists
 already has a citation route, and minting a second one splits the citations
 between two identifiers.
 
@@ -31,6 +31,8 @@ being permanent — the archive is a snapshot of the release, not of `main`:
 
 - [ ] **borgr/arXiv_stuck** (guide) — An arXiv moderator's explanation of why submissions get held, stuck, or rejected
 - [ ] **borgr/ATProto-links-bot** (tool) — Relays paper links shared in the CoLab Discord to Bluesky and Semble, via a sche
+- [ ] **borgr/claude-readable-reports** (tool) — Claude Code output styles: one that makes an agent's final report readable, one 
+- [ ] **borgr/erc-review** (guide) — Reviewing kit for ERC Starting/Consolidator proposals: the writing guide, a ten-
 - [ ] **borgr/facultips** (guide) — A guide to applying for tenure-track faculty positions: research and teaching st
 - [ ] **borgr/gcn_tf** (tool) — TensorFlow implementation of a labelled, gated syntactic graph convolutional net
 - [ ] **borgr/grant_search** (tool) — Agentic skill for finding AI research grants and funding calls.
@@ -42,3 +44,4 @@ being permanent — the archive is a snapshot of the release, not of `main`:
 - [ ] **borgr/social-follow** (tool) — Follows research collaborators across Bluesky, Twitter/X and LinkedIn from a CSV
 - [ ] **borgr/tutEval** (guide) — Materials for the LREC-COLING 2024 tutorial on evaluating large language models:
 - [ ] **borgr/wit3scripts** (tool) — Wrapper scripts for preprocessing the WIT3 multilingual TED-talk translation cor
+- [ ] **borgr/Xthread2social** (tool) — Republish an X/Twitter thread to your own Bluesky and Mastodon accounts. No API 

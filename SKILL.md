@@ -10,7 +10,7 @@ description: >
 
 # paper-geo
 
-113 papers and 31 repos, one command (`update.py`), one source of truth (`data/`),
+113 papers and 33 repos, one command (`update.py`), one source of truth (`data/`),
 and a short ranked list of what only a human can do (`WORKLIST.md`).
 
 ## Your contract
@@ -68,7 +68,7 @@ python scripts/propose_topics.py --ingest     # fold your repo proposals into re
 | the same item keeps reappearing in `WORKLIST.md` | it needs a recorded decision, not another pass |
 | you are tempted to read `docs/EVIDENCE.md` or `docs/SETUP.md` mid-run | don't. Neither is a procedure; one is why the rules exist, the other is one-time account work |
 
-**Only 1 of 31 repos maps to a paper** — paper code mostly lives in collaborators'
+**Only 1 of 33 repos maps to a paper** — paper code mostly lives in collaborators'
 accounts. Do not treat the repo track as "the code for the papers".
 
 ## Where the rules live

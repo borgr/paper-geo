@@ -17,18 +17,42 @@ holds the instructions; nothing here repeats them.
 the page gets visibly shorter.
 
 1. **Wikipedia describes your work in 3 place(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
+2. **1 paper listed twice on Scholar** — tick both rows on your Scholar profile and press *Merge*; both titles and the link to the second row are in the section.
 
 **As much as you have patience for.** Per-paper clicking, because
 there is no write API behind either surface — and both are ordered so
 that stopping early still captures most of the value.
 
-2. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
-3. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section.
+3. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
+4. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section.
 
 ## Waiting on the outside world
 
 - **2026-10-04** — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.
 - **2026-11-04** — Crossref and DataCite auto-update only fire on newly deposited metadata that already carries your iD, so the proof is a work whose ORCID source is Crossref or DataCite rather than your own name -- which cannot appear until something you publish is deposited.
+
+## Coverage: Google Scholar and the corpus disagree
+
+Scholar lists **117** works and matched **106** of the corpus's **113**. Scholar is
+the one list of your papers that is built by a different process, so it is the
+only check that can see a paper this pipeline never received.
+
+Every bucket in full, including what is truncated below:
+[`build/scholar_diff.json`](build/scholar_diff.json) — local only, because
+`build/` is not committed. `python update.py --step audit` writes it, and after
+a fresh clone that is the one command between you and the file.
+
+### 1 paper listed twice on Scholar
+
+Two rows for one paper splits its citation count, and nothing here can fix
+it: tick both rows and press *Merge*. Both titles are below, because on the
+profile they sort apart and neither reads as the other's duplicate.
+
+Open <https://scholar.google.com/citations?user=8b8IhUYAAAAJ&view_op=list_works&sortby=title>.
+
+- [ ] `automated-discovery-has-no-universally-superior-harness`
+      - one row: Automated Discovery Has No Universally Superior Harness
+      - the other: No Harness Rules Them All: Harness Choice in Automated Discovery — <https://scholar.google.com/citations?view_op=view_citation&hl=en&user=8b8IhUYAAAAJ&citation_for_view=8b8IhUYAAAAJ:tuHXwOkdijsC>
 
 ## Identity surfaces (1 open)
 
@@ -63,7 +87,7 @@ undo than an unclaimed one, and it makes the split look deliberate.
 - [ ] 16 cites — Label-Efficient Model Selection for Text Generation — <https://www.semanticscholar.org/paper/267627835>
 - [ ] 13 cites — The Mighty ToRR: A Benchmark for Table Reasoning and Rob — <https://www.semanticscholar.org/paper/276617897>
 - [ ] 8 cites — NeurIPS 2023 LLM Efficiency Fine-tuning Competition — <https://www.semanticscholar.org/paper/277104779>
-- [ ] 8 cites — Navigating the Modern Evaluation Landscape: Consideratio — <https://www.semanticscholar.org/paper/269804253>
+- [ ] 8 cites — Holmes: A Benchmark to Assess the Linguistic Competence  — <https://www.semanticscholar.org/paper/274625741>
 - … and 22 more in [`tasks/s2_merge.md`](tasks/s2_merge.md), same order
 
 ## Wikipedia describes your work in 3 place(s) — check the facts
@@ -117,7 +141,7 @@ its own form.
 1. *Weak here.* Scholar merges preprint and published versions largely on
    venue agreement, and a venue-less arXiv record can stay a separate
    cluster with the citations split across the two.
-   Measured on your own profile: **0 split pairs out of 113**, so for this
+   Measured on your own profile: **1 split pair out of 113**, so for this
    corpus that is mostly already handled — do not do this for that reason.
 2. **The arXiv DataCite record gains a `container-title`.** This is the real
    one and it is not visible on Scholar at all: that field is what flows to
@@ -133,15 +157,15 @@ cannot take off you — but the typing is not: both field values are below,
 per paper, built from the publisher's own bibtex. The same for all
 64 is in [`tasks/arxiv_jref.md`](tasks/arxiv_jref.md).
 
-- [ ] **893 cites** — TIES-Merging: Resolving Interference When Merging Models
+- [ ] **897 cites** — TIES-Merging: Resolving Interference When Merging Models
       - the form: find `2306.01708` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2306.01708))
       - `Journal-ref:` `Advances in Neural Information Processing Systems 36: Annual Conference on Neural Information Processing Systems 2023`
       - `Journal version DOI:` `10.52202/075280-0310`
-- [ ] **292 cites** — tinyBenchmarks: evaluating LLMs with fewer examples
+- [ ] **294 cites** — tinyBenchmarks: evaluating LLMs with fewer examples
       - the form: find `2402.14992` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2402.14992))
       - `Journal-ref:` `Forty-first International Conference on Machine Learning, 2024`
       - `Journal version DOI:` — none minted, leave blank
-- [ ] **188 cites** — Global MMLU: Understanding and Addressing Cultural and Linguistic Biases in Multilingual Evaluation
+- [ ] **190 cites** — Global MMLU: Understanding and Addressing Cultural and Linguistic Biases in Multilingual Evaluation
       - the form: find `2412.03304` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2412.03304))
       - `Journal-ref:` `Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 18761-18799, 2025`
       - `Journal version DOI:` `10.18653/v1/2025.acl-long.919`
@@ -153,11 +177,11 @@ per paper, built from the publisher's own bibtex. The same for all
       - the form: find `1907.01752` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/1907.01752))
       - `Journal-ref:` `8th International Conference on Learning Representations, 2020`
       - `Journal version DOI:` — none minted, leave blank
-- [ ] **119 cites** — DisentQA: Disentangling Parametric and Contextual Knowledge with Counterfactual Question Answering
+- [ ] **120 cites** — DisentQA: Disentangling Parametric and Contextual Knowledge with Counterfactual Question Answering
       - the form: find `2211.05655` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2211.05655))
       - `Journal-ref:` `Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 10056-10070, 2023`
       - `Journal version DOI:` `10.18653/v1/2023.acl-long.559`
-- [ ] **116 cites** — Model merging with SVD to tie the Knots
+- [ ] **117 cites** — Model merging with SVD to tie the Knots
       - the form: find `2410.19735` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2410.19735))
       - `Journal-ref:` `ICLR, 2025`
       - `Journal version DOI:` — none minted, leave blank
@@ -191,7 +215,7 @@ number (a lab's own report series) and none of these has one.
 Real work, parked on purpose. Regenerated from live state like
 everything else, so it stays accurate while it waits.
 
-### Artifacts with no citation route (13)
+### Artifacts with no citation route (16)
 
 *Deferred until an artifact is cited or asked about somewhere you can see it, or the paper work is done.*
 
@@ -201,7 +225,7 @@ and your ORCID works list — so they stop being GitHub-only objects.
 Steps, and the honest case for skipping some: `tasks/zenodo.md`.
 
 
-### Repo labels awaiting your review (27/31)
+### Repo labels awaiting your review (29/33)
 
 *Deferred until the sidecar format is settled and the papers are done.*
 
@@ -210,5 +234,5 @@ Check `data/repos.yaml`, fix anything wrong, set `reviewed: true` to freeze it, 
 
 ---
 
-*Per `data/declines.yaml` — hidden: 3 sections (OpenAlex — 4 duplicate profiles; 2 papers absent from the source bibliography — every item declined; 5 papers whose title does not appear on your Scholar profile — every item declined) and 8 individual items. deferred to the bottom: Artifacts with no citation route (13); Repo labels awaiting your review (27/31). marked in `tasks/openalex_merge.md`, `tasks/zenodo.md`. Delete a line there to have it asked normally again.*
+*Per `data/declines.yaml` — hidden: 3 sections (OpenAlex — 4 duplicate profiles; 2 papers absent from the source bibliography — every item declined; 5 papers whose title does not appear on your Scholar profile — every item declined) and 8 individual items. deferred to the bottom: Artifacts with no citation route (16); Repo labels awaiting your review (29/33). marked in `tasks/openalex_merge.md`, `tasks/zenodo.md`. Delete a line there to have it asked normally again.*
 
