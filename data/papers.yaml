@@ -4161,7 +4161,7 @@ papers:
     \ Computational Linguistics\",\n    url = \"https://aclanthology.org/2025.findings-naacl.475/\",\n\
     \    pages = \"4630--4644\",\n    ISBN = \"979-8-89176-195-7\"\n}"
   s2_author_record: '41019330'
-  citations: 18
+  citations: 19
   acl: null
   s2_corpus_id: 271909348
   arxiv_journal_ref: null

@@ -419,7 +419,7 @@ Journal-ref:          The Thirteenth International Conference on Learning Repres
 Journal version DOI:  (none minted — leave blank)
 ```
 
-### 41. Beneath the Surface of Consistency: Exploring Cross-lingual Knowledge Representation Sharing in LLMs — cited 18
+### 41. Beneath the Surface of Consistency: Exploring Cross-lingual Knowledge Representation Sharing in LLMs — cited 19
 
 <https://arxiv.org/abs/2408.10646> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
