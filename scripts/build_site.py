@@ -707,7 +707,7 @@ def build(cfg) -> dict:
         if p.get("canonical_page"):
             # Owned by a collaborator: link to theirs, publish nothing competing.
             index_rows.append(f'<li>{E(title)} — canonical page: '
-                              f'<a href="{E(p["canonical_page"])}">{E(p["owner"] or "co-author")}</a></li>')
+                              f'<a href="{E(p["canonical_page"])}">{E(p.get("owner") or "co-author")}</a></li>')
             stats["peer_owned"] += 1
             continue
         sc = read_sidecar(slug)

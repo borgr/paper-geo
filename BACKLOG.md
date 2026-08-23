@@ -160,17 +160,13 @@ Recorded rather than fixed, so the next person does not rediscover it as a bug.
       fields have 59 call sites across 12 files, including the worklist's citation
       ranking, and the benefit is cleaner diffs — the wrong trade today, but a real
       wrongness rather than a preference.
-- [ ] **`data/papers.yaml` also carries 224 lines of derived nothing.**
-      `ownership.py reconcile()` writes `owner: null` + `owner_source: unclaimed` for
-      every unclaimed paper, so 112 papers contribute 224 lines that say only "no one
-      has claimed this yet" — the default, stated 112 times. It is committed because
-      nothing derived is ever hand-edited, and it is stable rather than volatile, so it
-      churns once and then sits still. The fix is for the absence of an `owner` key to
-      mean unclaimed — most readers already spell it `p.get("owner")` — but two do
-      not: `ownership.py`'s report filters on `owner_source == "unclaimed"` and
-      `build_site.py` indexes `p["owner"]` directly. And `owner_source` is what
-      distinguishes "unclaimed" from "deferred to a peer's manifest", so dropping the
-      first case makes the second easier to misread. Small, not free.
+- [x] **`data/papers.yaml` carried 226 lines of derived nothing. Fixed.** Unclaimed is
+      now the absence of `owner` and `owner_source` rather than `owner: null` +
+      `owner_source: unclaimed` on all 113 papers. The two readers that needed the value
+      were changed with it: `ownership.py`'s unclaimed report filters on the key being
+      absent, and `build_site.py`'s peer-owned row reads `p.get("owner")`. A claimed or
+      peer-owned paper still carries both keys, so `owner_source` still separates
+      "unclaimed" from "deferred to a peer's manifest".
 - [ ] **The agent's procedure is only half tested.** One of the two proxies now
       exists: no claim may contain a figure absent from the paper's own full text
       (`check_sidecar_numbers()`), which is what caught an invented gap in a draft.

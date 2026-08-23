@@ -1873,10 +1873,9 @@ class TestARewriteDoesNotUnclaimYourPapers(unittest.TestCase):
     def test_an_unclaimed_paper_is_carried_too_so_the_diff_stays_empty(self):
         """`owner: null` is not a claim, and dropping it is still wrong.
 
-        It is what `ownership.py` writes for `unclaimed`, so a carry that tests
-        truthiness leaves the key out, the next step puts it back, and every collect-only
-        run shows a removed line per paper -- 113 of them, all meaning nothing. The point
-        of the file's history is to say what changed about the papers.
+        `ownership.py` leaves both keys off an unclaimed paper, but a hand-set `owner:
+        null` still has to survive a collect: a carry that tests truthiness drops it and
+        every collect-only run shows a removed line per paper, all meaning nothing.
         """
         got = self._carry([{"slug": "p", "owner": None, "owner_source": "unclaimed"}],
                           [{"slug": "p", "title": "freshly collected"}])

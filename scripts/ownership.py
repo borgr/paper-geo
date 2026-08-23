@@ -142,10 +142,12 @@ def reconcile(cfg, papers: list[dict], claimed: dict[str, dict]) -> dict:
             p["canonical_page"] = None
             stats["ours"] += 1
         else:
-            # Unclaimed. We do NOT auto-claim: silently claiming a paper a
+            # Unclaimed, which is the absence of both keys rather than a value: writing
+            # `owner: null` + `owner_source: unclaimed` states the default once per paper
+            # in a committed file. We do NOT auto-claim -- silently claiming a paper a
             # co-author is about to claim is how two canonical pages happen.
-            p["owner"] = None
-            p["owner_source"] = "unclaimed"
+            p.pop("owner", None)
+            p.pop("owner_source", None)
             stats["unclaimed"] += 1
     return stats
 
@@ -198,7 +200,7 @@ def main() -> None:
     if stats["unclaimed"] and peers:
         print("\nUnclaimed, with a suggested owner (first author). Nothing is claimed "
               "automatically -- agree, then run with --claim-all or set owner by hand:")
-        for p in sorted([p for p in papers if p.get("owner_source") == "unclaimed"],
+        for p in sorted([p for p in papers if not p.get("owner_source")],
                         key=lambda p: -(p.get("citations") or 0))[:10]:
             print(f"  {(p.get('citations') or 0):>5} cites  {p['title'][:52]:<54} "
                   f"-> {suggest_owner(p, cfg)}")
