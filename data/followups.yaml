@@ -16,6 +16,8 @@
 #   what    what you are waiting for
 #   then    what becomes possible, or what to do if it did not land
 #   check   optional shell command that answers it
+#   covers  optional list of WORKLIST.md heading fragments. A section matching one
+#           is work this wait may remove, and it says so with this date.
 #   owner   `human` (default) or `agent`. An `agent` item is a job for whoever runs the
 #           pipeline next, not a task for the researcher: it needs no decision, only a
 #           date that has passed. WORKLIST.md lists the two separately, because a list
@@ -35,6 +37,7 @@ followups:
       S2 count has not moved, the manual pulls in tasks/s2_merge.md are the only
       route left, and S2 support has already declined the merge once.
     check: python update.py --step collect && python update.py --step worklist
+    covers: ["Semantic Scholar —"]
 
   - due: 2026-11-04
     what: >-

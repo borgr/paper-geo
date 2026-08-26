@@ -158,6 +158,24 @@ def step_render(cfg, args) -> None:
     run([sys.executable, "scripts/build_site.py"])
 
 
+def held_until(fragment: str) -> str | None:
+    """The date a not-yet-due follow-up may remove the work in a section, or None.
+
+    `covers` on a follow-up lists heading fragments. A section that matches one is work
+    an outside process is scheduled to do instead, so the section says so and the date
+    stays in `data/followups.yaml` alone.
+    """
+    import datetime
+    items = (read_yaml(os.path.join(DATA, "followups.yaml")) or {}).get("followups") or []
+    today = datetime.date.today()
+    for i in items:
+        d = i["due"]
+        d = d if isinstance(d, datetime.date) else datetime.date.fromisoformat(str(d))
+        if d > today and fragment in (i.get("covers") or []):
+            return d.isoformat()
+    return None
+
+
 def due_followups() -> list[str]:
     """Surface anything in data/followups.yaml that has come due.
 
@@ -269,7 +287,8 @@ PLAN = (
      "nothing from you"),
     ("Semantic Scholar —", "afternoon",
      "one paste per paper into the Add Papers form, highest-citation first; every URL "
-     "is in the section"),
+     "is in the section — read its first paragraph first, because a dated follow-up may "
+     "do all of it for you"),
     ("listed twice on Scholar", "minute",
      "tick both rows on your Scholar profile and press *Merge*; both titles and the "
      "link to the second row are in the section"),
@@ -1086,11 +1105,17 @@ def step_worklist(cfg, args) -> None:
           "`tasks/identity_audit.md`.", ""]),
         (n_strays > 0,
          f"### Semantic Scholar — {n_strays} papers on a second author record",
-         ["Every S2-backed tool (Elicit, Consensus, SciSpace, most literature agents)",
-          "resolves you to one page, so each currently sees about half the corpus.",
-          "Support has already been asked to merge the two records and declined, so the",
-          "self-service route is the only one: a claimed page can pull papers across one",
-          "at a time.", "",
+         (["Every S2-backed tool (Elicit, Consensus, SciSpace, most literature agents)",
+           "resolves you to one page, so each currently sees about half the corpus.",
+           "Support has already been asked to merge the two records and declined, so the",
+           "self-service route is the only one: a claimed page can pull papers across one",
+           "at a time.", ""]
+          + ([f"**Worth waiting until {held_until('Semantic Scholar —')} before starting.**",
+              "S2 re-clusters authors off ORCID, the ORCID record already asserts every",
+              "paper here, and re-clustering would move all of them at no cost to you. It",
+              "cannot merge the two records, so the second one stays either way — but the",
+              "pastes below may be work that does itself.", ""]
+             if held_until("Semantic Scholar —") else []) + [
           f"1. Open your claimed page: <https://www.semanticscholar.org/author/"
           f"{ids['semantic_scholar_primary']}>",
           "2. *Edit Author Page → Add Papers*.",
@@ -1099,7 +1124,7 @@ def step_worklist(cfg, args) -> None:
           "",
           "Highest-citation first, so stopping early still captures most of the loss.",
           "**Do not claim the second page as well** — a second claimed record is harder to",
-          "undo than an unclaimed one, and it makes the split look deliberate.", ""]
+          "undo than an unclaimed one, and it makes the split look deliberate.", ""])
          + [f"- [ ] {p.get('citations') or 0} cites — "
             f"{(p.get('title_display') or p['title'])[:56]} — "
             + (f"<https://www.semanticscholar.org/paper/{p['s2_corpus_id']}>"

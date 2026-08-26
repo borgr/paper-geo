@@ -24,7 +24,7 @@ there is no write API behind either surface — and both are ordered so
 that stopping early still captures most of the value.
 
 3. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
-4. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section.
+4. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
 
 ## Waiting on the outside world
 
@@ -67,6 +67,12 @@ resolves you to one page, so each currently sees about half the corpus.
 Support has already been asked to merge the two records and declined, so the
 self-service route is the only one: a claimed page can pull papers across one
 at a time.
+
+**Worth waiting until 2026-10-04 before starting.**
+S2 re-clusters authors off ORCID, the ORCID record already asserts every
+paper here, and re-clustering would move all of them at no cost to you. It
+cannot merge the two records, so the second one stays either way — but the
+pastes below may be work that does itself.
 
 1. Open your claimed page: <https://www.semanticscholar.org/author/41019330>
 2. *Edit Author Page → Add Papers*.

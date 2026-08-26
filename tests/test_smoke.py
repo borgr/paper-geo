@@ -1635,6 +1635,24 @@ class TestAnIndexAnswerNeedsMoreThanWordOverlap(unittest.TestCase):
         body = src.split("\ndef from_s2_search(", 1)[1].split("\ndef ", 1)[0]
         self.assertIn("strict=True", body, "the S2 search endpoint answers loosely")
 
+    def test_a_covers_fragment_names_a_section_that_exists(self):
+        """A typo in `covers` silently drops the hold, leaving the section asking.
+
+        The fragment is matched against a heading, so nothing fails loudly when it stops
+        matching one. Every fragment has to be a heading the plan already knows about.
+        """
+        import sys
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        import update
+        from common import ROOT, read_yaml
+        items = (read_yaml(os.path.join(ROOT, "data", "followups.yaml"))
+                 or {}).get("followups") or []
+        known = {frag for frag, _tier, _cost in update.PLAN}
+        for i in items:
+            for frag in (i.get("covers") or []):
+                self.assertIn(frag, known,
+                              f"{i['due']} covers a section the plan does not name")
+
     def test_the_claimed_s2_record_wins_over_the_unclaimed_one(self):
         """A merged paper must stop counting as split, whatever order the ids sit in.
 
