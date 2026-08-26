@@ -102,7 +102,7 @@ recently**.
 
 | Line | What it means | What to do |
 |---|---|---|
-| `rate-limited every time since …` | the URL is fine and the host is refusing our pace | get the key, or slow the host down in `common.PACE` |
+| `rate-limited every time since …` | the URL is fine and the host is refusing our pace | get the key, or slow the host down in `common.PACE` — unless the error reads `429 budget`, which is a metered endpoint out of credits until it resets and needs no change |
 | `never once answered` (with the last error named) | the URL moved, the endpoint went away, or a config field is empty | check the URL; the error in brackets says which |
 | `last answered <date>, failing since` | it worked and stopped | usually upstream; if it persists, the field it feeds is stale |
 

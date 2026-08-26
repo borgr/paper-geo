@@ -27,6 +27,7 @@ exists to avoid one layer up.
 from __future__ import annotations
 
 import ast
+import datetime
 import importlib
 import json
 import contextlib
@@ -1547,6 +1548,78 @@ class TestAStrayCopyIsNotEveryPaperSharingAToken(unittest.TestCase):
         self.assertEqual(got[0]["matched"], "a")
 
 
+class TestTheSplitPassResumesTomorrow(unittest.TestCase):
+    """111 papers against 100 free queries a day, so the cache is the pass, not a speedup.
+
+    None of it runs for real until the credits reset, which is precisely why it is pinned
+    here: a resume that silently re-asks every paper never finishes, and one that never
+    re-asks keeps reporting a split after OpenAlex merges it.
+    """
+
+    def _module(self, cache, answers):
+        import scholar_strays as ss
+        importlib.reload(ss)
+        self.addCleanup(importlib.reload, ss)
+        d = tempfile.mkdtemp()
+        with open(os.path.join(d, "openalex_splits.json"), "w") as f:
+            json.dump(cache, f)
+        ss.BUILD = d
+        asked = []
+
+        def fake(url):
+            asked.append(url)
+            return answers.pop(0) if answers else {}
+
+        ss.get_json = fake
+        ss.budget_reset = lambda _h: None
+        return ss, asked, d
+
+    def _papers(self, n):
+        return [{"slug": f"p{i}", "title": f"A sufficiently long paper title number {i}",
+                 "title_display": f"Paper {i}"} for i in range(n)]
+
+    def test_a_fresh_answer_is_not_paid_for_twice(self):
+        today = datetime.date.today().isoformat()
+        ss, asked, _d = self._module({"p0": {"asked": today, "records": []}}, [{"results": []}])
+        out = ss.split_records(self._papers(2), None)
+        self.assertEqual(len(asked), 1, "re-asked a paper answered today")
+        self.assertEqual(out["checked"], 2)
+        self.assertEqual(out["total"], 2)
+
+    def test_a_stale_answer_is_asked_again(self):
+        old = (datetime.date.today() - datetime.timedelta(days=400)).isoformat()
+        ss, asked, _d = self._module({"p0": {"asked": old, "records": []}}, [{"results": []}])
+        ss.split_records(self._papers(1), None)
+        self.assertEqual(len(asked), 1, "a year-old answer was reused")
+
+    def test_two_matching_records_are_a_split_and_one_is_not(self):
+        title = "A sufficiently long paper title number 0"
+        twice = {"results": [{"id": "https://openalex.org/W1", "display_name": title,
+                              "cited_by_count": 9, "publication_year": 2024},
+                             {"id": "https://openalex.org/W2", "display_name": title,
+                              "cited_by_count": 4, "publication_year": 2024}]}
+        once = {"results": [{"id": "https://openalex.org/W3", "display_name": title,
+                             "cited_by_count": 1, "publication_year": 2024}]}
+        ss, _a, d = self._module({}, [twice, once])
+        out = ss.split_records(self._papers(2), None)
+        self.assertEqual([r["slug"] for r in out["rows"]], ["p0"])
+        self.assertEqual([r["citations"] for r in out["rows"][0]["records"]], [9, 4],
+                         "records are not ordered by citations")
+        with open(os.path.join(d, "openalex_splits.json")) as f:
+            self.assertEqual(sorted(json.load(f)), ["p0", "p1"], "the cache did not persist")
+
+    def test_the_pass_stops_at_the_first_refusal_and_keeps_what_it_paid_for(self):
+        ss, asked, d = self._module({}, [{"results": []}])
+        ss.budget_reset = lambda _h: (None if len(asked) < 2 else 26000)
+        out = ss.split_records(self._papers(6), None)
+        self.assertEqual(len(asked), 2, f"kept asking after a refusal: {asked}")
+        self.assertEqual(out["budget_reset"], 26000)
+        self.assertEqual((out["checked"], out["total"]), (1, 6),
+                         "the partial notice would misreport how far it got")
+        with open(os.path.join(d, "openalex_splits.json")) as f:
+            self.assertEqual(list(json.load(f)), ["p0"], "the paid-for answer was dropped")
+
+
 class TestAMeteredRefusalIsNotRetried(unittest.TestCase):
     """A 429 that means "no credits" has to end the host, not start a backoff.
 
@@ -1566,6 +1639,7 @@ class TestAMeteredRefusalIsNotRetried(unittest.TestCase):
     def _run(self, err):
         import common
         common._BUDGET_OUT.clear()
+        self.addCleanup(common._BUDGET_OUT.clear)
         calls = []
 
         def fake(req, timeout=None):
@@ -1586,7 +1660,24 @@ class TestAMeteredRefusalIsNotRetried(unittest.TestCase):
         self.assertEqual(second, b"", "a second URL on a spent host still asked")
         self.assertEqual(len(calls), 1, f"retried a refusal that cannot succeed: {calls}")
         self.assertEqual(common.budget_reset("api.openalex.org"), 26000)
+
+    def test_a_free_url_on_the_same_host_still_runs(self):
+        """The budget is per endpoint. A DOI lookup costs nothing and keeps answering."""
+        import common
         common._BUDGET_OUT.clear()
+        self.addCleanup(common._BUDGET_OUT.clear)
+        common._BUDGET_OUT["api.openalex.org"] = 26000
+        calls = []
+
+        def fake(req, timeout=None):
+            calls.append(req.full_url)
+            return io.BytesIO(b"{}")
+
+        with mock.patch.object(common.urllib.request, "urlopen", fake):
+            self.assertEqual(common.get("https://api.openalex.org/works/doi:10.1/x"), b"{}")
+            self.assertEqual(common.get("https://api.openalex.org/works?filter=title.search:a"),
+                             b"")
+        self.assertEqual(len(calls), 1, f"the priced URL was still fetched: {calls}")
 
     def test_a_plain_429_is_still_retried(self):
         import common

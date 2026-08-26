@@ -35,6 +35,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
 import os
 import sys
@@ -47,6 +48,9 @@ from common import (BUILD, DATA, ROOT, TASKS, budget_reset, clean_latex, get_jso
 
 # Below this the gap is indexing lag rather than a split record. Both conditions have
 # to hold: two citations is noise on a 200-cite paper, and 20% is noise on a 3-cite one.
+# An OpenAlex split gets merged, so a cached answer that is never re-asked would keep
+# reporting one long after it is gone.
+CACHE_DAYS = 60
 GAP_MIN = 3
 GAP_FRAC = 0.15
 
@@ -185,8 +189,8 @@ def split_records(papers, mailto, limit=None) -> dict:
 
     Returns `rows`, `budget_reset`, `checked` and `total`. One metered search per paper
     against a free daily allowance of 100, so a full corpus takes more than one day:
-    every answer is cached in `build/openalex_splits.json` and a run resumes at the
-    first paper without one. `budget_reset` is the seconds until more credits, or None
+    every answer is cached in `build/openalex_splits.json` for CACHE_DAYS and a run
+    resumes at the first paper without a fresh one. `budget_reset` is the seconds until more credits, or None
     if the pass finished.
 
     A split at OpenAlex is not itself a Scholar problem -- it is evidence that the
@@ -199,10 +203,11 @@ def split_records(papers, mailto, limit=None) -> dict:
             cache = json.load(f)
     except (OSError, ValueError):
         cache = {}
+    fresh = (datetime.date.today() - datetime.timedelta(days=CACHE_DAYS)).isoformat()
     asked = 0
     for p in papers[:limit]:
         title, slug = p.get("title") or "", p.get("slug")
-        if len(title) < 25 or slug in cache:
+        if len(title) < 25 or (cache.get(slug) or {}).get("asked", "") >= fresh:
             continue
         q = ("https://api.openalex.org/works?per-page=25&select=id,display_name,"
              "cited_by_count,publication_year&filter=title.search:"
@@ -212,26 +217,32 @@ def split_records(papers, mailto, limit=None) -> dict:
             break
         asked += 1
         want = title_tokens(title)
-        cache[slug] = [{"url": w.get("id"), "title": w.get("display_name"),
-                        "year": w.get("publication_year"),
-                        "citations": w.get("cited_by_count") or 0}
-                       for w in (d or {}).get("results") or []
-                       if want and len(want & title_tokens(w.get("display_name"))) / len(want) > 0.8]
+        cache[slug] = {
+            "asked": datetime.date.today().isoformat(),
+            "records": [{"url": w.get("id"), "title": w.get("display_name"),
+                         "year": w.get("publication_year"),
+                         "citations": w.get("cited_by_count") or 0}
+                        for w in (d or {}).get("results") or []
+                        if want
+                        and len(want & title_tokens(w.get("display_name"))) / len(want) > 0.8]}
     if asked:
         os.makedirs(BUILD, exist_ok=True)
         with open(cache_path, "w") as f:
             json.dump(cache, f, indent=1)
 
+    def records(slug):
+        return (cache.get(slug) or {}).get("records") or []
+
     out = [{"slug": p.get("slug"),
             "title": p.get("title_display") or p.get("title"),
-            "records": sorted(cache[p["slug"]], key=lambda w: -w["citations"]),
+            "records": sorted(records(p.get("slug")), key=lambda w: -w["citations"]),
             "search": scholar_query(p.get("title_display") or p.get("title"))}
-           for p in papers[:limit]
-           if len(cache.get(p.get("slug")) or []) > 1]
+           for p in papers[:limit] if len(records(p.get("slug"))) > 1]
     checkable = [p for p in papers[:limit] if len(p.get("title") or "") >= 25]
     return {"rows": sorted(out, key=lambda r: -sum(x["citations"] for x in r["records"])),
             "budget_reset": budget_reset("api.openalex.org"),
-            "checked": len([p for p in checkable if p.get("slug") in cache]),
+            "checked": len([p for p in checkable
+                            if (cache.get(p.get("slug")) or {}).get("asked", "") >= fresh]),
             "total": len(checkable)}
 
 

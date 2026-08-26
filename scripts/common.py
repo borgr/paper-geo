@@ -283,14 +283,26 @@ def _pace(url: str) -> None:
     _last_hit[host] = time.monotonic()
 
 
+def metered(url: str) -> bool:
+    """Whether this URL spends credits, as opposed to being free on the same host.
+
+    OpenAlex prices per endpoint, not per host: a `.search:` filter costs credits and a
+    `/works/doi:` lookup is free and keeps answering after the credits are gone. Only
+    the priced shape is worth skipping once a host has refused one. Read from the query
+    string alone, so a DOI with `search` in it stays free.
+    """
+    return "search" in url.partition("?")[2].lower()
+
+
 def _out_of_budget(e: urllib.error.HTTPError) -> bool:
     """A 429 that says the day's credits are spent, and records when they return."""
-    reset = e.headers.get("x-ratelimit-reset")
-    spent = (e.headers.get("x-ratelimit-remaining-usd") == "0"
+    h = e.headers or {}
+    spent = (h.get("x-ratelimit-remaining-usd") == "0"
              or b"Insufficient budget" in (e.read() if e.fp else b""))
     if not spent:
         return False
-    _BUDGET_OUT[host_of(e.url)] = int(reset) if (reset or "").isdigit() else 0
+    reset = h.get("x-ratelimit-reset") or ""
+    _BUDGET_OUT[host_of(e.url)] = int(reset) if str(reset).isdigit() else 0
     return True
 
 
@@ -312,7 +324,10 @@ def get(url: str, timeout: int = 40, retries: int = 6, accept: str | None = None
         headers["x-api-key"] = key
     if accept:
         headers["Accept"] = accept
-    if host_of(url) in _BUDGET_OUT:
+    if host_of(url) in _BUDGET_OUT and metered(url):
+        # Noted, not silent: `health_report` reads absence of a line as "every source
+        # answered recently", and skipping 111 fetches is the opposite of that.
+        note_fetch(url, False, "429 budget")
         return b""
     delay = 4.0
     for attempt in range(retries):
