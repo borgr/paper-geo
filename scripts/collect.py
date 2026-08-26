@@ -483,7 +483,12 @@ def merge_s2(papers: list[dict], cfg) -> None:
                 papers.append(p)
                 by_norm[n] = p
             ext = sp.get("externalIds") or {}
-            p["s2_author_record"] = aid
+            # A paper pulled onto the claimed page stays listed on the unclaimed one
+            # too, so it arrives from both fetches. The claimed record wins whatever
+            # order the ids are configured in -- otherwise every paper the author
+            # merges reads as still-split and the worklist asks for it again.
+            if p.get("s2_author_record") != cfg["ids"]["semantic_scholar_primary"]:
+                p["s2_author_record"] = aid
             p["citations"] = sp.get("citationCount")
             p.setdefault("acl", ext.get("ACL"))
             p["arxiv"] = p.get("arxiv") or ext.get("ArXiv")

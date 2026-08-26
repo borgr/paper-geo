@@ -1635,6 +1635,22 @@ class TestAnIndexAnswerNeedsMoreThanWordOverlap(unittest.TestCase):
         body = src.split("\ndef from_s2_search(", 1)[1].split("\ndef ", 1)[0]
         self.assertIn("strict=True", body, "the S2 search endpoint answers loosely")
 
+    def test_the_claimed_s2_record_wins_over_the_unclaimed_one(self):
+        """A merged paper must stop counting as split, whatever order the ids sit in.
+
+        `collect` walks `ids.semantic_scholar` and tags each paper with the record it
+        came from. A paper pulled onto the claimed page is still listed on the
+        unclaimed one, so it arrives twice; an unguarded assignment lets whichever id
+        is configured last decide, and the worklist re-asks for all 34 merges forever.
+        """
+        from common import ROOT
+        src = source(os.path.join(ROOT, "scripts", "collect.py"))
+        guard = ('if p.get("s2_author_record") != '
+                 'cfg["ids"]["semantic_scholar_primary"]:')
+        before = src.split('p["s2_author_record"] = aid', 1)[0]
+        self.assertIn(guard, before[-200:],
+                      "the assignment is not guarded by the primary record")
+
     def test_every_open_index_is_named_when_it_had_nothing(self):
         """`UNRESOLVED` has to name the indexes actually asked, not a stale list.
 

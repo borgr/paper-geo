@@ -30,10 +30,11 @@ followups:
       ORCID auto-update, and the ORCID-driven author re-clustering at Semantic
       Scholar and OpenAlex, run on their own schedule.
     then: >-
-      Re-check whether the duplicate S2 and OpenAlex author records merged
-      themselves. Filing a support ticket before this date may be work you do not
-      need to do.
-    check: python scripts/audit_identity.py
+      Re-run collect and read the counts. Today 34 papers sit on the secondary
+      Semantic Scholar record and 4 duplicate OpenAlex profiles are open. If the
+      S2 count has not moved, the manual pulls in tasks/s2_merge.md are the only
+      route left, and S2 support has already declined the merge once.
+    check: python update.py --step collect && python update.py --step worklist
 
   - due: 2026-11-04
     what: >-
