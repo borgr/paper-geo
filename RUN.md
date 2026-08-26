@@ -255,6 +255,7 @@ of this tool and pays for everything else, so do it first.
 ```bash
 python scripts/audit_identity.py     # what is still open, read live, no login
 python scripts/scholar_check.py      # what Scholar has that the corpus does not
+python scripts/scholar_strays.py     # citations sitting on a Scholar record you cannot see
 python scripts/identity_tasks.py     # the payload for each fix
 python scripts/identity_tasks.py --user-page ~/Downloads/arxiv-user.html   # once, see below
 ```
@@ -270,6 +271,13 @@ one reads a list built by a different process, so it catches a paper absent from
 source bibliography and a paper the authorship gate excluded. Its findings open
 [WORKLIST.md](WORKLIST.md) when there are any.
 
+`scholar_strays.py` answers a narrower question and needs `scholar_check.py` to have
+run first. Scholar indexes preprints, theses and slides the APIs do not, so a profile
+row should always count *more* citations than OpenAlex and Semantic Scholar do. A row
+counting less means Scholar parsed a second record for that paper out of somebody's
+reference list and the citations are accruing there. The remedy is Scholar's own merge,
+and the output is one phrase-quoted search per row.
+
 `identity_tasks.py` writes the payloads into [`tasks/`](tasks/), committed on purpose
 since these are lists a human works through over days — plus one from
 `scholar_check.py`:
@@ -282,6 +290,7 @@ since these are lists a human works through over days — plus one from
 | `wikidata_manual.md` | creating the author item by hand — **start here** |
 | `wikidata.qs` | the same item as a batch; needs an autoconfirmed account |
 | `s2_merge.md` | papers to pull onto the claimed Semantic Scholar page |
+| `scholar_strays.md` | Scholar searches that surface a second record for one paper, from `scholar_strays.py` |
 | `openalex_merge.md` | what to paste into the OpenAlex correction form |
 | `arxiv_ownership.md` | arXiv papers you are not a registered author on |
 | `arxiv_jref.md` | the journal-ref and published DOI to type into each arXiv listing |
@@ -489,6 +498,7 @@ and the one place the review is genuinely cheap.
 | `scripts/build_site.py [--deploy]` | generate the site | deploy: **yes** |
 | `scripts/audit_identity.py [--no-hf]` | live-read ORCID, arXiv, Wikidata, HF, S2 | local only |
 | `scripts/scholar_check.py [--quiet]` | diff your Google Scholar profile against the corpus — the only check that can see a paper the pipeline never received | local only |
+| `scripts/scholar_strays.py [--quiet] [--skip-openalex] [--limit N]` | copies of your papers that Scholar indexed separately, found by citation gap against the APIs; needs `scholar_check.py` first | local only |
 | `scripts/identity_tasks.py [--user-page FILE]` | payloads for the one-time identity fixes; `--user-page` reads a saved copy of your arXiv articles list so the journal-ref list can deep-link each form | local only |
 | `scripts/wikidata_apply.py [--apply] [--check-account]` | apply the Wikidata diff | apply: **yes, Wikidata** |
 | `scripts/validate.py [--fix-counts] [--strict]` | schema check + shipped-bug regressions + selftest; `--fix-counts` refreshes the corpus sizes stated in the docs. Exits 1 on a structural failure (which stops `update.py`), 0 on a stale count; `--strict` makes both fatal | `--fix-counts`: the doc sentences |

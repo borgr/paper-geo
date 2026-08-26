@@ -17,42 +17,57 @@ holds the instructions; nothing here repeats them.
 the page gets visibly shorter.
 
 1. **Wikipedia mentions 3 of your coinages across 6 article(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
-2. **1 paper listed twice on Scholar** — tick both rows on your Scholar profile and press *Merge*; both titles and the link to the second row are in the section.
 
 **As much as you have patience for.** Per-paper clicking, because
 there is no write API behind either surface — and both are ordered so
 that stopping early still captures most of the value.
 
-3. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
-4. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
+2. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
+3. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
+4. **Citations on a Scholar record you cannot see (7, ~161 citations)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
 
 ## Waiting on the outside world
 
 - **2026-10-04** — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.
 - **2026-11-04** — Crossref and DataCite auto-update only fire on newly deposited metadata that already carries your iD, so the proof is a work whose ORCID source is Crossref or DataCite rather than your own name -- which cannot appear until something you publish is deposited.
 
-## Coverage: Google Scholar and the corpus disagree
+## Citations on a Scholar record you cannot see (7, ~161 citations)
 
-Scholar lists **117** works and matched **106** of the corpus's **113**. Scholar is
-the one list of your papers that is built by a different process, so it is the
-only check that can see a paper this pipeline never received.
+Scholar indexes preprints and theses the APIs do not, so a profile row should
+always count *more* than OpenAlex and Semantic Scholar. Where it counts less,
+the rest of the count is on a second record Scholar parsed out of somebody's
+reference list — a mangled title, a misspelled author, initials only. Merging
+the two adds those citations to yours.
 
-Every bucket in full, including what is truncated below:
-[`build/scholar_diff.json`](build/scholar_diff.json) — local only, because
-`build/` is not committed. `python update.py --step audit` writes it, and after
-a fresh clone that is the one command between you and the file.
+Each row is a search. Open it, and if a result is your paper under a second
+record, tick your own row and that one on your profile and press *Merge*. A
+gap can also be plain indexing lag, so read the result before merging: a wrong
+merge attaches somebody else's paper to your name.
 
-### 1 paper listed twice on Scholar
+Full detail, including the 200-odd records filed under an initials-only form of
+your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).
 
-Two rows for one paper splits its citation count, and nothing here can fix
-it: tick both rows and press *Merge*. Both titles are below, because on the
-profile they sort apart and neither reads as the other's duplicate.
-
-Open <https://scholar.google.com/citations?user=8b8IhUYAAAAJ&view_op=list_works&sortby=title>.
-
-- [ ] `automated-discovery-has-no-universally-superior-harness`
-      - one row: Automated Discovery Has No Universally Superior Harness
-      - the other: No Harness Rules Them All: Harness Choice in Automated Discovery — <https://scholar.google.com/citations?view_op=view_citation&hl=en&user=8b8IhUYAAAAJ&citation_for_view=8b8IhUYAAAAJ:tuHXwOkdijsC>
+- [ ] **95 citations** — tinyBenchmarks: evaluating LLMs with fewer examples
+      - Scholar 199 vs 294 at the APIs
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22tinyBenchmarks%3A%20evaluating%20LLMs%20with%20fewer%20examples%22)
+- [ ] **37 citations** — Elements of World Knowledge (EWoK): A Cognition-Inspired Framewo
+      - Scholar 31 vs 68 at the APIs
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Elements%20of%20World%20Knowledge%20%28EWoK%29%3A%20A%20Cognition-Inspired%20Framework%20for%20Evaluating%20Basic%20World%20Knowledge%20in%20Language%20Models%22)
+- [ ] **13 citations** — The Mighty ToRR: A Benchmark for Table Reasoning and Robustness
+      - Scholar 0 vs 13 at the APIs
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22The%20Mighty%20ToRR%3A%20A%20Benchmark%20for%20Table%20Reasoning%20and%20Robustness%22)
+- [ ] **6 citations** — Beneath the Surface of Consistency: Exploring Cross-lingual Know
+      - Scholar 13 vs 19 at the APIs
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Beneath%20the%20Surface%20of%20Consistency%3A%20Exploring%20Cross-lingual%20Knowledge%20Representation%20Sharing%20in%20LLMs%22)
+- [ ] **4 citations** — CommonLID: Re-evaluating State-of-the-Art Language Identificatio
+      - Scholar 3 vs 7 at the APIs
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22CommonLID%3A%20Re-evaluating%20State-of-the-Art%20Language%20Identification%20Performance%20on%20Web%20Data%22)
+- [ ] **3 citations** — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Co
+      - Scholar 16 vs 19 at the APIs
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22LiveXiv%20--%20A%20Multi-Modal%20Live%20Benchmark%20Based%20on%20Arxiv%20Papers%20Content%22)
+- [ ] **3 citations** — Mediators in Determining what Processing BERT Performs First
+      - Scholar 13 vs 16 at the APIs
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Mediators%20in%20Determining%20what%20Processing%20BERT%20Performs%20First%22)
 
 ## Identity surfaces (1 open)
 
@@ -147,7 +162,7 @@ its own form.
 1. *Weak here.* Scholar merges preprint and published versions largely on
    venue agreement, and a venue-less arXiv record can stay a separate
    cluster with the citations split across the two.
-   Measured on your own profile: **1 split pair out of 113**, so for this
+   Measured on your own profile: **0 split pairs out of 113**, so for this
    corpus that is mostly already handled — do not do this for that reason.
 2. **The arXiv DataCite record gains a `container-title`.** This is the real
    one and it is not visible on Scholar at all: that field is what flows to

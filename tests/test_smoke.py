@@ -1489,6 +1489,63 @@ class TestLedgerAdviceMatchesTheEvidence(unittest.TestCase):
             self.assertEqual(0, json.load(f)["example.org/thing"]["since_ok"])
 
 
+class TestAStrayCopyIsNotEveryPaperSharingAToken(unittest.TestCase):
+    """The two ways `scholar_strays.py` reports work nobody needs to do.
+
+    Both fired on the first live run. The gap pass has to stay directional -- Scholar
+    counting *more* than the APIs is the normal case and reporting it would list the
+    whole profile. And Crossref's `query.author` is a loose bibliographic search rather
+    than an author filter, so "Leshem Chosen" answered with a 1970s plant-senescence
+    paper by Y Leshem; the searched form has to actually be on the record.
+    """
+
+    PAPERS = [{"slug": "a", "title": "A Paper About Things", "citations": 100},
+              {"slug": "b", "title": "Another Paper Entirely", "citations": 10}]
+
+    def test_only_a_gap_in_scholars_favour_is_silence(self):
+        import scholar_strays as ss
+        diff = {"paired": [
+            {"slug": "a", "scholar_citations": 40, "scholar_url": "u"},   # 60 missing
+            {"slug": "b", "scholar_citations": 99, "scholar_url": "u"}]}  # Scholar ahead
+        got = ss.undercounted(self.PAPERS, diff)
+        self.assertEqual([r["slug"] for r in got], ["a"])
+        self.assertEqual(got[0]["gap"], 60)
+
+    def test_a_small_or_proportionally_tiny_gap_is_indexing_lag(self):
+        import scholar_strays as ss
+        diff = {"paired": [
+            {"slug": "a", "scholar_citations": 98, "scholar_url": "u"},   # 2, under GAP_MIN
+            {"slug": "b", "scholar_citations": 9, "scholar_url": "u"}]}   # 1, under both
+        self.assertEqual(ss.undercounted(self.PAPERS, diff), [])
+
+    def test_the_searched_name_has_to_be_on_the_record(self):
+        import scholar_strays as ss
+        cfg = {"identity": {"name": "Leshem Choshen",
+                            "name_variants": ["Choshen, Leshem"],
+                            "name_typos": ["Leshem Chosen"]}}
+        loose = [{"index": "Crossref", "url": "x", "doi": "10.1/x",
+                  "title": "Plant senescence processes and free radicals",
+                  "year": 1988, "citations": 138, "authors": "Y Leshem",
+                  "author_list": ["Y Leshem"]}]
+        real = [{"index": "Crossref", "url": "y", "doi": "10.1/y",
+                 "title": "A Paper About Things", "year": 2024, "citations": 5,
+                 "authors": "Leshem Chosen", "author_list": ["Leshem Chosen"]}]
+        calls = []
+
+        def fake(name, mailto, batch):
+            calls.append(name)
+            return [dict(r) for r in batch] if name == "Leshem Chosen" else []
+
+        ss._openalex_by_name = lambda n, m: fake(n, m, loose)
+        ss._crossref_by_name = lambda n, m: fake(n, m, real)
+        try:
+            got = ss.typo_records(cfg, self.PAPERS, None)
+        finally:
+            importlib.reload(ss)
+        self.assertEqual([r["title"] for r in got], ["A Paper About Things"])
+        self.assertEqual(got[0]["matched"], "a")
+
+
 class TestPacedHostsAreTheOnesWeHammer(unittest.TestCase):
     """Every host this program fetches in a per-paper loop needs a `PACE` entry.
 

@@ -122,6 +122,9 @@ def step_audit(cfg, args) -> None:
     """
     run([sys.executable, "scripts/audit_identity.py"])
     run([sys.executable, "scripts/scholar_check.py"])
+    # After the Scholar diff, which is the only source of the per-row citation counts
+    # its first pass compares against.
+    run([sys.executable, "scripts/scholar_strays.py", "--quiet"])
     run([sys.executable, "scripts/identity_tasks.py"])
     # Wikipedia is read here for the same reason as the rest of this step: it is a surface we
     # do not control, and the only actions available on it are proposals an editor may
@@ -289,6 +292,10 @@ PLAN = (
      "one paste per paper into the Add Papers form, highest-citation first; every URL "
      "is in the section — read its first paragraph first, because a dated follow-up may "
      "do all of it for you"),
+    ("Citations on a Scholar record you cannot see", "afternoon",
+     "one search each, and a merge only where the result really is your paper. The "
+     "biggest single gap on the page, and the only section where the payoff is "
+     "citations you already earned rather than a surface that reads better"),
     ("listed twice on Scholar", "minute",
      "tick both rows on your Scholar profile and press *Merge*; both titles and the "
      "link to the second row are in the section"),
@@ -807,6 +814,56 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
     return L
 
 
+def scholar_split_records() -> list[str]:
+    """The worklist section for `build/scholar_strays.json`, or nothing.
+
+    Only the two passes whose remedy is one merge each. The `not in the bibliography`
+    pass lands in `tasks/scholar_strays.md` and not here -- it is a list to read, not a
+    list of edits, and most of its rows are other people.
+    """
+    try:
+        with open(os.path.join(ROOT, "build", "scholar_strays.json")) as f:
+            st = json.load(f)
+    except (OSError, ValueError):
+        return []
+    rows = [dict(r, kind="undercount") for r in st.get("undercounted") or []]
+    rows += [dict(r, kind="name form") for r in st.get("typo_records") or []
+             if r.get("matched")]
+    rows += [dict(r, kind="split", gap=sum(x["citations"] for x in r["records"][1:]))
+             for r in st.get("split_records") or []]
+    if not rows:
+        return []
+    rows.sort(key=lambda r: -(r.get("gap") or r.get("citations") or 0))
+    at_stake = sum(r.get("gap") or r.get("citations") or 0 for r in rows)
+    L = [f"## Citations on a Scholar record you cannot see ({len(rows)}, "
+         f"~{at_stake} citations)", "",
+         "Scholar indexes preprints and theses the APIs do not, so a profile row should",
+         "always count *more* than OpenAlex and Semantic Scholar. Where it counts less,",
+         "the rest of the count is on a second record Scholar parsed out of somebody's",
+         "reference list — a mangled title, a misspelled author, initials only. Merging",
+         "the two adds those citations to yours.", "",
+         "Each row is a search. Open it, and if a result is your paper under a second",
+         "record, tick your own row and that one on your profile and press *Merge*. A",
+         "gap can also be plain indexing lag, so read the result before merging: a wrong",
+         "merge attaches somebody else's paper to your name.", "",
+         "Full detail, including the 200-odd records filed under an initials-only form of",
+         "your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).", ""]
+    for r in rows[:15]:
+        gap = r.get("gap") or r.get("citations") or 0
+        why = (f"Scholar {r['scholar_citations']} vs {r['index_citations']} at the APIs"
+               if r["kind"] == "undercount" else
+               f"filed as *{r.get('searched_as')}* at {r.get('index')}"
+               if r["kind"] == "name form" else
+               f"{len(r['records'])} OpenAlex records for one title")
+        L += [f"- [ ] **{gap} citations** — {(r.get('title') or '')[:64]}",
+              f"      - {why}",
+              f"      - [search Scholar for it]({r['search']})"]
+    if len(rows) > 15:
+        L.append(f"- … and {len(rows) - 15} more in "
+                 "[`tasks/scholar_strays.md`](tasks/scholar_strays.md), same order")
+    return L + [""]
+
+
 def upstream_gaps(papers: list[dict], cfg) -> list[str]:
     """Papers the corpus has only because an override put them there.
 
@@ -947,6 +1004,7 @@ def step_worklist(cfg, args) -> None:
              "reading of each external surface is [tasks/identity_audit.md](tasks/identity_audit.md).", ""]
     lines += due_followups()
     lines += scholar_gaps(scholar, cfg)
+    lines += scholar_split_records()
     lines += upstream_gaps(papers, cfg)
 
     # The papers themselves and not just their count: the URL to paste into the Add

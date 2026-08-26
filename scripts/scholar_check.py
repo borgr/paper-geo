@@ -899,7 +899,14 @@ def main() -> None:
            "title_variants": sorted(variants, key=lambda v: -v["score"]),
            "scholar_duplicates": sorted(dupes, key=lambda v: -v["score"]),
            "not_in_corpus": sorted(missing, key=lambda r: -r["citations"]),
-           "not_on_scholar": sorted(absent, key=lambda p: -(p.get("citations") or 0))}
+           "not_on_scholar": sorted(absent, key=lambda p: -(p.get("citations") or 0)),
+           # Per-row counts for the matched rows, which no other file has: Scholar
+           # normally counts *more* than the API indexes, so a row counting fewer is
+           # the signature of a split Scholar record. `scholar_strays.py` reads it.
+           "paired": [{"slug": r["slug"], "scholar": r["title"],
+                       "scholar_citations": r.get("citations") or 0,
+                       "scholar_url": r.get("url")}
+                      for r in rows if r.get("slug")]}
     with open(os.path.join(BUILD, "scholar_diff.json"), "w") as f:
         json.dump(out, f, indent=1)
 
