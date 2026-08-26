@@ -278,6 +278,11 @@ counting less means Scholar parsed a second record for that paper out of somebod
 reference list and the citations are accruing there. The remedy is Scholar's own merge,
 and the output is one phrase-quoted search per row.
 
+Its last pass asks OpenAlex once per paper, and OpenAlex meters search queries: 100 a
+day free, then a 429 until midnight UTC. So the pass is partial by design — answers
+cache in `build/openalex_splits.json`, the task file says how far it got, and running
+it again the next day resumes there. `--skip-openalex` drops the pass entirely.
+
 `identity_tasks.py` writes the payloads into [`tasks/`](tasks/), committed on purpose
 since these are lists a human works through over days — plus one from
 `scholar_check.py`:
@@ -498,7 +503,7 @@ and the one place the review is genuinely cheap.
 | `scripts/build_site.py [--deploy]` | generate the site | deploy: **yes** |
 | `scripts/audit_identity.py [--no-hf]` | live-read ORCID, arXiv, Wikidata, HF, S2 | local only |
 | `scripts/scholar_check.py [--quiet]` | diff your Google Scholar profile against the corpus — the only check that can see a paper the pipeline never received | local only |
-| `scripts/scholar_strays.py [--quiet] [--skip-openalex] [--limit N]` | copies of your papers that Scholar indexed separately, found by citation gap against the APIs; needs `scholar_check.py` first | local only |
+| `scripts/scholar_strays.py [--quiet] [--skip-openalex] [--limit N]` | copies of your papers that Scholar indexed separately, found by citation gap against the APIs; needs `scholar_check.py` first, and its OpenAlex pass resumes across days | local only |
 | `scripts/identity_tasks.py [--user-page FILE]` | payloads for the one-time identity fixes; `--user-page` reads a saved copy of your arXiv articles list so the journal-ref list can deep-link each form | local only |
 | `scripts/wikidata_apply.py [--apply] [--check-account]` | apply the Wikidata diff | apply: **yes, Wikidata** |
 | `scripts/validate.py [--fix-counts] [--strict]` | schema check + shipped-bug regressions + selftest; `--fix-counts` refreshes the corpus sizes stated in the docs. Exits 1 on a structural failure (which stops `update.py`), 0 on a stale count; `--strict` makes both fatal | `--fix-counts`: the doc sentences |

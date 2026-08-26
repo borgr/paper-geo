@@ -27,13 +27,20 @@ count more. Where it counts less, the difference is on another record.
 
 ## Copies of your papers filed under another form of your name (0)
 
-None found at OpenAlex or Crossref.
+Nothing at Crossref, and OpenAlex refused every query: it meters its search
+endpoint at 100 free queries a day, and today's are spent. This pass saw one
+of its two sources.
 
 ## Filed under your name forms but not in the bibliography (0)
 
-None.
+Nothing at Crossref, and OpenAlex refused every query: it meters its search
+endpoint at 100 free queries a day, and today's are spent. This pass saw one
+of its two sources.
 
 ## Papers OpenAlex holds twice (0)
 
-Skipped with `--skip-openalex`.
+**Partial: 0 of 111 papers checked.** OpenAlex meters its search endpoint at
+100 free queries a day, and today's are spent. Every answer is cached, so
+re-running `python scripts/scholar_strays.py` tomorrow resumes where this one
+stopped.
 

@@ -41,6 +41,7 @@ import sys
 import tempfile
 import time
 import unittest
+import urllib.error
 import urllib.parse
 from unittest import mock
 
@@ -1546,6 +1547,56 @@ class TestAStrayCopyIsNotEveryPaperSharingAToken(unittest.TestCase):
         self.assertEqual(got[0]["matched"], "a")
 
 
+class TestAMeteredRefusalIsNotRetried(unittest.TestCase):
+    """A 429 that means "no credits" has to end the host, not start a backoff.
+
+    OpenAlex bills `.search:` filters against a free daily 100 and answers the 101st
+    with a 429 whose `retryAfter` is hours. `get`'s backoff read that as congestion and
+    spent up to four minutes per URL, so a 113-paper loop became a run with no end --
+    live for 31 minutes before it was killed, having written nothing.
+    """
+
+    def _refusal(self, url, remaining="0", body=b""):
+        import email.message
+        h = email.message.Message()
+        h["x-ratelimit-remaining-usd"] = remaining
+        h["x-ratelimit-reset"] = "26000"
+        return urllib.error.HTTPError(url, 429, "Too Many Requests", h, io.BytesIO(body))
+
+    def _run(self, err):
+        import common
+        common._BUDGET_OUT.clear()
+        calls = []
+
+        def fake(req, timeout=None):
+            calls.append(req.full_url)
+            raise err
+
+        with mock.patch.object(common.urllib.request, "urlopen", fake), \
+             mock.patch.object(common.time, "sleep", lambda _s: None):
+            first = common.get("https://api.openalex.org/works?filter=title.search:a")
+            second = common.get("https://api.openalex.org/works?filter=title.search:b")
+        return calls, first, second
+
+    def test_the_host_is_dropped_after_one_refusal(self):
+        import common
+        calls, first, second = self._run(
+            self._refusal("https://api.openalex.org/works?filter=title.search:a"))
+        self.assertEqual(first, b"")
+        self.assertEqual(second, b"", "a second URL on a spent host still asked")
+        self.assertEqual(len(calls), 1, f"retried a refusal that cannot succeed: {calls}")
+        self.assertEqual(common.budget_reset("api.openalex.org"), 26000)
+        common._BUDGET_OUT.clear()
+
+    def test_a_plain_429_is_still_retried(self):
+        import common
+        calls, _f, _s = self._run(
+            self._refusal("https://api.openalex.org/works?filter=title.search:a",
+                          remaining="0.05", body=b"slow down"))
+        self.assertGreater(len(calls), 2, "congestion has to keep its backoff")
+        self.assertIsNone(common.budget_reset("api.openalex.org"))
+
+
 class TestPacedHostsAreTheOnesWeHammer(unittest.TestCase):
     """Every host this program fetches in a per-paper loop needs a `PACE` entry.
 
@@ -1556,11 +1607,24 @@ class TestPacedHostsAreTheOnesWeHammer(unittest.TestCase):
     means no single call site can be trusted to notice when it is the one bursting.
     """
 
-    def test_arxiv_and_s2_are_paced(self):
+    def test_every_per_paper_host_is_paced(self):
+        from common import PACE
+        for host in ("arxiv.org", "api.semanticscholar.org",
+                     "api.openalex.org", "api.crossref.org"):
+            self.assertIn(host, PACE, f"{host} is fetched once per paper and unpaced")
+            self.assertGreater(PACE[host], 0.0, f"{host}'s gap is not a real gap")
+
+    def test_arxiv_and_s2_ask_for_a_full_second(self):
         from common import PACE
         for host in ("arxiv.org", "api.semanticscholar.org"):
-            self.assertIn(host, PACE, f"{host} is fetched once per paper and unpaced")
             self.assertGreaterEqual(PACE[host], 1.0, f"{host}'s gap is not a real gap")
+
+    def test_the_polite_pool_hosts_send_a_contact_address(self):
+        """OpenAlex and Crossref read it out of the User-Agent, not out of the query."""
+        import common
+        for host in common.POLITE:
+            self.assertIn(host, common.PACE, f"{host} is in the polite pool but unpaced")
+        self.assertTrue(common._contact(), "identity.email is what the polite pool reads")
 
 
 class TestARearrangedTitleIsTheSamePaper(unittest.TestCase):

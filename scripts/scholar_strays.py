@@ -38,10 +38,11 @@ import argparse
 import json
 import os
 import sys
+import textwrap
 import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, ROOT, TASKS, clean_latex, get_json,  # noqa: E402
+from common import (BUILD, DATA, ROOT, TASKS, budget_reset, clean_latex, get_json,  # noqa: E402
                     load_config, name_match, norm_title, read_yaml, title_tokens)
 
 # Below this the gap is indexing lag rather than a split record. Both conditions have
@@ -179,36 +180,72 @@ def typo_records(cfg, papers, mailto) -> list[dict]:
     return sorted(out, key=lambda r: -(r.get("citations") or 0))
 
 
-def split_records(papers, mailto, limit=None) -> list[dict]:
+def split_records(papers, mailto, limit=None) -> dict:
     """Corpus titles that OpenAlex holds more than one record for.
 
-    One fetch per paper, so this is the expensive pass. A split at OpenAlex is not
-    itself a Scholar problem -- it is evidence that the paper's metadata is mangled in
-    a way Scholar splits on too, and the search string is the same either way.
+    Returns `rows`, `budget_reset`, `checked` and `total`. One metered search per paper
+    against a free daily allowance of 100, so a full corpus takes more than one day:
+    every answer is cached in `build/openalex_splits.json` and a run resumes at the
+    first paper without one. `budget_reset` is the seconds until more credits, or None
+    if the pass finished.
+
+    A split at OpenAlex is not itself a Scholar problem -- it is evidence that the
+    paper's metadata is mangled in a way Scholar splits on too, and the search string is
+    the same either way.
     """
-    out = []
+    cache_path = os.path.join(BUILD, "openalex_splits.json")
+    try:
+        with open(cache_path) as f:
+            cache = json.load(f)
+    except (OSError, ValueError):
+        cache = {}
+    asked = 0
     for p in papers[:limit]:
-        title = p.get("title") or ""
-        if len(title) < 25:
+        title, slug = p.get("title") or "", p.get("slug")
+        if len(title) < 25 or slug in cache:
             continue
         q = ("https://api.openalex.org/works?per-page=25&select=id,display_name,"
              "cited_by_count,publication_year&filter=title.search:"
              + urllib.parse.quote(" ".join(title.split()[:12])))
         d = get_json(q + (f"&mailto={mailto}" if mailto else ""))
+        if budget_reset("api.openalex.org") is not None:
+            break
+        asked += 1
         want = title_tokens(title)
-        same = [w for w in (d or {}).get("results") or []
-                if want and len(want & title_tokens(w.get("display_name"))) / len(want) > 0.8]
-        if len(same) < 2:
-            continue
-        out.append({"slug": p.get("slug"),
-                    "title": p.get("title_display") or title,
-                    "records": [{"url": w.get("id"), "title": w.get("display_name"),
-                                 "year": w.get("publication_year"),
-                                 "citations": w.get("cited_by_count") or 0}
-                                for w in sorted(same,
-                                                key=lambda w: -(w.get("cited_by_count") or 0))],
-                    "search": scholar_query(p.get("title_display") or title)})
-    return sorted(out, key=lambda r: -sum(x["citations"] for x in r["records"]))
+        cache[slug] = [{"url": w.get("id"), "title": w.get("display_name"),
+                        "year": w.get("publication_year"),
+                        "citations": w.get("cited_by_count") or 0}
+                       for w in (d or {}).get("results") or []
+                       if want and len(want & title_tokens(w.get("display_name"))) / len(want) > 0.8]
+    if asked:
+        os.makedirs(BUILD, exist_ok=True)
+        with open(cache_path, "w") as f:
+            json.dump(cache, f, indent=1)
+
+    out = [{"slug": p.get("slug"),
+            "title": p.get("title_display") or p.get("title"),
+            "records": sorted(cache[p["slug"]], key=lambda w: -w["citations"]),
+            "search": scholar_query(p.get("title_display") or p.get("title"))}
+           for p in papers[:limit]
+           if len(cache.get(p.get("slug")) or []) > 1]
+    checkable = [p for p in papers[:limit] if len(p.get("title") or "") >= 25]
+    return {"rows": sorted(out, key=lambda r: -sum(x["citations"] for x in r["records"])),
+            "budget_reset": budget_reset("api.openalex.org"),
+            "checked": len([p for p in checkable if p.get("slug") in cache]),
+            "total": len(checkable)}
+
+
+# OpenAlex bills `.search:` filters against a free daily allowance, so a run can be
+# half-sighted rather than clean and every section that reads OpenAlex has to say which
+# it was.
+METER = ("meters its search endpoint at 100 free queries a day, and today's are spent.")
+HALF_BLIND = [textwrap.fill(
+    f"Nothing at Crossref, and OpenAlex refused every query: it {METER} This pass saw "
+    "one of its two sources.", 78, break_on_hyphens=False)]
+
+
+def out_of_credit(state: dict) -> bool:
+    return (state.get("openalex") or {}).get("budget_reset") is not None
 
 
 HOW = [
@@ -255,11 +292,15 @@ def write_page(state: dict) -> str:
             L.append(f"| {r['citations']} | {r['searched_as']} | `{r['matched']}` "
                      f"| [{r['index']}]({r['url']}) | [search]({r['search']}) |")
         L.append("")
+    elif out_of_credit(state):
+        L += [*HALF_BLIND, ""]
     else:
         L += ["None found at OpenAlex or Crossref.", ""]
 
     L += [f"## Filed under your name forms but not in the bibliography ({len(other)})", ""]
-    if other:
+    if not other and out_of_credit(state):
+        L += [*HALF_BLIND, ""]
+    elif other:
         L += ["Either somebody else with a similar name, or a paper the bibliography never",
               "received. Only the second kind is yours to act on, and it goes into",
               "`orig.bib`, never into the output.", "",
@@ -277,7 +318,15 @@ def write_page(state: dict) -> str:
         L += ["None.", ""]
 
     s = state["split_records"]
+    oa = state.get("openalex") or {}
     L += [f"## Papers OpenAlex holds twice ({len(s)})", ""]
+    partial = out_of_credit(state) and not state["openalex_skipped"]
+    if partial:
+        L += [textwrap.fill(
+            f"**Partial: {oa.get('checked')} of {oa.get('total')} papers checked.** "
+            f"OpenAlex {METER} Every answer is cached, so re-running "
+            "`python scripts/scholar_strays.py` tomorrow resumes where this one stopped.",
+            78, break_on_hyphens=False), ""]
     if state["openalex_skipped"]:
         L += ["Skipped with `--skip-openalex`.", ""]
     elif s:
@@ -289,7 +338,7 @@ def write_page(state: dict) -> str:
                 L.append(f"      - {x['citations']} cites — {(x['title'] or '')[:70]} "
                          f"— <{x['url']}>")
         L.append("")
-    else:
+    elif not partial:
         L += ["None. Every corpus title resolves to one OpenAlex record.", ""]
 
     os.makedirs(TASKS, exist_ok=True)
@@ -321,8 +370,11 @@ def main() -> int:
              "openalex_skipped": args.skip_openalex,
              "undercounted": undercounted(papers, diff),
              "typo_records": typo_records(cfg, papers, mailto),
-             "split_records": ([] if args.skip_openalex
-                               else split_records(papers, mailto, args.limit))}
+             "split_records": [], "openalex": {}}
+    if not args.skip_openalex:
+        sp = split_records(papers, mailto, args.limit)
+        state["split_records"], state["openalex"] = sp.pop("rows"), sp
+    state["openalex"]["budget_reset"] = budget_reset("api.openalex.org")
     os.makedirs(BUILD, exist_ok=True)
     with open(os.path.join(BUILD, "scholar_strays.json"), "w") as f:
         json.dump(state, f, indent=1)

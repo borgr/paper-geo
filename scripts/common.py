@@ -235,12 +235,43 @@ def health_report() -> list[str]:
 #          caller. A key raises the ceiling; it does not remove it.
 #   3s     arXiv's stated delay for programmatic access. `export.arxiv.org` is a
 #          different host and keeps its own explicit sleep.
-PACE = {"api.semanticscholar.org": 1.05, "arxiv.org": 3.0}
+# OpenAlex and Crossref answer 429 to a burst rather than queueing it, and `get`'s
+# backoff then spends up to four minutes per URL -- a 113-paper loop stops being a
+# slow run and becomes a run that never ends.
+PACE = {"api.semanticscholar.org": 1.05, "arxiv.org": 3.0,
+        "api.openalex.org": 0.2, "api.crossref.org": 0.2}
+# Both read a contact address out of the User-Agent and serve it from a separate
+# pool. The address is `identity.email` from `config.yaml`, which is already public.
+POLITE = ("api.openalex.org", "api.crossref.org")
 _last_hit: dict[str, float] = {}
+_CONTACT: str | None = None
+# host -> seconds until its budget resets. OpenAlex meters its search endpoints: a
+# `.search:` filter costs 10 credits against a free daily 1000 ($0.10), so the 113rd
+# per-paper query of a day is refused however slowly it is paced. The refusal is a 429
+# whose `retryAfter` is hours, so retrying it is the one case where backoff cannot win
+# and every later call to the same host is already answered.
+_BUDGET_OUT: dict[str, int] = {}
+
+
+def host_of(url: str) -> str:
+    return (re.match(r"https?://([^/?#]+)", url) or [None, ""])[1]
+
+
+def budget_reset(host: str) -> int | None:
+    """Seconds until `host`'s metered budget resets, or None if it has not refused us."""
+    return _BUDGET_OUT.get(host)
+
+
+def _contact() -> str:
+    """`identity.email`, or `""`. Cached: `get` asks once per request."""
+    global _CONTACT
+    if _CONTACT is None:
+        _CONTACT = ((load_config().get("identity") or {}).get("email") or "").strip()
+    return _CONTACT
 
 
 def _pace(url: str) -> None:
-    host = (re.match(r"https?://([^/?#]+)", url) or [None, ""])[1]
+    host = host_of(url)
     gap = PACE.get(host)
     if not gap:
         return
@@ -250,6 +281,17 @@ def _pace(url: str) -> None:
     # Stamped after the wait, so the clock starts when the request leaves rather than
     # when it was queued.
     _last_hit[host] = time.monotonic()
+
+
+def _out_of_budget(e: urllib.error.HTTPError) -> bool:
+    """A 429 that says the day's credits are spent, and records when they return."""
+    reset = e.headers.get("x-ratelimit-reset")
+    spent = (e.headers.get("x-ratelimit-remaining-usd") == "0"
+             or b"Insufficient budget" in (e.read() if e.fp else b""))
+    if not spent:
+        return False
+    _BUDGET_OUT[host_of(e.url)] = int(reset) if (reset or "").isdigit() else 0
+    return True
 
 
 def get(url: str, timeout: int = 40, retries: int = 6, accept: str | None = None) -> bytes:
@@ -263,11 +305,15 @@ def get(url: str, timeout: int = 40, retries: int = 6, accept: str | None = None
     only, never `config.yaml` -- that file is committed.
     """
     headers = dict(UA)
+    if any(h in url for h in POLITE) and _contact():
+        headers["User-Agent"] += f" mailto:{_contact()}"
     key = os.environ.get("S2_API_KEY", "").strip()
     if key and "api.semanticscholar.org" in url:
         headers["x-api-key"] = key
     if accept:
         headers["Accept"] = accept
+    if host_of(url) in _BUDGET_OUT:
+        return b""
     delay = 4.0
     for attempt in range(retries):
         try:
@@ -277,6 +323,9 @@ def get(url: str, timeout: int = 40, retries: int = 6, accept: str | None = None
             note_fetch(url, True)
             return body
         except urllib.error.HTTPError as e:
+            if e.code == 429 and _out_of_budget(e):
+                note_fetch(url, False, "429 budget")
+                return b""
             if e.code in (429, 503) and attempt < retries - 1:
                 time.sleep(delay)
                 delay *= 2
