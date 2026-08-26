@@ -16,7 +16,7 @@ holds the instructions; nothing here repeats them.
 **One edit each, and each one closes a section outright.** This is where
 the page gets visibly shorter.
 
-1. **Wikipedia describes your work in 3 place(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
+1. **Wikipedia mentions 3 of your coinages across 6 article(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
 2. **1 paper listed twice on Scholar** — tick both rows on your Scholar profile and press *Merge*; both titles and the link to the second row are in the section.
 
 **As much as you have patience for.** Per-paper clicking, because
@@ -96,7 +96,7 @@ undo than an unclaimed one, and it makes the split look deliberate.
 - [ ] 8 cites — Holmes: A Benchmark to Assess the Linguistic Competence  — <https://www.semanticscholar.org/paper/274625741>
 - … and 22 more in [`tasks/s2_merge.md`](tasks/s2_merge.md), same order
 
-## Wikipedia describes your work in 3 place(s) — check the facts
+## Wikipedia mentions 3 of your coinages across 6 article(s) — check the facts
 
 Wikipedia carries roughly half the citations in AI answers, and WP:COI
 means you may not edit these. What you *can* do is the thing only an

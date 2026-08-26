@@ -281,7 +281,7 @@ PLAN = (
      "save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` "
      "first: two minutes, once, and it turns every hunt-by-eye row into a one-click "
      "link. Then the top few and stop — that section argues its own case honestly"),
-    ("Wikipedia describes your work", "minute",
+    ("Wikipedia mentions", "minute",
      "read each article and tick it if it is right. Only a wrong description is work, and "
      "it goes on the talk page -- you may not edit these, and a correct mention needs "
      "nothing from you"),
@@ -1212,8 +1212,9 @@ def step_worklist(cfg, args) -> None:
     wiki_items = [(t, [t]) for t in wiki.get("already_mentions") or []]
     wiki_items += [(c["term"], c["articles"]) for c in wiki.get("checks") or []]
     if wiki_items:
-        lines += [f"## Wikipedia describes your work in {len(wiki_items)} place(s) — check "
-                  f"the facts", "",
+        n_arts = len({a for _t, arts in wiki_items for a in arts})
+        lines += [f"## Wikipedia mentions {len(wiki_items)} of your coinages across "
+                  f"{n_arts} article(s) — check the facts", "",
                   "Wikipedia carries roughly half the citations in AI answers, and WP:COI",
                   "means you may not edit these. What you *can* do is the thing only an",
                   "author can: notice that a description is wrong. If it reads correctly,",
