@@ -45,7 +45,11 @@ Every `python` command in this repo that is read-only or writes only into `build
 `tasks/`, or a draft directory is yours to run, not the author's — and running it is
 how you find out whether the item you are about to write is even still open. The only
 commands reserved for the author: `--accept` on a sidecar draft, `sweep_github.py
-apply`, `build_site.py --deploy`, and `wikidata_apply.py --apply`. Ask before those.
+apply`, and `build_site.py --deploy`. Ask before those.
+
+Wikidata is yours, including `--apply` on `wikidata_apply.py`, `wikidata_people.py`, and
+`wikidata_orgs.py`. What reaches the author is an act with no write API behind it and a
+choice the records do not settle.
 
 ## Where things live
 

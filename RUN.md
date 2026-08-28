@@ -295,27 +295,32 @@ references, and an item made to hold an edge back to you is not that.
 A *group* with a public record deserves an item as much as a person does, and several in
 the corpus have none — so a paper cannot say what it is part of and
 the group cannot say what it produced. `wikidata_orgs.py` reads
-[data/wikidata_orgs.yaml](data/wikidata_orgs.yaml), which is hand-maintained, and writes a
-QuickStatements batch to `tasks/wikidata_orgs.qs`.
+[data/wikidata_orgs.yaml](data/wikidata_orgs.yaml), which is hand-maintained, and `--apply`
+creates what Wikidata lacks. Without it the same batch goes to `tasks/wikidata_orgs.qs` for
+QuickStatements instead.
 
 Every statement in that file carries the URL a reader checks it against, and a statement
 with no public page belongs under `needs` instead, where it reaches the worklist as a
 question. Each QID also sits beside a `note` naming what it is, and the run compares that
 note against the item's live label — so a mistyped value stops the run rather than shipping.
 
-Two passes, decided per group by whether Wikidata already has it. Nothing carrying the
-label or an alias means a `CREATE` with its labelled statements and references. An item that
-exists instead gets the edges into it: *main subject* (P921) on each corpus paper about it,
-*organizer* (P664) on each event it ran. Those wait for the run after creation, because
-QuickStatements cannot use an item it just made as a value, and they drop out once Wikidata
-states them — so pasting twice adds nothing.
+Two halves, decided per group by whether Wikidata already has it. Nothing carrying the
+label or an alias gets created with its labelled statements and references. An item that
+exists gets the edges into it — *main subject* (P921) on each corpus paper about it,
+*organizer* (P664) on each event it ran. `--apply` does both in one run. The QuickStatements
+route needs a second paste for the edges, because it cannot use an item it just made as a
+value.
+
+Every item created and every edge added is written to
+`data/wikidata_orgs_created.yaml`. The query service takes hours to report an edit, so that
+file is what stops a second run creating the group again.
 
 ### Items for the co-authors who have none
 
 An *author* statement needs an item on both ends, and most co-authors have no item — which
 is what leaves the majority of name mentions unresolvable. `wikidata_people.py` takes the
-ORCIDs the co-author pass collected, keeps the ones no item claims, and writes a batch that
-creates a person for each.
+ORCIDs the co-author pass collected, keeps the ones no item claims, and `--apply` creates a
+person for each. `--limit N` stops after N of them.
 
 Every value comes from a public record about that person rather than from their name. ORCID
 gives the name they publish under and the employer they list with no end date; OpenAlex
@@ -324,8 +329,16 @@ and says nothing about whether somebody publishes. Each statement cites the reco
 from, the employer is stated only where exactly one organisation item carries that name, and
 anyone neither record describes is left off the page rather than guessed at.
 
-Nothing follows by hand. The new items claim their ORCIDs, so the next co-author run matches
-them and writes the *author* statements on its own.
+The new items claim their ORCIDs, so the next co-author run matches them and writes the
+*author* statements on its own, reading `data/wikidata_people_created.yaml` for the ones the
+query service has not caught up with.
+
+A name Wikidata already carries under a human item is held rather than created, because a
+second item for somebody who already has one is a merge only an administrator can undo. The
+worklist asks which item each held person is, the answer goes under `wikidata_people` in
+[data/overrides.yaml](data/overrides.yaml), and the next run puts the ORCID on that item or
+creates a separate one. Every run also re-derives the items it created before and repairs
+what a since-improved rule now reads differently.
 
 ## 7. The one-time identity fixes
 
@@ -378,9 +391,9 @@ since these are lists a human works through over days — plus one from
 | `wikidata_coauthors.md` | co-author strings on your paper items and the items they resolve to |
 | `wikidata_coauthors.qs` | the ORCID-matched half of that as a batch, safe to paste unread |
 | `wikidata_orgs.md` | items for the groups the work belongs to, each statement with its source |
-| `wikidata_orgs.qs` | the same as a batch — creates the items, then connects them on the next run |
+| `wikidata_orgs.qs` | the same as a batch, written only while something is still uncreated |
 | `wikidata_people.md` | co-authors with an ORCID and no item, with the record each value came from |
-| `wikidata_people.qs` | the same as a batch — creates them, after which the *author* statements follow on their own |
+| `wikidata_people.qs` | the same as a batch, written only while something is still uncreated |
 | `s2_merge.md` | papers to pull onto the claimed Semantic Scholar page |
 | `scholar_strays.md` | Scholar searches that surface a second record for one paper, from `scholar_strays.py` |
 | `openalex_merge.md` | what to paste into the OpenAlex correction form |
@@ -459,8 +472,8 @@ export S2_API_KEY=…      # free, https://www.semanticscholar.org/product/api
 Without it, Semantic Scholar is reached through a rate-limit pool shared with every
 anonymous caller; when its search refuses, the Scholar check cannot resolve a missing
 paper and has to report that no index has it. The other is `WIKIDATA_BOT_PASSWORD`,
-read from the environment or the gitignored `.wikidata_bot` and used only by
-`wikidata_apply.py`, the one script that logs in anywhere.
+read from the environment or the gitignored `.wikidata_bot`. Every Wikidata write goes
+through `wikidata_apply.py`, the one place that logs in.
 
 ## 10. Unattended: what GitHub Actions does
 
@@ -594,8 +607,8 @@ and the one place the review is genuinely cheap.
 | `scripts/identity_tasks.py [--user-page FILE]` | payloads for the one-time identity fixes; `--user-page` reads a saved copy of your arXiv articles list so the journal-ref list can deep-link each form | local only |
 | `scripts/wikidata_apply.py [--apply] [--check-account]` | apply the Wikidata diff | apply: **yes, Wikidata** |
 | `scripts/wikidata_coauthors.py [--quiet] [--refresh]` | co-author name strings on your paper items, matched to author items by ORCID where one exists and by name where it does not; needs paper items to exist | local only |
-| `scripts/wikidata_orgs.py [--quiet]` | items for the groups in `data/wikidata_orgs.yaml`, creating those Wikidata lacks and connecting those it has | local only |
-| `scripts/wikidata_people.py [--refresh] [--quiet]` | items for the co-authors who have an ORCID and no item, built from ORCID and OpenAlex | local only |
+| `scripts/wikidata_orgs.py [--quiet] [--apply]` | items for the groups in `data/wikidata_orgs.yaml`, creating those Wikidata lacks and connecting those it has | apply: **yes, Wikidata** |
+| `scripts/wikidata_people.py [--refresh] [--quiet] [--apply] [--limit N]` | items for the co-authors who have an ORCID and no item, built from ORCID and OpenAlex; `--apply` also repairs the ones it created before | apply: **yes, Wikidata** |
 | `scripts/validate.py [--fix-counts] [--strict]` | schema check + shipped-bug regressions + selftest; `--fix-counts` refreshes the corpus sizes stated in the docs. Exits 1 on a structural failure (which stops `update.py`), 0 on a stale count; `--strict` makes both fatal | `--fix-counts`: the doc sentences |
 | `measure/check_structure.py [--links]` | the "A" checks | no |
 | `measure/fidelity.py [--ingest]` | the "C" diagnostic | no |
