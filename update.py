@@ -928,10 +928,10 @@ def wikidata_people() -> list[str]:
     if not st.get("create"):
         return []
     L = [f"## Wikidata items for the co-authors ({st['create']} to create)", "",
-         "Each of these people has an ORCID and no Wikidata item, so their name on your",
-         "papers cannot become an *author* statement. Every value comes from a public",
-         f"record about them, and between them they account for {st['mentions']} name",
-         "mentions across the corpus.", "",
+         f"Each of these people has an ORCID and no Wikidata item, so their name on your papers",
+         f"cannot become an *author* statement. Every value comes from a public record about them,",
+         f"and between them they carry {st['mentions']} name mentions across the corpus.",
+         "",
          "- [ ] **paste [`tasks/wikidata_people.qs`](tasks/wikidata_people.qs) into "
          "[QuickStatements](https://quickstatements.toolforge.org/#/batch)**",
          "      - the name, employer and evidence for each: "
