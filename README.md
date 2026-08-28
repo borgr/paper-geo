@@ -7,6 +7,49 @@ fixes the automatable part, and hands you a ranked list of what only you can do.
 Built for one researcher's corpus (113 papers, 33 repos) but config-driven: fork
 it, replace `config.yaml` and `data/`, and it runs for yours.
 
+## Start here
+
+Python 3.10 or newer, and two dependencies. Everything else is the standard library,
+so a run in three years needs nothing that has since moved.
+
+```bash
+git clone https://github.com/borgr/paper-geo && cd paper-geo
+pip install -r requirements.txt
+python update.py
+```
+
+That first run is read-only in the sense that matters. It writes only inside this
+checkout — `data/` holds the derived records, `build/` is gitignored scratch plus the
+rendered site, `tasks/` holds payloads to paste, and `WORKLIST.md` is the ranked list
+of what is left. No write reaches GitHub, arXiv, ORCID or Hugging Face until you pass
+`--apply` or `--deploy`.
+
+Then read two files. **`WORKLIST.md`** is what needs you, ranked by citations.
+**`build/site/index.html`** is the corpus as a reader meets it. [RUN.md](RUN.md) is
+the manual for everything after that.
+
+To point it at your own corpus, replace `identity` and `ids` in `config.yaml` and
+point `sources.bibtex_url` at your own `.bib`. Empty the `papers:` list in
+`data/papers.yaml` so the first run rebuilds it from that bibliography, and pass
+`python scripts/collect.py --allow-shrink` once, because the guard that refuses a run
+holding much less data than the last commit is otherwise doing its job.
+[docs/SETUP.md](docs/SETUP.md) is the account-by-account checklist that has to happen
+alongside it.
+
+## Where the site ends up
+
+The generator writes into `build/site/` and publishes to GitHub Pages, so **you do
+not need a domain to have somewhere to point at**. Without a dedicated domain, Pages
+serves a `<user>.github.io` repo at that name. For this corpus that is
+[borgr.github.io](https://borgr.github.io), with one page per paper beneath it.
+
+    https://borgr.github.io/papers/tinybenchmarks-evaluating-llms-with-fewer-examples/
+
+`site.repo` and `site.base_url` in `config.yaml` set both of those. Every canonical
+URL, sitemap entry and JSON-LD `@id` in the output is derived from them, so moving to
+a custom domain later is one config change and a rebuild rather than a hunt through
+generated files.
+
 ## Why
 
 Three separate systems have to find your work, and they have different entry

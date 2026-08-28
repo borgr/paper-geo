@@ -1620,6 +1620,34 @@ class TestTheSplitPassResumesTomorrow(unittest.TestCase):
             self.assertEqual(list(json.load(f)), ["p0"], "the paid-for answer was dropped")
 
 
+class TestTheReadmeSiteExampleIsTheRealOne(unittest.TestCase):
+    """The README's example paper URL has to be the one this config would publish.
+
+    It is the first concrete thing a reader clicks, and a stale one is worse than none
+    -- it teaches a URL shape that no longer exists. Derived here rather than trusted,
+    because `site.base_url` is a config field and the README is prose.
+    """
+
+    def test_the_example_url_is_built_from_config_and_a_real_paper(self):
+        import common
+        cfg = common.load_config()
+        site = cfg["site"]
+        readme = open(os.path.join(common.ROOT, "README.md")).read()
+        prefix = site["base_url"].rstrip("/") + site["papers_path"].rstrip("/") + "/"
+        found = re.findall(re.escape(prefix) + r"([a-z0-9-]+)/", readme)
+        self.assertTrue(found, f"README shows no paper URL under {prefix}")
+        slugs = {p["slug"] for p in
+                 common.read_yaml(os.path.join(common.DATA, "papers.yaml"))["papers"]}
+        for slug in found:
+            self.assertIn(slug, slugs, "README links a paper the corpus does not have")
+
+    def test_the_bare_site_link_is_the_configured_one(self):
+        import common
+        base = common.load_config()["site"]["base_url"].rstrip("/")
+        readme = open(os.path.join(common.ROOT, "README.md")).read()
+        self.assertIn(base, readme, "README names no published site")
+
+
 class TestAMeteredRefusalIsNotRetried(unittest.TestCase):
     """A 429 that means "no credits" has to end the host, not start a backoff.
 
