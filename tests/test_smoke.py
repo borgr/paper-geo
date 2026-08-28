@@ -4232,6 +4232,15 @@ class TestGroupItemsAreCreatedOnceAndOnlyOnEvidence(unittest.TestCase):
         st = wo.state_of({"g": self._ITEM}, {"a-paper": "Q1"})
         self.assertEqual(st["g"]["missing"], [("Q1", "P921", "Q999")])
 
+    def test_an_edge_this_repo_just_added_is_not_added_again(self):
+        wo = self._module()
+        wo.found = lambda _i: {"g": ["Q999"]}
+        # The query service has not caught up, so it reports the edge as absent.
+        wo.edges_present = lambda _p: set()
+        st = wo.state_of({"g": self._ITEM}, {"a-paper": "Q1"},
+                         {"edges": ["Q131426993 P664 Q999"]})
+        self.assertEqual(st["g"]["missing"], [("Q1", "P921", "Q999")])
+
     def test_two_items_carrying_the_name_stay_a_question(self):
         wo = self._module()
         wo.found = lambda _i: {"g": ["Q998", "Q999"]}

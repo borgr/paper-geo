@@ -5,54 +5,16 @@ Several projects in the corpus are run by groups Wikidata has no item for, so
 the papers cannot say what they are part of. Each statement below cites the
 public page it came from.
 
-Paste [`wikidata_orgs.qs`](wikidata_orgs.qs) into
-[QuickStatements](https://quickstatements.toolforge.org/#/batch). Creating an
-item goes out under your name, so this is the one step that is yours.
-
 ## BabyLM Challenge
 
-- does not exist yet
+- [Q141203819](https://www.wikidata.org/wiki/Q141203819)
 - *shared task and workshop series on sample-efficient language model pretraining*
 
-| property | value | source |
-| --- | --- | --- |
-| P31 | academic workshop series | [https://aclanthology.org/venues/babylm/](https://aclanthology.org/venues/babylm/) |
-| P31 | competition | [https://babylm.github.io/](https://babylm.github.io/) |
-| P101 | natural language processing | [https://babylm.github.io/](https://babylm.github.io/) |
-| P571 | first edition, CoNLL 2023 | [https://aclanthology.org/venues/babylm/](https://aclanthology.org/venues/babylm/) |
-| P856 | https://babylm.github.io/ | [https://babylm.github.io/](https://babylm.github.io/) |
-| P2037 | babylm | [https://github.com/babylm](https://github.com/babylm) |
-
-These existing items point at it, in the batch on the run after it has a QID
--- QuickStatements cannot use an item it just created as a value.
-
-- [call-for-papers-the-babylm-challenge-sample-efficient-pretra](https://www.wikidata.org/wiki/Q141029649) → P921
-- [findings-of-the-babylm-challenge-sample-efficient-pretrainin](https://www.wikidata.org/wiki/Q141029636) → P921
-- [call-for-papers-the-2nd-babylm-challenge-sample-efficient-pr](https://www.wikidata.org/wiki/Q141029663) → P921
-- [findings-of-the-second-babylm-challenge-sample-efficient-pre](https://www.wikidata.org/wiki/Q141029660) → P921
-- [babylm-turns-3-call-for-papers-for-the-2025-babylm-workshop](https://www.wikidata.org/wiki/Q141029669) → P921
-- [findings-of-the-third-babylm-challenge-accelerating-language](https://www.wikidata.org/wiki/Q141029699) → P921
-- [babylm-turns-4-and-goes-multilingual-call-for-papers-for-the](https://www.wikidata.org/wiki/Q141029784) → P921
+Every edge into it is already stated.
 
 ## EvalEval Coalition
 
-- does not exist yet
+- [Q141203820](https://www.wikidata.org/wiki/Q141203820)
 - *research coalition on the evaluation of AI evaluations*
 
-| property | value | source |
-| --- | --- | --- |
-| P31 | research consortium | [https://evalevalai.com/](https://evalevalai.com/) |
-| P101 | artificial intelligence | [https://evalevalai.com/](https://evalevalai.com/) |
-| P101 | evaluation | [https://evalevalai.com/](https://evalevalai.com/) |
-| P571 | GitHub organisation created | [https://github.com/evaleval](https://github.com/evaleval) |
-| P856 | https://evalevalai.com/ | [https://evalevalai.com/](https://evalevalai.com/) |
-| P2037 | evaleval | [https://github.com/evaleval](https://github.com/evaleval) |
-| P2002 | evaluatingevals | [https://github.com/evaleval](https://github.com/evaleval) |
-| P1416 | Hugging Face, P3831 host | [https://github.com/evaleval](https://github.com/evaleval) |
-| P1416 | University of Edinburgh, P3831 host | [https://github.com/evaleval](https://github.com/evaleval) |
-| P1416 | EleutherAI, P3831 host | [https://github.com/evaleval](https://github.com/evaleval) |
-
-These existing items point at it, in the batch on the run after it has a QID
--- QuickStatements cannot use an item it just created as a value.
-
-- [Evaluating Evaluations (NeurIPS 2024 workshop)](https://www.wikidata.org/wiki/Q131426993) → P664
+Every edge into it is already stated.

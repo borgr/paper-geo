@@ -272,6 +272,11 @@ PLAN = (
      "paste `tasks/wikidata_coauthors.qs` into QuickStatements. Those authors were "
      "matched ORCID to ORCID with no name compared, so the batch is the one Wikidata "
      "edit on this page that needs no judgement from you"),
+    ("Co-authors who may already have a Wikidata item", "minute",
+     "open each item and write the QID beside the ORCID in `data/overrides.yaml`, or "
+     "`new` where the papers on it are somebody else's. The lines are in the section "
+     "ready to paste, and answering the top few is worth doing on its own — each answer "
+     "turns one co-author into `author` statements on the papers you share"),
     ("Sidecar drafts awaiting your verification", "minute",
      "read the draft and `--accept` it. The only place on this page where your "
      "judgement is the input rather than the check, because accepting publishes an "

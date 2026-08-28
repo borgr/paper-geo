@@ -1,0 +1,18 @@
+note: Groups `scripts/wikidata_orgs.py --apply` created, slug -> QID. A receipt, not a decision. Wikidata's
+  query service lags hours behind an edit, so until it catches up this file is the only thing that knows
+  the item exists. Never edit by hand.
+items:
+  babylm-challenge: Q141203819
+  evaleval-coalition: Q141203820
+labels:
+  Q141203819: BabyLM Challenge
+  Q141203820: EvalEval Coalition
+edges:
+- Q141029636 P921 Q141203819
+- Q141029649 P921 Q141203819
+- Q141029660 P921 Q141203819
+- Q141029663 P921 Q141203819
+- Q141029669 P921 Q141203819
+- Q141029699 P921 Q141203819
+- Q141029784 P921 Q141203819
+- Q131426993 P664 Q141203820

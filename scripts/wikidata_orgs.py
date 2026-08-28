@@ -25,8 +25,10 @@ already has it.
 Every QID in the file is read back live and its label compared against the `note` beside
 it, so a mistyped value is a failure here rather than a wrong statement on Wikidata.
 
-Writes nothing to Wikidata. Creating an item goes out under the author's name, so the
-paste is theirs.
+    python scripts/wikidata_orgs.py --apply
+
+does the same through the API instead, and records what it made in
+`data/wikidata_orgs_created.yaml`.
 """
 
 from __future__ import annotations
@@ -36,12 +38,20 @@ import datetime
 import json
 import os
 import sys
+import time
+import urllib.error
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import BUILD, DATA, TASKS, read_yaml  # noqa: E402
+from common import BUILD, DATA, TASKS, read_yaml, write_yaml  # noqa: E402
 from wikidata_coauthors import fill, qid_of, sparql  # noqa: E402
+from wikidata_apply import CAL, create_items, logged_in  # noqa: E402
 
 ORGS = "wikidata_orgs.yaml"
+LEDGER = "wikidata_orgs_created.yaml"
+LEDGER_NOTE = (
+    "Groups `scripts/wikidata_orgs.py --apply` created, slug -> QID. A receipt, not a "
+    "decision. Wikidata's query service lags hours behind an edit, so until it catches up "
+    "this file is the only thing that knows the item exists. Never edit by hand.")
 # Reference URL and the date it was read, stated on every generated statement.
 REF_URL = "S854"
 REF_DATE = "S813"
@@ -144,6 +154,46 @@ def ref(url: str, day: str) -> list[str]:
     return [REF_URL, '"%s"' % url, REF_DATE, "+%sT00:00:00Z/11" % day]
 
 
+def snak(pid: str, v: str) -> dict:
+    """One `wbeditentity` snak from the three value forms `data/wikidata_orgs.yaml` uses.
+
+    A QID, a quoted string, or a date with the precision after a slash the way
+    QuickStatements writes it.
+    """
+    v = str(v)
+    if v.startswith("Q"):
+        dv = {"value": {"entity-type": "item", "id": v}, "type": "wikibase-entityid"}
+    elif v.startswith("+"):
+        stamp, _, prec = v.partition("/")
+        dv = {"value": {"time": stamp, "timezone": 0, "before": 0, "after": 0,
+                        "precision": int(prec or 11), "calendarmodel": CAL},
+              "type": "time"}
+    else:
+        dv = {"value": v.strip('"'), "type": "string"}
+    return {"snaktype": "value", "property": pid, "datavalue": dv}
+
+
+def item_payload(it: dict, day: str) -> dict:
+    """One described group as a `wbeditentity` payload, statements sourced as written."""
+    claims = []
+    for s in it["statements"]:
+        c = {"mainsnak": snak(s["p"], s["v"]), "type": "statement", "rank": "normal",
+             "references": [{"snaks": {
+                 "P854": [snak("P854", '"%s"' % s["ref"])],
+                 "P813": [snak("P813", "+%sT00:00:00Z/11" % day)]}}]}
+        quals = {}
+        for x in s.get("q") or []:
+            quals.setdefault(x["p"], []).append(snak(x["p"], x["v"]))
+        if quals:
+            c["qualifiers"] = quals
+        claims.append(c)
+    return {"labels": {"en": {"language": "en", "value": it["label"]}},
+            "descriptions": {"en": {"language": "en", "value": it["description"]}},
+            "aliases": {"en": [{"language": "en", "value": a}
+                               for a in it.get("aliases") or []]},
+            "claims": claims}
+
+
 def batch(items: dict, state: dict, day: str) -> list[str]:
     """QuickStatements lines: a CREATE per absent item, an edge per missing connection."""
     L = []
@@ -165,18 +215,26 @@ def batch(items: dict, state: dict, day: str) -> list[str]:
     return L
 
 
-def state_of(items: dict, ledger: dict) -> dict[str, dict]:
-    """Per slug, the QID Wikidata already has, its ambiguity, and the edges still absent."""
+def state_of(items: dict, ledger: dict, receipts: dict | None = None) -> dict[str, dict]:
+    """Per slug, the QID Wikidata already has, its ambiguity, and the edges still absent.
+
+    `receipts` is `data/wikidata_orgs_created.yaml`, and everything it names counts as
+    present. The query service lags hours behind an edit, so a second run that reads only
+    Wikidata would create the group again and restate every edge.
+    """
     hits = found(items)
+    receipts = receipts or {}
+    made = receipts.get("items") or {}
     out = {}
     for slug, it in items.items():
-        qids = hits.get(slug) or []
+        qids = hits.get(slug) or made.get(slug) and [made[slug]] or []
         qid = qids[0] if len(qids) == 1 else ""
         edges = edges_for(it, qid, ledger)
         out[slug] = {"qid": qid, "ambiguous": qids if len(qids) > 1 else [],
                      "edges": edges, "missing": edges if qid else [],
                      "names": edge_names(it, ledger)}
     have = edges_present([e for st in out.values() for e in st["missing"]])
+    have |= {tuple(e.split()) for e in receipts.get("edges") or []}
     for st in out.values():
         st["missing"] = [e for e in st["missing"] if e not in have]
     return out
@@ -238,6 +296,8 @@ def write_page(items: dict, state: dict, qs_path: str | None) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--quiet", action="store_true")
+    ap.add_argument("--apply", action="store_true",
+                    help="create the absent items and add the missing edges through the API")
     args = ap.parse_args()
     items = described(os.path.join(DATA, ORGS))
     if not items:
@@ -258,7 +318,7 @@ def main() -> int:
             print("  " + b)
         return 1
 
-    state = state_of(items, ledger)
+    state = state_of(items, ledger, read_yaml(os.path.join(DATA, LEDGER)) or {})
     day = datetime.date.today().isoformat()
     qs = batch(items, state, day)
     qs_path = os.path.join(TASKS, "wikidata_orgs.qs")
@@ -284,7 +344,47 @@ def main() -> int:
         print("%d described: %d to create, %d edges into existing items"
               % (len(items), len(out["create"]), out["edges"]))
         print("wrote %s%s" % (page, " and " + qs_path if qs else ""))
-    return 0
+    if not args.apply:
+        return 0
+    return apply_batch(items, state, day)
+
+
+def apply_batch(items: dict, state: dict, day: str) -> int:
+    """Create the absent items, then add the edges into items that already exist."""
+    make = [(slug, items[slug]["label"], item_payload(items[slug], day))
+            for slug in sorted(items) if not state[slug]["qid"]]
+    edges = [(slug, e) for slug in sorted(items) for e in state[slug]["missing"]]
+    if not (make or edges):
+        print("nothing to create and no edges missing")
+        return 0
+    s = logged_in()
+    print("acting as %s" % s.user)
+    made = len(make) and create_items(
+        s, make, os.path.join(DATA, LEDGER),
+        "create item for a group in the corpus, from its own site", LEDGER_NOTE)
+    if make:
+        print("%d/%d created" % (made, len(make)))
+    ok = 0
+    # Each edge is written down as it lands, in the same file as a creation and for the same
+    # reason: the query service will not report it for hours, and the next run must not add
+    # it a second time.
+    path = os.path.join(DATA, LEDGER)
+    for i, (slug, (subj, prop, obj)) in enumerate(edges, 1):
+        try:
+            s.edit("wbcreateclaim", entity=subj, property=prop, snaktype="value",
+                   value=json.dumps({"entity-type": "item", "id": obj}),
+                   summary="connect %s to the group it belongs to (paper-geo)" % subj)
+            d = read_yaml(path) or {}
+            d.setdefault("edges", []).append("%s %s %s" % (subj, prop, obj))
+            write_yaml(path, d)
+            ok += 1
+            print("  %d/%d %s %s %s" % (i, len(edges), subj, prop, obj))
+        except (RuntimeError, urllib.error.URLError) as e:
+            print("  %d/%d FAILED %s %s %s\n     %s" % (i, len(edges), subj, prop, obj, e))
+        time.sleep(1.5)
+    if edges:
+        print("%d/%d edges added" % (ok, len(edges)))
+    return 0 if made == len(make) and ok == len(edges) else 1
 
 
 if __name__ == "__main__":

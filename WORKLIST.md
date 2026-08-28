@@ -21,15 +21,16 @@ backlogs the rest of the page is waiting on, and the run does the work.
 **One edit each, and each one closes a section outright.** This is where
 the page gets visibly shorter.
 
-2. **Wikipedia mentions 3 of your coinages across 6 article(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
+2. **Co-authors who may already have a Wikidata item (13)** — open each item and write the QID beside the ORCID in `data/overrides.yaml`, or `new` where the papers on it are somebody else's. The lines are in the section ready to paste, and answering the top few is worth doing on its own — each answer turns one co-author into `author` statements on the papers you share.
+3. **Wikipedia mentions 3 of your coinages across 6 article(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
 
 **As much as you have patience for.** Per-paper clicking, because
 there is no write API behind either surface — and both are ordered so
 that stopping early still captures most of the value.
 
-3. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
-4. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
-5. **Citations on a Scholar record you cannot see (7, ~161 citations)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
+4. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
+5. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
+6. **Citations on a Scholar record you cannot see (7, ~161 citations)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
 
 ## Waiting on the outside world
 
@@ -90,15 +91,6 @@ and many independent paths into your item is the point of having them at all.
 - [ ] **1149 strings across 108 papers** — one Author Disambiguator pass per paper, most-cited first
       - the links, and the candidate items found for each name: [`tasks/wikidata_coauthors.md`](tasks/wikidata_coauthors.md)
       - 176 name matches are left out as namesakes, on a stated occupation nothing like research
-
-## Wikidata items for the groups (2 to create)
-
-Some of the work in the corpus is run by groups Wikidata has no item for, so a
-paper cannot say what it is part of and a group cannot say what it produced.
-Every statement in the batch cites the public page it came from.
-
-- [ ] **create EvalEval Coalition, BabyLM Challenge** — paste [`tasks/wikidata_orgs.qs`](tasks/wikidata_orgs.qs) into QuickStatements
-      - the statements and their sources, and the facts still missing: [`tasks/wikidata_orgs.md`](tasks/wikidata_orgs.md)
 
 ## Co-authors who may already have a Wikidata item (13)
 
