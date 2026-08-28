@@ -264,8 +264,9 @@ because a name string matches a namesake exactly as well as the right person.
 The name matches are pruned before you see them. A candidate stating an occupation that is
 nothing like research — actor, footballer, politician — is a coincidence, and the long tail
 of those is what makes a common name unreadable; one string in the corpus matches 132 items.
-The test is Wikidata's own subclass tree under *researcher*, *academic*, *scientist* and
-*engineer*, not a list of words, so it follows the tree as it grows. An item stating no
+The test reads Wikidata's own subclass tree under *researcher*, *academic*, *scientist*
+and *engineer*. No list of words is involved, so the classification follows the tree as it
+grows. An item stating no
 occupation at all stays on the list, because a missing statement is not evidence against.
 This only ever shortens what a human reads — the batch is unaffected.
 
