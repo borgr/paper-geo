@@ -345,7 +345,8 @@ def fallback_papers(doc) -> list[str]:
 
 
 OVERRIDE_KEYS = {"force_merge", "force_distinct", "also_mine", "extra_arxiv",
-                 "extra_openreview", "drop", "hf_claim_requested", "fields", "absent"}
+                 "extra_openreview", "drop", "hf_claim_requested", "fields", "absent",
+                 "wikidata_people"}
 
 
 def check_overrides() -> list[str]:

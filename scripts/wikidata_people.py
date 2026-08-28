@@ -30,17 +30,22 @@ import datetime
 import json
 import os
 import sys
+import time
+import urllib.error
 import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from common import BUILD, DATA, TASKS, get, get_json
+from common import BUILD, DATA, TASKS, get, get_json, read_yaml, write_yaml
 from wikidata_coauthors import CACHE, fill, items_by_orcid, qid_of, sparql  # noqa: F401
-from wikidata_apply import CAL, create_items, logged_in, recorded  # noqa: F401
+from wikidata_apply import (CAL, Session, create_items,  # noqa: F401
+                            logged_in, recorded)
 from wikidata_orgs import labels_of
 
 WIKI = "https://www.wikidata.org/w/api.php"
 LEDGER = "wikidata_people_created.yaml"
+# Which existing item a held co-author is, answered by hand in data/overrides.yaml.
+DECIDED = "wikidata_people"
 LEDGER_NOTE = (
     "People `scripts/wikidata_people.py --apply` created, ORCID -> QID. A receipt, not a "
     "decision. Wikidata's query service lags hours behind an edit, so for those hours this "
@@ -102,6 +107,9 @@ def record(orcid: str) -> dict:
                 x for x in (val("given-names"), val("family-name")) if x).strip(),
             "openalex_label": oa.get("display_name") or "",
             "employers": sorted({o for o in now if o}),
+            "openalex_employers": sorted({(i.get("display_name") or "").strip()
+                                          for i in oa.get("last_known_institutions") or []
+                                          if i.get("display_name")}),
             "works": len(((acts.get("works") or {}).get("group") or [])),
             "openalex_works": oa.get("works_count") or 0}
 
@@ -156,14 +164,17 @@ def employer_items(names: list[str]) -> dict[str, str]:
 def cased(rec: dict) -> str:
     """The person's name in the form to label an item with.
 
-    ORCID stores whatever the person typed, so "mohit bansal" and "YANGSIBO HUANG" both
-    occur. OpenAlex normalises the same name from publisher metadata, so it answers for
-    those; a name ORCID already cases like a name is left exactly as given, since no rule
+    ORCID stores whatever the person typed, so "mohit bansal", "YANGSIBO HUANG" and
+    "Mathieu LAURIERE" all occur -- a shouted surname beside a normal given name is the
+    common form, and a middle initial is not one of these. OpenAlex normalises the same name from publisher metadata and answers for
+    those. A name ORCID already cases like a name is left exactly as given, since no rule
     handles "van der Maaten" and "McDonald" at once.
     """
     orcid_name = " ".join((rec.get("label") or "").split())
+    words = orcid_name.split()
     raw = orcid_name and (orcid_name == orcid_name.lower()
-                          or orcid_name == orcid_name.upper())
+                          or any(w.isalpha() and w.isupper() and len(w) > 1
+                                 for w in words))
     return (" ".join((rec.get("openalex_label") or "").split()) if raw
             else orcid_name) or " ".join((rec.get("openalex_label") or "").split())
 
@@ -208,6 +219,17 @@ def namesakes(labels: list[str]) -> dict[str, list[dict]]:
             for n, qs in found.items() if any(q in seen for q in qs)}
 
 
+def decided() -> dict[str, str]:
+    """ORCID to the answer given by hand for a held person: a QID, or `new`."""
+    return ((read_yaml(os.path.join(DATA, "overrides.yaml")) or {}).get(DECIDED) or {})
+
+
+def linked(p: dict, day: str) -> dict:
+    """A `wbeditentity` payload adding this person's ORCID to the item they turned out to be."""
+    return {"claims": [c for c in payload(p, day)["claims"]
+                       if c["mainsnak"]["property"] == "P496"]}
+
+
 def keeps(p: dict, same: list[dict]) -> list[dict]:
     """The same-name items that stop this person being created, or nothing.
 
@@ -231,24 +253,41 @@ def described(orcid: str, rec: dict, employers: dict[str, dict]) -> dict:
     """One person's item, or the reason the public records do not describe a person.
 
     `works` names the page that shows they publish, which is what `occupation` rests on.
+    The employer is what makes two same-name researchers distinguishable, and Wikidata
+    refuses a label and description pair that already exists. ORCID's answer is taken
+    first, and OpenAlex stands in only where it names exactly one institution. Each carries
+    whichever of the two said it.
     """
     label = cased(rec)
     if not label:
         return {"orcid": orcid, "skip": "neither ORCID nor OpenAlex gives a name"}
+    who = "https://orcid.org/" + orcid
+    oa = "https://openalex.org/authors/https://orcid.org/" + orcid
     if rec.get("works"):
-        works = "https://orcid.org/" + orcid
+        works = who
     elif rec.get("openalex_works"):
-        works = "https://openalex.org/authors/https://orcid.org/" + orcid
+        works = oa
     else:
         return {"orcid": orcid, "skip": "no works on either record"}
-    at = [employers[e] for e in rec["employers"] if e in employers]
+    at = [dict(employers[e], ref=who) for e in rec["employers"] if e in employers]
+    # OpenAlex lists every institution its own author disambiguation has seen, so more than
+    # one means it is unsure and none of them can be stated -- the list for one co-author
+    # here spans three continents. A single entry is its confident answer and is used.
+    oa_at = rec.get("openalex_employers") or []
+    if not at and len(oa_at) == 1 and oa_at[0] in employers:
+        at = [dict(employers[oa_at[0]], ref=oa)]
+    # The description is free text where `employer` needs an item to point at, so an
+    # employer Wikidata has never heard of still distinguishes two same-name researchers.
+    where = (at[0]["label"] if at else
+             (rec["employers"] or (oa_at if len(oa_at) == 1 else []) or [""])[0])
     return {"orcid": orcid, "label": label, "works": works,
-            "description": "researcher at " + at[0]["label"] if at else "researcher",
-            "employers": [(e["label"], e["qid"]) for e in at]}
+            "description": "researcher at " + where if where else "researcher",
+            "employers": [(e["label"], e["qid"], e["ref"]) for e in at]}
 
 
 def batch(people: list[dict], day: str) -> list[str]:
-    """QuickStatements lines: one CREATE per person, sourced to their ORCID record."""
+    """QuickStatements lines: one CREATE per person, each statement sourced to the record
+    that said it."""
     L = []
     def ref(url):
         return [REF_URL, '"%s"' % url, REF_DATE, "+%sT00:00:00Z/11" % day]
@@ -260,8 +299,8 @@ def batch(people: list[dict], day: str) -> list[str]:
         L.append("\t".join(["LAST", "P31", HUMAN] + ref(who)))
         L.append("\t".join(["LAST", "P106", RESEARCHER] + ref(p["works"])))
         L.append("\t".join(["LAST", "P496", '"%s"' % p["orcid"]] + ref(who)))
-        for _, qid in p["employers"]:
-            L.append("\t".join(["LAST", "P108", qid] + ref(who)))
+        for _, qid, src in p["employers"]:
+            L.append("\t".join(["LAST", "P108", qid] + ref(src)))
     return L
 
 
@@ -286,11 +325,40 @@ def payload(p: dict, day: str) -> dict:
               claim("P106", {"entity-type": "item", "id": RESEARCHER},
                     "wikibase-entityid", p["works"]),
               claim("P496", p["orcid"], "string", who)]
-    claims += [claim("P108", {"entity-type": "item", "id": qid}, "wikibase-entityid", who)
-               for _, qid in p["employers"]]
+    claims += [claim("P108", {"entity-type": "item", "id": qid}, "wikibase-entityid", src)
+               for _, qid, src in p["employers"]]
     return {"labels": {"en": {"language": "en", "value": p["label"]}},
             "descriptions": {"en": {"language": "en", "value": p["description"]}},
             "claims": claims}
+
+
+def stale(p: dict, live: dict, day: str) -> dict:
+    """A `wbeditentity` payload bringing one created item in line with the rules, or {}.
+
+    Both directions, because a rule that improves also retracts: an employer the rules no
+    longer support is removed, and only where the reference on it names this person's own
+    ORCID -- somebody else's statement on the same item is not ours to touch.
+    """
+    data: dict = {}
+    have = {}
+    for c in (live.get("claims") or {}).get("P108") or []:
+        v = (c["mainsnak"].get("datavalue") or {}).get("value") or {}
+        urls = [s["datavalue"]["value"] for r in c.get("references") or []
+                for s in r.get("snaks", {}).get("P854") or []]
+        have[v.get("id")] = (c["id"], urls)
+    if p["label"] != (live.get("labels", {}).get("en") or {}).get("value"):
+        data["labels"] = {"en": {"language": "en", "value": p["label"]}}
+    if p["description"] != (live.get("descriptions", {}).get("en") or {}).get("value"):
+        data["descriptions"] = {"en": {"language": "en", "value": p["description"]}}
+    want = {q: src for _, q, src in p["employers"]}
+    claims = [c for c in payload(p, day)["claims"]
+              if c["mainsnak"]["property"] == "P108"
+              and c["mainsnak"]["datavalue"]["value"]["id"] not in have]
+    claims += [{"id": guid, "remove": ""} for q, (guid, urls) in have.items()
+               if q not in want and any(p["orcid"] in u for u in urls)]
+    if claims:
+        data["claims"] = claims
+    return data
 
 
 def write_page(people: list[dict], held: list[dict], skipped: list[dict],
@@ -314,7 +382,7 @@ def write_page(people: list[dict], held: list[dict], skipped: list[dict],
          "| --- | --- | --- | --- | --- | --- |"]
     for p in sorted(people, key=lambda x: -papers.get(x["orcid"], 0)):
         emp = ", ".join(f"[{n}](https://www.wikidata.org/wiki/{q})"
-                        for n, q in p["employers"]) or "—"
+                        for n, q, _ in p["employers"]) or "—"
         src = "ORCID" if p["works"].startswith("https://orcid.org/") else "OpenAlex"
         L.append(f"| {p['label']} | [{p['orcid']}](https://orcid.org/{p['orcid']}) "
                  f"| {p['description']} | {emp} | [{src}]({p['works']}) "
@@ -371,15 +439,23 @@ def main() -> int:
     # last pass is not created twice.
     claimed = items_by_orcid(sorted(papers))
     todo = [o for o in sorted(papers) if not claimed.get(o)]
-    employers = employer_items(sorted({e for o in todo for e in recs[o]["employers"]}))
+    employers = employer_items(sorted({e for o in todo for e in
+                                       recs[o]["employers"] + (recs[o].get("openalex_employers") or [])}))
     made = [described(o, recs[o], employers) for o in todo]
     ok = [p for p in made if "skip" not in p]
     taken = namesakes(sorted({p["label"] for p in ok}))
     for p in ok:
         p["namesakes"] = keeps(p, taken.get(p["label"]) or [])
-    people = [p for p in ok if not p["namesakes"]]
-    held = [p for p in ok if p["namesakes"]]
+    answered = decided()
+    # An answer given by hand overrides the hold it was asked about.
+    people = [p for p in ok
+              if not p["namesakes"] or answered.get(p["orcid"]) == "new"]
+    link = [(p, answered[p["orcid"]]) for p in ok
+            if p["namesakes"] and (answered.get(p["orcid"]) or "").startswith("Q")]
+    held = [p for p in ok if p["namesakes"] and not answered.get(p["orcid"])]
     skipped = [p for p in made if "skip" in p]
+    for p in ok:
+        p["papers"] = papers.get(p["orcid"], 0)
     day = datetime.date.today().isoformat()
     lines = batch(people, day)
     qs = os.path.join(TASKS, "wikidata_people.qs")
@@ -401,18 +477,90 @@ def main() -> int:
         print("wrote %s%s" % (page, " and " + qs if lines else ""))
     if not args.apply:
         return 0
-    if not people:
-        print("nothing to create")
-        return 0
-    make = people[:args.limit] if args.limit else people
     s = logged_in()
-    print("creating %d as %s" % (len(make), s.user))
-    made = create_items(
-        s, [(p["orcid"], p["label"], payload(p, day)) for p in make],
-        os.path.join(DATA, LEDGER),
-        "create item for a co-author, from their ORCID record", LEDGER_NOTE)
-    print("%d/%d created" % (made, len(make)))
-    return 0 if made == len(make) else 1
+    print("acting as %s" % s.user)
+    made, wanted_n = 0, 0
+    if people:
+        make = people[:args.limit] if args.limit else people
+        wanted_n = len(make)
+        made = create_items(
+            s, [(p["orcid"], p["label"], payload(p, day)) for p in make],
+            os.path.join(DATA, LEDGER),
+            "create item for a co-author, from their ORCID record", LEDGER_NOTE)
+        print("%d/%d created" % (made, wanted_n))
+    if link:
+        print("adding the ORCID to %d item(s) answered by hand" % len(link))
+        add_orcids(s, link, day)
+    fixed, off = resync(s, day)
+    if off:
+        print("%d/%d already-created items brought up to date" % (fixed, off))
+    return 0 if made == wanted_n and fixed == off else 1
+
+
+def add_orcids(s, link: list[tuple[dict, str]], day: str) -> int:
+    """Add each person's ORCID to the item a hand-given answer says they are.
+
+    Recorded in the same ledger as a creation, which means the same thing either way: this
+    ORCID now resolves to this item, hours before the query service says so.
+    """
+    path = os.path.join(DATA, LEDGER)
+    d = read_yaml(path) or {}
+    ok = 0
+    for p, qid in link:
+        try:
+            s.edit("wbeditentity", id=qid, data=json.dumps(linked(p, day)),
+                   summary="add ORCID from data/overrides.yaml (paper-geo)")
+            d.setdefault("items", {})[p["orcid"]] = qid
+            d.setdefault("labels", {})[qid] = p["label"]
+            write_yaml(path, d)
+            ok += 1
+            print("  %s — %s" % (qid, p["label"]))
+        except (RuntimeError, urllib.error.URLError) as e:
+            print("  FAILED %s — %s\n     %s" % (qid, p["label"], e))
+        time.sleep(1.5)
+    return ok
+
+
+def resync(s, day: str) -> tuple[int, int]:
+    """Bring the items this repo already created in line with the current rules.
+
+    The rules keep improving -- a name read as shouting, an employer OpenAlex was unsure
+    about -- and an item created under an older reading would otherwise stay wrong. Every
+    change is derived the same way a creation is, so this needs no separate decision.
+    """
+    led = read_yaml(os.path.join(DATA, LEDGER)) or {}
+    mine = led.get("items") or {}
+    if not mine:
+        return 0, 0
+    recs = records(sorted(mine), False)
+    employers = employer_items(sorted({e for r in recs.values() for e in
+                                       r["employers"] + (r.get("openalex_employers") or [])}))
+    ids = sorted(set(mine.values()))
+    live = {}
+    for i in range(0, len(ids), 50):
+        d = json.loads(get(WIKI + "?action=wbgetentities&format=json&languages=en"
+                           "&props=labels|descriptions|claims&ids="
+                           + "|".join(ids[i:i + 50])) or "{}")
+        live.update(d.get("entities") or {})
+    todo = []
+    for orcid, qid in sorted(mine.items()):
+        p = described(orcid, recs[orcid], employers)
+        if "skip" in p or qid not in live:
+            continue
+        data = stale(p, live[qid], day)
+        if data:
+            todo.append((qid, p["label"], data))
+    ok = 0
+    for i, (qid, label, data) in enumerate(todo, 1):
+        try:
+            s.edit("wbeditentity", id=qid, data=json.dumps(data),
+                   summary="update from the ORCID and OpenAlex records (paper-geo)")
+            ok += 1
+            print("  %d/%d %s — %s %s" % (i, len(todo), qid, label, sorted(data)))
+        except (RuntimeError, urllib.error.URLError) as e:
+            print("  %d/%d FAILED — %s %s\n     %s" % (i, len(todo), qid, label, e))
+        time.sleep(1.5)
+    return ok, len(todo)
 
 
 if __name__ == "__main__":

@@ -4374,13 +4374,27 @@ class TestPeopleItemsRestOnPublicRecordsNotOnNames(unittest.TestCase):
                            self._rec(works=0, openalex_works=0), {})
         self.assertIn("skip", got)
 
-    def test_an_unmatched_employer_goes_unstated_rather_than_guessed(self):
+    def test_an_unmatched_employer_is_described_but_not_stated(self):
+        """`employer` has to point at an item, so an organisation Wikidata has never heard
+        of cannot be stated. The description is free text and still says where they are,
+        which is what separates two researchers of the same name."""
         wp = self._job()
         rec = self._rec(employers=["Some Lab Nobody Has An Item For"])
         got = wp.described("0000-0001-0000-0002", rec, {})
         self.assertEqual(got["employers"], [])
-        self.assertEqual(got["description"], "researcher")
+        self.assertEqual(got["description"], "researcher at Some Lab Nobody Has An Item For")
         self.assertNotIn("P108", "\n".join(wp.batch([got], "2026-08-28")))
+
+    def test_an_employer_openalex_is_unsure_about_is_not_used_at_all(self):
+        """OpenAlex lists every institution its disambiguation has seen. More than one
+        means it is unsure, and picking from the list put a finance institute in India on
+        a Hugging Face researcher."""
+        wp = self._job()
+        rec = self._rec(employers=[], openalex_employers=["Hugging Face", "Inria"])
+        got = wp.described("0000-0001-6500-6030", rec,
+                           {"Hugging Face": {"qid": "Q108943604", "label": "Hugging Face"}})
+        self.assertEqual(got["employers"], [])
+        self.assertEqual(got["description"], "researcher")
 
     def test_the_employer_reads_the_way_wikidata_names_it(self):
         wp = self._job()
@@ -4511,7 +4525,7 @@ class TestPeopleItemsRestOnPublicRecordsNotOnNames(unittest.TestCase):
         p = {"orcid": "0000-0002-1825-0097", "label": "Ada Lovelace",
              "description": "researcher at Somerville",
              "works": "https://orcid.org/0000-0002-1825-0097",
-             "employers": [("Somerville", "Q123")]}
+             "employers": [("Somerville", "Q123", "https://orcid.org/0000-0002-1825-0097")]}
         d = wp.payload(p, "2026-08-28")
         self.assertEqual(d["labels"]["en"]["value"], "Ada Lovelace")
         self.assertEqual(d["descriptions"]["en"]["value"], "researcher at Somerville")
@@ -4528,3 +4542,20 @@ class TestPeopleItemsRestOnPublicRecordsNotOnNames(unittest.TestCase):
         line = "\n".join(wp.batch([p], "2026-08-28"))
         self.assertIn('Len\t"Ada Lovelace"', line)
         self.assertIn("LAST\tP108\tQ123\t", line)
+
+    def test_an_employer_only_openalex_knows_is_sourced_to_openalex(self):
+        """ORCID's employment section is often empty and OpenAlex still knows where the
+        person last published from. Whichever record said it is the one cited."""
+        wp = self._job()
+        rec = self._rec(employers=[], openalex_employers=["University of Washington"])
+        p = wp.described("0000-0002-5830-9508", rec,
+                         {"University of Washington": {"qid": "Q219563",
+                                                       "label": "University of Washington"}})
+        self.assertEqual(p["description"], "researcher at University of Washington")
+        self.assertEqual(p["employers"], [("University of Washington", "Q219563",
+                                           "https://openalex.org/authors/"
+                                           "https://orcid.org/0000-0002-5830-9508")])
+        got = [c for c in wp.payload(p, "2026-08-28")["claims"]
+               if c["mainsnak"]["property"] == "P108"]
+        self.assertIn("openalex.org",
+                      got[0]["references"][0]["snaks"]["P854"][0]["datavalue"]["value"])

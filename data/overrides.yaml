@@ -205,3 +205,14 @@ fields:
     url: "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6176178"
   # ties-merging-resolving-interference-when-merging-models:
   #   venue: "NeurIPS 2023"
+
+# Which existing Wikidata item a co-author turns out to be, where an item carries their
+# name and neither side states an ORCID. `scripts/wikidata_people.py` lists the ones it
+# cannot answer in `tasks/wikidata_people.md` and acts on whatever is written here:
+#
+#   0000-0001-2345-6789: Q102070311   # the same person -- their ORCID is added to Q102070311
+#   0000-0002-3456-7890: new          # a different person -- a separate item is created
+#
+# Nothing else follows by hand either way. The next run resolves the ORCID to the item and
+# writes the `author` statements from it.
+wikidata_people: {}

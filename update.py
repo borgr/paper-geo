@@ -919,25 +919,47 @@ def wikidata_coauthors() -> list[str]:
 
 
 def wikidata_people() -> list[str]:
-    """The worklist section for `build/wikidata_people.json`, or nothing."""
+    """The worklist section for `build/wikidata_people.json`, or nothing.
+
+    Only the people the code cannot decide about. Creating the rest, and adding their
+    ORCIDs, is `scripts/wikidata_people.py --apply`.
+    """
     try:
         with open(os.path.join(ROOT, "build", "wikidata_people.json")) as f:
             st = json.load(f)
     except (OSError, ValueError):
         return []
-    if not st.get("create"):
+    held = [p for p in st.get("held_people") or [] if len(p["namesakes"]) == 1]
+    if not held:
         return []
-    L = [f"## Wikidata items for the co-authors ({st['create']} to create)", "",
-         f"Each of these people has an ORCID and no Wikidata item, so their name on your papers",
-         f"cannot become an *author* statement. Every value comes from a public record about them,",
-         f"and between them they carry {st['mentions']} name mentions across the corpus.",
+    many = len(st.get("held_people") or []) - len(held)
+    L = [f"## Co-authors who may already have a Wikidata item ({len(held)})", "",
+         "Wikidata has one human item under each of these names and it states no ORCID, so",
+         "it is either this co-author reached from a paper rather than a profile, or a",
+         "namesake. Open the item, and if the papers on it are theirs write the answer into",
+         "[`data/overrides.yaml`](data/overrides.yaml) under `wikidata_people`:",
          "",
-         "- [ ] **paste [`tasks/wikidata_people.qs`](tasks/wikidata_people.qs) into "
-         "[QuickStatements](https://quickstatements.toolforge.org/#/batch)**",
-         "      - the name, employer and evidence for each: "
-         "[`tasks/wikidata_people.md`](tasks/wikidata_people.md)",
-         "      - nothing follows by hand — the next run finds the new items by ORCID and "
-         "writes the *author* statements itself"]
+         "```yaml",
+         "wikidata_people:"]
+    held.sort(key=lambda x: (-x.get("papers", 0), x["label"]))
+    for p in held:
+        L.append(f"  {p['orcid']}: {p['namesakes'][0]['qid']}   "
+                 f"# {p['label']}, or `new` if that item is somebody else")
+    L += ["```", ""]
+    for p in held:
+        n = p["namesakes"][0]
+        papers = p.get("papers", 0)
+        L.append(f"- [ ] **{p['label']}** ({papers} paper{'' if papers == 1 else 's'} with "
+                 f"you) — [{n['qid']}](https://www.wikidata.org/wiki/{n['qid']}) against "
+                 f"[their ORCID record](https://orcid.org/{p['orcid']}), {p['description']}")
+    L += ["",
+          "Nothing else follows by hand. The next run adds the ORCID to the item, or creates a",
+          "separate one, and writes the *author* statements from it."]
+    if many:
+        L += ["",
+              f"{many} more names collide with several items each, which no glance settles. "
+              "Those wait for",
+              "a bibliography match rather than a decision."]
     return L + [""]
 
 

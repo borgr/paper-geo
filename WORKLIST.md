@@ -89,6 +89,60 @@ and many independent paths into your item is the point of having them at all.
       - both taken straight from the bibliography
 - [ ] **1149 strings across 108 papers** — one Author Disambiguator pass per paper, most-cited first
       - the links, and the candidate items found for each name: [`tasks/wikidata_coauthors.md`](tasks/wikidata_coauthors.md)
+      - 176 name matches are left out as namesakes, on a stated occupation nothing like research
+
+## Wikidata items for the groups (2 to create)
+
+Some of the work in the corpus is run by groups Wikidata has no item for, so a
+paper cannot say what it is part of and a group cannot say what it produced.
+Every statement in the batch cites the public page it came from.
+
+- [ ] **create EvalEval Coalition, BabyLM Challenge** — paste [`tasks/wikidata_orgs.qs`](tasks/wikidata_orgs.qs) into QuickStatements
+      - the statements and their sources, and the facts still missing: [`tasks/wikidata_orgs.md`](tasks/wikidata_orgs.md)
+
+## Co-authors who may already have a Wikidata item (13)
+
+Wikidata has one human item under each of these names and it states no ORCID, so
+it is either this co-author reached from a paper rather than a profile, or a
+namesake. Open the item, and if the papers on it are theirs write the answer into
+[`data/overrides.yaml`](data/overrides.yaml) under `wikidata_people`:
+
+```yaml
+wikidata_people:
+  0000-0003-4311-3876: Q102687062   # Omri Abend, or `new` if that item is somebody else
+  0000-0001-5171-8264: Q6577926   # Noam Slonim, or `new` if that item is somebody else
+  0000-0003-0153-6811: Q103330754   # Mikhail Yurochkin, or `new` if that item is somebody else
+  0000-0003-1445-3150: Q102070311   # Prateek Yadav, or `new` if that item is somebody else
+  0000-0002-0190-6459: Q107742361   # Sara Hooker, or `new` if that item is somebody else
+  0000-0001-8376-4505: Q137017900   # Charles Jochim, or `new` if that item is somebody else
+  0000-0001-5101-4443: Q102360378   # Dan Gutfreund, or `new` if that item is somebody else
+  0000-0002-4083-542X: Q102407752   # Joseph Shtok, or `new` if that item is somebody else
+  0009-0008-7352-2586: Q118928179   # Ran Levy, or `new` if that item is somebody else
+  0000-0002-4148-895X: Q115868444   # Shashank Srivastava, or `new` if that item is somebody else
+  0009-0003-3187-3955: Q110275688   # Wenting Zhao, or `new` if that item is somebody else
+  0000-0002-4837-8411: Q102278866   # Yoon Kim, or `new` if that item is somebody else
+  0000-0002-4712-5527: Q117414502   # Yuting Lin, or `new` if that item is somebody else
+```
+
+- [ ] **Omri Abend** (54 papers with you) — [Q102687062](https://www.wikidata.org/wiki/Q102687062) against [their ORCID record](https://orcid.org/0000-0003-4311-3876), researcher at Hebrew University of Jerusalem
+- [ ] **Noam Slonim** (26 papers with you) — [Q6577926](https://www.wikidata.org/wiki/Q6577926) against [their ORCID record](https://orcid.org/0000-0001-5171-8264), researcher
+- [ ] **Mikhail Yurochkin** (14 papers with you) — [Q103330754](https://www.wikidata.org/wiki/Q103330754) against [their ORCID record](https://orcid.org/0000-0003-0153-6811), researcher at Mohamed bin Zayed University of Artificial Intelligence
+- [ ] **Prateek Yadav** (4 papers with you) — [Q102070311](https://www.wikidata.org/wiki/Q102070311) against [their ORCID record](https://orcid.org/0000-0003-1445-3150), researcher
+- [ ] **Sara Hooker** (4 papers with you) — [Q107742361](https://www.wikidata.org/wiki/Q107742361) against [their ORCID record](https://orcid.org/0000-0002-0190-6459), researcher
+- [ ] **Charles Jochim** (2 papers with you) — [Q137017900](https://www.wikidata.org/wiki/Q137017900) against [their ORCID record](https://orcid.org/0000-0001-8376-4505), researcher
+- [ ] **Dan Gutfreund** (2 papers with you) — [Q102360378](https://www.wikidata.org/wiki/Q102360378) against [their ORCID record](https://orcid.org/0000-0001-5101-4443), researcher at IBM (United States)
+- [ ] **Joseph Shtok** (2 papers with you) — [Q102407752](https://www.wikidata.org/wiki/Q102407752) against [their ORCID record](https://orcid.org/0000-0002-4083-542X), researcher
+- [ ] **Ran Levy** (2 papers with you) — [Q118928179](https://www.wikidata.org/wiki/Q118928179) against [their ORCID record](https://orcid.org/0009-0008-7352-2586), researcher at Ben-Gurion University of the Negev
+- [ ] **Shashank Srivastava** (2 papers with you) — [Q115868444](https://www.wikidata.org/wiki/Q115868444) against [their ORCID record](https://orcid.org/0000-0002-4148-895X), researcher at Motilal Nehru National Institute of Technology
+- [ ] **Wenting Zhao** (2 papers with you) — [Q110275688](https://www.wikidata.org/wiki/Q110275688) against [their ORCID record](https://orcid.org/0009-0003-3187-3955), researcher at Salesforce (United States)
+- [ ] **Yoon Kim** (2 papers with you) — [Q102278866](https://www.wikidata.org/wiki/Q102278866) against [their ORCID record](https://orcid.org/0000-0002-4837-8411), researcher at University of Seoul
+- [ ] **Yuting Lin** (2 papers with you) — [Q117414502](https://www.wikidata.org/wiki/Q117414502) against [their ORCID record](https://orcid.org/0000-0002-4712-5527), researcher at Shenzhen University
+
+Nothing else follows by hand. The next run adds the ORCID to the item, or creates a
+separate one, and writes the *author* statements from it.
+
+11 more names collide with several items each, which no glance settles. Those wait for
+a bibliography match rather than a decision.
 
 ## Identity surfaces (1 open)
 
