@@ -61,7 +61,7 @@ DISAMBIG = "https://author-disambiguator.toolforge.org"
 CACHE_DAYS = 30
 CACHE = "wikidata_coauthors_cache.json"
 # Bumped when the cache layout changes, so an old file is re-asked rather than misread.
-SHAPE = 7
+SHAPE = 8
 
 
 def sparql(query: str) -> list[dict]:
@@ -182,8 +182,6 @@ def items_by_name(names: list[str]) -> dict[str, list[dict]]:
     return out
 
 
-# P1433 wants the publication, and a conference name matches the event as well as its
-# proceedings. Ordered by preference, so the first type a candidate has decides it.
 # Properties this pass can fill without a judgement call. P407 because every paper in the
 # corpus is in English, P953 because the bibliography carries a free full-text URL.
 FILLS = ("P407", "P953")
@@ -198,6 +196,30 @@ MIRRORS = ("doi.org", "arxiv.org")
 PUBLICATION_TYPES = ("Q1143604", "Q5633421", "Q737498")
 # Searched anyway, so a name that only matches the event can say so instead of vanishing.
 EVENT_TYPES = ("Q2020153", "Q47258130")
+
+
+# The failure mode of a name match is a namesake, and `occupation` is the one structured
+# statement that separates a footballer from a researcher. Roots rather than a list of
+# labels, so the classification follows Wikidata's own subclass tree as it grows.
+RESEARCH_ROOTS = ("Q1650915", "Q3400985", "Q901", "Q81096", "Q1622272")
+
+
+def researchers(qids: list[str]) -> set[str]:
+    """The items that could plausibly have written a paper in this corpus.
+
+    An item states an occupation under `RESEARCH_ROOTS`, or states none at all -- a missing
+    statement is not evidence against, and 185 of the candidates have no occupation.
+    """
+    stated, research = set(), set()
+    roots = " ".join("wd:" + q for q in RESEARCH_ROOTS)
+    for i in range(0, len(qids), 200):
+        vals = " ".join("wd:" + q for q in qids[i:i + 200])
+        for r in sparql("SELECT ?p WHERE { VALUES ?p {%s} ?p wdt:P106 [] }" % vals):
+            stated.add(qid_of(r["p"]["value"]))
+        for r in sparql("SELECT DISTINCT ?p WHERE { VALUES ?p {%s} VALUES ?r {%s} "
+                        "?p wdt:P106/wdt:P279* ?r }" % (vals, roots)):
+            research.add(qid_of(r["p"]["value"]))
+    return (set(qids) - stated) | research
 
 
 def year_of(row: dict) -> int:
@@ -384,6 +406,8 @@ def lookups(names: list[str], papers: list[dict], refresh: bool) -> dict:
                  sorted({o for m in orcids.values() for o in m.values()})),
              "by_name": items_by_name(names),
              "venues": venue_items(sorted({f for p in papers for f in venue_forms(p)}))}
+    cache["research"] = sorted(researchers(sorted(
+        {c["qid"] for cs in cache["by_name"].values() for c in cs})))
     cache["proceedings"] = proceedings_of(sorted(
         {c["qid"] for cs in cache["venues"].values() for c in cs
          if not publications([c])}))
@@ -407,12 +431,13 @@ def rows(papers: list[dict], created: dict, look: dict) -> list[dict]:
     venues = look.get("venues") or {}
     procs = look.get("proceedings") or {}
     state = item_state(sorted(created.values()))
+    plausible = set(look.get("research") or [])
     out = []
     for slug, qid in created.items():
         p, st = by_slug.get(slug), state.get(qid)
         if not p or not st:
             continue
-        edits, review, leftover = [], [], []
+        edits, review, leftover, dropped = [], [], [], 0
         known = (look["orcids"] or {}).get(slug) or {}
         for s in st["strings"]:
             orcid = next((known[k] for k in keys_for(s["name"]) if k in known), None)
@@ -422,8 +447,12 @@ def rows(papers: list[dict], created: dict, look: dict) -> list[dict]:
                 continue
             if hit:
                 continue
-            cands = [c for c in (look["by_name"] or {}).get(s["name"]) or []
+            named = [c for c in (look["by_name"] or {}).get(s["name"]) or []
                      if c["qid"] not in st["p50"]]
+            # A candidate whose stated occupation is nothing like research is a namesake,
+            # not a lead, and the long tail of these is what makes a name unreadable.
+            cands = [c for c in named if c["qid"] in plausible]
+            dropped += len(named) - len(cands)
             (review if cands else leftover).append(dict(s, candidates=cands))
         vname = (p.get("venue_display") or "").strip()
         fills = {}
@@ -463,7 +492,7 @@ def rows(papers: list[dict], created: dict, look: dict) -> list[dict]:
                         "title": p.get("title_display") or p.get("title"),
                         "citations": p.get("citations") or 0,
                         "edits": edits, "review": review,
-                        "leftover": len(leftover),
+                        "leftover": len(leftover), "dropped": dropped,
                         "venue_name": vname,
                         "venue": venue,
                         "venue_candidates": [] if venue else vcands})
@@ -591,6 +620,12 @@ def write_page(rows_: list[dict], qs_path: str | None) -> str:
                    "item and check the person before accepting. Two candidates on one name "
                    "sometimes means two items for one person, which is a merge rather than "
                    "a choice."), ""]
+        dropped = sum(r.get("dropped") or 0 for r in rows_)
+        if dropped:
+            L += [fill("%d name matches are not listed. Each states an occupation nothing "
+                       "like research -- footballer, actor, politician -- so the name is a "
+                       "coincidence. An item stating no occupation at all is still listed."
+                       % dropped), ""]
         for r in todo[:20]:
             unresolved = len(r["review"]) + r["leftover"]
             L.append(f"- [ ] **{r['citations']} citations** — {(r['title'] or '')[:60]} "
@@ -655,6 +690,7 @@ def main() -> int:
            "review": sum(len(r["review"]) for r in rows_),
            "leftover": sum(r["leftover"] for r in rows_),
            "papers_left": len([r for r in rows_ if r["review"] or r["leftover"]]),
+           "dropped": sum(r.get("dropped") or 0 for r in rows_),
            "items": len(created), "rows": rows_}
     os.makedirs(BUILD, exist_ok=True)
     with open(os.path.join(BUILD, "wikidata_coauthors.json"), "w") as f:

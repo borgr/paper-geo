@@ -910,6 +910,9 @@ def wikidata_coauthors() -> list[str]:
               "Author Disambiguator pass per paper, most-cited first",
               "      - the links, and the candidate items found for each name: "
               "[`tasks/wikidata_coauthors.md`](tasks/wikidata_coauthors.md)"]
+        if st.get("dropped"):
+            L += [f"      - {st['dropped']} name matches are left out as namesakes, on a "
+                  "stated occupation nothing like research"]
     return L + [""]
 
 

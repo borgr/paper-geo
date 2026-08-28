@@ -203,16 +203,16 @@ matches found here. A namesake matches identically, so open the item and check
 the person before accepting. Two candidates on one name sometimes means two
 items for one person, which is a merge rather than a choice.
 
+176 name matches are not listed. Each states an occupation nothing like
+research -- footballer, actor, politician -- so the name is a coincidence. An
+item stating no occupation at all is still listed.
+
 - [ ] **897 citations** — TIES-Merging: Resolving Interference When Merging Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029633)
-      - Prateek Yadav → [Q102070311](https://www.wikidata.org/wiki/Q102070311) — businessman
-      - Mohit Bansal → [Q96127041](https://www.wikidata.org/wiki/Q96127041) — researcher (ORCID 0000-0001-8777-1980), [Q103295310](https://www.wikidata.org/wiki/Q103295310) — Ph.D. University of California, Berkeley 201, [Q67386311](https://www.wikidata.org/wiki/Q67386311) — researcher, natural language processing and  … +3
+      - Mohit Bansal → [Q67386311](https://www.wikidata.org/wiki/Q67386311) — researcher, natural language processing and , [Q92117908](https://www.wikidata.org/wiki/Q92117908) — researcher (ORCID 0000-0002-8403-0316), [Q96127041](https://www.wikidata.org/wiki/Q96127041) — researcher (ORCID 0000-0001-8777-1980) … +2
 - [ ] **294 citations** — tinyBenchmarks: evaluating LLMs with fewer examples — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029634)
       - Yuekai Sun → [Q102433700](https://www.wikidata.org/wiki/Q102433700) — statistician
       - Gongjun Xu → [Q100674149](https://www.wikidata.org/wiki/Q100674149) — researcher
-      - Mikhail Yurochkin → [Q103330754](https://www.wikidata.org/wiki/Q103330754) — statistician
 - [ ] **244 citations** — Active Learning for BERT: An Empirical Study — 9 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029635)
-      - Alon Halfon → [Q4734339](https://www.wikidata.org/wiki/Q4734339) — Israeli footballer
-      - Yoav Katz → [Q12407882](https://www.wikidata.org/wiki/Q12407882) — Israeli writer and translator, [Q24923416](https://www.wikidata.org/wiki/Q24923416) — Israeli basketball player (1944-)
       - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
 - [ ] **238 citations** — Findings of the BabyLM Challenge: Sample-Efficient Pretraini — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029636)
       - Aaron Mueller → [Q87933941](https://www.wikidata.org/wiki/Q87933941) — researcher
@@ -225,7 +225,6 @@ items for one person, which is a merge rather than a choice.
       - Omri Abend → [Q102687062](https://www.wikidata.org/wiki/Q102687062) — Ph.D. Hebrew University 2013
 - [ ] **121 citations** — Fusing finetuned models for better pretraining — 3 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029641)
       - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
-      - Yoav Katz → [Q12407882](https://www.wikidata.org/wiki/Q12407882) — Israeli writer and translator, [Q24923416](https://www.wikidata.org/wiki/Q24923416) — Israeli basketball player (1944-)
 - [ ] **120 citations** — DisentQA: Disentangling Parametric and Contextual Knowledge  — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029642)
       - Omri Abend → [Q102687062](https://www.wikidata.org/wiki/Q102687062) — Ph.D. Hebrew University 2013
 - [ ] **117 citations** — Model merging with SVD to tie the Knots — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029643)
@@ -233,15 +232,13 @@ items for one person, which is a merge rather than a choice.
       - J. Hoffman → [Q76142038](https://www.wikidata.org/wiki/Q76142038) — Peerage person ID=560424, [Q59556470](https://www.wikidata.org/wiki/Q59556470) — researcher ORCID ID = 0000-0002-1571-6808, [Q138575927](https://www.wikidata.org/wiki/Q138575927) — researcher
 - [ ] **100 citations** — Beyond Binary Rewards: Training LMs to Reason About Their Un — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029645)
       - Isha Puri → [Q98770682](https://www.wikidata.org/wiki/Q98770682) — researcher
-      - Yoon Kim → [Q102278866](https://www.wikidata.org/wiki/Q102278866) — Ph.D. Virginia Polytechnic Institute and Sta, [Q60973630](https://www.wikidata.org/wiki/Q60973630) — South Korean researcher and politician, [Q130808559](https://www.wikidata.org/wiki/Q130808559) — researcher (ORCID 0009-0003-8583-6324) … +2
-      - Jacob Andreas → [Q125454034](https://www.wikidata.org/wiki/Q125454034) — AI researcher, [Q112760940](https://www.wikidata.org/wiki/Q112760940)
+      - Yoon Kim → [Q102278866](https://www.wikidata.org/wiki/Q102278866) — Ph.D. Virginia Polytechnic Institute and Sta, [Q130808559](https://www.wikidata.org/wiki/Q130808559) — researcher (ORCID 0009-0003-8583-6324), [Q60973630](https://www.wikidata.org/wiki/Q60973630) — South Korean researcher and politician … +2
+      - Jacob Andreas → [Q125454034](https://www.wikidata.org/wiki/Q125454034) — AI researcher
 - [ ] **100 citations** — Jump to Conclusions: Short-Cutting Transformers with Linear  — 3 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029646)
       - Alexander Yom Din → [Q102662940](https://www.wikidata.org/wiki/Q102662940) — Israeli mathematician
 - [ ] **92 citations** — Asymmetry in Low-Rank Adapters of Foundation Models — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029647)
-      - Mikhail Yurochkin → [Q103330754](https://www.wikidata.org/wiki/Q103330754) — statistician
 - [ ] **85 citations** — Efficient multi-prompt evaluation of LLMs — 8 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029648)
       - Yuekai Sun → [Q102433700](https://www.wikidata.org/wiki/Q102433700) — statistician
-      - Mikhail Yurochkin → [Q103330754](https://www.wikidata.org/wiki/Q103330754) — statistician
 - [ ] **83 citations** — Call for Papers - The BabyLM Challenge: Sample-efficient pre — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029649)
       - Aaron Mueller → [Q87933941](https://www.wikidata.org/wiki/Q87933941) — researcher
 - [ ] **78 citations** — Are You Convinced? Choosing the More Convincing Evidence wit — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029650)
@@ -249,14 +246,12 @@ items for one person, which is a merge rather than a choice.
 - [ ] **73 citations** — Knowledge is a Region in Weight Space for Fine-tuned Languag — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029651)
       - Colin Raffel → [Q86994604](https://www.wikidata.org/wiki/Q86994604) — researcher, machine learning
       - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
-      - Yoav Katz → [Q12407882](https://www.wikidata.org/wiki/Q12407882) — Israeli writer and translator, [Q24923416](https://www.wikidata.org/wiki/Q24923416) — Israeli basketball player (1944-)
 - [ ] **72 citations** — Will it Blend? Blending Weak and Strong Labeled Data in a Ne — 7 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029652)
-      - Carlos Alzate → [Q1042683](https://www.wikidata.org/wiki/Q1042683) — Colombian racing cyclist, [Q102390975](https://www.wikidata.org/wiki/Q102390975) — Ph.D. Katholieke Universiteit Leuven 2009
+      - Carlos Alzate → [Q102390975](https://www.wikidata.org/wiki/Q102390975) — Ph.D. Katholieke Universiteit Leuven 2009
       - Yufang Hou → [Q126462463](https://www.wikidata.org/wiki/Q126462463)
       - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
 - [ ] **70 citations** — Corpus Wide Argument Mining - A Working Solution — 12 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029653)
-      - Alon Halfon → [Q4734339](https://www.wikidata.org/wiki/Q4734339) — Israeli footballer
-      - Carlos Alzate → [Q1042683](https://www.wikidata.org/wiki/Q1042683) — Colombian racing cyclist, [Q102390975](https://www.wikidata.org/wiki/Q102390975) — Ph.D. Katholieke Universiteit Leuven 2009
+      - Carlos Alzate → [Q102390975](https://www.wikidata.org/wiki/Q102390975) — Ph.D. Katholieke Universiteit Leuven 2009
       - Yufang Hou → [Q126462463](https://www.wikidata.org/wiki/Q126462463)
       - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
 - [ ] **70 citations** — DORA The Explorer: Directed Outreaching Reinforcement Action — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029654)

@@ -3982,7 +3982,9 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
                                            "venue": True, "has": set(wc.FILLS)}}
         papers = [{"slug": "s1", "title": "T", "citations": 5}]
         look = {"orcids": {"s1": orcids or {}}, "by_orcid": by_orcid or {},
-                "by_name": by_name or {}}
+                "by_name": by_name or {},
+                # Every name candidate plausible, so the occupation prune is not in play.
+                "research": [c["qid"] for cs in (by_name or {}).values() for c in cs]}
         return wc.rows(papers, {"s1": "Q1"}, look)
 
     def test_a_name_match_never_reaches_the_batch(self):
@@ -4262,3 +4264,76 @@ class TestGroupItemsAreCreatedOnceAndOnlyOnEvidence(unittest.TestCase):
         for li in lines:
             if li.startswith("LAST\tP"):
                 self.assertIn("\tS854\t", li, li)
+
+
+class TestNamesakesAreLeftOffThePageNotGuessedAt(unittest.TestCase):
+    """Occupation prunes the candidate lists a human reads, and nothing else.
+
+    A name match to an actor or a footballer is a coincidence, and the long tail of those is
+    what makes a common name unreadable — one string in the corpus matched 132 items. The
+    prune may only ever shorten that list: an item stating no occupation is kept, because a
+    missing statement is not evidence against, and the ORCID-matched batch is untouched.
+    """
+
+    def _module(self):
+        import wikidata_coauthors as wc
+        importlib.reload(wc)
+        self.addCleanup(importlib.reload, wc)
+        return wc
+
+    def test_an_item_with_no_occupation_survives(self):
+        wc = self._module()
+        asked = []
+
+        def fake(q):
+            asked.append(q)
+            if "P106 []" in q:
+                return [{"p": {"value": "http://www.wikidata.org/entity/Q2"}}]
+            return [{"p": {"value": "http://www.wikidata.org/entity/Q2"}}]
+
+        wc.sparql = fake
+        self.assertEqual(wc.researchers(["Q1", "Q2"]), {"Q1", "Q2"})
+
+    def test_an_item_whose_only_occupation_is_unrelated_is_dropped(self):
+        wc = self._module()
+
+        def fake(q):
+            if "P106 []" in q:
+                return [{"p": {"value": "http://www.wikidata.org/entity/Q%d" % i}}
+                        for i in (1, 2)]
+            return [{"p": {"value": "http://www.wikidata.org/entity/Q1"}}]
+
+        wc.sparql = fake
+        self.assertEqual(wc.researchers(["Q1", "Q2"]), {"Q1"})
+
+    def test_the_roots_are_asked_of_wikidatas_own_subclass_tree(self):
+        wc = self._module()
+        seen = []
+        wc.sparql = lambda q: seen.append(q) or []
+        wc.researchers(["Q1"])
+        tree = [q for q in seen if "P279*" in q]
+        self.assertEqual(len(tree), 1)
+        for root in wc.RESEARCH_ROOTS:
+            self.assertIn("wd:" + root, tree[0])
+
+    def test_a_pruned_name_becomes_a_disambiguator_pass_not_a_lost_string(self):
+        wc = self._module()
+        wc.item_state = lambda _q: {"Q1": {"strings": [{"name": "A Namesake", "ordinal": "1"}],
+                                           "p50": set(), "venue": True,
+                                           "has": set(wc.FILLS)}}
+        look = {"orcids": {"s1": {}}, "by_orcid": {},
+                "by_name": {"A Namesake": [{"qid": "Q8", "description": "footballer",
+                                            "orcid": ""}]},
+                "research": []}
+        rows = wc.rows([{"slug": "s1", "title": "T", "citations": 5}], {"s1": "Q1"}, look)
+        self.assertEqual(rows[0]["review"], [])
+        self.assertEqual(rows[0]["leftover"], 1, "the string is still open, just unlisted")
+        self.assertEqual(rows[0]["dropped"], 1)
+
+    def test_the_prune_never_reaches_the_batch(self):
+        wc = self._module()
+        rows = [{"qid": "Q1", "fills": {}, "venue": None, "review": [], "dropped": 9,
+                 "edits": [{"qid": "Q7", "ordinal": "1", "name": "A Namesake"}]}]
+        self.assertEqual(wc.batch(rows), [
+            "Q1\tP50\tQ7\tP1545\t\"1\"\tP1932\t\"A Namesake\"",
+            "-Q1\tP2093\t\"A Namesake\""])
