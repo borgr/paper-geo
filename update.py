@@ -881,7 +881,7 @@ def wikidata_coauthors() -> list[str]:
     except (OSError, ValueError):
         return []
     left = (st.get("review") or 0) + (st.get("leftover") or 0)
-    if not (st.get("edits") or left or st.get("venues")):
+    if not (st.get("edits") or left or st.get("venues") or st.get("fills")):
         return []
     L = [f"## Wikidata author strings ({st.get('edits', 0)} batchable, "
          f"{left} by hand)", "",
@@ -898,6 +898,10 @@ def wikidata_coauthors() -> list[str]:
         L += [f"- [ ] **{st['venues']} papers get their venue** — in the same paste, "
               "*published in* pointing at the proceedings volume or journal",
               "      - resolved from the venue name already in the bibliography"]
+    if st.get("fills"):
+        L += [f"- [ ] **{st['fills']} language and full-text statements** — also in that "
+              "paste, *language of work* and *full work available at*",
+              "      - both taken straight from the bibliography"]
     if left:
         L += [f"- [ ] **{left} strings across {st.get('papers_left', 0)} papers** — one "
               "Author Disambiguator pass per paper, most-cited first",

@@ -3976,7 +3976,9 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
         return wc
 
     def _fixture(self, wc, strings, p50=(), orcids=None, by_orcid=None, by_name=None):
-        wc.item_state = lambda _q: {"Q1": {"strings": strings, "p50": set(p50)}}
+        # Every fillable property already stated, so these tests are only about authors.
+        wc.item_state = lambda _q: {"Q1": {"strings": strings, "p50": set(p50),
+                                           "has": set(wc.FILLS)}}
         papers = [{"slug": "s1", "title": "T", "citations": 5}]
         look = {"orcids": {"s1": orcids or {}}, "by_orcid": by_orcid or {},
                 "by_name": by_name or {}}
@@ -4082,3 +4084,39 @@ class TestVenueResolutionTargetsAPublication(unittest.TestCase):
         wc = self._module()
         cands = [{"qid": "Q9", "label": "TACL", "types": ["Q5633421", "Q773668"]}]
         self.assertEqual(wc.pick_venue(wc.publications(cands))["qid"], "Q9")
+
+
+class TestFullTextUrlSkipsIdentifierMirrors(unittest.TestCase):
+    """P953 is worth a statement only when it adds a copy the item does not already imply.
+
+    A doi.org link restates P356 and an arxiv.org link restates P818, so both are dropped.
+    Everything kept is normalised to https, since the corpus carries a few http URLs from
+    proceedings sites that have served https for years.
+    """
+
+    def _module(self):
+        import wikidata_coauthors as wc
+        importlib.reload(wc)
+        self.addCleanup(importlib.reload, wc)
+        return wc
+
+    def test_a_doi_or_arxiv_link_earns_nothing(self):
+        wc = self._module()
+        for url in ("https://doi.org/10.18653/v1/2020.emnlp-main.638",
+                    "https://arxiv.org/abs/2401.00001", "http://www.arxiv.org/abs/1"):
+            self.assertEqual(wc.full_text({"url": url}), "", url)
+
+    def test_a_publisher_copy_is_kept(self):
+        wc = self._module()
+        self.assertEqual(wc.full_text({"url": "https://aclanthology.org/2023.conll-babylm.1"}),
+                         "https://aclanthology.org/2023.conll-babylm.1")
+
+    def test_http_becomes_https(self):
+        wc = self._module()
+        self.assertEqual(wc.full_text({"url": "http://papers.nips.cc/paper/1"}),
+                         "https://papers.nips.cc/paper/1")
+
+    def test_a_missing_url_is_not_a_statement(self):
+        wc = self._module()
+        for p in ({}, {"url": ""}, {"url": "   "}, {"url": "not a url"}):
+            self.assertEqual(wc.full_text(p), "", p)

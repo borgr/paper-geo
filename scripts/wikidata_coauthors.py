@@ -18,11 +18,16 @@ Two passes, and the difference between them is the whole design.
              exactly as well, so these are listed one at a time for you to confirm and are
              never batched.
 
-A second, unrelated gap rides along because it is the same batch and the same items. None of
-the 108 states `published in` (P1433), so nothing joins a paper to the venue that published
-it. The venue name is in the corpus already, so this needs no guessing beyond one rule --
-P1433 takes a publication, and a conference name matches the conference event as readily as
-the proceedings volume, so only a proceedings or a journal is ever a target.
+Three gaps ride along in the same batch, because they are the same items and none of them
+needs a judgement either.
+
+  P1433  none of the 108 says where it was published, so nothing joins a paper to its
+         venue. The name is in the corpus, and the one rule is that P1433 takes a
+         publication -- a conference name matches the conference event as readily as the
+         proceedings volume, so only a proceedings or a journal is ever a target.
+  P407   none says what language it is in, and every paper in the corpus is English.
+  P953   none links a free copy. Only the publisher-hosted URL earns one, since a doi.org
+         or arxiv.org link restates P356 or P818.
 
 Creates no item about anybody and writes nothing to Wikidata. Items for people who have
 none are out of scope by policy, not by omission -- Wikidata notability wants "serious and
@@ -71,7 +76,8 @@ def qid_of(uri: str) -> str:
 
 
 def item_state(qids: list[str]) -> dict[str, dict]:
-    """Per paper item, the P2093 strings left, the P50 items present, and whether P1433 is.
+    """Per paper item, the P2093 strings left, the P50 items present, and which of the
+    properties this pass fills are already there.
 
     Read live rather than from `paper_item`, because the question is what the item says
     now. A string somebody else resolved last week is not work.
@@ -89,9 +95,10 @@ def item_state(qids: list[str]) -> dict[str, dict]:
                                 (s.get("qualifiers") or {}).get("P1545") or []), "")
                 if name:
                     strings.append({"name": name, "ordinal": ordinal})
-            out[qid] = {"strings": strings, "venue": bool(c.get("P1433")), "p50": {
-                (s["mainsnak"].get("datavalue") or {}).get("value", {}).get("id")
-                for s in c.get("P50") or []}}
+            out[qid] = {"strings": strings, "venue": bool(c.get("P1433")),
+                        "has": {p for p in FILLS if c.get(p)}, "p50": {
+                            (s["mainsnak"].get("datavalue") or {}).get("value", {}).get("id")
+                            for s in c.get("P50") or []}}
     return out
 
 
@@ -174,6 +181,13 @@ def items_by_name(names: list[str]) -> dict[str, list[dict]]:
 
 # P1433 wants the publication, and a conference name matches the event as well as its
 # proceedings. Ordered by preference, so the first type a candidate has decides it.
+# Properties this pass can fill without a judgement call. P407 because every paper in the
+# corpus is in English, P953 because the bibliography carries a free full-text URL.
+FILLS = ("P407", "P953")
+ENGLISH = "Q1860"
+# A URL that only restates an identifier the item already has is not worth a statement.
+MIRRORS = ("doi.org", "arxiv.org")
+
 # What P1433 accepts, in the order a tie is broken. Its value-type constraint wants a
 # publication, so a conference item is never a valid target however well its name matches.
 PUBLICATION_TYPES = ("Q1143604", "Q5633421")
@@ -229,6 +243,19 @@ def pick_venue(cands: list[dict]) -> dict | None:
         if same:
             return None
     return None
+
+
+def full_text(paper: dict) -> str:
+    """The paper's free full-text URL, or "" when the item already implies it.
+
+    A doi.org or arxiv.org link restates P356 or P818, so only a publisher-hosted copy --
+    the ACL Anthology, OpenReview, the proceedings site -- earns a P953.
+    """
+    url = (paper.get("url") or "").strip()
+    host = urllib.parse.urlparse(url).netloc.lower()
+    if not host or any(host.endswith(m) for m in MIRRORS):
+        return ""
+    return "https://" + url.split("://", 1)[1] if url.startswith("http://") else url
 
 
 def lookups(names: list[str], papers: list[dict], refresh: bool) -> dict:
@@ -294,10 +321,16 @@ def rows(papers: list[dict], created: dict, look: dict) -> list[dict]:
                      if c["qid"] not in st["p50"]]
             (review if cands else leftover).append(dict(s, candidates=cands))
         vname = (p.get("venue_display") or "").strip()
+        fills = {}
+        if "P407" not in st["has"]:
+            fills["P407"] = ENGLISH
+        url = full_text(p)
+        if url and "P953" not in st["has"]:
+            fills["P953"] = '"%s"' % url
         vcands = publications(venues.get(vname) or [])
         venue = pick_venue(vcands) if vname and not st["venue"] else None
-        if edits or review or leftover or venue or (vcands and not st["venue"]):
-            out.append({"slug": slug, "qid": qid,
+        if edits or review or leftover or venue or fills or (vcands and not st["venue"]):
+            out.append({"slug": slug, "qid": qid, "fills": fills,
                         "title": p.get("title_display") or p.get("title"),
                         "citations": p.get("citations") or 0,
                         "edits": edits, "review": review,
@@ -315,12 +348,15 @@ def batch(rows_: list[dict]) -> list[str]:
     named as` (P1932) qualifier and the original series ordinal; the second drops the
     string the P50 replaces, which is the swap Author Disambiguator performs by hand.
 
-    One more line per paper whose venue resolved to a single publication item.
+    One more line per paper whose venue resolved to a single publication item, and one per
+    property in `FILLS` the item is missing.
     """
     L = []
     for r in rows_:
         if r.get("venue"):
             L.append("\t".join([r["qid"], "P1433", r["venue"]["qid"]]))
+        for prop, val in sorted((r.get("fills") or {}).items()):
+            L.append("\t".join([r["qid"], prop, val]))
         for e in r["edits"]:
             add = [r["qid"], "P50", e["qid"]]
             if e["ordinal"]:
@@ -376,6 +412,16 @@ def write_page(rows_: list[dict], qs_path: str | None) -> str:
                               for c in r["venue_candidates"][:3])
             L.append(f"- [ ] {(r['title'] or '')[:44]} — *{r['venue_name']}* → {cands}")
         L.append("")
+
+    fills = [r for r in rows_ if r.get("fills")]
+    if fills:
+        n_lang = sum(1 for r in fills if "P407" in r["fills"])
+        n_url = sum(1 for r in fills if "P953" in r["fills"])
+        L += [f"## Language and full text ({n_lang + n_url})", "",
+              fill(f"Also in the same paste, and also nothing to decide. {n_lang} item(s) "
+                   f"do not say what language the paper is in, and {n_url} carry no link to "
+                   "a free copy — the publisher-hosted one, since a doi.org or arxiv.org "
+                   "link only restates an identifier the item already has."), ""]
 
     L += [f"## Matched by ORCID ({n_edits})", ""]
     if n_edits:
@@ -474,6 +520,7 @@ def main() -> int:
 
     out = {"asked": look.get("asked"), "strings": len(names),
            "venues": len([r for r in rows_ if r.get("venue")]),
+           "fills": sum(len(r.get("fills") or {}) for r in rows_),
            "venues_ask": len([r for r in rows_ if r.get("venue_candidates")]),
            "edits": sum(len(r["edits"]) for r in rows_),
            "review": sum(len(r["review"]) for r in rows_),
@@ -488,7 +535,8 @@ def main() -> int:
               f"{out['edits']} resolvable by ORCID, "
               f"{out['review'] + out['leftover']} left across "
               f"{out['papers_left']} papers")
-        print(f"venues: {out['venues']} resolved, {out['venues_ask']} ambiguous")
+        print(f"venues: {out['venues']} resolved, {out['venues_ask']} ambiguous; "
+              f"{out['fills']} language and full-text statements")
         print(f"wrote {os.path.relpath(page)}"
               + (f" and {os.path.relpath(qs_path)}" if qs else ""))
     return 0

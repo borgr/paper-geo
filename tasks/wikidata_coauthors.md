@@ -42,6 +42,13 @@ yet.
 - [ ] Inherent Biases in Reference-based Evaluatio — *ACL 2018* → [Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics - System Demonstrations](https://www.wikidata.org/wiki/Q55986409), [Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)](https://www.wikidata.org/wiki/Q53940876)
 - [ ] Automatic Metric Validation for Grammatical  — *ACL 2018* → [Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics - System Demonstrations](https://www.wikidata.org/wiki/Q55986409), [Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)](https://www.wikidata.org/wiki/Q53940876)
 
+## Language and full text (142)
+
+Also in the same paste, and also nothing to decide. 108 item(s) do not say
+what language the paper is in, and 34 carry no link to a free copy — the
+publisher-hosted one, since a doi.org or arxiv.org link only restates an
+identifier the item already has.
+
 ## Matched by ORCID (90)
 
 The paper's OpenAlex record gives the co-author's ORCID and exactly one
