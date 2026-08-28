@@ -44,7 +44,7 @@ import urllib.error
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import BUILD, DATA, TASKS, read_yaml, write_yaml  # noqa: E402
 from wikidata_coauthors import fill, qid_of, sparql  # noqa: E402
-from wikidata_apply import CAL, create_items, logged_in  # noqa: E402
+from wikidata_apply import create_items, logged_in, snak  # noqa: E402
 
 ORGS = "wikidata_orgs.yaml"
 LEDGER = "wikidata_orgs_created.yaml"
@@ -152,25 +152,6 @@ def edge_names(it: dict, ledger: dict) -> dict[str, str]:
 
 def ref(url: str, day: str) -> list[str]:
     return [REF_URL, '"%s"' % url, REF_DATE, "+%sT00:00:00Z/11" % day]
-
-
-def snak(pid: str, v: str) -> dict:
-    """One `wbeditentity` snak from the three value forms `data/wikidata_orgs.yaml` uses.
-
-    A QID, a quoted string, or a date with the precision after a slash the way
-    QuickStatements writes it.
-    """
-    v = str(v)
-    if v.startswith("Q"):
-        dv = {"value": {"entity-type": "item", "id": v}, "type": "wikibase-entityid"}
-    elif v.startswith("+"):
-        stamp, _, prec = v.partition("/")
-        dv = {"value": {"time": stamp, "timezone": 0, "before": 0, "after": 0,
-                        "precision": int(prec or 11), "calendarmodel": CAL},
-              "type": "time"}
-    else:
-        dv = {"value": v.strip('"'), "type": "string"}
-    return {"snaktype": "value", "property": pid, "datavalue": dv}
 
 
 def item_payload(it: dict, day: str) -> dict:

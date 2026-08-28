@@ -32,10 +32,15 @@ needs a judgement either.
   P953   none links a free copy. Only the publisher-hosted URL earns one, since a doi.org
          or arxiv.org link restates P356 or P818.
 
-Creates no item about anybody and writes nothing to Wikidata. Items for people who have
-none are out of scope by policy, not by omission -- Wikidata notability wants "serious and
-publicly available references", and a co-author with no record of their own has none that
-does not originate with us.
+    python scripts/wikidata_coauthors.py --apply
+
+writes the ORCID-matched half through the API, one edit per paper item. The rest stays a
+paste, because picking between two items that carry the same name is judgement.
+
+Creates no item about anybody. Items for people who have none are out of scope by policy
+rather than by omission -- Wikidata notability wants "serious and publicly available
+references", and a co-author with no record of their own has none that does not originate
+with us.
 """
 
 from __future__ import annotations
@@ -46,11 +51,14 @@ import json
 import os
 import sys
 import textwrap
+import time
+import urllib.error
 import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, TASKS, get, get_json, norm_name,  # noqa: E402
                     read_yaml)
+from wikidata_apply import logged_in, snak  # noqa: E402
 
 WDQS = "https://query.wikidata.org/sparql"
 API = "https://www.wikidata.org/w/api.php"
@@ -97,7 +105,7 @@ def item_state(qids: list[str]) -> dict[str, dict]:
                 ordinal = next((q["datavalue"]["value"] for q in
                                 (s.get("qualifiers") or {}).get("P1545") or []), "")
                 if name:
-                    strings.append({"name": name, "ordinal": ordinal})
+                    strings.append({"name": name, "ordinal": ordinal, "id": s["id"]})
             out[qid] = {"strings": strings, "venue": bool(c.get("P1433")),
                         "has": {p for p in FILLS if c.get(p)}, "p50": {
                             (s["mainsnak"].get("datavalue") or {}).get("value", {}).get("id")
@@ -497,9 +505,12 @@ def rows(papers: list[dict], created: dict, look: dict) -> list[dict]:
             venue = pick_venue(cands)
             if venue:
                 break
+        # An item stating a venue is settled, whichever way this pass read the name. Both the
+        # answer and the candidates go, or the paper comes back next run as a question about
+        # something it already says.
         if st["venue"]:
-            venue = None
-        if edits or review or leftover or venue or fills or (vcands and not st["venue"]):
+            venue, vcands = None, []
+        if edits or review or leftover or venue or fills or vcands:
             out.append({"slug": slug, "qid": qid, "fills": fills,
                         "title": p.get("title_display") or p.get("title"),
                         "citations": p.get("citations") or 0,
@@ -535,6 +546,54 @@ def batch(rows_: list[dict]) -> list[str]:
             L.append("\t".join(add))
             L.append("\t".join(["-" + r["qid"], "P2093", '"%s"' % e["name"].replace('"', "'")]))
     return L
+
+
+def payload(r: dict) -> dict:
+    """One paper item's whole batch as a `wbeditentity` payload, or {}.
+
+    Everything for one item in a single edit, which matters most for the author swap: the
+    `P50` and the removal of the `P2093` it replaces are one statement of the same fact, and
+    an interrupted run that landed only one of them leaves the paper either crediting nobody
+    or crediting the same person twice.
+    """
+    claims = []
+    if r.get("venue"):
+        claims.append(statement(snak("P1433", r["venue"]["qid"])))
+    for prop, val in sorted((r.get("fills") or {}).items()):
+        claims.append(statement(snak(prop, val)))
+    for e in r["edits"]:
+        quals = {"P1932": [snak("P1932", e["name"])]}
+        if e["ordinal"]:
+            quals["P1545"] = [snak("P1545", e["ordinal"])]
+        claims.append(statement(snak("P50", e["qid"]), quals))
+        claims.append({"id": e["id"], "remove": ""})
+    return {"claims": claims} if claims else {}
+
+
+def statement(main: dict, quals: dict | None = None) -> dict:
+    c = {"mainsnak": main, "type": "statement", "rank": "normal"}
+    if quals:
+        c["qualifiers"] = quals
+    return c
+
+
+def apply_rows(s, rows_: list[dict]) -> tuple[int, int]:
+    """Write each row's batch, one edit per paper item."""
+    todo = [(r, payload(r)) for r in rows_]
+    todo = [(r, d) for r, d in todo if d]
+    ok = 0
+    for i, (r, data) in enumerate(todo, 1):
+        try:
+            s.edit("wbeditentity", id=r["qid"], data=json.dumps(data),
+                   summary="resolve author name strings matched by ORCID, and fill the "
+                           "venue, language and full text from the bibliography (paper-geo)")
+            ok += 1
+            print("  %d/%d %s — %d statement(s), %s"
+                  % (i, len(todo), r["qid"], len(data["claims"]), r["slug"]))
+        except (RuntimeError, urllib.error.URLError) as e:
+            print("  %d/%d FAILED %s — %s\n     %s" % (i, len(todo), r["qid"], r["slug"], e))
+        time.sleep(1.5)
+    return ok, len(todo)
 
 
 def fill(text: str) -> str:
@@ -669,6 +728,10 @@ def main() -> int:
     ap.add_argument("--refresh", action="store_true",
                     help="re-ask OpenAlex and WDQS instead of reading the cache")
     ap.add_argument("--quiet", action="store_true")
+    ap.add_argument("--apply", action="store_true",
+                    help="write the ORCID-matched batch through the API")
+    ap.add_argument("--limit", type=int, default=0,
+                    help="with --apply, stop after this many paper items")
     args = ap.parse_args()
     papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers") or []
     created = ((read_yaml(os.path.join(DATA, "wikidata_created.yaml")) or {})
@@ -716,7 +779,13 @@ def main() -> int:
               f"{out['fills']} language and full-text statements")
         print(f"wrote {os.path.relpath(page)}"
               + (f" and {os.path.relpath(qs_path)}" if qs else ""))
-    return 0
+    if not args.apply or not qs:
+        return 0
+    s = logged_in()
+    print("acting as %s" % s.user)
+    done, want = apply_rows(s, rows_[:args.limit] if args.limit else rows_)
+    print("%d/%d items written" % (done, want))
+    return 0 if done == want else 1
 
 
 if __name__ == "__main__":

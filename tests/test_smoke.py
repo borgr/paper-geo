@@ -4181,6 +4181,61 @@ class TestVenueGuardsRejectAPlausibleWrongVolume(unittest.TestCase):
         self.assertEqual(wc.publications(stub), [])
 
 
+class TestTheAuthorSwapIsOneEdit(unittest.TestCase):
+    """The `P50` and the removal of the `P2093` it replaces must land together.
+
+    Either alone leaves the paper crediting the same person twice or crediting nobody, so
+    the two go in one atomic payload and the paste form states the same thing.
+    """
+
+    _ROW = {"qid": "Q1", "slug": "a-paper", "venue": {"qid": "Q9"},
+            "fills": {"P407": "Q1860", "P953": '"https://x.example/p.pdf"'},
+            "edits": [{"qid": "Q7", "name": "A B", "ordinal": "3", "id": "Q1$abc"}]}
+
+    def _module(self):
+        import wikidata_coauthors as wc
+        return wc
+
+    def test_the_add_and_the_removal_are_in_one_payload(self):
+        wc = self._module()
+        claims = wc.payload(self._ROW)["claims"]
+        adds = [c for c in claims if "mainsnak" in c]
+        self.assertEqual([c["mainsnak"]["property"] for c in adds],
+                         ["P1433", "P407", "P953", "P50"])
+        self.assertEqual([c for c in claims if "remove" in c],
+                         [{"id": "Q1$abc", "remove": ""}])
+
+    def test_the_printed_name_and_the_ordinal_ride_along(self):
+        wc = self._module()
+        q = [c for c in wc.payload(self._ROW)["claims"]
+             if c.get("mainsnak", {}).get("property") == "P50"][0]["qualifiers"]
+        self.assertEqual(q["P1932"][0]["datavalue"]["value"], "A B")
+        self.assertEqual(q["P1545"][0]["datavalue"]["value"], "3")
+
+    def test_the_api_and_the_paste_state_the_same_thing(self):
+        wc = self._module()
+        lines = wc.batch([self._ROW])
+        props = [li.split("\t")[1] for li in lines]
+        self.assertEqual(props, ["P1433", "P407", "P953", "P50", "P2093"])
+        self.assertTrue(lines[-1].startswith("-Q1\t"), "the paste removes the string too")
+        self.assertEqual(len(wc.payload(self._ROW)["claims"]), len(lines))
+
+    def test_a_paper_that_already_states_its_venue_is_not_asked_about(self):
+        """The regression that turned 33 resolved venues into 32 questions."""
+        wc = self._module()
+        wc.item_state = lambda _q: {"Q1": {"strings": [], "venue": True,
+                                           "has": {"P407", "P953"}, "p50": set()}}
+        look = {"venues": {}, "proceedings": {}, "orcids": {}, "by_orcid": {},
+                "by_name": {}, "research": []}
+        rows = wc.rows([{"slug": "a", "title": "A", "venue_display": "Some Proceedings"}],
+                       {"a": "Q1"}, look)
+        self.assertEqual(rows, [], "nothing is open on it, so it is off the page")
+
+    def test_a_row_with_nothing_to_write_is_no_edit(self):
+        wc = self._module()
+        self.assertEqual(wc.payload({"qid": "Q1", "slug": "a", "fills": {}, "edits": []}), {})
+
+
 class TestGroupItemsAreCreatedOnceAndOnlyOnEvidence(unittest.TestCase):
     """The batch creates public items under the author's name, so three things must hold.
 

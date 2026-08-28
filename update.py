@@ -256,8 +256,8 @@ TIERS = (
     ("minute", ["**One edit each, and each one closes a section outright.** This is where",
                 "the page gets visibly shorter."]),
     ("afternoon", ["**As much as you have patience for.** Per-paper clicking, because",
-                   "there is no write API behind either surface — and both are ordered so",
-                   "that stopping early still captures most of the value."]),
+                   "no write API can make the judgement each one needs — and every section",
+                   "is ordered so that stopping early still captures most of the value."]),
 )
 # Matched on a fragment of the heading rather than carrying its own copy of the counts:
 # the line the reader sees is the section's own heading, so "108 papers" cannot drift
@@ -268,10 +268,10 @@ PLAN = (
      "`python scripts/wikidata_apply.py --papers --limit 10`, repeated. The monthly CI "
      "leg refuses to touch new papers while a backlog this size exists, so this is the "
      "one item that turns maintenance back on"),
-    ("Wikidata author strings", "run",
-     "paste `tasks/wikidata_coauthors.qs` into QuickStatements. Those authors were "
-     "matched ORCID to ORCID with no name compared, so the batch is the one Wikidata "
-     "edit on this page that needs no judgement from you"),
+    ("Wikidata author strings", "afternoon",
+     "one Author Disambiguator pass per paper, most-cited first, at the link the section "
+     "gives for each. Everything an ORCID could settle is already on Wikidata, so what is "
+     "left is the half where the name is all there is to go on"),
     ("Co-authors who may already have a Wikidata item", "minute",
      "open each item and write the QID beside the ORCID in `data/overrides.yaml`, or "
      "`new` where the papers on it are somebody else's. The lines are in the section "
@@ -893,8 +893,9 @@ def wikidata_coauthors() -> list[str]:
     left = (st.get("review") or 0) + (st.get("leftover") or 0)
     if not (st.get("edits") or left or st.get("venues") or st.get("fills")):
         return []
-    L = [f"## Wikidata author strings ({st.get('edits', 0)} batchable, "
-         f"{left} by hand)", "",
+    counts = [f"{st['edits']} batchable"] if st.get("edits") else []
+    counts += [f"{left} by hand"] if left else []
+    L = [f"## Wikidata author strings ({', '.join(counts)})", "",
          "Every paper item lists you as *author* and each co-author as *author name",
          "string*, which is a literal nothing can join on — so each item hangs off your",
          "item alone. Resolving a string to that person's own item is what connects them,",

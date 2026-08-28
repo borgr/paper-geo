@@ -248,6 +248,24 @@ def claim_guids(qid: str, pid: str) -> list[tuple[str, str]]:
 CAL = "http://www.wikidata.org/entity/Q1985727"
 
 
+def snak(pid: str, v: str) -> dict:
+    """One `wbeditentity` snak from the three value forms the QuickStatements files use.
+
+    A QID, a quoted string, or a date with the precision after a slash.
+    """
+    v = str(v)
+    if v.startswith("Q"):
+        dv = {"value": {"entity-type": "item", "id": v}, "type": "wikibase-entityid"}
+    elif v.startswith("+"):
+        stamp, _, prec = v.partition("/")
+        dv = {"value": {"time": stamp, "timezone": 0, "before": 0, "after": 0,
+                        "precision": int(prec or 11), "calendarmodel": CAL},
+              "type": "time"}
+    else:
+        dv = {"value": v.strip('"'), "type": "string"}
+    return {"snaktype": "value", "property": pid, "datavalue": dv}
+
+
 def item_json(it: dict) -> dict:
     """One paper from `audit_identity.paper_item`, as a `wbeditentity` payload.
 

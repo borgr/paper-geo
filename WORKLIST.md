@@ -13,21 +13,17 @@ what each item costs — the one thing a section cannot say about itself,
 because it does not know what else is open. Each line names the section that
 holds the instructions; nothing here repeats them.
 
-**A command, and nothing to decide.** Any day, in any order: these drain
-backlogs the rest of the page is waiting on, and the run does the work.
-
-1. **Wikidata author strings (90 batchable, 1149 by hand)** — paste `tasks/wikidata_coauthors.qs` into QuickStatements. Those authors were matched ORCID to ORCID with no name compared, so the batch is the one Wikidata edit on this page that needs no judgement from you.
-
 **One edit each, and each one closes a section outright.** This is where
 the page gets visibly shorter.
 
-2. **Co-authors who may already have a Wikidata item (13)** — open each item and write the QID beside the ORCID in `data/overrides.yaml`, or `new` where the papers on it are somebody else's. The lines are in the section ready to paste, and answering the top few is worth doing on its own — each answer turns one co-author into `author` statements on the papers you share.
-3. **Wikipedia mentions 3 of your coinages across 6 article(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
+1. **Co-authors who may already have a Wikidata item (13)** — open each item and write the QID beside the ORCID in `data/overrides.yaml`, or `new` where the papers on it are somebody else's. The lines are in the section ready to paste, and answering the top few is worth doing on its own — each answer turns one co-author into `author` statements on the papers you share.
+2. **Wikipedia mentions 3 of your coinages across 6 article(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
 
 **As much as you have patience for.** Per-paper clicking, because
-there is no write API behind either surface — and both are ordered so
-that stopping early still captures most of the value.
+no write API can make the judgement each one needs — and every section
+is ordered so that stopping early still captures most of the value.
 
+3. **Wikidata author strings (1016 by hand)** — one Author Disambiguator pass per paper, most-cited first, at the link the section gives for each. Everything an ORCID could settle is already on Wikidata, so what is left is the half where the name is all there is to go on.
 4. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
 5. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
 6. **Citations on a Scholar record you cannot see (7, ~161 citations)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
@@ -75,20 +71,14 @@ your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).
       - Scholar 13 vs 16 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Mediators%20in%20Determining%20what%20Processing%20BERT%20Performs%20First%22)
 
-## Wikidata author strings (90 batchable, 1149 by hand)
+## Wikidata author strings (1016 by hand)
 
 Every paper item lists you as *author* and each co-author as *author name
 string*, which is a literal nothing can join on — so each item hangs off your
 item alone. Resolving a string to that person's own item is what connects them,
 and many independent paths into your item is the point of having them at all.
 
-- [ ] **90 authors, no judgement needed** — paste [`tasks/wikidata_coauthors.qs`](tasks/wikidata_coauthors.qs) into QuickStatements
-      - each one matched ORCID to ORCID, with no name compared
-- [ ] **33 papers get their venue** — in the same paste, *published in* pointing at the proceedings volume or journal
-      - resolved from the venue name already in the bibliography
-- [ ] **142 language and full-text statements** — also in that paste, *language of work* and *full work available at*
-      - both taken straight from the bibliography
-- [ ] **1149 strings across 108 papers** — one Author Disambiguator pass per paper, most-cited first
+- [ ] **1016 strings across 105 papers** — one Author Disambiguator pass per paper, most-cited first
       - the links, and the candidate items found for each name: [`tasks/wikidata_coauthors.md`](tasks/wikidata_coauthors.md)
       - 176 name matches are left out as namesakes, on a stated occupation nothing like research
 

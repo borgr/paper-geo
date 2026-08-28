@@ -9,188 +9,16 @@ connects these items to anything other than you.
 Nothing here creates an item for anyone. A co-author with no item stays a
 string, which is the correct end state for them.
 
-## Venues (33)
+## Venues (0)
 
-None of these items says where it was published, so nothing joins a paper to
-its venue. The name came from the corpus and resolved to one publication item,
-so these are in the batch below with the authors.
+None to add.
 
-- 2 paper(s) → [Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics](https://www.wikidata.org/wiki/Q65966891)
-- 2 paper(s) → [Transactions of the Association for Computational Linguistics](https://www.wikidata.org/wiki/Q28736261)
-- 2 paper(s) → [Transactions on Machine Learning Research](https://www.wikidata.org/wiki/Q110071865)
-- 2 paper(s) → [Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing](https://www.wikidata.org/wiki/Q134464704)
-- 2 paper(s) → [Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing](https://www.wikidata.org/wiki/Q124079222)
-- 1 paper(s) → [Advances in Neural Information Processing Systems 36](https://www.wikidata.org/wiki/Q122813142)
-- 1 paper(s) → [Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing](https://www.wikidata.org/wiki/Q102000089)
-- 1 paper(s) → [Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing](https://www.wikidata.org/wiki/Q109517629)
-- 1 paper(s) → [International Conference on Learning Representations. ICLR 2020](https://www.wikidata.org/wiki/Q104178691)
-- 1 paper(s) → [Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)](https://www.wikidata.org/wiki/Q123127917)
-- 1 paper(s) → [Proceedings of the 2024 Joint International Conference on Computational Linguistics, Language Resources and Evaluation (LREC-COLING 2024)](https://www.wikidata.org/wiki/Q126026573)
-- 1 paper(s) → [Advances in Neural Information Processing Systems 37](https://www.wikidata.org/wiki/Q130601483)
-- 1 paper(s) → [Findings of the Association for Computational Linguistics: EMNLP 2023](https://www.wikidata.org/wiki/Q126740907)
-- 1 paper(s) → [Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers), NAACL 2024, Mexico City, Mexico, June 16-21, 2024](https://www.wikidata.org/wiki/Q134464683)
-- 1 paper(s) → [Proceedings of the 37th international conference on Machine learning](https://www.wikidata.org/wiki/Q96024615)
-- 1 paper(s) → [Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)](https://www.wikidata.org/wiki/Q123243783)
-- 1 paper(s) → [Journal of Memory and Language](https://www.wikidata.org/wiki/Q6295556)
-- 1 paper(s) → [NeurIPS 2025](https://www.wikidata.org/wiki/Q136378626)
-- 1 paper(s) → [The Proceedings of the 24th Conference on Computational Natural Language Learning](https://www.wikidata.org/wiki/Q130415993)
-- 1 paper(s) → [Proceedings of the The 2022 Conference on Empirical Methods in Natural Language Processing, EMNLP 2022 - System Demonstrations, Abu Dhabi, UAE, December 7-11, 2022](https://www.wikidata.org/wiki/Q135229066)
-- 1 paper(s) → [Proceedings of the 23rd Conference on Computational Natural Language Learning (CoNLL)](https://www.wikidata.org/wiki/Q67385624)
-- 1 paper(s) → [Nature Machine Intelligence](https://www.wikidata.org/wiki/Q44062926)
-- 1 paper(s) → [Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)](https://www.wikidata.org/wiki/Q129325241)
-- 1 paper(s) → [Proceedings of the 2021 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies](https://www.wikidata.org/wiki/Q107009154)
-- 1 paper(s) → [Findings of the Association for Computational Linguistics: EMNLP 2020](https://www.wikidata.org/wiki/Q107145781)
-- 1 paper(s) → [Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing](https://www.wikidata.org/wiki/Q125022858)
-- 1 paper(s) → [Proceedings of the Thirteenth Language Resources and Evaluation Conference](https://www.wikidata.org/wiki/Q113380756)
-- 1 paper(s) → [Proceedings of the 29th International Conference on Computational Linguistics](https://www.wikidata.org/wiki/Q123165690)
+## Matched by ORCID (0)
 
-## Language and full text (142)
+None. Either every ORCID-carrying co-author is already resolved, or OpenAlex
+holds no ORCID for the ones that are not.
 
-Also in the same paste, and also nothing to decide. 108 item(s) do not say
-what language the paper is in, and 34 carry no link to a free copy — the
-publisher-hosted one, since a doi.org or arxiv.org link only restates an
-identifier the item already has.
-
-## Matched by ORCID (90)
-
-The paper's OpenAlex record gives the co-author's ORCID and exactly one
-Wikidata item states that ORCID. No name was compared, so these need no
-judgement.
-
-Paste [`tasks/wikidata_coauthors.qs`](tasks/wikidata_coauthors.qs) into
-<https://quickstatements.toolforge.org/#/batch>. Each author is two lines, one
-adding *author* with the printed name kept as an *object named as* qualifier,
-one dropping the string it replaces.
-
-- [ ] **238 citations** — Findings of the BabyLM Challenge: Sample-Efficient Pretraining o
-      - Juan Ciro → [Juan Ciro](https://www.wikidata.org/wiki/Q130933692) (ORCID 0009-0000-4179-3076)
-      - Rafael Mosquera → [Rafael Mosquera](https://www.wikidata.org/wiki/Q130933691) (ORCID 0009-0009-0812-6330)
-      - Adina Williams → [Adina Williams](https://www.wikidata.org/wiki/Q96129925) (ORCID 0000-0001-5281-3343)
-      - Tal Linzen → [Tal Linzen](https://www.wikidata.org/wiki/Q90253205) (ORCID 0000-0003-0435-6912)
-- [ ] **190 citations** — Global MMLU: Understanding and Addressing Cultural and Linguisti
-      - Wei Qi Leong → [Wei Qi Leong](https://www.wikidata.org/wiki/Q130884574) (ORCID 0009-0002-0645-1112)
-      - Raymond Ng → [Rachel Ng](https://www.wikidata.org/wiki/Q42410272) (ORCID 0000-0003-3692-8524)
-      - Antoine Bosselut → [Antoine Bosselut](https://www.wikidata.org/wiki/Q112594072) (ORCID 0000-0001-8968-9649)
-      - Alice Oh → [Alice Oh](https://www.wikidata.org/wiki/Q130940886) (ORCID 0000-0002-7884-3038)
-      - Andre Martins → [André Luis Martins](https://www.wikidata.org/wiki/Q22102463) (ORCID 0000-0002-4794-0644)
-      - Enzo Ferrante → [Enzo Ferrante](https://www.wikidata.org/wiki/Q92965241) (ORCID 0000-0002-8500-788X)
-- [ ] **92 citations** — Asymmetry in Low-Rank Adapters of Foundation Models
-      - Marzyeh Ghassemi → [Marzyeh Ghassemi](https://www.wikidata.org/wiki/Q64949666) (ORCID 0000-0001-6349-7251)
-      - Justin Solomon → [Justin Solomon](https://www.wikidata.org/wiki/Q102082858) (ORCID 0000-0002-7701-7586)
-- [ ] **83 citations** — Call for Papers - The BabyLM Challenge: Sample-efficient pretrai
-      - Adina Williams → [Adina Williams](https://www.wikidata.org/wiki/Q96129925) (ORCID 0000-0001-5281-3343)
-- [ ] **70 citations** — DORA The Explorer: Directed Outreaching Reinforcement Action-Sel
-      - Yonatan Loewenstein → [Yonatan Loewenstein](https://www.wikidata.org/wiki/Q67217583) (ORCID 0000-0003-2577-2317)
-- [ ] **68 citations** — A Survey on Model MoErging: Recycling and Routing Among Speciali
-      - Haokun Liu → [Haokun Liu](https://www.wikidata.org/wiki/Q53501108) (ORCID 0000-0003-0585-0541)
-- [ ] **66 citations** — Findings of the Second BabyLM Challenge: Sample-Efficient Pretra
-      - Michael Y. Hu → [Michael Y. Hu](https://www.wikidata.org/wiki/Q59674072) (ORCID 0000-0002-3718-7169)
-      - Adina Williams → [Adina Williams](https://www.wikidata.org/wiki/Q96129925) (ORCID 0000-0001-5281-3343)
-      - Tal Linzen → [Tal Linzen](https://www.wikidata.org/wiki/Q90253205) (ORCID 0000-0003-0435-6912)
-- [ ] **46 citations** — NumeroLogic: Number Encoding for Enhanced LLMs' Numerical Reason
-      - Leonid Karlinsky → [Leonid Karlinsky](https://www.wikidata.org/wiki/Q131117687) (ORCID 0000-0003-2524-2068)
-- [ ] **39 citations** — [Call for Papers] The 2nd BabyLM Challenge: Sample-efficient pre
-      - Michael Hu → [Michael Y. Hu](https://www.wikidata.org/wiki/Q59674072) (ORCID 0000-0002-3718-7169)
-      - Tal Linzen → [Tal Linzen](https://www.wikidata.org/wiki/Q90253205) (ORCID 0000-0003-0435-6912)
-      - Adina Williams → [Adina Williams](https://www.wikidata.org/wiki/Q96129925) (ORCID 0000-0001-5281-3343)
-- [ ] **38 citations** — SemEval-2019 Task 1: Cross-lingual Semantic Parsing with UCCA
-      - Daniel Hershcovich → [Daniel Hershcovich](https://www.wikidata.org/wiki/Q114406958) (ORCID 0000-0002-3966-8708)
-      - Elior Sulem → [Elior Sulem](https://www.wikidata.org/wiki/Q130803182) (ORCID 0000-0002-9859-7313)
-- [ ] **33 citations** — BabyLM Turns 3: Call for papers for the 2025 BabyLM workshop
-      - Mustafa Omer Gul → [Muhammed Gül](https://www.wikidata.org/wiki/Q104574144) (ORCID 0000-0002-5704-1896)
-      - Michael Hu → [Michael Y. Hu](https://www.wikidata.org/wiki/Q59674072) (ORCID 0000-0002-3718-7169)
-      - Tal Linzen → [Tal Linzen](https://www.wikidata.org/wiki/Q90253205) (ORCID 0000-0003-0435-6912)
-      - Jing Liu → [Jianjun Liu](https://www.wikidata.org/wiki/Q68692572) (ORCID 0000-0002-3255-3019)
-      - Adina Williams → [Adina Williams](https://www.wikidata.org/wiki/Q96129925) (ORCID 0000-0001-5281-3343)
-- [ ] **32 citations** — Bigger is not always better: The importance of human-scale langu
-      - Michael Y Hu → [Michael Y. Hu](https://www.wikidata.org/wiki/Q59674072) (ORCID 0000-0002-3718-7169)
-      - Adina Williams → [Adina Williams](https://www.wikidata.org/wiki/Q96129925) (ORCID 0000-0001-5281-3343)
-      - Tal Linzen → [Tal Linzen](https://www.wikidata.org/wiki/Q90253205) (ORCID 0000-0003-0435-6912)
-- [ ] **29 citations** — Compress then Serve: Serving Thousands of LoRA Adapters with Lit
-      - Justin Solomon → [Justin Solomon](https://www.wikidata.org/wiki/Q102082858) (ORCID 0000-0002-7701-7586)
-- [ ] **25 citations** — The Language of Legal and Illegal Activity on the Darknet
-      - Daniel Hershcovich → [Daniel Hershcovich](https://www.wikidata.org/wiki/Q114406958) (ORCID 0000-0002-3966-8708)
-      - Elior Sulem → [Elior Sulem](https://www.wikidata.org/wiki/Q130803182) (ORCID 0000-0002-9859-7313)
-- [ ] **23 citations** — Data Contamination Report from the 2024 CONDA Shared Task
-      - Oscar Sainz → [Oscar Sainz](https://www.wikidata.org/wiki/Q130803185) (ORCID 0000-0003-0890-7670)
-      - Eneko Agirre → [Eneko Agirre](https://www.wikidata.org/wiki/Q57400796) (ORCID 0000-0002-0195-4899)
-      - Yoav Goldberg → [Yoav Goldberg](https://www.wikidata.org/wiki/Q31777962) (ORCID 0000-0002-6497-829X)
-      - Mihai Surdeanu → [Mihai Surdeanu](https://www.wikidata.org/wiki/Q92866440) (ORCID 0000-0001-6956-8030)
-- [ ] **23 citations** — Classifying Syntactic Errors in Learner Language
-      - Dmitry Nikolaev → [Q137055425](https://www.wikidata.org/wiki/Q137055425) (ORCID 0000-0002-3034-9794)
-- [ ] **23 citations** — ZipNN: Lossless Compression for AI Models
-      - Moshik Hershcovitch → [Moshik Hershcovitch](https://www.wikidata.org/wiki/Q131118764) (ORCID 0000-0002-4826-4174)
-      - Andrew Wood → [Andrew W Wood](https://www.wikidata.org/wiki/Q56575718) (ORCID 0000-0002-6231-0085)
-      - Or Ozeri → [Or Ozeri](https://www.wikidata.org/wiki/Q130809773) (ORCID 0009-0005-7563-6171)
-      - Danny Harnik → [Danny Harnik](https://www.wikidata.org/wiki/Q130809774) (ORCID 0009-0000-0614-6543)
-- [ ] **22 citations** — When AI Benchmarks Plateau: A Systematic Study of Benchmark Satu
-      - Jennifer Mickel → [Jennifer Mickel](https://www.wikidata.org/wiki/Q130807785) (ORCID 0009-0006-7517-0460)
-      - Usman Gohar → [Usman Gohar](https://www.wikidata.org/wiki/Q130836496) (ORCID 0009-0001-8859-4928)
-      - Arjun Subramonian → [Arjun Subramonian](https://www.wikidata.org/wiki/Q130838665) (ORCID 0000-0002-0415-3800)
-      - Zeerak Talat → [Zeerak Talat](https://www.wikidata.org/wiki/Q130838689) (ORCID 0000-0001-5503-867X)
-- [ ] **21 citations** — Label Sleuth: From Unlabeled Text to a Classifier in a Few Hours
-      - Yannis Katsis → [Yannis Katsis](https://www.wikidata.org/wiki/Q130875094) (ORCID 0000-0002-1733-6227)
-      - Zheng Zhang → [Zheng Zhang](https://www.wikidata.org/wiki/Q88485247) (ORCID 0000-0003-1470-6998)
-      - Dakuo Wang → [Dakuo Wang](https://www.wikidata.org/wiki/Q104752315) (ORCID 0000-0001-9371-9441)
-- [ ] **19 citations** — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Co
-      - Leonid Karlinsky → [Leonid Karlinsky](https://www.wikidata.org/wiki/Q131117687) (ORCID 0000-0003-2524-2068)
-      - Raja Giryes → [Raja Giryes](https://www.wikidata.org/wiki/Q50640227) (ORCID 0000-0002-2830-0297)
-- [ ] **16 citations** — The Future of Open Human Feedback
-      - Tzu-Sheng Kuo → [Tzu-Sheng Kuo](https://www.wikidata.org/wiki/Q130804352) (ORCID 0000-0002-1504-7640)
-      - Atoosa Kasirzadeh → [Atoosa Kasirzadeh](https://www.wikidata.org/wiki/Q126287514) (ORCID 0000-0002-5967-3782)
-      - Tatsunori Hashimoto → [Tatsunori Hashimoto](https://www.wikidata.org/wiki/Q102974298) (ORCID 0000-0003-0521-5855)
-      - Yacine Jernite → [Yacine Jernite](https://www.wikidata.org/wiki/Q130836822) (ORCID 0000-0002-8053-6862)
-- [ ] **16 citations** — Findings of the Third BabyLM Challenge: Accelerating Language Mo
-      - Mustafa Omer Gul → [Muhammed Gül](https://www.wikidata.org/wiki/Q104574144) (ORCID 0000-0002-5704-1896)
-      - Michael Y. Hu → [Michael Y. Hu](https://www.wikidata.org/wiki/Q59674072) (ORCID 0000-0002-3718-7169)
-      - Jing Liu → [Jing Liu](https://www.wikidata.org/wiki/Q51017808) (ORCID 0000-0003-4690-1886)
-      - Tal Linzen → [Tal Linzen](https://www.wikidata.org/wiki/Q90253205) (ORCID 0000-0003-0435-6912)
-      - Adina Williams → [Adina Williams](https://www.wikidata.org/wiki/Q96129925) (ORCID 0000-0001-5281-3343)
-- [ ] **15 citations** — Lossless and Near-Lossless Compression for Foundation Models
-      - Moshik Hershcovitch → [Moshik Hershcovitch](https://www.wikidata.org/wiki/Q131118764) (ORCID 0000-0002-4826-4174)
-      - Andrew Wood → [Andrew W Wood](https://www.wikidata.org/wiki/Q56575718) (ORCID 0000-0002-6231-0085)
-      - Danny Harnik → [Danny Harnik](https://www.wikidata.org/wiki/Q130809774) (ORCID 0009-0000-0614-6543)
-- [ ] **13 citations** — The Mighty ToRR: A Benchmark for Table Reasoning and Robustness
-      - Percy Liang → [Percy Liang](https://www.wikidata.org/wiki/Q55395315) (ORCID 0000-0002-0458-6139)
-- [ ] **12 citations** — SERRANT: a syntactic classifier for English Grammatical Error Ty
-      - Dmitry Nikolaev → [Q137055425](https://www.wikidata.org/wiki/Q137055425) (ORCID 0000-0002-3034-9794)
-- [ ] **8 citations** — GrASP: A Library for Extracting and Exploring Human-Interpretabl
-      - Piyawat Lertvittayakumjorn → [Piyawat Lertvittayakumjorn](https://www.wikidata.org/wiki/Q130804596) (ORCID 0000-0002-2784-9827)
-      - Francesca Toni → [Francesca Toni](https://www.wikidata.org/wiki/Q58207653) (ORCID 0000-0001-8194-1459)
-- [ ] **8 citations** — Holmes: A Benchmark to Assess the Linguistic Competence of Langu
-      - Iryna Gurevych → [Iryna Gurevych](https://www.wikidata.org/wiki/Q21262416) (ORCID 0000-0003-2187-7621)
-- [ ] **7 citations** — CommonLID: Re-evaluating State-of-the-Art Language Identificatio
-      - Malte Ostendorff → [Malte Ostendorff](https://www.wikidata.org/wiki/Q67389868) (ORCID 0000-0003-2077-9907)
-      - Verrah Otiende → [Verrah Otiende](https://www.wikidata.org/wiki/Q90983668) (ORCID 0000-0001-6147-3547)
-      - Azmine Toushik Wasi → [Azmine Toushik Wasi](https://www.wikidata.org/wiki/Q130839353) (ORCID 0000-0001-9509-5804)
-- [ ] **3 citations** — CUBE: A Standard for Unifying Agent Benchmarks
-      - Alexandre Drouin → [Alexandre Drouin](https://www.wikidata.org/wiki/Q56437436) (ORCID 0000-0001-7718-0319)
-- [ ] **3 citations** — MINDGAMES: A Live Arena for Evaluating Social and Strategic Reas
-      - Pramod Viswanath → [Pramod Viswanath](https://www.wikidata.org/wiki/Q29387745) (ORCID 0000-0003-3171-8667)
-- [ ] **2 citations** — SemEval 2019 Shared Task: Cross-lingual Semantic Parsing with UC
-      - Daniel Hershcovich → [Daniel Hershcovich](https://www.wikidata.org/wiki/Q114406958) (ORCID 0000-0002-3966-8708)
-      - Elior Sulem → [Elior Sulem](https://www.wikidata.org/wiki/Q130803182) (ORCID 0000-0002-9859-7313)
-- [ ] **1 citations** — Every Eval Ever: A Unifying Schema and Community Repository for 
-      - Sander Land → [Sander Land](https://www.wikidata.org/wiki/Q41045693) (ORCID 0000-0001-8572-251X)
-      - Usman Gohar → [Usman Gohar](https://www.wikidata.org/wiki/Q130836496) (ORCID 0009-0001-8859-4928)
-      - Jennifer Mickel → [Jennifer Mickel](https://www.wikidata.org/wiki/Q130807785) (ORCID 0009-0006-7517-0460)
-      - Zeerak Talat → [Zeerak Talat](https://www.wikidata.org/wiki/Q130838689) (ORCID 0000-0001-5503-867X)
-- [ ] **1 citations** — BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 20
-      - Tal Linzen → [Tal Linzen](https://www.wikidata.org/wiki/Q90253205) (ORCID 0000-0003-0435-6912)
-- [ ] **1 citations** — A Latent Variable Framework for Scaling Laws in Large Language M
-      - Kean Ming Tan → [Kean Ming Tan](https://www.wikidata.org/wiki/Q93037996) (ORCID 0000-0001-8491-275X)
-- [ ] **1 citations** — Part of Speech and Universal Dependency effects on English Arabi
-      - Dmitry Nikolaev → [Q137055425](https://www.wikidata.org/wiki/Q137055425) (ORCID 0000-0002-3034-9794)
-- [ ] **0 citations** — Resolving Interference (RI): Disentangling Models for Improved M
-      - Arun Iyer → [Arun Iyer](https://www.wikidata.org/wiki/Q130832139) (ORCID 0000-0001-7377-7599)
-- [ ] **0 citations** — Evaluation Cards: An Interpretive Layer for AI Evaluation Report
-      - Jennifer Mickel → [Jennifer Mickel](https://www.wikidata.org/wiki/Q130807785) (ORCID 0009-0006-7517-0460)
-      - Shalaleh Rismani → [Shalaleh Rismani](https://www.wikidata.org/wiki/Q130857691) (ORCID 0000-0002-5281-2428)
-      - Usman Gohar → [Usman Gohar](https://www.wikidata.org/wiki/Q130836496) (ORCID 0009-0001-8859-4928)
-      - Yacine Jernite → [Yacine Jernite](https://www.wikidata.org/wiki/Q130836822) (ORCID 0000-0002-8053-6862)
-      - Zeerak Talat → [Zeerak Talat](https://www.wikidata.org/wiki/Q130838689) (ORCID 0000-0001-5503-867X)
-
-## Remaining, one paper at a time (108 papers, 1149 strings)
+## Remaining, one paper at a time (105 papers, 1016 strings)
 
 The *disambiguate* link opens Author Disambiguator on the paper item. It
 matches name forms an exact label search cannot -- a byline reading *Colin A.
@@ -208,52 +36,53 @@ research -- footballer, actor, politician -- so the name is a coincidence. An
 item stating no occupation at all is still listed.
 
 - [ ] **897 citations** — TIES-Merging: Resolving Interference When Merging Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029633)
-      - Mohit Bansal → [Q67386311](https://www.wikidata.org/wiki/Q67386311) — researcher, natural language processing and , [Q92117908](https://www.wikidata.org/wiki/Q92117908) — researcher (ORCID 0000-0002-8403-0316), [Q96127041](https://www.wikidata.org/wiki/Q96127041) — researcher (ORCID 0000-0001-8777-1980) … +2
-- [ ] **294 citations** — tinyBenchmarks: evaluating LLMs with fewer examples — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029634)
+      - Mohit Bansal → [Q92117908](https://www.wikidata.org/wiki/Q92117908) — researcher (ORCID 0000-0002-8403-0316), [Q96127041](https://www.wikidata.org/wiki/Q96127041) — researcher (ORCID 0000-0001-8777-1980), [Q67386311](https://www.wikidata.org/wiki/Q67386311) — researcher, natural language processing and  … +2
+- [ ] **294 citations** — tinyBenchmarks: evaluating LLMs with fewer examples — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029634)
       - Yuekai Sun → [Q102433700](https://www.wikidata.org/wiki/Q102433700) — statistician
       - Gongjun Xu → [Q100674149](https://www.wikidata.org/wiki/Q100674149) — researcher
-- [ ] **244 citations** — Active Learning for BERT: An Empirical Study — 9 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029635)
+- [ ] **244 citations** — Active Learning for BERT: An Empirical Study — 8 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029635)
       - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
-- [ ] **238 citations** — Findings of the BabyLM Challenge: Sample-Efficient Pretraini — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029636)
-      - Aaron Mueller → [Q87933941](https://www.wikidata.org/wiki/Q87933941) — researcher
-- [ ] **190 citations** — Global MMLU: Understanding and Addressing Cultural and Lingu — 16 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029638)
+- [ ] **238 citations** — Findings of the BabyLM Challenge: Sample-Efficient Pretraini — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029636)
+- [ ] **190 citations** — Global MMLU: Understanding and Addressing Cultural and Lingu — 11 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029638)
       - Sebastian Ruder → [Q47488652](https://www.wikidata.org/wiki/Q47488652) — computer scientist
       - Sara Hooker → [Q107742361](https://www.wikidata.org/wiki/Q107742361) — deep learning researcher
 - [ ] **167 citations** — Q²: Evaluating Factual Consistency in Knowledge-Grounded Dia — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029639)
       - Omri Abend → [Q102687062](https://www.wikidata.org/wiki/Q102687062) — Ph.D. Hebrew University 2013
-- [ ] **127 citations** — On the Weaknesses of Reinforcement Learning for Neural Machi — 3 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029640)
+- [ ] **127 citations** — On the Weaknesses of Reinforcement Learning for Neural Machi — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029640)
       - Omri Abend → [Q102687062](https://www.wikidata.org/wiki/Q102687062) — Ph.D. Hebrew University 2013
-- [ ] **121 citations** — Fusing finetuned models for better pretraining — 3 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029641)
+- [ ] **121 citations** — Fusing finetuned models for better pretraining — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029641)
       - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
 - [ ] **120 citations** — DisentQA: Disentangling Parametric and Contextual Knowledge  — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029642)
       - Omri Abend → [Q102687062](https://www.wikidata.org/wiki/Q102687062) — Ph.D. Hebrew University 2013
-- [ ] **117 citations** — Model merging with SVD to tie the Knots — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029643)
-      - George Stoica → [Q43172025](https://www.wikidata.org/wiki/Q43172025) — researcher
-      - J. Hoffman → [Q76142038](https://www.wikidata.org/wiki/Q76142038) — Peerage person ID=560424, [Q59556470](https://www.wikidata.org/wiki/Q59556470) — researcher ORCID ID = 0000-0002-1571-6808, [Q138575927](https://www.wikidata.org/wiki/Q138575927) — researcher
-- [ ] **100 citations** — Beyond Binary Rewards: Training LMs to Reason About Their Un — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029645)
-      - Isha Puri → [Q98770682](https://www.wikidata.org/wiki/Q98770682) — researcher
-      - Yoon Kim → [Q102278866](https://www.wikidata.org/wiki/Q102278866) — Ph.D. Virginia Polytechnic Institute and Sta, [Q130808559](https://www.wikidata.org/wiki/Q130808559) — researcher (ORCID 0009-0003-8583-6324), [Q60973630](https://www.wikidata.org/wiki/Q60973630) — South Korean researcher and politician … +2
+- [ ] **117 citations** — Model merging with SVD to tie the Knots — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029643)
+      - J. Hoffman → [Q59556470](https://www.wikidata.org/wiki/Q59556470) — researcher ORCID ID = 0000-0002-1571-6808, [Q76142038](https://www.wikidata.org/wiki/Q76142038) — Peerage person ID=560424, [Q138575927](https://www.wikidata.org/wiki/Q138575927) — researcher
+- [ ] **100 citations** — Beyond Binary Rewards: Training LMs to Reason About Their Un — 3 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029645)
+      - Yoon Kim → [Q60973630](https://www.wikidata.org/wiki/Q60973630) — South Korean researcher and politician, [Q130808559](https://www.wikidata.org/wiki/Q130808559) — researcher (ORCID 0009-0003-8583-6324), [Q91553362](https://www.wikidata.org/wiki/Q91553362) — researcher (ORCID 0000-0002-0679-6594) … +2
       - Jacob Andreas → [Q125454034](https://www.wikidata.org/wiki/Q125454034) — AI researcher
-- [ ] **100 citations** — Jump to Conclusions: Short-Cutting Transformers with Linear  — 3 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029646)
+- [ ] **100 citations** — Jump to Conclusions: Short-Cutting Transformers with Linear  — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029646)
       - Alexander Yom Din → [Q102662940](https://www.wikidata.org/wiki/Q102662940) — Israeli mathematician
-- [ ] **92 citations** — Asymmetry in Low-Rank Adapters of Foundation Models — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029647)
-- [ ] **85 citations** — Efficient multi-prompt evaluation of LLMs — 8 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029648)
+- [ ] **92 citations** — Asymmetry in Low-Rank Adapters of Foundation Models — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029647)
+- [ ] **85 citations** — Efficient multi-prompt evaluation of LLMs — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029648)
       - Yuekai Sun → [Q102433700](https://www.wikidata.org/wiki/Q102433700) — statistician
-- [ ] **83 citations** — Call for Papers - The BabyLM Challenge: Sample-efficient pre — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029649)
-      - Aaron Mueller → [Q87933941](https://www.wikidata.org/wiki/Q87933941) — researcher
-- [ ] **78 citations** — Are You Convinced? Choosing the More Convincing Evidence wit — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029650)
+- [ ] **78 citations** — Are You Convinced? Choosing the More Convincing Evidence wit — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029650)
       - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
-- [ ] **73 citations** — Knowledge is a Region in Weight Space for Fine-tuned Languag — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029651)
+- [ ] **73 citations** — Knowledge is a Region in Weight Space for Fine-tuned Languag — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029651)
       - Colin Raffel → [Q86994604](https://www.wikidata.org/wiki/Q86994604) — researcher, machine learning
       - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
 - [ ] **72 citations** — Will it Blend? Blending Weak and Strong Labeled Data in a Ne — 7 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029652)
       - Carlos Alzate → [Q102390975](https://www.wikidata.org/wiki/Q102390975) — Ph.D. Katholieke Universiteit Leuven 2009
       - Yufang Hou → [Q126462463](https://www.wikidata.org/wiki/Q126462463)
       - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
-- [ ] **70 citations** — Corpus Wide Argument Mining - A Working Solution — 12 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029653)
+- [ ] **70 citations** — Corpus Wide Argument Mining - A Working Solution — 11 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029653)
       - Carlos Alzate → [Q102390975](https://www.wikidata.org/wiki/Q102390975) — Ph.D. Katholieke Universiteit Leuven 2009
       - Yufang Hou → [Q126462463](https://www.wikidata.org/wiki/Q126462463)
       - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
-- [ ] **70 citations** — DORA The Explorer: Directed Outreaching Reinforcement Action — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029654)
-- … and 88 more papers, same order, in `build/wikidata_coauthors.json`
+- [ ] **69 citations** — Efficient Benchmarking (of Language Models) — 7 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029658)
+      - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
+- [ ] **68 citations** — Elements of World Knowledge (EWoK): A Cognition-Inspired Fra — 19 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029655)
+      - Carina Kauf → [Q126691875](https://www.wikidata.org/wiki/Q126691875) — researcher in the field of digital humanitie
+      - Jennifer Hu → [Q102309422](https://www.wikidata.org/wiki/Q102309422) — Cognitive Science researcher; Ph.D. Universi
+      - Maria Ryskina → [Q130838678](https://www.wikidata.org/wiki/Q130838678) — researcher
+      - Ekin Akyürek → [Q141203667](https://www.wikidata.org/wiki/Q141203667) — researcher at Massachusetts Institute of Tec
+- … and 85 more papers, same order, in `build/wikidata_coauthors.json`
 
