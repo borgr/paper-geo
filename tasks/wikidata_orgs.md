@@ -44,21 +44,15 @@ These existing items point at it, in the batch on the run after it has a QID
 | P31 | research consortium | [https://evalevalai.com/](https://evalevalai.com/) |
 | P101 | artificial intelligence | [https://evalevalai.com/](https://evalevalai.com/) |
 | P101 | evaluation | [https://evalevalai.com/](https://evalevalai.com/) |
+| P571 | GitHub organisation created | [https://github.com/evaleval](https://github.com/evaleval) |
 | P856 | https://evalevalai.com/ | [https://evalevalai.com/](https://evalevalai.com/) |
 | P2037 | evaleval | [https://github.com/evaleval](https://github.com/evaleval) |
 | P2002 | evaluatingevals | [https://github.com/evaleval](https://github.com/evaleval) |
-| P1416 | Hugging Face | [https://github.com/evaleval](https://github.com/evaleval) |
-| P1416 | University of Edinburgh | [https://github.com/evaleval](https://github.com/evaleval) |
-| P1416 | EleutherAI | [https://github.com/evaleval](https://github.com/evaleval) |
+| P1416 | Hugging Face, P3831 host | [https://github.com/evaleval](https://github.com/evaleval) |
+| P1416 | University of Edinburgh, P3831 host | [https://github.com/evaleval](https://github.com/evaleval) |
+| P1416 | EleutherAI, P3831 host | [https://github.com/evaleval](https://github.com/evaleval) |
 
 These existing items point at it, in the batch on the run after it has a QID
 -- QuickStatements cannot use an item it just created as a value.
 
 - [Evaluating Evaluations (NeurIPS 2024 workshop)](https://www.wikidata.org/wiki/Q131426993) → P664
-
-- **needs a fact only you have** — inception (P571) — the coalition's own
-founding date. The GitHub organisation was created 2024-07-22 and the first
-workshop was 2024-12-15, so both are floors rather than the date itself.
-- **needs a fact only you have** — whether the three hosts belong under
-*affiliation* (P1416, used here) or *sponsor* (P859). The site says only
-"Hosted By".

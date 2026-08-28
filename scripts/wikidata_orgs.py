@@ -53,10 +53,12 @@ def described(path: str) -> dict:
 
 
 def value_qids(items: dict) -> list[str]:
-    """Every QID the file names as a statement value or an edge subject."""
+    """Every QID the file names as a statement value, a qualifier value, or an edge subject."""
     out = set()
     for it in items.values():
-        out |= {s["v"] for s in it.get("statements") or [] if str(s["v"]).startswith("Q")}
+        for s in it.get("statements") or []:
+            out |= {str(x["v"]) for x in [s] + (s.get("q") or [])
+                    if str(x["v"]).startswith("Q")}
         out |= {e["qid"] for e in it.get("organizer_of") or []}
     return sorted(out)
 
@@ -73,14 +75,15 @@ def labels_of(qids: list[str]) -> dict[str, str]:
 
 
 def mistyped(items: dict, live: dict[str, str]) -> list[str]:
-    """Statements whose `note` does not match the live label of their QID."""
+    """Statements and qualifiers whose `note` does not match the live label of their QID."""
     bad = []
     for slug, it in sorted(items.items()):
         for s in it.get("statements") or []:
-            v, note = str(s["v"]), s.get("note")
-            if v.startswith("Q") and note and live.get(v, "").lower() != note.lower():
-                bad.append(f"{slug} {s['p']} {v} says {note!r}, "
-                           f"Wikidata says {live.get(v) or 'nothing'!r}")
+            for x in [s] + (s.get("q") or []):
+                v, note = str(x["v"]), x.get("note")
+                if v.startswith("Q") and note and live.get(v, "").lower() != note.lower():
+                    bad.append(f"{slug} {x['p']} {v} says {note!r}, "
+                               f"Wikidata says {live.get(v) or 'nothing'!r}")
     return bad
 
 
@@ -153,7 +156,9 @@ def batch(items: dict, state: dict, day: str) -> list[str]:
             for a in it.get("aliases") or []:
                 L.append("\t".join(["LAST", "Aen", '"%s"' % a]))
             for s in it["statements"]:
-                L.append("\t".join(["LAST", s["p"], str(s["v"])] + ref(s["ref"], day)))
+                quals = [c for x in s.get("q") or [] for c in (x["p"], str(x["v"]))]
+                L.append("\t".join(["LAST", s["p"], str(s["v"])]
+                                   + quals + ref(s["ref"], day)))
             continue
         for subj, prop, obj in st["missing"]:
             L.append("\t".join([subj, prop, obj]))
@@ -203,6 +208,8 @@ def write_page(items: dict, state: dict, qs_path: str | None) -> str:
             L += ["| property | value | source |", "| --- | --- | --- |"]
             for s in it["statements"]:
                 v = s.get("note") or str(s["v"]).strip('"')
+                for x in s.get("q") or []:
+                    v += ", %s %s" % (x["p"], x.get("note") or x["v"])
                 L.append(f"| {s['p']} | {v} | [{s['ref']}]({s['ref']}) |")
             L.append("")
         edges = st["missing"] if st["qid"] else st["edges"]

@@ -292,8 +292,8 @@ references, and an item made to hold an edge back to you is not that.
 
 ### Items for the groups the work belongs to
 
-A person with no independent record should not get an item. A *group* with one usually
-should, and several in the corpus have none — so a paper cannot say what it is part of and
+A *group* with a public record deserves an item as much as a person does, and several in
+the corpus have none — so a paper cannot say what it is part of and
 the group cannot say what it produced. `wikidata_orgs.py` reads
 [data/wikidata_orgs.yaml](data/wikidata_orgs.yaml), which is hand-maintained, and writes a
 QuickStatements batch to `tasks/wikidata_orgs.qs`.
@@ -309,6 +309,23 @@ exists instead gets the edges into it: *main subject* (P921) on each corpus pape
 *organizer* (P664) on each event it ran. Those wait for the run after creation, because
 QuickStatements cannot use an item it just made as a value, and they drop out once Wikidata
 states them — so pasting twice adds nothing.
+
+### Items for the co-authors who have none
+
+An *author* statement needs an item on both ends, and most co-authors have no item — which
+is what leaves the majority of name mentions unresolvable. `wikidata_people.py` takes the
+ORCIDs the co-author pass collected, keeps the ones no item claims, and writes a batch that
+creates a person for each.
+
+Every value comes from a public record about that person rather than from their name. ORCID
+gives the name they publish under and the employer they list with no end date; OpenAlex
+answers for the same ORCID and covers the case of a locked-down work list, which is common
+and says nothing about whether somebody publishes. Each statement cites the record it came
+from, the employer is stated only where exactly one organisation item carries that name, and
+anyone neither record describes is left off the page rather than guessed at.
+
+Nothing follows by hand. The new items claim their ORCIDs, so the next co-author run matches
+them and writes the *author* statements on its own.
 
 ## 7. The one-time identity fixes
 
@@ -362,6 +379,8 @@ since these are lists a human works through over days — plus one from
 | `wikidata_coauthors.qs` | the ORCID-matched half of that as a batch, safe to paste unread |
 | `wikidata_orgs.md` | items for the groups the work belongs to, each statement with its source |
 | `wikidata_orgs.qs` | the same as a batch — creates the items, then connects them on the next run |
+| `wikidata_people.md` | co-authors with an ORCID and no item, with the record each value came from |
+| `wikidata_people.qs` | the same as a batch — creates them, after which the *author* statements follow on their own |
 | `s2_merge.md` | papers to pull onto the claimed Semantic Scholar page |
 | `scholar_strays.md` | Scholar searches that surface a second record for one paper, from `scholar_strays.py` |
 | `openalex_merge.md` | what to paste into the OpenAlex correction form |
@@ -576,6 +595,7 @@ and the one place the review is genuinely cheap.
 | `scripts/wikidata_apply.py [--apply] [--check-account]` | apply the Wikidata diff | apply: **yes, Wikidata** |
 | `scripts/wikidata_coauthors.py [--quiet] [--refresh]` | co-author name strings on your paper items, matched to author items by ORCID where one exists and by name where it does not; needs paper items to exist | local only |
 | `scripts/wikidata_orgs.py [--quiet]` | items for the groups in `data/wikidata_orgs.yaml`, creating those Wikidata lacks and connecting those it has | local only |
+| `scripts/wikidata_people.py [--refresh] [--quiet]` | items for the co-authors who have an ORCID and no item, built from ORCID and OpenAlex | local only |
 | `scripts/validate.py [--fix-counts] [--strict]` | schema check + shipped-bug regressions + selftest; `--fix-counts` refreshes the corpus sizes stated in the docs. Exits 1 on a structural failure (which stops `update.py`), 0 on a stale count; `--strict` makes both fatal | `--fix-counts`: the doc sentences |
 | `measure/check_structure.py [--links]` | the "A" checks | no |
 | `measure/fidelity.py [--ingest]` | the "C" diagnostic | no |

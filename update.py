@@ -131,6 +131,8 @@ def step_audit(cfg, args) -> None:
     # Reads the paper items too, and its second pass needs the group items the first pass
     # asked for, so it is re-run every time rather than once.
     run([sys.executable, "scripts/wikidata_orgs.py", "--quiet"])
+    # Reads the co-author cache written above, so it runs after it and never before.
+    run([sys.executable, "scripts/wikidata_people.py", "--quiet"])
     # Wikipedia is read here for the same reason as the rest of this step: it is a surface we
     # do not control, and the only actions available on it are proposals an editor may
     # decline, so what is open has to be re-read rather than remembered.
@@ -916,6 +918,29 @@ def wikidata_coauthors() -> list[str]:
     return L + [""]
 
 
+def wikidata_people() -> list[str]:
+    """The worklist section for `build/wikidata_people.json`, or nothing."""
+    try:
+        with open(os.path.join(ROOT, "build", "wikidata_people.json")) as f:
+            st = json.load(f)
+    except (OSError, ValueError):
+        return []
+    if not st.get("create"):
+        return []
+    L = [f"## Wikidata items for the co-authors ({st['create']} to create)", "",
+         "Each of these people has an ORCID and no Wikidata item, so their name on your",
+         "papers cannot become an *author* statement. Every value comes from a public",
+         f"record about them, and between them they account for {st['mentions']} name",
+         "mentions across the corpus.", "",
+         "- [ ] **paste [`tasks/wikidata_people.qs`](tasks/wikidata_people.qs) into "
+         "[QuickStatements](https://quickstatements.toolforge.org/#/batch)**",
+         "      - the name, employer and evidence for each: "
+         "[`tasks/wikidata_people.md`](tasks/wikidata_people.md)",
+         "      - nothing follows by hand — the next run finds the new items by ORCID and "
+         "writes the *author* statements itself"]
+    return L + [""]
+
+
 def wikidata_orgs() -> list[str]:
     """The worklist section for `build/wikidata_orgs.json`, or nothing."""
     try:
@@ -1095,6 +1120,7 @@ def step_worklist(cfg, args) -> None:
     lines += scholar_split_records()
     lines += wikidata_coauthors()
     lines += wikidata_orgs()
+    lines += wikidata_people()
     lines += upstream_gaps(papers, cfg)
 
     # The papers themselves and not just their count: the URL to paste into the Add

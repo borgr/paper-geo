@@ -16,9 +16,10 @@ LAST	Aen	"EvalEval"
 LAST	P31	Q20747412	S854	"https://evalevalai.com/"	S813	+2026-08-28T00:00:00Z/11
 LAST	P101	Q11660	S854	"https://evalevalai.com/"	S813	+2026-08-28T00:00:00Z/11
 LAST	P101	Q1379672	S854	"https://evalevalai.com/"	S813	+2026-08-28T00:00:00Z/11
+LAST	P571	+2024-07-22T00:00:00Z/11	S854	"https://github.com/evaleval"	S813	+2026-08-28T00:00:00Z/11
 LAST	P856	"https://evalevalai.com/"	S854	"https://evalevalai.com/"	S813	+2026-08-28T00:00:00Z/11
 LAST	P2037	"evaleval"	S854	"https://github.com/evaleval"	S813	+2026-08-28T00:00:00Z/11
 LAST	P2002	"evaluatingevals"	S854	"https://github.com/evaleval"	S813	+2026-08-28T00:00:00Z/11
-LAST	P1416	Q108943604	S854	"https://github.com/evaleval"	S813	+2026-08-28T00:00:00Z/11
-LAST	P1416	Q160302	S854	"https://github.com/evaleval"	S813	+2026-08-28T00:00:00Z/11
-LAST	P1416	Q106289326	S854	"https://github.com/evaleval"	S813	+2026-08-28T00:00:00Z/11
+LAST	P1416	Q108943604	P3831	Q10870991	S854	"https://github.com/evaleval"	S813	+2026-08-28T00:00:00Z/11
+LAST	P1416	Q160302	P3831	Q10870991	S854	"https://github.com/evaleval"	S813	+2026-08-28T00:00:00Z/11
+LAST	P1416	Q106289326	P3831	Q10870991	S854	"https://github.com/evaleval"	S813	+2026-08-28T00:00:00Z/11

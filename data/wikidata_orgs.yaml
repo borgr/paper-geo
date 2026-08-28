@@ -9,7 +9,8 @@
 # puts it on the task page as a question instead of in the batch.
 #
 # `note` is a gloss of the value and is verified against the live label, so a mistyped
-# QID is caught before the paste rather than after.
+# QID is caught before the paste rather than after. `q` is qualifiers on the statement,
+# in the same shape.
 
 items:
   evaleval-coalition:
@@ -20,21 +21,24 @@ items:
       - {p: P31,   v: Q20747412,  note: research consortium,     ref: "https://evalevalai.com/"}
       - {p: P101,  v: Q11660,     note: artificial intelligence, ref: "https://evalevalai.com/"}
       - {p: P101,  v: Q1379672,   note: evaluation,              ref: "https://evalevalai.com/"}
+      # No founding is announced anywhere, so the earliest public trace of the coalition
+      # stands as the date.
+      - {p: P571,  v: "+2024-07-22T00:00:00Z/11", note: "GitHub organisation created",
+         ref: "https://github.com/evaleval"}
       - {p: P856,  v: '"https://evalevalai.com/"',               ref: "https://evalevalai.com/"}
       - {p: P2037, v: '"evaleval"',                              ref: "https://github.com/evaleval"}
       - {p: P2002, v: '"evaluatingevals"',                       ref: "https://github.com/evaleval"}
-      - {p: P1416, v: Q108943604, note: Hugging Face,            ref: "https://github.com/evaleval"}
-      - {p: P1416, v: Q160302,    note: University of Edinburgh, ref: "https://github.com/evaleval"}
-      - {p: P1416, v: Q106289326, note: EleutherAI,              ref: "https://github.com/evaleval"}
+      # Wikidata has no property for a host institution, so the three named under
+      # "Hosted By" are affiliations carrying the role that says which kind.
+      - {p: P1416, v: Q108943604, note: Hugging Face,            ref: "https://github.com/evaleval",
+         q: [{p: P3831, v: Q10870991, note: host}]}
+      - {p: P1416, v: Q160302,    note: University of Edinburgh, ref: "https://github.com/evaleval",
+         q: [{p: P3831, v: Q10870991, note: host}]}
+      - {p: P1416, v: Q106289326, note: EleutherAI,              ref: "https://github.com/evaleval",
+         q: [{p: P3831, v: Q10870991, note: host}]}
     # Items that already exist and should point at this one once it has a QID.
     organizer_of:
       - {qid: Q131426993, note: "Evaluating Evaluations (NeurIPS 2024 workshop)"}
-    needs:
-      - "inception (P571) — the coalition's own founding date. The GitHub organisation was
-        created 2024-07-22 and the first workshop was 2024-12-15, so both are floors rather
-        than the date itself."
-      - "whether the three hosts belong under *affiliation* (P1416, used here) or *sponsor*
-        (P859). The site says only \"Hosted By\"."
 
   babylm-challenge:
     label: BabyLM Challenge

@@ -4337,3 +4337,90 @@ class TestNamesakesAreLeftOffThePageNotGuessedAt(unittest.TestCase):
         self.assertEqual(wc.batch(rows), [
             "Q1\tP50\tQ7\tP1545\t\"1\"\tP1932\t\"A Namesake\"",
             "-Q1\tP2093\t\"A Namesake\""])
+
+
+class TestPeopleItemsRestOnPublicRecordsNotOnNames(unittest.TestCase):
+    """Creating a person is the most public thing this repo generates, so the batch may
+    only carry people two public records describe, and only once each."""
+
+    def _job(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import wikidata_people as wp
+        return wp
+
+    def _rec(self, **kw):
+        base = {"label": "Ada Lovelace", "openalex_label": "", "employers": [],
+                "works": 3, "openalex_works": 0}
+        return dict(base, **kw)
+
+    def test_a_private_work_list_is_not_an_empty_one(self):
+        wp = self._job()
+        rec = self._rec(works=0, openalex_works=613)
+        got = wp.described("0000-0001-5522-1351", rec, {})
+        self.assertNotIn("skip", got)
+        # The occupation has to point at the record that actually shows the publishing.
+        self.assertIn("openalex.org", got["works"])
+
+    def test_nobody_neither_record_names_reaches_the_batch(self):
+        wp = self._job()
+        got = wp.described("0000-0000-0000-0000",
+                           self._rec(label="", openalex_label=""), {})
+        self.assertIn("skip", got)
+        self.assertEqual(wp.batch([], "2026-08-28"), [])
+
+    def test_a_person_with_no_works_anywhere_is_left_out(self):
+        wp = self._job()
+        got = wp.described("0000-0000-0000-0001",
+                           self._rec(works=0, openalex_works=0), {})
+        self.assertIn("skip", got)
+
+    def test_an_unmatched_employer_goes_unstated_rather_than_guessed(self):
+        wp = self._job()
+        rec = self._rec(employers=["Some Lab Nobody Has An Item For"])
+        got = wp.described("0000-0001-0000-0002", rec, {})
+        self.assertEqual(got["employers"], [])
+        self.assertEqual(got["description"], "researcher")
+        self.assertNotIn("P108", "\n".join(wp.batch([got], "2026-08-28")))
+
+    def test_the_employer_reads_the_way_wikidata_names_it(self):
+        wp = self._job()
+        rec = self._rec(employers=["The Hebrew University of Jerusalem"])
+        emp = {"The Hebrew University of Jerusalem":
+               {"qid": "Q174158", "label": "Hebrew University of Jerusalem"}}
+        got = wp.described("0000-0003-4311-3876", rec, emp)
+        self.assertEqual(got["description"], "researcher at Hebrew University of Jerusalem")
+        self.assertIn("LAST\tP108\tQ174158", "\n".join(wp.batch([got], "2026-08-28")))
+
+    def test_somebody_who_got_an_item_since_the_last_pass_is_not_created_twice(self):
+        wp = self._job()
+        cache = {"by_orcid": {"0000-0000-0000-0003": {"qid": "Q9"}},
+                 "orcids": {"s1": {"a b": "0000-0000-0000-0003",
+                                   "c d": "0000-0000-0000-0004"}}}
+        with tempfile.TemporaryDirectory() as d:
+            with open(os.path.join(d, wp.CACHE), "w") as f:
+                json.dump(cache, f)
+            with mock.patch.object(wp, "BUILD", d):
+                self.assertEqual(wp.wanted(), {"0000-0000-0000-0004": 1})
+
+    def test_every_statement_in_the_batch_carries_a_source(self):
+        wp = self._job()
+        got = wp.described("0000-0001-0000-0005", self._rec(), {})
+        lines = wp.batch([got], "2026-08-28")
+        self.assertTrue(lines and lines[0] == "CREATE")
+        for line in lines:
+            if line.startswith("LAST\tP"):
+                self.assertIn("\tS854\t", line, line)
+                self.assertIn("\tS813\t", line, line)
+
+    def test_the_real_batch_creates_a_human_researcher_with_the_orcid_on_it(self):
+        path = os.path.join(ROOT, "tasks", "wikidata_people.qs")
+        if not os.path.exists(path):
+            self.skipTest("no batch generated")
+        with open(path) as f:
+            text = f.read()
+        blocks = [b for b in text.split("CREATE\n") if b.strip()]
+        self.assertTrue(blocks)
+        for b in blocks:
+            self.assertIn("LAST\tP31\tQ5\t", b)
+            self.assertIn("LAST\tP106\tQ1650915\t", b)
+            self.assertRegex(b, r"LAST\tP496\t\"\d{4}-\d{4}-\d{4}-\d{3}[\dX]\"")
