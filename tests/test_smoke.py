@@ -3976,9 +3976,10 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
         return wc
 
     def _fixture(self, wc, strings, p50=(), orcids=None, by_orcid=None, by_name=None):
-        # Every fillable property already stated, so these tests are only about authors.
+        # Venue and every fillable property already stated, so these tests are only about
+        # authors.
         wc.item_state = lambda _q: {"Q1": {"strings": strings, "p50": set(p50),
-                                           "has": set(wc.FILLS)}}
+                                           "venue": True, "has": set(wc.FILLS)}}
         papers = [{"slug": "s1", "title": "T", "citations": 5}]
         look = {"orcids": {"s1": orcids or {}}, "by_orcid": by_orcid or {},
                 "by_name": by_name or {}}
@@ -4120,3 +4121,59 @@ class TestFullTextUrlSkipsIdentifierMirrors(unittest.TestCase):
         wc = self._module()
         for p in ({}, {"url": ""}, {"url": "   "}, {"url": "not a url"}):
             self.assertEqual(wc.full_text(p), "", p)
+
+
+class TestVenueGuardsRejectAPlausibleWrongVolume(unittest.TestCase):
+    """The batch is pasted unread, so a venue may only resolve on evidence.
+
+    Two ways a well-matching name is still the wrong answer. A conference publishes several
+    volumes and an alias of one of them is often the conference's plain name, so a short
+    paper matching on that name would be filed among the long papers. And Wikidata carries
+    bad aliases — the CoNLL 2020 proceedings answers to `CoNLL 2024` — which the volume's
+    own publication year catches.
+    """
+
+    def _module(self):
+        import wikidata_coauthors as wc
+        importlib.reload(wc)
+        self.addCleanup(importlib.reload, wc)
+        return wc
+
+    def test_a_volume_the_name_does_not_name_is_refused(self):
+        wc = self._module()
+        plain = "Proceedings of the 56th Annual Meeting of the ACL"
+        vol1 = "Proceedings of the 56th Annual Meeting of the ACL (Volume 1: Long Papers)"
+        self.assertEqual(wc.volume_named(plain), set())
+        self.assertFalse(wc.volume_named(vol1) <= wc.volume_named(plain))
+        self.assertTrue(wc.volume_named(vol1) <= wc.volume_named(vol1))
+
+    def test_a_volume_from_the_wrong_year_is_refused(self):
+        wc = self._module()
+        self.assertFalse(wc.right_year({"year": 2020}, 2024))
+        self.assertTrue(wc.right_year({"year": 2024}, 2024))
+        self.assertTrue(wc.right_year({"year": 2023}, 2024), "December editions slip a year")
+
+    def test_an_undated_journal_is_waved_through(self):
+        wc = self._module()
+        self.assertTrue(wc.right_year({"year": 0}, 2024))
+        self.assertTrue(wc.right_year({}, 2024))
+        self.assertTrue(wc.right_year({"year": 2020}, None))
+
+    def test_venue_forms_are_tried_canonical_first_and_never_arxiv(self):
+        wc = self._module()
+        got = wc.venue_forms({
+            "venue_display": "Findings of EMNLP 2023",
+            "venue": "Findings of the {ACL}: {EMNLP} 2023, Singapore, December 6-10, 2023"})
+        self.assertEqual(got[0], "Findings of EMNLP 2023")
+        self.assertIn("Findings of the ACL: EMNLP 2023", got)
+        self.assertEqual(wc.venue_forms({"venue_display": "arXiv", "venue": "arXiv.org"}), [])
+
+    def test_findings_is_read_off_the_anthology_identifier(self):
+        wc = self._module()
+        self.assertTrue(wc.is_findings({"doi": "10.18653/v1/2023.findings-emnlp.95"}))
+        self.assertFalse(wc.is_findings({"doi": "10.18653/v1/2023.emnlp-main.90"}))
+
+    def test_an_unlabelled_stub_is_not_a_target(self):
+        wc = self._module()
+        stub = [{"qid": "Q135923323", "label": "", "types": ["Q1143604"]}]
+        self.assertEqual(wc.publications(stub), [])

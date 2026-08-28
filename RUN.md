@@ -263,11 +263,16 @@ because a name string matches a namesake exactly as well as the right person.
 
 The same batch carries three more statements, because they are the same items and none of
 them needs a judgement either. *Published in* (P1433) is missing everywhere, so nothing
-joins a paper to the venue that published it. The venue name is already in the bibliography
-and P1433 wants a publication, so only a proceedings volume or a journal is ever a target —
-a conference name matches the conference event just as well, and pointing P1433 at an event
-violates the property's own constraint. Two proceedings volumes for one conference stay a
-question, listed with both labels in full. *Language of work* (P407) is missing everywhere
+joins a paper to the venue that published it. The venue name is already in the bibliography,
+and three guards stand between a name that matches and a statement that is right. Only a
+proceedings volume or a journal is a target, because a conference name matches the conference
+event just as well and pointing P1433 at an event violates the property's own constraint. A
+candidate whose title names a volume the matched name does not is refused, since the plain
+conference name is usually an alias of the long-papers volume and a short paper would land
+in the wrong book. And a dated volume has to agree with the paper's year, because Wikidata
+carries aliases that do not — the CoNLL 2020 proceedings answers to *CoNLL 2024*. Where the
+short name matches only the conference, its volumes are reached through *is proceedings from*
+(P4745), and the paper's own Anthology identifier says whether it belongs in Findings. *Language of work* (P407) is missing everywhere
 too, and every paper in the corpus is English. *Full work available at* (P953) gets the
 publisher-hosted copy, skipping any doi.org or arxiv.org link that only restates the DOI or
 arXiv ID the item already carries.

@@ -83,7 +83,7 @@ and many independent paths into your item is the point of having them at all.
 
 - [ ] **90 authors, no judgement needed** — paste [`tasks/wikidata_coauthors.qs`](tasks/wikidata_coauthors.qs) into QuickStatements
       - each one matched ORCID to ORCID, with no name compared
-- [ ] **18 papers get their venue** — in the same paste, *published in* pointing at the proceedings volume or journal
+- [ ] **33 papers get their venue** — in the same paste, *published in* pointing at the proceedings volume or journal
       - resolved from the venue name already in the bibliography
 - [ ] **142 language and full-text statements** — also in that paste, *language of work* and *full work available at*
       - both taken straight from the bibliography

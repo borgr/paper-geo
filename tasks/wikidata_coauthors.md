@@ -9,7 +9,7 @@ connects these items to anything other than you.
 Nothing here creates an item for anyone. A co-author with no item stays a
 string, which is the correct end state for them.
 
-## Venues (18)
+## Venues (33)
 
 None of these items says where it was published, so nothing joins a paper to
 its venue. The name came from the corpus and resolved to one publication item,
@@ -17,30 +17,32 @@ so these are in the batch below with the authors.
 
 - 2 paper(s) → [Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics](https://www.wikidata.org/wiki/Q65966891)
 - 2 paper(s) → [Transactions of the Association for Computational Linguistics](https://www.wikidata.org/wiki/Q28736261)
+- 2 paper(s) → [Transactions on Machine Learning Research](https://www.wikidata.org/wiki/Q110071865)
+- 2 paper(s) → [Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing](https://www.wikidata.org/wiki/Q134464704)
+- 2 paper(s) → [Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing](https://www.wikidata.org/wiki/Q124079222)
+- 1 paper(s) → [Advances in Neural Information Processing Systems 36](https://www.wikidata.org/wiki/Q122813142)
 - 1 paper(s) → [Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing](https://www.wikidata.org/wiki/Q102000089)
 - 1 paper(s) → [Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing](https://www.wikidata.org/wiki/Q109517629)
 - 1 paper(s) → [International Conference on Learning Representations. ICLR 2020](https://www.wikidata.org/wiki/Q104178691)
 - 1 paper(s) → [Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)](https://www.wikidata.org/wiki/Q123127917)
 - 1 paper(s) → [Proceedings of the 2024 Joint International Conference on Computational Linguistics, Language Resources and Evaluation (LREC-COLING 2024)](https://www.wikidata.org/wiki/Q126026573)
 - 1 paper(s) → [Advances in Neural Information Processing Systems 37](https://www.wikidata.org/wiki/Q130601483)
-- 1 paper(s) → [The Proceedings of the 24th Conference on Computational Natural Language Learning](https://www.wikidata.org/wiki/Q130415993)
+- 1 paper(s) → [Findings of the Association for Computational Linguistics: EMNLP 2023](https://www.wikidata.org/wiki/Q126740907)
+- 1 paper(s) → [Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers), NAACL 2024, Mexico City, Mexico, June 16-21, 2024](https://www.wikidata.org/wiki/Q134464683)
+- 1 paper(s) → [Proceedings of the 37th international conference on Machine learning](https://www.wikidata.org/wiki/Q96024615)
 - 1 paper(s) → [Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)](https://www.wikidata.org/wiki/Q123243783)
 - 1 paper(s) → [Journal of Memory and Language](https://www.wikidata.org/wiki/Q6295556)
 - 1 paper(s) → [NeurIPS 2025](https://www.wikidata.org/wiki/Q136378626)
+- 1 paper(s) → [The Proceedings of the 24th Conference on Computational Natural Language Learning](https://www.wikidata.org/wiki/Q130415993)
+- 1 paper(s) → [Proceedings of the The 2022 Conference on Empirical Methods in Natural Language Processing, EMNLP 2022 - System Demonstrations, Abu Dhabi, UAE, December 7-11, 2022](https://www.wikidata.org/wiki/Q135229066)
 - 1 paper(s) → [Proceedings of the 23rd Conference on Computational Natural Language Learning (CoNLL)](https://www.wikidata.org/wiki/Q67385624)
+- 1 paper(s) → [Nature Machine Intelligence](https://www.wikidata.org/wiki/Q44062926)
+- 1 paper(s) → [Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)](https://www.wikidata.org/wiki/Q129325241)
 - 1 paper(s) → [Proceedings of the 2021 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies](https://www.wikidata.org/wiki/Q107009154)
+- 1 paper(s) → [Findings of the Association for Computational Linguistics: EMNLP 2020](https://www.wikidata.org/wiki/Q107145781)
+- 1 paper(s) → [Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing](https://www.wikidata.org/wiki/Q125022858)
 - 1 paper(s) → [Proceedings of the Thirteenth Language Resources and Evaluation Conference](https://www.wikidata.org/wiki/Q113380756)
 - 1 paper(s) → [Proceedings of the 29th International Conference on Computational Linguistics](https://www.wikidata.org/wiki/Q123165690)
-
-3 paper(s) have a venue name that matched more than one publication item,
-usually two volumes of one proceedings. Those need the right volume picked by
-hand. A paper whose venue matched only the conference itself is not listed —
-P1433 wants the publication, and the proceedings volume for it does not exist
-yet.
-
-- [ ] Will it Blend? Blending Weak and Strong Labe — *ACL 2018* → [Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics - System Demonstrations](https://www.wikidata.org/wiki/Q55986409), [Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)](https://www.wikidata.org/wiki/Q53940876)
-- [ ] Inherent Biases in Reference-based Evaluatio — *ACL 2018* → [Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics - System Demonstrations](https://www.wikidata.org/wiki/Q55986409), [Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)](https://www.wikidata.org/wiki/Q53940876)
-- [ ] Automatic Metric Validation for Grammatical  — *ACL 2018* → [Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics - System Demonstrations](https://www.wikidata.org/wiki/Q55986409), [Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)](https://www.wikidata.org/wiki/Q53940876)
 
 ## Language and full text (142)
 
@@ -203,7 +205,7 @@ items for one person, which is a merge rather than a choice.
 
 - [ ] **897 citations** — TIES-Merging: Resolving Interference When Merging Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029633)
       - Prateek Yadav → [Q102070311](https://www.wikidata.org/wiki/Q102070311) — businessman
-      - Mohit Bansal → [Q67386311](https://www.wikidata.org/wiki/Q67386311) — researcher, natural language processing and , [Q92117908](https://www.wikidata.org/wiki/Q92117908) — researcher (ORCID 0000-0002-8403-0316), [Q96127041](https://www.wikidata.org/wiki/Q96127041) — researcher (ORCID 0000-0001-8777-1980) … +3
+      - Mohit Bansal → [Q96127041](https://www.wikidata.org/wiki/Q96127041) — researcher (ORCID 0000-0001-8777-1980), [Q103295310](https://www.wikidata.org/wiki/Q103295310) — Ph.D. University of California, Berkeley 201, [Q67386311](https://www.wikidata.org/wiki/Q67386311) — researcher, natural language processing and  … +3
 - [ ] **294 citations** — tinyBenchmarks: evaluating LLMs with fewer examples — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029634)
       - Yuekai Sun → [Q102433700](https://www.wikidata.org/wiki/Q102433700) — statistician
       - Gongjun Xu → [Q100674149](https://www.wikidata.org/wiki/Q100674149) — researcher
@@ -228,11 +230,11 @@ items for one person, which is a merge rather than a choice.
       - Omri Abend → [Q102687062](https://www.wikidata.org/wiki/Q102687062) — Ph.D. Hebrew University 2013
 - [ ] **117 citations** — Model merging with SVD to tie the Knots — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029643)
       - George Stoica → [Q43172025](https://www.wikidata.org/wiki/Q43172025) — researcher
-      - J. Hoffman → [Q59556470](https://www.wikidata.org/wiki/Q59556470) — researcher ORCID ID = 0000-0002-1571-6808, [Q76142038](https://www.wikidata.org/wiki/Q76142038) — Peerage person ID=560424, [Q138575927](https://www.wikidata.org/wiki/Q138575927) — researcher
+      - J. Hoffman → [Q76142038](https://www.wikidata.org/wiki/Q76142038) — Peerage person ID=560424, [Q59556470](https://www.wikidata.org/wiki/Q59556470) — researcher ORCID ID = 0000-0002-1571-6808, [Q138575927](https://www.wikidata.org/wiki/Q138575927) — researcher
 - [ ] **100 citations** — Beyond Binary Rewards: Training LMs to Reason About Their Un — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029645)
       - Isha Puri → [Q98770682](https://www.wikidata.org/wiki/Q98770682) — researcher
-      - Yoon Kim → [Q102278866](https://www.wikidata.org/wiki/Q102278866) — Ph.D. Virginia Polytechnic Institute and Sta, [Q130808559](https://www.wikidata.org/wiki/Q130808559) — researcher (ORCID 0009-0003-8583-6324), [Q60973630](https://www.wikidata.org/wiki/Q60973630) — South Korean researcher and politician … +2
-      - Jacob Andreas → [Q112760940](https://www.wikidata.org/wiki/Q112760940), [Q125454034](https://www.wikidata.org/wiki/Q125454034) — AI researcher
+      - Yoon Kim → [Q102278866](https://www.wikidata.org/wiki/Q102278866) — Ph.D. Virginia Polytechnic Institute and Sta, [Q60973630](https://www.wikidata.org/wiki/Q60973630) — South Korean researcher and politician, [Q130808559](https://www.wikidata.org/wiki/Q130808559) — researcher (ORCID 0009-0003-8583-6324) … +2
+      - Jacob Andreas → [Q125454034](https://www.wikidata.org/wiki/Q125454034) — AI researcher, [Q112760940](https://www.wikidata.org/wiki/Q112760940)
 - [ ] **100 citations** — Jump to Conclusions: Short-Cutting Transformers with Linear  — 3 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029646)
       - Alexander Yom Din → [Q102662940](https://www.wikidata.org/wiki/Q102662940) — Israeli mathematician
 - [ ] **92 citations** — Asymmetry in Low-Rank Adapters of Foundation Models — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029647)

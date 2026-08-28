@@ -22,9 +22,12 @@ Three gaps ride along in the same batch, because they are the same items and non
 needs a judgement either.
 
   P1433  none of the 108 says where it was published, so nothing joins a paper to its
-         venue. The name is in the corpus, and the one rule is that P1433 takes a
-         publication -- a conference name matches the conference event as readily as the
-         proceedings volume, so only a proceedings or a journal is ever a target.
+         venue. The name is in the corpus, and three guards keep a well-matching name from
+         being the wrong answer. Only a proceedings or a journal is a target, since a
+         conference name matches the event just as readily and P1433 wants the publication.
+         A candidate whose title names a volume the matched name does not is refused, or a
+         short paper lands among the long ones. And a dated volume has to agree with the
+         paper's year, because Wikidata carries aliases that do not.
   P407   none says what language it is in, and every paper in the corpus is English.
   P953   none links a free copy. Only the publisher-hosted URL earns one, since a doi.org
          or arxiv.org link restates P356 or P818.
@@ -58,7 +61,7 @@ DISAMBIG = "https://author-disambiguator.toolforge.org"
 CACHE_DAYS = 30
 CACHE = "wikidata_coauthors_cache.json"
 # Bumped when the cache layout changes, so an old file is re-asked rather than misread.
-SHAPE = 4
+SHAPE = 7
 
 
 def sparql(query: str) -> list[dict]:
@@ -190,9 +193,19 @@ MIRRORS = ("doi.org", "arxiv.org")
 
 # What P1433 accepts, in the order a tie is broken. Its value-type constraint wants a
 # publication, so a conference item is never a valid target however well its name matches.
-PUBLICATION_TYPES = ("Q1143604", "Q5633421")
+# `academic journal` is a sibling of `scientific journal` rather than a subclass, so a
+# journal like Nature Machine Intelligence is invisible without it.
+PUBLICATION_TYPES = ("Q1143604", "Q5633421", "Q737498")
 # Searched anyway, so a name that only matches the event can say so instead of vanishing.
 EVENT_TYPES = ("Q2020153", "Q47258130")
+
+
+def year_of(row: dict) -> int:
+    """The year in a SPARQL row's optional `date` binding, or 0."""
+    try:
+        return int(row["date"]["value"][:4])
+    except (KeyError, TypeError, ValueError):
+        return 0
 
 
 def venue_items(names: list[str]) -> dict[str, list[dict]]:
@@ -206,9 +219,10 @@ def venue_items(names: list[str]) -> dict[str, list[dict]]:
         vals = " ".join('"%s"@en' % n.replace('"', "") for n in names[i:i + 60])
         types = " ".join("wd:" + t for t in PUBLICATION_TYPES + EVENT_TYPES)
         rows_ = sparql(
-            "SELECT ?name ?p ?pLabel ?t WHERE { VALUES ?name { %s } "
+            "SELECT ?name ?p ?pLabel ?t ?date WHERE { VALUES ?name { %s } "
             "{ ?p rdfs:label ?name } UNION { ?p skos:altLabel ?name } "
             "?p wdt:P31/wdt:P279* ?t . VALUES ?t { %s } "
+            "OPTIONAL { ?p wdt:P577 ?date } "
             'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }'
             % (vals, types))
         for r in rows_:
@@ -217,7 +231,7 @@ def venue_items(names: list[str]) -> dict[str, list[dict]]:
             cand = next((c for c in got if c["qid"] == qid), None)
             if cand is None:
                 cand = {"qid": qid, "label": r.get("pLabel", {}).get("value", ""),
-                        "types": []}
+                        "year": year_of(r), "types": []}
                 got.append(cand)
             if t not in cand["types"]:
                 cand["types"].append(t)
@@ -225,8 +239,95 @@ def venue_items(names: list[str]) -> dict[str, list[dict]]:
 
 
 def publications(cands: list[dict]) -> list[dict]:
-    """The candidates that are publications rather than conference events."""
-    return [c for c in cands if set(c["types"]) & set(PUBLICATION_TYPES)]
+    """The candidates that are publications rather than conference events.
+
+    An unlabelled item is dropped even when it is typed as a publication -- a bare stub is
+    not something the reader can check the paste against.
+    """
+    return [c for c in cands
+            if set(c["types"]) & set(PUBLICATION_TYPES) and c["label"]
+            and not c["label"].startswith("Q")]
+
+
+def proceedings_of(events: list[str]) -> dict[str, list[dict]]:
+    """Conference item to the proceedings volumes published from it (P4745, reversed).
+
+    A corpus venue name like `EMNLP 2023` matches the conference and not the volume, which
+    is the name nobody writes. The conference item knows its own volumes, so this is the
+    route from one to the other.
+    """
+    out: dict[str, list[dict]] = {}
+    for i in range(0, len(events), 60):
+        vals = " ".join("wd:" + q for q in events[i:i + 60])
+        for r in sparql(
+                "SELECT ?c ?p ?pLabel ?t ?date WHERE { VALUES ?c { %s } "
+                "?p wdt:P4745 ?c . ?p wdt:P31/wdt:P279* ?t . VALUES ?t { %s } "
+                "OPTIONAL { ?p wdt:P577 ?date } "
+                'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }'
+                % (vals, " ".join("wd:" + t for t in PUBLICATION_TYPES))):
+            got = out.setdefault(qid_of(r["c"]["value"]), [])
+            qid, t = qid_of(r["p"]["value"]), qid_of(r["t"]["value"])
+            cand = next((c for c in got if c["qid"] == qid), None)
+            if cand is None:
+                cand = {"qid": qid, "label": r.get("pLabel", {}).get("value", ""),
+                        "year": year_of(r), "types": []}
+                got.append(cand)
+            if t not in cand["types"]:
+                cand["types"].append(t)
+    return out
+
+
+def venue_forms(paper: dict) -> list[str]:
+    """The names one paper's venue is looked up under, most canonical first.
+
+    The short form is what the site displays, and the bibliography's own string is what
+    Wikidata labels a volume with. Its BibTeX braces come off, and cutting at the first
+    comma drops the `, Singapore, December 6-10, 2023` tail that no label carries.
+    """
+    out = []
+    for f in ([(paper.get("venue_display") or "").strip()]
+              + [(paper.get("venue") or "").replace("{", "").replace("}", "").strip()]):
+        for form in (f, f.split(", ")[0]):
+            # arXiv is a preprint repository and P818 already carries the ID, so P1433 does
+            # not point at it however well the name matches an item.
+            if form and not form.lower().startswith("arxiv") and form not in out:
+                out.append(form)
+    return out
+
+
+# Words that mark one volume of a conference apart from another. A candidate whose label
+# carries one of these is a specific volume, and only a name that carries it too can pick it.
+VOLUME_WORDS = ("volume 1", "volume 2", "volume 3", "volume 4", "long papers",
+                "short papers", "system demonstrations", "demonstrations",
+                "student research workshop", "tutorial", "industry track", "findings")
+
+
+def volume_named(text: str) -> set[str]:
+    """The volume-distinguishing words a title carries."""
+    low = text.lower()
+    return {w for w in VOLUME_WORDS if w in low}
+
+
+def right_year(cand: dict, year) -> bool:
+    """Whether a dated volume belongs to the same year as the paper.
+
+    Wikidata carries bad aliases -- the CoNLL 2020 proceedings answers to `CoNLL 2024` --
+    and the year is the one thing a volume can be checked on against the bibliography. A
+    journal states no publication year and is waved through.
+    """
+    if not cand.get("year") or not year:
+        return True
+    return abs(int(cand["year"]) - int(year)) <= 1
+
+
+def is_findings(paper: dict) -> bool:
+    """Whether the paper appeared in a Findings volume rather than the main proceedings.
+
+    The ACL Anthology puts it in the identifier itself, as `2024.findings-emnlp.12`, which
+    is what separates two volumes of one conference that the venue name cannot.
+    """
+    return "findings" in (str(paper.get("url") or "")
+                          + str(paper.get("doi") or "")).lower()
 
 
 def pick_venue(cands: list[dict]) -> dict | None:
@@ -262,8 +363,9 @@ def lookups(names: list[str], papers: list[dict], refresh: bool) -> dict:
     """The network answers this pass needs, cached in `build/` for CACHE_DAYS.
 
     Returns `orcids` (name to ORCID), `by_orcid` (ORCID to item), `by_name` (name to
-    candidate items) and `venues` (venue name to candidate items). Re-asked together, so a
-    cached set is internally consistent.
+    candidate items), `venues` (venue name to candidate items) and `proceedings` (a
+    conference item to its volumes). Re-asked together, so a cached set is internally
+    consistent.
     """
     path = os.path.join(BUILD, CACHE)
     try:
@@ -281,8 +383,10 @@ def lookups(names: list[str], papers: list[dict], refresh: bool) -> dict:
              "by_orcid": items_by_orcid(
                  sorted({o for m in orcids.values() for o in m.values()})),
              "by_name": items_by_name(names),
-             "venues": venue_items(sorted({(p.get("venue_display") or "").strip()
-                                           for p in papers} - {"", "arXiv"}))}
+             "venues": venue_items(sorted({f for p in papers for f in venue_forms(p)}))}
+    cache["proceedings"] = proceedings_of(sorted(
+        {c["qid"] for cs in cache["venues"].values() for c in cs
+         if not publications([c])}))
     os.makedirs(BUILD, exist_ok=True)
     with open(path, "w") as f:
         json.dump(cache, f, indent=1, sort_keys=True)
@@ -301,6 +405,7 @@ def rows(papers: list[dict], created: dict, look: dict) -> list[dict]:
     """
     by_slug = {p["slug"]: p for p in papers}
     venues = look.get("venues") or {}
+    procs = look.get("proceedings") or {}
     state = item_state(sorted(created.values()))
     out = []
     for slug, qid in created.items():
@@ -327,8 +432,32 @@ def rows(papers: list[dict], created: dict, look: dict) -> list[dict]:
         url = full_text(p)
         if url and "P953" not in st["has"]:
             fills["P953"] = '"%s"' % url
-        vcands = publications(venues.get(vname) or [])
-        venue = pick_venue(vcands) if vname and not st["venue"] else None
+        vcands, venue = [], None
+        # Each form is tried on its own and the first that settles wins. Pooling them makes
+        # the display name and the bibliography's name look like two rival volumes.
+        for form in venue_forms(p):
+            raw = venues.get(form) or []
+            cands = publications(raw)
+            if not cands:
+                # The name matched the conference and not its volume, so ask the conference.
+                found = is_findings(p)
+                cands = publications([v for c in raw
+                                      for v in (procs.get(c["qid"]) or [])
+                                      if ("Findings" in v["label"]) == found])
+            # A label naming a volume the form does not name is a guess. `Proceedings of
+            # the 56th Annual Meeting of the ACL` is an alias of the Long Papers volume, so
+            # a short paper matching on it would be filed in the wrong book.
+            named = volume_named(form)
+            cands = [c for c in cands if volume_named(c["label"]) <= named
+                     and right_year(c, p.get("year"))]
+            if not cands:
+                continue
+            vcands = vcands or cands
+            venue = pick_venue(cands)
+            if venue:
+                break
+        if st["venue"]:
+            venue = None
         if edits or review or leftover or venue or fills or (vcands and not st["venue"]):
             out.append({"slug": slug, "qid": qid, "fills": fills,
                         "title": p.get("title_display") or p.get("title"),
