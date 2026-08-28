@@ -14,7 +14,10 @@ Two passes, and the difference between them is the whole design.
   by ORCID   the paper's OpenAlex record carries the co-author's ORCID, and exactly one
              Wikidata item states that ORCID (P496). Identifier to identifier with no name
              in the middle, so it is emitted as a batch to paste.
-  by name    the string matches the label or an alias of a human item. A namesake matches
+  by DBLP    the string matches a human item by name, and exactly one such item states a
+             DBLP author id whose page lists this same paper. DBLP separates its own
+             namesakes, so a shared publication is a shared person and this batches too.
+  by name    the string matches a human item and nothing else agrees. A namesake matches
              exactly as well, so these are listed one at a time for you to confirm and are
              never batched.
 
@@ -34,8 +37,8 @@ needs a judgement either.
 
     python scripts/wikidata_coauthors.py --apply
 
-writes the ORCID-matched half through the API, one edit per paper item. The rest stays a
-paste, because picking between two items that carry the same name is judgement.
+writes the identifier-matched half through the API, one edit per paper item. The rest stays
+a paste, because picking between two items that carry the same name is judgement.
 
 Creates no item about anybody. Items for people who have none are out of scope by policy
 rather than by omission -- Wikidata notability wants "serious and publicly available
@@ -49,15 +52,17 @@ import argparse
 import datetime
 import json
 import os
+import re
 import sys
 import textwrap
+import unicodedata
 import time
 import urllib.error
 import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, TASKS, get, get_json, norm_name,  # noqa: E402
-                    read_yaml)
+                    read_yaml, write_json)
 from wikidata_apply import logged_in, snak  # noqa: E402
 
 WDQS = "https://query.wikidata.org/sparql"
@@ -68,6 +73,16 @@ DISAMBIG = "https://author-disambiguator.toolforge.org"
 # pass is free on a normal run, short enough that a name resolved elsewhere drops out.
 CACHE_DAYS = 30
 CACHE = "wikidata_coauthors_cache.json"
+# A DBLP page is fetched once and kept far longer than the rest, because a publication list
+# only grows. A stale entry can miss a confirmation and cannot produce a wrong one.
+DBLP_CACHE = "dblp_titles.json"
+DBLP_DAYS = 90
+DBLP_SHAPE = 1
+# Pages per run. DBLP answers a paced request in about a second and drops the connection
+# for minutes if pushed, so a first run on a fresh cache would otherwise hold every other
+# job up behind it. An author whose page is not read yet keeps their strings on the review
+# list, which is where they already were.
+DBLP_PER_RUN = 40
 # Bumped when the cache layout changes, so an old file is re-asked rather than misread.
 SHAPE = 8
 
@@ -222,6 +237,63 @@ EVENT_TYPES = ("Q2020153", "Q47258130")
 # statement that separates a footballer from a researcher. Roots rather than a list of
 # labels, so the classification follows Wikidata's own subclass tree as it grows.
 RESEARCH_ROOTS = ("Q1650915", "Q3400985", "Q901", "Q81096", "Q1622272")
+
+
+def dblp_ids(qids: list[str]) -> dict[str, str]:
+    """Item to the DBLP author id it states, empty string for one that states none."""
+    out = {q: "" for q in qids}
+    for i in range(0, len(qids), 200):
+        vals = " ".join("wd:" + q for q in qids[i:i + 200])
+        for r in sparql("SELECT ?p ?d WHERE { VALUES ?p {%s} ?p wdt:P2456 ?d }" % vals):
+            out[qid_of(r["p"]["value"])] = r["d"]["value"]
+    return out
+
+
+def title_key(text: str) -> str:
+    """A title reduced to what two catalogues can agree on."""
+    return re.sub(r"[^a-z0-9]+", " ",
+                  unicodedata.normalize("NFKD", text or "").lower()).strip()
+
+
+def dblp_pages(look: dict, refresh: bool) -> dict[str, list[str]]:
+    """Name candidate item to the reduced titles its DBLP author page lists.
+
+    One page per author, DBLP_PER_RUN of them per run, each written to the cache as it
+    arrives so the next run carries on from there.
+    """
+    qids = sorted({c["qid"] for cs in (look.get("by_name") or {}).values() for c in cs})
+    if not qids:
+        return {}
+    path = os.path.join(BUILD, DBLP_CACHE)
+    try:
+        with open(path) as f:
+            cache = json.load(f)
+    except (OSError, ValueError):
+        cache = {}
+    fresh = (datetime.date.today() - datetime.timedelta(days=DBLP_DAYS)).isoformat()
+    if refresh or cache.get("shape") != DBLP_SHAPE or cache.get("asked", "") < fresh:
+        cache = {"shape": DBLP_SHAPE, "asked": datetime.date.today().isoformat(),
+                 "pids": {}, "titles": {}}
+    pids, titles = cache.setdefault("pids", {}), cache.setdefault("titles", {})
+    ask = sorted(set(qids) - set(pids))
+    if ask:
+        pids.update(dblp_ids(ask))
+        write_json(path, cache)
+    left = sorted({pids[q] for q in qids if pids.get(q)} - set(titles))
+    if len(left) > DBLP_PER_RUN:
+        print("  dblp: %d author page(s), %d of them left for the next run"
+              % (len(left), len(left) - DBLP_PER_RUN))
+    for n, d in enumerate(left[:DBLP_PER_RUN], 1):
+        page = get("https://dblp.org/pid/%s.xml" % d)
+        if not page:
+            continue
+        titles[d] = sorted({title_key(x) for x in
+                            re.findall(r"<title>(.*?)</title>",
+                                       page.decode("utf-8", "replace"), re.S)} - {""})
+        write_json(path, cache)
+        if n % 10 == 0:
+            print("  dblp: %d author pages read" % n)
+    return {q: titles[pids[q]] for q in qids if titles.get(pids.get(q) or "")}
 
 
 def researchers(qids: list[str]) -> set[str]:
@@ -407,7 +479,7 @@ def lookups(names: list[str], papers: list[dict], refresh: bool) -> dict:
     Returns `orcids` (name to ORCID), `by_orcid` (ORCID to item), `by_name` (name to
     candidate items), `venues` (venue name to candidate items) and `proceedings` (a
     conference item to its volumes). Re-asked together, so a cached set is internally
-    consistent.
+    consistent. `dblp` rides along from a file of its own, on its own longer clock.
     """
     path = os.path.join(BUILD, CACHE)
     try:
@@ -416,32 +488,32 @@ def lookups(names: list[str], papers: list[dict], refresh: bool) -> dict:
     except (OSError, ValueError):
         cache = {}
     fresh = (datetime.date.today() - datetime.timedelta(days=CACHE_DAYS)).isoformat()
-    if (not refresh and cache.get("shape") == SHAPE
-            and cache.get("asked", "") >= fresh and cache.get("names") == names):
-        return cache
-    orcids = openalex_orcids(papers)
-    cache = {"shape": SHAPE, "asked": datetime.date.today().isoformat(), "names": names,
-             "orcids": orcids,
-             "by_orcid": items_by_orcid(
-                 sorted({o for m in orcids.values() for o in m.values()})),
-             "by_name": items_by_name(names),
-             "venues": venue_items(sorted({f for p in papers for f in venue_forms(p)}))}
-    cache["research"] = sorted(researchers(sorted(
-        {c["qid"] for cs in cache["by_name"].values() for c in cs})))
-    cache["proceedings"] = proceedings_of(sorted(
-        {c["qid"] for cs in cache["venues"].values() for c in cs
-         if not publications([c])}))
-    os.makedirs(BUILD, exist_ok=True)
-    with open(path, "w") as f:
-        json.dump(cache, f, indent=1, sort_keys=True)
+    if (refresh or cache.get("shape") != SHAPE
+            or cache.get("asked", "") < fresh or cache.get("names") != names):
+        orcids = openalex_orcids(papers)
+        cache = {"shape": SHAPE, "asked": datetime.date.today().isoformat(),
+                 "names": names, "orcids": orcids,
+                 "by_orcid": items_by_orcid(
+                     sorted({o for m in orcids.values() for o in m.values()})),
+                 "by_name": items_by_name(names),
+                 "venues": venue_items(
+                     sorted({f for p in papers for f in venue_forms(p)}))}
+        cache["research"] = sorted(researchers(sorted(
+            {c["qid"] for cs in cache["by_name"].values() for c in cs})))
+        cache["proceedings"] = proceedings_of(sorted(
+            {c["qid"] for cs in cache["venues"].values() for c in cs
+             if not publications([c])}))
+        write_json(path, cache, indent=1, sort_keys=True)
+    cache["dblp"] = dblp_pages(cache, refresh)
     return cache
 
 
 def rows(papers: list[dict], created: dict, look: dict) -> list[dict]:
     """One row per paper item with strings left to resolve, most-cited first.
 
-    Each row's `edits` are ORCID-matched and safe to batch. Its `review` entries matched on
-    a name alone and carry every candidate item, because picking between them is judgement.
+    Each row's `edits` are safe to batch, every one settled by an identifier or by a shared
+    publication record and none by a name. Its `review` entries matched on a name alone and
+    carry every candidate item, because picking between them is judgement.
     `leftover` counts the strings that matched neither, which is most of them -- a person
     whose item is labelled differently from the byline, or who has no item. Those rows still
     belong on the page, because Author Disambiguator matches name forms that an exact label
@@ -452,6 +524,7 @@ def rows(papers: list[dict], created: dict, look: dict) -> list[dict]:
     procs = look.get("proceedings") or {}
     state = item_state(sorted(created.values()))
     plausible = set(look.get("research") or [])
+    dblp = look.get("dblp") or {}
     out = []
     for slug, qid in created.items():
         p, st = by_slug.get(slug), state.get(qid)
@@ -459,11 +532,13 @@ def rows(papers: list[dict], created: dict, look: dict) -> list[dict]:
             continue
         edits, review, leftover, dropped = [], [], [], 0
         known = (look["orcids"] or {}).get(slug) or {}
+        here = title_key(p.get("title_display") or p.get("title"))
         for s in st["strings"]:
             orcid = next((known[k] for k in keys_for(s["name"]) if k in known), None)
             hit = (look["by_orcid"] or {}).get(orcid or "")
             if hit and hit["qid"] not in st["p50"]:
-                edits.append(dict(s, qid=hit["qid"], label=hit["label"], orcid=orcid))
+                edits.append(dict(s, qid=hit["qid"], label=hit["label"], orcid=orcid,
+                                  via="ORCID %s" % orcid))
                 continue
             if hit:
                 continue
@@ -473,6 +548,17 @@ def rows(papers: list[dict], created: dict, look: dict) -> list[dict]:
             # not a lead, and the long tail of these is what makes a name unreadable.
             cands = [c for c in named if c["qid"] in plausible]
             dropped += len(named) - len(cands)
+            # DBLP disambiguates its own author pages, so a candidate whose page lists this
+            # very paper wrote it rather than merely sharing a name with whoever did. Two
+            # such candidates mean DBLP holds one person under two ids, which is a merge and
+            # not a choice, so the string stays a question.
+            shared = [c for c in cands if here in (dblp.get(c["qid"]) or ())]
+            if here and len(shared) == 1:
+                edits.append(dict(s, qid=shared[0]["qid"],
+                                  label=shared[0].get("label") or s["name"],
+                                  orcid=shared[0].get("orcid") or "",
+                                  via="DBLP, which lists this paper on their page"))
+                continue
             (review if cands else leftover).append(dict(s, candidates=cands))
         vname = (p.get("venue_display") or "").strip()
         fills = {}
@@ -585,7 +671,8 @@ def apply_rows(s, rows_: list[dict]) -> tuple[int, int]:
     for i, (r, data) in enumerate(todo, 1):
         try:
             s.edit("wbeditentity", id=r["qid"], data=json.dumps(data),
-                   summary="resolve author name strings matched by ORCID, and fill the "
+                   summary="resolve author name strings matched by ORCID or by a shared "
+                           "DBLP publication, and fill the "
                            "venue, language and full text from the bibliography (paper-geo)")
             ok += 1
             print("  %d/%d %s — %d statement(s), %s"
@@ -652,11 +739,15 @@ def write_page(rows_: list[dict], qs_path: str | None) -> str:
                    "a free copy — the publisher-hosted one, since a doi.org or arxiv.org "
                    "link only restates an identifier the item already has."), ""]
 
-    L += [f"## Matched by ORCID ({n_edits})", ""]
+    n_dblp = sum(1 for r in rows_ for e in r["edits"] if e["via"].startswith("DBLP"))
+    L += [f"## Settled by a record rather than a name ({n_edits})", ""]
     if n_edits:
-        L += [fill("The paper's OpenAlex record gives the co-author's ORCID and exactly "
-                   "one Wikidata item states that ORCID. No name was compared, so these "
-                   "need no judgement."), ""]
+        L += [fill("Two kinds of evidence and no name compared in either, so none of "
+                   f"these needs a judgement. {n_edits - n_dblp} came from the paper's "
+                   "OpenAlex record giving the co-author's ORCID, with exactly one "
+                   f"Wikidata item stating it. {n_dblp} came from DBLP, where exactly one "
+                   "candidate's author page lists this same paper -- DBLP separates its "
+                   "own namesakes, so a shared publication is a shared person."), ""]
         if qs_path:
             L += [fill(f"Paste [`{os.path.relpath(qs_path)}`]({os.path.relpath(qs_path)}) "
                        "into <https://quickstatements.toolforge.org/#/batch>. Each author "
@@ -670,11 +761,11 @@ def write_page(rows_: list[dict], qs_path: str | None) -> str:
             for e in r["edits"]:
                 L.append(f"      - {e['name']} → [{e['label'] or e['qid']}]"
                          f"(https://www.wikidata.org/wiki/{e['qid']}) "
-                         f"(ORCID {e['orcid']})")
+                         f"({e['via']})")
         L.append("")
     else:
-        L += [fill("None. Either every ORCID-carrying co-author is already resolved, or "
-                   "OpenAlex holds no ORCID for the ones that are not."), ""]
+        L += [fill("None left. Every co-author an ORCID or a DBLP page could reach is "
+                   "already resolved."), ""]
 
     todo = [r for r in rows_ if r["review"] or r["leftover"]]
     n_left = sum(r["leftover"] for r in todo)
@@ -729,7 +820,7 @@ def main() -> int:
                     help="re-ask OpenAlex and WDQS instead of reading the cache")
     ap.add_argument("--quiet", action="store_true")
     ap.add_argument("--apply", action="store_true",
-                    help="write the ORCID-matched batch through the API")
+                    help="write the identifier-matched batch through the API")
     ap.add_argument("--limit", type=int, default=0,
                     help="with --apply, stop after this many paper items")
     args = ap.parse_args()
@@ -762,18 +853,18 @@ def main() -> int:
            "fills": sum(len(r.get("fills") or {}) for r in rows_),
            "venues_ask": len([r for r in rows_ if r.get("venue_candidates")]),
            "edits": sum(len(r["edits"]) for r in rows_),
+           "dblp": sum(1 for r in rows_ for e in r["edits"]
+                       if e["via"].startswith("DBLP")),
            "review": sum(len(r["review"]) for r in rows_),
            "leftover": sum(r["leftover"] for r in rows_),
            "papers_left": len([r for r in rows_ if r["review"] or r["leftover"]]),
            "dropped": sum(r.get("dropped") or 0 for r in rows_),
            "items": len(created), "rows": rows_}
-    os.makedirs(BUILD, exist_ok=True)
-    with open(os.path.join(BUILD, "wikidata_coauthors.json"), "w") as f:
-        json.dump(out, f, indent=1)
+    write_json(os.path.join(BUILD, "wikidata_coauthors.json"), out, indent=1)
     if not args.quiet:
         print(f"{out['strings']} name strings on {out['items']} items: "
-              f"{out['edits']} resolvable by ORCID, "
-              f"{out['review'] + out['leftover']} left across "
+              f"{out['edits'] - out['dblp']} settled by ORCID, {out['dblp']} by a shared "
+              f"DBLP publication, {out['review'] + out['leftover']} left across "
               f"{out['papers_left']} papers")
         print(f"venues: {out['venues']} resolved, {out['venues_ask']} ambiguous; "
               f"{out['fills']} language and full-text statements")

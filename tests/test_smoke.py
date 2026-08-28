@@ -3964,9 +3964,9 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
     """The one rule this pass cannot get wrong.
 
     A P50 pointing at the wrong person welds a stranger's item to your paper, and the batch
-    is pasted without review. So the batch may contain only matches made ORCID to ORCID,
-    and everything reached through a name has to stay on the review list however obvious it
-    looks.
+    is pasted without review. So the batch may contain only matches an outside record made
+    -- ORCID to ORCID, or a DBLP author page listing this same paper -- and a name that
+    nothing but its own spelling supports stays on the review list however obvious it looks.
     """
 
     def _module(self):
@@ -3975,14 +3975,15 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
         self.addCleanup(importlib.reload, wc)
         return wc
 
-    def _fixture(self, wc, strings, p50=(), orcids=None, by_orcid=None, by_name=None):
+    def _fixture(self, wc, strings, p50=(), orcids=None, by_orcid=None, by_name=None,
+                 dblp=None):
         # Venue and every fillable property already stated, so these tests are only about
         # authors.
         wc.item_state = lambda _q: {"Q1": {"strings": strings, "p50": set(p50),
                                            "venue": True, "has": set(wc.FILLS)}}
         papers = [{"slug": "s1", "title": "T", "citations": 5}]
         look = {"orcids": {"s1": orcids or {}}, "by_orcid": by_orcid or {},
-                "by_name": by_name or {},
+                "by_name": by_name or {}, "dblp": dblp or {},
                 # Every name candidate plausible, so the occupation prune is not in play.
                 "research": [c["qid"] for cs in (by_name or {}).values() for c in cs]}
         return wc.rows(papers, {"s1": "Q1"}, look)
@@ -3996,6 +3997,51 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
         self.assertEqual(rows[0]["edits"], [])
         self.assertEqual(len(rows[0]["review"]), 1)
         self.assertEqual(wc.batch(rows), [])
+
+    def test_a_dblp_page_listing_this_paper_settles_the_name(self):
+        """The one name match that is not a name match: DBLP separates its own namesakes."""
+        wc = self._module()
+        rows = self._fixture(
+            wc, [{"name": "Ada Lovelace", "ordinal": "2", "id": "Q1$a"}],
+            by_name={"Ada Lovelace": [{"qid": "Q7259", "description": "", "orcid": ""}]},
+            dblp={"Q7259": ["t"]})
+        self.assertEqual([e["qid"] for e in rows[0]["edits"]], ["Q7259"])
+        self.assertEqual(rows[0]["review"], [])
+        self.assertTrue(rows[0]["edits"][0]["via"].startswith("DBLP"),
+                        "the page says which record settled it, so the two are told apart")
+
+    def test_a_dblp_page_without_this_paper_settles_nothing(self):
+        wc = self._module()
+        rows = self._fixture(
+            wc, [{"name": "Ada Lovelace", "ordinal": "2", "id": "Q1$a"}],
+            by_name={"Ada Lovelace": [{"qid": "Q7259", "description": "", "orcid": ""}]},
+            dblp={"Q7259": ["some other paper"]})
+        self.assertEqual(rows[0]["edits"], [])
+        self.assertEqual(len(rows[0]["review"]), 1)
+
+    def test_two_pages_listing_this_paper_stay_a_question(self):
+        """One person under two DBLP ids is a merge, and merging is not this pass's call."""
+        wc = self._module()
+        rows = self._fixture(
+            wc, [{"name": "Ada Lovelace", "ordinal": "2", "id": "Q1$a"}],
+            by_name={"Ada Lovelace": [{"qid": "Q7259", "description": "", "orcid": ""},
+                                      {"qid": "Q7260", "description": "", "orcid": ""}]},
+            dblp={"Q7259": ["t"], "Q7260": ["t"]})
+        self.assertEqual(rows[0]["edits"], [])
+        self.assertEqual(len(rows[0]["review"]), 1)
+
+    def test_a_paper_with_no_title_confirms_nothing(self):
+        """An empty title reduces to an empty key, which would match every author page."""
+        wc = self._module()
+        wc.item_state = lambda _q: {"Q1": {
+            "strings": [{"name": "Ada Lovelace", "ordinal": "2", "id": "Q1$a"}],
+            "p50": set(), "venue": True, "has": set(wc.FILLS)}}
+        rows = wc.rows([{"slug": "s1", "title": "", "citations": 5}], {"s1": "Q1"},
+                       {"orcids": {}, "by_orcid": {},
+                        "by_name": {"Ada Lovelace": [{"qid": "Q7259", "description": "",
+                                                      "orcid": ""}]},
+                        "research": ["Q7259"], "dblp": {"Q7259": [""]}})
+        self.assertEqual(rows[0]["edits"], [])
 
     def test_an_orcid_match_survives_a_middle_initial_on_the_byline(self):
         wc = self._module()

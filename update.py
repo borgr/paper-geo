@@ -270,8 +270,8 @@ PLAN = (
      "one item that turns maintenance back on"),
     ("Wikidata author strings", "afternoon",
      "one Author Disambiguator pass per paper, most-cited first, at the link the section "
-     "gives for each. Everything an ORCID could settle is already on Wikidata, so what is "
-     "left is the half where the name is all there is to go on"),
+     "gives for each. Everything an ORCID or a DBLP author page could settle is already on "
+     "Wikidata, so what is left is the part where the name is all there is to go on"),
     ("Co-authors who may already have a Wikidata item", "minute",
      "open each item and write the QID beside the ORCID in `data/overrides.yaml`, or "
      "`new` where the papers on it are somebody else's. The lines are in the section "
@@ -901,10 +901,14 @@ def wikidata_coauthors() -> list[str]:
          "item alone. Resolving a string to that person's own item is what connects them,",
          "and many independent paths into your item is the point of having them at all.", ""]
     if st.get("edits"):
+        dblp, orcid = st.get("dblp") or 0, st["edits"] - (st.get("dblp") or 0)
+        how = [f"{orcid} matched ORCID to ORCID"] if orcid else []
+        how += [f"{dblp} confirmed by a DBLP author page listing the same paper"] if dblp \
+            else []
         L += [f"- [ ] **{st['edits']} authors, no judgement needed** — paste "
               "[`tasks/wikidata_coauthors.qs`](tasks/wikidata_coauthors.qs) into "
               "QuickStatements",
-              "      - each one matched ORCID to ORCID, with no name compared"]
+              "      - " + ", ".join(how) + ", and no name compared in either"]
     if st.get("venues"):
         L += [f"- [ ] **{st['venues']} papers get their venue** — in the same paste, "
               "*published in* pointing at the proceedings volume or journal",

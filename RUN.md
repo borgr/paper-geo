@@ -254,12 +254,15 @@ person welds someone else's item to your paper — and the wrong thing to leave,
 string is a literal nothing can join on. Until they are resolved each item hangs off your
 item alone.
 
-`wikidata_coauthors.py` splits the job in two by how much trust the match deserves. Where
-the paper's OpenAlex record carries a co-author's ORCID and exactly one Wikidata item
-states that ORCID, the match is identifier to identifier with no name in the middle, and
-`--apply` writes it. Everything else is listed per paper with an
-[Author Disambiguator](https://author-disambiguator.toolforge.org) link, because a name
-string matches a namesake exactly as well as the right person.
+`wikidata_coauthors.py` splits the job by how much trust the match deserves, and `--apply`
+writes the two halves an outside record settles. Where the paper's OpenAlex record carries
+a co-author's ORCID and exactly one Wikidata item states that ORCID, the match is
+identifier to identifier with no name in the middle. Where no ORCID reaches them, a name
+match is confirmed instead when exactly one candidate item states a DBLP author id whose
+page lists this same paper. DBLP separates its own namesakes, so a shared publication is
+evidence about the person and not about the spelling. Everything else is listed per paper
+with an [Author Disambiguator](https://author-disambiguator.toolforge.org) link, because a
+name string matches a namesake exactly as well as the right person.
 
 Each paper item is one edit. Adding *author* and removing the *author name string* it
 replaces are the same fact stated twice, and a run interrupted between them leaves the paper
@@ -393,7 +396,7 @@ since these are lists a human works through over days — plus one from
 | `wikidata_manual.md` | creating the author item by hand — **start here** |
 | `wikidata.qs` | the same item as a batch; needs an autoconfirmed account |
 | `wikidata_coauthors.md` | co-author strings on your paper items and the items they resolve to |
-| `wikidata_coauthors.qs` | the ORCID-matched half of that as a batch, written only while something is still unwritten |
+| `wikidata_coauthors.qs` | the record-settled half of that as a batch, written only while something is still unwritten |
 | `wikidata_orgs.md` | items for the groups the work belongs to, each statement with its source |
 | `wikidata_orgs.qs` | the same as a batch, written only while something is still uncreated |
 | `wikidata_people.md` | co-authors with an ORCID and no item, with the record each value came from |
@@ -610,7 +613,7 @@ and the one place the review is genuinely cheap.
 | `scripts/scholar_strays.py [--quiet] [--skip-openalex] [--limit N]` | copies of your papers that Scholar indexed separately, found by citation gap against the APIs; needs `scholar_check.py` first, and its OpenAlex pass resumes across days | local only |
 | `scripts/identity_tasks.py [--user-page FILE]` | payloads for the one-time identity fixes; `--user-page` reads a saved copy of your arXiv articles list so the journal-ref list can deep-link each form | local only |
 | `scripts/wikidata_apply.py [--apply] [--check-account]` | apply the Wikidata diff | apply: **yes, Wikidata** |
-| `scripts/wikidata_coauthors.py [--quiet] [--refresh] [--apply] [--limit N]` | co-author name strings on your paper items, matched to author items by ORCID where one exists and by name where it does not; needs paper items to exist. `--apply` writes the ORCID-matched half | apply: **yes, Wikidata** |
+| `scripts/wikidata_coauthors.py [--quiet] [--refresh] [--apply] [--limit N]` | co-author name strings on your paper items, matched to author items by ORCID where one exists, by a shared DBLP publication where it does not, and left for Author Disambiguator otherwise; needs paper items to exist. `--apply` writes the two matched halves | apply: **yes, Wikidata** |
 | `scripts/wikidata_orgs.py [--quiet] [--apply]` | items for the groups in `data/wikidata_orgs.yaml`, creating those Wikidata lacks and connecting those it has | apply: **yes, Wikidata** |
 | `scripts/wikidata_people.py [--refresh] [--quiet] [--apply] [--limit N]` | items for the co-authors who have an ORCID and no item, built from ORCID and OpenAlex; `--apply` also repairs the ones it created before | apply: **yes, Wikidata** |
 | `scripts/validate.py [--fix-counts] [--strict]` | schema check + shipped-bug regressions + selftest; `--fix-counts` refreshes the corpus sizes stated in the docs. Exits 1 on a structural failure (which stops `update.py`), 0 on a stale count; `--strict` makes both fatal | `--fix-counts`: the doc sentences |

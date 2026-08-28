@@ -13,12 +13,12 @@ string, which is the correct end state for them.
 
 None to add.
 
-## Matched by ORCID (0)
+## Settled by a record rather than a name (0)
 
-None. Either every ORCID-carrying co-author is already resolved, or OpenAlex
-holds no ORCID for the ones that are not.
+None left. Every co-author an ORCID or a DBLP page could reach is already
+resolved.
 
-## Remaining, one paper at a time (105 papers, 1016 strings)
+## Remaining, one paper at a time (105 papers, 965 strings)
 
 The *disambiguate* link opens Author Disambiguator on the paper item. It
 matches name forms an exact label search cannot -- a byline reading *Colin A.
@@ -31,17 +31,16 @@ matches found here. A namesake matches identically, so open the item and check
 the person before accepting. Two candidates on one name sometimes means two
 items for one person, which is a merge rather than a choice.
 
-176 name matches are not listed. Each states an occupation nothing like
+171 name matches are not listed. Each states an occupation nothing like
 research -- footballer, actor, politician -- so the name is a coincidence. An
 item stating no occupation at all is still listed.
 
 - [ ] **897 citations** — TIES-Merging: Resolving Interference When Merging Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029633)
-      - Mohit Bansal → [Q92117908](https://www.wikidata.org/wiki/Q92117908) — researcher (ORCID 0000-0002-8403-0316), [Q96127041](https://www.wikidata.org/wiki/Q96127041) — researcher (ORCID 0000-0001-8777-1980), [Q67386311](https://www.wikidata.org/wiki/Q67386311) — researcher, natural language processing and  … +2
+      - Mohit Bansal → [Q67386311](https://www.wikidata.org/wiki/Q67386311) — researcher, natural language processing and , [Q131168113](https://www.wikidata.org/wiki/Q131168113) — researcher (ORCID 0009-0009-2965-5354), [Q92117908](https://www.wikidata.org/wiki/Q92117908) — researcher (ORCID 0000-0002-8403-0316) … +2
 - [ ] **294 citations** — tinyBenchmarks: evaluating LLMs with fewer examples — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029634)
       - Yuekai Sun → [Q102433700](https://www.wikidata.org/wiki/Q102433700) — statistician
       - Gongjun Xu → [Q100674149](https://www.wikidata.org/wiki/Q100674149) — researcher
-- [ ] **244 citations** — Active Learning for BERT: An Empirical Study — 8 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029635)
-      - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
+- [ ] **244 citations** — Active Learning for BERT: An Empirical Study — 7 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029635)
 - [ ] **238 citations** — Findings of the BabyLM Challenge: Sample-Efficient Pretraini — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029636)
 - [ ] **190 citations** — Global MMLU: Understanding and Addressing Cultural and Lingu — 11 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029638)
       - Sebastian Ruder → [Q47488652](https://www.wikidata.org/wiki/Q47488652) — computer scientist
@@ -50,36 +49,27 @@ item stating no occupation at all is still listed.
       - Omri Abend → [Q102687062](https://www.wikidata.org/wiki/Q102687062) — Ph.D. Hebrew University 2013
 - [ ] **127 citations** — On the Weaknesses of Reinforcement Learning for Neural Machi — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029640)
       - Omri Abend → [Q102687062](https://www.wikidata.org/wiki/Q102687062) — Ph.D. Hebrew University 2013
-- [ ] **121 citations** — Fusing finetuned models for better pretraining — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029641)
-      - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
+- [ ] **121 citations** — Fusing finetuned models for better pretraining — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029641)
 - [ ] **120 citations** — DisentQA: Disentangling Parametric and Contextual Knowledge  — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029642)
       - Omri Abend → [Q102687062](https://www.wikidata.org/wiki/Q102687062) — Ph.D. Hebrew University 2013
 - [ ] **117 citations** — Model merging with SVD to tie the Knots — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029643)
       - J. Hoffman → [Q59556470](https://www.wikidata.org/wiki/Q59556470) — researcher ORCID ID = 0000-0002-1571-6808, [Q76142038](https://www.wikidata.org/wiki/Q76142038) — Peerage person ID=560424, [Q138575927](https://www.wikidata.org/wiki/Q138575927) — researcher
 - [ ] **100 citations** — Beyond Binary Rewards: Training LMs to Reason About Their Un — 3 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029645)
-      - Yoon Kim → [Q60973630](https://www.wikidata.org/wiki/Q60973630) — South Korean researcher and politician, [Q130808559](https://www.wikidata.org/wiki/Q130808559) — researcher (ORCID 0009-0003-8583-6324), [Q91553362](https://www.wikidata.org/wiki/Q91553362) — researcher (ORCID 0000-0002-0679-6594) … +2
+      - Yoon Kim → [Q130808559](https://www.wikidata.org/wiki/Q130808559) — researcher (ORCID 0009-0003-8583-6324), [Q88771001](https://www.wikidata.org/wiki/Q88771001) — researcher (ORCID 0000-0002-7404-8432), [Q91553362](https://www.wikidata.org/wiki/Q91553362) — researcher (ORCID 0000-0002-0679-6594) … +2
       - Jacob Andreas → [Q125454034](https://www.wikidata.org/wiki/Q125454034) — AI researcher
 - [ ] **100 citations** — Jump to Conclusions: Short-Cutting Transformers with Linear  — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029646)
       - Alexander Yom Din → [Q102662940](https://www.wikidata.org/wiki/Q102662940) — Israeli mathematician
 - [ ] **92 citations** — Asymmetry in Low-Rank Adapters of Foundation Models — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029647)
 - [ ] **85 citations** — Efficient multi-prompt evaluation of LLMs — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029648)
       - Yuekai Sun → [Q102433700](https://www.wikidata.org/wiki/Q102433700) — statistician
-- [ ] **78 citations** — Are You Convinced? Choosing the More Convincing Evidence wit — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029650)
-      - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
-- [ ] **73 citations** — Knowledge is a Region in Weight Space for Fine-tuned Languag — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029651)
-      - Colin Raffel → [Q86994604](https://www.wikidata.org/wiki/Q86994604) — researcher, machine learning
-      - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
-- [ ] **72 citations** — Will it Blend? Blending Weak and Strong Labeled Data in a Ne — 7 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029652)
+- [ ] **78 citations** — Are You Convinced? Choosing the More Convincing Evidence wit — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029650)
+- [ ] **73 citations** — Knowledge is a Region in Weight Space for Fine-tuned Languag — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029651)
+- [ ] **72 citations** — Will it Blend? Blending Weak and Strong Labeled Data in a Ne — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029652)
       - Carlos Alzate → [Q102390975](https://www.wikidata.org/wiki/Q102390975) — Ph.D. Katholieke Universiteit Leuven 2009
-      - Yufang Hou → [Q126462463](https://www.wikidata.org/wiki/Q126462463)
-      - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
-- [ ] **70 citations** — Corpus Wide Argument Mining - A Working Solution — 11 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029653)
+- [ ] **70 citations** — Corpus Wide Argument Mining - A Working Solution — 9 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029653)
       - Carlos Alzate → [Q102390975](https://www.wikidata.org/wiki/Q102390975) — Ph.D. Katholieke Universiteit Leuven 2009
-      - Yufang Hou → [Q126462463](https://www.wikidata.org/wiki/Q126462463)
-      - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
-- [ ] **69 citations** — Efficient Benchmarking (of Language Models) — 7 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029658)
-      - Noam Slonim → [Q6577926](https://www.wikidata.org/wiki/Q6577926) — Israeli scientist
-- [ ] **68 citations** — Elements of World Knowledge (EWoK): A Cognition-Inspired Fra — 19 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029655)
+- [ ] **69 citations** — Efficient Benchmarking (of Language Models) — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029658)
+- [ ] **68 citations** — Elements of World Knowledge (EWoK): A Cognition-Inspired Fra — 18 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029655)
       - Carina Kauf → [Q126691875](https://www.wikidata.org/wiki/Q126691875) — researcher in the field of digital humanitie
       - Jennifer Hu → [Q102309422](https://www.wikidata.org/wiki/Q102309422) — Cognitive Science researcher; Ph.D. Universi
       - Maria Ryskina → [Q130838678](https://www.wikidata.org/wiki/Q130838678) — researcher

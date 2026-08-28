@@ -239,7 +239,7 @@ def health_report() -> list[str]:
 # backoff then spends up to four minutes per URL -- a 113-paper loop stops being a
 # slow run and becomes a run that never ends.
 PACE = {"api.semanticscholar.org": 1.05, "arxiv.org": 3.0,
-        "api.openalex.org": 0.2, "api.crossref.org": 0.2}
+        "api.openalex.org": 0.2, "api.crossref.org": 0.2, "dblp.org": 4.0}
 # Both read a contact address out of the User-Agent and serve it from a separate
 # pool. The address is `identity.email` from `config.yaml`, which is already public.
 POLITE = ("api.openalex.org", "api.crossref.org")
@@ -1068,6 +1068,12 @@ def write_yaml(path: str, obj) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
         yaml.safe_dump(obj, f, sort_keys=False, allow_unicode=True, width=100)
+
+
+def write_json(path: str, obj, **kw) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(obj, f, **kw)
 
 
 def read_yaml(path: str, default=None):

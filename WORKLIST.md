@@ -23,7 +23,7 @@ the page gets visibly shorter.
 no write API can make the judgement each one needs — and every section
 is ordered so that stopping early still captures most of the value.
 
-3. **Wikidata author strings (1016 by hand)** — one Author Disambiguator pass per paper, most-cited first, at the link the section gives for each. Everything an ORCID could settle is already on Wikidata, so what is left is the half where the name is all there is to go on.
+3. **Wikidata author strings (965 by hand)** — one Author Disambiguator pass per paper, most-cited first, at the link the section gives for each. Everything an ORCID or a DBLP author page could settle is already on Wikidata, so what is left is the part where the name is all there is to go on.
 4. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
 5. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
 6. **Citations on a Scholar record you cannot see (7, ~161 citations)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
@@ -71,16 +71,16 @@ your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).
       - Scholar 13 vs 16 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Mediators%20in%20Determining%20what%20Processing%20BERT%20Performs%20First%22)
 
-## Wikidata author strings (1016 by hand)
+## Wikidata author strings (965 by hand)
 
 Every paper item lists you as *author* and each co-author as *author name
 string*, which is a literal nothing can join on — so each item hangs off your
 item alone. Resolving a string to that person's own item is what connects them,
 and many independent paths into your item is the point of having them at all.
 
-- [ ] **1016 strings across 105 papers** — one Author Disambiguator pass per paper, most-cited first
+- [ ] **965 strings across 105 papers** — one Author Disambiguator pass per paper, most-cited first
       - the links, and the candidate items found for each name: [`tasks/wikidata_coauthors.md`](tasks/wikidata_coauthors.md)
-      - 176 name matches are left out as namesakes, on a stated occupation nothing like research
+      - 171 name matches are left out as namesakes, on a stated occupation nothing like research
 
 ## Co-authors who may already have a Wikidata item (13)
 
