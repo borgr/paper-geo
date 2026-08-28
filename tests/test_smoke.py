@@ -4177,3 +4177,88 @@ class TestVenueGuardsRejectAPlausibleWrongVolume(unittest.TestCase):
         wc = self._module()
         stub = [{"qid": "Q135923323", "label": "", "types": ["Q1143604"]}]
         self.assertEqual(wc.publications(stub), [])
+
+
+class TestGroupItemsAreCreatedOnceAndOnlyOnEvidence(unittest.TestCase):
+    """The batch creates public items under the author's name, so three things must hold.
+
+    A group Wikidata already has must never be created twice, an edge must never be
+    restated, and a QID whose label does not match the note beside it must stop the run
+    rather than ship. Every statement also has to name the page it came from, because that
+    is what Wikidata notability asks for.
+    """
+
+    def _module(self):
+        import wikidata_orgs as wo
+        importlib.reload(wo)
+        self.addCleanup(importlib.reload, wo)
+        return wo
+
+    _ITEM = {"label": "EvalEval Coalition", "description": "research coalition",
+             "aliases": ["EvalEval"],
+             "statements": [{"p": "P31", "v": "Q20747412", "note": "research consortium",
+                             "ref": "https://evalevalai.com/"}],
+             "organizer_of": [{"qid": "Q131426993", "note": "the 2024 workshop"}],
+             "subject_of": ["a-paper"]}
+
+    def test_an_existing_group_is_connected_rather_than_created(self):
+        wo = self._module()
+        wo.found = lambda _i: {"g": ["Q999"]}
+        wo.edges_present = lambda _p: set()
+        st = wo.state_of({"g": self._ITEM}, {"a-paper": "Q1"})
+        self.assertEqual(st["g"]["qid"], "Q999")
+        lines = wo.batch({"g": self._ITEM}, st, "2026-08-28")
+        self.assertNotIn("CREATE", lines)
+        self.assertIn("Q131426993\tP664\tQ999", lines)
+        self.assertIn("Q1\tP921\tQ999", lines)
+
+    def test_an_absent_group_is_created_and_its_edges_wait(self):
+        wo = self._module()
+        wo.found = lambda _i: {"g": []}
+        wo.edges_present = lambda _p: set()
+        st = wo.state_of({"g": self._ITEM}, {"a-paper": "Q1"})
+        lines = wo.batch({"g": self._ITEM}, st, "2026-08-28")
+        self.assertEqual(lines[0], "CREATE")
+        self.assertEqual(st["g"]["missing"], [])
+        self.assertTrue(any(li.startswith("LAST\tP31\tQ20747412") for li in lines))
+        self.assertFalse(any("P664" in li for li in lines), "no edge before the QID exists")
+
+    def test_an_edge_already_stated_is_not_restated(self):
+        wo = self._module()
+        wo.found = lambda _i: {"g": ["Q999"]}
+        wo.edges_present = lambda _p: {("Q131426993", "P664", "Q999")}
+        st = wo.state_of({"g": self._ITEM}, {"a-paper": "Q1"})
+        self.assertEqual(st["g"]["missing"], [("Q1", "P921", "Q999")])
+
+    def test_two_items_carrying_the_name_stay_a_question(self):
+        wo = self._module()
+        wo.found = lambda _i: {"g": ["Q998", "Q999"]}
+        wo.edges_present = lambda _p: set()
+        st = wo.state_of({"g": self._ITEM}, {})
+        self.assertEqual(st["g"]["qid"], "")
+        self.assertEqual(st["g"]["ambiguous"], ["Q998", "Q999"])
+        self.assertEqual(wo.batch({"g": self._ITEM}, st, "2026-08-28")[0], "CREATE")
+
+    def test_a_qid_whose_label_contradicts_its_note_is_caught(self):
+        wo = self._module()
+        self.assertEqual(wo.mistyped({"g": self._ITEM},
+                                     {"Q20747412": "research consortium"}), [])
+        bad = wo.mistyped({"g": self._ITEM}, {"Q20747412": "institutions of the EU"})
+        self.assertEqual(len(bad), 1)
+        self.assertIn("Q20747412", bad[0])
+        self.assertEqual(len(wo.mistyped({"g": self._ITEM}, {})), 1,
+                         "a QID with no label at all is not a pass")
+
+    def test_every_shipped_statement_cites_a_page(self):
+        wo = self._module()
+        items = wo.described(os.path.join(ROOT, "data", "wikidata_orgs.yaml"))
+        self.assertTrue(items)
+        for slug, it in items.items():
+            for s in it["statements"]:
+                self.assertTrue(str(s.get("ref", "")).startswith("https://"),
+                                f"{slug} {s['p']} has no source")
+        lines = wo.batch(items, {s: {"qid": "", "missing": []} for s in items},
+                         "2026-08-28")
+        for li in lines:
+            if li.startswith("LAST\tP"):
+                self.assertIn("\tS854\t", li, li)

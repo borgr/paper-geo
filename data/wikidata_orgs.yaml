@@ -1,0 +1,59 @@
+# Items for the collectives this work belongs to that Wikidata has no item for.
+#
+# Hand-maintained, and read by `scripts/wikidata_orgs.py`, which checks what already
+# exists and writes a QuickStatements batch to paste. Nothing here edits Wikidata.
+#
+# Every statement carries `ref`, the URL a reader can check it against -- Wikidata
+# notability asks for "serious and publicly available references", and a statement whose
+# only source is us is not one. A fact with no public source goes under `needs`, which
+# puts it on the task page as a question instead of in the batch.
+#
+# `note` is a gloss of the value and is verified against the live label, so a mistyped
+# QID is caught before the paste rather than after.
+
+items:
+  evaleval-coalition:
+    label: EvalEval Coalition
+    description: research coalition on the evaluation of AI evaluations
+    aliases: [EvalEval]
+    statements:
+      - {p: P31,   v: Q20747412,  note: research consortium,     ref: "https://evalevalai.com/"}
+      - {p: P101,  v: Q11660,     note: artificial intelligence, ref: "https://evalevalai.com/"}
+      - {p: P101,  v: Q1379672,   note: evaluation,              ref: "https://evalevalai.com/"}
+      - {p: P856,  v: '"https://evalevalai.com/"',               ref: "https://evalevalai.com/"}
+      - {p: P2037, v: '"evaleval"',                              ref: "https://github.com/evaleval"}
+      - {p: P2002, v: '"evaluatingevals"',                       ref: "https://github.com/evaleval"}
+      - {p: P1416, v: Q108943604, note: Hugging Face,            ref: "https://github.com/evaleval"}
+      - {p: P1416, v: Q160302,    note: University of Edinburgh, ref: "https://github.com/evaleval"}
+      - {p: P1416, v: Q106289326, note: EleutherAI,              ref: "https://github.com/evaleval"}
+    # Items that already exist and should point at this one once it has a QID.
+    organizer_of:
+      - {qid: Q131426993, note: "Evaluating Evaluations (NeurIPS 2024 workshop)"}
+    needs:
+      - "inception (P571) — the coalition's own founding date. The GitHub organisation was
+        created 2024-07-22 and the first workshop was 2024-12-15, so both are floors rather
+        than the date itself."
+      - "whether the three hosts belong under *affiliation* (P1416, used here) or *sponsor*
+        (P859). The site says only \"Hosted By\"."
+
+  babylm-challenge:
+    label: BabyLM Challenge
+    description: shared task and workshop series on sample-efficient language model pretraining
+    aliases: [BabyLM, BabyLM Shared Task]
+    statements:
+      - {p: P31,   v: Q47459256, note: academic workshop series,     ref: "https://aclanthology.org/venues/babylm/"}
+      - {p: P31,   v: Q476300,   note: competition,                  ref: "https://babylm.github.io/"}
+      - {p: P101,  v: Q30642,    note: natural language processing,  ref: "https://babylm.github.io/"}
+      - {p: P571,  v: "+2023-00-00T00:00:00Z/9", note: "first edition, CoNLL 2023",
+         ref: "https://aclanthology.org/venues/babylm/"}
+      - {p: P856,  v: '"https://babylm.github.io/"',                 ref: "https://babylm.github.io/"}
+      - {p: P2037, v: '"babylm"',                                    ref: "https://github.com/babylm"}
+    # Corpus papers whose main subject (P921) is this, resolved through the item ledger.
+    subject_of:
+      - call-for-papers-the-babylm-challenge-sample-efficient-pretra
+      - findings-of-the-babylm-challenge-sample-efficient-pretrainin
+      - call-for-papers-the-2nd-babylm-challenge-sample-efficient-pr
+      - findings-of-the-second-babylm-challenge-sample-efficient-pre
+      - babylm-turns-3-call-for-papers-for-the-2025-babylm-workshop
+      - findings-of-the-third-babylm-challenge-accelerating-language
+      - babylm-turns-4-and-goes-multilingual-call-for-papers-for-the

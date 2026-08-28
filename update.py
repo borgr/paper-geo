@@ -128,6 +128,9 @@ def step_audit(cfg, args) -> None:
     run([sys.executable, "scripts/identity_tasks.py"])
     # Reads the paper items live, so it has to follow any run that created some.
     run([sys.executable, "scripts/wikidata_coauthors.py", "--quiet"])
+    # Reads the paper items too, and its second pass needs the group items the first pass
+    # asked for, so it is re-run every time rather than once.
+    run([sys.executable, "scripts/wikidata_orgs.py", "--quiet"])
     # Wikipedia is read here for the same reason as the rest of this step: it is a surface we
     # do not control, and the only actions available on it are proposals an editor may
     # decline, so what is open has to be re-read rather than remembered.
@@ -910,6 +913,42 @@ def wikidata_coauthors() -> list[str]:
     return L + [""]
 
 
+def wikidata_orgs() -> list[str]:
+    """The worklist section for `build/wikidata_orgs.json`, or nothing."""
+    try:
+        with open(os.path.join(ROOT, "build", "wikidata_orgs.json")) as f:
+            st = json.load(f)
+    except (OSError, ValueError):
+        return []
+    if not (st.get("create") or st.get("edges") or st.get("ambiguous")):
+        return []
+    names = [st["state"][s].get("label") or s for s in st.get("create") or []]
+    L = [f"## Wikidata items for the groups ({len(st.get('create') or [])} to create)", "",
+         "Some of the work in the corpus is run by groups Wikidata has no item for, so a",
+         "paper cannot say what it is part of and a group cannot say what it produced.",
+         "Every statement in the batch cites the public page it came from.", ""]
+    if st.get("create"):
+        L += [f"- [ ] **create {', '.join(names)}** — paste "
+              "[`tasks/wikidata_orgs.qs`](tasks/wikidata_orgs.qs) into QuickStatements",
+              "      - the statements and their sources, and the facts still missing: "
+              "[`tasks/wikidata_orgs.md`](tasks/wikidata_orgs.md)"]
+    if st.get("edges"):
+        L += [f"- [ ] **{st['edges']} edges into those items** — in the same paste, "
+              "*main subject* on each paper about them and *organizer* on each event",
+              "      - resolved through the item ledger, so nothing to look up"]
+    if st.get("ambiguous"):
+        L += [f"- [ ] **{len(st['ambiguous'])} names match more than one item** — pick the "
+              "right one by hand, or the group has an item already",
+              "      - the candidates: "
+              "[`tasks/wikidata_orgs.md`](tasks/wikidata_orgs.md)"]
+    if st.get("needs"):
+        L += [f"- [ ] **{st['needs']} statements wait on a fact only you have** — "
+              "add them to [`data/wikidata_orgs.yaml`](data/wikidata_orgs.yaml)",
+              "      - each one, and why the public pages do not settle it: "
+              "[`tasks/wikidata_orgs.md`](tasks/wikidata_orgs.md)"]
+    return L + [""]
+
+
 def upstream_gaps(papers: list[dict], cfg) -> list[str]:
     """Papers the corpus has only because an override put them there.
 
@@ -1052,6 +1091,7 @@ def step_worklist(cfg, args) -> None:
     lines += scholar_gaps(scholar, cfg)
     lines += scholar_split_records()
     lines += wikidata_coauthors()
+    lines += wikidata_orgs()
     lines += upstream_gaps(papers, cfg)
 
     # The papers themselves and not just their count: the URL to paste into the Add

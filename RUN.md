@@ -281,6 +281,26 @@ Nothing here creates an item for anybody. A co-author with no item stays a strin
 their correct end state — Wikidata notability asks for serious, publicly available
 references, and an item made to hold an edge back to you is not that.
 
+### Items for the groups the work belongs to
+
+A person with no independent record should not get an item. A *group* with one usually
+should, and several in the corpus have none — so a paper cannot say what it is part of and
+the group cannot say what it produced. `wikidata_orgs.py` reads
+[data/wikidata_orgs.yaml](data/wikidata_orgs.yaml), which is hand-maintained, and writes a
+QuickStatements batch to `tasks/wikidata_orgs.qs`.
+
+Every statement in that file carries the URL a reader checks it against, and a statement
+with no public page belongs under `needs` instead, where it reaches the worklist as a
+question. Each QID also sits beside a `note` naming what it is, and the run compares that
+note against the item's live label — so a mistyped value stops the run rather than shipping.
+
+Two passes, decided per group by whether Wikidata already has it. Nothing carrying the
+label or an alias means a `CREATE` with its labelled statements and references. An item that
+exists instead gets the edges into it: *main subject* (P921) on each corpus paper about it,
+*organizer* (P664) on each event it ran. Those wait for the run after creation, because
+QuickStatements cannot use an item it just made as a value, and they drop out once Wikidata
+states them — so pasting twice adds nothing.
+
 ## 7. The one-time identity fixes
 
 The account-level checklist — ORCID, Semantic Scholar, Google Scholar, Wikidata,
@@ -331,6 +351,8 @@ since these are lists a human works through over days — plus one from
 | `wikidata.qs` | the same item as a batch; needs an autoconfirmed account |
 | `wikidata_coauthors.md` | co-author strings on your paper items and the items they resolve to |
 | `wikidata_coauthors.qs` | the ORCID-matched half of that as a batch, safe to paste unread |
+| `wikidata_orgs.md` | items for the groups the work belongs to, each statement with its source |
+| `wikidata_orgs.qs` | the same as a batch — creates the items, then connects them on the next run |
 | `s2_merge.md` | papers to pull onto the claimed Semantic Scholar page |
 | `scholar_strays.md` | Scholar searches that surface a second record for one paper, from `scholar_strays.py` |
 | `openalex_merge.md` | what to paste into the OpenAlex correction form |
@@ -544,6 +566,7 @@ and the one place the review is genuinely cheap.
 | `scripts/identity_tasks.py [--user-page FILE]` | payloads for the one-time identity fixes; `--user-page` reads a saved copy of your arXiv articles list so the journal-ref list can deep-link each form | local only |
 | `scripts/wikidata_apply.py [--apply] [--check-account]` | apply the Wikidata diff | apply: **yes, Wikidata** |
 | `scripts/wikidata_coauthors.py [--quiet] [--refresh]` | co-author name strings on your paper items, matched to author items by ORCID where one exists and by name where it does not; needs paper items to exist | local only |
+| `scripts/wikidata_orgs.py [--quiet]` | items for the groups in `data/wikidata_orgs.yaml`, creating those Wikidata lacks and connecting those it has | local only |
 | `scripts/validate.py [--fix-counts] [--strict]` | schema check + shipped-bug regressions + selftest; `--fix-counts` refreshes the corpus sizes stated in the docs. Exits 1 on a structural failure (which stops `update.py`), 0 on a stale count; `--strict` makes both fatal | `--fix-counts`: the doc sentences |
 | `measure/check_structure.py [--links]` | the "A" checks | no |
 | `measure/fidelity.py [--ingest]` | the "C" diagnostic | no |
