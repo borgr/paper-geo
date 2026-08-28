@@ -3958,3 +3958,83 @@ class TestASidecarPathHasOneOwner(unittest.TestCase):
             self.assertEqual([], hits,
                              f"{os.path.basename(path)} builds its own sidecar path -- "
                              f"use sidecar_io.draft_path/live_path/draft_paths/live_paths")
+
+
+class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
+    """The one rule this pass cannot get wrong.
+
+    A P50 pointing at the wrong person welds a stranger's item to your paper, and the batch
+    is pasted without review. So the batch may contain only matches made ORCID to ORCID,
+    and everything reached through a name has to stay on the review list however obvious it
+    looks.
+    """
+
+    def _module(self):
+        import wikidata_coauthors as wc
+        importlib.reload(wc)
+        self.addCleanup(importlib.reload, wc)
+        return wc
+
+    def _fixture(self, wc, strings, p50=(), orcids=None, by_orcid=None, by_name=None):
+        wc.item_state = lambda _q: {"Q1": {"strings": strings, "p50": set(p50)}}
+        papers = [{"slug": "s1", "title": "T", "citations": 5}]
+        look = {"orcids": {"s1": orcids or {}}, "by_orcid": by_orcid or {},
+                "by_name": by_name or {}}
+        return wc.rows(papers, {"s1": "Q1"}, look)
+
+    def test_a_name_match_never_reaches_the_batch(self):
+        wc = self._module()
+        rows = self._fixture(
+            wc, [{"name": "Ada Lovelace", "ordinal": "2"}],
+            by_name={"Ada Lovelace": [{"qid": "Q7259", "description": "mathematician",
+                                       "orcid": ""}]})
+        self.assertEqual(rows[0]["edits"], [])
+        self.assertEqual(len(rows[0]["review"]), 1)
+        self.assertEqual(wc.batch(rows), [])
+
+    def test_an_orcid_match_survives_a_middle_initial_on_the_byline(self):
+        wc = self._module()
+        rows = self._fixture(
+            wc, [{"name": "Colin A. Raffel", "ordinal": "4"}],
+            orcids={"colin raffel": "0000-0002-0000-0001",
+                    "c raffel": "0000-0002-0000-0001"},
+            by_orcid={"0000-0002-0000-0001": {"qid": "Q9", "label": "Colin Raffel"}})
+        self.assertEqual([e["qid"] for e in rows[0]["edits"]], ["Q9"])
+        lines = wc.batch(rows)
+        self.assertEqual(lines[0].split("\t")[:3], ["Q1", "P50", "Q9"])
+        # The printed byline is kept as `object named as`, so the swap loses nothing.
+        self.assertIn("Colin A. Raffel", lines[0])
+        self.assertEqual(lines[1], '-Q1\tP2093\t"Colin A. Raffel"')
+
+    def test_an_author_already_stated_is_not_proposed_again(self):
+        wc = self._module()
+        rows = self._fixture(
+            wc, [{"name": "Tal Linzen", "ordinal": "3"}], p50=("Q90253205",),
+            orcids={"tal linzen": "0000-0003-0435-6912", "t linzen": "0000-0003-0435-6912"},
+            by_orcid={"0000-0003-0435-6912": {"qid": "Q90253205", "label": "Tal Linzen"}})
+        self.assertEqual(rows, [])
+
+    def test_a_string_matching_nothing_still_gets_its_paper_listed(self):
+        wc = self._module()
+        rows = self._fixture(wc, [{"name": "Nobody At All", "ordinal": "5"}])
+        self.assertEqual(rows[0]["leftover"], 1)
+        self.assertEqual((rows[0]["edits"], rows[0]["review"]), ([], []))
+
+    def test_two_orcids_under_one_key_in_one_paper_are_dropped(self):
+        wc = self._module()
+        wc.get_json = lambda _u: {"authorships": [
+            {"author": {"display_name": "Jian Li",
+                        "orcid": "https://orcid.org/0000-0002-0000-0002"}},
+            {"author": {"display_name": "Jian Li",
+                        "orcid": "https://orcid.org/0000-0002-0000-0003"}}]}
+        self.assertEqual(wc.openalex_orcids([{"slug": "s1", "doi": "10.1/x"}]), {})
+
+    def test_the_ambiguous_key_is_only_used_inside_one_paper(self):
+        wc = self._module()
+        wc.get_json = lambda _u: {"authorships": [{"author": {
+            "display_name": "Ada Lovelace",
+            "orcid": "https://orcid.org/0000-0002-0000-0004"}}]}
+        got = wc.openalex_orcids([{"slug": "s1", "doi": "10.1/x"},
+                                  {"slug": "s2", "arxiv": "2401.00001"}])
+        self.assertEqual(sorted(got), ["s1", "s2"])
+        self.assertEqual(sorted(got["s1"]), ["a lovelace", "ada lovelace"])

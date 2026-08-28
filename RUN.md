@@ -246,6 +246,25 @@ rather than writing their own. If someone else owns a paper, add their manifest 
 a link, not a competing page. If two of you claim the same paper, `ownership.py` flags
 it and refuses to guess; the one who lets go switches to a link.
 
+### Their names on your Wikidata items
+
+Every paper item this project created states you as *author* (P50) and every co-author as
+*author name string* (P2093). That is the right thing to deposit — a P50 aimed at a guessed
+person welds someone else's item to your paper — and the wrong thing to leave, because a
+string is a literal nothing can join on. Until they are resolved each item hangs off your
+item alone.
+
+`wikidata_coauthors.py` splits the job in two by how much trust the match deserves. Where
+the paper's OpenAlex record carries a co-author's ORCID and exactly one Wikidata item
+states that ORCID, the match is identifier to identifier with no name in the middle, and it
+goes into `tasks/wikidata_coauthors.qs` for QuickStatements. Everything else is listed per
+paper with an [Author Disambiguator](https://author-disambiguator.toolforge.org) link,
+because a name string matches a namesake exactly as well as the right person.
+
+Nothing here creates an item for anybody. A co-author with no item stays a string, which is
+their correct end state — Wikidata notability asks for serious, publicly available
+references, and an item made to hold an edge back to you is not that.
+
 ## 7. The one-time identity fixes
 
 The account-level checklist — ORCID, Semantic Scholar, Google Scholar, Wikidata,
@@ -294,6 +313,8 @@ since these are lists a human works through over days — plus one from
 | `orcid_import.bib` | ORCID *Add BibTeX*, DOI-bearing entries first |
 | `wikidata_manual.md` | creating the author item by hand — **start here** |
 | `wikidata.qs` | the same item as a batch; needs an autoconfirmed account |
+| `wikidata_coauthors.md` | co-author strings on your paper items and the items they resolve to |
+| `wikidata_coauthors.qs` | the ORCID-matched half of that as a batch, safe to paste unread |
 | `s2_merge.md` | papers to pull onto the claimed Semantic Scholar page |
 | `scholar_strays.md` | Scholar searches that surface a second record for one paper, from `scholar_strays.py` |
 | `openalex_merge.md` | what to paste into the OpenAlex correction form |
@@ -506,6 +527,7 @@ and the one place the review is genuinely cheap.
 | `scripts/scholar_strays.py [--quiet] [--skip-openalex] [--limit N]` | copies of your papers that Scholar indexed separately, found by citation gap against the APIs; needs `scholar_check.py` first, and its OpenAlex pass resumes across days | local only |
 | `scripts/identity_tasks.py [--user-page FILE]` | payloads for the one-time identity fixes; `--user-page` reads a saved copy of your arXiv articles list so the journal-ref list can deep-link each form | local only |
 | `scripts/wikidata_apply.py [--apply] [--check-account]` | apply the Wikidata diff | apply: **yes, Wikidata** |
+| `scripts/wikidata_coauthors.py [--quiet] [--refresh]` | co-author name strings on your paper items, matched to author items by ORCID where one exists and by name where it does not; needs paper items to exist | local only |
 | `scripts/validate.py [--fix-counts] [--strict]` | schema check + shipped-bug regressions + selftest; `--fix-counts` refreshes the corpus sizes stated in the docs. Exits 1 on a structural failure (which stops `update.py`), 0 on a stale count; `--strict` makes both fatal | `--fix-counts`: the doc sentences |
 | `measure/check_structure.py [--links]` | the "A" checks | no |
 | `measure/fidelity.py [--ingest]` | the "C" diagnostic | no |

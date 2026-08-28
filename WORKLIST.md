@@ -13,18 +13,23 @@ what each item costs — the one thing a section cannot say about itself,
 because it does not know what else is open. Each line names the section that
 holds the instructions; nothing here repeats them.
 
+**A command, and nothing to decide.** Any day, in any order: these drain
+backlogs the rest of the page is waiting on, and the run does the work.
+
+1. **Wikidata author strings (90 batchable, 1149 by hand)** — paste `tasks/wikidata_coauthors.qs` into QuickStatements. Those authors were matched ORCID to ORCID with no name compared, so the batch is the one Wikidata edit on this page that needs no judgement from you.
+
 **One edit each, and each one closes a section outright.** This is where
 the page gets visibly shorter.
 
-1. **Wikipedia mentions 3 of your coinages across 6 article(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
+2. **Wikipedia mentions 3 of your coinages across 6 article(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
 
 **As much as you have patience for.** Per-paper clicking, because
 there is no write API behind either surface — and both are ordered so
 that stopping early still captures most of the value.
 
-2. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
-3. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
-4. **Citations on a Scholar record you cannot see (7, ~161 citations)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
+3. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
+4. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
+5. **Citations on a Scholar record you cannot see (7, ~161 citations)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
 
 ## Waiting on the outside world
 
@@ -68,6 +73,18 @@ your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).
 - [ ] **3 citations** — Mediators in Determining what Processing BERT Performs First
       - Scholar 13 vs 16 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Mediators%20in%20Determining%20what%20Processing%20BERT%20Performs%20First%22)
+
+## Wikidata author strings (90 batchable, 1149 by hand)
+
+Every paper item lists you as *author* and each co-author as *author name
+string*, which is a literal nothing can join on — so each item hangs off your
+item alone. Resolving a string to that person's own item is what connects them,
+and many independent paths into your item is the point of having them at all.
+
+- [ ] **90 authors, no judgement needed** — paste [`tasks/wikidata_coauthors.qs`](tasks/wikidata_coauthors.qs) into QuickStatements
+      - each one matched ORCID to ORCID, with no name compared
+- [ ] **1149 strings across 108 papers** — one Author Disambiguator pass per paper, most-cited first
+      - the links, and the candidate items found for each name: [`tasks/wikidata_coauthors.md`](tasks/wikidata_coauthors.md)
 
 ## Identity surfaces (1 open)
 

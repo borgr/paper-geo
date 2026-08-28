@@ -126,6 +126,8 @@ def step_audit(cfg, args) -> None:
     # its first pass compares against.
     run([sys.executable, "scripts/scholar_strays.py", "--quiet"])
     run([sys.executable, "scripts/identity_tasks.py"])
+    # Reads the paper items live, so it has to follow any run that created some.
+    run([sys.executable, "scripts/wikidata_coauthors.py", "--quiet"])
     # Wikipedia is read here for the same reason as the rest of this step: it is a surface we
     # do not control, and the only actions available on it are proposals an editor may
     # decline, so what is open has to be re-read rather than remembered.
@@ -261,6 +263,10 @@ PLAN = (
      "`python scripts/wikidata_apply.py --papers --limit 10`, repeated. The monthly CI "
      "leg refuses to touch new papers while a backlog this size exists, so this is the "
      "one item that turns maintenance back on"),
+    ("Wikidata author strings", "run",
+     "paste `tasks/wikidata_coauthors.qs` into QuickStatements. Those authors were "
+     "matched ORCID to ORCID with no name compared, so the batch is the one Wikidata "
+     "edit on this page that needs no judgement from you"),
     ("Sidecar drafts awaiting your verification", "minute",
      "read the draft and `--accept` it. The only place on this page where your "
      "judgement is the input rather than the check, because accepting publishes an "
@@ -864,6 +870,38 @@ def scholar_split_records() -> list[str]:
     return L + [""]
 
 
+def wikidata_coauthors() -> list[str]:
+    """The worklist section for `build/wikidata_coauthors.json`, or nothing.
+
+    Ranked by the batch first, because that half needs no judgement at all.
+    """
+    try:
+        with open(os.path.join(ROOT, "build", "wikidata_coauthors.json")) as f:
+            st = json.load(f)
+    except (OSError, ValueError):
+        return []
+    left = (st.get("review") or 0) + (st.get("leftover") or 0)
+    if not (st.get("edits") or left):
+        return []
+    L = [f"## Wikidata author strings ({st.get('edits', 0)} batchable, "
+         f"{left} by hand)", "",
+         "Every paper item lists you as *author* and each co-author as *author name",
+         "string*, which is a literal nothing can join on — so each item hangs off your",
+         "item alone. Resolving a string to that person's own item is what connects them,",
+         "and many independent paths into your item is the point of having them at all.", ""]
+    if st.get("edits"):
+        L += [f"- [ ] **{st['edits']} authors, no judgement needed** — paste "
+              "[`tasks/wikidata_coauthors.qs`](tasks/wikidata_coauthors.qs) into "
+              "QuickStatements",
+              "      - each one matched ORCID to ORCID, with no name compared"]
+    if left:
+        L += [f"- [ ] **{left} strings across {st.get('papers_left', 0)} papers** — one "
+              "Author Disambiguator pass per paper, most-cited first",
+              "      - the links, and the candidate items found for each name: "
+              "[`tasks/wikidata_coauthors.md`](tasks/wikidata_coauthors.md)"]
+    return L + [""]
+
+
 def upstream_gaps(papers: list[dict], cfg) -> list[str]:
     """Papers the corpus has only because an override put them there.
 
@@ -1005,6 +1043,7 @@ def step_worklist(cfg, args) -> None:
     lines += due_followups()
     lines += scholar_gaps(scholar, cfg)
     lines += scholar_split_records()
+    lines += wikidata_coauthors()
     lines += upstream_gaps(papers, cfg)
 
     # The papers themselves and not just their count: the URL to paste into the Add
