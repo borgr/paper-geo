@@ -147,7 +147,12 @@ def openalex_orcids(papers: list[dict]) -> dict[str, dict[str, str]]:
 
 
 def items_by_orcid(orcids: list[str]) -> dict[str, dict]:
-    """ORCID to the single Wikidata item stating it. An ORCID two items claim is dropped."""
+    """ORCID to the single Wikidata item stating it. An ORCID two items claim is dropped.
+
+    The receipts in `data/wikidata_people_created.yaml` are read as well. The query service
+    lags hours behind a creation, so an item this repo just made answers here immediately
+    rather than on the run after next.
+    """
     found: dict[str, set] = {}
     labels: dict[str, str] = {}
     for i in range(0, len(orcids), 150):
@@ -158,6 +163,13 @@ def items_by_orcid(orcids: list[str]) -> dict[str, dict]:
             q = qid_of(r["p"]["value"])
             found.setdefault(r["o"]["value"], set()).add(q)
             labels[q] = r.get("pLabel", {}).get("value", q)
+    led = read_yaml(os.path.join(DATA, "wikidata_people_created.yaml")) or {}
+    named = led.get("labels") or {}
+    want = set(orcids)
+    for o, q in (led.get("items") or {}).items():
+        if o in want:
+            found.setdefault(o, set()).add(q)
+            labels[q] = labels.get(q) or named.get(q, "")
     return {o: {"qid": next(iter(qs)), "label": labels.get(next(iter(qs)), "")}
             for o, qs in found.items() if len(qs) == 1}
 

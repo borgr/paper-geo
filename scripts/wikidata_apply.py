@@ -53,7 +53,7 @@ import urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from common import (DATA, ROOT, UA, get_json, load_config,  # noqa: E402
-                    norm_name, read_yaml)
+                    norm_name, read_yaml, write_yaml)
 
 API = "https://www.wikidata.org/w/api.php"
 CREDS_FILE = os.path.join(ROOT, ".wikidata_bot")
@@ -332,6 +332,62 @@ def create_papers(s: "Session", items: list[dict]) -> int:
         # Politeness, not a rate limit: nothing here is close to one. It keeps a
         # hundred creations off the recent-changes feed as a single burst, which is
         # what gets a good-faith batch reverted wholesale.
+        time.sleep(1.5)
+    return ok
+
+
+def logged_in() -> "Session":
+    """A logged-in session, or exit saying which credential is missing."""
+    user, password = read_creds()
+    if not (user and password):
+        sys.exit("no bot credential. Set WIKIDATA_BOT_USER and WIKIDATA_BOT_PASSWORD, or "
+                 "put them in .wikidata_bot -- see the module docstring of "
+                 "scripts/wikidata_apply.py")
+    s = Session()
+    s.login(user, password)
+    return s
+
+
+def recorded(ledger: str) -> dict[str, str]:
+    """The key-to-QID receipts in one ledger file."""
+    return (read_yaml(ledger) or {}).get("items") or {}
+
+
+def create_items(s: "Session", items: list[tuple[str, str, dict]], ledger: str,
+                 summary: str, note: str = "") -> int:
+    """Create each item atomically, writing its QID to the ledger before the next starts.
+
+    `items` is (key, label, wbeditentity payload). One call per item rather than a create
+    followed by a claim each: an interrupted run would otherwise leave a labelled item
+    with no identifier on it, which is indistinguishable from something to delete.
+
+    The query service lags hours behind an edit, so until it catches up the ledger is the
+    only thing that knows these exist. Returns how many landed.
+    """
+    d = read_yaml(ledger) or {}
+    if note and not d.get("note"):
+        d["note"] = note
+    got = d.setdefault("items", {})
+    # The label is kept beside the QID so a later run can name what it made without asking
+    # the query service, which does not answer about a new item for hours.
+    named = d.setdefault("labels", {})
+    ok = 0
+    for i, (key, label, payload) in enumerate(items, 1):
+        try:
+            r = s.edit("wbeditentity", new="item", data=json.dumps(payload),
+                       summary=f"{summary} (paper-geo)")
+            qid = ((r.get("entity") or {}).get("id")) or ""
+            if not qid:
+                raise RuntimeError("no entity id in the response")
+            got[key] = qid
+            named[qid] = label
+            write_yaml(ledger, d)
+            ok += 1
+            print(f"  {i}/{len(items)} {qid} — {label[:58]}")
+        except (RuntimeError, urllib.error.URLError) as e:
+            print(f"  {i}/{len(items)} FAILED — {label[:58]}\n     {e}")
+        # Politeness rather than a rate limit. It keeps a batch off the recent-changes
+        # feed as a single burst, which is what gets a good-faith run reverted wholesale.
         time.sleep(1.5)
     return ok
 

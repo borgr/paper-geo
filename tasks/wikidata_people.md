@@ -18,100 +18,39 @@ at.
 
 | name | ORCID | described as | employer | publishes | papers with you |
 | --- | --- | --- | --- | --- | --- |
-| Omri Abend | [0000-0003-4311-3876](https://orcid.org/0000-0003-4311-3876) | researcher at Hebrew University of Jerusalem | [Hebrew University of Jerusalem](https://www.wikidata.org/wiki/Q174158) | [ORCID](https://orcid.org/0000-0003-4311-3876) | 54 |
-| Noam Slonim | [0000-0001-5171-8264](https://orcid.org/0000-0001-5171-8264) | researcher | — | [ORCID](https://orcid.org/0000-0001-5171-8264) | 26 |
-| Michal Shmueli-Scheuer | [0000-0002-6386-8726](https://orcid.org/0000-0002-6386-8726) | researcher | — | [ORCID](https://orcid.org/0000-0002-6386-8726) | 24 |
-| Ethan Gotlieb Wilcox | [0000-0002-5128-9890](https://orcid.org/0000-0002-5128-9890) | researcher | — | [ORCID](https://orcid.org/0000-0002-5128-9890) | 16 |
-| Alex Warstadt | [0000-0002-5397-3151](https://orcid.org/0000-0002-5397-3151) | researcher | — | [ORCID](https://orcid.org/0000-0002-5397-3151) | 16 |
-| Aaron Mueller | [0009-0005-1148-5001](https://orcid.org/0009-0005-1148-5001) | researcher at Boston University | [Boston University](https://www.wikidata.org/wiki/Q49110) | [ORCID](https://orcid.org/0009-0005-1148-5001) | 16 |
-| Elad Venezian | [0000-0001-9785-3605](https://orcid.org/0000-0001-9785-3605) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0001-9785-3605) | 14 |
-| Mikhail Yurochkin | [0000-0003-0153-6811](https://orcid.org/0000-0003-0153-6811) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0003-0153-6811) | 14 |
-| Ryan Cotterell | [0000-0003-4080-1833](https://orcid.org/0000-0003-4080-1833) | researcher at ETH Zurich | [ETH Zurich](https://www.wikidata.org/wiki/Q11942) | [ORCID](https://orcid.org/0000-0003-4080-1833) | 14 |
-| Jacob Andreas | [0000-0002-3141-5845](https://orcid.org/0000-0002-3141-5845) | researcher | — | [ORCID](https://orcid.org/0000-0002-3141-5845) | 10 |
-| Chengxu Zhuang | [0000-0002-9306-9407](https://orcid.org/0000-0002-9306-9407) | researcher | — | [ORCID](https://orcid.org/0000-0002-9306-9407) | 10 |
-| Eliya Habba | [0009-0001-3472-0650](https://orcid.org/0009-0001-3472-0650) | researcher | — | [ORCID](https://orcid.org/0009-0001-3472-0650) | 10 |
-| Felipe Maia Polo | [0000-0002-4950-2795](https://orcid.org/0000-0002-4950-2795) | researcher | — | [ORCID](https://orcid.org/0000-0002-4950-2795) | 8 |
-| Lior Fox | [0000-0001-8127-5652](https://orcid.org/0000-0001-8127-5652) | researcher | — | [ORCID](https://orcid.org/0000-0001-8127-5652) | 6 |
-| Assaf Toledo | [0000-0002-5309-267X](https://orcid.org/0000-0002-5309-267X) | researcher | — | [ORCID](https://orcid.org/0000-0002-5309-267X) | 6 |
-| Guy Moshkowich | [0000-0003-1856-8430](https://orcid.org/0000-0003-1856-8430) | researcher | — | [ORCID](https://orcid.org/0000-0003-1856-8430) | 6 |
-| Carlos Alzate | [0000-0003-2434-2534](https://orcid.org/0000-0003-2434-2534) | researcher at Gaia Dynamics | [Gaia Dynamics](https://www.wikidata.org/wiki/Q139599339) | [ORCID](https://orcid.org/0000-0003-2434-2534) | 6 |
-| mohit bansal | [0000-0001-5522-1351](https://orcid.org/0000-0001-5522-1351) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0001-5522-1351) | 4 |
-| Mehul Damani | [0000-0001-5790-376X](https://orcid.org/0000-0001-5790-376X) | researcher | — | [ORCID](https://orcid.org/0000-0001-5790-376X) | 4 |
-| Assaf Arbelle | [0000-0001-6559-2316](https://orcid.org/0000-0001-6559-2316) | researcher | — | [ORCID](https://orcid.org/0000-0001-6559-2316) | 4 |
-| Yonatan Bilu | [0000-0001-9119-7889](https://orcid.org/0000-0001-9119-7889) | researcher | — | [ORCID](https://orcid.org/0000-0001-9119-7889) | 4 |
-| matan orbach | [0000-0001-9923-5093](https://orcid.org/0000-0001-9923-5093) | researcher | — | [ORCID](https://orcid.org/0000-0001-9923-5093) | 4 |
-| Sara Hooker | [0000-0002-0190-6459](https://orcid.org/0000-0002-0190-6459) | researcher | — | [ORCID](https://orcid.org/0000-0002-0190-6459) | 4 |
-| yoav kantor | [0000-0002-0775-437X](https://orcid.org/0000-0002-0775-437X) | researcher | — | [ORCID](https://orcid.org/0000-0002-0775-437X) | 4 |
-| Onkar Bhardwaj | [0000-0002-4179-4877](https://orcid.org/0000-0002-4179-4877) | researcher | — | [ORCID](https://orcid.org/0000-0002-4179-4877) | 4 |
-| George Stoica | [0000-0002-5830-9508](https://orcid.org/0000-0002-5830-9508) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0002-5830-9508) | 4 |
-| Michelle Lin | [0000-0002-8376-107X](https://orcid.org/0000-0002-8376-107X) | researcher at University of California, San Francisco | [University of California, San Francisco](https://www.wikidata.org/wiki/Q1061104) | [ORCID](https://orcid.org/0000-0002-8376-107X) | 4 |
-| Sumati Ahuja | [0000-0003-0841-7671](https://orcid.org/0000-0003-0841-7671) | researcher at University of Technology Sydney | [University of Technology Sydney](https://www.wikidata.org/wiki/Q1145731) | [ORCID](https://orcid.org/0000-0003-0841-7671) | 4 |
-| Prateek Yadav | [0000-0003-1445-3150](https://orcid.org/0000-0003-1445-3150) | researcher | — | [ORCID](https://orcid.org/0000-0003-1445-3150) | 4 |
-| Judy Hoffman | [0000-0003-1971-1606](https://orcid.org/0000-0003-1971-1606) | researcher at University of California, Irvine | [University of California, Irvine](https://www.wikidata.org/wiki/Q868421) | [ORCID](https://orcid.org/0000-0003-1971-1606) | 4 |
-| Sivan Doveh | [0000-0003-2431-0620](https://orcid.org/0000-0003-2431-0620) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0003-2431-0620) | 4 |
-| Marina Danilevsky | [0000-0003-2875-2442](https://orcid.org/0000-0003-2875-2442) | researcher | — | [ORCID](https://orcid.org/0000-0003-2875-2442) | 4 |
-| Sundararaman Swaminathan | [0000-0003-4773-141X](https://orcid.org/0000-0003-4773-141X) | researcher | — | [ORCID](https://orcid.org/0000-0003-4773-141X) | 4 |
-| Guy Hacohen | [0009-0001-1423-2318](https://orcid.org/0009-0001-1423-2318) | researcher | — | [ORCID](https://orcid.org/0009-0001-1423-2318) | 4 |
-| Dan Gutfreund | [0000-0001-5101-4443](https://orcid.org/0000-0001-5101-4443) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0001-5101-4443) | 2 |
-| Lilach Eden | [0000-0001-5244-3813](https://orcid.org/0000-0001-5244-3813) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0001-5244-3813) | 2 |
-| Clémentine Fourrier | [0000-0001-6500-6030](https://orcid.org/0000-0001-6500-6030) | researcher | — | [ORCID](https://orcid.org/0000-0001-6500-6030) | 2 |
-| Roy Bar-Haim | [0000-0001-7365-1662](https://orcid.org/0000-0001-7365-1662) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0001-7365-1662) | 2 |
-| Michal Malka | [0000-0001-8215-7682](https://orcid.org/0000-0001-8215-7682) | researcher | — | [ORCID](https://orcid.org/0000-0001-8215-7682) | 2 |
-| Charles Jochim | [0000-0001-8376-4505](https://orcid.org/0000-0001-8376-4505) | researcher | — | [ORCID](https://orcid.org/0000-0001-8376-4505) | 2 |
-| Xing Han Lu | [0000-0001-9027-8425](https://orcid.org/0000-0001-9027-8425) | researcher | — | [ORCID](https://orcid.org/0000-0001-9027-8425) | 2 |
-| Daphne Ippolito | [0000-0001-9328-8995](https://orcid.org/0000-0001-9328-8995) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0001-9328-8995) | 2 |
-| Mor Geva | [0000-0001-9529-6315](https://orcid.org/0000-0001-9529-6315) | researcher at Tel Aviv University | [Tel Aviv University](https://www.wikidata.org/wiki/Q319239) | [ORCID](https://orcid.org/0000-0001-9529-6315) | 2 |
-| Iker García-Ferrero | [0000-0001-9612-7134](https://orcid.org/0000-0001-9612-7134) | researcher | — | [ORCID](https://orcid.org/0000-0001-9612-7134) | 2 |
-| Kirtana  Sunil Phatnani | [0000-0001-9988-1167](https://orcid.org/0000-0001-9988-1167) | researcher at Fractal Analytics | [Fractal Analytics](https://www.wikidata.org/wiki/Q5477463) | [ORCID](https://orcid.org/0000-0001-9988-1167) | 2 |
-| David Ifeoluwa Adelani | [0000-0002-0193-2083](https://orcid.org/0000-0002-0193-2083) | researcher at McGill University | [McGill University](https://www.wikidata.org/wiki/Q201492) | [ORCID](https://orcid.org/0000-0002-0193-2083) | 2 |
-| YANGSIBO HUANG | [0000-0002-0640-4845](https://orcid.org/0000-0002-0640-4845) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0002-0640-4845) | 2 |
-| Bo Liu | [0000-0002-0836-2212](https://orcid.org/0000-0002-0836-2212) | researcher at Shanghai Institute of Applied Physics | [Shanghai Institute of Applied Physics](https://www.wikidata.org/wiki/Q9384253) | [ORCID](https://orcid.org/0000-0002-0836-2212) | 2 |
-| Raj Shah | [0000-0002-0847-8426](https://orcid.org/0000-0002-0847-8426) | researcher | — | [ORCID](https://orcid.org/0000-0002-0847-8426) | 2 |
-| Derry Wijaya | [0000-0002-0848-4703](https://orcid.org/0000-0002-0848-4703) | researcher at Boston University | [Boston University](https://www.wikidata.org/wiki/Q49110), [Monash University Indonesia](https://www.wikidata.org/wiki/Q109913238) | [ORCID](https://orcid.org/0000-0002-0848-4703) | 2 |
-| Yihan Jiang | [0000-0002-1399-7909](https://orcid.org/0000-0002-1399-7909) | researcher | — | [ORCID](https://orcid.org/0000-0002-1399-7909) | 2 |
-| Gabriel Stanovsky | [0000-0002-2420-8979](https://orcid.org/0000-0002-2420-8979) | researcher at Hebrew University of Jerusalem | [Hebrew University of Jerusalem](https://www.wikidata.org/wiki/Q174158) | [ORCID](https://orcid.org/0000-0002-2420-8979) | 2 |
-| Andreas Waldis | [0000-0002-2772-5701](https://orcid.org/0000-0002-2772-5701) | researcher | — | [ORCID](https://orcid.org/0000-0002-2772-5701) | 2 |
-| eitan farchi | [0000-0002-3021-1488](https://orcid.org/0000-0002-3021-1488) | researcher | — | [ORCID](https://orcid.org/0000-0002-3021-1488) | 2 |
-| Lili Kotlerman | [0000-0002-3141-9475](https://orcid.org/0000-0002-3141-9475) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0002-3141-9475) | 2 |
-| Eli Schwartz | [0000-0002-3393-8666](https://orcid.org/0000-0002-3393-8666) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0002-3393-8666) | 2 |
-| Ora N. Fandina | [0000-0002-3545-1501](https://orcid.org/0000-0002-3545-1501) | researcher | — | [ORCID](https://orcid.org/0000-0002-3545-1501) | 2 |
-| Boglarka Ecsedi | [0000-0002-3592-8306](https://orcid.org/0000-0002-3592-8306) | researcher at University of Toronto | [University of Toronto](https://www.wikidata.org/wiki/Q180865) | [ORCID](https://orcid.org/0000-0002-3592-8306) | 2 |
-| Joseph Shtok | [0000-0002-4083-542X](https://orcid.org/0000-0002-4083-542X) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0002-4083-542X) | 2 |
-| Shashank Srivastava | [0000-0002-4148-895X](https://orcid.org/0000-0002-4148-895X) | researcher | — | [ORCID](https://orcid.org/0000-0002-4148-895X) | 2 |
-| Mathieu LAURIERE | [0000-0002-4380-1399](https://orcid.org/0000-0002-4380-1399) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0002-4380-1399) | 2 |
-| Marzieh Fadaee | [0000-0002-4447-1213](https://orcid.org/0000-0002-4447-1213) | researcher | — | [ORCID](https://orcid.org/0000-0002-4447-1213) | 2 |
-| Yuting LIN | [0000-0002-4712-5527](https://orcid.org/0000-0002-4712-5527) | researcher at Shenzhen University | [Shenzhen University](https://www.wikidata.org/wiki/Q1945756) | [ORCID](https://orcid.org/0000-0002-4712-5527) | 2 |
-| yifan mai | [0000-0002-4807-037X](https://orcid.org/0000-0002-4807-037X) | researcher | — | [ORCID](https://orcid.org/0000-0002-4807-037X) | 2 |
-| Daniel Ruffinelli | [0000-0002-4831-2930](https://orcid.org/0000-0002-4831-2930) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0002-4831-2930) | 2 |
-| Yoon Kim | [0000-0002-4837-8411](https://orcid.org/0000-0002-4837-8411) | researcher at University of Seoul | [University of Seoul](https://www.wikidata.org/wiki/Q488334) | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0002-4837-8411) | 2 |
-| Ekin Akyürek | [0000-0002-5166-4689](https://orcid.org/0000-0002-5166-4689) | researcher at Massachusetts Institute of Technology | [Massachusetts Institute of Technology](https://www.wikidata.org/wiki/Q49108) | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0002-5166-4689) | 2 |
-| Yanan Jiang | [0000-0002-5216-0853](https://orcid.org/0000-0002-5216-0853) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0002-5216-0853) | 2 |
-| Uri Shaham | [0000-0002-5928-4269](https://orcid.org/0000-0002-5928-4269) | researcher at Bar-Ilan University | [Bar-Ilan University](https://www.wikidata.org/wiki/Q1124657) | [ORCID](https://orcid.org/0000-0002-5928-4269) | 2 |
-| Luca Foppiano | [0000-0002-6114-6164](https://orcid.org/0000-0002-6114-6164) | researcher | — | [ORCID](https://orcid.org/0000-0002-6114-6164) | 2 |
-| Zengzhi Wang | [0000-0002-6146-6248](https://orcid.org/0000-0002-6146-6248) | researcher | — | [ORCID](https://orcid.org/0000-0002-6146-6248) | 2 |
-| Wei LIN | [0000-0002-6265-5307](https://orcid.org/0000-0002-6265-5307) | researcher | — | [ORCID](https://orcid.org/0000-0002-6265-5307) | 2 |
-| peerat limkonchotiwat | [0000-0002-7212-8228](https://orcid.org/0000-0002-7212-8228) | researcher at AI Singapore | [AI Singapore](https://www.wikidata.org/wiki/Q133811830) | [ORCID](https://orcid.org/0000-0002-7212-8228) | 2 |
-| Alon Jacovi | [0000-0002-7263-2061](https://orcid.org/0000-0002-7263-2061) | researcher | — | [ORCID](https://orcid.org/0000-0002-7263-2061) | 2 |
-| Maria Polukarov | [0000-0002-7421-3012](https://orcid.org/0000-0002-7421-3012) | researcher | — | [ORCID](https://orcid.org/0000-0002-7421-3012) | 2 |
-| Ti-Rong Wu | [0000-0002-7532-3176](https://orcid.org/0000-0002-7532-3176) | researcher at Academia Sinica | [Academia Sinica](https://www.wikidata.org/wiki/Q337266) | [ORCID](https://orcid.org/0000-0002-7532-3176) | 2 |
-| George Kour | [0000-0002-8908-3134](https://orcid.org/0000-0002-8908-3134) | researcher at IBM Research | [IBM Research](https://www.wikidata.org/wiki/Q3146518) | [ORCID](https://orcid.org/0000-0002-8908-3134) | 2 |
-| Yu Su | [0000-0002-9532-4408](https://orcid.org/0000-0002-9532-4408) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0002-9532-4408) | 2 |
-| Isha Puri | [0000-0003-1001-2016](https://orcid.org/0000-0003-1001-2016) | researcher | — | [ORCID](https://orcid.org/0000-0003-1001-2016) | 2 |
-| Cheston Tan | [0000-0003-1248-4906](https://orcid.org/0000-0003-1248-4906) | researcher at Institute for Infocomm Research | [Institute for Infocomm Research](https://www.wikidata.org/wiki/Q30281831), [Singapore University of Technology and Design](https://www.wikidata.org/wiki/Q11081251) | [ORCID](https://orcid.org/0000-0003-1248-4906) | 2 |
-| Alexander Buyantuev | [0000-0003-1670-0741](https://orcid.org/0000-0003-1670-0741) | researcher at State University of New York at Albany | [State University of New York at Albany](https://www.wikidata.org/wiki/Q1780816), [State University of New York at Albany](https://www.wikidata.org/wiki/Q1780816) | [ORCID](https://orcid.org/0000-0003-1670-0741) | 2 |
-| Stewart Slocum | [0000-0003-1740-3407](https://orcid.org/0000-0003-1740-3407) | researcher | — | [ORCID](https://orcid.org/0000-0003-1740-3407) | 2 |
-| Ruchit Rawal | [0000-0003-1794-9573](https://orcid.org/0000-0003-1794-9573) | researcher | — | [ORCID](https://orcid.org/0000-0003-1794-9573) | 2 |
-| Sabrina Li | [0000-0003-2145-4493](https://orcid.org/0000-0003-2145-4493) | researcher | — | [ORCID](https://orcid.org/0000-0003-2145-4493) | 2 |
-| Vicky Feliren | [0000-0003-3306-8426](https://orcid.org/0000-0003-3306-8426) | researcher | — | [ORCID](https://orcid.org/0000-0003-3306-8426) | 2 |
-| yucheng li | [0000-0003-3473-3176](https://orcid.org/0000-0003-3473-3176) | researcher | — | [ORCID](https://orcid.org/0000-0003-3473-3176) | 2 |
-| Yevgeni Berzak | [0000-0003-4474-1727](https://orcid.org/0000-0003-4474-1727) | researcher at Technion – Israel Institute of Technology | [Technion – Israel Institute of Technology](https://www.wikidata.org/wiki/Q333705) | [ORCID](https://orcid.org/0000-0003-4474-1727) | 2 |
-| Shai Gretz | [0000-0003-4562-7029](https://orcid.org/0000-0003-4562-7029) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0000-0003-4562-7029) | 2 |
-| Ruijie XU | [0009-0000-0221-9768](https://orcid.org/0009-0000-0221-9768) | researcher | — | [ORCID](https://orcid.org/0009-0000-0221-9768) | 2 |
-| Haitz Saez de Ocariz Borde | [0009-0000-2297-7750](https://orcid.org/0009-0000-2297-7750) | researcher | — | [ORCID](https://orcid.org/0009-0000-2297-7750) | 2 |
-| Elisabeth Fittschen | [0009-0001-3702-671X](https://orcid.org/0009-0001-3702-671X) | researcher | — | [ORCID](https://orcid.org/0009-0001-3702-671X) | 2 |
-| CYNTHIA JAYNE AMOL | [0009-0002-0870-7126](https://orcid.org/0009-0002-0870-7126) | researcher at Maseno University | [Maseno University](https://www.wikidata.org/wiki/Q3551629) | [ORCID](https://orcid.org/0009-0002-0870-7126) | 2 |
-| Kevin Klyman | [0009-0003-2130-3529](https://orcid.org/0009-0003-2130-3529) | researcher at Stanford University | [Stanford University](https://www.wikidata.org/wiki/Q41506) | [OpenAlex](https://openalex.org/authors/https://orcid.org/0009-0003-2130-3529) | 2 |
-| Wenting Zhao | [0009-0003-3187-3955](https://orcid.org/0009-0003-3187-3955) | researcher | — | [OpenAlex](https://openalex.org/authors/https://orcid.org/0009-0003-3187-3955) | 2 |
-| Pengfei Liu | [0009-0008-6932-7091](https://orcid.org/0009-0008-6932-7091) | researcher | — | [ORCID](https://orcid.org/0009-0008-6932-7091) | 2 |
-| Ran Levy | [0009-0008-7352-2586](https://orcid.org/0009-0008-7352-2586) | researcher | — | [ORCID](https://orcid.org/0009-0008-7352-2586) | 2 |
-| Ishan Khire | [0009-0009-7694-9638](https://orcid.org/0009-0009-7694-9638) | researcher at Georgia Tech | [Georgia Tech](https://www.wikidata.org/wiki/Q864855) | [ORCID](https://orcid.org/0009-0009-7694-9638) | 2 |
+
+## Already have a same-name item (27)
+
+Wikidata has a human item under each of these names. Where it states no ORCID
+it is often this same person, reached from a paper rather than from a profile
+-- so the right edit is to put the ORCID on that item, and creating a second
+one would split a person in two. Where the name has many bearers, nothing here
+settles which is which.
+
+- **Omri Abend** ([0000-0003-4311-3876](https://orcid.org/0000-0003-4311-3876), 54 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID: [Q102687062](https://www.wikidata.org/wiki/Q102687062)
+- **Noam Slonim** ([0000-0001-5171-8264](https://orcid.org/0000-0001-5171-8264), 26 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID: [Q6577926](https://www.wikidata.org/wiki/Q6577926)
+- **Mikhail Yurochkin** ([0000-0003-0153-6811](https://orcid.org/0000-0003-0153-6811), 14 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID: [Q103330754](https://www.wikidata.org/wiki/Q103330754)
+- **Jacob Andreas** ([0000-0002-3141-5845](https://orcid.org/0000-0002-3141-5845), 10 papers with you) — 3 item(s) carry the name, 3 of them stating no ORCID: [Q112760940](https://www.wikidata.org/wiki/Q112760940), [Q125454034](https://www.wikidata.org/wiki/Q125454034), [Q62754](https://www.wikidata.org/wiki/Q62754)
+- **Carlos Alzate** ([0000-0003-2434-2534](https://orcid.org/0000-0003-2434-2534), 6 papers with you) — 2 item(s) carry the name, 2 of them stating no ORCID: [Q102390975](https://www.wikidata.org/wiki/Q102390975), [Q1042683](https://www.wikidata.org/wiki/Q1042683)
+- **Mohit Bansal** ([0000-0001-5522-1351](https://orcid.org/0000-0001-5522-1351), 4 papers with you) — 3 item(s) carry the name, 3 of them stating no ORCID: [Q103295310](https://www.wikidata.org/wiki/Q103295310), [Q112628221](https://www.wikidata.org/wiki/Q112628221), [Q67386311](https://www.wikidata.org/wiki/Q67386311)
+- **Sara Hooker** ([0000-0002-0190-6459](https://orcid.org/0000-0002-0190-6459), 4 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID: [Q107742361](https://www.wikidata.org/wiki/Q107742361)
+- **George Stoica** ([0000-0002-5830-9508](https://orcid.org/0000-0002-5830-9508), 4 papers with you) — 1 item(s) carry the name, 0 of them stating no ORCID: [Q43172025](https://www.wikidata.org/wiki/Q43172025)
+- **Michelle Lin** ([0000-0002-8376-107X](https://orcid.org/0000-0002-8376-107X), 4 papers with you) — 3 item(s) carry the name, 3 of them stating no ORCID: [Q139550968](https://www.wikidata.org/wiki/Q139550968), [Q64785953](https://www.wikidata.org/wiki/Q64785953), [Q85881335](https://www.wikidata.org/wiki/Q85881335)
+- **Prateek Yadav** ([0000-0003-1445-3150](https://orcid.org/0000-0003-1445-3150), 4 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID: [Q102070311](https://www.wikidata.org/wiki/Q102070311)
+- **Judy Hoffman** ([0000-0003-1971-1606](https://orcid.org/0000-0003-1971-1606), 4 papers with you) — 3 item(s) carry the name, 3 of them stating no ORCID: [Q103328754](https://www.wikidata.org/wiki/Q103328754), [Q22097391](https://www.wikidata.org/wiki/Q22097391), [Q6304478](https://www.wikidata.org/wiki/Q6304478)
+- **Dan Gutfreund** ([0000-0001-5101-4443](https://orcid.org/0000-0001-5101-4443), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID: [Q102360378](https://www.wikidata.org/wiki/Q102360378)
+- **Charles Jochim** ([0000-0001-8376-4505](https://orcid.org/0000-0001-8376-4505), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID: [Q137017900](https://www.wikidata.org/wiki/Q137017900)
+- **Bo Liu** ([0000-0002-0836-2212](https://orcid.org/0000-0002-0836-2212), 2 papers with you) — 5 item(s) carry the name, 5 of them stating no ORCID: [Q102196599](https://www.wikidata.org/wiki/Q102196599), [Q102403237](https://www.wikidata.org/wiki/Q102403237), [Q102682954](https://www.wikidata.org/wiki/Q102682954), [Q124355855](https://www.wikidata.org/wiki/Q124355855), [Q67220313](https://www.wikidata.org/wiki/Q67220313)
+- **Raj Shah** ([0000-0002-0847-8426](https://orcid.org/0000-0002-0847-8426), 2 papers with you) — 6 item(s) carry the name, 4 of them stating no ORCID: [Q1274250](https://www.wikidata.org/wiki/Q1274250), [Q130379561](https://www.wikidata.org/wiki/Q130379561), [Q29043436](https://www.wikidata.org/wiki/Q29043436), [Q46413647](https://www.wikidata.org/wiki/Q46413647), [Q47460504](https://www.wikidata.org/wiki/Q47460504), [Q99555917](https://www.wikidata.org/wiki/Q99555917)
+- **Eli Schwartz** ([0000-0002-3393-8666](https://orcid.org/0000-0002-3393-8666), 2 papers with you) — 2 item(s) carry the name, 2 of them stating no ORCID: [Q110505456](https://www.wikidata.org/wiki/Q110505456), [Q30570617](https://www.wikidata.org/wiki/Q30570617)
+- **Joseph Shtok** ([0000-0002-4083-542X](https://orcid.org/0000-0002-4083-542X), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID: [Q102407752](https://www.wikidata.org/wiki/Q102407752)
+- **Shashank Srivastava** ([0000-0002-4148-895X](https://orcid.org/0000-0002-4148-895X), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID: [Q115868444](https://www.wikidata.org/wiki/Q115868444)
+- **Yuting LIN** ([0000-0002-4712-5527](https://orcid.org/0000-0002-4712-5527), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID: [Q117414502](https://www.wikidata.org/wiki/Q117414502)
+- **Yifan Mai** ([0000-0002-4807-037X](https://orcid.org/0000-0002-4807-037X), 2 papers with you) — 1 item(s) carry the name, 0 of them stating no ORCID: [Q130823937](https://www.wikidata.org/wiki/Q130823937)
+- **Yoon Kim** ([0000-0002-4837-8411](https://orcid.org/0000-0002-4837-8411), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID: [Q102278866](https://www.wikidata.org/wiki/Q102278866)
+- **Wei LIN** ([0000-0002-6265-5307](https://orcid.org/0000-0002-6265-5307), 2 papers with you) — 9 item(s) carry the name, 9 of them stating no ORCID: [Q102200147](https://www.wikidata.org/wiki/Q102200147), [Q102208278](https://www.wikidata.org/wiki/Q102208278), [Q102308764](https://www.wikidata.org/wiki/Q102308764), [Q102399878](https://www.wikidata.org/wiki/Q102399878), [Q103300352](https://www.wikidata.org/wiki/Q103300352), [Q109859447](https://www.wikidata.org/wiki/Q109859447), [Q120718843](https://www.wikidata.org/wiki/Q120718843), [Q45424520](https://www.wikidata.org/wiki/Q45424520) …
+- **Yu Su** ([0000-0002-9532-4408](https://orcid.org/0000-0002-9532-4408), 2 papers with you) — 8 item(s) carry the name, 7 of them stating no ORCID: [Q102131509](https://www.wikidata.org/wiki/Q102131509), [Q102376718](https://www.wikidata.org/wiki/Q102376718), [Q113070588](https://www.wikidata.org/wiki/Q113070588), [Q45403146](https://www.wikidata.org/wiki/Q45403146), [Q45419816](https://www.wikidata.org/wiki/Q45419816), [Q45481252](https://www.wikidata.org/wiki/Q45481252), [Q45647788](https://www.wikidata.org/wiki/Q45647788), [Q87339820](https://www.wikidata.org/wiki/Q87339820)
+- **Isha Puri** ([0000-0003-1001-2016](https://orcid.org/0000-0003-1001-2016), 2 papers with you) — 1 item(s) carry the name, 0 of them stating no ORCID: [Q98770682](https://www.wikidata.org/wiki/Q98770682)
+- **Wenting Zhao** ([0009-0003-3187-3955](https://orcid.org/0009-0003-3187-3955), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID: [Q110275688](https://www.wikidata.org/wiki/Q110275688)
+- **Pengfei Liu** ([0009-0008-6932-7091](https://orcid.org/0009-0008-6932-7091), 2 papers with you) — 2 item(s) carry the name, 2 of them stating no ORCID: [Q102434002](https://www.wikidata.org/wiki/Q102434002), [Q102925389](https://www.wikidata.org/wiki/Q102925389)
+- **Ran Levy** ([0009-0008-7352-2586](https://orcid.org/0009-0008-7352-2586), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID: [Q118928179](https://www.wikidata.org/wiki/Q118928179)

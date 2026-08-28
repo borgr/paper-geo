@@ -4424,3 +4424,107 @@ class TestPeopleItemsRestOnPublicRecordsNotOnNames(unittest.TestCase):
             self.assertIn("LAST\tP31\tQ5\t", b)
             self.assertIn("LAST\tP106\tQ1650915\t", b)
             self.assertRegex(b, r"LAST\tP496\t\"\d{4}-\d{4}-\d{4}-\d{3}[\dX]\"")
+
+    def test_a_namesake_stating_another_orcid_is_somebody_else(self):
+        """Ours matched no item on the way in, so an item stating an ORCID states a
+        different one and does not stop the creation."""
+        wp = self._job()
+        p = {"description": "researcher at Somerville"}
+        self.assertEqual(wp.keeps(p, [{"qid": "Q1", "orcid": "0000-0001-8071-4828",
+                                       "description": "researcher"}]), [])
+
+    def test_a_namesake_stating_no_orcid_stops_the_creation(self):
+        """The same person reached from a source that gave no identifier looks exactly
+        like this, and a duplicate human item is not ours to undo."""
+        wp = self._job()
+        got = wp.keeps({"description": "researcher"},
+                       [{"qid": "Q2", "orcid": "", "description": "physicist"}])
+        self.assertEqual([s["qid"] for s in got], ["Q2"])
+
+    def test_a_name_and_description_wikidata_would_refuse_is_held_first(self):
+        """Wikidata rejects a label and description pair that already exists. Two
+        same-name researchers with no employer between them are that pair."""
+        wp = self._job()
+        got = wp.keeps({"description": "researcher"},
+                       [{"qid": "Q3", "orcid": "0000-0002-0982-9785",
+                         "description": "researcher"}])
+        self.assertEqual([s["qid"] for s in got], ["Q3"])
+
+    def _searched(self, wp, answers):
+        """`namesakes` run against canned API responses instead of the live wiki."""
+        def fake(url, **kw):
+            if "wbsearchentities" in url:
+                name = urllib.parse.unquote(url.split("search=")[1])
+                return json.dumps({"search": [{"id": q, "label": lab}
+                                              for q, lab, _ in answers.get(name, [])]})
+            ids = url.split("ids=")[1].split("&")[0].split("|")
+            claim = {"Q5": lambda: {"mainsnak": {"datavalue": {
+                "value": {"id": "Q5"}}}}}
+            out = {}
+            for q in ids:
+                human = any(q == a[0] and a[2] for v in answers.values() for a in v)
+                out[q] = {"claims": {"P31": [claim["Q5"]()]} if human else {}}
+            return json.dumps({"entities": out})
+        old, wp.get = wp.get, fake
+        try:
+            return wp.namesakes(sorted({n for n in answers}))
+        finally:
+            wp.get = old
+
+    def test_a_namesake_is_held_whatever_it_says_the_person_does(self):
+        """The occupation on an item is no evidence about who it is. One co-author's item
+        says businessman and it is still him, so any same-name human item holds."""
+        wp = self._job()
+        got = self._searched(wp, {"Prateek Yadav": [("Q102070311", "Prateek Yadav", True)]})
+        self.assertEqual([n["qid"] for n in got["Prateek Yadav"]], ["Q102070311"])
+
+    def test_a_same_name_item_that_is_not_a_person_does_not_hold(self):
+        """An album or a company sharing a name says nothing about the person."""
+        wp = self._job()
+        self.assertEqual(
+            self._searched(wp, {"Ada Lovelace": [("Q999999", "Ada Lovelace", False)]}), {})
+
+    def test_a_namesake_under_a_different_spelling_still_holds(self):
+        """Profiles write one name several ways, and the search index answers for the
+        forms a query on the English label cannot see."""
+        wp = self._job()
+        got = self._searched(wp, {"Mohit Bansal": [("Q67386311", "mohit bansal", True)]})
+        self.assertEqual([n["qid"] for n in got["Mohit Bansal"]], ["Q67386311"])
+
+    def test_a_name_typed_in_one_case_is_labelled_in_the_other(self):
+        """ORCID stores whatever the person typed. A label is a name, so a record giving
+        one case takes OpenAlex's form, and a name already cased as a name is left alone."""
+        wp = self._job()
+        self.assertEqual(wp.cased(self._rec(label="mohit bansal",
+                                            openalex_label="Mohit Bansal")), "Mohit Bansal")
+        self.assertEqual(wp.cased(self._rec(label="YANGSIBO HUANG",
+                                            openalex_label="Yangsibo Huang")), "Yangsibo Huang")
+        self.assertEqual(wp.cased(self._rec(label="Ludwig van Beethoven",
+                                            openalex_label="Ludwig Van Beethoven")),
+                         "Ludwig van Beethoven")
+        self.assertEqual(wp.cased(self._rec(label="Kirtana  Sunil Phatnani")),
+                         "Kirtana Sunil Phatnani")
+
+    def test_the_api_payload_and_the_paste_form_state_the_same_thing(self):
+        """Two ways out of one batch, so a revoked credential does not change what lands."""
+        wp = self._job()
+        p = {"orcid": "0000-0002-1825-0097", "label": "Ada Lovelace",
+             "description": "researcher at Somerville",
+             "works": "https://orcid.org/0000-0002-1825-0097",
+             "employers": [("Somerville", "Q123")]}
+        d = wp.payload(p, "2026-08-28")
+        self.assertEqual(d["labels"]["en"]["value"], "Ada Lovelace")
+        self.assertEqual(d["descriptions"]["en"]["value"], "researcher at Somerville")
+        got = [(c["mainsnak"]["property"],
+                c["mainsnak"]["datavalue"]["value"].get("id")
+                if isinstance(c["mainsnak"]["datavalue"]["value"], dict)
+                else c["mainsnak"]["datavalue"]["value"]) for c in d["claims"]]
+        self.assertEqual(got, [("P31", "Q5"), ("P106", "Q1650915"),
+                               ("P496", "0000-0002-1825-0097"), ("P108", "Q123")])
+        for c in d["claims"]:
+            snaks = c["references"][0]["snaks"]
+            self.assertTrue(snaks["P854"][0]["datavalue"]["value"])
+            self.assertEqual(snaks["P813"][0]["datavalue"]["value"]["precision"], 11)
+        line = "\n".join(wp.batch([p], "2026-08-28"))
+        self.assertIn('Len\t"Ada Lovelace"', line)
+        self.assertIn("LAST\tP108\tQ123\t", line)
