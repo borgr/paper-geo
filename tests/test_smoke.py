@@ -4038,3 +4038,47 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
                                   {"slug": "s2", "arxiv": "2401.00001"}])
         self.assertEqual(sorted(got), ["s1", "s2"])
         self.assertEqual(sorted(got["s1"]), ["a lovelace", "ada lovelace"])
+
+
+class TestVenueResolutionTargetsAPublication(unittest.TestCase):
+    """P1433 takes a publication, and its value-type constraint says so.
+
+    A conference name matches the conference event as readily as the proceedings volume,
+    and the batch is pasted unread, so an event must never become a target. Two candidates
+    of equal rank stay a question rather than resolving to whichever row came back first.
+    """
+
+    def _module(self):
+        import wikidata_coauthors as wc
+        importlib.reload(wc)
+        self.addCleanup(importlib.reload, wc)
+        return wc
+
+    def test_a_conference_event_is_not_a_candidate_at_all(self):
+        wc = self._module()
+        event = [{"qid": "Q9", "label": "EMNLP 2024", "types": ["Q2020153"]}]
+        self.assertEqual(wc.publications(event), [])
+        self.assertIsNone(wc.pick_venue(wc.publications(event)))
+
+    def test_a_proceedings_beside_its_own_conference_resolves(self):
+        wc = self._module()
+        cands = [{"qid": "Q8", "label": "ACL 2019", "types": ["Q2020153"]},
+                 {"qid": "Q9", "label": "Proceedings of ACL 2019", "types": ["Q1143604"]}]
+        self.assertEqual(wc.pick_venue(wc.publications(cands))["qid"], "Q9")
+
+    def test_two_proceedings_volumes_stay_a_question(self):
+        wc = self._module()
+        cands = [{"qid": "Q8", "label": "Volume 1", "types": ["Q1143604"]},
+                 {"qid": "Q9", "label": "Demonstrations", "types": ["Q1143604"]}]
+        self.assertIsNone(wc.pick_venue(cands))
+
+    def test_a_proceedings_outranks_a_journal_of_the_same_name(self):
+        wc = self._module()
+        cands = [{"qid": "Q8", "label": "X", "types": ["Q5633421"]},
+                 {"qid": "Q9", "label": "X", "types": ["Q1143604", "Q3331189"]}]
+        self.assertEqual(wc.pick_venue(cands)["qid"], "Q9")
+
+    def test_a_journal_under_a_subtype_still_counts_as_one(self):
+        wc = self._module()
+        cands = [{"qid": "Q9", "label": "TACL", "types": ["Q5633421", "Q773668"]}]
+        self.assertEqual(wc.pick_venue(wc.publications(cands))["qid"], "Q9")

@@ -18,6 +18,12 @@ Two passes, and the difference between them is the whole design.
              exactly as well, so these are listed one at a time for you to confirm and are
              never batched.
 
+A second, unrelated gap rides along because it is the same batch and the same items. None of
+the 108 states `published in` (P1433), so nothing joins a paper to the venue that published
+it. The venue name is in the corpus already, so this needs no guessing beyond one rule --
+P1433 takes a publication, and a conference name matches the conference event as readily as
+the proceedings volume, so only a proceedings or a journal is ever a target.
+
 Creates no item about anybody and writes nothing to Wikidata. Items for people who have
 none are out of scope by policy, not by omission -- Wikidata notability wants "serious and
 publicly available references", and a co-author with no record of their own has none that
@@ -47,7 +53,7 @@ DISAMBIG = "https://author-disambiguator.toolforge.org"
 CACHE_DAYS = 30
 CACHE = "wikidata_coauthors_cache.json"
 # Bumped when the cache layout changes, so an old file is re-asked rather than misread.
-SHAPE = 2
+SHAPE = 4
 
 
 def sparql(query: str) -> list[dict]:
@@ -65,7 +71,7 @@ def qid_of(uri: str) -> str:
 
 
 def item_state(qids: list[str]) -> dict[str, dict]:
-    """Per paper item, the P2093 strings still on it and the P50 items already there.
+    """Per paper item, the P2093 strings left, the P50 items present, and whether P1433 is.
 
     Read live rather than from `paper_item`, because the question is what the item says
     now. A string somebody else resolved last week is not work.
@@ -83,7 +89,7 @@ def item_state(qids: list[str]) -> dict[str, dict]:
                                 (s.get("qualifiers") or {}).get("P1545") or []), "")
                 if name:
                     strings.append({"name": name, "ordinal": ordinal})
-            out[qid] = {"strings": strings, "p50": {
+            out[qid] = {"strings": strings, "venue": bool(c.get("P1433")), "p50": {
                 (s["mainsnak"].get("datavalue") or {}).get("value", {}).get("id")
                 for s in c.get("P50") or []}}
     return out
@@ -166,11 +172,71 @@ def items_by_name(names: list[str]) -> dict[str, list[dict]]:
     return out
 
 
-def lookups(names: list[str], papers: list[dict], refresh: bool) -> dict:
-    """The three network answers this pass needs, cached in `build/` for CACHE_DAYS.
+# P1433 wants the publication, and a conference name matches the event as well as its
+# proceedings. Ordered by preference, so the first type a candidate has decides it.
+# What P1433 accepts, in the order a tie is broken. Its value-type constraint wants a
+# publication, so a conference item is never a valid target however well its name matches.
+PUBLICATION_TYPES = ("Q1143604", "Q5633421")
+# Searched anyway, so a name that only matches the event can say so instead of vanishing.
+EVENT_TYPES = ("Q2020153", "Q47258130")
 
-    Returns `orcids` (name to ORCID), `by_orcid` (ORCID to item) and `by_name` (name to
-    candidate items). Re-asks all three together, so a cached set is internally consistent.
+
+def venue_items(names: list[str]) -> dict[str, list[dict]]:
+    """Venue name to every journal, proceedings or conference item labelled with it.
+
+    Each candidate carries every one of these types it has, since a volume is often also a
+    `version, edition or translation` and a journal often also `open-access journal`.
+    """
+    out: dict[str, list[dict]] = {}
+    for i in range(0, len(names), 60):
+        vals = " ".join('"%s"@en' % n.replace('"', "") for n in names[i:i + 60])
+        types = " ".join("wd:" + t for t in PUBLICATION_TYPES + EVENT_TYPES)
+        rows_ = sparql(
+            "SELECT ?name ?p ?pLabel ?t WHERE { VALUES ?name { %s } "
+            "{ ?p rdfs:label ?name } UNION { ?p skos:altLabel ?name } "
+            "?p wdt:P31/wdt:P279* ?t . VALUES ?t { %s } "
+            'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }'
+            % (vals, types))
+        for r in rows_:
+            qid, t = qid_of(r["p"]["value"]), qid_of(r["t"]["value"])
+            got = out.setdefault(r["name"]["value"], [])
+            cand = next((c for c in got if c["qid"] == qid), None)
+            if cand is None:
+                cand = {"qid": qid, "label": r.get("pLabel", {}).get("value", ""),
+                        "types": []}
+                got.append(cand)
+            if t not in cand["types"]:
+                cand["types"].append(t)
+    return out
+
+
+def publications(cands: list[dict]) -> list[dict]:
+    """The candidates that are publications rather than conference events."""
+    return [c for c in cands if set(c["types"]) & set(PUBLICATION_TYPES)]
+
+
+def pick_venue(cands: list[dict]) -> dict | None:
+    """The one candidate P1433 should point at, or None if the name does not settle.
+
+    A proceedings volume outranks a journal, which is how a proceedings sitting beside its
+    own conference item resolves. Two candidates of the same rank stay a question, and a
+    name that matched only the conference event has no answer here at all.
+    """
+    for t in PUBLICATION_TYPES:
+        same = [c for c in cands if t in c["types"]]
+        if len(same) == 1:
+            return same[0]
+        if same:
+            return None
+    return None
+
+
+def lookups(names: list[str], papers: list[dict], refresh: bool) -> dict:
+    """The network answers this pass needs, cached in `build/` for CACHE_DAYS.
+
+    Returns `orcids` (name to ORCID), `by_orcid` (ORCID to item), `by_name` (name to
+    candidate items) and `venues` (venue name to candidate items). Re-asked together, so a
+    cached set is internally consistent.
     """
     path = os.path.join(BUILD, CACHE)
     try:
@@ -187,7 +253,9 @@ def lookups(names: list[str], papers: list[dict], refresh: bool) -> dict:
              "orcids": orcids,
              "by_orcid": items_by_orcid(
                  sorted({o for m in orcids.values() for o in m.values()})),
-             "by_name": items_by_name(names)}
+             "by_name": items_by_name(names),
+             "venues": venue_items(sorted({(p.get("venue_display") or "").strip()
+                                           for p in papers} - {"", "arXiv"}))}
     os.makedirs(BUILD, exist_ok=True)
     with open(path, "w") as f:
         json.dump(cache, f, indent=1, sort_keys=True)
@@ -205,6 +273,7 @@ def rows(papers: list[dict], created: dict, look: dict) -> list[dict]:
     query cannot and it works a whole paper at a time.
     """
     by_slug = {p["slug"]: p for p in papers}
+    venues = look.get("venues") or {}
     state = item_state(sorted(created.values()))
     out = []
     for slug, qid in created.items():
@@ -224,12 +293,18 @@ def rows(papers: list[dict], created: dict, look: dict) -> list[dict]:
             cands = [c for c in (look["by_name"] or {}).get(s["name"]) or []
                      if c["qid"] not in st["p50"]]
             (review if cands else leftover).append(dict(s, candidates=cands))
-        if edits or review or leftover:
+        vname = (p.get("venue_display") or "").strip()
+        vcands = publications(venues.get(vname) or [])
+        venue = pick_venue(vcands) if vname and not st["venue"] else None
+        if edits or review or leftover or venue or (vcands and not st["venue"]):
             out.append({"slug": slug, "qid": qid,
                         "title": p.get("title_display") or p.get("title"),
                         "citations": p.get("citations") or 0,
                         "edits": edits, "review": review,
-                        "leftover": len(leftover)})
+                        "leftover": len(leftover),
+                        "venue_name": vname,
+                        "venue": venue,
+                        "venue_candidates": [] if venue else vcands})
     return sorted(out, key=lambda r: -r["citations"])
 
 
@@ -239,9 +314,13 @@ def batch(rows_: list[dict]) -> list[str]:
     Two lines per author. The first states P50 with the printed name kept as an `object
     named as` (P1932) qualifier and the original series ordinal; the second drops the
     string the P50 replaces, which is the swap Author Disambiguator performs by hand.
+
+    One more line per paper whose venue resolved to a single publication item.
     """
     L = []
     for r in rows_:
+        if r.get("venue"):
+            L.append("\t".join([r["qid"], "P1433", r["venue"]["qid"]]))
         for e in r["edits"]:
             add = [r["qid"], "P50", e["qid"]]
             if e["ordinal"]:
@@ -259,6 +338,8 @@ def fill(text: str) -> str:
 def write_page(rows_: list[dict], qs_path: str | None) -> str:
     n_edits = sum(len(r["edits"]) for r in rows_)
     n_review = sum(len(r["review"]) for r in rows_)
+    venues = [r for r in rows_ if r.get("venue")]
+    v_ask = [r for r in rows_ if r.get("venue_candidates")]
     L = ["# Wikidata co-authors", "",
          fill("Generated by `python scripts/wikidata_coauthors.py`. Every paper item this "
               "project created lists you as *author* and every co-author as *author name "
@@ -267,6 +348,34 @@ def write_page(rows_: list[dict], qs_path: str | None) -> str:
               "is what connects these items to anything other than you."), "",
          fill("Nothing here creates an item for anyone. A co-author with no item stays a "
               "string, which is the correct end state for them."), ""]
+
+    L += [f"## Venues ({len(venues)})", ""]
+    if venues:
+        L += [fill("None of these items says where it was published, so nothing joins a "
+                   "paper to its venue. The name came from the corpus and resolved to one "
+                   "publication item, so these are in the batch below with the authors."),
+              ""]
+        seen = {}
+        for r in venues:
+            seen.setdefault((r["venue"]["qid"], r["venue"]["label"]), []).append(r)
+        for (qid, label), rs in sorted(seen.items(), key=lambda kv: -len(kv[1])):
+            L.append(f"- {len(rs)} paper(s) → [{label}]"
+                     f"(https://www.wikidata.org/wiki/{qid})")
+        L.append("")
+    else:
+        L += ["None to add.", ""]
+    if v_ask:
+        L += [fill(f"{len(v_ask)} paper(s) have a venue name that matched more than one "
+                   "publication item, usually two volumes of one proceedings. Those need "
+                   "the right volume picked by hand. A paper whose venue matched only the "
+                   "conference itself is not listed — P1433 wants the publication, and the "
+                   "proceedings volume for it does not exist yet."), ""]
+        for r in v_ask[:8]:
+            cands = ", ".join(f"[{c['label']}]"
+                              f"(https://www.wikidata.org/wiki/{c['qid']})"
+                              for c in r["venue_candidates"][:3])
+            L.append(f"- [ ] {(r['title'] or '')[:44]} — *{r['venue_name']}* → {cands}")
+        L.append("")
 
     L += [f"## Matched by ORCID ({n_edits})", ""]
     if n_edits:
@@ -364,6 +473,8 @@ def main() -> int:
     page = write_page(rows_, qs_path if qs else None)
 
     out = {"asked": look.get("asked"), "strings": len(names),
+           "venues": len([r for r in rows_ if r.get("venue")]),
+           "venues_ask": len([r for r in rows_ if r.get("venue_candidates")]),
            "edits": sum(len(r["edits"]) for r in rows_),
            "review": sum(len(r["review"]) for r in rows_),
            "leftover": sum(r["leftover"] for r in rows_),
@@ -377,6 +488,7 @@ def main() -> int:
               f"{out['edits']} resolvable by ORCID, "
               f"{out['review'] + out['leftover']} left across "
               f"{out['papers_left']} papers")
+        print(f"venues: {out['venues']} resolved, {out['venues_ask']} ambiguous")
         print(f"wrote {os.path.relpath(page)}"
               + (f" and {os.path.relpath(qs_path)}" if qs else ""))
     return 0

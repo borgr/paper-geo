@@ -261,6 +261,13 @@ goes into `tasks/wikidata_coauthors.qs` for QuickStatements. Everything else is 
 paper with an [Author Disambiguator](https://author-disambiguator.toolforge.org) link,
 because a name string matches a namesake exactly as well as the right person.
 
+The same batch carries one more statement, because it is the same items. None of them says
+*published in* (P1433), so nothing joins a paper to the venue that published it. The venue
+name is already in the bibliography and P1433 wants a publication, so only a proceedings
+volume or a journal is ever a target — a conference name matches the conference event just
+as well, and pointing P1433 at an event violates the property's own constraint. Two
+proceedings volumes for one conference stay a question, listed with both labels in full.
+
 Nothing here creates an item for anybody. A co-author with no item stays a string, which is
 their correct end state — Wikidata notability asks for serious, publicly available
 references, and an item made to hold an edge back to you is not that.
