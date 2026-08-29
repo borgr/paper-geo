@@ -29,6 +29,7 @@ import os
 import re
 import subprocess
 import sys
+import textwrap
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -704,6 +705,26 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
     """
     if not sc:
         return []
+    if not sc.get("scholar_answered", True):
+        # Without this the section is simply absent, which on a page of open items reads
+        # as Scholar agreeing with the corpus. Every bucket below rests on a title being
+        # absent from the profile listing, and none of them can be computed from a
+        # listing that did not arrive.
+        got = sc.get("scholar_rows") or 0
+        why = (f"{got} row(s) arrived and then a page refused. Every bucket here rests on "
+               "a title being absent from the listing, so a listing missing a page is no "
+               "more usable than none."
+               if got else
+               "Scholar refuses most machines most of the time, and a refusal says nothing "
+               "about the corpus.")
+        # The last two lines are not wrapped. A command or a markdown link split across a
+        # newline is a link the reader has to repair before they can use it.
+        lead = (f"**Google Scholar did not answer this run, so the coverage section is "
+                f"missing rather than empty.** {why}")
+        return [f"> {ln}" for ln in textwrap.wrap(lead, 76)] + [
+            "> Re-run `python update.py --step audit`. What the Semantic Scholar author",
+            "> record could answer is in [tasks/identity_audit.md](tasks/identity_audit.md).",
+            ""]
     gate, miss = sc.get("gate_dropped") or [], sc.get("not_in_corpus") or []
     miss = [r for r in miss if (r.get("kind") or "paper") == "paper"]
     dup = sc.get("scholar_duplicates") or []

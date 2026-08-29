@@ -2912,6 +2912,99 @@ class TestTheWorklistSaysWhatToDoFirst(unittest.TestCase):
                             f"top of WORKLIST.md silently leaves it out")
 
 
+class TestHalfAProfileIsNotTheWholeProfile(unittest.TestCase):
+    """`scholar_rows` stopped paging on a refused page and returned the prefix.
+
+    The caller then computed `not_on_scholar` -- corpus papers whose title is not in the
+    listing -- against that prefix, and wrote `scholar_answered: True` over it. The
+    profile pages at 100 and this corpus is 114, so one lost second page put every paper
+    on it under a `WORKLIST.md` heading asking the author to add papers Scholar already
+    has. A first-page refusal was caught; a later one was indistinguishable from the end
+    of the table.
+    """
+
+    def _sc(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import scholar_check
+        return scholar_check
+
+    @staticmethod
+    def _page(n, first=0):
+        row = ('<tr class="gsc_a_tr"><a class="gsc_a_at" '
+               'href="?citation_for_view=x:{i}">Paper {i}</a></tr>')
+        return "".join(row.format(i=first + i) for i in range(n))
+
+    def _rows(self, pages):
+        """`pages[start]` is what the profile answers for that offset, "" for a refusal."""
+        sc = self._sc()
+        with mock.patch.object(sc, "fetch", lambda uid, start: pages.get(start, "")), \
+                mock.patch.object(sc.time, "sleep"):
+            return sc.scholar_rows("u")
+
+    def test_a_short_last_page_is_a_whole_read(self):
+        rows, whole = self._rows({0: self._page(100), 100: self._page(16, 100)})
+        self.assertTrue(whole)
+        self.assertEqual(116, len(rows))
+
+    def test_a_page_that_refuses_part_way_is_not_a_whole_read(self):
+        """The defect. 100 rows of 116, and nothing said the 16 were unread."""
+        rows, whole = self._rows({0: self._page(100)})
+        self.assertEqual(100, len(rows))
+        self.assertFalse(whole, "a prefix of the profile came back as the whole profile")
+
+    def test_a_refused_page_is_asked_for_again(self):
+        """The profile answered once, so one page refusing is worth a retry."""
+        sc = self._sc()
+        pages = {0: self._page(100), 100: self._page(16, 100)}
+        tries = {"n": 0}
+
+        def flaky(uid, start):
+            if start and (tries.__setitem__("n", tries["n"] + 1) or tries["n"] < 3):
+                return ""
+            return pages[start]
+
+        with mock.patch.object(sc, "fetch", flaky), mock.patch.object(sc.time, "sleep"):
+            rows, whole = sc.scholar_rows("u")
+        self.assertTrue(whole, "one refused page ended the read with two tries unspent")
+        self.assertEqual(116, len(rows))
+
+    def test_a_first_page_refusal_reads_nothing(self):
+        self.assertEqual(([], False), self._rows({}))
+
+    def test_a_prefix_reaches_the_same_branch_as_a_refusal(self):
+        """Structural, because the branch sits behind a live profile fetch in `main`.
+
+        Both buckets the branch skips rest on a title being absent from the listing, so a
+        prefix cannot produce either of them honestly.
+        """
+        tree = ast.parse(source(os.path.join(ROOT, "scripts", "scholar_check.py")))
+        main = next(n for n in ast.walk(tree)
+                    if isinstance(n, ast.FunctionDef) and n.name == "main")
+        tests = [ast.unparse(n.test) for n in ast.walk(main) if isinstance(n, ast.If)]
+        self.assertIn("not rows or not whole", tests,
+                      "a partly-read profile is treated as a fully-read one")
+
+    def test_a_refusal_says_so_on_the_page(self):
+        import update
+        out = "\n".join(update.scholar_gaps({"scholar_answered": False,
+                                             "scholar_rows": 0}))
+        self.assertTrue(out, "the section is absent, which reads as Scholar agreeing")
+        self.assertIn("update.py --step audit", out, "no way back to an answer")
+        part = "\n".join(update.scholar_gaps({"scholar_answered": False,
+                                              "scholar_rows": 100}))
+        self.assertIn("100 row(s)", part, "the page does not say how much did arrive")
+
+    def test_an_answered_profile_still_gets_its_section(self):
+        """And so does a build file written before the flag existed."""
+        import update
+        var = [{"slug": "b", "stale": "open", "scholar": "Theirs", "corpus": "Ours"}]
+        for sc in ({"title_variants": var},
+                   {"title_variants": var, "scholar_answered": True}):
+            out = "\n".join(update.scholar_gaps(sc))
+            self.assertIn("- [ ] `b`", out)
+            self.assertNotIn("did not answer this run", out)
+
+
 class TestAnUnfetchedArxivTitleIsNotAgreement(unittest.TestCase):
     """`scholar_check.stale_side` decides which of two titles is behind on one build file.
 

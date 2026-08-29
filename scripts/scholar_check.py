@@ -125,11 +125,24 @@ def fetch(uid: str, start: int) -> str:
         return ""
 
 
-def scholar_rows(uid: str) -> list[dict]:
-    """Every row of the citations table, paging until a page comes back short."""
-    out, start = [], 0
+def scholar_rows(uid: str) -> tuple[list[dict], bool]:
+    """Every row of the citations table, and whether the whole table was read.
+
+    Paging stops when a page comes back short, and a page that refuses stops it too --
+    which returns a prefix of the profile. Every finding the caller draws from a title
+    being *absent* from this list is wrong on a prefix, so the second value says whether
+    the list is one.
+    """
+    out, start, whole = [], 0, False
     while True:
         page = fetch(uid, start)
+        if not page and start:
+            # The profile answered at least once, so this is one page refusing rather than
+            # Scholar refusing the profile. Asked for twice more before the read is short.
+            for _ in range(2):
+                time.sleep(5)
+                if page := fetch(uid, start):
+                    break
         if not page:
             break
         rows = ROW.findall(page)
@@ -156,10 +169,11 @@ def scholar_rows(uid: str) -> list[dict]:
                                f"view_citation&hl=en&user={uid}&citation_for_view="
                                f"{i.group(1)}" if i else None})
         if len(rows) < PAGE:
+            whole = True
             break
         start += PAGE
         time.sleep(2)
-    return out
+    return out, whole
 
 
 def index(titles) -> dict[str, str]:
@@ -811,20 +825,26 @@ def main() -> None:
     attributed = s2_mine(cfg)
     gaps, stubs = attributed_gaps(attributed or [], papers, mine, gated)
 
-    rows = scholar_rows(uid)
-    if not rows:
+    rows, whole = scholar_rows(uid)
+    if not rows or not whole:
         # Google refused, which is the normal case from a datacenter IP and says nothing
         # about the corpus. Write what the author record could answer rather than
-        # nothing: a file absent and a file reporting no gaps are indistinguishable to
+        # nothing -- a file absent and a file reporting no gaps are indistinguishable to
         # every reader downstream, and only one of them is true.
+        #
+        # A page that refused part-way counts the same. The profile pages at 100 and this
+        # corpus is larger, so a lost second page puts every paper on it into
+        # `not_on_scholar`, under a heading asking the author to add papers Scholar has.
         write_json(
             os.path.join(BUILD, "scholar_diff.json"),
-            {"scholar_profile": uid, "scholar_rows": 0,
+            {"scholar_profile": uid, "scholar_rows": len(rows),
              "scholar_answered": False, "corpus": len(papers),
              "s2_answered": attributed is not None,
              "not_in_corpus_by_index": gaps,
              "index_stubs_no_id": stubs}, indent=1)
-        print(f"scholar: profile unavailable; author record answered for "
+        read = ("profile unavailable" if not rows
+                else f"read {len(rows)} row(s), then a page refused")
+        print(f"scholar: {read}; author record answered for "
               f"{len(attributed or [])} paper(s)", file=sys.stderr)
         report_gaps(gaps, stubs, args.quiet)
         return
