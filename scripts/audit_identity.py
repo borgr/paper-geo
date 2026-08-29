@@ -1399,14 +1399,23 @@ def arxiv_ownership_file(cfg, papers, registered: set[str] | None) -> tuple[str 
     return path, len(gap)
 
 
-def main() -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--no-hf", action="store_true",
-                    help="skip the per-paper Hugging Face checks (the slow part)")
-    ap.add_argument("--no-names", action="store_true",
-                    help="skip the arXiv author-name check (needs ~3s per 50 papers)")
-    args = ap.parse_args()
-    cfg = load_config()
+def _incomplete(r: dict) -> bool:
+    """An education row stating no degree, or no end year -- which still reads as *enrolled*."""
+    return not r["role"] or not r["end"]
+
+
+def _asserted_by_them(r: dict, name: str) -> bool:
+    """Somebody other than the author asserted the row, so ORCID offers Delete and no Edit."""
+    s = (r.get("source") or "").lower()
+    return bool(s) and s != (name or "").lower()
+
+
+def read_surfaces(cfg: dict, args) -> dict | None:
+    """Every live read the audit makes, and the task files written while reading.
+
+    `None` when ORCID did not answer: half the report comes from that record, so the run
+    writes nothing and the last one's numbers stand.
+    """
     ident, ids = cfg["identity"], cfg["ids"]
     papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {})["papers"]
     # One row per arXiv id, not per record: a few papers legitimately carry two
@@ -1422,12 +1431,10 @@ def main() -> None:
     print("reading ORCID ...", flush=True)
     orc = orcid_public(ident["orcid"])
     if not orc["reachable"]:
-        # Nothing has been written yet at this point, so the last run's numbers stand and
-        # the next run re-reads. Writing this one would report every paper as missing.
         print("ORCID did not answer (status %s). Half of this report is read from that "
               "record, so nothing is written -- re-run when it is back."
               % (orc["status"] or "no reply"), file=sys.stderr)
-        return 1
+        return None
     print("reading arXiv authority records ...", flush=True)
     reg = arxiv_registered(ident["orcid"])
     print("searching Wikidata by identifier ...", flush=True)
@@ -1477,8 +1484,16 @@ def main() -> None:
     # someone else's paper -- either way it is the one direction of this diff that
     # nothing else in the repo would ever surface.
     stray = sorted((reg or set()) - {p["arxiv"] for p in ax})
+    return dict(papers=papers, ax=ax, orc=orc, reg=reg,
+                wd=wd, wd_path=wd_path, wd_gaps=wd_gaps, wd_cov=wd_cov,
+                wd_qs=wd_qs, hf=hf, hf_path=hf_path, name_path=name_path,
+                n_typo=n_typo, n_absent=n_absent, n_read=n_read, ax_path=ax_path,
+                n_gap=n_gap, stray=stray)
 
-    # --- the audit report -------------------------------------------------------
+
+def orcid_findings(cfg: dict, orc: dict, papers: list[dict]) -> dict:
+    """What the ORCID record says against what `config.yaml` claims, read by page and state."""
+    ident = cfg["identity"]
     canon = ident["canonical_url"].rstrip("/")
     url_vals = [u for _, u in orc["urls"] if u]
     has_canon = any(canon in (u or "").rstrip("/") for u in url_vals)
@@ -1517,15 +1532,44 @@ def main() -> None:
     # row is editable in place. An institution-asserted row shows no *Edit* control in ORCID,
     # only *Delete*, so those are reported as a decision (leave it, or delete and re-add your
     # own) rather than as an open task -- and institution-asserted is the better evidence.
-    def _incomplete(r):
-        return not r["role"] or not r["end"]
+    rows = orc["education_rows"]
+    name = ident["name"]
+    edu_open = [r for r in rows if _incomplete(r) and not _asserted_by_them(r, name)]
+    edu_theirs = [r for r in rows if _incomplete(r) and _asserted_by_them(r, name)]
+    return dict(canon=canon, url_vals=url_vals, has_canon=has_canon,
+                missing_variants=missing_variants, other_pages=other_pages, want_kw=want_kw,
+                o_stray=o_stray, o_dups=o_dups, o_have=o_have, o_misfiled=o_misfiled,
+                o_vers=o_vers, o_conf=o_conf, o_unk=o_unk, o_missing=o_missing,
+                auto_src=auto_src, missing_empl=missing_empl, missing_edu=missing_edu,
+                edu_open=edu_open, edu_theirs=edu_theirs)
 
-    def _theirs(r):
-        s = (r.get("source") or "").lower()
-        return bool(s) and s != (ident["name"] or "").lower()
 
-    edu_open = [r for r in orc["education_rows"] if _incomplete(r) and not _theirs(r)]
-    edu_theirs = [r for r in orc["education_rows"] if _incomplete(r) and _theirs(r)]
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--no-hf", action="store_true",
+                    help="skip the per-paper Hugging Face checks (the slow part)")
+    ap.add_argument("--no-names", action="store_true",
+                    help="skip the arXiv author-name check (needs ~3s per 50 papers)")
+    args = ap.parse_args()
+    cfg = load_config()
+    ident, ids = cfg["identity"], cfg["ids"]
+    r = read_surfaces(cfg, args)
+    if r is None:
+        return 1
+    d = orcid_findings(cfg, r["orc"], r["papers"])
+    papers, ax, orc = r["papers"], r["ax"], r["orc"]
+    reg, wd, wd_path = r["reg"], r["wd"], r["wd_path"]
+    wd_gaps, wd_cov, wd_qs = r["wd_gaps"], r["wd_cov"], r["wd_qs"]
+    hf, hf_path, name_path = r["hf"], r["hf_path"], r["name_path"]
+    n_typo, n_absent, n_read = r["n_typo"], r["n_absent"], r["n_read"]
+    ax_path, n_gap, stray = r["ax_path"], r["n_gap"], r["stray"]
+    canon, url_vals, has_canon = d["canon"], d["url_vals"], d["has_canon"]
+    missing_variants, other_pages, want_kw = d["missing_variants"], d["other_pages"], d["want_kw"]
+    o_stray, o_dups, o_have = d["o_stray"], d["o_dups"], d["o_have"]
+    o_misfiled, o_vers, o_conf = d["o_misfiled"], d["o_vers"], d["o_conf"]
+    o_unk, o_missing, auto_src = d["o_unk"], d["o_missing"], d["auto_src"]
+    missing_empl, missing_edu, edu_open = d["missing_empl"], d["missing_edu"], d["edu_open"]
+    edu_theirs = d["edu_theirs"]
 
     def status(ok: bool) -> str:
         return "ok" if ok else "**fix**"
@@ -1699,9 +1743,10 @@ def main() -> None:
                 L.append(f"- *employment* — {r['org']} · {r['role'] or 'no role title'}"
                          f" · {r['start'] or '?'}–{r['end'] or 'present'}")
             for r in orc["education_rows"]:
+                theirs = _asserted_by_them(r, ident["name"])
                 L.append(f"- *education* — {r['org']} · {r['role'] or 'no degree stated'}"
                          f" · {r['start'] or '?'}–{r['end'] or 'present'}"
-                         + (f" · asserted by {r['source']}" if _theirs(r) else ""))
+                         + (f" · asserted by {r['source']}" if theirs else ""))
             L.append("")
         if missing_empl:
             L += ["**Affiliations in `config.yaml` with no employment entry.** Each is one",

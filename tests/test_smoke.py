@@ -7188,12 +7188,16 @@ class TestAnUnreadRecordIsNotAnEmptyOne(unittest.TestCase):
         numbers stand."""
         src = source(os.path.join(ROOT, "scripts", "audit_identity.py"))
         after = src.split('orc = orcid_public(ident["orcid"])', 1)[1]
-        guard = after[:after.index("return 1") + 8]
+        guard = after[:after.index("return None") + 11]
         self.assertIn('if not orc["reachable"]:', guard)
         # Nothing may be written between the read and the guard, or the run that could not
         # read the record still leaves its conclusions on disk.
         for writes in ("open(", "write_json", "write_yaml", "_file("):
             self.assertNotIn(writes, guard)
+        # `read_surfaces` says so by returning nothing, so `main` has to stop on that before
+        # it writes a page of its own.
+        bail = src.split("r = read_surfaces(cfg, args)", 1)[1].lstrip()
+        self.assertTrue(bail.startswith("if r is None:\n        return 1"), bail[:120])
 
     def test_only_a_404_writes_the_flag_that_puts_a_page_on_the_worklist(self):
         """`hf_indexed: False` lives in the committed `data/papers.yaml` and the worklist
