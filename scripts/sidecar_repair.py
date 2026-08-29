@@ -26,7 +26,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import QA_ROLES, phrasings, qa_loci, rules_block  # noqa: E402
 from llm import JSON_ONLY  # noqa: E402
 from sidecar_io import (RULES_DOC, draft_path, front_matter, held,  # noqa: E402
-                        live_path, oneline, unstructure, validate_draft, write_draft)
+                        live_path, oneline, read_front_matter, unstructure,
+                        validate_draft, write_draft)
 
 REPAIR = ("Here is the paper, a sidecar you drafted from it, and the findings an "
           "automated checker raised against the sidecar. Fix exactly what the findings "
@@ -266,9 +267,11 @@ def reroute(slug: str, again, source: str = "a model") -> tuple[int, int]:
     """
     # The draft when one exists, since that is what `--accept` will promote; the live file
     # otherwise.
-    fm = next((front_matter(path) for path in (draft_path(slug),
-                                              live_path(slug))
-               if os.path.exists(path)), None)
+    path = next((f for f in (draft_path(slug), live_path(slug)) if os.path.exists(f)), None)
+    fm, unread = read_front_matter(path) if path else (None, "")
+    if unread:
+        print(f"    {os.path.basename(path)}: {unread} -- rerouting nothing in it",
+              file=sys.stderr)
     if not fm:
         return 0, 0
     groups = fm.get("qa") or []

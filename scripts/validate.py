@@ -27,6 +27,8 @@ import os
 import re
 import sys
 
+import yaml
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (DATA, QA_ROLES, ROOT, answered_by, load_config,  # noqa: E402
                     norm_name, phrasings, read_yaml, rules_block)
@@ -506,10 +508,6 @@ def read_sidecars(paths: list[str] | None = None) -> tuple[list[tuple[str, dict]
     Returns the files that parsed and errors for the ones that did not, so a broken file
     is reported exactly once instead of once per check.
     """
-    try:
-        import yaml
-    except ImportError:
-        return [], []
     out, errs = [], []
     for path in paths or sorted(glob.glob(os.path.join(DATA, "sidecars", "*.md"))):
         name = os.path.basename(path)

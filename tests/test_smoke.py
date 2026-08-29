@@ -3909,6 +3909,22 @@ class TestARequeuedPaperIsRepairedNotRewritten(unittest.TestCase):
         self.assertEqual("x", fm["one_liner"])
         self.assertEqual(["broken", "too long"], found)
 
+    def test_a_file_it_cannot_read_is_not_silently_replaced(self):
+        """The from-scratch job is still the right one, and the run now says why."""
+        import draft_sidecars
+        import sidecar_io
+        with tempfile.TemporaryDirectory() as d:
+            os.makedirs(os.path.join(d, "drafts"))
+            with open(os.path.join(d, "p.md"), "w") as f:
+                f.write("---\nclaims: [1,\n  qa: {\n---\n")
+            err = io.StringIO()
+            with mock.patch.object(sidecar_io, "SIDECARS", d), \
+                 mock.patch.object(sidecar_io, "DRAFTS", os.path.join(d, "drafts")), \
+                 contextlib.redirect_stderr(err):
+                self.assertEqual((None, []), draft_sidecars.standing("p"))
+        self.assertIn("unparseable front matter", err.getvalue())
+        self.assertIn("p.md", err.getvalue())
+
     def test_a_paper_with_nothing_on_disk_is_drafted_from_scratch(self):
         import draft_sidecars
         import sidecar_io
@@ -3916,6 +3932,86 @@ class TestARequeuedPaperIsRepairedNotRewritten(unittest.TestCase):
             with mock.patch.object(sidecar_io, "SIDECARS", d), \
                  mock.patch.object(sidecar_io, "DRAFTS", d):
                 self.assertEqual((None, []), draft_sidecars.standing("absent"))
+
+
+class TestBrokenFrontMatterIsNotAMissingFile(unittest.TestCase):
+    """`front_matter` returned `None` for a file with no `---` block and for broken YAML.
+
+    The remedies differ. The first is a paper nothing has drafted; the second is a sidecar
+    somebody hand-edited, and the callers that read `None` as the first went on to redraft
+    it from scratch, skip it, or rank it as clean. `read_front_matter` keeps them apart and
+    those callers now say which one they met.
+    """
+
+    def _io(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import sidecar_io
+        return sidecar_io
+
+    def _write(self, d, body):
+        path = os.path.join(d, "s.md")
+        with open(path, "w") as f:
+            f.write(body)
+        return path
+
+    def test_the_three_outcomes(self):
+        io_ = self._io()
+        with tempfile.TemporaryDirectory() as d:
+            got = io_.read_front_matter(self._write(d, "---\none_liner: x\n---\nbody\n"))
+            self.assertEqual(({"one_liner": "x"}, ""), got)
+
+            fm, why = io_.read_front_matter(self._write(d, "no front matter here\n"))
+            self.assertIsNone(fm)
+            self.assertEqual("no YAML front matter", why)
+
+            fm, why = io_.read_front_matter(self._write(d, "---\na: [1,\n b: {\n---\n"))
+            self.assertIsNone(fm)
+            self.assertIn("unparseable front matter", why)
+            self.assertNotEqual("no YAML front matter", why,
+                                "a hand-edited file reads as one nothing has drafted")
+
+    def test_the_collapsing_wrapper_still_collapses(self):
+        """Six callers use it, and for four of them `None` is the right single answer."""
+        io_ = self._io()
+        with tempfile.TemporaryDirectory() as d:
+            self.assertEqual({"one_liner": "x"},
+                             io_.front_matter(self._write(d, "---\none_liner: x\n---\n")))
+            self.assertIsNone(io_.front_matter(self._write(d, "nothing\n")))
+            self.assertIsNone(io_.front_matter(self._write(d, "---\na: [1,\n---\n")))
+
+    def test_the_draft_check_names_which_one_it_met(self):
+        """One parse feeds both, so the two messages cannot drift apart."""
+        io_ = self._io()
+        with tempfile.TemporaryDirectory() as d:
+            errs, qual = io_.validate_draft(self._write(d, "nothing\n"), note=False)
+            self.assertEqual([], qual)
+            self.assertIn("no YAML front matter", errs[0])
+            errs, _ = io_.validate_draft(self._write(d, "---\na: [1,\n---\n"), note=False)
+            self.assertIn("unparseable front matter", errs[0])
+
+    def test_an_unreadable_draft_is_not_ranked_clean(self):
+        """`suspicion` reads fields, so an empty read scores 0 -- its nothing-wrong rank."""
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import sidecar_review
+        with tempfile.TemporaryDirectory() as d:
+            score, why = sidecar_review.suspicion(self._write(d, "---\na: [1,\n---\n"))
+        self.assertGreater(score, 0, "an unreadable draft ranked as one with nothing wrong")
+        self.assertIn("unparseable front matter", why[0])
+
+    def test_a_missing_parser_is_not_a_clean_corpus(self):
+        """`validate.read_sidecars` returned `([], [])` when PyYAML was absent.
+
+        Every sidecar check runs over what it returns, so `--strict` passed with none of
+        them run. PyYAML is in `requirements.txt` and `common` imports it at module scope,
+        so the handler could not fire -- and if it ever could, silence is the wrong answer.
+        """
+        tree = ast.parse(source(os.path.join(ROOT, "scripts", "validate.py")))
+        fn = next(n for n in ast.walk(tree)
+                  if isinstance(n, ast.FunctionDef) and n.name == "read_sidecars")
+        for node in ast.walk(fn):
+            if isinstance(node, ast.ExceptHandler):
+                self.assertNotIn("ImportError", ast.unparse(node.type or ast.Constant("")),
+                                 "a missing parser reports every sidecar as fine again")
 
 
 class TestACitationFileIsWrittenOnlyWhenItWouldChange(unittest.TestCase):

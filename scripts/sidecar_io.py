@@ -328,14 +328,29 @@ def restamp(slugs: list[str] | None = None) -> tuple[list[str], list[tuple[str, 
     return done, refused
 
 
-def front_matter(path: str) -> dict | None:
-    m = re.search(r"^---\n(.*?)^---\n", open(path).read(), re.S | re.M)
+def read_front_matter(path: str) -> tuple[dict | None, str]:
+    """The front matter of one sidecar, and what stopped it being read.
+
+    `({...}, "")` when it parsed. `(None, why)` for a file with no `---` block and for one
+    whose YAML will not parse -- two states with different remedies, since the first is a
+    file nothing has drafted and the second is one somebody edited by hand.
+    """
+    with open(path) as f:
+        m = re.search(r"^---\n(.*?)^---\n", f.read(), re.S | re.M)
     if not m:
-        return None
+        return None, "no YAML front matter"
     try:
-        return yaml.safe_load(m.group(1)) or {}
-    except yaml.YAMLError:
-        return None
+        return yaml.safe_load(m.group(1)) or {}, ""
+    except yaml.YAMLError as e:
+        return None, f"unparseable front matter: {e}"
+
+
+def front_matter(path: str) -> dict | None:
+    """The front matter of one sidecar, `None` for a file with none and for broken YAML.
+
+    Use `read_front_matter` wherever `None` would be reported as a clean or finished state.
+    """
+    return read_front_matter(path)[0]
 
 
 def validate_draft(path: str, note: bool = True) -> tuple[list[str], list[str]]:
@@ -348,15 +363,9 @@ def validate_draft(path: str, note: bool = True) -> tuple[list[str], list[str]]:
     said. Accepting is the moment those become an assertion under their name, which is
     why the tier that `validate.py` reports and shrugs at is fatal here.
     """
-    with open(path) as f:
-        text = f.read()
-    m = re.search(r"^---\n(.*?)^---\n", text, re.S | re.M)
-    if not m:
-        return [f"{path}: no YAML front matter"], []
-    try:
-        fm = yaml.safe_load(m.group(1)) or {}
-    except yaml.YAMLError as e:
-        return [f"{path}: unparseable front matter: {e}"], []
+    fm, why = read_front_matter(path)
+    if fm is None:
+        return [f"{path}: {why}"], []
     errs = []
     try:
         import jsonschema

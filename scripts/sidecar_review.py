@@ -25,8 +25,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, ROOT, answered_by, has_live_sidecar,  # noqa: E402
                     phrasings, qa_loci, read_yaml)
 from sidecar_io import (CACHE, draft_path, draft_paths, front_matter, held,  # noqa: E402
-                        live_path, live_paths, oneline, quote, spec_sha, stale,
-                        validate_draft)
+                        live_path, live_paths, oneline, quote, read_front_matter,
+                        spec_sha, stale, validate_draft)
 from sidecar_repair import at, rule_of  # noqa: E402
 
 
@@ -608,10 +608,14 @@ def suspicion(path: str) -> tuple[int, list[str]]:
     reason it gives names the field to read and what to read it against.
     """
     from validate import deline, figures, figures_in, rounds_to, values_in
-    fm = front_matter(path) or {}
+    fm, unread = read_front_matter(path)
     slug = os.path.basename(path)[:-3]
     cached = os.path.join(CACHE, f"{slug}.txt")
     score, why = 0, []
+    if fm is None:
+        # Every check below reads a field, so an unreadable file scores zero -- the rank
+        # this function gives a draft it found nothing wrong with.
+        return 5, [f"{unread}, so nothing in this draft was ranked at all"]
     if not os.path.exists(cached):
         # The strongest signal available, and the one a reader would never guess: the figure
         # rule is the one rule with no exceptions, and here it did not run at all.

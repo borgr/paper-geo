@@ -63,7 +63,7 @@ from fulltext import LIMIT as FULLTEXT_LIMIT  # noqa: E402
 from fulltext import cut_chars  # noqa: E402
 from fulltext import resolve as resolve_fulltext  # noqa: E402
 from sidecar_io import (CACHE, RULES_DOC, draft_path, draft_paths,  # noqa: E402
-                        front_matter, held, live_path, live_paths, restamp, schema,
+                        held, live_path, live_paths, read_front_matter, restamp, schema,
                         spec_sha, validate_draft, write_draft)
 from sidecar_repair import mend, repair, reroute  # noqa: E402
 from sidecar_review import review, show, suspects, write_review_page  # noqa: E402
@@ -333,10 +333,15 @@ def standing(slug: str) -> tuple[dict | None, list[str]]:
     for path in (draft_path(slug),
                  live_path(slug)):
         if os.path.exists(path):
-            fm = front_matter(path)
+            fm, unread = read_front_matter(path)
             if fm:
                 errs, qual = validate_draft(path, note=False)
                 return fm, [str(x).split(".md: ")[-1] for x in errs + qual]
+            if unread:
+                # Said out loud, because the empty `sidecar` below is the from-scratch job
+                # this docstring is about, and the file it would replace is on disk.
+                print(f"  {os.path.relpath(path, ROOT)}: {unread} -- drafting this paper "
+                      f"from scratch rather than repairing it", file=sys.stderr)
     return None, []
 
 
@@ -856,12 +861,18 @@ def main() -> None:
             sys.exit("--reroute needs a model it can call: --mode api or --mode openai")
         if args.effort:
             cfg["llm"]["effort"] = args.effort
-        legacy = []
+        legacy, unread = [], []
         for f in live_paths():
-            fm = front_matter(f) or {}
-            if any(isinstance(g.get("ask"), dict) and g["ask"].get("unsorted")
-                   for g in (fm.get("qa") or [])):
+            fm, why = read_front_matter(f)
+            if fm is None:
+                unread.append(f"{os.path.basename(f)[:-3]} ({why})")
+            elif any(isinstance(g.get("ask"), dict) and g["ask"].get("unsorted")
+                     for g in (fm.get("qa") or [])):
                 legacy.append(os.path.basename(f)[:-3])
+        if unread:
+            # Separate from the line below, which says a sidecar was read and holds no
+            # `unsorted` group. These were not read.
+            print(f"not checked for `unsorted` groups: {', '.join(unread)}", file=sys.stderr)
         want = args.reroute or legacy
         unknown = [s for s in want if s not in legacy]
         if unknown:
