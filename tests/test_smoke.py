@@ -3948,7 +3948,7 @@ class TestAFailedGhReadIsNotAnEmptyOne(unittest.TestCase):
             self.assertEqual(common.gh_text("api", "x"), "")
             self.assertIsNone(common.gh_json("api", "x"))
             with self.assertRaises(RuntimeError):
-                sweep_github.gh("api", "x")
+                common.gh("api", "x", check=True)
             with self.assertRaises(RuntimeError):
                 sweep_github.list_repos({"ids": {"github": "nobody"}})
         finally:

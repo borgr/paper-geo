@@ -24,20 +24,14 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, ROOT, clean_latex, gh_json, gh_text,  # noqa: E402
+from common import (BUILD, DATA, ROOT, clean_latex, gh, gh_json, gh_text,  # noqa: E402
                     load_config, norm_title, paper_doi, read_yaml, write_yaml)
-from common import gh as common_gh  # noqa: E402
 
 # Topics and descriptions are decided in `propose_topics.py`, not here. A reader auditing
 # "how does a public topic get chosen?" opens this file first, which is why the note
 # outlives the keyword table that used to sit here -- substring matching over name +
 # description + README was also the wrong tool: `merg` matched *emergent*, `interpret`
 # matched *interpreter*, and `training` matched every ML README there is.
-
-
-def gh(*args: str) -> str:
-    """`gh` stdout. Raises on any failure -- this module writes, so a silent no-op lies."""
-    return common_gh(*args, check=True)[1]
 
 
 def gh_or_none(*args: str) -> str | None:
@@ -398,13 +392,15 @@ def phase_apply(cfg, yes: bool) -> None:
         sys.exit("refusing to write to public repos without --yes")
     for r, cur, ch in _changes(cfg):
         name = r["repo"]
+        # check=True on every write: a silent no-op here reports a repo as swept.
         try:
             if "topics" in ch:
                 gh("api", "-X", "PUT", f"repos/{name}/topics",
-                   *gh_topics_args(ch["topics"]))
+                   *gh_topics_args(ch["topics"]), check=True)
             patch = {k: ch[k] for k in ("description", "homepage") if k in ch}
             for k, v in patch.items():
-                gh("api", "-X", "PATCH", f"repos/{name}", "-f", f"{k}={v}")
+                gh("api", "-X", "PATCH", f"repos/{name}", "-f", f"{k}={v}",
+                   check=True)
             if "CITATION.cff" in ch:
                 body = r.get("_cff_body")
                 if body:
@@ -424,7 +420,8 @@ def phase_apply(cfg, yes: bool) -> None:
                             "-f", f"content={base64.b64encode(body.encode()).decode()}"]
                     if sha:
                         args += ["-f", f"sha={sha}"]
-                    gh("api", "-X", "PUT", f"repos/{name}/contents/CITATION.cff", *args)
+                    gh("api", "-X", "PUT", f"repos/{name}/contents/CITATION.cff",
+                       *args, check=True)
             print(f"  ok  {name}: {', '.join(ch)}")
         except RuntimeError as e:
             print(f"  FAIL {name}: {e}", file=sys.stderr)
