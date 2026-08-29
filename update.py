@@ -41,9 +41,25 @@ STEPS = ("collect", "repos", "propose", "draft", "links", "ownership", "audit",
          "validate", "render", "worklist")
 
 
+FAILED: list[tuple[str, int]] = []
+
+
 def run(argv: list[str], cwd: str | None = None) -> int:
+    """Run one step, recording a non-zero exit in `FAILED`.
+
+    Every script here refuses rather than writing a false-empty when a source will not
+    answer, and three of them say so in as many words. That refusal only counts for
+    something if the run carries it forward. `WORKLIST.md` is rebuilt at the end from
+    whatever `build/` holds, so a step that died after an earlier run wrote its file leaves
+    a section reading as current on last week's data, which `built` cannot see because the
+    file is there and parses.
+    """
     print(f"\n$ {' '.join(argv)}", flush=True)
-    return subprocess.call(argv, cwd=cwd or ROOT)
+    code = subprocess.call(argv, cwd=cwd or ROOT)
+    if code:
+        FAILED.append((" ".join(argv[1:]) or argv[0], code))
+        print(f"  ^ exited {code}", file=sys.stderr, flush=True)
+    return code
 
 
 def step_collect(cfg, args) -> None:
@@ -861,6 +877,18 @@ def built(name: str) -> dict:
         why = "not there" if isinstance(e, FileNotFoundError) else "there and unreadable"
         UNBUILT.append(f"`build/{name}` ({why})")
         return {}
+
+
+def failed_note() -> list[str]:
+    """One line naming the steps of this run that did not finish, or nothing."""
+    if not FAILED:
+        return []
+    one = len(FAILED) == 1
+    return [f"> **{'A step' if one else f'{len(FAILED)} steps'} of this run did not "
+            f"finish.** {', '.join(f'`{c}` (exit {n})' for c, n in FAILED)}. Whatever rests "
+            f"on {'it' if one else 'them'} below was built from what the last run that did "
+            f"finish left behind, so {'that section may be' if one else 'those sections may be'} "
+            f"behind rather than done. The run's own output says what refused.", ""]
 
 
 def unbuilt_note() -> list[str]:
@@ -1939,10 +1967,13 @@ def step_worklist(cfg, args) -> None:
     # Last, because `built` is called all the way down this function. Inserted above the
     # first heading so it sits with the promise it qualifies -- the opening line saying a
     # section that is not here is done.
-    if note := unbuilt_note():
+    if note := failed_note() + unbuilt_note():
         i = next((k for k, l in enumerate(lines) if l.startswith("## ")), len(lines))
         lines[i:i] = note
-        print("  built without: " + "; ".join(UNBUILT))
+        if FAILED:
+            print("  did not finish: " + "; ".join(f"{c} (exit {n})" for c, n in FAILED))
+        if UNBUILT:
+            print("  built without: " + "; ".join(UNBUILT))
 
     out = os.path.join(ROOT, "WORKLIST.md")
     with open(out, "w") as f:
@@ -2050,6 +2081,12 @@ def main() -> None:
         run([sys.executable, "scripts/sweep_github.py", "apply", "--yes"])
         run([sys.executable, "scripts/paper_code.py", "--apply"])
     closing(args)
+    if FAILED:
+        # After `closing`, so the page and the summary are still written. A partial run is
+        # worth reading, it is just not worth reporting as a clean one.
+        raise SystemExit("\n%d step(s) did not finish: %s"
+                         % (len(FAILED),
+                            ", ".join(f"{c} (exit {n})" for c, n in FAILED)))
 
 
 if __name__ == "__main__":

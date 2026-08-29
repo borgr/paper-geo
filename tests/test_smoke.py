@@ -2980,6 +2980,106 @@ class TestAnAbsentStateFileIsNotAnEmptySection(unittest.TestCase):
                         "UNBUILT is not cleared, so one run reports the last run's misses")
 
 
+class TestAStepThatCrashedIsNotAStepThatFoundNothing(unittest.TestCase):
+    """`run` discarded the exit code at sixteen of its seventeen call sites.
+
+    A step that died left the pipeline going, and `step_worklist` rebuilt the page at the
+    end from whatever `build/` holds -- so a section came back reading as current on the
+    last run's data and `python update.py` exited 0. `built` cannot see this one: the file
+    is there and parses. Four of the step scripts return 1 precisely so a refusal is not
+    read as "nothing left", which only counts if the run carries it forward.
+    """
+
+    def _u(self):
+        import update
+        update.FAILED.clear()
+        update.UNBUILT.clear()
+        return update
+
+    def test_a_step_that_exits_non_zero_is_recorded_with_its_code(self):
+        u = self._u()
+        code = u.run([sys.executable, "-c", "raise SystemExit(3)"])
+        self.assertEqual(3, code, "the caller can still read it")
+        self.assertEqual([("-c raise SystemExit(3)", 3)], u.FAILED)
+        u.FAILED.clear()
+
+    def test_a_step_that_succeeds_records_nothing(self):
+        u = self._u()
+        self.assertEqual(0, u.run([sys.executable, "-c", "pass"]))
+        self.assertEqual([], u.FAILED)
+
+    def test_a_clean_run_says_nothing(self):
+        self.assertEqual([], self._u().failed_note())
+
+    def test_the_note_names_every_step_its_code_and_what_that_means(self):
+        u = self._u()
+        u.FAILED += [("scripts/collect.py", 2), ("scripts/wikidata_people.py --quiet", 1)]
+        note = u.failed_note()[0]
+        u.FAILED.clear()
+        self.assertTrue(note.startswith("> "), "not a blockquote, so it reads as body text")
+        for want in ("2 steps", "scripts/collect.py", "(exit 2)",
+                     "scripts/wikidata_people.py --quiet", "(exit 1)", "may be behind"):
+            self.assertIn(want, note)
+
+    def test_one_failed_step_reads_as_one(self):
+        u = self._u()
+        u.FAILED.append(("scripts/collect.py", 2))
+        note = u.failed_note()[0]
+        u.FAILED.clear()
+        self.assertIn("A step of this run did not finish", note)
+        self.assertNotIn("1 steps", note)
+
+    def test_nothing_runs_a_step_around_the_recording(self):
+        """`subprocess` is reached once, inside `run`.
+
+        A second launch site would be a step whose crash is invisible again, and the
+        symptom is a stale section on a page that exited 0, which looks like nothing.
+        """
+        tree = ast.parse(source(os.path.join(ROOT, "update.py")))
+        wrapper = next(n for n in ast.walk(tree)
+                       if isinstance(n, ast.FunctionDef) and n.name == "run")
+        inside = {id(n) for n in ast.walk(wrapper)}
+        stray = [n.lineno for n in ast.walk(tree)
+                 if isinstance(n, ast.Attribute) and getattr(n.value, "id", "") == "subprocess"
+                 and id(n) not in inside]
+        self.assertEqual([], stray, "update.py launches a step outside `run`")
+
+    def test_the_run_exits_non_zero_but_only_after_the_page_is_written(self):
+        """A partial run is worth reading. It is just not worth reporting as a clean one."""
+        tree = ast.parse(source(os.path.join(ROOT, "update.py")))
+        main = next(n for n in ast.walk(tree)
+                    if isinstance(n, ast.FunctionDef) and n.name == "main")
+        closing = [n.lineno for n in ast.walk(main) if isinstance(n, ast.Call)
+                   and getattr(n.func, "id", "") == "closing"]
+        guard = [n for n in ast.walk(main) if isinstance(n, ast.If)
+                 and ast.unparse(n.test) == "FAILED"]
+        self.assertTrue(closing, "main no longer writes the page")
+        self.assertTrue(guard, "nothing in main reads FAILED, so a failed run still exits 0")
+        raises = [n.lineno for g in guard for n in ast.walk(g)
+                  if isinstance(n, ast.Raise) and "SystemExit" in ast.unparse(n)]
+        self.assertTrue(raises, "FAILED is read but the run still exits 0")
+        self.assertTrue(all(r > max(closing) for r in raises),
+                        "main gives up before writing the page it did build")
+
+    def test_the_page_itself_carries_the_note(self):
+        """A note nothing splices in is a note only the terminal scrollback holds."""
+        tree = ast.parse(source(os.path.join(ROOT, "update.py")))
+        fn = next(n for n in ast.walk(tree)
+                  if isinstance(n, ast.FunctionDef) and n.name == "step_worklist")
+        self.assertIn("failed_note()", ast.unparse(fn))
+
+    def test_a_failed_run_still_reports_what_it_could_not_read(self):
+        """The two notes stack. Neither is a substitute for the other."""
+        u = self._u()
+        u.FAILED.append(("scripts/collect.py", 2))
+        u.UNBUILT.append("`build/a.json` (not there)")
+        note = "\n".join(u.failed_note() + u.unbuilt_note())
+        u.FAILED.clear()
+        u.UNBUILT.clear()
+        self.assertIn("did not finish", note)
+        self.assertIn("could not be read", note)
+
+
 class TestADeclinedSectionTakesItsPayloadWithIt(unittest.TestCase):
     """The worklist hides a section; the file that section handed you is committed.
 
