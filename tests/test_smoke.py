@@ -1589,7 +1589,7 @@ class TestTheSplitPassResumesTomorrow(unittest.TestCase):
             asked.append(url)
             return answers.pop(0) if answers else {}
 
-        ss.get_json = fake
+        ss.lookup = fake
         ss.budget_reset = lambda _h: None
         return ss, asked, d
 
@@ -1626,6 +1626,87 @@ class TestTheSplitPassResumesTomorrow(unittest.TestCase):
                          "records are not ordered by citations")
         with open(os.path.join(d, "openalex_splits.json")) as f:
             self.assertEqual(sorted(json.load(f)), ["p0", "p1"], "the cache did not persist")
+
+    def test_a_search_that_did_not_answer_is_not_cached_as_no_split(self):
+        """A cache entry stamped with today's date and no records stops the paper being
+        asked again for CACHE_DAYS, so one refusal reports it unsplit for two months."""
+        ss, asked, d = self._module({}, [None, {"results": []}])
+        out = ss.split_records(self._papers(2), None)
+        self.assertEqual(2, len(asked), "stopped asking after a refusal")
+        with open(os.path.join(d, "openalex_splits.json")) as f:
+            self.assertEqual(["p1"], sorted(json.load(f)), "a refusal was cached")
+        self.assertEqual(1, out["checked"])
+        self.assertEqual(2, out["total"])
+
+    def test_the_partial_count_is_read_off_the_papers_not_the_credits(self):
+        """The credits can run out on the last paper, leaving nothing to resume, and a
+        plain refusal leaves papers unchecked with credits to spare."""
+        import scholar_strays as ss
+        for oa, want in ((({"checked": 5, "total": 5, "budget_reset": 900}), None),
+                         (({"checked": 3, "total": 5, "budget_reset": 900}), "tomorrow"),
+                         (({"checked": 3, "total": 5, "budget_reset": None}),
+                          "did not answer for the rest")):
+            text = self._page(ss, {"openalex": oa})
+            if want is None:
+                self.assertNotIn("**Partial", text, str(oa))
+            else:
+                self.assertIn("**Partial: 3 of 5 papers checked.**", text)
+                self.assertIn(want, text)
+
+    def test_a_source_that_did_not_answer_is_not_a_finding_of_none(self):
+        """Every section here reports what it did not find, so a refused source reads as a
+        clean result. The meter wording asserts Crossref answered with nothing, which holds
+        only when OpenAlex alone went quiet."""
+        import scholar_strays as ss
+        text = self._page(ss, {})
+        self.assertIn("None found at OpenAlex or Crossref.", text)
+        text = self._page(ss, {"silent": ["api.crossref.org"]})
+        self.assertNotIn("None found at OpenAlex or Crossref.", text)
+        self.assertIn("api.crossref.org did not answer this run", text)
+        meter = {"silent": ["api.openalex.org"], "openalex": {"budget_reset": 900}}
+        self.assertIn("OpenAlex refused every query", self._page(ss, meter))
+        both = dict(meter, silent=["api.crossref.org", "api.openalex.org"])
+        text = self._page(ss, both)
+        self.assertNotIn("Nothing at Crossref", text)
+        self.assertIn("api.crossref.org and api.openalex.org did not answer", text)
+
+    def test_a_refusal_is_recorded_against_its_host_and_reaches_the_page(self):
+        """`silent` in build/scholar_strays.json is how the page knows an empty section is
+        not a finding, so the whole path from the status to the wording is one run."""
+        import scholar_strays as ss
+        importlib.reload(ss)
+        self.addCleanup(importlib.reload, ss)
+        for st in (0, 429, 500):
+            ss._silent.clear()
+            with mock.patch.object(ss, "get_status", lambda _u, **kw: (st, b"")):
+                self.assertIsNone(ss.lookup("https://api.crossref.org/works?rows=1"))
+            self.assertEqual({"api.crossref.org"}, ss._silent, "status %s answered" % st)
+        ss._silent.clear()
+        with mock.patch.object(ss, "get_status",
+                               lambda _u, **kw: (200, b'{"message": {"items": []}}')):
+            self.assertEqual({"message": {"items": []}},
+                             ss.lookup("https://api.crossref.org/works"))
+        self.assertEqual(set(), ss._silent)
+
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d, True)
+        with mock.patch.object(ss, "BUILD", d), mock.patch.object(ss, "TASKS", d), \
+             mock.patch.object(ss, "get_status", lambda _u, **kw: (500, b"")), \
+             mock.patch.object(sys, "argv", ["scholar_strays.py", "--quiet", "--limit", "1"]):
+            self.assertEqual(0, ss.main())
+        with open(os.path.join(d, "scholar_strays.json")) as f:
+            self.assertIn("api.openalex.org", json.load(f)["silent"])
+        with open(os.path.join(d, "scholar_strays.md")) as f:
+            self.assertIn("did not answer this run", f.read())
+
+    def _page(self, ss, over):
+        """`tasks/scholar_strays.md` for a state with nothing found, written to a tempdir."""
+        state = {"scholar_answered": True, "openalex_skipped": False, "undercounted": [],
+                 "typo_records": [], "split_records": [], "openalex": {}, "silent": []}
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d, True)
+        with mock.patch.object(ss, "TASKS", d):
+            return open(ss.write_page(dict(state, **over))).read()
 
     def test_a_record_with_a_word_the_title_lacks_is_a_different_paper(self):
         import scholar_strays as ss

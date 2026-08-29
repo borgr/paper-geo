@@ -43,9 +43,9 @@ import textwrap
 import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, ROOT, TASKS, budget_reset, clean_latex, get_json,  # noqa: E402
-                    load_config, name_match, norm_title, read_yaml, title_tokens,
-                    write_json)
+from common import (BUILD, DATA, ROOT, TASKS, budget_reset, clean_latex,  # noqa: E402
+                    get_status, host_of, load_config, name_match, norm_title, read_yaml,
+                    title_tokens, write_json)
 
 # Below this the gap is indexing lag rather than a split record. Both conditions have
 # to hold: two citations is noise on a 200-cite paper, and 20% is noise on a 3-cite one.
@@ -54,6 +54,27 @@ from common import (BUILD, DATA, ROOT, TASKS, budget_reset, clean_latex, get_jso
 CACHE_DAYS = 60
 GAP_MIN = 3
 GAP_FRAC = 0.15
+
+# Hosts that did not answer this run. Each of the three passes reports what it did not find,
+# so a source that refused reads as a clean result -- and the split pass would cache that
+# clean result against the paper for CACHE_DAYS.
+_silent: set[str] = set()
+
+
+def lookup(url: str) -> dict | None:
+    """One JSON lookup, None if it did not answer, with the host recorded in `_silent`.
+
+    Both indexes answer 200 with an empty result set for a name they do not have, so any
+    other status is a refusal rather than a report.
+    """
+    st, raw = get_status(url, accept="application/json")
+    try:
+        d = json.loads(raw) if st == 200 and raw else None
+    except ValueError:
+        d = None
+    if d is None:
+        _silent.add(host_of(url))
+    return d
 
 
 def scholar_query(title: str) -> str:
@@ -110,7 +131,7 @@ def _openalex_by_name(name: str, mailto: str | None) -> list[dict]:
     q = ("https://api.openalex.org/works?per-page=100&filter=raw_author_name.search:"
          + urllib.parse.quote(name)
          + "&select=id,doi,display_name,publication_year,cited_by_count,authorships")
-    d = get_json(q + (f"&mailto={mailto}" if mailto else ""))
+    d = lookup(q + (f"&mailto={mailto}" if mailto else ""))
     out = []
     for w in (d or {}).get("results") or []:
         raw = ", ".join(a.get("raw_author_name") or "" for a in w.get("authorships") or [])
@@ -125,7 +146,7 @@ def _openalex_by_name(name: str, mailto: str | None) -> list[dict]:
 def _crossref_by_name(name: str, mailto: str | None) -> list[dict]:
     q = ("https://api.crossref.org/works?rows=100&select=DOI,title,author,"
          "is-referenced-by-count,issued&query.author=" + urllib.parse.quote(name))
-    d = get_json(q + (f"&mailto={mailto}" if mailto else ""))
+    d = lookup(q + (f"&mailto={mailto}" if mailto else ""))
     out = []
     for w in ((d or {}).get("message") or {}).get("items") or []:
         raw = ", ".join(f"{a.get('given', '')} {a.get('family', '')}".strip()
@@ -199,10 +220,10 @@ def split_records(papers, mailto, limit=None) -> dict:
     """Corpus titles that OpenAlex holds more than one record for.
 
     Returns `rows`, `budget_reset`, `checked` and `total`. One metered search per paper
-    against a free daily allowance of 100, so a full corpus takes more than one day:
-    every answer is cached in `build/openalex_splits.json` for CACHE_DAYS and a run
-    resumes at the first paper without a fresh one. `budget_reset` is the seconds until more credits, or None
-    if the pass finished.
+    against a free daily allowance of 100, so a full corpus takes more than one day.
+    Every answer is cached in `build/openalex_splits.json` for CACHE_DAYS and a run
+    resumes at the first paper without a fresh one. A search that did not answer is not
+    cached, so an outage costs a retry rather than CACHE_DAYS of reporting no split.
 
     A split at OpenAlex is not itself a Scholar problem -- it is evidence that the
     paper's metadata is mangled in a way Scholar splits on too, and the search string is
@@ -223,9 +244,14 @@ def split_records(papers, mailto, limit=None) -> dict:
         q = ("https://api.openalex.org/works?per-page=25&select=id,display_name,"
              "cited_by_count,publication_year&filter=title.search:"
              + urllib.parse.quote(" ".join(title.split()[:12])))
-        d = get_json(q + (f"&mailto={mailto}" if mailto else ""))
+        d = lookup(q + (f"&mailto={mailto}" if mailto else ""))
         if budget_reset("api.openalex.org") is not None:
             break
+        if d is None:
+            # Caching this would stamp the paper as asked today with no split found, and
+            # nothing would ask again for CACHE_DAYS. The budget case above resumes
+            # tomorrow; any other refusal is retried on the next run.
+            continue
         asked += 1
         want = title_tokens(title)
         cache[slug] = {
@@ -272,6 +298,14 @@ def out_of_credit(state: dict) -> bool:
     return (state.get("openalex") or {}).get("budget_reset") is not None
 
 
+def blind(silent: list[str]) -> list[str]:
+    """The stand-in for a count of nothing, when nothing is not what a source said."""
+    return [textwrap.fill(
+        f"{' and '.join(silent)} did not answer this run, so an empty list here is not a "
+        "finding. Re-run `python scripts/scholar_strays.py`.", 78,
+        break_on_hyphens=False)]
+
+
 HOW = [
     "Every row below is a search string. Paste it into Scholar, and if a result is your",
     "paper under a second record, use *Merge* from your profile -- tick your own row and",
@@ -304,6 +338,11 @@ def write_page(state: dict) -> str:
                      f"| {(r['title'] or '')[:60]} | [search]({r['search']}) |")
         L.append("")
 
+    silent = state.get("silent") or []
+    # The budget wording asserts Crossref answered with nothing, which only one of these
+    # two states supports.
+    half_blind = out_of_credit(state) and "api.crossref.org" not in silent
+
     t = state["typo_records"]
     stray = [r for r in t if r.get("matched")]
     other = [r for r in t if not r.get("matched")]
@@ -316,14 +355,18 @@ def write_page(state: dict) -> str:
             L.append(f"| {r['citations']} | {r['searched_as']} | `{r['matched']}` "
                      f"| [{r['index']}]({r['url']}) | [search]({r['search']}) |")
         L.append("")
-    elif out_of_credit(state):
+    elif half_blind:
         L += [*HALF_BLIND, ""]
+    elif silent:
+        L += [*blind(silent), ""]
     else:
         L += ["None found at OpenAlex or Crossref.", ""]
 
     L += [f"## Filed under your name forms but not in the bibliography ({len(other)})", ""]
-    if not other and out_of_credit(state):
+    if not other and half_blind:
         L += [*HALF_BLIND, ""]
+    elif not other and silent:
+        L += [*blind(silent), ""]
     elif other:
         L += ["Either somebody else with a similar name, or a paper the bibliography never",
               "received. Only the second kind is yours to act on, and it goes into",
@@ -344,12 +387,18 @@ def write_page(state: dict) -> str:
     s = state["split_records"]
     oa = state.get("openalex") or {}
     L += [f"## Papers OpenAlex holds twice ({len(s)})", ""]
-    partial = out_of_credit(state) and not state["openalex_skipped"]
+    # Counted rather than read off the budget: the credits can run out on the last paper,
+    # which leaves nothing to resume, and a plain refusal leaves papers unchecked with
+    # credits to spare.
+    partial = (not state["openalex_skipped"]
+               and (oa.get("checked") or 0) < (oa.get("total") or 0))
     if partial:
+        spent = out_of_credit(state)
+        why = f"OpenAlex {METER}" if spent else "OpenAlex did not answer for the rest."
         L += [textwrap.fill(
-            f"**Partial: {oa.get('checked')} of {oa.get('total')} papers checked.** "
-            f"OpenAlex {METER} Every answer is cached, so re-running "
-            "`python scripts/scholar_strays.py` tomorrow resumes where this one stopped.",
+            f"**Partial: {oa.get('checked')} of {oa.get('total')} papers checked.** {why} "
+            f"Every answer is cached, so re-running `python scripts/scholar_strays.py` "
+            f"{'tomorrow ' if spent else ''}resumes where this one stopped.",
             78, break_on_hyphens=False), ""]
     if state["openalex_skipped"]:
         L += ["Skipped with `--skip-openalex`.", ""]
@@ -399,6 +448,7 @@ def main() -> int:
         sp = split_records(papers, mailto, args.limit)
         state["split_records"], state["openalex"] = sp.pop("rows"), sp
     state["openalex"]["budget_reset"] = budget_reset("api.openalex.org")
+    state["silent"] = sorted(_silent)
     write_json(os.path.join(BUILD, "scholar_strays.json"), state, indent=1)
     path = write_page(state)
 
