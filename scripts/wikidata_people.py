@@ -125,9 +125,11 @@ def record(orcid: str) -> dict:
             if v:
                 dated.append((y, v))
             break
-    oa_st, oa_raw = get_status(
-        "https://api.openalex.org/authors/https://orcid.org/" + orcid,
-        accept="application/json")
+    # `authors/orcid:<id>`, not `authors/https://orcid.org/<id>`: OpenAlex prices the
+    # second form and refuses it for the rest of the day once the budget is spent, while
+    # the canonical by-id form is free and answers the same record (measured).
+    oa_st, oa_raw = get_status("https://api.openalex.org/authors/orcid:" + orcid,
+                               accept="application/json")
     oa = (json.loads(oa_raw or b"{}") if oa_st == 200 else {}) or {}
     return {"partial": st != 200 or oa_st != 200,
             "label": val("credit-name") or " ".join(

@@ -16,57 +16,75 @@ one would split a person in two. Where the name has many bearers, nothing here
 settles which is which.
 
 - **Omri Abend** ([0000-0003-4311-3876](https://orcid.org/0000-0003-4311-3876), 54 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
+  - that ORCID record states The Hebrew University of Jerusalem · "On the Weaknesses of Reinforcement Learning for Neural…" · "The Language of Legal and Illegal Activity on the Darknet"
   - [Q102687062](https://www.wikidata.org/wiki/Q102687062) — Ph.D. Hebrew University 2013 · studied at Hebrew University of Jerusalem
 - **Mikhail Yurochkin** ([0000-0003-0153-6811](https://orcid.org/0000-0003-0153-6811), 14 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
+  - that ORCID record states nothing public beyond the name
   - [Q103330754](https://www.wikidata.org/wiki/Q103330754) — statistician · studied at Moscow Institute of Physics and Technology, University of Michigan · at IBM Research
 - **Jacob Andreas** ([0000-0002-3141-5845](https://orcid.org/0000-0002-3141-5845), 10 papers with you) — 3 item(s) carry the name, 3 of them stating no ORCID
+  - that ORCID record states "Modeling Student Learning with 3.8 Million Program Traces" · "Cooperation by non-kin during birth underpins sperm…"
   - [Q125454034](https://www.wikidata.org/wiki/Q125454034) — AI researcher · artificial intelligence researcher, professor · studied at Columbia University, University of California, Berkeley, University of Cambridge
   - [Q62754](https://www.wikidata.org/wiki/Q62754) — German lutheran theologian (1528-1590) · Protestant reformer, reformer, university teacher, writer · studied at University of Tübingen · at Evangelical-Lutheran Church in Württemberg, University of Tübingen
   - [Q112760940](https://www.wikidata.org/wiki/Q112760940) — actor
 - **Carlos Alzate** ([0000-0003-2434-2534](https://orcid.org/0000-0003-2434-2534), 6 papers with you) — 2 item(s) carry the name, 2 of them stating no ORCID
+  - that ORCID record states Gaia Dynamics · "An autonomous debating system" · "Correction to: ECML PKDD 2018 Workshops"
   - [Q102390975](https://www.wikidata.org/wiki/Q102390975) — Ph.D. Katholieke Universiteit Leuven 2009
   - [Q1042683](https://www.wikidata.org/wiki/Q1042683) — Colombian racing cyclist · sport cyclist
 - **Mohit Bansal** ([0000-0001-5522-1351](https://orcid.org/0000-0001-5522-1351), 4 papers with you) — 3 item(s) carry the name, 3 of them stating no ORCID
+  - that ORCID record states nothing public beyond the name
   - [Q103295310](https://www.wikidata.org/wiki/Q103295310) — Ph.D. University of California, Berkeley 2015 · computer scientist
   - [Q67386311](https://www.wikidata.org/wiki/Q67386311) — researcher, natural language processing and machine learning, University of North Carolina (UNC) Chapel Hill · 3 papers including "ChrEn: Cherokee-English Machine Translation for Endangered Language Revitalization"
   - [Q112628221](https://www.wikidata.org/wiki/Q112628221) — Indian Entrepreneur · philanthropist · studied at State University of New York · 5 papers including "Health literacy and oral health literacy: are they associated? A cross sectional survey among undergraduate students of tricity (Chandigarh, Mohali, Panchkula), India"
 - **Sara Hooker** ([0000-0002-0190-6459](https://orcid.org/0000-0002-0190-6459), 4 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
+  - that ORCID record states "To Code, or Not To Code? Exploring Impact of Code in…" · "The Multilingual Alignment Prism: Aligning Global and…"
   - [Q107742361](https://www.wikidata.org/wiki/Q107742361) — deep learning researcher · computer scientist · studied at Carleton College, Université de Montréal, Waterford Kamhlaba · at Cohere, Google Brain · 1 paper including "A Benchmark for Interpretability Methods in Deep Neural Networks"
 - **Michelle Lin** ([0000-0002-8376-107X](https://orcid.org/0000-0002-8376-107X), 4 papers with you) — 3 item(s) carry the name, 3 of them stating no ORCID
+  - that ORCID record states University of California, San Francisco · "Research Dissemination Strategies in Pediatric Emergency…" · "Digital Impact Factor: A Quality Index for Educational…"
   - [Q139550968](https://www.wikidata.org/wiki/Q139550968) — professor, researcher
   - [Q64785953](https://www.wikidata.org/wiki/Q64785953) — Asian American writer · poet · studied at University of California, Riverside, University of Pittsburgh
   - [Q85881335](https://www.wikidata.org/wiki/Q85881335) — Taiwanese television presenter and politician · studied at Affiliated Senior High School of National Taiwan Normal University, Soochow University · at SET News
 - **Prateek Yadav** ([0000-0003-1445-3150](https://orcid.org/0000-0003-1445-3150), 4 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
+  - that ORCID record states "Service Migration in Edge Computing: Techniques,…" · "The Synergy of Blockchain and IoT: A Comprehensive…"
   - [Q102070311](https://www.wikidata.org/wiki/Q102070311) — businessman · businessperson · 1 paper including "Synthesis of Chiral-Substituted 2-Aryl-ferrocenes by the Catellani Reaction"
 - **Judy Hoffman** ([0000-0003-1971-1606](https://orcid.org/0000-0003-1971-1606), 4 papers with you) — 3 item(s) carry the name, 3 of them stating no ORCID
+  - that ORCID record states University of California, Irvine · "ZSON: Zero-Shot Object-Goal Navigation using Multimodal…" · "VIsCUIT: Visual Auditor for Bias in CNN Image Classifier"
   - [Q103328754](https://www.wikidata.org/wiki/Q103328754) — Ph.D. University of California, Berkeley 2016 · computer scientist · at Georgia Tech
   - [Q22097391](https://www.wikidata.org/wiki/Q22097391) — American filmmaker and arts activist · film director · studied at Northeastern University
   - [Q6304478](https://www.wikidata.org/wiki/Q6304478) — American artist · sculptor · studied at Grinnell College
 - **Charles Jochim** ([0000-0001-8376-4505](https://orcid.org/0000-0001-8376-4505), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
+  - that ORCID record states "Probability Statements Extraction with Constrained…" · "Extracting Dependence Relations from Unstructured…"
   - [Q137017900](https://www.wikidata.org/wiki/Q137017900) — states nothing beyond the name
 - **Bo Liu** ([0000-0002-0836-2212](https://orcid.org/0000-0002-0836-2212), 2 papers with you) — 5 item(s) carry the name, 5 of them stating no ORCID
+  - that ORCID record states Shanghai Advanced Research Institute · Shanghai Institute of Applied Physics · "Development of 3.9 GHz fundamental power couplers for…" · "Kilowatt-Level EUV Regenerative Amplifier Free-Electron…"
   - [Q102196599](https://www.wikidata.org/wiki/Q102196599) — applied math Ph.D. University of Minnesota-Minneapolis 1998
   - [Q102403237](https://www.wikidata.org/wiki/Q102403237) — statistics Ph.D. North Carolina State University 2012 · statistician
   - [Q102682954](https://www.wikidata.org/wiki/Q102682954) — analysis Ph.D. Nankai University 2013
   - [Q124355855](https://www.wikidata.org/wiki/Q124355855) — Chinese entomologist
   - [Q67220313](https://www.wikidata.org/wiki/Q67220313) — particle physicist in Cagliari, Italy · researcher · at INFN Sezione di Cagliari · 348 papers including "A model-independent Dalitz plot analysis of B ± → D K ± with D → K S 0 h + h − ( h = π , K ) decays and constraints on the CKM angle γ"
 - **Raj Shah** ([0000-0002-0847-8426](https://orcid.org/0000-0002-0847-8426), 2 papers with you) — 4 item(s) carry the name, 4 of them stating no ORCID
+  - that ORCID record states "Can LLM-Simulated Practice and Feedback Upskill Human…" · "Helping the Helper : Supporting Peer Counselors via…"
   - [Q1274250](https://www.wikidata.org/wiki/Q1274250) — American government official (born 1973) · executive, politician, university teacher · studied at Perelman School of Medicine at the University of Pennsylvania, The Wharton School, University of Michigan · at United States Department of Agriculture
   - [Q130379561](https://www.wikidata.org/wiki/Q130379561) — venture capitalist · airman · studied at Princeton University
   - [Q29043436](https://www.wikidata.org/wiki/Q29043436) — White House Deputy Press Secretary · civil servant, opposition researcher · studied at Cornell University · at Fox Corporation, White House Office of the Press Secretary
   - [Q47460504](https://www.wikidata.org/wiki/Q47460504) — American rower and physician · coxswain, otolaryngologist · studied at Brown University, Phillips Exeter Academy
 - **Eli Schwartz** ([0000-0002-3393-8666](https://orcid.org/0000-0002-3393-8666), 2 papers with you) — 2 item(s) carry the name, 2 of them stating no ORCID
+  - that ORCID record states nothing public beyond the name
   - [Q30570617](https://www.wikidata.org/wiki/Q30570617) — economist · studied at Brown University, University of Connecticut, University of Denver
   - [Q110505456](https://www.wikidata.org/wiki/Q110505456) — Author and Consultant · writer
 - **Joseph Shtok** ([0000-0002-4083-542X](https://orcid.org/0000-0002-4083-542X), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
+  - that ORCID record states nothing public beyond the name
   - [Q102407752](https://www.wikidata.org/wiki/Q102407752) — Ph.D. Technion-Israel Institute of Technology 2012 · studied at Technion – Israel Institute of Technology
 - **Shashank Srivastava** ([0000-0002-4148-895X](https://orcid.org/0000-0002-4148-895X), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
+  - that ORCID record states Motilal Nehru National Institute of Technology · "Varna-based optimization: a novel method for capacitated…" · "Intelligent DDoS Detection System in Software-Defined…"
   - [Q115868444](https://www.wikidata.org/wiki/Q115868444) — Senior Executive Director, Marketing & Sales, Maruti Suzuki India
 - **Yuting Lin** ([0000-0002-4712-5527](https://orcid.org/0000-0002-4712-5527), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
+  - that ORCID record states Shenzhen University · "We agree completely with the reviewer, but … ”: Stance…" · "Correcting the scientific record"
   - [Q117414502](https://www.wikidata.org/wiki/Q117414502) — nurse, graduated from University of Washington with a Ph.D. in Nursing · 1 paper including "Itching and parental guilt: parent responses to children's symptoms following unintentional burn injuries"
 - **Yoon Kim** ([0000-0002-4837-8411](https://orcid.org/0000-0002-4837-8411), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
+  - that ORCID record states University of Seoul
   - [Q102278866](https://www.wikidata.org/wiki/Q102278866) — Ph.D. Virginia Polytechnic Institute and State University 1992 · studied at Virginia Tech
 - **Wei Lin** ([0000-0002-6265-5307](https://orcid.org/0000-0002-6265-5307), 2 papers with you) — 9 item(s) carry the name, 9 of them stating no ORCID
+  - that ORCID record states "Numerical Study on Seismic Performance of a New…" · "Time Reversal Method for Lamb−Wave−Based Diagnostics of…"
   - [Q102200147](https://www.wikidata.org/wiki/Q102200147) — Ph.D. Washington University in St. Louis 1993 · studied at Washington University in St. Louis
   - [Q102208278](https://www.wikidata.org/wiki/Q102208278) — Ph.D. University of Newcastle 1993
   - [Q102308764](https://www.wikidata.org/wiki/Q102308764) — Ph.D. Clemson University 2006
@@ -77,6 +95,7 @@ settles which is which.
   - [Q45424520](https://www.wikidata.org/wiki/Q45424520) — Tang dynasty person CBDB=33626
   - … 1 more
 - **Yu Su** ([0000-0002-9532-4408](https://orcid.org/0000-0002-9532-4408), 2 papers with you) — 7 item(s) carry the name, 7 of them stating no ORCID
+  - that ORCID record states nothing public beyond the name
   - [Q102131509](https://www.wikidata.org/wiki/Q102131509) — Ph.D. University of Arizona 1990
   - [Q102376718](https://www.wikidata.org/wiki/Q102376718) — Ph.D. Rutgers University, New Brunswick 2003
   - [Q45403146](https://www.wikidata.org/wiki/Q45403146) — Song dynasty person (CBDB = 22803)
@@ -85,9 +104,12 @@ settles which is which.
   - [Q45647788](https://www.wikidata.org/wiki/Q45647788) — Tang dynasty person CBDB = 185733
   - [Q113070588](https://www.wikidata.org/wiki/Q113070588) — musical artist · musician
 - **Wenting Zhao** ([0009-0003-3187-3955](https://orcid.org/0009-0003-3187-3955), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
+  - that ORCID record states nothing public beyond the name
   - [Q110275688](https://www.wikidata.org/wiki/Q110275688) — researcher (biochemistry) · at La Trobe University
 - **Pengfei Liu** ([0009-0008-6932-7091](https://orcid.org/0009-0008-6932-7091), 2 papers with you) — 2 item(s) carry the name, 2 of them stating no ORCID
+  - that ORCID record states "Improving Rare Words Recognition through Homophone…" · "Out-of-Scope Domain and Intent Classification through…"
   - [Q102434002](https://www.wikidata.org/wiki/Q102434002) — Ph.D. Université Bordeaux 1 2013 · studied at University of Bordeaux 1
   - [Q102925389](https://www.wikidata.org/wiki/Q102925389) — Ph.D. Chinese University of Hong Kong 2013 · studied at The Chinese University of Hong Kong
 - **Ran Levy** ([0009-0008-7352-2586](https://orcid.org/0009-0008-7352-2586), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
+  - that ORCID record states Amazon · "The Power of Summary-Source Alignments" · "Multi-Review Fusion-in-Context"
   - [Q118928179](https://www.wikidata.org/wiki/Q118928179) — naturalist

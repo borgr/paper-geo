@@ -56,7 +56,7 @@ item stating no occupation at all is still listed.
 - [ ] **117 citations** — Model merging with SVD to tie the Knots — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029643)
       - J. Hoffman → [Q59556470](https://www.wikidata.org/wiki/Q59556470) — researcher ORCID ID = 0000-0002-1571-6808, [Q76142038](https://www.wikidata.org/wiki/Q76142038) — Peerage person ID=560424, [Q138575927](https://www.wikidata.org/wiki/Q138575927) — researcher
 - [ ] **100 citations** — Beyond Binary Rewards: Training LMs to Reason About Their Un — 3 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029645)
-      - Yoon Kim → [Q60973630](https://www.wikidata.org/wiki/Q60973630) — South Korean researcher and politician, [Q130808559](https://www.wikidata.org/wiki/Q130808559) — researcher (ORCID 0009-0003-8583-6324), [Q88771001](https://www.wikidata.org/wiki/Q88771001) — researcher (ORCID 0000-0002-7404-8432) … +2
+      - Yoon Kim → [Q60973630](https://www.wikidata.org/wiki/Q60973630) — South Korean researcher and politician, [Q88771001](https://www.wikidata.org/wiki/Q88771001) — researcher (ORCID 0000-0002-7404-8432), [Q91553362](https://www.wikidata.org/wiki/Q91553362) — researcher (ORCID 0000-0002-0679-6594) … +2
       - Jacob Andreas → [Q125454034](https://www.wikidata.org/wiki/Q125454034) — AI researcher
 - [ ] **100 citations** — Jump to Conclusions: Short-Cutting Transformers with Linear  — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029646)
       - Alexander Yom Din → [Q102662940](https://www.wikidata.org/wiki/Q102662940) — Israeli mathematician
