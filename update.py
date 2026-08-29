@@ -290,6 +290,12 @@ PLAN = (
     ("the bibliography does not have", "minute",
      "one paste into `orig.bib`. The pipeline's only real input is that file, and the "
      "override line standing in for it goes on the next run"),
+    ("field corrections the bibliography does not carry", "minute",
+     "one paste per line, into the entry `orig.bib` already has for that paper. Every "
+     "line is given ready to drop in, and the override lines go after. Worth more than "
+     "its size — Scholar, "
+     "Semantic Scholar and OpenAlex all read the paper's own record, and none of them "
+     "reads this repo"),
     ("full text nothing can fetch", "minute",
      "drop the PDF you already have into `data/fulltext/` (gitignored, so it stays on "
      "your machine and only the sidecar it produces is committed)"),
@@ -997,7 +1003,8 @@ def wikidata_orgs() -> list[str]:
 
 
 def upstream_gaps(papers: list[dict], cfg) -> list[str]:
-    """Papers the corpus has only because an override put them there.
+    """Papers the corpus has only because an override put them there, and the field
+    corrections it carries privately.
 
     `extra_arxiv` and `extra_openreview` cover the interval before the entry lands in the
     bibliography, and both files say to delete the line after. Nothing else reports them,
@@ -1006,8 +1013,8 @@ def upstream_gaps(papers: list[dict], cfg) -> list[str]:
 
     `_override` is provenance. `collect.py` sets it on records it adds from an override and it
     disappears once the bibliography's own entry merges, so a paper still carrying it is still
-    absent upstream. The second half reads `overrides.yaml` too, for lines left behind after
-    a paste lands.
+    absent upstream. The second and third blocks read `overrides.yaml` too, for lines left
+    behind after a paste lands and for `fields:` corrections upstream has not absorbed.
     """
     L = []
     pend = sorted((p for p in papers if p.get("_override")),
@@ -1064,6 +1071,38 @@ def upstream_gaps(papers: list[dict], cfg) -> list[str]:
         for k, v in spent:
             L.append(f"- [ ] `{k}:` delete `{v[:60]}`")
         L.append("")
+
+    # A `fields:` correction the bibliography could carry itself. Matched on the value
+    # anywhere in the entry rather than on a field name, because a venue lives in
+    # `booktitle` in one entry and `institution` in the next -- the ICML position paper's
+    # venue is already upstream under `institution`, and only its DOI and URL are missing.
+    BIBFIELD = {"doi": "doi", "url": "url", "year": "year", "venue": "booktitle"}
+    by_slug = {p.get("slug"): p for p in papers}
+    priv = []                     # one row per paper -- one visit to one entry
+    for slug, fix in (ov.get("fields") or {}).items():
+        rec = by_slug.get(slug) or {}
+        bib = (rec.get("bibtex") or "").lower()
+        want = [(f, str(v)) for f, v in (fix or {}).items() if v and str(v).lower() not in bib]
+        if want:
+            priv.append((rec, slug, want))
+    if priv:
+        n = sum(len(w) for _r, _s, w in priv)
+        L += [f"## {n} field correction{'s' * (n != 1)} the bibliography does not carry", "",
+              "`fields:` in [`data/overrides.yaml`](data/overrides.yaml) corrects these for",
+              "the corpus and nothing else. Scholar, Semantic Scholar and OpenAlex read the",
+              "paper's own record, so a correction that stays here is one they never get.",
+              "Add them to the entry upstream, then delete the override lines.", ""]
+        if edit.startswith("https://github.com/"):
+            L += [f"Edit the bibliography here: <{edit}>", ""]
+        for rec, slug, want in priv:
+            title = (rec.get("title_display") or rec.get("title") or slug)[:60]
+            key = rec.get("key") or ""
+            L += [f"- [ ] **{title}**" + (f" — entry `{key}`" if key else ""), "",
+                  "  ```bibtex"]
+            L += [f"  {BIBFIELD[f]:<12} = {{{v}}}," if f in BIBFIELD
+                  else f"  % {f} = {v}   <- field name depends on the entry type"
+                  for f, v in want]
+            L += ["  ```", ""]
     return L
 
 

@@ -2066,8 +2066,8 @@ class TestASubmissionIsNotAPublication(unittest.TestCase):
 
 
 class TestAStopgapCannotGoQuiet(unittest.TestCase):
-    """`extra_arxiv` and `extra_openreview` have a stated lifetime, so something has to
-    watch both ends of it.
+    """`extra_arxiv`, `extra_openreview` and `fields:` have a stated lifetime, so something
+    has to watch both ends of it.
 
     They exist because a paper the bibliography has not received yet has no page at all,
     and the fix is one entry upstream -- after which the line here is dead weight. Both
@@ -2076,7 +2076,9 @@ class TestAStopgapCannotGoQuiet(unittest.TestCase):
     diffing Scholar against the corpus, and the override has already closed the gap. Once
     the paste lands, the paper correctly stops being reported -- and the line it leaves
     behind is announced once, on stderr, in a five-minute run. The live `extra_arxiv` id
-    got there exactly that way, which is what this pins.
+    got there exactly that way, which is what this pins. `fields:` is the same shape --
+    Scholar, Semantic Scholar and OpenAlex read the paper's own record, so a correction
+    that stays here reaches the corpus and nothing else.
     """
 
     def _render(self, papers, overrides):
@@ -2133,6 +2135,29 @@ class TestAStopgapCannotGoQuiet(unittest.TestCase):
             {"extra_openreview": ["A paper OpenReview does not have"],
              "extra_arxiv": ["2604.12843"]})
         self.assertEqual("", out)
+
+    def test_a_field_correction_upstream_does_not_have_is_reported(self):
+        """A `fields:` value the entry lacks, with the line to paste."""
+        out = self._render(
+            [{"slug": "s", "title": "Position: Agentic Systems Should be General",
+              "key": "bandel2026agentic", "_override": None,
+              "bibtex": "@inproceedings{bandel2026agentic,\n  title = {Position},\n"
+                        "  institution = {International Conference on Machine Learning},\n"
+                        "  year = {2026},\n}"}],
+            {"fields": {"s": {"doi": "10.2139/ssrn.6176178",
+                              "venue": "International Conference on Machine Learning"}}})
+        self.assertIn("1 field correction the bibliography does not carry", out)
+        self.assertIn("doi          = {10.2139/ssrn.6176178},", out)
+        # The venue is already upstream under `institution`, so asking for it again is a
+        # done paste. Matching is on the value anywhere in the entry, not on a field name.
+        self.assertNotIn("booktitle", out)
+
+    def test_a_correction_the_entry_already_carries_is_not_reported(self):
+        out = self._render(
+            [{"slug": "s", "title": "Knots", "key": "k2025knots", "_override": None,
+              "bibtex": "@article{k2025knots,\n  year = {2025},\n  doi = {10.1/x},\n}"}],
+            {"fields": {"s": {"year": 2025, "doi": "10.1/X"}}})
+        self.assertNotIn("field correction", out)
 
     def test_the_live_file_has_no_spent_lines(self):
         """And the report is empty right now, which is the only state worth committing.

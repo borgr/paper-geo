@@ -17,16 +17,17 @@ holds the instructions; nothing here repeats them.
 the page gets visibly shorter.
 
 1. **Co-authors who may already have a Wikidata item (13)** — open each item and write the QID beside the ORCID in `data/overrides.yaml`, or `new` where the papers on it are somebody else's. The lines are in the section ready to paste, and answering the top few is worth doing on its own — each answer turns one co-author into `author` statements on the papers you share.
-2. **Wikipedia mentions 3 of your coinages across 6 article(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
+2. **2 field corrections the bibliography does not carry** — one paste per line, into the entry `orig.bib` already has for that paper. Every line is given ready to drop in, and the override lines go after. Worth more than its size — Scholar, Semantic Scholar and OpenAlex all read the paper's own record, and none of them reads this repo.
+3. **Wikipedia mentions 3 of your coinages across 6 article(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
 
 **As much as you have patience for.** Per-paper clicking, because
 no write API can make the judgement each one needs — and every section
 is ordered so that stopping early still captures most of the value.
 
-3. **Wikidata author strings (965 by hand)** — one Author Disambiguator pass per paper, most-cited first, at the link the section gives for each. Everything an ORCID or a DBLP author page could settle is already on Wikidata, so what is left is the part where the name is all there is to go on.
-4. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
-5. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
-6. **Citations on a Scholar record you cannot see (46, ~247 citations)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
+4. **Wikidata author strings (965 by hand)** — one Author Disambiguator pass per paper, most-cited first, at the link the section gives for each. Everything an ORCID or a DBLP author page could settle is already on Wikidata, so what is left is the part where the name is all there is to go on.
+5. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
+6. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
+7. **Citations on a Scholar record you cannot see (46, ~247 citations)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
 
 ## Waiting on the outside world
 
@@ -154,6 +155,22 @@ separate one, and writes the *author* statements from it.
 
 11 more names collide with several items each, which no glance settles. Those wait for
 a bibliography match rather than a decision.
+
+## 2 field corrections the bibliography does not carry
+
+`fields:` in [`data/overrides.yaml`](data/overrides.yaml) corrects these for
+the corpus and nothing else. Scholar, Semantic Scholar and OpenAlex read the
+paper's own record, so a correction that stays here is one they never get.
+Add them to the entry upstream, then delete the override lines.
+
+Edit the bibliography here: <https://github.com/borgr/publications/edit/master/orig.bib>
+
+- [ ] **Position: Agentic Systems Should be General** — entry `bandel2026agentic`
+
+  ```bibtex
+  url          = {https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6176178},
+  doi          = {10.2139/ssrn.6176178},
+  ```
 
 ## Identity surfaces (1 open)
 
