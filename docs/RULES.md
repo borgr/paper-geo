@@ -310,13 +310,12 @@ citation-shaped queries, and the lever is a bidirectional paper↔repo link:
   a "Cite this repository" widget from it and it is machine-readable.
 - **A generated links block in the README**, carrying the paper's *whole* link set
   the way the paper page does — paper, HTML rendering, HF paper page, data,
-  models, project page. Three reasons: Hugging Face extracts the arXiv id and
-  auto-tags the repo on the paper page, which is the cheapest paper↔repo edge
-  there is; GitHub is heavily crawled, so a README link to the canonical page is a
-  real P1 edge; and it is §5's corroboration mechanism, asserting the same link
-  set on a second high-authority domain. Maintained between markers so it is
-  regenerable without touching hand-written prose, and switched by
-  `write_links_block` on the repo entry:
+  models, project page. It buys three edges at once. Hugging Face extracts the
+  arXiv id and auto-tags the repo on the paper page, GitHub is crawled heavily
+  enough that a README link to the canonical page is a real P1 edge, and the same
+  link set on a second high-authority domain is §5's corroboration. Maintained
+  between markers so it is regenerable without touching hand-written prose, and
+  switched by `write_links_block` on the repo entry:
 
   ```markdown
   <!-- paper-geo:links:start -->
@@ -487,14 +486,12 @@ and not publish their own page for it. One sidecar per paper, one owner, shared
 rather than forked — a co-author who wants to contribute claims PRs the owner's
 sidecar.
 
-**What co-authors add beyond you running the code alone —** nothing for coverage:
-run it across your whole corpus and every paper already has a canonical page. The
-gains are a 5-author paper's page linked from 5 independent accounts and domains
-instead of 1 (independent mentions correlate with AI-Overview visibility at 0.664 vs
-0.218 for backlinks, and you cannot post in someone else's README); N co-authors
-asserting the *identical* claim sentence, which needs coordination because it needs
-the same words; and preventing a co-author from spinning up a competing page for the
-same paper.
+**What co-authors add beyond you running the code alone —** nothing for coverage, since
+running it across your whole corpus already gives every paper a canonical page. The gains
+are a 5-author paper's page linked from 5 independent domains instead of 1 (independent
+mentions correlate with AI-Overview visibility at 0.664 against 0.218 for backlinks, and
+you cannot post in someone else's README), N co-authors asserting the *identical* claim
+sentence, and no competing page for the same paper.
 
 So use it for multi-author flagship papers with active co-authors, the top of
 `WORKLIST.md`. Do not negotiate over the long tail; claim those yourself and move

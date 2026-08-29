@@ -238,114 +238,89 @@ python scripts/ownership.py --claim-all   # claim everything still unclaimed
 python scripts/build_site.py --deploy     # publishes it at /paper-geo.json
 ```
 
-If you are first to claim a paper, tell your co-authors two things: your manifest URL,
+If you are first to claim a paper, tell your co-authors two things. Your manifest URL,
 e.g. `https://borgr.github.io/paper-geo.json`, which they add to their `config.yaml`
-under `collaboration.peers`; and where the sidecar lives, so they can PR claims into it
+under `collaboration.peers`. And where the sidecar lives, so they can PR claims into it
 rather than writing their own. If someone else owns a paper, add their manifest to your
 `peers` and the tool defers — it sets `canonical_page` from their manifest and publishes
-a link, not a competing page. If two of you claim the same paper, `ownership.py` flags
-it and refuses to guess; the one who lets go switches to a link.
+a link rather than a competing page. If two of you claim the same paper, `ownership.py`
+flags it and refuses to guess, and the one who lets go switches to a link.
 
 ### Their names on your Wikidata items
 
 Every paper item this project created states you as *author* (P50) and every co-author as
-*author name string* (P2093). That is the right thing to deposit — a P50 aimed at a guessed
-person welds someone else's item to your paper — and the wrong thing to leave, because a
-string is a literal nothing can join on. Until they are resolved each item hangs off your
-item alone.
+*author name string* (P2093). A string is a literal nothing can join on, so until they are
+resolved each item hangs off your item alone.
 
-`wikidata_coauthors.py` splits the job by how much trust the match deserves, and `--apply`
-writes the two halves an outside record settles. Where the paper's OpenAlex record carries
-a co-author's ORCID and exactly one Wikidata item states that ORCID, the match is
-identifier to identifier with no name in the middle. Where no ORCID reaches them, a name
-match is confirmed instead when exactly one candidate item states a DBLP author id whose
-page lists this same paper. DBLP separates its own namesakes, so a shared publication is
-evidence about the person and not about the spelling. Everything else is listed per paper
-with an [Author Disambiguator](https://author-disambiguator.toolforge.org) link, because a
-name string matches a namesake exactly as well as the right person.
+`wikidata_coauthors.py --apply` writes the matches an outside record settles, in two
+tiers. Where the paper's OpenAlex record carries a co-author's ORCID and exactly one
+Wikidata item states that ORCID, the match runs identifier to identifier with no name in
+the middle. Where no ORCID reaches them, a name match is confirmed when exactly one
+candidate item states a DBLP author id whose page lists this same paper — DBLP separates
+its own namesakes, so a shared publication is evidence about the person rather than about
+the spelling. Everything else is listed per paper with an
+[Author Disambiguator](https://author-disambiguator.toolforge.org) link, because a name
+string matches a namesake exactly as well as the right person.
 
-Each paper item is one edit. Adding *author* and removing the *author name string* it
-replaces are the same fact stated twice, and a run interrupted between them leaves the paper
-crediting nobody or crediting one person twice.
+That per-paper list arrives pruned to items whose stated occupation is plausibly research,
+read off Wikidata's own subclass tree. An item stating no occupation at all stays on it.
+Pruning only ever shortens what a human reads and never changes what `--apply` writes.
 
-The name matches are pruned before you see them. A candidate stating an occupation that is
-nothing like research — actor, footballer, politician — is a coincidence, and the long tail
-of those is what makes a common name unreadable; one string in the corpus matches 132 items.
-The test reads Wikidata's own subclass tree under *researcher*, *academic*, *scientist*
-and *engineer*. No list of words is involved, so the classification follows the tree as it
-grows. An item stating no
-occupation at all stays on the list, because a missing statement is not evidence against.
-This only ever shortens what a human reads — the batch is unaffected.
+The same batch fills three properties that need no judgement either, since they sit on the
+same items. *Published in* (P1433) from the venue already in the bibliography, guarded so
+that only a proceedings volume or a journal is a target and a dated volume has to agree
+with the paper's year. *Language of work* (P407), English throughout this corpus. *Full
+work available at* (P953), the publisher-hosted copy, skipping any doi.org or arxiv.org
+link that only restates an identifier the item already carries.
 
-The same batch carries three more statements, because they are the same items and none of
-them needs a judgement either. *Published in* (P1433) is missing everywhere, so nothing
-joins a paper to the venue that published it. The venue name is already in the bibliography,
-and three guards stand between a name that matches and a statement that is right. Only a
-proceedings volume or a journal is a target, because a conference name matches the conference
-event just as well and pointing P1433 at an event violates the property's own constraint. A
-candidate whose title names a volume the matched name does not is refused, since the plain
-conference name is usually an alias of the long-papers volume and a short paper would land
-in the wrong book. And a dated volume has to agree with the paper's year, because Wikidata
-carries aliases that do not — the CoNLL 2020 proceedings answers to *CoNLL 2024*. Where the
-short name matches only the conference, its volumes are reached through *is proceedings from*
-(P4745), and the paper's own Anthology identifier says whether it belongs in Findings. *Language of work* (P407) is missing everywhere
-too, and every paper in the corpus is English. *Full work available at* (P953) gets the
-publisher-hosted copy, skipping any doi.org or arxiv.org link that only restates the DOI or
-arXiv ID the item already carries.
-
-Nothing here creates an item for anybody. A co-author with no item stays a string, which is
-their correct end state — Wikidata notability asks for serious, publicly available
-references, and an item made to hold an edge back to you is not that.
+Resolving a name creates nothing. A co-author with no item and no ORCID stays a string,
+which is their correct end state — Wikidata notability asks for serious, publicly
+available references, and an item made to hold an edge back to you is not that. The two
+commands below are what create items, and neither runs as part of `update.py`.
 
 ### Items for the groups the work belongs to
 
-A *group* with a public record deserves an item as much as a person does, and several in
-the corpus have none — so a paper cannot say what it is part of and
+Several groups in the corpus have no item, so a paper cannot say what it is part of and
 the group cannot say what it produced. `wikidata_orgs.py` reads
-[data/wikidata_orgs.yaml](data/wikidata_orgs.yaml), which is hand-maintained, and `--apply`
-creates what Wikidata lacks. Without it the same batch goes to `tasks/wikidata_orgs.qs` for
-QuickStatements instead.
+[data/wikidata_orgs.yaml](data/wikidata_orgs.yaml), which is hand-maintained, and
+`--apply` creates what Wikidata lacks and adds the edges into what it already has —
+*main subject* (P921) on each corpus paper about a group, *organizer* (P664) on each event
+it ran. Without `--apply` the same batch goes to `tasks/wikidata_orgs.qs` for
+QuickStatements, which needs a second paste for the edges because it cannot use an item it
+just created as a value.
 
 Every statement in that file carries the URL a reader checks it against, and a statement
 with no public page belongs under `needs` instead, where it reaches the worklist as a
-question. Each QID also sits beside a `note` naming what it is, and the run compares that
-note against the item's live label — so a mistyped value stops the run rather than shipping.
-
-Two halves, decided per group by whether Wikidata already has it. Nothing carrying the
-label or an alias gets created with its labelled statements and references. An item that
-exists gets the edges into it — *main subject* (P921) on each corpus paper about it,
-*organizer* (P664) on each event it ran. `--apply` does both in one run. The QuickStatements
-route needs a second paste for the edges, because it cannot use an item it just made as a
-value.
+question. Each QID also sits beside a `note` naming what it is, and the run stops rather
+than shipping when that note disagrees with the item's live label.
 
 Every item created and every edge added is written to
-`data/wikidata_orgs_created.yaml`. The query service takes hours to report an edit, so that
-file is what stops a second run creating the group again.
+`data/wikidata_orgs_created.yaml`. The query service takes hours to report an edit, so
+that file is what stops a second run creating the group again.
 
 ### Items for the co-authors who have none
 
-An *author* statement needs an item on both ends, and most co-authors have no item — which
-is what leaves the majority of name mentions unresolvable. `wikidata_people.py` takes the
-ORCIDs the co-author pass collected, keeps the ones no item claims, and `--apply` creates a
-person for each. `--limit N` stops after N of them.
+An *author* statement needs an item on both ends, and most co-authors have none.
+`wikidata_people.py` takes the ORCIDs the co-author pass collected, keeps the ones no item
+claims, and `--apply` creates a person for each. `--limit N` stops after N of them.
 
-Every value comes from a public record about that person rather than from their name. ORCID
-gives the name they publish under and the employer they list with no end date; OpenAlex
-answers for the same ORCID and covers the case of a locked-down work list, which is common
-and says nothing about whether somebody publishes. Each statement cites the record it came
-from, the employer is stated only where exactly one organisation item carries that name, and
-anyone neither record describes is left off the page rather than guessed at.
+Every value comes from a public record about that person rather than from their name.
+ORCID gives the name they publish under and the employer they list with no end date, and
+OpenAlex answers for the same ORCID where the work list is locked down. Each statement
+cites the record it came from, the employer is stated only where exactly one organisation
+item carries that name, and anyone neither record describes is left off the page rather
+than guessed at.
 
 The new items claim their ORCIDs, so the next co-author run matches them and writes the
-*author* statements on its own, reading `data/wikidata_people_created.yaml` for the ones the
-query service has not caught up with.
+*author* statements on its own, reading `data/wikidata_people_created.yaml` for the ones
+the query service has not caught up with. Every run also re-derives the items it created
+before and repairs what a since-improved rule now reads differently.
 
 A name Wikidata already carries under a human item is held rather than created, because a
-second item for somebody who already has one is a merge only an administrator can undo. The
-worklist asks which item each held person is, the answer goes under `wikidata_people` in
-[data/overrides.yaml](data/overrides.yaml), and the next run puts the ORCID on that item or
-creates a separate one. Every run also re-derives the items it created before and repairs
-what a since-improved rule now reads differently.
+second item for somebody who already has one is a merge only an administrator can undo.
+The worklist asks which item each held person is, the answer goes under `wikidata_people`
+in [data/overrides.yaml](data/overrides.yaml), and the next run puts the ORCID on that
+item or creates a separate one.
 
 ## 7. The one-time identity fixes
 
@@ -524,14 +499,12 @@ answers those with a challenge page rather than a profile. No fix short of a
 self-hosted runner.
 
 The unattended run asks the narrower half of the same question against Semantic
-Scholar's author record, which answers from anywhere: *is there a paper an index
-attributes to you that the bibliography has never received?* It finds strictly less —
-measured on this corpus, Scholar finds three absent papers and this finds none of them,
-because S2's author record does not hold them either. What it reliably catches is a
-**new** paper that reached an index and not the bibliography. So the unattended run can
-say *no new paper went missing*, and only a run from a desk can say *nothing is
-missing*. Run `scholar_check.py` locally when you think of it; nothing else depends on
-it being fresh.
+Scholar's author record, which answers from anywhere. It reliably catches a **new** paper
+that reached an index and not the bibliography, and it finds strictly less than Scholar
+does — on this corpus Scholar finds three absent papers and S2's author record holds none
+of them. So an unattended run can say *no new paper went missing*, and only a run from a
+desk can say *nothing is missing*. Run `scholar_check.py` locally when you think of it.
+Nothing else depends on it being fresh.
 
 **Remember anything.** `build/` is gitignored, and the health ledger is the one file
 there that is memory rather than output — it distinguishes "arXiv did not answer just
@@ -565,30 +538,26 @@ matters sits on claims.
 
 Three rows need more than a table row.
 
-**Repo topics and descriptions are the deliberate exception.** They are an interpreted
-claim published unread, which the line above would gate. It is not gated: the undo is
-one API call against your own repo, GitHub keeps no history of either field, and gating
-would leave 29 of 33 repos unlabelled indefinitely. `diff` marks which values are
-model-written and unread, so the `--yes` moment has that fact. To change one, edit
-`data/repos.yaml`; to freeze a row against future proposals, set `reviewed: true`. A
-`confidence: low` proposal is never promoted.
+**Repo topics and descriptions are the deliberate exception** — an interpreted claim
+published unread. Gating them would leave 29 of 33 repos unlabelled indefinitely, and the
+undo is one API call against a repo you own. `diff` marks which values are model-written
+and unread, so the `--yes` moment has that fact. To change one, edit `data/repos.yaml`. To
+freeze a row against future proposals, set `reviewed: true`. A `confidence: low` proposal
+is never promoted.
 
 **The paper→code link is stronger than it looks.** Of the 32 unreviewed accepted links,
 **30 are backed by the paper's own full text naming that URL** ("our code is available
-at…"), which is a re-derived fact. The other two were inferred from an author's GitHub
-handle plus a shared word, and both carry independent corroboration — the repo's own
-README or description names the paper. `verdict: accept` requires the top candidate to
-beat the runner-up by a margin, so a single weak candidate with no competition can clear
-it; the full-text evidence is what makes that safe in practice.
-`build/paper_code_why.json` holds the evidence for every row.
+at…"), which makes them re-derived facts. The other two came from an author's GitHub
+handle plus a shared word, and the repo's own README or description names the paper in
+both. `build/paper_code_why.json` holds the evidence for every row.
 
-**What a human catches is a wrong *kind* of claim, not a wrong URL.** An `awesome-`
-list is a companion resource, and calling it `codeRepository` for a survey with no code
-is a category error the match rule cannot see; likewise whether a fork is *this*
-paper's fork. Roughly one row in thirty. Make the check a habit rather than a gate.
+**What a human catches is a wrong *kind* of claim rather than a wrong URL.** An
+`awesome-` list is a companion resource, and calling it `codeRepository` for a survey with
+no code is a category error the match rule cannot see. Likewise whether a fork is *this*
+paper's fork. Roughly one row in thirty, so make the check a habit rather than a gate.
 
-**Do not automate `--accept`.** It is the only gate on the only surface with no undo,
-and the one place the review is genuinely cheap.
+**Do not automate `--accept`.** It is the only gate on the only surface with no undo, and
+the one place the review is genuinely cheap.
 
 ## 12. Command reference
 
