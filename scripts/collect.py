@@ -16,6 +16,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import subprocess
@@ -28,7 +29,7 @@ import yaml
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (ARXIV_NS, BUILD, DATA, ROOT, arxiv_id,  # noqa: E402
                     authors_truncated, clean_bibtex, clean_latex, get, get_json,
-                    is_preprint_venue, load_config, name_match, norm_title,
+                    get_status, is_preprint_venue, load_config, name_match, norm_title,
                     parse_bibtex, read_yaml, short_venue, slugify, split_authors,
                     write_json, write_yaml)
 # The only OpenReview reader in the repo. Imported rather than reimplemented because the
@@ -549,14 +550,26 @@ def merge_arxiv(papers: list[dict]) -> None:
 
 
 def merge_hf(papers: list[dict], cfg) -> None:
-    """HF paper pages carry claim state AND the paper->repo/model/dataset links."""
+    """HF paper pages carry claim state AND the paper->repo/model/dataset links.
+
+    `hf_indexed: False` is written only on a 404, which is Hugging Face saying it has no
+    page for that arXiv id. Any other non-answer leaves whatever the last run learned in
+    place: the flag lives in `data/papers.yaml` and the worklist turns a False into "visit
+    this page", so a run during an outage would ask for every page in the corpus.
+    """
     me = cfg["ids"]["huggingface"]
     for p in papers:
         if not p.get("arxiv"):
             continue
-        d = get_json(f"https://huggingface.co/api/papers/{p['arxiv']}", retries=1)
+        st, raw = get_status(f"https://huggingface.co/api/papers/{p['arxiv']}", retries=1,
+                             accept="application/json")
+        try:
+            d = json.loads(raw) if st == 200 and raw else None
+        except ValueError:
+            d = None
         if d is None:
-            p["hf_indexed"] = False
+            if st in (404, 410):
+                p["hf_indexed"] = False
         else:
             authors = d.get("authors", [])
             users = {(a.get("user") or {}).get("user") for a in authors}

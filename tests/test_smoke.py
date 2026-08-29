@@ -5313,3 +5313,24 @@ class TestAnUnreadRecordIsNotAnEmptyOne(unittest.TestCase):
         # read the record still leaves its conclusions on disk.
         for writes in ("open(", "write_json", "write_yaml", "_file("):
             self.assertNotIn(writes, guard)
+
+    def test_only_a_404_writes_the_flag_that_puts_a_page_on_the_worklist(self):
+        """`hf_indexed: False` lives in the committed `data/papers.yaml` and the worklist
+        turns it into "visit this page", so it may only be written when Hugging Face says
+        it has no page. On any other non-answer the last run's flag stands."""
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import collect
+        cfg = {"ids": {"huggingface": "someone"}}
+        old = collect.get_status
+        try:
+            for st in (0, 429, 500):
+                collect.get_status = lambda _u, **kw: (st, b"")
+                p = {"slug": "a", "arxiv": "2401.00001"}
+                collect.merge_hf([p], cfg)
+                self.assertNotIn("hf_indexed", p, "status %s wrote the flag" % st)
+            collect.get_status = lambda _u, **kw: (404, b"")
+            p = {"slug": "a", "arxiv": "2401.00001"}
+            collect.merge_hf([p], cfg)
+            self.assertIs(False, p["hf_indexed"])
+        finally:
+            collect.get_status = old
