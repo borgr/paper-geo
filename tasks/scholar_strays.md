@@ -27,19 +27,22 @@ count more. Where it counts less, the difference is on another record.
 
 ## Copies of your papers filed under another form of your name (0)
 
-api.openalex.org did not answer this run, so an empty list here is not a
-finding. Re-run `python scripts/scholar_strays.py`.
+Nothing at Crossref, and OpenAlex refused every query. It meters its search
+endpoint at 100 free queries a day, and today's are spent. This pass saw one
+of its two sources.
 
 ## Filed under your name forms but not in the bibliography (0)
 
-api.openalex.org did not answer this run, so an empty list here is not a
-finding. Re-run `python scripts/scholar_strays.py`.
+Nothing at Crossref, and OpenAlex refused every query. It meters its search
+endpoint at 100 free queries a day, and today's are spent. This pass saw one
+of its two sources.
 
 ## Papers OpenAlex holds twice (50)
 
-**Partial: 107 of 112 papers checked.** OpenAlex did not answer for the rest.
-Every answer is cached, so re-running `python scripts/scholar_strays.py`
-resumes where this one stopped.
+**Partial: 107 of 112 papers checked.** OpenAlex meters its search endpoint at
+100 free queries a day, and today's are spent. Every answer is cached, so
+re-running `python scripts/scholar_strays.py` tomorrow resumes where this one
+stopped.
 
 A paper split at OpenAlex is usually split at Scholar too, for the same
 reason: the metadata a parser read differs between copies.

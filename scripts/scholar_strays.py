@@ -290,7 +290,7 @@ def split_records(papers, mailto, limit=None) -> dict:
 # it was.
 METER = ("meters its search endpoint at 100 free queries a day, and today's are spent.")
 HALF_BLIND = [textwrap.fill(
-    f"Nothing at Crossref, and OpenAlex refused every query: it {METER} This pass saw "
+    f"Nothing at Crossref, and OpenAlex refused every query. It {METER} This pass saw "
     "one of its two sources.", 78, break_on_hyphens=False)]
 
 
