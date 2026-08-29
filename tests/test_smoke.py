@@ -7154,6 +7154,31 @@ class TestACoauthorOrcidIsShownForWhatItSays(unittest.TestCase):
         self.assertNotIn("partial", kept["A"])
 
 
+class TestARefusalReachesTheRunThatCalledIt(unittest.TestCase):
+    """`update.run` records a non-zero exit in `FAILED`, and that is the whole path by which
+    one script's refusal reaches the person reading `WORKLIST.md`. A `main` that returns 1
+    under a bare `main()` exits 0, so the refusal stops inside the function that raised it
+    and the run reports the step as done.
+    """
+
+    def test_every_main_that_returns_a_code_hands_it_to_the_interpreter(self):
+        for path in sorted(glob.glob(os.path.join(ROOT, "scripts", "*.py"))):
+            src = source(path)
+            fns = [f for f in ast.parse(src).body
+                   if isinstance(f, ast.FunctionDef) and f.name == "main"]
+            if not fns:
+                continue
+            codes = {n.value.value for n in ast.walk(fns[0])
+                     if isinstance(n, ast.Return) and isinstance(n.value, ast.Constant)} - {None}
+            if not codes:
+                continue
+            _, mark, tail = src.partition('if __name__ == "__main__":')
+            self.assertRegex(
+                mark + tail, r"(sys\.exit|raise SystemExit)\(main\(\)\)",
+                "%s: main returns %s and nothing carries it out, so a caller reads success"
+                % (os.path.relpath(path, ROOT), sorted(codes)))
+
+
 class TestAnUnreadRecordIsNotAnEmptyOne(unittest.TestCase):
     """`get`/`get_json` collapse every failure to `b''`/`None`, so a caller reading an
     absence as a statement reports a source's silence as its answer. `common.get_status`
