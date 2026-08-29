@@ -43,7 +43,7 @@ import urllib.error
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import BUILD, DATA, TASKS, read_yaml, write_json, write_yaml  # noqa: E402
-from wikidata_coauthors import fill, qid_of, sparql  # noqa: E402
+from wikidata_coauthors import fill, qid_of, sparql, wdqs_quiet  # noqa: E402
 from wikidata_apply import create_items, logged_in, snak  # noqa: E402
 
 ORGS = "wikidata_orgs.yaml"
@@ -289,6 +289,13 @@ def main() -> int:
     ledger = ((read_yaml(os.path.join(DATA, "wikidata_created.yaml")) or {})
               .get("items") or {})
     live = labels_of(value_qids(items))
+    quiet = wdqs_quiet()
+    if quiet:
+        # A refusal reads as a QID that carries no label, so `mistyped` would report every
+        # noted statement in the file as disagreeing with Wikidata.
+        print("wikidata did not answer (%s), so nothing is checked and nothing is written"
+              % quiet, file=sys.stderr)
+        return 1
     bad = mistyped(items, live)
     bad += ["%s subject_of names %s, which no item was created for" % (slug, s)
             for slug, it in sorted(items.items())
@@ -300,6 +307,14 @@ def main() -> int:
         return 1
 
     state = state_of(items, ledger, read_yaml(os.path.join(DATA, LEDGER)) or {})
+    quiet = wdqs_quiet()
+    if quiet:
+        # Read again on `state_of`'s own two rounds. `found` reads a refusal as no item
+        # under this label and `edges_present` as no edge stated, which together are the
+        # exact state that creates the group a second time and restates every edge.
+        print("wikidata did not answer (%s), so nothing is written and nothing is created"
+              % quiet, file=sys.stderr)
+        return 1
     day = datetime.date.today().isoformat()
     qs = batch(items, state, day)
     qs_path = os.path.join(TASKS, "wikidata_orgs.qs")

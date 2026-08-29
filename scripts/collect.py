@@ -539,9 +539,14 @@ def merge_arxiv(papers: list[dict]) -> None:
             # Asked only while the answer can still change: `True` is kept without re-asking,
             # `False` and missing are re-probed every run because backfill lands. That is the
             # difference between 321 requests a run and the few dozen still open.
+            #
+            # Written only when arXiv answered. `False` sends `links.html` to ar5iv and
+            # counts the paper as missing HTML, and papers.yaml holds only what a source
+            # actually asserted -- a refused probe asserts nothing.
             if not p.get("arxiv_html"):
-                p["arxiv_html"] = bool(get(f"https://arxiv.org/html/{p['arxiv']}",
-                                           retries=3))
+                st, _ = get_status(f"https://arxiv.org/html/{p['arxiv']}", retries=3)
+                if st == 200 or st in (404, 410):
+                    p["arxiv_html"] = st == 200
             # Note: the arXiv DataCite DOI (10.48550/arXiv.<id>) is deliberately NOT
             # written here. Storing it would let it shadow a publisher DOI that shows
             # up later, and it is derivable from the id anyway -- so it is computed at
@@ -598,6 +603,8 @@ def backfill_abstracts(papers: list[dict]) -> None:
         raw = get(f"http://export.arxiv.org/api/query?id_list={','.join(chunk)}"
                   f"&max_results={len(chunk)}")
         if not raw:
+            print(f"  ! arXiv batch {i} unavailable; {len(chunk)} abstract(s) still "
+                  f"missing", file=sys.stderr)
             continue
         for e in ET.fromstring(raw).findall("a:entry", ARXIV_NS):
             tail = e.find("a:id", ARXIV_NS).text.split("/abs/")[-1]
@@ -848,15 +855,19 @@ def corporate_authors(authors: list[str]) -> list[str]:
     return [a for a in authors if CORPORATE_AUTHOR.search(a)]
 
 
-def arxiv_authors(ax: str) -> list[str]:
-    """The complete author list for one arXiv id, or [] if arXiv does not answer."""
-    raw = get(f"http://export.arxiv.org/api/query?id_list={ax}&max_results=1")
-    if not raw:
-        return []
+def arxiv_authors(ax: str) -> list[str] | None:
+    """The complete author list for one arXiv id.
+
+    `[]` means arXiv answered and has no entry under that id. `None` means it did not
+    answer -- which `authorship_gate` has to tell apart, since it drops a paper on this.
+    """
+    st, raw = get_status(f"http://export.arxiv.org/api/query?id_list={ax}&max_results=1")
+    if st != 200 or not raw:
+        return None if st != 404 else []
     try:
         e = ET.fromstring(raw).find("a:entry", ARXIV_NS)
     except ET.ParseError:
-        return []
+        return None
     if e is None:
         return []
     return [" ".join((a.findtext("a:name", default="", namespaces=ARXIV_NS)).split())
@@ -874,12 +885,13 @@ def authorship_gate(papers: list[dict], cfg: dict, ov: dict) -> list[dict]:
     else's is a false authorship assertion in a public registry.
 
     Rejects go to build/not_mine.json for review. A short or consortium author list is
-    checked against arXiv first, and only on papers about to be dropped. To keep one
-    regardless, record its title under `also_mine` in data/overrides.yaml.
+    checked against arXiv first, and only on papers about to be dropped. A reject whose
+    arXiv check did not answer carries `arxiv_silent`, so it is not filed as checked. To
+    keep one regardless, record its title under `also_mine` in data/overrides.yaml.
     """
     variants = cfg["identity"]["name_variants"]
     keep_norm = {norm_title(t) for t in (ov.get("also_mine") or [])}
-    kept, rejected = [], []
+    kept, rejected, silent = [], [], set()
     for p in papers:
         authors = p.get("authors") or []
         marks = {name_match(a, variants) for a in authors}
@@ -890,7 +902,9 @@ def authorship_gate(papers: list[dict], cfg: dict, ov: dict) -> list[dict]:
         corp = corporate_authors(authors)
         if not marks & {"exact", "near"} and p.get("arxiv"):
             full = arxiv_authors(p["arxiv"])
-            if full and len(full) > len(authors):
+            if full is None:
+                silent.add(p["arxiv"])
+            elif full and len(full) > len(authors):
                 p["authors_from_arxiv"] = {"was": len(authors), "now": len(full),
                                            "why": "consortium author" if corp else
                                                   "list was short"}
@@ -909,6 +923,9 @@ def authorship_gate(papers: list[dict], cfg: dict, ov: dict) -> list[dict]:
             kept.append(p)
         else:
             rejected.append(p)
+    for p in rejected:
+        if p.get("arxiv") in silent:
+            p["arxiv_silent"] = True
     if rejected:
         # `n_authors` and `confidence` are the two facts a reviewer needs and the old
         # four-name sample hid: it printed "authors: 4" for a 561-author paper, so every
@@ -936,7 +953,10 @@ def reject_confidence(p: dict) -> str:
     absent, the answer is a fact and nobody needs to read it. Where the only author
     string names a group and there is no arXiv id to expand it, the gate dropped a paper
     on no evidence about who wrote it -- which is the exact shape that lost MindGames.
+    An arXiv id that did not answer is the same shape, and reads as checked without this.
     """
+    if p.get("arxiv_silent"):
+        return "unverified: arXiv did not answer, so its full author list was never read"
     if corporate_authors(p.get("authors") or []) and not p.get("arxiv"):
         return "unverified: group name for an author, and no arXiv id to expand it"
     if p.get("arxiv"):
@@ -1068,15 +1088,16 @@ def main() -> None:
         if not_mine:
             # The unverified ones named separately. The rest are a fact arXiv confirmed;
             # these are a guess the gate had no way to check, and burying them in a count
-            # of sixteen is what made the last one invisible.
+            # of sixteen is what made the last one invisible. The reason comes from
+            # `reject_confidence`, so the row here and the row in not_mine.json cannot
+            # disagree about why a paper was dropped.
             blind = [p for p in not_mine
-                     if corporate_authors(p.get("authors") or []) and not p.get("arxiv")]
+                     if reject_confidence(p).startswith("unverified")]
             print(f"  authorship: {len(not_mine)} records have no form of your name "
                   f"and were excluded -- review build/not_mine.json", file=sys.stderr)
             for p in blind:
-                print(f"    unverified drop: {p.get('title', '')[:56]!r} -- an author is "
-                      f"a group name and there is no arXiv id to expand it",
-                      file=sys.stderr)
+                print(f"    unverified drop: {p.get('title', '')[:56]!r} -- "
+                      f"{reject_confidence(p).split(': ', 1)[1]}", file=sys.stderr)
         # After the merges and the gate, deliberately: this is four API calls per paper,
         # and a record that is about to be folded into its arXiv twin or excluded as
         # someone else's should not cost any of them.

@@ -61,7 +61,7 @@ import urllib.error
 import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, TASKS, get, get_json, get_status,  # noqa: E402
+from common import (BUILD, DATA, TASKS, get, get_status,  # noqa: E402
                     host_of, norm_name, read_yaml, write_json)
 from wikidata_apply import logged_in, snak  # noqa: E402
 
@@ -128,18 +128,40 @@ def qid_of(uri: str) -> str:
     return uri.rsplit("/", 1)[1]
 
 
+# Set to the first `w/api.php` call that did not answer. An item nobody read is an item
+# with no work left, so a caller reporting what is resolved has to ask -- see `api_quiet`.
+_api_quiet = ""
+
+
+def api_quiet() -> str:
+    """The first Wikidata API call of this run that did not answer, or `""`."""
+    return _api_quiet
+
+
 def item_state(qids: list[str]) -> dict[str, dict]:
     """Per paper item, the P2093 strings left, the P50 items present, and which of the
     properties this pass fills are already there.
 
     Read live rather than from `paper_item`, because the question is what the item says
     now. A string somebody else resolved last week is not work.
+
+    An item this did not read is simply absent from the result, and `rows` skips a paper it
+    has no state for -- so a refusal reads as a paper with nothing left to resolve. What did
+    not answer is recorded in `api_quiet()`.
     """
+    global _api_quiet
     out: dict[str, dict] = {}
     for i in range(0, len(qids), 40):
-        d = get_json(f"{API}?action=wbgetentities&format=json&props=claims&ids="
-                     + "|".join(qids[i:i + 40]))
-        for qid, it in ((d or {}).get("entities") or {}).items():
+        st, raw = get_status(f"{API}?action=wbgetentities&format=json&props=claims&ids="
+                             + "|".join(qids[i:i + 40]), accept="application/json")
+        try:
+            d = json.loads(raw) if st == 200 and raw else None
+        except ValueError:
+            d = None
+        if d is None:
+            _api_quiet = _api_quiet or f"{host_of(API)} -> HTTP {st}"
+            continue
+        for qid, it in (d.get("entities") or {}).items():
             c = it.get("claims") or {}
             strings = []
             for s in c.get("P2093") or []:
@@ -567,7 +589,8 @@ def lookups(names: list[str], papers: list[dict], refresh: bool) -> dict:
     return cache
 
 
-def rows(papers: list[dict], created: dict, look: dict) -> list[dict]:
+def rows(papers: list[dict], created: dict, look: dict,
+         state: dict | None = None) -> list[dict]:
     """One row per paper item with strings left to resolve, most-cited first.
 
     Each row's `edits` are safe to batch, every one settled by an identifier or by a shared
@@ -581,7 +604,7 @@ def rows(papers: list[dict], created: dict, look: dict) -> list[dict]:
     by_slug = {p["slug"]: p for p in papers}
     venues = look.get("venues") or {}
     procs = look.get("proceedings") or {}
-    state = item_state(sorted(created.values()))
+    state = item_state(sorted(created.values())) if state is None else state
     plausible = set(look.get("research") or [])
     dblp = look.get("dblp") or {}
     out = []
@@ -894,7 +917,14 @@ def main() -> int:
     state = item_state(sorted(created.values()))
     names = sorted({s["name"] for st in state.values() for s in st["strings"]})
     look = lookups(names, papers, args.refresh)
-    rows_ = rows(papers, created, look)
+    rows_ = rows(papers, created, look, state)
+    quiet = api_quiet() or wdqs_quiet()
+    if quiet:
+        # Every count below is what is left to do, and each rests on a read whose refusal
+        # reads as nothing left. The page would say the work is done, and the batch file --
+        # which is deleted when there is nothing to batch -- would go with it.
+        print("wikidata did not answer (%s), so nothing is written" % quiet, file=sys.stderr)
+        return 1
 
     qs = batch(rows_)
     qs_path = os.path.join(TASKS, "wikidata_coauthors.qs")

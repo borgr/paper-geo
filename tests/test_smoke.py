@@ -1300,6 +1300,74 @@ class TestEveryBackendCanBeRepaired(unittest.TestCase):
         self.assertIn("caller = call_api if mode == \"api\" else call_openai", src)
 
 
+class TestAQuietArxivDropsNobodyQuietly(unittest.TestCase):
+    """The authorship gate drops a paper on one arXiv read, and filed the drop as checked.
+
+    `reject_confidence` exists to say which drops a reviewer can skip. "checked: arXiv's
+    full author list does not contain your name" was printed whenever the paper had an arXiv
+    id, answered or not -- so a refused read produced the one label that says nobody needs to
+    read this row. The same read decides `links.html`, which is on the built site.
+    """
+
+    def _c(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import collect
+        return collect
+
+    CFG = {"identity": {"name_variants": ["Leshem Choshen", "L. Choshen"]}}
+
+    def _gated(self, c, answers):
+        """Run the gate over one consortium paper, returning its reject row."""
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d, True)
+        p = {"title": "A shared task report", "key": "k", "arxiv": "2401.00001",
+             "authors": ["The BigScience Workshop"]}
+        with mock.patch.object(c, "BUILD", d), \
+             mock.patch.object(c, "get_status", lambda u, **kw: answers(u)):
+            kept, rejected = c.authorship_gate([p], self.CFG, {})
+        self.assertEqual(([], 1), (kept, len(rejected)))
+        return rejected[0]
+
+    def test_an_unread_author_list_is_not_a_list_without_your_name(self):
+        c = self._c()
+        for st in (0, 429, 500):
+            with mock.patch.object(c, "get_status", lambda _u, **kw: (st, b"")):
+                self.assertIsNone(c.arxiv_authors("2401.00001"))
+            row = self._gated(c, lambda _u, st=st: (st, b""))
+            self.assertTrue(row.get("arxiv_silent"), "status %s read as an answer" % st)
+            self.assertTrue(c.reject_confidence(row).startswith("unverified"),
+                            "status %s filed as checked: %s"
+                            % (st, c.reject_confidence(row)))
+
+    def test_an_author_list_arxiv_did_give_is_still_filed_as_checked(self):
+        """The unverified label is for a read that did not happen. A list arXiv served that
+        genuinely lacks the name is a fact, and marking it unverified would put every drop
+        in front of a reviewer."""
+        c = self._c()
+        feed = ('<feed xmlns="http://www.w3.org/2005/Atom">'
+                '<entry><id>http://arxiv.org/abs/2401.00001v1</id>'
+                '<author><name>Ada Example</name></author>'
+                '<author><name>Grace Example</name></author></entry></feed>')
+        row = self._gated(c, lambda _u: (200, feed.encode()))
+        self.assertNotIn("arxiv_silent", row)
+        self.assertTrue(c.reject_confidence(row).startswith("checked"),
+                        c.reject_confidence(row))
+
+    def test_a_refused_html_probe_is_not_a_paper_without_html(self):
+        """`arxiv_html: False` sends `links.html` to ar5iv and counts the paper as missing
+        HTML. papers.yaml holds only what a source asserted, and a refused probe asserts
+        nothing."""
+        c = self._c()
+        for st, want in ((0, None), (429, None), (500, None), (404, False), (200, True)):
+            p = {"arxiv": "2401.00001", "title": "t"}
+            with mock.patch.object(c, "get", lambda *a, **kw: b""), \
+                 mock.patch.object(c, "get_status", lambda _u, **kw: (st, b"")), \
+                 mock.patch.object(c.time, "sleep", lambda _n: None):
+                c.merge_arxiv([p])
+            self.assertEqual(want, p.get("arxiv_html"),
+                             "status %s wrote %r" % (st, p.get("arxiv_html")))
+
+
 class TestAQuietGithubIsNotARepoWithNoReadme(unittest.TestCase):
     """`readme` caches what it fetched, and it used to cache an empty result too.
 
@@ -5428,6 +5496,99 @@ class TestAQuietItemIsNotAnItemWithNoStatements(unittest.TestCase):
             self.assertEqual(1, code, "status %s reported an account" % st)
             self.assertIn("did not answer", out.getvalue())
             self.assertNotIn("need 50", out.getvalue())
+
+
+class TestAQuietWikidataLeavesTheWorkOnThePage(unittest.TestCase):
+    """Two more pages built entirely from what Wikidata says is still missing.
+
+    `item_state` leaves out an item it could not read and `rows` skips a paper it has no
+    state for, so a refusal reads as a paper with every author resolved. `wikidata_orgs`
+    reads the same way twice over -- no item under this label, no edge stated -- which is the
+    state that creates the group a second time and restates every edge it already carries.
+    """
+
+    def _mods(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import wikidata_coauthors as wc
+        import wikidata_orgs as wo
+        return wc, wo
+
+    def test_an_item_that_was_not_read_is_not_an_item_with_nothing_left(self):
+        wc, _ = self._mods()
+        old = wc._api_quiet
+        try:
+            for st in (0, 429, 500):
+                wc._api_quiet = ""
+                with mock.patch.object(wc, "get_status", lambda _u, **kw: (st, b"")):
+                    self.assertEqual({}, wc.item_state(["Q1"]))
+                self.assertTrue(wc.api_quiet(), "status %s passed as an answer" % st)
+            wc._api_quiet = ""
+            body = json.dumps({"entities": {"Q1": {"claims": {}}}}).encode()
+            with mock.patch.object(wc, "get_status", lambda _u, **kw: (200, body)):
+                self.assertIn("Q1", wc.item_state(["Q1"]))
+            self.assertEqual("", wc.api_quiet())
+        finally:
+            wc._api_quiet = old
+
+    def test_no_coauthor_page_is_written_from_a_read_that_did_not_answer(self):
+        """The batch file is deleted when there is nothing to batch, so a quiet run takes a
+        valid pasteable batch with it."""
+        wc, _ = self._mods()
+        old = wc._api_quiet
+        try:
+            for quiet, want in (("www.wikidata.org -> HTTP 500", 1), ("", 0)):
+                wc._api_quiet = ""
+                d = tempfile.mkdtemp()
+                self.addCleanup(shutil.rmtree, d, True)
+                with open(os.path.join(d, "wikidata_coauthors.qs"), "w") as f:
+                    f.write("Q1\tP50\tQ2\n")
+                with mock.patch.object(wc, "TASKS", d), \
+                     mock.patch.object(wc, "BUILD", d), \
+                     mock.patch.object(wc, "read_yaml", lambda p: (
+                         {"items": {"s1": "Q1"}} if "created" in p
+                         else {"papers": [{"slug": "s1", "title": "T", "citations": 1}]})), \
+                     mock.patch.object(wc, "item_state", lambda q: {}), \
+                     mock.patch.object(wc, "lookups", lambda n, p, r: {"asked": "d"}), \
+                     mock.patch.object(wc, "api_quiet", lambda: quiet), \
+                     mock.patch.object(wc, "wdqs_quiet", lambda: ""), \
+                     mock.patch.object(sys, "argv", ["wikidata_coauthors.py", "--quiet"]):
+                    self.assertEqual(want, wc.main())
+                kept = os.path.exists(os.path.join(d, "wikidata_coauthors.qs"))
+                self.assertEqual(bool(quiet), kept,
+                                 "a quiet read deleted the batch" if quiet else
+                                 "the stale batch outlived a run that found nothing")
+        finally:
+            wc._api_quiet = old
+
+    def test_no_group_is_created_from_a_read_that_did_not_answer(self):
+        """Both of `wikidata_orgs`'s reads are checked, because the first one's refusal reads
+        as a QID with no label and stops the run at `mistyped` with a page of wrong rows."""
+        _, wo = self._mods()
+        items = {"g": {"label": "A Coalition", "statements": [
+            {"p": "P31", "v": "Q43229", "note": "organization"}]}}
+        # `labels_of` answers here, so a run that gets past the second guard would reach the
+        # writes rather than stopping at `mistyped`.
+        live = {"Q43229": "organization"}
+        for goes_quiet_on in (1, 2):
+            d = tempfile.mkdtemp()
+            self.addCleanup(shutil.rmtree, d, True)
+            asked = []
+            out = io.StringIO()
+            with mock.patch.object(wo, "TASKS", d), \
+                 mock.patch.object(wo, "BUILD", d), \
+                 mock.patch.object(wo, "described", lambda p: items), \
+                 mock.patch.object(wo, "read_yaml", lambda p: {}), \
+                 mock.patch.object(wo, "labels_of", lambda q: live), \
+                 mock.patch.object(wo, "state_of", lambda *a: {}), \
+                 mock.patch.object(wo, "wdqs_quiet",
+                                   lambda: (asked.append(1), "query.wikidata.org -> HTTP 500"
+                                            if len(asked) >= goes_quiet_on else "")[1]), \
+                 mock.patch.object(sys, "argv", ["wikidata_orgs.py", "--quiet"]):
+                with contextlib.redirect_stderr(out):
+                    code = wo.main()
+            self.assertEqual(1, code, "guard %d did not stop the run" % goes_quiet_on)
+            self.assertIn("did not answer (query.wikidata.org -> HTTP 500)", out.getvalue())
+            self.assertEqual([], os.listdir(d), "guard %d wrote a batch" % goes_quiet_on)
 
 
 class TestAQuietWikidataCreatesNobody(unittest.TestCase):
