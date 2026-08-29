@@ -926,6 +926,12 @@ def authorship_gate(papers: list[dict], cfg: dict, ov: dict) -> list[dict]:
     for p in rejected:
         if p.get("arxiv") in silent:
             p["arxiv_silent"] = True
+    # Removed when there is nothing to write, because both readers take this file as what
+    # the gate decided *this* run. `scholar_check.attributed_gaps` drops a gap whose title
+    # the file names, and `audit_identity.orcid_strays` tags a stray `confirmed` on the
+    # strength of it, which `WORKLIST.md` reports as "the collector rejected each of these".
+    # Left standing after a run that rejected nothing, it puts last run's answer behind both.
+    not_mine = os.path.join(BUILD, "not_mine.json")
     if rejected:
         # `n_authors` and `confidence` are the two facts a reviewer needs and the old
         # four-name sample hid: it printed "authors: 4" for a 561-author paper, so every
@@ -933,7 +939,7 @@ def authorship_gate(papers: list[dict], cfg: dict, ov: dict) -> list[dict]:
         # which rows are a judgement and which are a fact, so a reviewer reads three rows
         # instead of sixteen.
         write_json(
-            os.path.join(BUILD, "not_mine.json"),
+            not_mine,
             [{"title": p.get("title"), "key": p.get("key"),
               "confidence": reject_confidence(p),
               "arxiv": p.get("arxiv"), "doi": p.get("doi"),
@@ -943,6 +949,8 @@ def authorship_gate(papers: list[dict], cfg: dict, ov: dict) -> list[dict]:
               "to_keep_anyway": "add the title under `also_mine` in "
                                 "data/overrides.yaml"}
              for p in rejected], indent=1)
+    elif os.path.exists(not_mine):
+        os.remove(not_mine)
     return kept, rejected
 
 

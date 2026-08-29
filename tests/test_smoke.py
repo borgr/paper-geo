@@ -1313,6 +1313,62 @@ class TestEveryBackendCanBeRepaired(unittest.TestCase):
         self.assertIn("caller = call_api if mode == \"api\" else call_openai", src)
 
 
+class TestAGateThatRejectedNothingSaysNothing(unittest.TestCase):
+    """`build/not_mine.json` was written only on runs that rejected something.
+
+    Nothing removed it afterwards, so a run that rejected nothing left the previous run's
+    list standing and both readers took it as this run's decision.
+    `scholar_check.attributed_gaps` drops a gap whose title the file names, and
+    `audit_identity.orcid_strays` tags a stray `confirmed` on the strength of it, which
+    `WORKLIST.md` reports as "the collector rejected each of these because no form of your
+    name appears" -- a sentence about a paper the current gate never saw.
+    """
+
+    CFG = {"identity": {"name_variants": ["Leshem Choshen", "L. Choshen"]}}
+    MINE = {"title": "A paper of mine", "key": "a",
+            "authors": ["Leshem Choshen", "Omri Abend"]}
+    THEIRS = {"title": "Somebody else's paper", "key": "b",
+              "authors": ["Ada Lovelace", "Alan Turing"]}
+
+    def _gate(self, papers, d):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import collect
+        with mock.patch.object(collect, "BUILD", d):
+            return collect.authorship_gate(papers, self.CFG, {})
+
+    def _dir(self):
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d, True)
+        return d, os.path.join(d, "not_mine.json")
+
+    def test_a_run_that_rejects_something_writes_the_list(self):
+        d, f = self._dir()
+        kept, rejected = self._gate([self.MINE, self.THEIRS], d)
+        self.assertEqual((1, 1), (len(kept), len(rejected)))
+        self.assertEqual(["Somebody else's paper"],
+                         [r["title"] for r in json.load(open(f))])
+
+    def test_a_run_that_rejects_nothing_clears_the_last_run_s_list(self):
+        """The whole defect. Same directory, two runs, and the second disagrees."""
+        d, f = self._dir()
+        self._gate([self.MINE, self.THEIRS], d)
+        self.assertTrue(os.path.exists(f))
+        self._gate([self.MINE], d)
+        self.assertFalse(os.path.exists(f),
+                         "the gate rejected nothing and the last run's rejects stand")
+
+    def test_a_gate_that_has_never_rejected_leaves_no_file(self):
+        d, f = self._dir()
+        self.assertEqual(([], []), tuple(map(list, self._gate([], d))))
+        self.assertFalse(os.path.exists(f))
+
+    def test_the_file_is_still_what_the_two_readers_read(self):
+        """The removal only matters while something takes the file as current state."""
+        for rel in ("scripts/scholar_check.py", "scripts/audit_identity.py"):
+            self.assertIn("not_mine.json", source(os.path.join(ROOT, rel)),
+                          f"{rel} no longer reads the file, so check what does")
+
+
 class TestAQuietArxivDropsNobodyQuietly(unittest.TestCase):
     """The authorship gate drops a paper on one arXiv read, and filed the drop as checked.
 
