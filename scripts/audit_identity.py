@@ -38,10 +38,9 @@ from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, WD_IDENTIFIERS, clipped,  # noqa: E402
-                    declined, get, get_status,
-                    get_json, load_config, name_match, norm_name, norm_title,
-                    org_name, paper_doi, plural, read_yaml, synth_bibtex,
-                    title_tokens, write_json, write_yaml)
+                    declined, get, get_json, get_status, load_config, name_match,
+                    norm_name, norm_title, org_name, paper_doi, plural, read_yaml,
+                    synth_bibtex, title_tokens, write_json, write_yaml)
 
 TASKS = os.path.join(ROOT, "tasks")
 ATOM = {"a": "http://www.w3.org/2005/Atom"}
@@ -165,17 +164,21 @@ def arxiv_registered(orcid: str) -> set[str] | None:
     """arXiv ids your account is registered as an author on.
 
     Read from the Atom flavour of arxiv.org/a/<orcid>: the HTML page 303-redirects
-    and is JS-free, but the feed is the parseable one. None means the page does not
-    exist yet, which happens when the ORCID is not linked to an arXiv account.
+    and is JS-free, but the feed is the parseable one. An empty set means the ORCID is
+    not linked to an arXiv account yet, and None means arXiv did not answer -- the
+    "claim ownership" section is built from this, and an unread feed reads as nobody
+    being registered on anything.
     """
-    raw = get(f"https://arxiv.org/a/{orcid}.atom2", retries=2)
-    if not raw:
+    st, raw = get_status(f"https://arxiv.org/a/{orcid}.atom2", retries=2)
+    if st in (404, 410):
+        return set()
+    if st != 200 or not raw:
         return None
     try:
         root = ET.fromstring(raw)
     except ET.ParseError:
         # An unlinked ORCID serves the arXiv 404 page, which is HTML, not Atom.
-        return None
+        return set()
     out = set()
     for e in root.findall("a:entry", ATOM):
         m = _ABS.search((e.findtext("a:id", "", ATOM) or ""))
@@ -478,17 +481,29 @@ def hf_state(papers, me: str, variants, requested=()) -> dict[str, list]:
         blocked    no author string resembles your name, so no claim control exists and
                    the upstream metadata is the task
         claimed    done
+        refused    Hugging Face did not answer, so nothing above is known about it
 
     `requested` (data/overrides.yaml -> hf_claim_requested) moves a page to `pending`. HF
     exposes the `user` link only after moderation, so a request sent an hour ago reads over
     the API exactly like one never made.
+
+    Only a 404 puts a paper in `missing`, which is Hugging Face saying it has no page for
+    that arXiv id. Any other non-answer is a `refused`, because `missing` is a list the
+    author works through one browser visit at a time and an outage would fill it with the
+    whole corpus.
     """
     me = me.lower()
-    out = {k: [] for k in ("missing", "unclaimed", "pending", "blocked", "claimed")}
+    out = {k: [] for k in ("missing", "unclaimed", "pending", "blocked", "claimed",
+                           "refused")}
     for p in papers:
-        j = get_json(f"https://huggingface.co/api/papers/{p['arxiv']}", retries=1)
+        st, raw = get_status(f"https://huggingface.co/api/papers/{p['arxiv']}", retries=1,
+                             accept="application/json")
+        try:
+            j = json.loads(raw) if st == 200 and raw else None
+        except ValueError:
+            j = None
         if j is None:
-            out["missing"].append(p)
+            out["missing" if st in (404, 410) else "refused"].append(p)
             continue
         authors = j.get("authors") or []
         mine = [a for a in authors if (a.get("user") or {}).get("user", "").lower() == me]
@@ -1256,10 +1271,20 @@ def _rows(group, extra=lambda p: "") -> list[str]:
             for p in group]
 
 
-def arxiv_ownership_file(cfg, papers, registered: set[str] | None) -> tuple[str, int]:
+def arxiv_ownership_file(cfg, papers, registered: set[str] | None) -> tuple[str | None,
+                                                                             int | None]:
+    """Writes `tasks/arxiv_ownership.md` and returns it with the count of unowned papers.
+
+    `registered` of None is arXiv not answering, and nothing is written for it: this page
+    is the claim list itself, so a run during an outage would replace 64 papers and their
+    two claim routes with a line telling the author to go link an account they linked
+    years ago.
+    """
     ident = cfg["identity"]
     path = os.path.join(TASKS, "arxiv_ownership.md")
     if registered is None:
+        return None, None
+    if not registered:
         body = ["# arXiv ownership", "",
                 f"`https://arxiv.org/a/{ident['orcid']}` does not resolve yet. Link your",
                 "arXiv account to your ORCID first: <https://arxiv.org/user/confirm_orcid_id>",
@@ -1371,7 +1396,15 @@ def main() -> None:
                      ((read_yaml(os.path.join(DATA, "overrides.yaml")) or {})
                       .get("hf_claim_requested") or [])}
         hf = hf_state(ax, ids["huggingface"], variants, requested)
-        hf_path = hf_worklist_file(hf)
+        if hf["refused"]:
+            # Read as "no page yet", these would put every one of them on the author's
+            # list as a browser visit. The last run's reading stands instead.
+            print("hugging face did not answer for %d of %d page(s), so its half of this "
+                  "report is carried from the last run" % (len(hf["refused"]), len(ax)),
+                  file=sys.stderr)
+            hf = None
+        else:
+            hf_path = hf_worklist_file(hf)
 
     name_path = n_typo = n_absent = None
     if not args.no_names:
@@ -1379,6 +1412,9 @@ def main() -> None:
         name_path, n_typo, n_absent = arxiv_name_file(ax, variants)
 
     ax_path, n_gap = arxiv_ownership_file(cfg, ax, reg)
+    if reg is None:
+        print("arxiv did not answer for the author feed, so tasks/arxiv_ownership.md and "
+              "the ownership rows are left as the last run read them", file=sys.stderr)
     # Papers arXiv says you own that the bibliography does not mention. Usually a new
     # paper the .bib has not caught up with, occasionally an ownership claim on
     # someone else's paper -- either way it is the one direction of this diff that
@@ -1472,8 +1508,10 @@ def main() -> None:
          # Intersection, not len(reg): the feed also lists papers that are not in the
          # bibliography at all, and counting those made the row read "105 of 105" while
          # still flagging a gap.
-         f"| arXiv registered author | {len({p['arxiv'] for p in ax} & (reg or set()))}"
-         f" of {len({p['arxiv'] for p in ax})} | {status(n_gap == 0)} |",
+         f"| arXiv registered author | "
+         + (f"{len({p['arxiv'] for p in ax} & reg)} of {len({p['arxiv'] for p in ax})} "
+            f"| {status(n_gap == 0)} |" if reg is not None
+            else "arXiv did not answer | re-run |"),
          f"| Wikidata author item | {wd or 'none'} | {status(bool(wd))} |"]
     if wd_gaps:
         n_wd = (len(wd_gaps["missing"]) + len(wd_gaps["wrong"]) + len(wd_gaps["dupes"])
@@ -1842,7 +1880,7 @@ def main() -> None:
         return {k: prev[k] for k in keys if k in prev}
 
     state = carried("hf_missing", "hf_unclaimed", "hf_pending", "hf_blocked") \
-        if args.no_hf else \
+        if hf is None else \
         {"hf_missing": [p["arxiv"] for p in hf["missing"]],
          "hf_unclaimed": [p["arxiv"] for p in hf["unclaimed"]],
          "hf_pending": [p["arxiv"] for p in hf["pending"]],
@@ -1854,16 +1892,18 @@ def main() -> None:
                  {"arxiv_name_typos": [{"arxiv": p["arxiv"], "reads": p["near_miss"],
                                         "slug": p["slug"]} for p in n_typo],
                   "arxiv_name_absent": [p["arxiv"] for p in n_absent]})
+    # An unread feed would report every paper as somebody else's and blank the section
+    # that says so, so the last reading stands.
+    state.update(carried("arxiv_registered", "arxiv_unowned") if reg is None else
+                 {"arxiv_registered": len(reg),
+                  "arxiv_unowned": [p["arxiv"] for p in ax if p["arxiv"] not in reg]})
     state.update({"orcid_public_works": orc["works"],
                   "orcid_has_canonical_url": has_canon,
                   "orcid_missing_variants": missing_variants,
                   "orcid_keywords": len(orc["keywords"]),
                   "orcid_missing_keywords": want_kw,
                   "orcid_missing_other_pages": other_pages,
-                  "arxiv_registered": len(reg) if reg is not None else None,
                   "arxiv_total": len({p["arxiv"] for p in ax}),
-                  "arxiv_unowned": [p["arxiv"] for p in ax
-                                    if reg is not None and p["arxiv"] not in reg],
                   "arxiv_stray": stray,
                   "orcid_strays_confirmed": [t for t, _p, _k in o_conf],
                   "orcid_strays_unknown": [t for t, _p, _k in o_unk],
@@ -1916,8 +1956,8 @@ def main() -> None:
         f.write(orcid_remove_file(o_stray, o_dups, papers, cfg))
     miss_paths = orcid_missing_files(o_missing, ident["orcid"]) if o_missing else []
 
-    wrote = [path, ax_path, rm_path] + miss_paths \
-        + [q for q in (hf_path, name_path, wd_path) if q]
+    wrote = [path, rm_path] + miss_paths \
+        + [q for q in (ax_path, hf_path, name_path, wd_path) if q]
     print("\nwrote " + "\n      ".join(wrote))
     for line in L:
         if line.startswith("| ") and "---" not in line:

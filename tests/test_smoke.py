@@ -5367,3 +5367,66 @@ class TestAPricedCallIsNotRetriedOnAHostThatSaidNo(unittest.TestCase):
                 if "api.openalex.org/authors/" in line:
                     self.assertIn("authors/orcid:", line,
                                   "%s asks by a priced form" % os.path.basename(path))
+
+
+class TestTheAuditKeepsThePagesItCouldNotRead(unittest.TestCase):
+    """Three of this audit's outputs are the author's payload rather than a summary: the
+    Hugging Face index list, the arXiv claim list, and the unowned count the worklist
+    counts down. Each was built from a fetch whose failure looked like an answer, so an
+    outage turned "the whole corpus" into a to-do list.
+    """
+
+    def _ai(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import audit_identity
+        return audit_identity
+
+    @contextlib.contextmanager
+    def _answering(self, ai, status, body=b""):
+        old = ai.get_status
+        ai.get_status = lambda _u, **kw: (status, body)
+        try:
+            yield
+        finally:
+            ai.get_status = old
+
+    def test_only_a_404_puts_a_paper_on_the_list_of_pages_to_go_and_create(self):
+        ai = self._ai()
+        papers = [{"arxiv": "2401.00001", "title": "A", "slug": "a"}]
+        for st in (0, 429, 500, 503):
+            with self._answering(ai, st):
+                got = ai.hf_state(papers, "someone", ["Some One"])
+            self.assertEqual([], got["missing"], "status %s asked for a visit" % st)
+            self.assertEqual(1, len(got["refused"]), "status %s was not named" % st)
+        with self._answering(ai, 404):
+            got = ai.hf_state(papers, "someone", ["Some One"])
+        self.assertEqual(1, len(got["missing"]))
+        self.assertEqual([], got["refused"])
+
+    def test_an_unread_arxiv_feed_is_not_an_unlinked_orcid(self):
+        """A 404 is arXiv saying the author page does not exist, which is what the "link
+        your account first" page is for. Anything else is arXiv not answering."""
+        ai = self._ai()
+        with self._answering(ai, 404):
+            self.assertEqual(set(), ai.arxiv_registered("0000-0002-3491-0632"))
+        for st in (0, 429, 500):
+            with self._answering(ai, st):
+                self.assertIsNone(ai.arxiv_registered("0000-0002-3491-0632"),
+                                  "status %s read as unlinked" % st)
+
+    def test_nothing_is_written_over_the_claim_list_when_arxiv_is_silent(self):
+        ai = self._ai()
+        cfg = {"identity": {"orcid": "0000-0002-3491-0632"}}
+        papers = [{"arxiv": "2401.00001", "title": "A", "citations": 1}]
+        with tempfile.TemporaryDirectory() as d:
+            old = ai.TASKS
+            ai.TASKS = d
+            try:
+                path, gap = ai.arxiv_ownership_file(cfg, papers, None)
+                self.assertEqual((None, None), (path, gap))
+                self.assertEqual([], os.listdir(d), "a refusal wrote a page")
+                path, gap = ai.arxiv_ownership_file(cfg, papers, set())
+                self.assertEqual(0, gap)
+                self.assertIn("does not resolve yet", open(path).read())
+            finally:
+                ai.TASKS = old
