@@ -31,13 +31,12 @@ UA = {"User-Agent": "paper-geo/0.1 (+https://github.com/borgr/paper-geo)"}
 def load_config(path: str | None = None) -> dict:
     """`config.yaml`, with one field the environment may override.
 
-    `llm.mode` chooses between `skill` (queue a JSON task file for an agent session to fill)
-    and `api` (call Anthropic directly). The file says `skill` because that is right at a
-    desk; CI has no session to fill a task file, so an unattended run needs `api` without
-    editing a committed file.
+    `llm.mode` is `skill` (queue a JSON task file for an agent session to fill) or `api`
+    (call Anthropic directly), and $PAPER_GEO_LLM_MODE overrides it so CI, which has no
+    session to fill a task file, does not need a committed file edited.
 
-    One field, named explicitly, rather than a general env-overrides-config mechanism --
-    which would invite putting a secret in `config.yaml` and overriding it.
+    That one field only. A general env-overrides-config mechanism would invite putting a
+    secret in `config.yaml` and overriding it there.
     """
     with open(path or os.path.join(ROOT, "config.yaml")) as f:
         cfg = yaml.safe_load(f)
@@ -54,14 +53,10 @@ PROMPT_MIN = 400          # chars; below this the block is a stub, not a rule se
 def rules_block(doc: str) -> str:
     """The rules a model is sent, read out of the doc that documents them.
 
-    The doc between the two markers is the only copy, so editing it changes what the model is
-    told in the same commit. Prose copies in the prompt plus schema descriptions plus the doc
-    made three rule sets that drifted -- the measured cause of the sidecar variation in
-    docs/SIDECAR.md §5.
-
-    Raises rather than degrades: a missing marker means a prompt with no rules in it, and a
-    model given no rules still returns confident-looking JSON, so the failure would surface
-    as slowly worsening drafts. `validate.py check_prompt_blocks` catches it earlier.
+    The text between the two markers is the only copy, so editing the doc changes what the
+    model is told in the same commit. Raises rather than degrades, because a model given no
+    rules still returns confident-looking JSON and the failure would surface only as slowly
+    worsening drafts. `validate.py check_prompt_blocks` catches a missing marker earlier.
     """
     path = os.path.join(ROOT, doc)
     try:
@@ -552,17 +547,14 @@ _STOP = frozenset("a an the of for to in on with and or from at by as is are be 
 def title_tokens(s: str | None) -> frozenset:
     """A title's subject-matter words, order and punctuation discarded.
 
-    For the one mismatch `norm_title` cannot absorb: the same title *rearranged*. It
-    normalizes to one flat string, so it compares word order as though it were content, and a
-    swap around the colon leaves neither string inside the other either.
+    For the one mismatch `norm_title` cannot absorb, the same title *rearranged* -- it
+    compares word order as though it were content.
 
-    Set equality rather than overlap, and no stemming, because of the direction the error
-    runs: a missed match reports a paper you wrote as a possible stray, costing a minute of
-    reading, while a wrong match silently drops a real stray -- and the stray that started
-    that check was an authorship claim on "Attention is all you need". So it only ever
-    collapses a reordering: differ by one content word, singular against plural included, and
-    it declines. Callers should also refuse a short title, where a small set makes an
-    accidental collision cheap.
+    Set equality and no stemming, so a difference of one content word declines, singular
+    against plural included. The errors are not symmetric. A missed match reports a paper you
+    wrote as a possible stray and costs a minute of reading, while a wrong match silently
+    drops a real stray. Callers must also refuse a short title, where a small set collides by
+    accident.
     """
     return frozenset(_NONWORD.sub(" ", _fold_title(s or "")).split()) - _STOP
 
@@ -684,14 +676,11 @@ def norm_name(s: str) -> str:
 def name_match(candidate: str, variants) -> str:
     """Classify an author string against your known name forms: "exact", "near", or "".
 
-    "near" earns this function. Two of these papers carry "Leshem Chosen" in the *arXiv*
-    metadata, one character off, so every index built from arXiv metadata files them under a
-    person who does not otherwise exist. An exact-match check reports the author as simply
-    absent and sends you looking for the wrong problem.
-
-    Deliberately narrow: same first name and a surname within one or two characters, or
-    whole-string similarity above .88. A looser rule starts matching other people, and a
-    false "that is you" is worse than a miss.
+    "near" is same first name with a surname within one or two characters, or whole-string
+    similarity above .88 -- deliberately narrow, since a false "that is you" is worse than a
+    miss. It earns its place because two of these papers carry "Leshem Chosen" in their arXiv
+    metadata, so every arXiv-derived index files them under a person who does not exist, and
+    an exact-match check would report the author as simply absent.
     """
     import difflib
 
@@ -741,13 +730,13 @@ def arxiv_id(entry: dict) -> str | None:
 def paper_doi(p: dict) -> str | None:
     """The best DOI for a paper, falling back to its arXiv DataCite DOI.
 
-    Preference order is publisher DOI, then whatever DOI the author registered with arXiv,
-    then arXiv's own 10.48550/arXiv.<id> -- most specific claim first. arXiv registers one
-    for every paper including the oldest ids.
+    Most specific claim first -- publisher DOI, then whatever DOI the author registered with
+    arXiv, then arXiv's own 10.48550/arXiv.<id>, which exists for every paper including the
+    oldest ids.
 
     ORCID *groups* works that share an identifier, so an entry carrying a DOI merges with the
-    registry-sourced copy instead of becoming a second record, and "Add DOI" can only resolve
-    an entry that has one. A paper with no DOI anywhere is the only kind that can duplicate.
+    registry-sourced copy instead of becoming a second record. A paper with no DOI anywhere
+    is the only kind that can duplicate.
     """
     if p.get("doi"):
         return p["doi"]
@@ -885,14 +874,13 @@ _LONG_VENUE = 40
 def venue_is_conference(v: str | None, entry_type: str | None = None) -> bool:
     """Whether to cite this venue as a conference rather than as a journal.
 
-    Where the entry type says conference it is believed. `@article` is not enough on its own:
-    bibliographies routinely type a conference paper as `@article` with `journal={ICLR}`, and
-    six entries here do. Google Scholar has separate citation_conference_title and
-    citation_journal_title tags and matches citations on them, so guessing wrong misfiles the
-    paper.
+    A conference entry type is believed. `@article` is not, because bibliographies routinely
+    type a conference paper as `@article` with `journal={ICLR}` and six entries here do. Two
+    things override the type, a venue named by its year and a venue containing a known
+    conference acronym.
 
-    Two things override the type: a venue named by its year, and a venue containing an
-    acronym known to be a conference.
+    Scholar matches citations on separate citation_conference_title and citation_journal_title
+    tags, so a wrong answer misfiles the paper. Cases in `validate.py`.
     """
     v = clean_latex(v)
     # Before the type, because `@inproceedings` with an arXiv venue is an entry written
@@ -921,8 +909,8 @@ def canonical_venue(v: str | None, year: int | str | None = None) -> str:
     """"ACL 2026", not "Proceedings of the 64th Annual Meeting of the ..., San Diego".
 
     The full proceedings name is what DBLP, the ACL Anthology and Semantic Scholar give, and
-    it is the wrong string to publish: it is the venue field on every paper page, in JSON-LD
-    `isPartOf`, and in the `citation_conference_title` tag Scholar matches on, where a
+    it is the wrong string to publish. It reaches the venue field on every paper page, JSON-LD
+    `isPartOf`, and the `citation_conference_title` tag Scholar matches on, where a
     110-character truncation reads as broken metadata.
 
     Returns "" when nothing is confidently recognized, so the caller keeps the original
@@ -998,15 +986,12 @@ def clean_bibtex(raw: str | None) -> str:
 def synth_bibtex(p: dict) -> str:
     """Build a BibTeX entry for a paper that has none.
 
-    A paper only carries a `bibtex` field if it came from the bibliography. Papers discovered
-    on arXiv or Semantic Scholar have every field a citation needs and no entry text, so
-    anything filtering on `p.get("bibtex")` dropped them silently -- which is how 16 papers,
-    one with 112 citations, were absent from `orcid_import.bib` and so from the ORCID record.
+    A paper only carries a `bibtex` field if it came from the bibliography, so anything
+    filtering on `p.get("bibtex")` silently drops the ones discovered on arXiv or Semantic
+    Scholar -- which have every field a citation needs and no entry text.
 
-    Synthesised rather than skipped, because to ORCID's importer or a reference manager an
-    entry built from title/authors/year/DOI is worth the same as a typed one. The citation key
-    is derived, so it is not the key anyone already cites -- which is why `clean_bibtex` still
-    passes the bibliography's own text through untouched when there is some.
+    The citation key is derived, so it is not the key anyone already cites. That is why
+    `clean_bibtex` passes the bibliography's own text through untouched where there is some.
     """
     kind = {"inproceedings": "inproceedings", "article": "article",
             "incollection": "incollection"}.get(p.get("type") or "", "article")
@@ -1028,11 +1013,10 @@ def synth_bibtex(p: dict) -> str:
 def plural(n: int, one: str, many: str | None = None) -> str:
     """`3 papers`, `1 paper` -- a count and its noun, agreeing.
 
-    Small, and worth having because of *when* the disagreement shows. Every count in the
-    audit reports something left to do, so each one trends to 1 and then to 0 as the work
-    gets done -- which means a hardcoded plural reads correctly for as long as the surface
-    is broken and turns wrong on the last item. `1 papers are listed twice` was live in
-    `tasks/identity_audit.md`, and these files are committed and browsable on GitHub.
+    Small, and worth having because of *when* a hardcoded plural goes wrong. Every count in
+    the audit reports something left to do, so each trends to 1 and then to 0 as the work gets
+    done, and the wording reads correctly for as long as the surface is broken. These files
+    are committed and browsable on GitHub.
     """
     return f"{n} {one if n == 1 else (many or one + 's')}"
 
@@ -1041,17 +1025,16 @@ def slugify(s: str, maxlen: int = 60) -> str:
     """A slug is a published URL, so this has to be stable across a *fix* upstream.
 
     Callers pass the raw BibTeX title, so LaTeX is resolved here rather than in the display
-    path. Two rules, both of which have already moved a live URL if broken:
+    path. Two rules, both checked in `validate.py`, and either one broken moves a live URL.
 
-    Resolve the math first. `{\\textdollar}Q2{\\textdollar}` and `Q\\({}^{\\mbox{2}}\\)` are the
-    damaged and the repaired form of one title, and a superscript two is the digit two as far
-    as a URL is concerned -- so both must give `q2-...`, not `q-2-...`. Accents likewise:
-    without this, `M{\\'{\\i}}rian` slugs to `m-rian`.
+    Math resolves first. `{\\textdollar}Q2{\\textdollar}` and `Q\\({}^{\\mbox{2}}\\)` are the
+    damaged and the repaired form of one title, and both must give `q2-...` rather than
+    `q-2-...`. Accents likewise, or `M{\\'{\\i}}rian` slugs to `m-rian`.
 
-    Drop braces, do not space them. BibTeX braces protect capitals *inside* a word --
-    `{B}aby{LM}`, `Lo{RA}`, `Com{PEFT}` -- so a separator splits the protected word:
-    `findings-of-the-b-aby-lm-challenge`. `norm_title` is spared because it drops every
-    non-word character afterwards; a slug keeps hyphens, so the difference reaches the URL.
+    Braces are dropped, not spaced. BibTeX braces protect capitals *inside* a word --
+    `{B}aby{LM}`, `Lo{RA}`, `Com{PEFT}` -- so a separator splits it into
+    `findings-of-the-b-aby-lm-challenge`. `norm_title` escapes this by dropping every
+    non-word character afterwards. A slug keeps hyphens, so the difference reaches the URL.
     """
     s = strip_mangled(s or "")
     for k, v in _MATH.items():
@@ -1098,17 +1081,14 @@ def has_live_sidecar(slug: str) -> bool:
 def declined(text: str | None) -> str | None:
     """The `data/declines.yaml` `items:` pattern this text was declined by, if any.
 
-    `apply_declines` filters `WORKLIST.md` after rendering, which meant a decision reached the
-    summary and none of the payloads: "LLM Merging" was ruled out of the bibliography on
-    purpose and `tasks/orcid_remove.md` went on printing it under *check before deleting*,
-    where the honest reading of that heading is "we have not looked at this yet". So the
-    generators read the file too.
+    Returns the pattern rather than a bool, so the caller can print *which* decision this
+    was. Case-insensitive, unlike the sections matcher, because the patterns are titles typed
+    by hand against whichever surface showed them and Scholar title-cases what BibTeX does
+    not.
 
-    Case-insensitive, unlike the sections matcher: the patterns are titles typed by hand
-    against whichever surface showed them, and Scholar title-cases what BibTeX does not.
-
-    Returns the matching pattern rather than a bool, so the caller can print *which* decision
-    this was.
+    Every generator reads this, not only `apply_declines`. That one filters `WORKLIST.md`
+    after rendering, so on its own a decision reaches the summary and none of the payload
+    files under `tasks/`.
     """
     if not text:
         return None
