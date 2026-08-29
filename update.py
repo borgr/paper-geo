@@ -820,18 +820,22 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
     return L
 
 
-def scholar_split_records() -> list[str]:
+def built(name: str) -> dict:
+    """What a step left in `build/`, `{}` if it has not run or wrote something unreadable."""
+    try:
+        with open(os.path.join(ROOT, "build", name)) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def scholar_split_records(st: dict) -> list[str]:
     """The worklist section for `build/scholar_strays.json`, or nothing.
 
     Only the two passes whose remedy is one merge each. The `not in the bibliography`
     pass lands in `tasks/scholar_strays.md` and not here -- it is a list to read, not a
     list of edits, and most of its rows are other people.
     """
-    try:
-        with open(os.path.join(ROOT, "build", "scholar_strays.json")) as f:
-            st = json.load(f)
-    except (OSError, ValueError):
-        return []
     rows = [dict(r, kind="undercount") for r in st.get("undercounted") or []]
     rows += [dict(r, kind="name form") for r in st.get("typo_records") or []
              if r.get("matched")]
@@ -873,16 +877,11 @@ def scholar_split_records() -> list[str]:
     return L + [""]
 
 
-def wikidata_coauthors() -> list[str]:
+def wikidata_coauthors(st: dict) -> list[str]:
     """The worklist section for `build/wikidata_coauthors.json`, or nothing.
 
     Ranked by the batch first, because that half needs no judgement at all.
     """
-    try:
-        with open(os.path.join(ROOT, "build", "wikidata_coauthors.json")) as f:
-            st = json.load(f)
-    except (OSError, ValueError):
-        return []
     left = (st.get("review") or 0) + (st.get("leftover") or 0)
     if not (st.get("edits") or left or st.get("venues") or st.get("fills")):
         return []
@@ -921,58 +920,58 @@ def wikidata_coauthors() -> list[str]:
     return L + [""]
 
 
-def wikidata_people() -> list[str]:
+def wikidata_people(st: dict) -> list[str]:
     """The worklist section for `build/wikidata_people.json`, or nothing.
 
-    Only the people the code cannot decide about. Creating the rest, and adding their
-    ORCIDs, is `scripts/wikidata_people.py --apply`.
+    Only the people no public record decides. Creating the rest, and adding the ORCID to the
+    item a shared paper or employer identifies, is `scripts/wikidata_people.py --apply`.
     """
-    try:
-        with open(os.path.join(ROOT, "build", "wikidata_people.json")) as f:
-            st = json.load(f)
-    except (OSError, ValueError):
-        return []
-    held = [p for p in st.get("held_people") or [] if len(p["namesakes"]) == 1]
+    held = sorted(st.get("held_people") or [],
+                  key=lambda x: (-x.get("papers", 0), x["label"]))
     if not held:
         return []
-    many = len(st.get("held_people") or []) - len(held)
     L = [f"## Co-authors who may already have a Wikidata item ({len(held)})", "",
-         "Wikidata has one human item under each of these names and it states no ORCID, so",
-         "it is either this co-author reached from a paper rather than a profile, or a",
-         "namesake. Open the item, and if the papers on it are theirs write the answer into",
-         "[`data/overrides.yaml`](data/overrides.yaml) under `wikidata_people`:",
+         "Wikidata carries a human item under each of these names and none of them states an",
+         "ORCID, so each is either this co-author reached from a paper rather than a profile",
+         "or somebody else of the same name. Under each name is what every candidate item",
+         "says about itself, the ones stating a research occupation first. The answer is",
+         "which line is them, or `new` if none is.",
+         "",
+         "Paste into [`data/overrides.yaml`](data/overrides.yaml) under `wikidata_people`,",
+         "correcting the QIDs that are wrong:",
          "",
          "```yaml",
          "wikidata_people:"]
-    held.sort(key=lambda x: (-x.get("papers", 0), x["label"]))
     for p in held:
-        L.append(f"  {p['orcid']}: {p['namesakes'][0]['qid']}   "
-                 f"# {p['label']}, or `new` if that item is somebody else")
+        rest = [n["qid"] for n in p["namesakes"][1:4]]
+        # The alternatives inline, because the first candidate is the likeliest and not the
+        # answer -- a block pasted unread would put an ORCID on a racing cyclist.
+        L.append(f"  {p['orcid']}: {p['namesakes'][0]['qid']}   # {p['label']}"
+                 + (" — or " + ", ".join(rest) if rest else "")
+                 + (", …" if len(p["namesakes"]) > 4 else "")
+                 + ", or new")
     L += ["```", ""]
     for p in held:
-        n = p["namesakes"][0]
         papers = p.get("papers", 0)
         L.append(f"- [ ] **{p['label']}** ({papers} paper{'' if papers == 1 else 's'} with "
-                 f"you) — [{n['qid']}](https://www.wikidata.org/wiki/{n['qid']}) against "
-                 f"[their ORCID record](https://orcid.org/{p['orcid']}), {p['description']}")
+                 f"you, [their ORCID record](https://orcid.org/{p['orcid']}))")
+        for n in p["namesakes"]:
+            L.append(f"  - [{n['qid']}](https://www.wikidata.org/wiki/{n['qid']}) — "
+                     f"{n.get('says') or 'states nothing beyond the name'}")
     L += ["",
-          "Nothing else follows by hand. The next run adds the ORCID to the item, or creates a",
-          "separate one, and writes the *author* statements from it."]
-    if many:
+          "Nothing else follows by hand. The next run adds the ORCID to the item named, or",
+          "creates a separate one, and writes the *author* statements from it."]
+    if st.get("decided"):
         L += ["",
-              f"{many} more names collide with several items each, which no glance settles. "
-              "Those wait for",
-              "a bibliography match rather than a decision."]
+              f"{st['decided']} more needed no answer -- a paper or an employer both records",
+              "name says which item they are, and "
+              "[`tasks/wikidata_people.md`](tasks/wikidata_people.md)",
+              "lists which and why."]
     return L + [""]
 
 
-def wikidata_orgs() -> list[str]:
+def wikidata_orgs(st: dict) -> list[str]:
     """The worklist section for `build/wikidata_orgs.json`, or nothing."""
-    try:
-        with open(os.path.join(ROOT, "build", "wikidata_orgs.json")) as f:
-            st = json.load(f)
-    except (OSError, ValueError):
-        return []
     if not (st.get("create") or st.get("edges") or st.get("ambiguous")):
         return []
     names = [st["state"][s].get("label") or s for s in st.get("create") or []]
@@ -1194,17 +1193,8 @@ def step_worklist(cfg, args) -> None:
     ident, ids = cfg["identity"], cfg["ids"]
     # Written by the audit step. Absent (audit skipped) = fall back to stored state
     # rather than guessing, and say so where it matters.
-    state, scholar = {}, {}
-    try:
-        with open(os.path.join(ROOT, "build", "identity_state.json")) as f:
-            state = json.load(f)
-    except (OSError, ValueError):
-        pass
-    try:
-        with open(os.path.join(ROOT, "build", "scholar_diff.json")) as f:
-            scholar = json.load(f)
-    except (OSError, ValueError):
-        pass
+    state = built("identity_state.json")
+    scholar = built("scholar_diff.json")
     unowned = set(state.get("arxiv_unowned") or [])
 
     def top(pred, n=8):
@@ -1218,10 +1208,10 @@ def step_worklist(cfg, args) -> None:
              "reading of each external surface is [tasks/identity_audit.md](tasks/identity_audit.md).", ""]
     lines += due_followups()
     lines += scholar_gaps(scholar, cfg)
-    lines += scholar_split_records()
-    lines += wikidata_coauthors()
-    lines += wikidata_orgs()
-    lines += wikidata_people()
+    lines += scholar_split_records(built("scholar_strays.json"))
+    lines += wikidata_coauthors(built("wikidata_coauthors.json"))
+    lines += wikidata_orgs(built("wikidata_orgs.json"))
+    lines += wikidata_people(built("wikidata_people.json"))
     lines += upstream_gaps(papers, cfg)
 
     # The papers themselves and not just their count: the URL to paste into the Add
@@ -1477,12 +1467,7 @@ def step_worklist(cfg, args) -> None:
 
     # Nothing here asks for an insertion -- see the docstring of scripts/wikipedia_tasks.py
     # for why the propose-a-mention version was dropped.
-    try:
-        with open(os.path.join(ROOT, "build", "wikipedia_state.json")) as f:
-            wiki = json.load(f)
-    except (OSError, ValueError):
-        wiki = {}
-    lines += wikipedia_checks(wiki)
+    lines += wikipedia_checks(built("wikipedia_state.json"))
 
     typos = state.get("arxiv_name_typos") or []
     if typos:

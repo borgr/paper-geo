@@ -4785,6 +4785,91 @@ class TestPeopleItemsRestOnPublicRecordsNotOnNames(unittest.TestCase):
                 self.assertIn("\tS854\t", line, line)
                 self.assertIn("\tS813\t", line, line)
 
+    def _held(self, **kw):
+        """One held person with one same-name item, as `main` assembles them."""
+        n = {"qid": "Q7", "orcid": "", "description": "researcher", "works": [],
+             "research": True, "occupations": {}, "education": {}, "employers": {}}
+        n.update(kw.pop("item", {}))
+        return dict({"orcid": "0000-0001-0000-0009", "label": "Ada Lovelace",
+                     "description": "researcher at Somewhere", "employers": [],
+                     "namesakes": [n]}, **kw)
+
+    def test_a_paper_they_share_says_which_item_they_are(self):
+        """The one signal that needs no judgement: the item is stated as an author of a paper
+        this ORCID is on, so it is them."""
+        wp = self._job()
+        p = self._held(item={"works": ["Fusing Finetuned Models for Better Pretraining"]})
+        got = wp.verdict(p, {wp.title_key("Fusing finetuned models for better pretraining")})
+        self.assertEqual("Q7", got["qid"])
+        self.assertIn("Fusing Finetuned Models", got["why"])
+
+    def test_an_employer_both_records_name_says_the_same(self):
+        wp = self._job()
+        p = self._held(employers=[("IBM Research", "Q3146518", "https://orcid.org/x")],
+                       item={"employers": {"Q3146518": "IBM Research"}})
+        got = wp.verdict(p, set())
+        self.assertEqual("Q7", got["qid"])
+        self.assertIn("IBM Research", got["why"])
+
+    def test_nothing_here_ever_concludes_that_a_namesake_is_one(self):
+        """An occupation nothing like research reads as a different person and is not enough
+        to act on. Adding an ORCID is undone by removing it, where a second item for somebody
+        who has one takes an administrator to merge -- and the tree that classifies an
+        occupation has holes, statistician reaching no research root at all."""
+        wp = self._job()
+        p = self._held(item={"description": "businessman", "research": False,
+                            "occupations": {"Q43845": "businessperson"}})
+        self.assertEqual({}, wp.verdict(p, {"a shared paper nobody claims"}))
+
+    def test_an_item_that_states_an_orcid_is_never_linked_to(self):
+        """It states a different ORCID, ours having matched nothing on the way in. It is held
+        because the label and description collide, which is not a reason to edit it."""
+        wp = self._job()
+        p = self._held(employers=[("IBM Research", "Q3146518", "https://orcid.org/x")],
+                       item={"orcid": "0000-0002-0000-0000", "works": ["A Shared Paper"],
+                             "employers": {"Q3146518": "IBM Research"}})
+        self.assertEqual({}, wp.verdict(p, {wp.title_key("A Shared Paper")}))
+
+    def test_a_value_the_query_service_has_no_label_for_is_left_out(self):
+        """A bare QID in a line meant to be read is noise, and the item is linked anyway."""
+        wp = self._job()
+        line = wp.summary({"description": "statistician", "works": [],
+                           "occupations": {"Q2732142": "statistician"},
+                           "education": {}, "employers": {"Q138498667": ""}})
+        self.assertEqual("statistician", line)
+        self.assertEqual("states nothing beyond the name",
+                         wp.summary({"description": "", "works": [], "occupations": {},
+                                     "education": {}, "employers": {}}))
+
+    def test_every_candidate_row_says_what_that_item_states(self):
+        """A row asking which same-name item is them, without saying what any of them says,
+        is 22 people to look up. The text is in hand either way -- the same call that finds
+        the candidates returns it."""
+        import update
+        out = "\n".join(update.wikidata_people(
+            {"decided": 2,
+             "held_people": [{"label": "Jacob Andreas", "orcid": "0000-0002-3141-5845",
+                              "papers": 10, "description": "researcher",
+                              "namesakes": [{"qid": "Q125454034", "says": "AI researcher"},
+                                            {"qid": "Q112760940", "says": "actor"}]}]}))
+        self.assertIn("may already have a Wikidata item (1)", out)
+        self.assertIn("- [Q125454034](https://www.wikidata.org/wiki/Q125454034) — "
+                      "AI researcher", out)
+        self.assertIn("— actor", out)
+        # The first candidate is the likeliest and not the answer, so the alternatives are
+        # in the block a reader pastes rather than only in the rows above it.
+        self.assertIn("  0000-0002-3141-5845: Q125454034   # Jacob Andreas — or "
+                      "Q112760940, or new", out)
+        self.assertIn("2 more needed no answer", out)
+
+    def test_a_state_file_written_before_the_evidence_existed_still_renders(self):
+        import update
+        out = "\n".join(update.wikidata_people(
+            {"held_people": [{"label": "Ada Lovelace", "orcid": "0000-0001-0000-0009",
+                              "papers": 1, "namesakes": [{"qid": "Q7"}]}]}))
+        self.assertIn("states nothing beyond the name", out)
+        self.assertNotIn("needed no answer", out)
+
     def test_the_real_batch_creates_a_human_researcher_with_the_orcid_on_it(self):
         path = os.path.join(ROOT, "tasks", "wikidata_people.qs")
         if not os.path.exists(path):

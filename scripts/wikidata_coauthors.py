@@ -66,6 +66,8 @@ from common import (BUILD, DATA, TASKS, get, get_json, get_status,  # noqa: E402
 from wikidata_apply import logged_in, snak  # noqa: E402
 
 WDQS = "https://query.wikidata.org/sparql"
+# Papers live in their own subgraph, so `author` statements are only queryable here.
+SCHOLARLY = "https://query-scholarly.wikidata.org/sparql"
 API = "https://www.wikidata.org/w/api.php"
 DISAMBIG = "https://author-disambiguator.toolforge.org"
 # A resolved string does not come back and an item's own statements change slowly, so the
@@ -87,9 +89,13 @@ DBLP_PER_RUN = 40
 SHAPE = 8
 
 
-def sparql(query: str) -> list[dict]:
-    """Rows of a SPARQL query against WDQS, or `[]` if it did not answer."""
-    raw = get(f"{WDQS}?" + urllib.parse.urlencode({"query": query}),
+def sparql(query: str, endpoint: str = "") -> list[dict]:
+    """Rows of a SPARQL query against WDQS, or `[]` if it did not answer.
+
+    `endpoint` names a different service. The scholarly one is the only one that answers
+    `author` (P50), which the main service returns nothing for.
+    """
+    raw = get(f"{endpoint or WDQS}?" + urllib.parse.urlencode({"query": query}),
               accept="application/sparql-results+json")
     try:
         return json.loads(raw)["results"]["bindings"]
@@ -236,7 +242,10 @@ EVENT_TYPES = ("Q2020153", "Q47258130")
 # The failure mode of a name match is a namesake, and `occupation` is the one structured
 # statement that separates a footballer from a researcher. Roots rather than a list of
 # labels, so the classification follows Wikidata's own subclass tree as it grows.
-RESEARCH_ROOTS = ("Q1650915", "Q3400985", "Q901", "Q81096", "Q1622272")
+# The last is an ISCO group rather than a role: statistician reaches researcher, scientist
+# and academic by no path at all, only this one, and dropping a statistician as a namesake
+# is a co-author lost.
+RESEARCH_ROOTS = ("Q1650915", "Q3400985", "Q901", "Q81096", "Q1622272", "Q108289028")
 
 
 def dblp_ids(qids: list[str]) -> dict[str, str]:

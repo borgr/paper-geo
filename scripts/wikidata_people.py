@@ -38,7 +38,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from common import (BUILD, DATA, TASKS, get, get_json, read_yaml, write_json,
                     write_yaml)
-from wikidata_coauthors import CACHE, fill, items_by_orcid, qid_of, sparql  # noqa: F401
+from wikidata_coauthors import (CACHE, SCHOLARLY, fill, items_by_orcid,  # noqa: F401
+                               qid_of, researchers, sparql, title_key)
 from wikidata_apply import (CAL, Session, create_items,  # noqa: F401
                             logged_in, recorded)
 from wikidata_orgs import labels_of
@@ -57,6 +58,9 @@ CACHE_PEOPLE = "orcid_records.json"
 CACHE_DAYS = 30
 # Bump to re-ask when `record` starts reading a different field.
 SHAPE = 1
+# What a same-name item states about itself, beside its description -- occupation,
+# educated at, employer. Enough to tell a naturalist from an NLP researcher.
+FACTS = ("occupations", "education", "employers")
 # The occupation every item carries, and the class of the subject itself.
 HUMAN, RESEARCHER = "Q5", "Q1650915"
 REF_URL, REF_DATE = "S854", "S813"
@@ -187,6 +191,9 @@ def namesakes(labels: list[str]) -> dict[str, list[dict]]:
     only in German still answers, and it is live, where the query service lags hours behind
     a creation.
 
+    Each item carries what it states about itself under `FACTS`, so a namesake can be told
+    from the co-author without opening it.
+
     Reports rather than decides -- `keeps` reads the answer.
     """
     found: dict[str, set[str]] = {}
@@ -214,9 +221,114 @@ def namesakes(labels: list[str]) -> dict[str, list[dict]]:
             for c in cl.get("P496") or []:
                 orcid = (c["mainsnak"].get("datavalue") or {}).get("value") or ""
             seen[q] = {"qid": q, "orcid": orcid,
-                       "description": (e.get("descriptions", {}).get("en") or {}).get("value", "")}
+                       "description": (e.get("descriptions", {}).get("en") or {}).get("value", ""),
+                       "occupations": points_at(cl, "P106"),
+                       "education": points_at(cl, "P69"),
+                       "employers": points_at(cl, "P108")}
+    live = labels_of(sorted({q for it in seen.values() for k in FACTS for q in it[k]}))
+    for it in seen.values():
+        for k in FACTS:
+            # Empty where the query service has no label yet, which is what a brand-new item
+            # looks like. `summary` leaves those out rather than printing a bare QID.
+            it[k] = {q: live.get(q) or "" for q in it[k]}
     return {n: [seen[q] for q in sorted(qs) if q in seen]
             for n, qs in found.items() if any(q in seen for q in qs)}
+
+
+def points_at(claims: dict, prop: str) -> list[str]:
+    """The item QIDs one property's statements point at."""
+    out = []
+    for c in claims.get(prop) or []:
+        q = ((c["mainsnak"].get("datavalue") or {}).get("value") or {}).get("id")
+        if q:
+            out.append(q)
+    return out
+
+
+def about(qids: list[str]) -> dict[str, dict]:
+    """Per same-name item, the papers it is an author of and whether it could be a researcher.
+
+    Two query-service reads for the whole set, so the cost does not grow with the number of
+    people asked about.
+    """
+    if not qids:
+        return {}
+    plausible = researchers(qids)
+    titles: dict[str, list[str]] = {}
+    for i in range(0, len(qids), 50):
+        vals = " ".join("wd:" + q for q in qids[i:i + 50])
+        for r in sparql("SELECT ?p ?t WHERE { VALUES ?p {%s} ?w wdt:P50 ?p . "
+                        "?w rdfs:label ?t FILTER(LANG(?t) = 'en') }" % vals,
+                        endpoint=SCHOLARLY):
+            titles.setdefault(qid_of(r["p"]["value"]), []).append(r["t"]["value"])
+    return {q: {"works": sorted(set(titles.get(q) or [])), "research": q in plausible}
+            for q in qids}
+
+
+def coauthored() -> dict[str, set[str]]:
+    """ORCID to the reduced titles of the corpus papers whose author list it is on.
+
+    The co-author cache already resolved each name on each paper to an ORCID, so this only
+    turns that inside out. Reduced with `title_key`, because a Wikidata paper title and a
+    bibliography one differ in punctuation and case and in nothing else.
+    """
+    with open(os.path.join(BUILD, CACHE)) as f:
+        by_slug = (json.load(f).get("orcids") or {})
+    titles = {p["slug"]: title_key(p.get("title") or "")
+              for p in ((read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers")
+                        or [])}
+    out: dict[str, set[str]] = {}
+    for slug, names in by_slug.items():
+        for orcid in (names or {}).values():
+            if titles.get(slug):
+                out.setdefault(orcid, set()).add(titles[slug])
+    return out
+
+
+def verdict(p: dict, mine: set[str]) -> dict:
+    """Which same-name item this person is, where the public records settle it.
+
+    `{"qid": …}` names the item to put their ORCID on, `{}` leaves the answer to a person.
+    The `why` is printed by both task pages.
+
+    Only ever the same-person direction. An ORCID statement is undone by removing it, where a
+    second item for somebody who already has one takes an administrator to merge, so nothing
+    here concludes that a namesake is a namesake -- an occupation outside `RESEARCH_ROOTS`
+    reads that way and is not, because the subclass tree has holes (statistician reaches no
+    root at all).
+    """
+    same = [n for n in p["namesakes"] if not n["orcid"]]
+    shared = {n["qid"]: next((w for w in n.get("works") or [] if title_key(w) in mine), "")
+              for n in same}
+    for n in same:
+        if shared[n["qid"]]:
+            return {"qid": n["qid"],
+                    "why": 'it is stated as an author of "%s"' % shared[n["qid"]]}
+    at = {q for _label, q, _ref in p["employers"]}
+    both = [n for n in same if at & set(n["employers"])]
+    if len(same) == 1 and len(both) == 1:
+        shares = sorted(at & set(both[0]["employers"]))
+        return {"qid": both[0]["qid"],
+                "why": "it and their ORCID record name the same employer, "
+                       + ", ".join(both[0]["employers"][q] for q in shares)}
+    return {}
+
+
+def summary(n: dict) -> str:
+    """What a same-name item states about itself, on one line, for a reader deciding."""
+    desc = n.get("description") or ""
+    bits = [desc] if desc else []
+    for k, lead in (("occupations", ""), ("education", "studied at "), ("employers", "at ")):
+        # A description of "statistician" beside an occupation of statistician is one fact.
+        vals = sorted(v for v in (n.get(k) or {}).values()
+                      if v and v.lower() not in desc.lower())
+        if vals:
+            bits.append(lead + ", ".join(vals))
+    works = n.get("works") or []
+    if works:
+        bits.append('%d paper%s including "%s"'
+                    % (len(works), "" if len(works) == 1 else "s", works[0]))
+    return " · ".join(bits) or "states nothing beyond the name"
 
 
 def decided() -> dict[str, str]:
@@ -359,7 +471,7 @@ def stale(p: dict, live: dict, day: str) -> dict:
 
 
 def write_page(people: list[dict], held: list[dict], skipped: list[dict],
-               papers: dict[str, int], qs_path: str | None) -> str:
+               decisions: list[dict], papers: dict[str, int], qs_path: str | None) -> str:
     L = ["# Wikidata items for the co-authors", "",
          fill("Generated by `python scripts/wikidata_people.py`. A co-author with an ORCID "
               "and no Wikidata item cannot be an `author` statement on the papers you "
@@ -402,10 +514,25 @@ def write_page(people: list[dict], held: list[dict], skipped: list[dict],
                      f"([{p['orcid']}](https://orcid.org/{p['orcid']}), "
                      f"{papers.get(p['orcid'], 0)} papers with you) — "
                      f"{len(p['namesakes'])} item(s) carry the name, "
-                     f"{len(near)} of them stating no ORCID: "
-                     + ", ".join(f"[{n['qid']}](https://www.wikidata.org/wiki/{n['qid']})"
-                                 for n in p["namesakes"][:8])
-                     + (" …" if len(p["namesakes"]) > 8 else ""))
+                     f"{len(near)} of them stating no ORCID")
+            for n in p["namesakes"][:8]:
+                L.append(f"  - [{n['qid']}](https://www.wikidata.org/wiki/{n['qid']}) — "
+                         f"{n['says']}")
+            if len(p["namesakes"]) > 8:
+                L.append(f"  - … {len(p['namesakes']) - 8} more")
+        L.append("")
+    if decisions:
+        L += [f"## Answered from the records ({len(decisions)})", "",
+              fill("A paper or an employer both records name means the same-name item is "
+                   "this person, so the ORCID goes on it -- `--apply` adds it. The other "
+                   "direction is never concluded here: a second item for somebody who "
+                   "already has one takes an administrator to merge, and a stated occupation "
+                   "is not enough to risk it."), ""]
+        for d in sorted(decisions, key=lambda x: -papers.get(x["orcid"], 0)):
+            v = d["verdict"]
+            L.append(f"- **{d['label']}** — "
+                     f"[{v['qid']}](https://www.wikidata.org/wiki/{v['qid']}), "
+                     f"because {v['why']}")
         L.append("")
     if skipped:
         L += [f"## Left out ({len(skipped)})", "",
@@ -447,7 +574,24 @@ def main() -> int:
     taken = namesakes(sorted({p["label"] for p in ok}))
     for p in ok:
         p["namesakes"] = keeps(p, taken.get(p["label"]) or [])
+    facts = about(sorted({n["qid"] for p in ok for n in p["namesakes"]}))
+    for p in ok:
+        for n in p["namesakes"]:
+            n.update(facts.get(n["qid"]) or {"works": [], "research": True})
+            # Written into the state so the worklist prints the same line as the task page.
+            n["says"] = summary(n)
+        # The likely answer first: an item stating an occupation nothing like research is
+        # still shown, because the tree that says so has holes.
+        p["namesakes"].sort(key=lambda n: (not n["research"], n["qid"]))
     answered = decided()
+    mine = coauthored()
+    # A hold the records themselves settle is not a question. Answered here rather than
+    # asked, and only where an answer given by hand has not already said otherwise.
+    for p in ok:
+        v = verdict(p, mine.get(p["orcid"]) or set()) if p["namesakes"] else {}
+        if v and not answered.get(p["orcid"]):
+            p["verdict"] = v
+            answered[p["orcid"]] = v["qid"]
     # An answer given by hand overrides the hold it was asked about.
     people = [p for p in ok
               if not p["namesakes"] or answered.get(p["orcid"]) == "new"]
@@ -465,17 +609,25 @@ def main() -> int:
             f.write("\n".join(lines) + "\n")
     elif os.path.exists(qs):
         os.remove(qs)
-    page = write_page(people, held, skipped, papers, qs if lines else None)
+    decisions = [p for p in ok if p.get("verdict")]
+    page = write_page(people, held, skipped, decisions, papers, qs if lines else None)
     write_json(
         os.path.join(BUILD, "wikidata_people.json"),
         {"asked": day, "create": len(people), "held": len(held),
-         "skipped": len(skipped),
+         "skipped": len(skipped), "decided": len(decisions),
          "mentions": sum(papers[p["orcid"]] for p in people),
-         "people": people, "held_people": held}, indent=1, sort_keys=True)
+         "people": people, "held_people": held,
+         "decisions": [{"label": p["label"], "orcid": p["orcid"], "papers": p["papers"],
+                        "verdict": p["verdict"]} for p in decisions]},
+        indent=1, sort_keys=True)
     if not args.quiet:
         print("%d co-author ORCIDs with no item: %d to create, %d already have a "
               "same-name item, %d left out"
               % (len(todo), len(people), len(held), len(skipped)))
+        for p in sorted(ok, key=lambda x: x["label"]):
+            if p.get("verdict"):
+                print("  %s is %s — %s"
+                      % (p["label"], p["verdict"]["qid"], p["verdict"]["why"]))
         print("wrote %s%s" % (page, " and " + qs if lines else ""))
     if not args.apply:
         return 0

@@ -16,7 +16,7 @@ holds the instructions; nothing here repeats them.
 **One edit each, and each one closes a section outright.** This is where
 the page gets visibly shorter.
 
-1. **Co-authors who may already have a Wikidata item (13)** — open each item and write the QID beside the ORCID in `data/overrides.yaml`, or `new` where the papers on it are somebody else's. The lines are in the section ready to paste, and answering the top few is worth doing on its own — each answer turns one co-author into `author` statements on the papers you share.
+1. **Co-authors who may already have a Wikidata item (22)** — open each item and write the QID beside the ORCID in `data/overrides.yaml`, or `new` where the papers on it are somebody else's. The lines are in the section ready to paste, and answering the top few is worth doing on its own — each answer turns one co-author into `author` statements on the papers you share.
 2. **2 field corrections the bibliography does not carry** — one paste per line, into the entry `orig.bib` already has for that paper. Every line is given ready to drop in, and the override lines go after. Worth more than its size — Scholar, Semantic Scholar and OpenAlex all read the paper's own record, and none of them reads this repo.
 3. **Wikipedia mentions 3 of your coinages across 6 article(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
 
@@ -112,49 +112,126 @@ and many independent paths into your item is the point of having them at all.
       - the links, and the candidate items found for each name: [`tasks/wikidata_coauthors.md`](tasks/wikidata_coauthors.md)
       - 171 name matches are left out as namesakes, on a stated occupation nothing like research
 
-## Co-authors who may already have a Wikidata item (13)
+## Co-authors who may already have a Wikidata item (22)
 
-Wikidata has one human item under each of these names and it states no ORCID, so
-it is either this co-author reached from a paper rather than a profile, or a
-namesake. Open the item, and if the papers on it are theirs write the answer into
-[`data/overrides.yaml`](data/overrides.yaml) under `wikidata_people`:
+Wikidata carries a human item under each of these names and none of them states an
+ORCID, so each is either this co-author reached from a paper rather than a profile
+or somebody else of the same name. Under each name is what every candidate item
+says about itself, the ones stating a research occupation first. The answer is
+which line is them, or `new` if none is.
+
+Paste into [`data/overrides.yaml`](data/overrides.yaml) under `wikidata_people`,
+correcting the QIDs that are wrong:
 
 ```yaml
 wikidata_people:
-  0000-0003-4311-3876: Q102687062   # Omri Abend, or `new` if that item is somebody else
-  0000-0001-5171-8264: Q6577926   # Noam Slonim, or `new` if that item is somebody else
-  0000-0003-0153-6811: Q103330754   # Mikhail Yurochkin, or `new` if that item is somebody else
-  0000-0003-1445-3150: Q102070311   # Prateek Yadav, or `new` if that item is somebody else
-  0000-0002-0190-6459: Q107742361   # Sara Hooker, or `new` if that item is somebody else
-  0000-0001-8376-4505: Q137017900   # Charles Jochim, or `new` if that item is somebody else
-  0000-0001-5101-4443: Q102360378   # Dan Gutfreund, or `new` if that item is somebody else
-  0000-0002-4083-542X: Q102407752   # Joseph Shtok, or `new` if that item is somebody else
-  0009-0008-7352-2586: Q118928179   # Ran Levy, or `new` if that item is somebody else
-  0000-0002-4148-895X: Q115868444   # Shashank Srivastava, or `new` if that item is somebody else
-  0009-0003-3187-3955: Q110275688   # Wenting Zhao, or `new` if that item is somebody else
-  0000-0002-4837-8411: Q102278866   # Yoon Kim, or `new` if that item is somebody else
-  0000-0002-4712-5527: Q117414502   # Yuting Lin, or `new` if that item is somebody else
+  0000-0003-4311-3876: Q102687062   # Omri Abend, or new
+  0000-0003-0153-6811: Q103330754   # Mikhail Yurochkin, or new
+  0000-0002-3141-5845: Q125454034   # Jacob Andreas — or Q62754, Q112760940, or new
+  0000-0003-2434-2534: Q102390975   # Carlos Alzate — or Q1042683, or new
+  0000-0003-1971-1606: Q103328754   # Judy Hoffman — or Q22097391, Q6304478, or new
+  0000-0002-8376-107X: Q139550968   # Michelle Lin — or Q64785953, Q85881335, or new
+  0000-0001-5522-1351: Q103295310   # Mohit Bansal — or Q67386311, Q112628221, or new
+  0000-0003-1445-3150: Q102070311   # Prateek Yadav, or new
+  0000-0002-0190-6459: Q107742361   # Sara Hooker, or new
+  0000-0002-0836-2212: Q102196599   # Bo Liu — or Q102403237, Q102682954, Q124355855, …, or new
+  0000-0001-8376-4505: Q137017900   # Charles Jochim, or new
+  0000-0002-3393-8666: Q30570617   # Eli Schwartz — or Q110505456, or new
+  0000-0002-4083-542X: Q102407752   # Joseph Shtok, or new
+  0009-0008-6932-7091: Q102434002   # Pengfei Liu — or Q102925389, or new
+  0000-0002-0847-8426: Q1274250   # Raj Shah — or Q130379561, Q29043436, Q47460504, or new
+  0009-0008-7352-2586: Q118928179   # Ran Levy, or new
+  0000-0002-4148-895X: Q115868444   # Shashank Srivastava, or new
+  0000-0002-6265-5307: Q102200147   # Wei Lin — or Q102208278, Q102308764, Q102399878, …, or new
+  0009-0003-3187-3955: Q110275688   # Wenting Zhao, or new
+  0000-0002-4837-8411: Q102278866   # Yoon Kim, or new
+  0000-0002-9532-4408: Q102131509   # Yu Su — or Q102376718, Q45403146, Q45419816, …, or new
+  0000-0002-4712-5527: Q117414502   # Yuting Lin, or new
 ```
 
-- [ ] **Omri Abend** (54 papers with you) — [Q102687062](https://www.wikidata.org/wiki/Q102687062) against [their ORCID record](https://orcid.org/0000-0003-4311-3876), researcher at Hebrew University of Jerusalem
-- [ ] **Noam Slonim** (26 papers with you) — [Q6577926](https://www.wikidata.org/wiki/Q6577926) against [their ORCID record](https://orcid.org/0000-0001-5171-8264), researcher
-- [ ] **Mikhail Yurochkin** (14 papers with you) — [Q103330754](https://www.wikidata.org/wiki/Q103330754) against [their ORCID record](https://orcid.org/0000-0003-0153-6811), researcher at Mohamed bin Zayed University of Artificial Intelligence
-- [ ] **Prateek Yadav** (4 papers with you) — [Q102070311](https://www.wikidata.org/wiki/Q102070311) against [their ORCID record](https://orcid.org/0000-0003-1445-3150), researcher
-- [ ] **Sara Hooker** (4 papers with you) — [Q107742361](https://www.wikidata.org/wiki/Q107742361) against [their ORCID record](https://orcid.org/0000-0002-0190-6459), researcher
-- [ ] **Charles Jochim** (2 papers with you) — [Q137017900](https://www.wikidata.org/wiki/Q137017900) against [their ORCID record](https://orcid.org/0000-0001-8376-4505), researcher
-- [ ] **Dan Gutfreund** (2 papers with you) — [Q102360378](https://www.wikidata.org/wiki/Q102360378) against [their ORCID record](https://orcid.org/0000-0001-5101-4443), researcher at IBM (United States)
-- [ ] **Joseph Shtok** (2 papers with you) — [Q102407752](https://www.wikidata.org/wiki/Q102407752) against [their ORCID record](https://orcid.org/0000-0002-4083-542X), researcher
-- [ ] **Ran Levy** (2 papers with you) — [Q118928179](https://www.wikidata.org/wiki/Q118928179) against [their ORCID record](https://orcid.org/0009-0008-7352-2586), researcher at Ben-Gurion University of the Negev
-- [ ] **Shashank Srivastava** (2 papers with you) — [Q115868444](https://www.wikidata.org/wiki/Q115868444) against [their ORCID record](https://orcid.org/0000-0002-4148-895X), researcher at Motilal Nehru National Institute of Technology
-- [ ] **Wenting Zhao** (2 papers with you) — [Q110275688](https://www.wikidata.org/wiki/Q110275688) against [their ORCID record](https://orcid.org/0009-0003-3187-3955), researcher at Salesforce (United States)
-- [ ] **Yoon Kim** (2 papers with you) — [Q102278866](https://www.wikidata.org/wiki/Q102278866) against [their ORCID record](https://orcid.org/0000-0002-4837-8411), researcher at University of Seoul
-- [ ] **Yuting Lin** (2 papers with you) — [Q117414502](https://www.wikidata.org/wiki/Q117414502) against [their ORCID record](https://orcid.org/0000-0002-4712-5527), researcher at Shenzhen University
+- [ ] **Omri Abend** (54 papers with you, [their ORCID record](https://orcid.org/0000-0003-4311-3876))
+  - [Q102687062](https://www.wikidata.org/wiki/Q102687062) — Ph.D. Hebrew University 2013 · studied at Hebrew University of Jerusalem
+- [ ] **Mikhail Yurochkin** (14 papers with you, [their ORCID record](https://orcid.org/0000-0003-0153-6811))
+  - [Q103330754](https://www.wikidata.org/wiki/Q103330754) — statistician · studied at Moscow Institute of Physics and Technology, University of Michigan · at IBM Research
+- [ ] **Jacob Andreas** (10 papers with you, [their ORCID record](https://orcid.org/0000-0002-3141-5845))
+  - [Q125454034](https://www.wikidata.org/wiki/Q125454034) — AI researcher · artificial intelligence researcher, professor · studied at Columbia University, University of California, Berkeley, University of Cambridge
+  - [Q62754](https://www.wikidata.org/wiki/Q62754) — German lutheran theologian (1528-1590) · Protestant reformer, reformer, university teacher, writer · studied at University of Tübingen · at Evangelical-Lutheran Church in Württemberg, University of Tübingen
+  - [Q112760940](https://www.wikidata.org/wiki/Q112760940) — actor
+- [ ] **Carlos Alzate** (6 papers with you, [their ORCID record](https://orcid.org/0000-0003-2434-2534))
+  - [Q102390975](https://www.wikidata.org/wiki/Q102390975) — Ph.D. Katholieke Universiteit Leuven 2009
+  - [Q1042683](https://www.wikidata.org/wiki/Q1042683) — Colombian racing cyclist · sport cyclist
+- [ ] **Judy Hoffman** (4 papers with you, [their ORCID record](https://orcid.org/0000-0003-1971-1606))
+  - [Q103328754](https://www.wikidata.org/wiki/Q103328754) — Ph.D. University of California, Berkeley 2016 · computer scientist · at Georgia Tech
+  - [Q22097391](https://www.wikidata.org/wiki/Q22097391) — American filmmaker and arts activist · film director · studied at Northeastern University
+  - [Q6304478](https://www.wikidata.org/wiki/Q6304478) — American artist · sculptor · studied at Grinnell College
+- [ ] **Michelle Lin** (4 papers with you, [their ORCID record](https://orcid.org/0000-0002-8376-107X))
+  - [Q139550968](https://www.wikidata.org/wiki/Q139550968) — professor, researcher
+  - [Q64785953](https://www.wikidata.org/wiki/Q64785953) — Asian American writer · poet · studied at University of California, Riverside, University of Pittsburgh
+  - [Q85881335](https://www.wikidata.org/wiki/Q85881335) — Taiwanese television presenter and politician · studied at Affiliated Senior High School of National Taiwan Normal University, Soochow University · at SET News
+- [ ] **Mohit Bansal** (4 papers with you, [their ORCID record](https://orcid.org/0000-0001-5522-1351))
+  - [Q103295310](https://www.wikidata.org/wiki/Q103295310) — Ph.D. University of California, Berkeley 2015 · computer scientist
+  - [Q67386311](https://www.wikidata.org/wiki/Q67386311) — researcher, natural language processing and machine learning, University of North Carolina (UNC) Chapel Hill · 3 papers including "ChrEn: Cherokee-English Machine Translation for Endangered Language Revitalization"
+  - [Q112628221](https://www.wikidata.org/wiki/Q112628221) — Indian Entrepreneur · philanthropist · studied at State University of New York · 5 papers including "Health literacy and oral health literacy: are they associated? A cross sectional survey among undergraduate students of tricity (Chandigarh, Mohali, Panchkula), India"
+- [ ] **Prateek Yadav** (4 papers with you, [their ORCID record](https://orcid.org/0000-0003-1445-3150))
+  - [Q102070311](https://www.wikidata.org/wiki/Q102070311) — businessman · businessperson · 1 paper including "Synthesis of Chiral-Substituted 2-Aryl-ferrocenes by the Catellani Reaction"
+- [ ] **Sara Hooker** (4 papers with you, [their ORCID record](https://orcid.org/0000-0002-0190-6459))
+  - [Q107742361](https://www.wikidata.org/wiki/Q107742361) — deep learning researcher · computer scientist · studied at Carleton College, Université de Montréal, Waterford Kamhlaba · at Cohere, Google Brain · 1 paper including "A Benchmark for Interpretability Methods in Deep Neural Networks"
+- [ ] **Bo Liu** (2 papers with you, [their ORCID record](https://orcid.org/0000-0002-0836-2212))
+  - [Q102196599](https://www.wikidata.org/wiki/Q102196599) — applied math Ph.D. University of Minnesota-Minneapolis 1998
+  - [Q102403237](https://www.wikidata.org/wiki/Q102403237) — statistics Ph.D. North Carolina State University 2012 · statistician
+  - [Q102682954](https://www.wikidata.org/wiki/Q102682954) — analysis Ph.D. Nankai University 2013
+  - [Q124355855](https://www.wikidata.org/wiki/Q124355855) — Chinese entomologist
+  - [Q67220313](https://www.wikidata.org/wiki/Q67220313) — particle physicist in Cagliari, Italy · researcher · at INFN Sezione di Cagliari · 348 papers including "A model-independent Dalitz plot analysis of B ± → D K ± with D → K S 0 h + h − ( h = π , K ) decays and constraints on the CKM angle γ"
+- [ ] **Charles Jochim** (2 papers with you, [their ORCID record](https://orcid.org/0000-0001-8376-4505))
+  - [Q137017900](https://www.wikidata.org/wiki/Q137017900) — states nothing beyond the name
+- [ ] **Eli Schwartz** (2 papers with you, [their ORCID record](https://orcid.org/0000-0002-3393-8666))
+  - [Q30570617](https://www.wikidata.org/wiki/Q30570617) — economist · studied at Brown University, University of Connecticut, University of Denver
+  - [Q110505456](https://www.wikidata.org/wiki/Q110505456) — Author and Consultant · writer
+- [ ] **Joseph Shtok** (2 papers with you, [their ORCID record](https://orcid.org/0000-0002-4083-542X))
+  - [Q102407752](https://www.wikidata.org/wiki/Q102407752) — Ph.D. Technion-Israel Institute of Technology 2012 · studied at Technion – Israel Institute of Technology
+- [ ] **Pengfei Liu** (2 papers with you, [their ORCID record](https://orcid.org/0009-0008-6932-7091))
+  - [Q102434002](https://www.wikidata.org/wiki/Q102434002) — Ph.D. Université Bordeaux 1 2013 · studied at University of Bordeaux 1
+  - [Q102925389](https://www.wikidata.org/wiki/Q102925389) — Ph.D. Chinese University of Hong Kong 2013 · studied at The Chinese University of Hong Kong
+- [ ] **Raj Shah** (2 papers with you, [their ORCID record](https://orcid.org/0000-0002-0847-8426))
+  - [Q1274250](https://www.wikidata.org/wiki/Q1274250) — American government official (born 1973) · executive, politician, university teacher · studied at Perelman School of Medicine at the University of Pennsylvania, The Wharton School, University of Michigan · at United States Department of Agriculture
+  - [Q130379561](https://www.wikidata.org/wiki/Q130379561) — venture capitalist · airman · studied at Princeton University
+  - [Q29043436](https://www.wikidata.org/wiki/Q29043436) — White House Deputy Press Secretary · civil servant, opposition researcher · studied at Cornell University · at Fox Corporation, White House Office of the Press Secretary
+  - [Q47460504](https://www.wikidata.org/wiki/Q47460504) — American rower and physician · coxswain, otolaryngologist · studied at Brown University, Phillips Exeter Academy
+- [ ] **Ran Levy** (2 papers with you, [their ORCID record](https://orcid.org/0009-0008-7352-2586))
+  - [Q118928179](https://www.wikidata.org/wiki/Q118928179) — naturalist
+- [ ] **Shashank Srivastava** (2 papers with you, [their ORCID record](https://orcid.org/0000-0002-4148-895X))
+  - [Q115868444](https://www.wikidata.org/wiki/Q115868444) — Senior Executive Director, Marketing & Sales, Maruti Suzuki India
+- [ ] **Wei Lin** (2 papers with you, [their ORCID record](https://orcid.org/0000-0002-6265-5307))
+  - [Q102200147](https://www.wikidata.org/wiki/Q102200147) — Ph.D. Washington University in St. Louis 1993 · studied at Washington University in St. Louis
+  - [Q102208278](https://www.wikidata.org/wiki/Q102208278) — Ph.D. University of Newcastle 1993
+  - [Q102308764](https://www.wikidata.org/wiki/Q102308764) — Ph.D. Clemson University 2006
+  - [Q102399878](https://www.wikidata.org/wiki/Q102399878) — states nothing beyond the name
+  - [Q103300352](https://www.wikidata.org/wiki/Q103300352) — Ph.D. University of Toronto 2016
+  - [Q109859447](https://www.wikidata.org/wiki/Q109859447) — states nothing beyond the name
+  - [Q120718843](https://www.wikidata.org/wiki/Q120718843) — academic and researcher · university teacher · 6 papers including "A Study of the Monohydrate and Dihydrate Complexes of Perfluoropropionic Acid Using Chirped-Pulse Fourier Transform Microwave (CP-FTMW) Spectroscopy"
+  - [Q45424520](https://www.wikidata.org/wiki/Q45424520) — Tang dynasty person CBDB=33626
+  - [Q5213883](https://www.wikidata.org/wiki/Q5213883) — Taiwanese-American film producer (born 1973) · studied at Harvard Business School, Harvard University, The Wharton School
+- [ ] **Wenting Zhao** (2 papers with you, [their ORCID record](https://orcid.org/0009-0003-3187-3955))
+  - [Q110275688](https://www.wikidata.org/wiki/Q110275688) — researcher (biochemistry) · at La Trobe University
+- [ ] **Yoon Kim** (2 papers with you, [their ORCID record](https://orcid.org/0000-0002-4837-8411))
+  - [Q102278866](https://www.wikidata.org/wiki/Q102278866) — Ph.D. Virginia Polytechnic Institute and State University 1992 · studied at Virginia Tech
+- [ ] **Yu Su** (2 papers with you, [their ORCID record](https://orcid.org/0000-0002-9532-4408))
+  - [Q102131509](https://www.wikidata.org/wiki/Q102131509) — Ph.D. University of Arizona 1990
+  - [Q102376718](https://www.wikidata.org/wiki/Q102376718) — Ph.D. Rutgers University, New Brunswick 2003
+  - [Q45403146](https://www.wikidata.org/wiki/Q45403146) — Song dynasty person (CBDB = 22803)
+  - [Q45419816](https://www.wikidata.org/wiki/Q45419816) — Tang dynasty person CBDB=31500
+  - [Q45481252](https://www.wikidata.org/wiki/Q45481252) — Tang dynasty person CBDB = 177576
+  - [Q45647788](https://www.wikidata.org/wiki/Q45647788) — Tang dynasty person CBDB = 185733
+  - [Q113070588](https://www.wikidata.org/wiki/Q113070588) — musical artist · musician
+- [ ] **Yuting Lin** (2 papers with you, [their ORCID record](https://orcid.org/0000-0002-4712-5527))
+  - [Q117414502](https://www.wikidata.org/wiki/Q117414502) — nurse, graduated from University of Washington with a Ph.D. in Nursing · 1 paper including "Itching and parental guilt: parent responses to children's symptoms following unintentional burn injuries"
 
-Nothing else follows by hand. The next run adds the ORCID to the item, or creates a
-separate one, and writes the *author* statements from it.
+Nothing else follows by hand. The next run adds the ORCID to the item named, or
+creates a separate one, and writes the *author* statements from it.
 
-11 more names collide with several items each, which no glance settles. Those wait for
-a bibliography match rather than a decision.
+2 more needed no answer -- a paper or an employer both records
+name says which item they are, and [`tasks/wikidata_people.md`](tasks/wikidata_people.md)
+lists which and why.
 
 ## 2 field corrections the bibliography does not carry
 
