@@ -5679,6 +5679,40 @@ class TestTheAuditKeepsThePagesItCouldNotRead(unittest.TestCase):
         self.assertEqual(1, len(got["missing"]))
         self.assertEqual([], got["refused"])
 
+    def test_an_unread_wikidata_item_is_not_an_item_with_no_gaps(self):
+        """Both readings report an absence -- no item claims this identifier, this item
+        states no gaps -- so a refusal reads as an author item in order. The worklist builds
+        its two Wikidata sections from the counts, and `None` takes them away."""
+        ai = self._ai()
+        old = ai._wd_quiet
+        try:
+            cfg = {"identity": {"orcid": "0000-0002-3491-0632"},
+                   "ids": {"semantic_scholar_primary": "1", "google_scholar": "g",
+                           "github": "borgr"}}
+            for st in (0, 429, 500):
+                ai._wd_quiet = ""
+                with self._answering(ai, st):
+                    self.assertIsNone(ai.wikidata_item(cfg))
+                    self.assertEqual({}, ai.wikidata_gaps("Q123", cfg))
+                self.assertTrue(ai._wd_quiet, "status %s passed as an answer" % st)
+                # The counts this run has are all None; last run's stand instead.
+                state = {"wikidata_gaps": None, "wikidata_papers_present": None,
+                         "wikidata_papers_absent": None, "wikidata_papers_creatable": None}
+                prev = {"wikidata_gaps": 4, "wikidata_papers_present": 12,
+                        "wikidata_papers_absent": 105, "wikidata_papers_creatable": 104}
+                self.assertTrue(ai.carry_wikidata(state, prev))
+                self.assertEqual(prev, state, "status %s blanked the section" % st)
+
+            ai._wd_quiet = ""
+            with self._answering(ai, 200, b'{"query": {"search": []}}'):
+                self.assertIsNone(ai.wikidata_item(cfg))
+            self.assertEqual("", ai._wd_quiet)
+            state = {"wikidata_gaps": 0}
+            self.assertEqual("", ai.carry_wikidata(state, {"wikidata_gaps": 4}))
+            self.assertEqual({"wikidata_gaps": 0}, state, "this run's reading was replaced")
+        finally:
+            ai._wd_quiet = old
+
     def test_an_unread_arxiv_feed_is_not_an_unlinked_orcid(self):
         """A 404 is arXiv saying the author page does not exist, which is what the "link
         your account first" page is for. Anything else is arXiv not answering."""

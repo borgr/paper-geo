@@ -187,6 +187,29 @@ def arxiv_registered(orcid: str) -> set[str] | None:
     return out
 
 
+# Set to the first Wikidata call that did not answer. Both readings below report an
+# absence -- no item claims this identifier, this item states no gaps -- and every way of
+# not answering reports the same absence, which reads on the page as an item in order.
+_wd_quiet = ""
+
+
+def wd_asked(url: str) -> dict:
+    """One Wikidata call, `{}` if it did not answer, with the refusal recorded.
+
+    Both endpoints answer 200 with an empty result for something they do not have, so any
+    other status is a refusal rather than a report.
+    """
+    global _wd_quiet
+    st, raw = get_status(url, accept="application/json")
+    try:
+        d = json.loads(raw) if st == 200 and raw else None
+    except ValueError:
+        d = None
+    if d is None:
+        _wd_quiet = _wd_quiet or f"HTTP {st}"
+    return d or {}
+
+
 def wikidata_item(cfg) -> str | None:
     """Find an author item by any identifier we already know, not by name.
 
@@ -199,8 +222,8 @@ def wikidata_item(cfg) -> str | None:
               ("P1960", ids["google_scholar"]), ("P2037", ids["github"])]
     for prop, val in probes:
         q = quote(f'haswbstatement:"{prop}={val}"')
-        j = get_json("https://www.wikidata.org/w/api.php?action=query&list=search"
-                     f"&srsearch={q}&srlimit=5&format=json") or {}
+        j = wd_asked("https://www.wikidata.org/w/api.php?action=query&list=search"
+                     f"&srsearch={q}&srlimit=5&format=json")
         for hit in ((j.get("query") or {}).get("search") or []):
             return hit["title"]
     return None
@@ -228,7 +251,7 @@ def wikidata_gaps(qid: str, cfg) -> dict:
     several -- markdown backticks and all, which is what happened here. Both are
     silent: the item looks complete and queries against it come back wrong.
     """
-    d = get_json(f"https://www.wikidata.org/wiki/Special:EntityData/{qid}.json") or {}
+    d = wd_asked(f"https://www.wikidata.org/wiki/Special:EntityData/{qid}.json")
     ent = ((d.get("entities") or {}).get(qid)) or {}
     if not ent:
         return {}
@@ -293,6 +316,23 @@ def wikidata_gaps(qid: str, cfg) -> dict:
 
 
 CREATED = os.path.join(DATA, "wikidata_created.yaml")
+
+
+def carry_wikidata(state: dict, prev: dict) -> str:
+    """Put the last run's Wikidata counts back, if Wikidata did not answer this run.
+
+    Returns what did not answer, or `""`. Every one of these counts is `None` when the
+    item could not be read, and the worklist builds its Wikidata sections from them, so
+    writing them would take the sections away -- which reads as work already done rather
+    than as a reading this run does not have.
+    """
+    if not _wd_quiet:
+        return ""
+    for k in ("wikidata_gaps", "wikidata_papers_present", "wikidata_papers_absent",
+              "wikidata_papers_creatable"):
+        if k in prev:
+            state[k] = prev[k]
+    return _wd_quiet
 
 
 def created_items() -> dict:
@@ -1517,6 +1557,10 @@ def main() -> None:
         n_wd = (len(wd_gaps["missing"]) + len(wd_gaps["wrong"]) + len(wd_gaps["dupes"])
                 + len(wd_gaps["bad_aliases"]) + len(wd_gaps["want_aliases"]))
         L.append(f"| Wikidata item complete | {n_wd} gaps | {status(not n_wd)} |")
+    elif wd:
+        # Dropping the row would read as one fewer thing to check rather than as a
+        # reading this run does not have.
+        L.append("| Wikidata item complete | Wikidata did not answer | re-run |")
     if wd_cov:
         # Not scored. Low coverage is a fact about Wikidata's imports, not a defect in
         # your record, and a red mark here would read as 119 tasks you are behind on.
@@ -1949,6 +1993,10 @@ def main() -> None:
                   "wikidata_papers_creatable": (
                       sum(1 for p in wd_cov["absent"] if paper_item(p, cfg))
                       if wd_cov else None)})
+    quiet = carry_wikidata(state, prev)
+    if quiet:
+        print("wikidata did not answer (%s), so its half of this report is carried from "
+              "the last run" % quiet, file=sys.stderr)
     write_json(state_path, state, indent=1)
 
     rm_path = os.path.join(TASKS, "orcid_remove.md")
