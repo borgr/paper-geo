@@ -1133,6 +1133,51 @@ def orcid_missing_items(slugs: list[str], by_slug: dict) -> list[str]:
     return out
 
 
+def wikipedia_checks(wiki: dict) -> list[str]:
+    """Articles that name the author or a coined term, each with the sentence saying so.
+
+    Read from `build/wikipedia_state.json` because the ~100 API calls behind it belong to
+    the audit step. One row per article rather than per term: the row is a page to read,
+    and the quoted line under it is what makes reading optional.
+    """
+
+    def arts(v):
+        """`(title, says)` pairs, tolerating a state file written before `says` existed."""
+        return [(a, "") if isinstance(a, str) else (a.get("title") or "", a.get("says") or "")
+                for a in v or []]
+
+    rows = [(t, t, s) for t, s in arts(wiki.get("already_mentions"))]
+    rows += [(c["term"], a, s) for c in wiki.get("checks") or []
+             for a, s in arts(c.get("articles"))]
+    if not rows:
+        return []
+    L = [f"## Wikipedia mentions {len({t for t, _a, _s in rows})} of your coinages across "
+         f"{len({a for _t, a, _s in rows})} article(s) — check the facts", "",
+         "Wikipedia carries roughly half the citations in AI answers, and WP:COI",
+         "means you may not edit these. What you *can* do is the thing only an",
+         "author can: notice that a description is wrong. The quoted line is what the",
+         "article says — if it reads correctly, tick it and move on, which is the",
+         "expected outcome.",
+         "",
+         "A correction goes on the talk page, with the corrected value and the page",
+         "or table it comes from. Never in the article, and never a citation of your",
+         "own work — that is the edit that gets reverted on sight.", ""]
+    for term, art, says in rows:
+        q = art.replace(" ", "_")
+        # An article naming the author is its own subject, so naming it twice reads as noise.
+        what = "" if term == art else f"**{term}** in "
+        L.append(f"- [ ] {what}[{art}](https://en.wikipedia.org/wiki/{q}) "
+                 f"([talk](https://en.wikipedia.org/wiki/Talk:{q}))")
+        if says:
+            L.append(f"  > {says}")
+    return L + ["",
+                f"The {wiki.get('absent', 0)} coinages Wikipedia does not mention are "
+                f"listed in",
+                "[`tasks/wikipedia.md`](tasks/wikipedia.md) as deliberately not "
+                "actionable, along with",
+                "the field articles you could improve with other people's sources.", ""]
+
+
 def step_worklist(cfg, args) -> None:
     """Report what still needs the account owner, ranked by leverage.
 
@@ -1430,40 +1475,14 @@ def step_worklist(cfg, args) -> None:
                   "Nothing open. ORCID, Semantic Scholar, Wikidata and OpenAlex all match",
                   "`config.yaml` as of the last audit.", ""]
 
-    # Wikipedia: corrections only. Read from build/wikipedia_state.json because the ~100 API
-    # calls behind it belong to the audit step, not to rendering the worklist. Nothing here
-    # asks for an insertion -- see the docstring of scripts/wikipedia_tasks.py for why the
-    # propose-a-mention version was dropped.
+    # Nothing here asks for an insertion -- see the docstring of scripts/wikipedia_tasks.py
+    # for why the propose-a-mention version was dropped.
     try:
         with open(os.path.join(ROOT, "build", "wikipedia_state.json")) as f:
             wiki = json.load(f)
     except (OSError, ValueError):
         wiki = {}
-    wiki_items = [(t, [t]) for t in wiki.get("already_mentions") or []]
-    wiki_items += [(c["term"], c["articles"]) for c in wiki.get("checks") or []]
-    if wiki_items:
-        n_arts = len({a for _t, arts in wiki_items for a in arts})
-        lines += [f"## Wikipedia mentions {len(wiki_items)} of your coinages across "
-                  f"{n_arts} article(s) — check the facts", "",
-                  "Wikipedia carries roughly half the citations in AI answers, and WP:COI",
-                  "means you may not edit these. What you *can* do is the thing only an",
-                  "author can: notice that a description is wrong. If it reads correctly,",
-                  "tick it and move on — that is the expected outcome.",
-                  "",
-                  "A correction goes on the talk page, with the corrected value and the page",
-                  "or table it comes from. Never in the article, and never a citation of your",
-                  "own work — that is the edit that gets reverted on sight.", ""]
-        for term, arts in wiki_items:
-            links = ", ".join(f"[{a}](https://en.wikipedia.org/wiki/{a.replace(' ', '_')}) "
-                              f"([talk](https://en.wikipedia.org/wiki/Talk:"
-                              f"{a.replace(' ', '_')}))" for a in arts)
-            lines.append(f"- [ ] **{term}** — {links}")
-        lines += ["",
-                  f"The {wiki.get('absent', 0)} coinages Wikipedia does not mention are "
-                  f"listed in",
-                  "[`tasks/wikipedia.md`](tasks/wikipedia.md) as deliberately not "
-                  "actionable, along with",
-                  "the field articles you could improve with other people's sources.", ""]
+    lines += wikipedia_checks(wiki)
 
     typos = state.get("arxiv_name_typos") or []
     if typos:

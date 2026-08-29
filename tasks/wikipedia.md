@@ -10,18 +10,33 @@ insert-a-mention version of this page was dropped.
 
 Read each one and check it describes the work correctly. If it does, there is
 nothing to do. If it does not, the talk page gets the correction and the page
-or table it comes from -- never the article itself.
+or table it comes from -- never the article itself. The quoted line is the
+text that names you, excerpted by the search, so it may start mid-sentence.
 
 - [ ] [Argument technology](https://en.wikipedia.org/wiki/Argument_technology) — [talk](https://en.wikipedia.org/wiki/Talk:Argument_technology)
+  > m|first4=Roy|last5=Bogin|first5=Ben|last6=Bonin|first6=Francesca|last7=Choshen|first7=Leshem|last8=Cohen-Karlik|first8=Edo|last9=Dankin|first9=Lena|l
 
 ## Coined here and written up by someone else (2)
 
 The article exists or the term appears in one, so the description is not
 yours and may be wrong. Same rule: read it, and only raise a talk-page item
-if it misstates the work.
+if it misstates the work. The quoted line is what that article says about the
+term — enough to tick most rows without opening anything.
 
-- [ ] **Project Debater** (173 citations) — [Project Debater](https://en.wikipedia.org/wiki/Project_Debater), [Outline of artificial intelligence](https://en.wikipedia.org/wiki/Outline_of_artificial_intelligence), [Argument technology](https://en.wikipedia.org/wiki/Argument_technology), [Open to Debate](https://en.wikipedia.org/wiki/Open_to_Debate), [Noam Slonim](https://en.wikipedia.org/wiki/Noam_Slonim)
-- [ ] **PromptEval** (85 citations) — [Prompt engineering](https://en.wikipedia.org/wiki/Prompt_engineering)
+- **Project Debater** (173 citations)
+  - [ ] [Project Debater](https://en.wikipedia.org/wiki/Project_Debater) — [talk](https://en.wikipedia.org/wiki/Talk:Project_Debater)
+    > Project Debater is an IBM artificial intelligence project, designed to participate in a full live debate with expert human debaters.
+  - [ ] [Outline of artificial intelligence](https://en.wikipedia.org/wiki/Outline_of_artificial_intelligence) — [talk](https://en.wikipedia.org/wiki/Talk:Outline_of_artificial_intelligence)
+    > representation Automated reasoning Machine learning Project Debater (2018) – artificially intelligent computer system, designed
+  - [ ] [Argument technology](https://en.wikipedia.org/wiki/Argument_technology) — [talk](https://en.wikipedia.org/wiki/Talk:Argument_technology)
+    > been growing rapidly, with, for example, IBM's Grand Challenge, Project Debater, results for which were published in Nature
+  - [ ] [Open to Debate](https://en.wikipedia.org/wiki/Open_to_Debate) — [talk](https://en.wikipedia.org/wiki/Talk:Open_to_Debate)
+    > intelligence and a human being, in partnership with IBM's "Project Debater".
+  - [ ] [Noam Slonim](https://en.wikipedia.org/wiki/Noam_Slonim) — [talk](https://en.wikipedia.org/wiki/Talk:Noam_Slonim)
+    > Jerusalem | doctoral_advisor = Naftali Tishby | known_for = Project Debater | awards = IBM Distinguished Engineer Noam Slonim
+- **PromptEval** (85 citations)
+  - [ ] [Prompt engineering](https://en.wikipedia.org/wiki/Prompt_engineering) — [talk](https://en.wikipedia.org/wiki/Talk:Prompt_engineering)
+    > more comprehensive performance interval. Similarly, PromptEval estimates performance distributions across diverse prompts, enabling robust
 
 ## Topic articles in your fields
 

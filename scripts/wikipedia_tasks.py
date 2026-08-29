@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+import html
 import os
 import re
 import sys
@@ -77,8 +78,45 @@ def exists(title: str) -> dict | None:
     return None
 
 
+# `insource:` searches the wikitext, so a snippet is source and not rendered text. Left as
+# it arrives, a quotable sentence reads as `[[IBM]]'s Grand Challenge, [[Project Debater]]`
+# and an outline row as `*** [[Machine learning]] *`.
+MARKUP = [(re.compile(r"<ref[^>]*>.*?</ref>|<[^>]*>", re.S), ""),
+          (re.compile(r"\{\{[^{}]*(\}\})?"), " "),
+          (re.compile(r"\[\[[^\]|]*\|([^\]|]*)\]\]"), r"\1"),
+          (re.compile(r"\[\[([^\]|]*)\]\]"), r"\1"),
+          (re.compile(r"'{2,}|\[\[|\]\]|\{\{|\}\}"), ""),
+          (re.compile(r"(^|\s)[*#:;]+(\s|$)"), " ")]
+
+
+def snippet(h: dict) -> str:
+    """A search hit's matched text, unescaped and folded onto one line, still wikitext."""
+    return " ".join(html.unescape(h.get("snippet") or "").split())
+
+
+def plain(text: str) -> str:
+    """Wikitext with its markup removed, so the line can be read as a sentence.
+
+    Unescaped again at the end: an article source that writes `&ndash;` literally arrives
+    from the API escaped twice.
+    """
+    for pat, rep in MARKUP:
+        text = pat.sub(rep, text)
+    return " ".join(html.unescape(text).split())
+
+
+def saying(text: str, term: str) -> str:
+    """The sentence of `text` that names `term`, else its first sentence, on one line."""
+    flat = " ".join(html.unescape(text).split())
+    return next((s for s in re.split(r"(?<=[.!?]) +", flat) if term in s),
+                flat.split(". ")[0])
+
+
 def mentions(term: str, limit: int = 5) -> list[dict]:
     """Articles whose text contains this term with its capitalisation intact.
+
+    Each hit carries `says`, the text around the match, so the description can be judged
+    without opening the article.
 
     Wikipedia's search is case-insensitive and has no case-sensitive operator, so the
     filter is applied to the returned snippet. `ColD Fusion` and `Q^2` only mean anything
@@ -86,12 +124,14 @@ def mentions(term: str, limit: int = 5) -> list[dict]:
     """
     out = []
     for h in search(f'insource:"{term}"', limit=limit * 4):
-        snip = re.sub(r"<[^>]+>", "", h.get("snippet") or "")
+        # Cleaned before the test, not after: the API wraps every matched word in a
+        # `searchmatch` span, so a two-word term is not contiguous in the raw snippet.
+        snip = plain(snippet(h))
         # In-domain as well as case-exact: `RLCR` matched five articles about sculpture and
         # a rotisserie oven, and an accuracy check aimed at "Brushstrokes in Flight" is not
         # a task, it is a reason to stop trusting the page.
         if term in snip and in_domain(h["title"]):
-            out.append(h)
+            out.append(dict(h, says=snip))
     return out[:limit]
 
 
@@ -104,6 +144,14 @@ DOMAIN = re.compile(r"artificial intelligence|machine learning|neural network|"
                     r"natural language processing|language model|deep learning", re.I)
 
 
+def intro(title: str) -> str:
+    """An article's lead section as plain text, `""` if the API does not answer."""
+    d = api(prop="extracts", exintro=1, explaintext=1, titles=title)
+    for p in (d.get("query") or {}).get("pages") or []:
+        return p.get("extract") or ""
+    return ""
+
+
 def in_domain(title: str) -> bool:
     """Is this article actually about this field, or a same-words article from another one?
 
@@ -113,10 +161,7 @@ def in_domain(title: str) -> bool:
     then have been offered as places to propose a benchmark. The intro paragraph is checked
     for a field term instead, which is cheap and rejects exactly those two.
     """
-    d = api(prop="extracts", exintro=1, explaintext=1, titles=title)
-    for p in (d.get("query") or {}).get("pages") or []:
-        return bool(DOMAIN.search(p.get("extract") or ""))
-    return False
+    return bool(DOMAIN.search(intro(title)))
 
 
 def sidecar_terms() -> dict[str, list[str]]:
@@ -174,16 +219,21 @@ def main() -> None:
     #    notice a misstatement and the worst-placed one to fix it, so it is a talk-page item
     #    -- but a correction of fact is the proposal editors accept most readily.
     hits = search(f'insource:"{surname}" insource:"arxiv"', limit=30)
-    mine = [h for h in hits if surname.lower() in (h.get("snippet") or "").lower()]
+    mine = [dict(h, says=plain(snippet(h))) for h in hits
+            if surname.lower() in plain(snippet(h)).lower()]
     L += [f"## Articles that mention {surname} ({len(mine)})", ""]
     if mine:
         L += ["Read each one and check it describes the work correctly. If it does, there is",
               "nothing to do. If it does not, the talk page gets the correction and the page",
-              "or table it comes from -- never the article itself.", ""]
+              "or table it comes from -- never the article itself. The quoted line is the",
+              "text that names you, excerpted by the search, so it may start mid-sentence.",
+              ""]
         for h in mine:
             q = urllib.parse.quote(h["title"].replace(" ", "_"))
             L.append(f"- [ ] [{h['title']}](https://en.wikipedia.org/wiki/{q}) — "
                      f"[talk](https://en.wikipedia.org/wiki/Talk:{q})")
+            if h["says"]:
+                L.append(f"  > {h['says']}")
         L.append("")
     else:
         L += ["None found. That is the expected state and not a gap to close.", ""]
@@ -201,7 +251,8 @@ def main() -> None:
         # `E-values` is a statistics article, and neither is a description of this work to
         # check. Same guard as `mentions` applies to the same failure.
         art = exists(term)
-        art = art if art and in_domain(art["title"]) else None
+        lead = intro(art["title"]) if art else ""
+        art = dict(art, says=saying(lead, term)) if DOMAIN.search(lead) else None
         found = ([art] if art else []) + [h for h in mentions(term)
                                           if not art or h["title"] != art["title"]]
         (checks.append((term, p, found)) if found else absent.append((term, p)))
@@ -210,12 +261,16 @@ def main() -> None:
     if checks:
         L += ["The article exists or the term appears in one, so the description is not",
               "yours and may be wrong. Same rule: read it, and only raise a talk-page item",
-              "if it misstates the work.", ""]
+              "if it misstates the work. The quoted line is what that article says about the",
+              "term — enough to tick most rows without opening anything.", ""]
         for term, p, found in sorted(checks, key=lambda t: -(t[1].get("citations") or 0)):
-            L.append(f"- [ ] **{term}** ({p.get('citations') or 0} citations) — "
-                     + ", ".join(f"[{h['title']}](https://en.wikipedia.org/wiki/"
-                                 f"{urllib.parse.quote(h['title'].replace(' ', '_'))})"
-                                 for h in found))
+            L.append(f"- **{term}** ({p.get('citations') or 0} citations)")
+            for h in found:
+                q = urllib.parse.quote(h["title"].replace(" ", "_"))
+                L.append(f"  - [ ] [{h['title']}](https://en.wikipedia.org/wiki/{q}) — "
+                         f"[talk](https://en.wikipedia.org/wiki/Talk:{q})")
+                if h.get("says"):
+                    L.append(f"    > {h['says']}")
         L.append("")
     else:
         L += ["None.", ""]
@@ -251,9 +306,10 @@ def main() -> None:
     write_json(
         STATE,
         {"checks": [{"term": t, "citations": p.get("citations") or 0,
-                     "articles": [h["title"] for h in f_]}
+                     "articles": [{"title": h["title"], "says": h.get("says") or ""}
+                                  for h in f_]}
                     for t, p, f_ in checks],
-         "already_mentions": [h["title"] for h in mine],
+         "already_mentions": [{"title": h["title"], "says": h["says"]} for h in mine],
          "absent": len(absent)}, indent=1)
     os.makedirs(TASKS, exist_ok=True)
     open(OUT, "w").write("\n".join(L) + "\n")

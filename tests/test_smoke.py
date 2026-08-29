@@ -3926,6 +3926,61 @@ class TestWikipediaAsksOnlyForCorrections(unittest.TestCase):
         for term in ("E-values", "Sloth", "Genie", "DORA"):
             self.assertTrue(w.AMBIGUOUS.match(term), term)
 
+    def test_a_two_word_term_survives_the_search_match_spans(self):
+        """The API wraps every matched word separately, so the term is not contiguous."""
+        w = self._mod()
+        raw = ("in partnership with [[IBM]]'s \"[[<span class=\"searchmatch\">Project</span> "
+               "<span class=\"searchmatch\">Debater</span>]]\".")
+        with mock.patch.object(w, "search", lambda q, limit=20: [
+                {"title": "Open to Debate", "snippet": raw}]), \
+             mock.patch.object(w, "in_domain", lambda t: True):
+            got = w.mentions("Project Debater")
+        self.assertEqual(1, len(got))
+        self.assertEqual('in partnership with IBM\'s "Project Debater".', got[0]["says"])
+
+    def test_the_quoted_line_is_wikitext_no_longer(self):
+        """`insource:` matches source, and a row is only worth reading if it reads."""
+        w = self._mod()
+        # `&ndash;` written literally in an article arrives escaped twice, so `snippet` and
+        # `plain` unescape once each.
+        self.assertEqual("Automated reasoning Machine learning Project Debater (2018) – x",
+                         w.plain("*** [[Automated reasoning]] *** [[Machine learning]] * "
+                                 "[[Project Debater]] (2018) &ndash; x"))
+        self.assertEqual("published in Nature",
+                         w.plain("published in \'\'[[Nature (journal)|Nature]]\'\'"))
+        self.assertEqual("Similarly, PromptEval estimates",
+                         w.plain('<ref name="auto" /> Similarly, PromptEval estimates'))
+        self.assertEqual("Roy Bogin – joined",
+                         w.plain(w.snippet({"snippet": "Roy Bogin &amp;ndash; joined"})))
+
+    def test_every_worklist_row_carries_what_the_article_says(self):
+        """A row asking whether a description is wrong, without the description, is a bug.
+
+        The reader cannot judge six articles they have to open first, and the text is in
+        hand either way -- the search returns it with the hit.
+        """
+        import update
+        out = "\n".join(update.wikipedia_checks(
+            {"already_mentions": [{"title": "Argument technology", "says": "names you here"}],
+             "checks": [{"term": "PromptEval", "citations": 85,
+                         "articles": [{"title": "Prompt engineering",
+                                       "says": "PromptEval estimates performance"}]}],
+             "absent": 35}))
+        self.assertIn("2 of your coinages across 2 article(s)", out)
+        self.assertIn("  > names you here", out)
+        self.assertIn("  > PromptEval estimates performance", out)
+        self.assertIn("**PromptEval** in [Prompt engineering]", out)
+        # An article that mentions the author *is* the row's subject, so it is not labelled
+        # with itself.
+        self.assertNotIn("**Argument technology** in", out)
+        self.assertIn("wikipedia.org/wiki/Talk:Prompt_engineering", out)
+
+    def test_a_state_file_written_before_the_text_existed_still_renders(self):
+        import update
+        out = "\n".join(update.wikipedia_checks(
+            {"already_mentions": ["Argument technology"], "checks": []}))
+        self.assertIn("[Argument technology](https://en.wikipedia.org/wiki/", out)
+
     def test_no_insertion_is_ever_asked_for(self):
         """The whole page is checks. A drafted request to add a mention is the regression."""
         text = open(os.path.join(ROOT, "tasks", "wikipedia.md")).read().lower()

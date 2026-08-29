@@ -218,16 +218,28 @@ undo than an unclaimed one, and it makes the split look deliberate.
 
 Wikipedia carries roughly half the citations in AI answers, and WP:COI
 means you may not edit these. What you *can* do is the thing only an
-author can: notice that a description is wrong. If it reads correctly,
-tick it and move on — that is the expected outcome.
+author can: notice that a description is wrong. The quoted line is what the
+article says — if it reads correctly, tick it and move on, which is the
+expected outcome.
 
 A correction goes on the talk page, with the corrected value and the page
 or table it comes from. Never in the article, and never a citation of your
 own work — that is the edit that gets reverted on sight.
 
-- [ ] **Argument technology** — [Argument technology](https://en.wikipedia.org/wiki/Argument_technology) ([talk](https://en.wikipedia.org/wiki/Talk:Argument_technology))
-- [ ] **Project Debater** — [Project Debater](https://en.wikipedia.org/wiki/Project_Debater) ([talk](https://en.wikipedia.org/wiki/Talk:Project_Debater)), [Outline of artificial intelligence](https://en.wikipedia.org/wiki/Outline_of_artificial_intelligence) ([talk](https://en.wikipedia.org/wiki/Talk:Outline_of_artificial_intelligence)), [Argument technology](https://en.wikipedia.org/wiki/Argument_technology) ([talk](https://en.wikipedia.org/wiki/Talk:Argument_technology)), [Open to Debate](https://en.wikipedia.org/wiki/Open_to_Debate) ([talk](https://en.wikipedia.org/wiki/Talk:Open_to_Debate)), [Noam Slonim](https://en.wikipedia.org/wiki/Noam_Slonim) ([talk](https://en.wikipedia.org/wiki/Talk:Noam_Slonim))
-- [ ] **PromptEval** — [Prompt engineering](https://en.wikipedia.org/wiki/Prompt_engineering) ([talk](https://en.wikipedia.org/wiki/Talk:Prompt_engineering))
+- [ ] [Argument technology](https://en.wikipedia.org/wiki/Argument_technology) ([talk](https://en.wikipedia.org/wiki/Talk:Argument_technology))
+  > m|first4=Roy|last5=Bogin|first5=Ben|last6=Bonin|first6=Francesca|last7=Choshen|first7=Leshem|last8=Cohen-Karlik|first8=Edo|last9=Dankin|first9=Lena|l
+- [ ] [Project Debater](https://en.wikipedia.org/wiki/Project_Debater) ([talk](https://en.wikipedia.org/wiki/Talk:Project_Debater))
+  > Project Debater is an IBM artificial intelligence project, designed to participate in a full live debate with expert human debaters.
+- [ ] **Project Debater** in [Outline of artificial intelligence](https://en.wikipedia.org/wiki/Outline_of_artificial_intelligence) ([talk](https://en.wikipedia.org/wiki/Talk:Outline_of_artificial_intelligence))
+  > representation Automated reasoning Machine learning Project Debater (2018) – artificially intelligent computer system, designed
+- [ ] **Project Debater** in [Argument technology](https://en.wikipedia.org/wiki/Argument_technology) ([talk](https://en.wikipedia.org/wiki/Talk:Argument_technology))
+  > been growing rapidly, with, for example, IBM's Grand Challenge, Project Debater, results for which were published in Nature
+- [ ] **Project Debater** in [Open to Debate](https://en.wikipedia.org/wiki/Open_to_Debate) ([talk](https://en.wikipedia.org/wiki/Talk:Open_to_Debate))
+  > intelligence and a human being, in partnership with IBM's "Project Debater".
+- [ ] **Project Debater** in [Noam Slonim](https://en.wikipedia.org/wiki/Noam_Slonim) ([talk](https://en.wikipedia.org/wiki/Talk:Noam_Slonim))
+  > Jerusalem | doctoral_advisor = Naftali Tishby | known_for = Project Debater | awards = IBM Distinguished Engineer Noam Slonim
+- [ ] **PromptEval** in [Prompt engineering](https://en.wikipedia.org/wiki/Prompt_engineering) ([talk](https://en.wikipedia.org/wiki/Talk:Prompt_engineering))
+  > more comprehensive performance interval. Similarly, PromptEval estimates performance distributions across diverse prompts, enabling robust
 
 The 35 coinages Wikipedia does not mention are listed in
 [`tasks/wikipedia.md`](tasks/wikipedia.md) as deliberately not actionable, along with
