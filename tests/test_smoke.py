@@ -4090,6 +4090,40 @@ class TestWikipediaAsksOnlyForCorrections(unittest.TestCase):
         for banned in ("{{edit coi", "suggested addition"):
             self.assertNotIn(banned, open(os.path.join(ROOT, "WORKLIST.md")).read().lower())
 
+    def test_an_unread_api_does_not_write_a_page_saying_there_is_nothing_to_check(self):
+        """Every section of this page is built from the absence of a hit, so a refused run
+        would report each one as clear -- articles naming the author, coinages written up
+        elsewhere, field articles to improve -- and move every coinage to the list that says
+        nothing is to be done. Nothing on that page reads as wrong."""
+        w = self._mod()
+        old = w._refused
+        try:
+            for st in (0, 429, 500):
+                w._refused = ""
+                with mock.patch.object(w, "get_status", lambda _u, **kw: (st, b"")):
+                    self.assertEqual({}, w.api(titles="Project Debater"))
+                self.assertTrue(w._refused, "status %s passed as an answer" % st)
+                # One refusal stands for the run: the rest of the ~100 calls are not sent.
+                with mock.patch.object(w, "get_status",
+                                       lambda _u, **kw: self.fail("kept fetching")):
+                    self.assertEqual({}, w.api(titles="Sloth"))
+            with tempfile.TemporaryDirectory() as d:
+                out, state = os.path.join(d, "wikipedia.md"), os.path.join(d, "s.json")
+                with mock.patch.object(w, "OUT", out), \
+                     mock.patch.object(w, "STATE", state), \
+                     mock.patch.object(sys, "argv", ["wikipedia_tasks.py"]):
+                    with self.assertRaises(SystemExit) as e:
+                        w.main()
+                self.assertEqual(1, e.exception.code)
+                self.assertEqual([], os.listdir(d), "a refusal wrote a page")
+            w._refused = ""
+            with mock.patch.object(w, "get_status",
+                                   lambda _u, **kw: (200, b'{"query": {"pages": []}}')):
+                self.assertEqual({"query": {"pages": []}}, w.api(titles="Sloth"))
+            self.assertEqual("", w._refused)
+        finally:
+            w._refused = old
+
 
 class TestAQuestionGroupIsAFormNotAList(unittest.TestCase):
     """The `q: [a, b, c]` shape and what replaced it.

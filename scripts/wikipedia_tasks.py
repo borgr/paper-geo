@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import glob
 import html
+import json
 import os
 import re
 import sys
@@ -35,7 +36,7 @@ import urllib.parse
 import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, ROOT, TASKS, get_json, load_config,  # noqa: E402
+from common import (BUILD, DATA, ROOT, TASKS, get_status, load_config,  # noqa: E402
                     read_yaml, write_json)
 
 API = "https://en.wikipedia.org/w/api.php"
@@ -52,10 +53,31 @@ STATE = os.path.join(ROOT, "build", "wikipedia_state.json")
 AMBIGUOUS = re.compile(r"^(genie|choice|version|fusing|cube|sloth|e-values|dora)$", re.I)
 
 
+# Set to the first call Wikipedia did not answer. Every section of this page is built from
+# the absence of a hit, so a run that could not read the API writes a page saying there is
+# nothing to check -- indistinguishable from a clean run, and nothing on it is wrong enough
+# to notice. `main` writes nothing while this is set, and later calls stop being sent.
+_refused = ""
+
+
 def api(**params) -> dict:
-    params.update(action="query", format="json", formatversion="2")
-    q = urllib.parse.urlencode(params)
-    return get_json(f"{API}?{q}") or {}
+    """One `action=query` call, `{}` if it did not answer.
+
+    `action=query` answers 200 for a title that does not exist, with `missing` on the page,
+    so any other status is the API refusing rather than reporting.
+    """
+    global _refused
+    if _refused:
+        return {}
+    q = urllib.parse.urlencode(dict(params, action="query", format="json", formatversion="2"))
+    st, raw = get_status(f"{API}?{q}", accept="application/json")
+    try:
+        d = json.loads(raw) if st == 200 and raw else None
+    except ValueError:
+        d = None
+    if d is None:
+        _refused = f"{params} -> HTTP {st}"
+    return d or {}
 
 
 def exists(title: str) -> dict | None:
@@ -319,6 +341,14 @@ def main() -> None:
           "become checks in section 2 if someone else ever writes about them.", ""]
     for term, p in sorted(absent, key=lambda t: -(t[1].get("citations") or 0)):
         L.append(f"- {term} — {p.get('citations') or 0} citations")
+
+    if _refused:
+        # Every list above is empty because the API did not answer, not because there is
+        # nothing to check, and the worklist section is built from the state file.
+        print(f"wikipedia did not answer ({_refused}), so "
+              f"{os.path.relpath(OUT, ROOT)} and {os.path.relpath(STATE, ROOT)} are left "
+              f"as the last run read them", file=sys.stderr)
+        raise SystemExit(1)
 
     write_json(
         STATE,
