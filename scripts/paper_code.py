@@ -41,6 +41,8 @@ confirmed author on the paper.
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
 import json
 import os
 import re
@@ -50,7 +52,7 @@ import urllib.error
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (DATA, ROOT, gh, load_config, note_fetch,  # noqa: E402
+from common import (DATA, ROOT, gh, gh_status, load_config, note_fetch,  # noqa: E402
                     read_yaml, write_json, write_yaml)
 from fulltext import resolve as resolve_fulltext  # noqa: E402
 
@@ -172,10 +174,6 @@ PAGE_FILE_RX = re.compile(
     r"pptx?|docx?|mp4|wav|bin|ckpt|pt|h5)$", re.I)
 
 
-# The status GitHub reported, lifted out of `gh`'s stderr -- "gh: Not Found (HTTP 404)".
-GH_STATUS_RX = re.compile(r"\(HTTP (\d{3})\)")
-
-
 class RepoFacts:
     """GitHub's answer about one `owner/name`, cached across runs.
 
@@ -190,11 +188,12 @@ class RepoFacts:
                     self.cache = json.load(fh)
             except (json.JSONDecodeError, OSError):
                 self.cache = {}
-        # Entries written before this file told a 404 apart from a refusal carry no status,
-        # and any of them could be a repo that exists. Dropped rather than trusted, which
-        # costs one API call each and is how a poisoned one clears.
-        self.cache = {k: v for k, v in self.cache.items()
-                      if v.get("exists") or "status" in v}
+        # An entry written before this file told a 404 apart from a refusal is dropped
+        # rather than trusted, since a poisoned one is indistinguishable from an honest one
+        # and re-asking costs a single call. Repo facts gained `status` and READMEs became a
+        # dict, so an entry still in the old shape is exactly the one to drop.
+        self.cache = {k: v for k, v in self.cache.items() if isinstance(v, dict)
+                      and (k.startswith("readme:") or v.get("exists") or "status" in v)}
 
     def save(self) -> None:
         write_json(GH_CACHE, self.cache, indent=1, sort_keys=True)
@@ -214,8 +213,7 @@ class RepoFacts:
                 d = json.loads(out)
             except json.JSONDecodeError:
                 d = None
-        m = GH_STATUS_RX.search(out)
-        st = 200 if d is not None else (int(m.group(1)) if m else 0)
+        st = 200 if d is not None else gh_status(out)
         note_fetch(f"https://api.github.com/repos/{full}", d is not None,
                    f"HTTP {st}" if st else "no reply")
         if d is None:
@@ -244,19 +242,32 @@ class RepoFacts:
         return fact
 
     def readme(self, full: str) -> str:
+        """The repo's README, or "". Same caching rule as `get`.
+
+        The README is the back-link corroboration, so caching a refusal as "no README"
+        would hold the candidate at `review` for ever.
+        """
         key = f"readme:{full}"
-        if key in self.cache:
-            return self.cache[key]
-        d = gh_json("api", f"repos/{full}/readme")
+        hit = self.cache.get(key)
+        if isinstance(hit, dict):
+            return hit["text"]
+        code, out = gh("api", f"repos/{full}/readme")
+        d = None
+        if not code:
+            try:
+                d = json.loads(out)
+            except json.JSONDecodeError:
+                d = None
         text = ""
         if d and d.get("content"):
-            import base64
             try:
                 text = base64.b64decode(d["content"]).decode("utf-8", "replace")
-            except Exception:
+            except (ValueError, binascii.Error):
                 text = ""
-        self.cache[key] = text[:20000]
-        return self.cache[key]
+        text = text[:20000]
+        if d is not None or gh_status(out) in (404, 410):
+            self.cache[key] = {"text": text}
+        return text
 
 
 def name_tokens(s: str) -> set[str]:

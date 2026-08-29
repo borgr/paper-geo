@@ -404,6 +404,18 @@ def gh(*args: str, check: bool = False, timeout: int = 60) -> tuple[int, str]:
     return r.returncode, (r.stdout if r.returncode == 0 else r.stderr)
 
 
+_GH_STATUS = re.compile(r"\(HTTP (\d{3})\)")
+
+
+def gh_status(out: str) -> int:
+    """The HTTP status in a failed `gh` message -- `gh: Not Found (HTTP 404)` -- or 0.
+
+    0 is `gh` never reaching GitHub, which no caller may read as GitHub saying no.
+    """
+    m = _GH_STATUS.search(out)
+    return int(m.group(1)) if m else 0
+
+
 def gh_text(*args: str, timeout: int = 60) -> str:
     """`gh` stdout, or "" for any failure -- for reads where absent and broken are the same."""
     code, out = gh(*args, timeout=timeout)

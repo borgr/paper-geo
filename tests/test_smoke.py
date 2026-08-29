@@ -27,6 +27,7 @@ exists to avoid one layer up.
 from __future__ import annotations
 
 import ast
+import base64
 import datetime
 import importlib
 import json
@@ -5498,6 +5499,41 @@ class TestAQuietItemIsNotAnItemWithNoStatements(unittest.TestCase):
             self.assertNotIn("need 50", out.getvalue())
 
 
+class TestAQuietGitHubIsNotAReadmeToCreate(unittest.TestCase):
+    """`links_block.fetch_readme` returned ("", None) for a repo with no README and for a
+    repo GitHub would not talk about.
+
+    `diff` then tells the author a repo they maintain has no README, and `apply --yes` sends
+    a create for a file that is already there. GitHub rejects that with a 422, so the cost
+    is a wasted write against a public repo and a wrong report -- and the report is the half
+    they act on.
+    """
+
+    NOT_FOUND = (1, "gh: Not Found (HTTP 404)")
+    RATE = (1, "gh: API rate limit exceeded for user ID 1. (HTTP 403)")
+    NO_REPLY = (1, "dial tcp: lookup api.github.com: no such host")
+
+    def _lb(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import links_block
+        return links_block
+
+    def test_only_a_404_reads_as_a_repo_with_no_readme(self):
+        lb = self._lb()
+        for answer, quiet in ((self.NOT_FOUND, ""), (self.RATE, "HTTP 403"),
+                              (self.NO_REPLY, "HTTP no reply")):
+            with mock.patch.object(lb, "gh", lambda *a, **k: answer):
+                text, sha, got = lb.fetch_readme("o/n")
+            self.assertEqual(("", None), (text, sha))
+            self.assertEqual(quiet, got, "%r read as %r" % (answer[1][:40], got))
+
+    def test_a_readme_that_answers_carries_its_sha(self):
+        lb = self._lb()
+        out = base64.b64encode(b"# hi").decode() + "|abc123"
+        with mock.patch.object(lb, "gh", lambda *a, **k: (0, out)):
+            self.assertEqual(("# hi", "abc123", ""), lb.fetch_readme("o/n"))
+
+
 class TestAQuietGitHubIsNotAMissingRepo(unittest.TestCase):
     """`paper_code.RepoFacts` cached "no such repo" for every failed `gh` call.
 
@@ -5546,7 +5582,11 @@ class TestAQuietGitHubIsNotAMissingRepo(unittest.TestCase):
         self.assertIn("o/n", f.cache)
 
     def test_a_cache_written_before_the_status_existed_is_dropped(self):
-        """Those entries are indistinguishable from the poisoned ones, so none is trusted."""
+        """Those entries are indistinguishable from the poisoned ones, so none is trusted.
+
+        The live cache holds README text under `readme:` beside the repo facts, so the
+        filter has to survive an entry that is not a dict at all.
+        """
         pc = self._pc()
         d = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, d, True)
@@ -5554,9 +5594,30 @@ class TestAQuietGitHubIsNotAMissingRepo(unittest.TestCase):
         with io.open(path, "w", encoding="utf-8") as fh:
             json.dump({"gone/x": {"exists": False},
                        "kept/y": {"exists": False, "status": 404},
-                       "live/z": {"exists": True, "stars": 3}}, fh)
+                       "live/z": {"exists": True, "stars": 3},
+                       "readme:old/s": "# a README, cached as a bare string",
+                       "readme:new/s": {"text": "# a README"}}, fh)
         with mock.patch.object(pc, "GH_CACHE", path):
-            self.assertEqual({"kept/y", "live/z"}, set(pc.RepoFacts().cache))
+            self.assertEqual({"kept/y", "live/z", "readme:new/s"},
+                             set(pc.RepoFacts().cache))
+
+    def test_a_refused_readme_read_is_not_a_repo_without_one(self):
+        """The README is the back-link corroboration, so caching a refusal as "no README"
+        holds the candidate at review for ever."""
+        pc = self._pc()
+        body = json.dumps({"content": base64.b64encode(b"# hi").decode()})
+        for answer, text, cached in (((0, body), "# hi", True),
+                                     (self.NOT_FOUND, "", True),
+                                     (self.RATE, "", False),
+                                     (self.NO_REPLY, "", False)):
+            d = tempfile.mkdtemp()
+            self.addCleanup(shutil.rmtree, d, True)
+            with mock.patch.object(pc, "GH_CACHE", os.path.join(d, "gh.json")), \
+                 mock.patch.object(pc, "gh", lambda *a, **k: answer):
+                f = pc.RepoFacts()
+                self.assertEqual(text, f.readme("o/n"))
+                self.assertEqual(cached, "readme:o/n" in f.cache,
+                                 "%r cached as an answer" % (answer[1][:40],))
 
     def test_confirm_does_not_report_a_refusal_as_a_404(self):
         """The reader acts on this line. "404" on a live repo is a delete-it instruction."""

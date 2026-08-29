@@ -30,7 +30,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from build_site import LINK_LABELS, read_sidecar  # noqa: E402
-from common import BUILD, DATA, README_NAMES, gh, load_config, read_yaml  # noqa: E402
+from common import (BUILD, DATA, README_NAMES, gh, gh_status,  # noqa: E402
+                    load_config, read_yaml)
 
 START = "<!-- paper-geo:links:start -->"
 END = "<!-- paper-geo:links:end -->"
@@ -99,13 +100,22 @@ def targets(cfg):
             yield r, p
 
 
-def fetch_readme(repo: str) -> tuple[str, str | None]:
+def fetch_readme(repo: str) -> tuple[str, str | None, str]:
+    """(text, sha, refusal), where refusal is "" if GitHub answered about every name.
+
+    A repo with no README and a repo GitHub would not talk about both come back with no
+    text, and only the first is a reason to create one.
+    """
+    quiet = ""
     for name in README_NAMES:
         code, out = gh("api", f"repos/{repo}/contents/{name}", "-q", ".content+\"|\"+.sha")
         if code == 0 and "|" in out:
             b64, sha = out.rsplit("|", 1)
-            return base64.b64decode(b64).decode("utf-8", "replace"), sha.strip()
-    return "", None
+            return base64.b64decode(b64).decode("utf-8", "replace"), sha.strip(), ""
+        st = gh_status(out)
+        if st not in (404, 410):
+            quiet = quiet or f"HTTP {st or 'no reply'}"
+    return "", None, quiet
 
 
 def main() -> None:
@@ -128,7 +138,14 @@ def main() -> None:
             n += 1
             continue
 
-        readme, sha = fetch_readme(repo)
+        readme, sha, quiet = fetch_readme(repo)
+        if quiet:
+            # Without this the refusal reads as an empty README, so `diff` tells the reader
+            # a repo they maintain has none and `apply` sends a create for a file that is
+            # already there. GitHub 422s that, so the damage is a wasted write and a wrong
+            # report rather than a clobber -- but the report is what they act on.
+            print(f"  skip {repo}: GitHub would not answer ({quiet})")
+            continue
         new = splice(readme, block)
         if new == readme:
             continue
