@@ -394,9 +394,10 @@ def wikidata_paper_coverage(papers, chunk: int = 50) -> dict:
 
     ordered = list(keys)
     found: dict[str, str] = {}
-    answered = False
+    answered: set[str] = set()
     for i in range(0, len(ordered), chunk):
-        vals = " ".join('"%s"' % k.replace('"', "") for k in ordered[i:i + chunk])
+        block = ordered[i:i + chunk]
+        vals = " ".join('"%s"' % k.replace('"', "") for k in block)
         # One query, two properties: the identifier forms are disjoint, so a UNION
         # over both costs the same as testing each list separately.
         sparql = ("SELECT ?item ?v WHERE { VALUES ?v {" + vals + "} "
@@ -405,7 +406,7 @@ def wikidata_paper_coverage(papers, chunk: int = 50) -> dict:
                      + quote(sparql))
         if j is None:
             continue
-        answered = True
+        answered.update(block)
         for b in ((j.get("results") or {}).get("bindings") or []):
             v = (b.get("v") or {}).get("value", "")
             qid = ((b.get("item") or {}).get("value", "")).rsplit("/", 1)[-1]
@@ -416,10 +417,17 @@ def wikidata_paper_coverage(papers, chunk: int = 50) -> dict:
     for slug, qid in (created_items() or {}).items():
         found.setdefault(slug, qid)
 
+    # A paper is absent only when the endpoint answered for one of its keys. `absent` is
+    # what `wikidata_apply.py --papers --apply` turns into item creations, so a chunk that
+    # timed out must not land there -- that mints a duplicate publication item, and merging
+    # one needs somebody else.
+    asked = {p["slug"] for k, p in keys.items() if k in answered}
     present = [(p, found[p["slug"]]) for p in papers if p["slug"] in found]
-    absent = [p for p in papers if p["slug"] not in found]
-    return {"present": present, "absent": absent,
-            "checked": len({p["slug"] for p in keys.values()}), "total": len(papers)}
+    rest = [p for p in papers if p["slug"] not in found]
+    return {"present": present,
+            "absent": [p for p in rest if p["slug"] in asked],
+            "unchecked": [p for p in rest if p["slug"] not in asked],
+            "checked": len(asked), "total": len(papers)}
 
 
 def paper_item(p: dict, cfg) -> dict | None:
@@ -829,6 +837,10 @@ def paper_link_section(q: str, cov: dict, qs_path: str | None) -> list[str]:
          f"**Measured this run: {n_have} of {n_tot} have a Wikidata item.**",
          f"(Matched on DOI and arXiv id across {cov['checked']} papers that carry one",
          "— exact keys, so this is coverage and not a name-search guess.)", ""]
+    if cov.get("unchecked"):
+        L += [f"{len(cov['unchecked'])} more carry a key the endpoint would not answer for "
+              "on this run, so they are neither counted above nor queued for creation. "
+              "Each is retried next run.", ""]
     for p, qid in cov["present"]:
         L.append(f"- [{qid}](https://www.wikidata.org/wiki/{qid}) — "
                  f"{clipped(p.get('title_display') or p['title'], 70)}")
@@ -1778,6 +1790,10 @@ def main() -> None:
               "Wikidata's main query graph, so a publication query against",
               "`query.wikidata.org` returns zero rows with a 200, and looks like an",
               "answer. This uses `query-scholarly.wikidata.org`.", ""]
+        if wd_cov.get("unchecked"):
+            L += [f"{len(wd_cov['unchecked'])} of the corpus is missing from that number "
+                  "because the endpoint would not answer for it, not because it has no "
+                  "item. Nothing is created for those until a run gets an answer.", ""]
         if wd_qs:
             L += [f"The {len(wd_cov['absent'])} missing items are created by "
                   "`python scripts/wikidata_apply.py --papers --apply --limit 10`, which "
@@ -2000,6 +2016,8 @@ def main() -> None:
                                               else None),
                   "wikidata_papers_absent": (len(wd_cov["absent"]) if wd_cov
                                              else None),
+                  "wikidata_papers_unchecked": (len(wd_cov.get("unchecked") or [])
+                                                if wd_cov else None),
                   # How many of the absent ones can actually be created, which is smaller: a paper with
                   # neither a DOI nor an arXiv id has no key to deduplicate against, so nothing will
                   # mint an item for it. The worklist heads its section with this rather than `absent`,

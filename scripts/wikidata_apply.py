@@ -424,7 +424,8 @@ def papers_plan(cfg: dict, limit: int | None = None) -> list[dict] | None:
     run minutes after the last one still knows what it did.
 
     Returns None -- not [] -- when the query service does not answer. "Nothing is missing" and
-    "I could not find out" differ by 108 items.
+    "I could not find out" differ by 108 items. A run the endpoint answered only part of
+    yields only the papers it answered about, so a refused chunk is never created twice.
     """
     from audit_identity import paper_item, wikidata_paper_coverage
     papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers") or []

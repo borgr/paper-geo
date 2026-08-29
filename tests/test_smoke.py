@@ -5511,6 +5511,66 @@ class TestAQuietItemIsNotAnItemWithNoStatements(unittest.TestCase):
             self.assertNotIn("need 50", out.getvalue())
 
 
+class TestARefusedSparqlChunkIsNotAMissingItem(unittest.TestCase):
+    """`audit_identity.wikidata_paper_coverage` asks in chunks of 50 and used to treat one
+    refused chunk as fifty papers with no Wikidata item.
+
+    `absent` is what `wikidata_apply.py --papers --apply` turns into item creations and what
+    `tasks/wikidata_papers.qs` holds as a paste-in batch, so a chunk that timed out minted a
+    duplicate publication item for every paper in it. Merging one needs somebody else, which
+    makes this the one write in the repo that cannot be undone from here.
+    """
+
+    PAPERS = [{"slug": "has-item", "arxiv": "2501.00001"},
+              {"slug": "refused", "arxiv": "2501.00002"},
+              {"slug": "really-absent", "arxiv": "2501.00003"}]
+
+    @staticmethod
+    def _ai():
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import audit_identity
+        return audit_identity
+
+    @staticmethod
+    def _bindings(*pairs):
+        return {"results": {"bindings": [
+            {"v": {"value": v}, "item": {"value": "http://www.wikidata.org/entity/" + q}}
+            for v, q in pairs]}}
+
+    def _cov(self, answers):
+        """One chunk per paper, so `answers` maps an arXiv id to its reply or None."""
+        ai = self._ai()
+        with mock.patch.object(ai, "created_items", lambda: {}), \
+             mock.patch.object(ai, "get_json",
+                               lambda url, **k: next(v for key, v in answers.items()
+                                                     if key in url)):
+            return ai.wikidata_paper_coverage(self.PAPERS, chunk=1)
+
+    def test_a_refused_chunk_is_unchecked_rather_than_absent(self):
+        cov = self._cov({"2501.00001": self._bindings(("2501.00001", "Q1")),
+                         "2501.00002": None,
+                         "2501.00003": self._bindings()})
+        self.assertEqual(["has-item"], [p["slug"] for p, _q in cov["present"]])
+        self.assertEqual(["really-absent"], [p["slug"] for p in cov["absent"]],
+                         "a refused chunk would be created as a duplicate item")
+        self.assertEqual(["refused"], [p["slug"] for p in cov["unchecked"]])
+        self.assertEqual((2, 3), (cov["checked"], cov["total"]))
+
+    def test_a_created_item_counts_even_inside_a_refused_chunk(self):
+        """The scholarly endpoint indexes a new item hours late, so the ledger outranks it."""
+        ai = self._ai()
+        with mock.patch.object(ai, "created_items", lambda: {"refused": "Q9"}), \
+             mock.patch.object(ai, "get_json", lambda url, **k: None
+                               if "2501.00002" in url else self._bindings()):
+            cov = ai.wikidata_paper_coverage(self.PAPERS, chunk=1)
+        self.assertEqual([("refused", "Q9")], [(p["slug"], q) for p, q in cov["present"]])
+        self.assertEqual([], [p["slug"] for p in cov["unchecked"]])
+
+    def test_nothing_answering_still_returns_nothing(self):
+        self.assertEqual({}, self._cov(dict.fromkeys(
+            ("2501.00001", "2501.00002", "2501.00003"))))
+
+
 class TestARefusedHuggingFaceReadIsNotAnAnswer(unittest.TestCase):
     """`paper_code.hf_siblings` and `paper_code.hf_get` both returned emptiness on failure.
 
