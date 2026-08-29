@@ -149,19 +149,35 @@ def keys_for(name: str) -> list[str]:
     return out
 
 
-def openalex_orcids(papers: list[dict]) -> dict[str, dict[str, str]]:
-    """Per paper slug, the ORCIDs its OpenAlex record carries, keyed by `keys_for`.
+def openalex_orcids(papers: list[dict]) -> tuple[dict[str, dict[str, str]], list[str]]:
+    """Per paper slug, the ORCIDs its OpenAlex record carries, keyed by `keys_for`. Plus
+    the slugs OpenAlex did not answer for.
 
     By-id lookups only, which are free where OpenAlex meters its search endpoints. A key
     that two ORCIDs in the same paper answer to is dropped rather than guessed at.
+
+    OpenAlex meters even by-id lookups and refuses every request for the rest of the day
+    once the budget is spent, and this map is what names every ORCID the rest of the pass
+    works on. Read as an answer, one such day empties it for all 111 papers; cached, it
+    stays empty for CACHE_DAYS.
     """
     out: dict[str, dict[str, str]] = {}
+    refused: list[str] = []
     for p in papers:
         doi = p.get("doi") or (f"10.48550/arXiv.{p['arxiv']}" if p.get("arxiv") else None)
         if not doi:
             continue
-        d = get_json("https://api.openalex.org/works/doi:"
-                     + urllib.parse.quote(str(doi)) + "?select=authorships")
+        st, raw = get_status("https://api.openalex.org/works/doi:"
+                             + urllib.parse.quote(str(doi)) + "?select=authorships",
+                             accept="application/json")
+        if st != 200:
+            refused.append(p["slug"])
+            continue
+        try:
+            d = json.loads(raw or b"{}")
+        except ValueError:
+            refused.append(p["slug"])
+            continue
         seen: dict[str, set[str]] = {}
         for a in (d or {}).get("authorships") or []:
             au = a.get("author") or {}
@@ -172,7 +188,7 @@ def openalex_orcids(papers: list[dict]) -> dict[str, dict[str, str]]:
         got = {k: next(iter(v)) for k, v in seen.items() if len(v) == 1}
         if got:
             out[p["slug"]] = got
-    return out
+    return out, refused
 
 
 def items_by_orcid(orcids: list[str]) -> dict[str, dict]:
@@ -501,8 +517,19 @@ def lookups(names: list[str], papers: list[dict], refresh: bool) -> dict:
     fresh = (datetime.date.today() - datetime.timedelta(days=CACHE_DAYS)).isoformat()
     if (refresh or cache.get("shape") != SHAPE
             or cache.get("asked", "") < fresh or cache.get("names") != names):
-        orcids = openalex_orcids(papers)
-        cache = {"shape": SHAPE, "asked": datetime.date.today().isoformat(),
+        orcids, refused = openalex_orcids(papers)
+        # A paper OpenAlex refused keeps whatever the cache already said for it, and the
+        # clock only advances when every paper answered, so the next run asks again.
+        for slug in refused:
+            was = (cache.get("orcids") or {}).get(slug)
+            if was:
+                orcids[slug] = was
+        if refused:
+            print("openalex did not answer for %d paper(s); keeping what the cache had "
+                  "and not resetting its clock" % len(refused), file=sys.stderr)
+        cache = {"shape": SHAPE,
+                 "asked": (cache.get("asked") or "0000-00-00") if refused
+                 else datetime.date.today().isoformat(),
                  "names": names, "orcids": orcids,
                  "by_orcid": items_by_orcid(
                      sorted({o for m in orcids.values() for o in m.values()})),

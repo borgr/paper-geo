@@ -4421,24 +4421,73 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
         self.assertEqual(rows[0]["leftover"], 1)
         self.assertEqual((rows[0]["edits"], rows[0]["review"]), ([], []))
 
+    @contextlib.contextmanager
+    def _answering(self, wc, status, body):
+        old = wc.get_status
+        wc.get_status = lambda _u, **kw: (status, json.dumps(body).encode())
+        try:
+            yield
+        finally:
+            wc.get_status = old
+
     def test_two_orcids_under_one_key_in_one_paper_are_dropped(self):
         wc = self._module()
-        wc.get_json = lambda _u: {"authorships": [
-            {"author": {"display_name": "Jian Li",
-                        "orcid": "https://orcid.org/0000-0002-0000-0002"}},
-            {"author": {"display_name": "Jian Li",
-                        "orcid": "https://orcid.org/0000-0002-0000-0003"}}]}
-        self.assertEqual(wc.openalex_orcids([{"slug": "s1", "doi": "10.1/x"}]), {})
+        with self._answering(wc, 200, {"authorships": [
+                {"author": {"display_name": "Jian Li",
+                            "orcid": "https://orcid.org/0000-0002-0000-0002"}},
+                {"author": {"display_name": "Jian Li",
+                            "orcid": "https://orcid.org/0000-0002-0000-0003"}}]}):
+            self.assertEqual(wc.openalex_orcids([{"slug": "s1", "doi": "10.1/x"}]), ({}, []))
 
     def test_the_ambiguous_key_is_only_used_inside_one_paper(self):
         wc = self._module()
-        wc.get_json = lambda _u: {"authorships": [{"author": {
-            "display_name": "Ada Lovelace",
-            "orcid": "https://orcid.org/0000-0002-0000-0004"}}]}
-        got = wc.openalex_orcids([{"slug": "s1", "doi": "10.1/x"},
-                                  {"slug": "s2", "arxiv": "2401.00001"}])
+        with self._answering(wc, 200, {"authorships": [{"author": {
+                "display_name": "Ada Lovelace",
+                "orcid": "https://orcid.org/0000-0002-0000-0004"}}]}):
+            got, refused = wc.openalex_orcids([{"slug": "s1", "doi": "10.1/x"},
+                                               {"slug": "s2", "arxiv": "2401.00001"}])
         self.assertEqual(sorted(got), ["s1", "s2"])
         self.assertEqual(sorted(got["s1"]), ["a lovelace", "ada lovelace"])
+        self.assertEqual([], refused)
+
+    def test_the_cache_never_regresses_on_a_day_openalex_is_down(self):
+        """The map is cached for CACHE_DAYS, so an empty answer written once is an empty
+        co-author pass for a month. A refused paper keeps what the cache had, and the clock
+        does not advance, so the next run asks again rather than trusting today's silence."""
+        wc = self._module()
+        stubs = {"openalex_orcids": lambda _p: ({}, ["s1"]),
+                 "items_by_orcid": lambda _o: {}, "items_by_name": lambda _n: {},
+                 "venue_items": lambda _v: {}, "researchers": lambda _q: [],
+                 "proceedings_of": lambda _q: {}, "publications": lambda _c: [],
+                 "dblp_pages": lambda _c, _r: {}}
+        was = {k: getattr(wc, k) for k in stubs}
+        with tempfile.TemporaryDirectory() as d:
+            build = wc.BUILD
+            try:
+                wc.BUILD = d
+                for k, v in stubs.items():
+                    setattr(wc, k, v)
+                with open(os.path.join(d, wc.CACHE), "w") as f:
+                    json.dump({"shape": wc.SHAPE, "asked": "2026-08-01", "names": [],
+                               "orcids": {"s1": {"ada lovelace": "0000-0002-0000-0004"}}}, f)
+                got = wc.lookups([], [{"slug": "s1", "doi": "10.1/x"}], refresh=True)
+                with open(os.path.join(d, wc.CACHE)) as f:
+                    kept = json.load(f)
+            finally:
+                wc.BUILD = build
+                for k, v in was.items():
+                    setattr(wc, k, v)
+        self.assertEqual({"ada lovelace": "0000-0002-0000-0004"}, got["orcids"]["s1"])
+        self.assertEqual("2026-08-01", kept["asked"])
+
+    def test_a_metered_refusal_does_not_empty_the_map_it_seeds_everything_from(self):
+        """This map names every ORCID the rest of the pass works on, and OpenAlex refuses
+        all day once its budget is spent. A refused paper is named rather than counted as
+        having no authors, so the caller can keep what it already had."""
+        wc = self._module()
+        with self._answering(wc, 429, {"error": "Rate limit exceeded"}):
+            self.assertEqual(({}, ["s1", "s2"]), wc.openalex_orcids(
+                [{"slug": "s1", "doi": "10.1/x"}, {"slug": "s2", "arxiv": "2401.00001"}]))
 
 
 class TestVenueResolutionTargetsAPublication(unittest.TestCase):
@@ -5222,3 +5271,45 @@ class TestACoauthorOrcidIsShownForWhatItSays(unittest.TestCase):
                 wp.BUILD, wp.record = real_build, real_record
         self.assertEqual(["A"], sorted(kept))
         self.assertNotIn("partial", kept["A"])
+
+
+class TestAnUnreadRecordIsNotAnEmptyOne(unittest.TestCase):
+    """`get`/`get_json` collapse every failure to `b''`/`None`, so a caller reading an
+    absence as a statement reports a source's silence as its answer. `common.get_status`
+    keeps the distinction, and these are the three places where getting it wrong is
+    expensive: a thirty-day cache, a report the author acts on, and a page of people.
+    """
+
+    def test_the_audit_tells_a_refusal_from_a_record_with_nothing_on_it(self):
+        """A works count of 0 already means either empty or private. Unread is the third
+        case and the only one that must not be reported, because half of what the audit
+        prints is read from this record."""
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import audit_identity as ai
+        read = {"person": {}, "activities-summary": {"works": {"group": []}}}
+        old = ai.get_status
+        try:
+            ai.get_status = lambda _u, **kw: (429, b'{"error": "Rate limit exceeded"}')
+            refused = ai.orcid_public("0000-0002-3491-0632")
+            ai.get_status = lambda _u, **kw: (0, b"")
+            silent = ai.orcid_public("0000-0002-3491-0632")
+            ai.get_status = lambda _u, **kw: (200, json.dumps(read).encode())
+            empty = ai.orcid_public("0000-0002-3491-0632")
+        finally:
+            ai.get_status = old
+        self.assertEqual((False, 429), (refused["reachable"], refused["status"]))
+        self.assertEqual((False, 0), (silent["reachable"], silent["status"]))
+        self.assertEqual((True, 0), (empty["reachable"], empty["works"]))
+
+    def test_the_audit_stops_rather_than_reporting_the_corpus_as_absent(self):
+        """`orcid_strays` matches corpus papers against that record, so an unread one makes
+        every paper a gap. The guard runs before anything is written, so the last run's
+        numbers stand."""
+        src = source(os.path.join(ROOT, "scripts", "audit_identity.py"))
+        after = src.split('orc = orcid_public(ident["orcid"])', 1)[1]
+        guard = after[:after.index("return 1") + 8]
+        self.assertIn('if not orc["reachable"]:', guard)
+        # Nothing may be written between the read and the guard, or the run that could not
+        # read the record still leaves its conclusions on disk.
+        for writes in ("open(", "write_json", "write_yaml", "_file("):
+            self.assertNotIn(writes, guard)

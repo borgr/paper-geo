@@ -38,7 +38,7 @@ from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, WD_IDENTIFIERS, clipped,  # noqa: E402
-                    declined, get,
+                    declined, get, get_status,
                     get_json, load_config, name_match, norm_name, norm_title,
                     org_name, paper_doi, plural, read_yaml, synth_bibtex,
                     title_tokens, write_json, write_yaml)
@@ -72,8 +72,17 @@ def orcid_public(orcid: str) -> dict:
     The public API is what Semantic Scholar, OpenAlex and Crossref see. An item
     whose visibility is "trusted parties" is invisible here -- so a works count of
     0 does not distinguish "empty" from "private", and both fail identically.
+
+    `reachable` is the third case, which the other two must never be confused with. Half of
+    what the audit reports is read from this record, and an unread one reports the whole
+    corpus as absent from ORCID and every work as self-asserted.
     """
-    d = get_json(f"https://pub.orcid.org/v3.0/{orcid}/record") or {}
+    st, raw = get_status(f"https://pub.orcid.org/v3.0/{orcid}/record",
+                         accept="application/json")
+    try:
+        d = json.loads(raw or b"{}") if st == 200 else {}
+    except ValueError:
+        d = {}
     act, person = d.get("activities-summary") or {}, d.get("person") or {}
     urls = [(u.get("url-name"), (u.get("url") or {}).get("value"))
             for u in ((person.get("researcher-urls") or {}).get("researcher-url") or [])]
@@ -147,7 +156,8 @@ def orcid_public(orcid: str) -> dict:
         "keywords": [k.get("content") for k in
                      ((person.get("keywords") or {}).get("keyword") or [])],
         "biography": bool(person.get("biography")),
-        "reachable": bool(d),
+        "reachable": st == 200 and bool(d),
+        "status": st,
     }
 
 
@@ -1330,6 +1340,13 @@ def main() -> None:
 
     print("reading ORCID ...", flush=True)
     orc = orcid_public(ident["orcid"])
+    if not orc["reachable"]:
+        # Nothing has been written yet at this point, so the last run's numbers stand and
+        # the next run re-reads. Writing this one would report every paper as missing.
+        print("ORCID did not answer (status %s). Half of this report is read from that "
+              "record, so nothing is written -- re-run when it is back."
+              % (orc["status"] or "no reply"), file=sys.stderr)
+        return 1
     print("reading arXiv authority records ...", flush=True)
     reg = arxiv_registered(ident["orcid"])
     print("searching Wikidata by identifier ...", flush=True)
