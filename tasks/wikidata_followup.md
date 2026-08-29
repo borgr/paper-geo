@@ -27,8 +27,8 @@ and all of them are personal data you would then be maintaining.
 
 ## Then: your papers
 
-**Measured this run: 111 of 113 have a Wikidata item.**
-(Matched on DOI and arXiv id across 111 papers that carry one
+**Measured this run: 112 of 113 have a Wikidata item.**
+(Matched on DOI and arXiv id across 112 papers that carry one
 — exact keys, so this is coverage and not a name-search guess.)
 
 - [Q141029633](https://www.wikidata.org/wiki/Q141029633) — TIES-Merging: Resolving Interference When Merging Models
@@ -136,6 +136,7 @@ and all of them are personal data you would then be maintaining.
 - [Q141029791](https://www.wikidata.org/wiki/Q141029791) — Instructions Shape Production of Language, not Processing
 - [Q141029792](https://www.wikidata.org/wiki/Q141029792) — Growing Pains: Extensible and Efficient LLM Benchmarking Via Fixed Par
 - [Q141029793](https://www.wikidata.org/wiki/Q141029793) — Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting
+- [Q141214062](https://www.wikidata.org/wiki/Q141214062) — Position: Agentic Systems Should be General
 - [Q141029794](https://www.wikidata.org/wiki/Q141029794) — Stop Guessing When to Stop Testing: Efficient Model Evaluation with Ju
 - [Q141029795](https://www.wikidata.org/wiki/Q141029795) — Cross-Lingual Exploration for Parametric Knowledge
 - [Q141029796](https://www.wikidata.org/wiki/Q141029796) — CRISP: Complex Reasoning with Interpretable Step-based Plans

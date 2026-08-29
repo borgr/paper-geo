@@ -19,7 +19,7 @@ which is why it can be re-run — the fixes all need one.
 | arXiv registered author | 105 of 105 | ok |
 | Wikidata author item | Q140867203 | ok |
 | Wikidata item complete | 0 gaps | ok |
-| Wikidata paper items | 111 of 113 | optional |
+| Wikidata paper items | 112 of 113 | optional |
 | HF pages indexed | 105 of 105 | ok |
 | HF pages claimed | 105 of 105 claimable | ok |
 | arXiv records misspelling your name | 0 | ok |
@@ -99,7 +99,7 @@ Do not delete it and re-add your own: that trades a vouched-for entry for a
 self-asserted one, which is a downgrade in exactly the signal this section
 exists to provide.
 
-## Wikidata paper coverage: 111 of 113
+## Wikidata paper coverage: 112 of 113
 
 Matched on DOI and arXiv id, not on name. This number matters because it
 decides which Wikidata job is worth doing: relinking author strings on

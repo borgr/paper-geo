@@ -8085,7 +8085,7 @@ papers:
   year: 2026
   venue: International Conference on Machine Learning
   type: misc
-  doi: null
+  doi: 10.2139/ssrn.6176178
   arxiv: null
   url: https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6176178
   abstract: We call for the development of agentic systems that thrive in new environments. Agentic systems,
@@ -8117,6 +8117,7 @@ papers:
     semantic_scholar: https://www.semanticscholar.org/paper/287926756
     publisher: https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6176178
   overridden_fields:
+  - doi
   - url
   - venue
   title_display: 'Position: Agentic Systems Should be General'

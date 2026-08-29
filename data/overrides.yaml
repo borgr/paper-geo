@@ -200,9 +200,17 @@ fields:
   # paths that fill this in for every other paper apply. `venue` is given in long form
   # because `short_venue` derives "ICML 2026" from it and the year together; writing
   # "ICML 2026" here directly would hard-code the year in two places.
+  #
+  # The DOI is SSRN's own, and Crossref has it: `10.2139/ssrn.6176178` returns this exact
+  # title with Choshen in the author list, type `posted-content`. A preprint DOI is what
+  # the rest of the corpus uses where the venue mints none -- 49 of 113 papers carry an
+  # arXiv `10.48550` DOI -- and PMLR mints none for ICML. Without it this paper is one of
+  # the two that cannot become a Wikidata item, since `paper_item` requires a resolvable
+  # identifier.
   position-agentic-systems-should-be-general:
     venue: "International Conference on Machine Learning"
     url: "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6176178"
+    doi: "10.2139/ssrn.6176178"
   # ties-merging-resolving-interference-when-merging-models:
   #   venue: "NeurIPS 2023"
 
