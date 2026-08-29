@@ -5166,6 +5166,43 @@ class TestACoauthorOrcidIsShownForWhatItSays(unittest.TestCase):
             wp.sorted_out([{"orcid": "A", "namesakes": [{"qid": "Q1"}]}], {"A": "None"})
         self.assertIn("is not a QID, `new` or `no`", str(e.exception))
 
+    def test_a_refused_fetch_defers_the_verdict_instead_of_leaving_somebody_out(self):
+        """"Left out" and "no works on either record" are claims about what the records say.
+
+        Neither is available when one of them did not answer, so both wait for a run where
+        both did. A record that does describe a person still does, because ORCID answers for
+        the name and the employer and OpenAlex only stands in where ORCID is silent.
+        """
+        wp = self._job()
+        blank = {"label": "", "openalex_label": "", "employers": [], "works": 0,
+                 "openalex_works": 0}
+        self.assertEqual("neither ORCID nor OpenAlex gives a name",
+                         wp.described("A", dict(blank, partial=True), {})["later"])
+        self.assertEqual("no works on either record",
+                         wp.described("B", dict(blank, label="Ada Lovelace",
+                                                partial=True), {})["later"])
+        self.assertNotIn("skip", wp.described("B", dict(blank, partial=True), {}))
+        got = wp.described("C", dict(blank, label="Ada Lovelace", works=3, partial=True), {})
+        self.assertNotIn("later", got)
+        self.assertEqual("Ada Lovelace", got["label"])
+
+    def test_the_page_says_they_were_not_asked_rather_than_not_describable(self):
+        wp = self._job()
+        with tempfile.TemporaryDirectory() as d:
+            real = wp.TASKS
+            try:
+                wp.TASKS = d
+                page = wp.write_page([], [], [], [], {}, None,
+                                     [{"orcid": "0000-0001-0000-0000",
+                                       "later": "no works on either record"}])
+                with open(page) as f:
+                    text = f.read()
+            finally:
+                wp.TASKS = real
+        self.assertIn("## Not asked yet (1)", text)
+        self.assertIn("would be *no works on either record*, on a record that answered", text)
+        self.assertNotIn("Left out", text)
+
     def test_a_refusal_is_used_this_run_and_never_written_to_the_cache(self):
         """OpenAlex is metered and answers 429 for the rest of the day once the budget is
         spent. Read as an empty record that is 22 co-authors dropped, and cached it is 22
