@@ -232,12 +232,16 @@ def wikidata_item(cfg) -> str | None:
 
 
 def wd_labels(qids) -> dict:
-    """QID -> English label for up to 50 items, `{}` if the API does not answer."""
+    """QID -> English label for up to 50 items, `{}` if the API does not answer.
+
+    Through `wd_asked`, so a refusal here reaches `carry_wikidata` like every other one.
+    Callers fall back to the QID, which is a readable row rather than a missing one.
+    """
     ids = sorted({q for q in qids if q})
     if not ids:
         return {}
-    d = get_json(f"https://www.wikidata.org/w/api.php?action=wbgetentities&format=json"
-                 f"&props=labels&languages=en&ids={'|'.join(ids[:50])}") or {}
+    d = wd_asked(f"https://www.wikidata.org/w/api.php?action=wbgetentities&format=json"
+                 f"&props=labels&languages=en&ids={'|'.join(ids[:50])}")
     return {q: ((e.get("labels") or {}).get("en") or {}).get("value", q)
             for q, e in (d.get("entities") or {}).items()}
 

@@ -31,8 +31,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, get_json, load_config, read_yaml,  # noqa: E402
-                    write_json, write_yaml)
+from common import (BUILD, DATA, get_status, host_of, load_config,  # noqa: E402
+                    read_yaml, write_json, write_yaml)
 
 MANIFEST_VERSION = 1
 
@@ -91,11 +91,32 @@ def write_manifest(cfg, papers: list[dict]) -> str:
     return path
 
 
+# Set to the first peer manifest of this run that did not answer. A manifest nobody read
+# is a peer claiming nothing, which is the state that claims their paper -- see `quiet`.
+_quiet = ""
+
+
+def quiet() -> str:
+    """The first peer manifest of this run that did not answer, or `""`."""
+    return _quiet
+
+
 def fetch_peers(cfg) -> dict[str, dict]:
-    """id -> {owner, canonical_page, source_url}, from every peer manifest."""
+    """id -> {owner, canonical_page, source_url}, from every peer manifest.
+
+    A peer whose manifest did not answer is absent from the result, which is
+    indistinguishable from a peer claiming nothing. What did not answer is in `quiet()`.
+    """
+    global _quiet
     claimed: dict[str, dict] = {}
     for url in cfg["collaboration"].get("peers") or []:
-        doc = get_json(url)
+        st, raw = get_status(url, accept="application/json")
+        try:
+            doc = json.loads(raw) if st == 200 and raw else None
+        except ValueError:
+            doc = None
+        if doc is None and st not in (404, 410):
+            _quiet = _quiet or f"{host_of(url)} -> HTTP {st}"
         if not doc or not doc.get("paper_geo_manifest"):
             print(f"  ! unreadable or not a manifest: {url}", file=sys.stderr)
             continue
@@ -170,6 +191,13 @@ def main() -> None:
     peers = cfg["collaboration"].get("peers") or []
     print(f"peers configured: {len(peers)}")
     claimed = fetch_peers(cfg) if peers else {}
+    if quiet():
+        # `reconcile` writes papers.yaml from `claimed`, and a peer absent from it reads as
+        # a peer claiming nothing -- so it strips the owner this file recorded last run and
+        # `render` then builds our own canonical page for their paper. That is the
+        # duplicate-canonical-page harm this whole file exists to prevent.
+        sys.exit(f"a peer manifest did not answer ({quiet()}), so nothing is reconciled "
+                 f"and nothing is written")
 
     if args.claim_all:
         for p in papers:

@@ -5498,6 +5498,116 @@ class TestAQuietItemIsNotAnItemWithNoStatements(unittest.TestCase):
             self.assertNotIn("need 50", out.getvalue())
 
 
+class TestAQuietPeerDoesNotHandOverItsPapers(unittest.TestCase):
+    """`ownership` reconciles papers.yaml from the peer manifests it could read.
+
+    A peer whose manifest did not answer is absent from `claimed`, which is the same shape
+    as a peer claiming nothing -- so `reconcile` strips the owner recorded last run and
+    `render` builds our own canonical page for their paper. Splitting a canonical page in
+    two is the harm the module's own docstring names.
+    """
+
+    CFG = {"collaboration": {"me": "us", "peers": ["https://peer.example/paper-geo.json"]}}
+    MANIFEST = {"paper_geo_manifest": 1, "owner": "them",
+                "claims": [{"ids": ["10.1/x"], "canonical_page": "https://peer.example/x"}]}
+
+    def _o(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import ownership
+        return ownership
+
+    def test_a_refused_manifest_is_not_a_peer_claiming_nothing(self):
+        o = self._o()
+        old = o._quiet
+        try:
+            for st in (0, 429, 500):
+                o._quiet = ""
+                with mock.patch.object(o, "get_status", lambda _u, **kw: (st, b"")):
+                    self.assertEqual({}, o.fetch_peers(self.CFG))
+                self.assertTrue(o.quiet(), "status %s passed as an answer" % st)
+            for st in (404, 410):
+                o._quiet = ""
+                with mock.patch.object(o, "get_status", lambda _u, **kw: (st, b"")):
+                    self.assertEqual({}, o.fetch_peers(self.CFG))
+                self.assertEqual("", o.quiet(),
+                                 "status %s is an answer and must not stop the run" % st)
+            o._quiet = ""
+            body = json.dumps(self.MANIFEST).encode()
+            with mock.patch.object(o, "get_status", lambda _u, **kw: (200, body)):
+                self.assertEqual("them", o.fetch_peers(self.CFG)["10.1/x"]["owner"])
+            self.assertEqual("", o.quiet())
+        finally:
+            o._quiet = old
+
+    def test_papers_yaml_is_not_rewritten_from_a_manifest_that_did_not_answer(self):
+        """The write is what matters. Losing `owner: them` here is a second canonical page
+        for a paper somebody else owns."""
+        o = self._o()
+        for quiet, expect_write in (("peer.example -> HTTP 500", False), ("", True)):
+            d = tempfile.mkdtemp()
+            self.addCleanup(shutil.rmtree, d, True)
+            doc = {"papers": [{"slug": "x", "title": "Their paper", "doi": "10.1/x",
+                               "citations": 1, "owner": "them", "owner_source": "peer"}]}
+            written = []
+            with mock.patch.object(o, "DATA", d), \
+                 mock.patch.object(o, "load_config", lambda: self.CFG), \
+                 mock.patch.object(o, "read_yaml", lambda _p: doc), \
+                 mock.patch.object(o, "fetch_peers", lambda _c: {}), \
+                 mock.patch.object(o, "quiet", lambda: quiet), \
+                 mock.patch.object(o, "write_yaml", lambda p, d_: written.append(p)), \
+                 mock.patch.object(sys, "argv", ["ownership.py", "--claim-all"]):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    if expect_write:
+                        o.main()
+                    else:
+                        with self.assertRaises(SystemExit) as cm:
+                            o.main()
+                        self.assertIn("did not answer (peer.example -> HTTP 500)",
+                                      str(cm.exception))
+            self.assertEqual(expect_write, bool(written),
+                             "a quiet peer's paper was reconciled" if quiet else
+                             "an answered run wrote nothing")
+            p = doc["papers"][0]
+            if expect_write:
+                # An answered run that finds no claim releases the paper. `--claim-all` reads
+                # the record before `reconcile` does, so it does not grab one just released.
+                self.assertEqual((None, None), (p.get("owner"), p.get("owner_source")))
+            else:
+                self.assertEqual(("them", "peer"), (p.get("owner"), p.get("owner_source")),
+                                 "a refused read released a peer's paper")
+
+
+class TestAQuietWikidataDoesNotBlankALabel(unittest.TestCase):
+    """`wd_labels` bypassed `wd_asked`, so its refusal never reached `carry_wikidata`.
+
+    Every other Wikidata read in `audit_identity` records that it did not answer, and
+    `carry_wikidata` puts the last run's counts back on the strength of it. This one call
+    was the exception, and a run refused only here reported a worklist row naming a bare
+    QID with nothing saying why.
+    """
+
+    def _a(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import audit_identity
+        return audit_identity
+
+    def test_a_refused_label_read_is_recorded_like_every_other(self):
+        a = self._a()
+        old = a._wd_quiet
+        try:
+            a._wd_quiet = ""
+            with mock.patch.object(a, "get_status", lambda _u, **kw: (500, b"")):
+                self.assertEqual({}, a.wd_labels(["Q1"]))
+            self.assertEqual("HTTP 500", a._wd_quiet, "the refusal was never recorded")
+            a._wd_quiet = ""
+            body = json.dumps({"entities": {"Q1": {"labels": {"en": {"value": "IBM"}}}}})
+            with mock.patch.object(a, "get_status", lambda _u, **kw: (200, body.encode())):
+                self.assertEqual({"Q1": "IBM"}, a.wd_labels(["Q1"]))
+            self.assertEqual("", a._wd_quiet)
+        finally:
+            a._wd_quiet = old
+
+
 class TestAQuietWikidataLeavesTheWorkOnThePage(unittest.TestCase):
     """Two more pages built entirely from what Wikidata says is still missing.
 
