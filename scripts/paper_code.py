@@ -50,7 +50,7 @@ import urllib.error
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (DATA, ROOT, gh_json, load_config, note_fetch,  # noqa: E402
+from common import (DATA, ROOT, gh, load_config, note_fetch,  # noqa: E402
                     read_yaml, write_json, write_yaml)
 from fulltext import resolve as resolve_fulltext  # noqa: E402
 
@@ -172,26 +172,54 @@ PAGE_FILE_RX = re.compile(
     r"pptx?|docx?|mp4|wav|bin|ckpt|pt|h5)$", re.I)
 
 
+# The status GitHub reported, lifted out of `gh`'s stderr -- "gh: Not Found (HTTP 404)".
+GH_STATUS_RX = re.compile(r"\(HTTP (\d{3})\)")
+
+
 class RepoFacts:
-    """GitHub's answer about one `owner/name`, cached across runs."""
+    """GitHub's answer about one `owner/name`, cached across runs.
+
+    Only a definite answer is cached. See `get`.
+    """
 
     def __init__(self) -> None:
         self.cache: dict = {}
         if os.path.exists(GH_CACHE):
             try:
-                self.cache = json.load(open(GH_CACHE))
+                with open(GH_CACHE, encoding="utf-8") as fh:
+                    self.cache = json.load(fh)
             except (json.JSONDecodeError, OSError):
                 self.cache = {}
+        # Entries written before this file told a 404 apart from a refusal carry no status,
+        # and any of them could be a repo that exists. Dropped rather than trusted, which
+        # costs one API call each and is how a poisoned one clears.
+        self.cache = {k: v for k, v in self.cache.items()
+                      if v.get("exists") or "status" in v}
 
     def save(self) -> None:
         write_json(GH_CACHE, self.cache, indent=1, sort_keys=True)
 
     def get(self, full: str) -> dict:
+        """`{exists, status, ...}` for one repo, from the cache when it is there.
+
+        A refusal is not cached, so the next run asks again. Caching one would drop the
+        paper's code link for good, since the cache is consulted before GitHub is.
+        """
         if full in self.cache:
             return self.cache[full]
-        d = gh_json("api", f"repos/{full}")
+        code, out = gh("api", f"repos/{full}")
+        d = None
+        if not code:
+            try:
+                d = json.loads(out)
+            except json.JSONDecodeError:
+                d = None
+        m = GH_STATUS_RX.search(out)
+        st = 200 if d is not None else (int(m.group(1)) if m else 0)
+        note_fetch(f"https://api.github.com/repos/{full}", d is not None,
+                   f"HTTP {st}" if st else "no reply")
         if d is None:
-            fact = {"exists": False}
+            fact = {"exists": False, "status": st}
         else:
             # The README is the other half of the bidirectional check: a repo that
             # names the paper is not a coincidence. Base64 costs nothing to skip --
@@ -208,8 +236,11 @@ class RepoFacts:
                     # looks public from here. Hugging Face -- and every reader -- gets
                     # a 404, and its API rejects the link outright.
                     "private": bool(d.get("private")),
-                    "topics": d.get("topics") or []}
-        self.cache[full] = fact
+                    "topics": d.get("topics") or [], "status": 200}
+        # A rate limit, an expired token and a dropped connection all leave `gh` with
+        # nothing to parse, and 404 is the only status that means the repo is not there.
+        if st in (200, 404, 410):
+            self.cache[full] = fact
         return fact
 
     def readme(self, full: str) -> str:
@@ -314,7 +345,8 @@ class PageFacts:
         self.cache: dict = {}
         if os.path.exists(PAGE_CACHE):
             try:
-                self.cache = json.load(open(PAGE_CACHE))
+                with open(PAGE_CACHE, encoding="utf-8") as fh:
+                    self.cache = json.load(fh)
             except (json.JSONDecodeError, OSError):
                 self.cache = {}
 
@@ -497,7 +529,13 @@ def confirm(c: dict, paper: dict, facts: RepoFacts) -> dict:
     f = facts.get(c["repo"])
     c["exists"] = f.get("exists", False)
     if not c["exists"]:
-        c["why"].append("GitHub 404 -- rejected")
+        # A repo GitHub says is gone and a repo GitHub would not talk about are both
+        # unconfirmed, so neither is accepted. Only the first is a reason to stop looking,
+        # and saying "404" for the second sends the reader to delete a working link.
+        st = f.get("status")
+        c["why"].append("GitHub 404 -- rejected" if st in (404, 410, None) else
+                        f"GitHub would not answer (HTTP {st or 'no reply'}) -- "
+                        "retried next run")
         c["score"] -= 10
         return c
     if f.get("private"):

@@ -5498,6 +5498,85 @@ class TestAQuietItemIsNotAnItemWithNoStatements(unittest.TestCase):
             self.assertNotIn("need 50", out.getvalue())
 
 
+class TestAQuietGitHubIsNotAMissingRepo(unittest.TestCase):
+    """`paper_code.RepoFacts` cached "no such repo" for every failed `gh` call.
+
+    `gh_json` returns None for a 404, a rate limit, an expired token and a dropped
+    connection alike, and the fact went into `build/github_repos.json` whatever the reason.
+    The cache is consulted before GitHub is, so one refused minute dropped a paper's code
+    link permanently and `confirm` reported it to the reader as "GitHub 404".
+    """
+
+    NOT_FOUND = (1, "gh: Not Found (HTTP 404)")
+    RATE = (1, "gh: API rate limit exceeded for user ID 1. (HTTP 403)")
+    NO_REPLY = (1, "dial tcp: lookup api.github.com: no such host")
+    REPO = (0, json.dumps({"full_name": "o/n", "description": "d", "private": False}))
+
+    def _pc(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import paper_code
+        return paper_code
+
+    def _facts(self, pc, answer):
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d, True)
+        with mock.patch.object(pc, "GH_CACHE", os.path.join(d, "gh.json")), \
+             mock.patch.object(pc, "note_fetch", lambda *a, **k: None), \
+             mock.patch.object(pc, "gh", lambda *a, **k: answer):
+            f = pc.RepoFacts()
+            fact = f.get("o/n")
+        return f, fact
+
+    def test_only_a_404_is_remembered_as_no_such_repo(self):
+        pc = self._pc()
+        for answer, st, cached in ((self.NOT_FOUND, 404, True),
+                                   (self.RATE, 403, False),
+                                   (self.NO_REPLY, 0, False)):
+            f, fact = self._facts(pc, answer)
+            self.assertFalse(fact["exists"])
+            self.assertEqual(st, fact["status"])
+            self.assertEqual(cached, "o/n" in f.cache,
+                             "HTTP %s cached as %s" % (st, "an answer" if cached else "one"))
+
+    def test_a_repo_that_answers_is_remembered(self):
+        pc = self._pc()
+        f, fact = self._facts(pc, self.REPO)
+        self.assertTrue(fact["exists"])
+        self.assertEqual(200, fact["status"])
+        self.assertIn("o/n", f.cache)
+
+    def test_a_cache_written_before_the_status_existed_is_dropped(self):
+        """Those entries are indistinguishable from the poisoned ones, so none is trusted."""
+        pc = self._pc()
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d, True)
+        path = os.path.join(d, "gh.json")
+        with io.open(path, "w", encoding="utf-8") as fh:
+            json.dump({"gone/x": {"exists": False},
+                       "kept/y": {"exists": False, "status": 404},
+                       "live/z": {"exists": True, "stars": 3}}, fh)
+        with mock.patch.object(pc, "GH_CACHE", path):
+            self.assertEqual({"kept/y", "live/z"}, set(pc.RepoFacts().cache))
+
+    def test_confirm_does_not_report_a_refusal_as_a_404(self):
+        """The reader acts on this line. "404" on a live repo is a delete-it instruction."""
+        pc = self._pc()
+
+        class F:
+            def __init__(self, st):
+                self.st = st
+
+            def get(self, _full):
+                return {"exists": False, "status": self.st}
+
+        for st, frag in ((404, "GitHub 404"), (403, "would not answer (HTTP 403)"),
+                         (0, "would not answer (HTTP no reply)")):
+            c = pc.confirm({"repo": "o/n", "why": [], "score": 0}, {"title": "T"}, F(st))
+            self.assertFalse(c["exists"])
+            self.assertTrue(any(frag in w for w in c["why"]),
+                            "HTTP %s reported as %r" % (st, c["why"]))
+
+
 class TestAQuietHostIsNotADeadLink(unittest.TestCase):
     """`check_structure --links` called anything that did not return a body dead.
 
