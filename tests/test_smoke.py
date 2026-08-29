@@ -2250,6 +2250,78 @@ class TestARewriteDoesNotUnclaimYourPapers(unittest.TestCase):
         self.assertIn("owner_source", CARRIED)
 
 
+class TestTheItemIsNotAskedForWhatItAlreadyHas(unittest.TestCase):
+    """The follow-up file is a diff, and the only way to see that is to render one.
+
+    The block it emits was a standing table of four statements, so it asked for the same
+    four whether or not the item carried them -- and it does carry all four, which made
+    a done item read as open work forever. That is the failure `code > agent > human`
+    exists to prevent: the item is readable by API, so nothing about it belongs in a
+    list a human is asked to check.
+    """
+
+    def _block(self, has, unqualified, orc=None):
+        from audit_identity import disambiguating_statements
+        g = {"qid": "Q1", "has": has, "unqualified": unqualified}
+        ident = {"name": "Ada Lovelace", "affiliations": [{"name": "Somewhere"}],
+                 "education": [{"institution": "Somewhere", "degree": "PhD"}]}
+        return "\n".join(disambiguating_statements(g, ident, "Ada", "Lovelace", orc))
+
+    def test_a_complete_item_gets_no_table(self):
+        out = self._block({"P735": ["x"], "P734": ["x"], "P69": ["x"], "P108": ["x"]}, [])
+        self.assertEqual("", out)
+
+    def test_only_the_absent_statements_are_listed(self):
+        out = self._block({"P735": ["x"], "P69": ["x"]}, [])
+        self.assertIn("`P734`", out)
+        self.assertIn("`P108`", out)
+        self.assertNotIn("`P735`", out)
+        self.assertNotIn("`P69`", out)
+
+    def test_a_date_orcid_states_is_not_asked_for(self):
+        """The split that decides who does the work, and the reason it is measured here.
+
+        A start time on the ORCID record is one `wikidata_apply.py --apply` away, so
+        putting it on the page would be asking for an edit the code makes. An employment
+        ORCID does not list has no public date at all, and that one is the author's.
+        """
+        orc = {"employment_rows": [{"org": "Dated Lab", "start": 2016, "end": None,
+                                    "role": None}]}
+        out = self._block({"P735": ["x"], "P734": ["x"], "P69": ["x"], "P108": ["x"]},
+                          [("P108", "Q2", "Dated Lab"), ("P108", "Q3", "Undated Lab")],
+                          orc)
+        self.assertIn("wikidata_apply.py --apply", out)
+        self.assertIn("Dated Lab", out.split("## Employers only you can date")[0])
+        yours = out.split("## Employers only you can date")[1]
+        self.assertIn("Undated Lab", yours)
+        self.assertNotIn("Dated Lab", yours)
+
+
+class TestOneAffiliationSpreadOverSeveralOrcidRows(unittest.TestCase):
+    """ORCID keeps one row per appointment, so the degree and its dates are separate.
+
+    Reading the first matching row got the PhD from `config.yaml` and missed the 2023 end
+    date sitting on the other row for the same university. Merging is what makes the
+    qualifier set complete rather than nearly so.
+    """
+
+    def test_the_earliest_start_the_latest_end_and_every_role(self):
+        from common import affil_index
+        got = affil_index([
+            {"org": "The Hebrew University of Jerusalem", "start": 2016, "end": None,
+             "role": None},
+            {"org": "Hebrew University of Jerusalem", "start": None, "end": 2023,
+             "role": "PhD"},
+        ])
+        self.assertEqual(["hebrew university of jerusalem"], list(got))
+        e = got["hebrew university of jerusalem"]
+        self.assertEqual((2016, 2023, ["PhD"]), (e["start"], e["end"], e["roles"]))
+
+    def test_a_row_with_no_organisation_is_dropped(self):
+        from common import affil_index
+        self.assertEqual({}, affil_index([{"org": None, "start": 2016}]))
+
+
 class TestBothWikidataWritersDescribeTheSameItem(unittest.TestCase):
     """Two ways to create a paper item, and the danger is not that one is wrong.
 

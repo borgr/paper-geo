@@ -45,6 +45,7 @@ import argparse
 import http.cookiejar
 import json
 import os
+import re
 import sys
 import time
 import urllib.parse
@@ -52,8 +53,8 @@ import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from common import (DATA, ROOT, UA, get_json, load_config,  # noqa: E402
-                    norm_name, read_yaml, write_yaml)
+from common import (DATA, ROOT, UA, affil_index, get_json,  # noqa: E402
+                    load_config, norm_name, read_yaml, write_yaml)
 
 API = "https://www.wikidata.org/w/api.php"
 CREDS_FILE = os.path.join(ROOT, ".wikidata_bot")
@@ -225,6 +226,90 @@ def plan(gaps: dict, cfg: dict) -> list[dict]:
                       "action": "wbcreateclaim",
                       "post": {"entity": gaps["qid"], "property": pid,
                                "snaktype": "value", "value": json.dumps(str(want))}})
+    steps += qualifier_steps(gaps, cfg)
+    return steps
+
+
+# ORCID states the role in free text, so only titles that map to a Wikidata item become
+# a `position held` qualifier. Anything else keeps its start time and no role.
+ROLES = {"postdoctoral researcher": ("Q1125292", "postdoctoral researcher"),
+         "postdoc": ("Q1125292", "postdoctoral researcher"),
+         "research scientist": ("Q1650915", "research scientist"),
+         "phd student": ("Q12722588", "doctoral student")}
+
+DEGREES = {"phd": ("Q752297", "Doctor of Philosophy"),
+           "msc": ("Q12047422", "Master of Science"),
+           "ma": ("Q1765120", "Master of Arts"),
+           "bsc": ("Q798137", "Bachelor of Science")}
+
+
+def date_snak(year, precision: int = 9) -> str:
+    """A Wikibase time value for a year, as the JSON `wbsetqualifier` wants."""
+    return json.dumps({"time": f"+{int(year)}-00-00T00:00:00Z", "timezone": 0,
+                       "before": 0, "after": 0, "precision": precision,
+                       "calendarmodel": CAL})
+
+
+def item_snak(qid: str) -> str:
+    """A Wikibase item value, as the JSON `wbsetqualifier` wants."""
+    return json.dumps({"entity-type": "item", "id": qid})
+
+
+def qualifier_steps(gaps: dict, cfg: dict) -> list[dict]:
+    """Start times, roles and degrees for statements the item carries bare.
+
+    `P108` with no `P580` is a set of employers rather than a career, and `P69` with no
+    `P512` does not say which degree. Both are on the ORCID record, which is the same
+    source `config.yaml` was written from, so neither is a question for the author.
+    Statements ORCID has no row for are left alone and stay in the follow-up file.
+    """
+    bare = gaps.get("unqualified") or []
+    if not bare:
+        return []
+    from audit_identity import orcid_public
+    rec = orcid_public(cfg["identity"]["orcid"]) or {}
+    rows = {"P108": affil_index(rec.get("employment_rows")),
+            "P69": affil_index(rec.get("education_rows"))}
+    guids = {pid: {v: g for g, v in claim_guids(gaps["qid"], pid)}
+             for pid in ("P108", "P69")}
+    named = [str(e.get("degree") or "") for e in cfg["identity"].get("education") or []]
+    steps = []
+    for pid, q, label in bare:
+        guid = guids.get(pid, {}).get(q)
+        row = rows.get(pid, {}).get(re.sub(r"^the ", "", norm_name(label)))
+        if not (guid and row):
+            continue
+
+        def qual(prop: str, value: str, what: str, why: str) -> dict:
+            return {"what": f"{pid} {label}: {what}", "why": why,
+                    "action": "wbsetqualifier",
+                    "summary": "qualifier from the ORCID record (paper-geo)",
+                    "post": {"claim": guid, "property": prop, "snaktype": "value",
+                             "value": value}}
+
+        if row.get("start"):
+            steps.append(qual("P580", date_snak(row["start"]),
+                              f"start time {row['start']}",
+                              f"ORCID states {row['start']} for this affiliation"))
+        if row.get("end"):
+            steps.append(qual("P582", date_snak(row["end"]), f"end time {row['end']}",
+                              f"ORCID states it ended {row['end']}"))
+        if pid == "P108":
+            role = next((ROLES[r.strip().lower()] for r in row["roles"]
+                         if r.strip().lower() in ROLES), None)
+            if role:
+                steps.append(qual("P39", item_snak(role[0]),
+                                  f"position held {role[1]}",
+                                  f"ORCID states the role as {row['roles'][0]!r}"))
+        else:
+            deg = next((DEGREES[d] for d in
+                        (n.strip().lower().replace(".", "") for n in row["roles"] + named)
+                        if d in DEGREES), None)
+            if deg:
+                steps.append(qual("P512", item_snak(deg[0]),
+                                  f"academic degree {deg[1]}",
+                                  "the degree is what separates a doctorate from a "
+                                  "semester abroad"))
     return steps
 
 
@@ -534,7 +619,8 @@ def main() -> int:
                            summary=f"remove duplicate {step['pid']} statement "
                                    f"(paper-geo)")
             else:
-                s.edit(step["action"], summary="from config.yaml (paper-geo)",
+                s.edit(step["action"],
+                       summary=step.get("summary", "from config.yaml (paper-geo)"),
                        **step["post"])
             ok += 1
             print(f"  {i}. done — {step['what']}")

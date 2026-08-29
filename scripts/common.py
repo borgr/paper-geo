@@ -679,6 +679,29 @@ def norm_name(s: str) -> str:
     return " ".join(re.sub(r"[^\w\s]", " ", s).lower().split())
 
 
+def affil_index(rows) -> dict:
+    """ORCID affiliation rows folded to one entry per organisation.
+
+    Key is the organisation name normalised by `norm_name`, with a leading "the"
+    dropped. Value carries the earliest `start`, the latest `end`, and every `role`
+    stated on any row. ORCID keeps one row per appointment, so the same institution
+    appears several times -- a degree on one row and its dates on another.
+    """
+    out: dict[str, dict] = {}
+    for r in rows or []:
+        k = re.sub(r"^the ", "", norm_name(str(r.get("org") or "")))
+        if not k:
+            continue
+        e = out.setdefault(k, {"org": r.get("org"), "start": None, "end": None,
+                               "roles": []})
+        for f, pick in (("start", min), ("end", max)):
+            v = r.get(f)
+            e[f] = pick(e[f], int(v)) if (v and e[f]) else (int(v) if v else e[f])
+        if r.get("role"):
+            e["roles"].append(str(r["role"]))
+    return out
+
+
 def name_match(candidate: str, variants) -> str:
     """Classify an author string against your known name forms: "exact", "near", or "".
 

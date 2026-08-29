@@ -31,6 +31,7 @@ import json
 import os
 import re
 import sys
+import textwrap
 import time
 import xml.etree.ElementTree as ET
 from urllib.parse import quote
@@ -193,6 +194,17 @@ def wikidata_item(cfg) -> str | None:
 
 
 
+def wd_labels(qids) -> dict:
+    """QID -> English label for up to 50 items, `{}` if the API does not answer."""
+    ids = sorted({q for q in qids if q})
+    if not ids:
+        return {}
+    d = get_json(f"https://www.wikidata.org/w/api.php?action=wbgetentities&format=json"
+                 f"&props=labels&languages=en&ids={'|'.join(ids[:50])}") or {}
+    return {q: ((e.get("labels") or {}).get("en") or {}).get("value", q)
+            for q, e in (d.get("entities") or {}).items()}
+
+
 def wikidata_gaps(qid: str, cfg) -> dict:
     """Diff a live Wikidata item against the identifiers config says it should carry.
 
@@ -247,9 +259,20 @@ def wikidata_gaps(qid: str, cfg) -> dict:
             if v != cfg["identity"]["name"]]
     want_aliases = [v for v in want
                     if not any(norm_name(v) == norm_name(a) for a in good)]
+    # A statement with no qualifier is not a gap the identifier diff above can see, and
+    # two of them carry most of the disambiguating weight: an employer with no start time
+    # is not a career an engine can order, and a degree-less `educated at` does not say
+    # which degree.
+    bare = [(pid, ((c.get("mainsnak") or {}).get("datavalue") or {})
+             .get("value", {}).get("id", ""))
+            for pid, want in (("P108", "P580"), ("P69", "P512"))
+            for c in (ent.get("claims") or {}).get(pid, [])
+            if want not in (c.get("qualifiers") or {})]
+    lab = wd_labels([q for _p, q in bare])
+    unqualified = [(pid, q, lab.get(q, q)) for pid, q in bare]
     return {"qid": qid, "missing": missing, "wrong": wrong, "dupes": dupes,
             "aliases": aliases, "bad_aliases": bad_aliases,
-            "want_aliases": want_aliases,
+            "want_aliases": want_aliases, "has": vals, "unqualified": unqualified,
             "n_p856": len(vals.get("P856") or []),
             "label": (ent.get("labels") or {}).get("en", {}).get("value", ""),
             "description": (ent.get("descriptions") or {}).get("en", {}).get("value", "")}
@@ -539,7 +562,80 @@ def hf_worklist_file(st: dict) -> str:
     return path
 
 
-def wikidata_followup_file(g: dict, cfg, cov: dict, qs_path: str | None) -> str:
+def disambiguating_statements(g: dict, ident, given: str, family: str,
+                             orc: dict | None = None) -> list[str]:
+    """The non-identifier statements the item does not carry yet, or `[]`.
+
+    A diff against the live item, so every row is open work and the block disappears
+    once the item is complete. Qualifier gaps are split by who can settle them: a start
+    time the ORCID record states belongs to `wikidata_apply.py`, and only an employment
+    ORCID does not list is the author's to date.
+    """
+    have, L = g.get("has") or {}, []
+    edu = "; ".join(f"{e.get('institution')}"
+                    + (f" ({e['degree']})" if e.get("degree") else "")
+                    for e in (ident.get("education") or [])) or "your PhD institution"
+    def _wd(a):
+        q = a.get("wikidata") if isinstance(a, dict) else None
+        return f" (`{q}`)" if q else ""
+
+    emp = "; ".join(f"{org_name(a)}{_wd(a)}"
+                    for a in (ident.get("affiliations") or [])) or "your employers"
+    rows = [(lab, pid, val, why) for pid, lab, val, why in (
+        ("P735", "given name", given,
+         "lets a query match the name parts separately from the label string"),
+        ("P734", "family name", family, "same"),
+        ("P69", "educated at", edu,
+         "the single strongest disambiguating fact about a researcher"),
+        ("P108", "employer", emp, "turns a name into a career an engine can order"),
+    ) if not have.get(pid)]
+    if rows:
+        L += ["## Worth adding while you are in the editor", "",
+              "Not identifiers — statements that help a disambiguator separate you",
+              "from a namesake, which is the whole job of this item. Only what the",
+              "item does not carry yet is listed.", "",
+              "| property | | value | why |", "|---|---|---|---|"]
+        L += [f"| {lab} | `{pid}` | {val} | {why} |" for lab, pid, val, why in rows]
+        L += ["",
+              "`educated at` is for degree-granting study only. A postdoc goes in "
+              "`employer`",
+              "(`P108`), optionally qualified with *position held* (`P39`) = `Q1125292`",
+              "(postdoctoral researcher) — no degree was awarded, and the institution",
+              "was paying you. The test is just: was a degree awarded?", "",
+              "Skip date of birth, sex or gender, and image. None of them help retrieval",
+              "and all of them are personal data you would then be maintaining.", ""]
+
+    dated = {norm_name(str(r.get("org") or "").replace("The ", "")): r
+             for sect in ("employment_rows", "education_rows")
+             for r in ((orc or {}).get(sect) or [])}
+    mine = [lab for pid, _q, lab in g.get("unqualified") or []
+            if (dated.get(norm_name(lab)) or {}).get("start")
+            or (pid == "P69" and norm_name(lab) in dated)]
+    yours = [(pid, q, lab) for pid, q, lab in g.get("unqualified") or []
+             if lab not in mine]
+    if mine:
+        L += [f"## {plural(len(mine), 'qualifier')} a run will add", "",
+              "`P108` with no *start time* is a set of employers rather than a career,",
+              "and `P69` with no *academic degree* does not say which degree. The ORCID",
+              "record states both, so nothing here is yours:", "",
+              "```", "python scripts/wikidata_apply.py --apply", "```", ""]
+        L += [textwrap.fill("It qualifies " + ", ".join(sorted(mine)) + ".", 78), ""]
+    empl = [(q, lab) for pid, q, lab in yours if pid == "P108"]
+    if empl:
+        L += ["## Employers only you can date", "",
+              "These carry no *start time* and the ORCID record has no employment row to",
+              "take one from, so the year is the one fact no public source settles.", "",
+              "Adding the employment to <https://orcid.org/my-orcid#employment> instead",
+              "leaves the qualifier to `python scripts/wikidata_apply.py --apply`, and",
+              "every service that reads ORCID gets the affiliation too.", "",
+              f"On <https://www.wikidata.org/wiki/{g['qid']}#P108>, click the statement,",
+              "*add qualifier* → *start time* → the year:", ""]
+        L += [f"- [ ] **{lab}** (`{q}`)" for q, lab in empl] + [""]
+    return L
+
+
+def wikidata_followup_file(g: dict, cfg, cov: dict, qs_path: str | None,
+                           orc: dict | None = None) -> str:
     """What is left to do on an item that already exists.
 
     Separate from wikidata_manual.md, which is about creating one. Once the item is
@@ -638,27 +734,7 @@ def wikidata_followup_file(g: dict, cfg, cov: dict, qs_path: str | None) -> str:
               "because a duplicate profile would make the guess wrong, and a wrong "
               "identifier is worse than a missing one.", ""]
 
-    edu = [f"{e.get('institution')}" + (f" ({e['degree']})" if e.get("degree") else "")
-           for e in (ident.get("education") or [])] or ["your PhD institution"]
-    L += ["## Worth adding while you are in the editor", "",
-          "Not identifiers — statements that help a disambiguator separate you from a",
-          "namesake, which is the whole job of this item.", "",
-          "| property | | value | why |",
-          "|---|---|---|---|",
-          f"| given name | `P735` | {given} | lets a query match the name parts "
-          "separately from the label string |",
-          f"| family name | `P734` | {family} | same |",
-          f"| educated at | `P69` | {'; '.join(edu)} | the single strongest "
-          "disambiguating fact about a researcher |",
-          "| employer | `P108` | with *start time* qualifiers | turns flat "
-          "affiliations into a career an engine can order |",
-          "",
-          "`educated at` is for degree-granting study only. A postdoc goes in `employer`",
-          "(`P108`), optionally qualified with *position held* (`P39`) = `Q1125292`",
-          "(postdoctoral researcher) — no degree was awarded, and the institution was",
-          "paying you. The test is just: was a degree awarded?", "",
-          "Skip date of birth, sex or gender, and image. None of them help retrieval",
-          "and all of them are personal data you would then be maintaining.", ""]
+    L += disambiguating_statements(g, ident, given, family, orc)
 
     L += paper_link_section(q, cov, qs_path)
     return _write_followup(L)
@@ -1263,7 +1339,7 @@ def main() -> None:
         wd_cov = wikidata_paper_coverage(papers)
         wd_qs, _ = wikidata_papers_qs(wd_cov, cfg)
         if wd_gaps:
-            wd_path = wikidata_followup_file(wd_gaps, cfg, wd_cov, wd_qs)
+            wd_path = wikidata_followup_file(wd_gaps, cfg, wd_cov, wd_qs, orc)
     # --no-hf means "leave the HF artifacts alone", not "regenerate them from cache".
     # Writing the cached view here would silently overwrite a freshly-checked
     # worklist with older numbers, which is worse than not writing at all.

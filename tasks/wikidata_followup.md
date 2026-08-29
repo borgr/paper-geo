@@ -5,25 +5,19 @@ Label **Leshem Choshen** · description *Israeli computer scientists and researc
 Live diff against `config.yaml`. Re-run `python scripts/audit_identity.py`
 after editing to confirm each line cleared.
 
-## Worth adding while you are in the editor
+## Employers only you can date
 
-Not identifiers — statements that help a disambiguator separate you from a
-namesake, which is the whole job of this item.
+These carry no *start time* and the ORCID record has no employment row to
+take one from, so the year is the one fact no public source settles.
 
-| property | | value | why |
-|---|---|---|---|
-| given name | `P735` | Leshem | lets a query match the name parts separately from the label string |
-| family name | `P734` | Choshen | same |
-| educated at | `P69` | Hebrew University of Jerusalem (PhD) | the single strongest disambiguating fact about a researcher |
-| employer | `P108` | with *start time* qualifiers | turns flat affiliations into a career an engine can order |
+Adding the employment to <https://orcid.org/my-orcid#employment> instead
+leaves the qualifier to `python scripts/wikidata_apply.py --apply`, and
+every service that reads ORCID gets the affiliation too.
 
-`educated at` is for degree-granting study only. A postdoc goes in `employer`
-(`P108`), optionally qualified with *position held* (`P39`) = `Q1125292`
-(postdoctoral researcher) — no degree was awarded, and the institution was
-paying you. The test is just: was a degree awarded?
+On <https://www.wikidata.org/wiki/Q140867203#P108>, click the statement,
+*add qualifier* → *start time* → the year:
 
-Skip date of birth, sex or gender, and image. None of them help retrieval
-and all of them are personal data you would then be maintaining.
+- [ ] **MIT-IBM Watson AI Lab** (`Q117720866`)
 
 ## Then: your papers
 
