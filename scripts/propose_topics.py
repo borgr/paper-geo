@@ -143,17 +143,12 @@ def declined_to_guess(repos: list[dict]) -> list[str]:
     """Repos still missing a label that the labeller refused to invent one for.
 
     Missing *either* topics or a description, matching `sweep_github.py`'s own count of what
-    needs labelling. Two of the three live cases have a description and no topics, so
-    requiring both reported one repo where there are three.
+    needs labelling. Two of the three live cases have a description and no topics.
 
-    They are stuck where two correct decisions meet: `pending()` skips a row that already has
-    a proposal, and `promote()` refuses a `confidence: low` one -- so the row keeps its
-    non-answer and stays bare. Neither half is wrong; going quiet about the result is, since
-    `propose` printed "nothing to propose" while three repos had no label at all.
-
-    Deliberately not fixed by re-proposing them. The model's answer was that the evidence does
-    not support a label, and the evidence is a README, so asking again costs a call for the
-    same answer. The fix is upstream and it is a paragraph of prose.
+    The row is stuck between two correct decisions -- `pending()` skips a row that already
+    has a proposal, and `promote()` refuses a `confidence: low` one -- so it keeps its
+    non-answer and stays bare. Re-proposing costs a call for the same answer, since the
+    evidence is a README and the model's answer was that the README does not support a label.
     """
     return [r["repo"] for r in repos
             if not r.get("skip") and not r.get("reviewed")

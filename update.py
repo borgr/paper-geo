@@ -109,16 +109,13 @@ def step_ownership(cfg, args) -> None:
 def step_audit(cfg, args) -> None:
     """Live-read the identity surfaces we do not control and regenerate the payloads.
 
-    Runs the Hugging Face pass again even though collect.py just fetched the same pages: ~30s
-    in a multi-minute run, in exchange for both hand-worked lists coming from one moment in
-    time. Deciding at read time which of two differently-aged sources is fresher is how a
-    worklist starts sending you back to pages you already did.
+    Runs the Hugging Face pass again even though collect.py just fetched the same pages, at
+    ~30s in a multi-minute run, so both hand-worked lists come from one moment in time.
 
-    The Scholar diff belongs here rather than in `collect`, because it audits the collector's
-    *output* against a list the collector cannot see: a paper that never entered, and a paper
-    the authorship gate dropped. Report-only, and it never stops the run -- Google answers a
-    crawler with a challenge page often enough that treating that as a failed run would be
-    wrong.
+    The Scholar diff belongs here rather than in `collect`, since it audits the collector's
+    output against a list the collector cannot see -- a paper that never entered, and a
+    paper the authorship gate dropped. Report-only, and it never stops the run, because
+    Google answers a crawler with a challenge page often enough.
     """
     run([sys.executable, "scripts/audit_identity.py"])
     run([sys.executable, "scripts/scholar_check.py"])
@@ -1002,17 +999,15 @@ def wikidata_orgs() -> list[str]:
 def upstream_gaps(papers: list[dict], cfg) -> list[str]:
     """Papers the corpus has only because an override put them there.
 
-    `extra_arxiv` and `extra_openreview` are stopgaps covering the interval before the entry
-    lands in the bibliography, and both files say to delete the line after. Nothing else can
-    report them: the Scholar block finds missing papers by diffing Scholar against the corpus,
-    and an override closes exactly that gap.
+    `extra_arxiv` and `extra_openreview` cover the interval before the entry lands in the
+    bibliography, and both files say to delete the line after. Nothing else reports them,
+    since the Scholar block finds missing papers by diffing Scholar against the corpus and an
+    override closes exactly that gap.
 
-    `_override` is provenance, not a decision -- `collect.py` sets it on records it adds from an
-    override, and it disappears once the bibliography's own entry merges, so a paper still
-    carrying it is still absent upstream.
-
-    The second half reads `overrides.yaml` as well as the corpus, for the override lines left
-    behind after the paste lands.
+    `_override` is provenance. `collect.py` sets it on records it adds from an override and it
+    disappears once the bibliography's own entry merges, so a paper still carrying it is still
+    absent upstream. The second half reads `overrides.yaml` too, for lines left behind after
+    a paste lands.
     """
     L = []
     pend = sorted((p for p in papers if p.get("_override")),

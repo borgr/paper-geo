@@ -233,17 +233,14 @@ def linked(p: dict, day: str) -> dict:
 def keeps(p: dict, same: list[dict]) -> list[dict]:
     """The same-name items that stop this person being created, or nothing.
 
-    Two reasons to stop, and the second is Wikidata's own rule rather than a judgement:
-
     An item stating no ORCID is very often this person reached from a source that gave no
-    identifier, and a second item for somebody who already has one is the mistake here only
-    an administrator can undo. An item stating an ORCID states a different one -- ours
-    matched nothing on the way in -- so that one is somebody else.
+    identifier, and a second item for somebody who already has one can only be undone by an
+    administrator. An item stating an ORCID states a different one, since ours matched
+    nothing on the way in, so that one is somebody else.
 
-    Wikidata refuses a label and description pair that already exists, so an item sharing
-    both is held whatever it states. Two same-name researchers with no distinguishing
-    employer between them cannot both be described as "researcher", and choosing which
-    detail separates them is not a call to make from a name.
+    An item sharing the label and description is held whatever it states, because Wikidata
+    refuses a duplicate pair. Which detail separates two same-name researchers with the same
+    employer is not a call to make from a name.
     """
     return [s for s in same
             if not s["orcid"] or s["description"] == p["description"]]

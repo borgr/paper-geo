@@ -243,18 +243,14 @@ def first_word(t: str) -> str:
 def same_work(a: str, b: str) -> bool:
     """`same_paper`, plus the same first content word. For pairing against an index.
 
-    `same_paper` compares two titles already known to be yours, so a wrong pair costs one
-    dismissed line. An index answers from every paper ever published, where the same
-    threshold costs a stranger's paper pasted into your bibliography under your name -- word
-    overlap alone accepted "Attention is all you need" against "Tensor Product Attention Is
-    All You Need", and "An autonomous debating system" against "A superpersuasive autonomous
-    policy debating system".
+    `same_paper` compares two titles already known to be the author's, where a wrong pair
+    costs one dismissed line. An index answers from every paper ever published, where the
+    same threshold pastes a stranger's paper into the bibliography -- word overlap alone
+    accepted "Attention is all you need" against "Tensor Product Attention Is All You Need".
 
-    What separates those is where the extra words went: legitimate variants keep their
-    opening (a dropped subtitle, an appended venue retitle), while prepended words change the
-    subject. The cost is a title rearranged across the colon ("Tie the KnOTS: Model Merging
-    with SVD" against "Model Merging with SVD to Tie the KnOTS"), which comes back as a
-    near-miss line to confirm instead of resolving on its own. The right direction to fail in.
+    Legitimate variants keep their opening, such as a dropped subtitle or an appended venue
+    retitle, while prepended words change the subject. A title rearranged across the colon
+    comes back as a near-miss line to confirm rather than resolving on its own.
     """
     if norm_title(a) == norm_title(b):
         return True
@@ -546,17 +542,16 @@ def val(c: dict, k: str):
 def published(c: dict) -> bool:
     """Did this OpenReview note actually get in anywhere.
 
-    OpenReview hosts the submission, not only the paper: "A superpersuasive autonomous policy
-    debating system" is a real note with seven real authors whose venue reads *ICLR 2026
-    Conference Withdrawn Submission*, and citing that as `@inproceedings{booktitle = {ICLR
-    2026}}` claims it appeared there.
+    OpenReview hosts the submission as well as the paper, so a note whose venue reads *ICLR
+    2026 Conference Withdrawn Submission* would otherwise be cited as an `@inproceedings`
+    with `booktitle = {ICLR 2026}`.
 
-    One rule covers every rejected state, because OpenReview names them all the same way: a
+    One rule covers every rejected state, since OpenReview names them all the same way. A
     note that did not get in lives in a group whose last path segment ends in `Submission` --
     `Withdrawn_Submission`, `Desk_Rejected_Submission`, `Rejected_Submission`, or plain
-    `Submission` while review is still running. An accepted paper's `venueid` is the venue's
-    own group and ends in `Conference`, `Workshop`, or the workshop's name. `Submitted to ...`
-    catches the venues that put the state in the display string and leave the id off.
+    `Submission` while review is still running. An accepted paper's `venueid` ends in
+    `Conference`, `Workshop`, or the workshop's name. `Submitted to ...` catches the venues
+    that put the state in the display string and leave the id off.
     """
     vid, venue = (val(c, "venueid") or "").strip(), (val(c, "venue") or "").strip()
     if venue.lower().startswith("submitted to") or venue.lower().endswith("submission"):

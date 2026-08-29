@@ -217,15 +217,13 @@ def unstructure(value, spec: dict):
     """Put a reply back into the shape the schema asked for, where that is lossless.
 
     A forced tool call over-structures. `misreadings` is declared as an array of plain
-    strings; one live pass returned it as `[{"text": "The 0.77 accuracy ..."}]` in one draft
-    and as a string exploded character by character (`{"0": "T", "1": "h", ...}`) in two
-    more. Each is a string wearing an object, each converts back exactly, and left alone
-    each costs a schema error.
+    strings, and one live pass returned it as `[{"text": "The 0.77 accuracy ..."}]` in one
+    draft and as a string exploded character by character (`{"0": "T", "1": "h", ...}`) in
+    two more. Each is a string wearing an object and each converts back exactly.
 
-    Deliberately narrow: it only turns an object into the string the schema already
-    required, and only when the object holds nothing the string does not. Anything else is
-    returned untouched -- a shape code cannot unambiguously recover is a finding for the
-    author, not a guess.
+    Narrow by design. It turns an object into the string the schema already required, and
+    only when the object holds nothing the string does not. Anything else is returned
+    untouched, since a shape code cannot unambiguously recover is a finding for the author.
     """
     if not isinstance(spec, dict):
         return value

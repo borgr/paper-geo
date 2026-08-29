@@ -168,15 +168,12 @@ def inventory(text: str) -> str:
     """What the paper's own numbering contains, lifted out of the text ahead of drafting.
 
     Section and figure numbers, so `evidence:` can cite one that exists -- a Limitations
-    claim citing Section 7 of a paper whose last section is 6 is the error class `validate`
-    makes fatal at `--accept`, and discovering it at review time is a round trip.
+    claim citing Section 7 of a six-section paper is fatal at `--accept`. Captions too, since
+    they carry the magnitudes and the full text is truncated head-and-tail, so a caption in
+    the middle of a long paper is what the model never sees.
 
-    Captions too, because they are where magnitudes live and because the full text is
-    truncated head-and-tail -- so a caption in the middle of a long paper is exactly what
-    the model never sees. Half of a page's result claims must state a figure.
-
-    Approximate, and safe in the direction it errs: PDF text loses column order, so a
-    caption can arrive scrambled and a heading can be missed. Nothing here is authority --
+    Approximate, and safe in the direction it errs. PDF text loses column order, so a caption
+    can arrive scrambled and a heading can be missed. Nothing here is authority --
     `check_claim_evidence` verifies pointers against the text independently.
     """
     from validate import deline

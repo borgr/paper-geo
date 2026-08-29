@@ -645,17 +645,15 @@ def paper_llms_txt(p: dict, sc: dict, cfg) -> str:
 def retired_slugs(papers: list[dict]) -> dict[str, str]:
     """Paper URLs a merge retired -> the slug that replaced them.
 
-    GitHub Pages has no server-side redirect, so a page consolidated away whose URL is
-    already published, linked and indexed becomes a 404 unless something is written at it,
-    which is the opposite of what a merge is for. A zero-delay meta refresh plus a
-    canonical naming the survivor is the redirect a static host can express, and crawlers
-    read the pair as one.
+    GitHub Pages has no server-side redirect, so a consolidated page whose URL is already
+    published and indexed becomes a 404 unless something is written at it. A zero-delay meta
+    refresh plus a canonical naming the survivor is the redirect a static host can express,
+    and crawlers read the pair as one.
 
     Derived from each paper's `merged_from` titles through the same slugify the live pages
-    use, never from what happens to be deployed, so the same inputs give the same site.
-    Merges are not the only way a URL retires, though: correcting a title upstream or
-    improving `slugify` moves a page whose old address exists nowhere in the current
-    inputs, so collect.py's recorded moves are read from disk and unioned in.
+    use, never from what happens to be deployed, so the same inputs give the same site. A
+    corrected title or an improved `slugify` also moves a page, and that old address exists
+    nowhere in the current inputs, so collect.py's recorded moves are unioned in from disk.
     """
     live = {p["slug"] for p in papers}
     hist = read_yaml(os.path.join(DATA, "slug_history.yaml")) or {}
