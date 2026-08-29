@@ -5511,6 +5511,75 @@ class TestAQuietItemIsNotAnItemWithNoStatements(unittest.TestCase):
             self.assertNotIn("need 50", out.getvalue())
 
 
+class TestEveryFetchReachesTheHealthLedger(unittest.TestCase):
+    """A direct `urllib.request.urlopen` has to call `note_fetch` about what happened.
+
+    `data/health.yaml` is how a source that quietly stopped answering becomes visible, and
+    the symptom of a path that skips it is a whole worklist section absent -- which reads as
+    "nothing to report". Three such paths were found and fixed by hand once. This is the
+    same finding as a check, so the fourth one fails here instead.
+
+    Anything going through `common.get_status` is covered by that function's own call. The
+    exemptions below are the two cases where a fetch genuinely is not a source read, and
+    each has to stay justified -- an exemption that is no longer needed fails too.
+
+    Per function, not per branch. A fetcher that records one outcome and not another gets
+    past this, so the branch coverage is on the tests for that function.
+    """
+
+    EXEMPT = {
+        "scripts/paper_code.py:hf_put_links":
+            "a POST under the author's token, so there is no source whose health it "
+            "measures -- its return string is reported per paper instead",
+        "scripts/paper_code.py:PageFacts.get":
+            "URLs lifted out of paper full text, where a 404 is the probe succeeding. "
+            "One mistyped URL in one paper would otherwise earn a permanent ledger line",
+    }
+
+    @staticmethod
+    def _calls(node, dotted: str) -> bool:
+        for n in ast.walk(node):
+            if not isinstance(n, ast.Call):
+                continue
+            f, parts = n.func, []
+            while isinstance(f, ast.Attribute):
+                parts.append(f.attr)
+                f = f.value
+            if isinstance(f, ast.Name):
+                parts.append(f.id)
+            if ".".join(reversed(parts)) == dotted:
+                return True
+        return False
+
+    def _fetchers(self):
+        """(qualified name, path) for every function that opens a URL itself."""
+        out = []
+        for path in sorted(glob.glob(os.path.join(ROOT, "scripts", "*.py"))
+                           + glob.glob(os.path.join(ROOT, "measure", "*.py"))
+                           + [os.path.join(ROOT, "update.py")]):
+            rel = os.path.relpath(path, ROOT)
+            tree = ast.parse(source(path))
+            stack = [(tree, "")]
+            while stack:
+                node, prefix = stack.pop()
+                for child in node.body:
+                    if isinstance(child, ast.ClassDef):
+                        stack.append((child, prefix + child.name + "."))
+                    elif isinstance(child, ast.FunctionDef):
+                        stack.append((child, prefix + child.name + "."))
+                        if self._calls(child, "urllib.request.urlopen"):
+                            out.append((f"{rel}:{prefix}{child.name}", child))
+        # An outer function is credited to whichever inner one does the opening.
+        inner = {q for q, n in out}
+        return [(q, n) for q, n in out
+                if not any(o != q and o.startswith(q + ".") for o in inner)]
+
+    def test_every_fetch_records_what_happened(self):
+        missing = {q for q, n in self._fetchers() if not self._calls(n, "note_fetch")}
+        self.assertEqual(set(self.EXEMPT), missing,
+                         "left out of data/health.yaml, or exempt without needing to be")
+
+
 class TestARefusedSparqlChunkIsNotAMissingItem(unittest.TestCase):
     """`audit_identity.wikidata_paper_coverage` asks in chunks of 50 and used to treat one
     refused chunk as fifty papers with no Wikidata item.
