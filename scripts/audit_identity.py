@@ -1545,19 +1545,24 @@ def orcid_findings(cfg: dict, orc: dict, papers: list[dict]) -> dict:
 
 
 def audit_page(cfg: dict, r: dict, d: dict) -> list[str]:
-    """The audit page: one table row per surface, then one section per surface with a fix."""
+    """The audit page: a table of what every surface says, then a section per open fix."""
+    return audit_table(cfg, r, d) + audit_fixes(cfg, r, d)
+
+
+def audit_table(cfg: dict, r: dict, d: dict) -> list[str]:
+    """One row per surface, each marked ok, **fix**, **check** or optional."""
     ident, ids = cfg["identity"], cfg["ids"]
     papers, ax, orc = r["papers"], r["ax"], r["orc"]
     reg, wd, wd_gaps = r["reg"], r["wd"], r["wd_gaps"]
-    wd_cov, wd_qs, hf = r["wd_cov"], r["wd_qs"], r["hf"]
-    n_typo, n_absent, n_read = r["n_typo"], r["n_absent"], r["n_read"]
-    n_gap, stray = r["n_gap"], r["stray"]
-    canon, url_vals, has_canon = d["canon"], d["url_vals"], d["has_canon"]
-    missing_variants, other_pages, want_kw = d["missing_variants"], d["other_pages"], d["want_kw"]
-    o_dups, o_misfiled, o_vers = d["o_dups"], d["o_misfiled"], d["o_vers"]
-    o_conf, o_unk, o_missing = d["o_conf"], d["o_unk"], d["o_missing"]
-    auto_src, missing_empl, missing_edu = d["auto_src"], d["missing_empl"], d["missing_edu"]
-    edu_open, edu_theirs = d["edu_open"], d["edu_theirs"]
+    wd_cov, hf, n_typo = r["wd_cov"], r["hf"], r["n_typo"]
+    n_absent, n_read, n_gap = r["n_absent"], r["n_read"], r["n_gap"]
+    stray = r["stray"]
+    has_canon, missing_variants = d["has_canon"], d["missing_variants"]
+    other_pages = d["other_pages"]
+    want_kw, o_dups, o_misfiled = d["want_kw"], d["o_dups"], d["o_misfiled"]
+    o_vers, o_conf, o_unk = d["o_vers"], d["o_conf"], d["o_unk"]
+    o_missing, auto_src, missing_empl = d["o_missing"], d["auto_src"], d["missing_empl"]
+    missing_edu, edu_open, edu_theirs = d["missing_edu"], d["edu_open"], d["edu_theirs"]
     def status(ok: bool) -> str:
         return "ok" if ok else "**fix**"
 
@@ -1657,7 +1662,25 @@ def audit_page(cfg: dict, r: dict, d: dict) -> list[str]:
         L.append(f"| ORCID works ORCID already merged | {len(o_vers)} | optional |")
     L += [f"| Semantic Scholar records | {len(ids['semantic_scholar'])} | "
           f"{status(len(ids['semantic_scholar']) == 1)} |", ""]
+    return L
 
+
+def audit_fixes(cfg: dict, r: dict, d: dict) -> list[str]:
+    """One section per surface with something open, carrying the URL, the clicks and the
+    values to paste. Empty when every row of the table above reads ok."""
+    ident, ids = cfg["identity"], cfg["ids"]
+    orc, reg, wd = r["orc"], r["reg"], r["wd"]
+    wd_gaps, wd_cov, wd_qs = r["wd_gaps"], r["wd_cov"], r["wd_qs"]
+    hf, n_typo, n_gap = r["hf"], r["n_typo"], r["n_gap"]
+    stray = r["stray"]
+    canon, url_vals, has_canon = d["canon"], d["url_vals"], d["has_canon"]
+    missing_variants, other_pages = d["missing_variants"], d["other_pages"]
+    want_kw = d["want_kw"]
+    o_dups, o_misfiled, o_conf = d["o_dups"], d["o_misfiled"], d["o_conf"]
+    o_unk, o_missing, auto_src = d["o_unk"], d["o_missing"], d["auto_src"]
+    missing_empl, missing_edu, edu_open = d["missing_empl"], d["missing_edu"], d["edu_open"]
+    edu_theirs = d["edu_theirs"]
+    L = []
     if orc["works"] == 0:
         L += ["## ORCID has 0 public works", "",
               "Note the *public*: an item set to “trusted parties” is invisible to the",
