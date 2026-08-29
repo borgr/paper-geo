@@ -2906,6 +2906,80 @@ class TestAnUnfetchedArxivTitleIsNotAgreement(unittest.TestCase):
         self.assertIn("title_diffs.json", out, "and it vanished without a word")
 
 
+class TestAnAbsentStateFileIsNotAnEmptySection(unittest.TestCase):
+    """`WORKLIST.md` opens by promising that a section absent from it is done.
+
+    Each section is built from one file in `build/`, and every one of them reads an empty
+    file as nothing to report. So a step that did not run, or that crashed mid-write, takes
+    its whole section off the page -- and the opening line then calls it done. `build/` is
+    gitignored, so `python update.py --step worklist` on a fresh clone is that run.
+    """
+
+    def _u(self):
+        import update
+        update.UNBUILT.clear()
+        return update
+
+    def test_a_missing_file_is_recorded(self):
+        import tempfile
+        u = self._u()
+        with tempfile.TemporaryDirectory() as d:
+            old, u.ROOT = u.ROOT, d
+            try:
+                self.assertEqual({}, u.built("scholar_diff.json"))
+            finally:
+                u.ROOT = old
+        self.assertEqual(["`build/scholar_diff.json` (not there)"], u.UNBUILT)
+        self.assertIn("scholar_diff.json", u.unbuilt_note()[0])
+
+    def test_a_half_written_file_says_so(self):
+        """A crashed write is not a step that never ran, and the remedy differs."""
+        import tempfile
+        u = self._u()
+        with tempfile.TemporaryDirectory() as d:
+            os.makedirs(os.path.join(d, "build"))
+            with open(os.path.join(d, "build", "wikidata_people.json"), "w") as f:
+                f.write('{"people": [{"name": "A')
+            old, u.ROOT = u.ROOT, d
+            try:
+                self.assertEqual({}, u.built("wikidata_people.json"))
+            finally:
+                u.ROOT = old
+        self.assertEqual(["`build/wikidata_people.json` (there and unreadable)"], u.UNBUILT)
+
+    def test_a_clean_run_says_nothing(self):
+        self.assertEqual([], self._u().unbuilt_note())
+
+    def test_the_note_names_every_file_and_the_fix(self):
+        u = self._u()
+        u.UNBUILT += ["`build/a.json` (not there)", "`build/b.json` (not there)"]
+        note = u.unbuilt_note()[0]
+        u.UNBUILT.clear()
+        self.assertTrue(note.startswith("> "), "not a blockquote, so it reads as body text")
+        for want in ("2 files", "build/a.json", "build/b.json", "python update.py"):
+            self.assertIn(want, note)
+
+    def test_every_build_read_happens_before_the_note(self):
+        """`built` is called all the way down `step_worklist`.
+
+        One added below the note would collect a miss nothing goes on to report, which is
+        the silence this class exists to remove.
+        """
+        tree = ast.parse(source(os.path.join(ROOT, "update.py")))
+        fn = next(n for n in ast.walk(tree)
+                  if isinstance(n, ast.FunctionDef) and n.name == "step_worklist")
+        def calls(name):
+            return [n.lineno for n in ast.walk(fn) if isinstance(n, ast.Call)
+                    and (getattr(n.func, "id", "") == name
+                         or getattr(n.func, "attr", "") == name)]
+        note, reads, clear = calls("unbuilt_note"), calls("built"), calls("clear")
+        self.assertEqual(1, len(note), "the note is emitted once or not at all")
+        self.assertTrue(reads, "no build/ read left in the worklist step")
+        self.assertLess(max(reads), note[0], "a state file is read after the note is built")
+        self.assertTrue(clear and min(clear) < min(reads),
+                        "UNBUILT is not cleared, so one run reports the last run's misses")
+
+
 class TestADeclinedSectionTakesItsPayloadWithIt(unittest.TestCase):
     """The worklist hides a section; the file that section handed you is committed.
 

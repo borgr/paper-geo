@@ -844,13 +844,35 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
     return L
 
 
+UNBUILT: list[str] = []
+
+
 def built(name: str) -> dict:
-    """What a step left in `build/`, `{}` if it has not run or wrote something unreadable."""
+    """What a step left in `build/`, `{}` if it has not run or wrote something unreadable.
+
+    Records the miss in `UNBUILT`, which `unbuilt_note` puts on the page. Every section built
+    from one of these files treats an empty read as nothing to report, so a step that did not
+    run removes its whole section from a page whose first line says an absent section is done.
+    """
     try:
         with open(os.path.join(ROOT, "build", name)) as f:
             return json.load(f)
-    except (OSError, ValueError):
+    except (OSError, ValueError) as e:
+        why = "not there" if isinstance(e, FileNotFoundError) else "there and unreadable"
+        UNBUILT.append(f"`build/{name}` ({why})")
         return {}
+
+
+def unbuilt_note() -> list[str]:
+    """One line naming what the sections below were built without, or nothing."""
+    if not UNBUILT:
+        return []
+    one = len(UNBUILT) == 1
+    return [f"> **{'A file' if one else f'{len(UNBUILT)} files'} this page is built from could "
+            f"not be read.** {', '.join(UNBUILT)}. "
+            f"{'The section it feeds is' if one else 'The sections they feed are'} absent here "
+            f"for want of input rather than because {'it holds' if one else 'they hold'} "
+            f"nothing. A full `python update.py` writes {'it' if one else 'them'} first.", ""]
 
 
 def scholar_split_records(st: dict) -> list[str]:
@@ -1241,7 +1263,8 @@ def step_worklist(cfg, args) -> None:
     repos = (read_yaml(os.path.join(DATA, "repos.yaml")) or {}).get("repos", [])
     ident, ids = cfg["identity"], cfg["ids"]
     # Written by the audit step. Absent (audit skipped) = fall back to stored state
-    # rather than guessing, and say so where it matters.
+    # rather than guessing, and `unbuilt_note` says on the page which ones were absent.
+    UNBUILT.clear()
     state = built("identity_state.json")
     scholar = built("scholar_diff.json")
     unowned = set(state.get("arxiv_unowned") or [])
@@ -1913,6 +1936,13 @@ def step_worklist(cfg, args) -> None:
                   "it, then `python scripts/sweep_github.py diff`.", ""]
 
     lines = next_steps(tidy(drop_hollow(apply_declines(lines))))
+    # Last, because `built` is called all the way down this function. Inserted above the
+    # first heading so it sits with the promise it qualifies -- the opening line saying a
+    # section that is not here is done.
+    if note := unbuilt_note():
+        i = next((k for k, l in enumerate(lines) if l.startswith("## ")), len(lines))
+        lines[i:i] = note
+        print("  built without: " + "; ".join(UNBUILT))
 
     out = os.path.join(ROOT, "WORKLIST.md")
     with open(out, "w") as f:
