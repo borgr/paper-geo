@@ -15,13 +15,7 @@ choose `tasks/orcid_missing.bib` → review the list → *Add all*.
 
 | # | cites | title | identifier |
 |---|---|---|---|
-| 1 | 0 | A Statistical Framework for Game-Based AI Evaluation | `— none —` |
-
-**1 of these carry no identifier at all.** Those are the entries
-where a BibTeX import genuinely can duplicate later, because ORCID has
-nothing to group them on. Add them last, or leave them out — a work with no
-DOI and no arXiv id is also a work nothing downstream can resolve.
-
+| 1 | 0 | Skill Issue: Are Skills Language-Invariant in LLMs? | `10.48550/arXiv.2608.25832` |
 
 Then re-run the audit: the *ORCID holds your papers* row is the check.
 

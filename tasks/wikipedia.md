@@ -17,7 +17,7 @@ yours and may be wrong. Same rule: read it, and only raise a talk-page item
 if it misstates the work. The quoted line is what that article says about the
 term — enough to tick most rows without opening anything.
 
-- **Project Debater** (173 citations)
+- **Project Debater** (174 citations)
   - [ ] [Project Debater](https://en.wikipedia.org/wiki/Project_Debater) — [talk](https://en.wikipedia.org/wiki/Talk:Project_Debater)
     > Project Debater is an IBM artificial intelligence project, designed to participate in a full live debate with expert human debaters.
   - [ ] [Outline of artificial intelligence](https://en.wikipedia.org/wiki/Outline_of_artificial_intelligence) — [talk](https://en.wikipedia.org/wiki/Talk:Outline_of_artificial_intelligence)
@@ -26,7 +26,7 @@ term — enough to tick most rows without opening anything.
     > been growing rapidly, with, for example, IBM's Grand Challenge, Project Debater, results for which were published in Nature
   - [ ] [Open to Debate](https://en.wikipedia.org/wiki/Open_to_Debate) — [talk](https://en.wikipedia.org/wiki/Talk:Open_to_Debate)
     > intelligence and a human being, in partnership with IBM's "Project Debater".
-- **PromptEval** (85 citations)
+- **PromptEval** (87 citations)
   - [ ] [Prompt engineering](https://en.wikipedia.org/wiki/Prompt_engineering) — [talk](https://en.wikipedia.org/wiki/Talk:Prompt_engineering)
     > more comprehensive performance interval. Similarly, PromptEval estimates performance distributions across diverse prompts, enabling robust
 
@@ -50,34 +50,34 @@ disclosure -- it is ordinary editing in an area you know.
 - *machine translation evaluation* — no article, and nothing in this field close to it
 - *efficient evaluation* — no article, and nothing in this field close to it
 
-## Absent from Wikipedia (35) — nothing to do
+## Absent from Wikipedia (36) — nothing to do
 
 Coined here, above the citation floor, and nobody independent has written them
 up. Deliberately not actionable: proposing the mention yourself is the request
 that gets declined, and writing the article yourself is the spam case. They
 become checks in section 2 if someone else ever writes about them.
 
-- tinyBenchmarks — 294 citations
-- BabyLM Challenge — 238 citations
-- Global-MMLU — 190 citations
+- tinyBenchmarks — 297 citations
+- BabyLM Challenge — 241 citations
+- Global-MMLU — 193 citations
 - PkE — 127 citations
 - peakiness effect — 127 citations
-- DisentQA — 120 citations
-- RLCR — 100 citations
+- DisentQA — 122 citations
+- RLCR — 102 citations
 - IBM-EviConv — 78 citations
 - BlendNet — 72 citations
+- EWoK — 71 citations
+- Flash-HELM — 70 citations
 - Retrospective Labeling — 70 citations
-- Flash-HELM — 69 citations
-- EWoK — 68 citations
-- MoErging — 68 citations
+- MoErging — 69 citations
 - ColD Fusion — 64 citations
 - TP-agreement — 64 citations
-- NumeroLogic — 46 citations
+- NumeroLogic — 47 citations
 - LCB — 38 citations
 - Low Coverage Bias — 38 citations
 - USim — 36 citations
 - MAEGE — 35 citations
-- BabyLM Interaction track — 33 citations
+- BabyLM Interaction track — 34 citations
 - BabyLM — 32 citations
 - DCT — 29 citations
 - Deductive Closure Training — 29 citations
@@ -85,10 +85,11 @@ become checks in section 2 if someone else ever writes about them.
 - JD-Full — 29 citations
 - joint diagonalization of LoRAs — 29 citations
 - BERT_IT:CLUST — 28 citations
+- ZipNN — 25 citations
 - SErCl — 23 citations
 - Unitxt — 23 citations
-- ZipNN — 23 citations
 - BenchBench — 22 citations
+- CLIKE — 22 citations
 - ComPEFT — 21 citations
 - DOVE — 21 citations
 - Label Sleuth — 21 citations

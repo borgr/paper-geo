@@ -327,6 +327,9 @@ papers:
   serrant-a-syntactic-classifier-for-english-grammatical-error:
     verdict: accept
     repo: https://github.com/matanel-oren/serrant
+  skill-issue-are-skills-language-invariant-in-llms:
+    verdict: review
+    repo: https://github.com/TextArena/TextArena
   sloth-scaling-laws-for-llm-skills-to-predict-multi-benchmark:
     verdict: accept
     repo: https://github.com/felipemaiapolo/sloth

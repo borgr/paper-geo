@@ -59,7 +59,7 @@ No request is made on your behalf at any point -- code reads the file you saved.
 Highest citations first, so stopping early still helps most. A commented line is a
 field the listing already has -- shown so you can check it rather than retype it.
 
-### 1. TIES-Merging: Resolving Interference When Merging Models — cited 897
+### 1. TIES-Merging: Resolving Interference When Merging Models — cited 905
 
 <https://arxiv.org/abs/2306.01708> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -68,7 +68,7 @@ Journal-ref:          Advances in Neural Information Processing Systems 36: Annu
 Journal version DOI:  10.52202/075280-0310
 ```
 
-### 2. tinyBenchmarks: evaluating LLMs with fewer examples — cited 294
+### 2. tinyBenchmarks: evaluating LLMs with fewer examples — cited 297
 
 <https://arxiv.org/abs/2402.14992> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -77,7 +77,7 @@ Journal-ref:          Forty-first International Conference on Machine Learning, 
 Journal version DOI:  (none minted — leave blank)
 ```
 
-### 3. Global MMLU: Understanding and Addressing Cultural and Linguistic Biases in Multilingual Evaluation — cited 190
+### 3. Global MMLU: Understanding and Addressing Cultural and Linguistic Biases in Multilingual Evaluation — cited 193
 
 <https://arxiv.org/abs/2412.03304> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -104,7 +104,7 @@ Journal-ref:          8th International Conference on Learning Representations, 
 Journal version DOI:  (none minted — leave blank)
 ```
 
-### 6. DisentQA: Disentangling Parametric and Contextual Knowledge with Counterfactual Question Answering — cited 120
+### 6. DisentQA: Disentangling Parametric and Contextual Knowledge with Counterfactual Question Answering — cited 122
 
 <https://arxiv.org/abs/2211.05655> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -113,7 +113,7 @@ Journal-ref:          Proceedings of the 61st Annual Meeting of the Association 
 Journal version DOI:  10.18653/v1/2023.acl-long.559
 ```
 
-### 7. Model merging with SVD to tie the Knots — cited 117
+### 7. Model merging with SVD to tie the Knots — cited 118
 
 <https://arxiv.org/abs/2410.19735> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -122,7 +122,7 @@ Journal-ref:          ICLR, 2025
 Journal version DOI:  (none minted — leave blank)
 ```
 
-### 8. Asymmetry in Low-Rank Adapters of Foundation Models — cited 92
+### 8. Asymmetry in Low-Rank Adapters of Foundation Models — cited 94
 
 <https://arxiv.org/abs/2402.16842> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -131,7 +131,7 @@ Journal-ref:          Forty-first International Conference on Machine Learning, 
 Journal version DOI:  (none minted — leave blank)
 ```
 
-### 9. Efficient multi-prompt evaluation of LLMs — cited 85
+### 9. Efficient multi-prompt evaluation of LLMs — cited 87
 
 <https://arxiv.org/abs/2405.17202> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -158,34 +158,7 @@ Journal-ref:          Findings of the Association for Computational Linguistics:
 Journal version DOI:  10.18653/v1/2023.findings-emnlp.95
 ```
 
-### 12. Corpus Wide Argument Mining - A Working Solution — cited 70
-
-<https://arxiv.org/abs/1911.10763> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
-
-```
-# already set:        AAAI 2020
-Journal version DOI:  10.1609/AAAI.V34I05.6270
-```
-
-### 13. DORA The Explorer: Directed Outreaching Reinforcement Action-Selection — cited 70
-
-<https://arxiv.org/abs/1804.04012> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
-
-```
-Journal-ref:          6th International Conference on Learning Representations, Conference Track Proceedings, 2018
-Journal version DOI:  (none minted — leave blank)
-```
-
-### 14. Efficient Benchmarking (of Language Models) — cited 69
-
-<https://arxiv.org/abs/2308.11696> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
-
-```
-Journal-ref:          Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers), pages 2519-2536
-Journal version DOI:  10.18653/v1/2024.naacl-long.139
-```
-
-### 15. Elements of World Knowledge (EWoK): A Cognition-Inspired Framework for Evaluating Basic World Knowledge in Language Models — cited 68
+### 12. Elements of World Knowledge (EWoK): A Cognition-Inspired Framework for Evaluating Basic World Knowledge in Language Models — cited 71
 
 <https://arxiv.org/abs/2405.09605> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -194,21 +167,48 @@ Journal-ref:          Trans. Assoc. Comput. Linguistics 13 (2025) 1245-1270
 Journal version DOI:  10.1162/TACL.A.38
 ```
 
-### 16. A Survey on Model MoErging: Recycling and Routing Among Specialized Experts for Collaborative Learning — cited 68
-
-<https://arxiv.org/abs/2408.07057> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
-
-```
-Journal-ref:          Transactions on Machine Learning Research, 2025
-Journal version DOI:  (none minted — leave blank)
-```
-
-### 17. Findings of the Second BabyLM Challenge: Sample-Efficient Pretraining on Developmentally Plausible Corpora — cited 66
+### 13. Findings of the Second BabyLM Challenge: Sample-Efficient Pretraining on Developmentally Plausible Corpora — cited 70
 
 <https://arxiv.org/abs/2412.05149> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
 ```
 Journal-ref:          The 2nd BabyLM Challenge at the 28th Conference on Computational Natural Language Learning, pages 1-21, 2024
+Journal version DOI:  (none minted — leave blank)
+```
+
+### 14. Efficient Benchmarking (of Language Models) — cited 70
+
+<https://arxiv.org/abs/2308.11696> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
+
+```
+Journal-ref:          Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers), pages 2519-2536
+Journal version DOI:  10.18653/v1/2024.naacl-long.139
+```
+
+### 15. Corpus Wide Argument Mining - A Working Solution — cited 70
+
+<https://arxiv.org/abs/1911.10763> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
+
+```
+# already set:        AAAI 2020
+Journal version DOI:  10.1609/AAAI.V34I05.6270
+```
+
+### 16. DORA The Explorer: Directed Outreaching Reinforcement Action-Selection — cited 70
+
+<https://arxiv.org/abs/1804.04012> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
+
+```
+Journal-ref:          6th International Conference on Learning Representations, Conference Track Proceedings, 2018
+Journal version DOI:  (none minted — leave blank)
+```
+
+### 17. A Survey on Model MoErging: Recycling and Routing Among Specialized Experts for Collaborative Learning — cited 69
+
+<https://arxiv.org/abs/2408.07057> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
+
+```
+Journal-ref:          Transactions on Machine Learning Research, 2025
 Journal version DOI:  (none minted — leave blank)
 ```
 
@@ -221,7 +221,7 @@ Journal-ref:          Proceedings of the 61st Annual Meeting of the Association 
 Journal version DOI:  10.18653/v1/2023.acl-long.46
 ```
 
-### 19. NumeroLogic: Number Encoding for Enhanced LLMs' Numerical Reasoning — cited 46
+### 19. NumeroLogic: Number Encoding for Enhanced LLMs' Numerical Reasoning — cited 47
 
 <https://arxiv.org/abs/2404.00459> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -329,16 +329,7 @@ Journal-ref:          The Thirty-ninth Annual Conference on Neural Information P
 Journal version DOI:  (none minted — leave blank)
 ```
 
-### 31. The Language of Legal and Illegal Activity on the Darknet — cited 25
-
-<https://arxiv.org/abs/1905.05543> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
-
-```
-Journal-ref:          Proceedings of the 57th Conference of the Association for Computational Linguistics, Volume 1: Long Papers, pages 4271-4279, 2019
-Journal version DOI:  10.18653/v1/p19-1419
-```
-
-### 32. ZipNN: Lossless Compression for AI Models — cited 23
+### 31. ZipNN: Lossless Compression for AI Models — cited 25
 
 <https://arxiv.org/abs/2411.05239> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -347,22 +338,31 @@ Journal-ref:          2025 IEEE 18th International Conference on Cloud Computing
 Journal version DOI:  10.1109/CLOUD67622.2025.00028
 ```
 
-### 33. Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluation for Generative AI — cited 23
+### 32. The Language of Legal and Illegal Activity on the Darknet — cited 25
 
-<https://arxiv.org/abs/2401.14019> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
+<https://arxiv.org/abs/1905.05543> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
 ```
-Journal-ref:          Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 3: System Demonstrations), pages 207-215
-Journal version DOI:  10.18653/v1/2024.naacl-demo.21
+Journal-ref:          Proceedings of the 57th Conference of the Association for Computational Linguistics, Volume 1: Long Papers, pages 4271-4279, 2019
+Journal version DOI:  10.18653/v1/p19-1419
 ```
 
-### 34. Data Contamination Report from the 2024 CONDA Shared Task — cited 23
+### 33. Data Contamination Report from the 2024 CONDA Shared Task — cited 24
 
 <https://arxiv.org/abs/2407.21530> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
 ```
 Journal-ref:          The First Data Contamination Workshop, pages 41-56, 2024
 Journal version DOI:  10.18653/v1/2024.conda-1.4
+```
+
+### 34. Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluation for Generative AI — cited 23
+
+<https://arxiv.org/abs/2401.14019> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
+
+```
+Journal-ref:          Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 3: System Demonstrations), pages 207-215
+Journal version DOI:  10.18653/v1/2024.naacl-demo.21
 ```
 
 ### 35. Classifying Syntactic Errors in Learner Language — cited 23
@@ -383,7 +383,16 @@ Journal-ref:          Forty-second International Conference on Machine Learning,
 Journal version DOI:  (none minted — leave blank)
 ```
 
-### 37. ComPEFT: Compression for Communicating Parameter Efficient Updates via Sparsification and Quantization — cited 21
+### 37. Beneath the Surface of Consistency: Exploring Cross-lingual Knowledge Representation Sharing in LLMs — cited 22
+
+<https://arxiv.org/abs/2408.10646> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
+
+```
+Journal-ref:          Findings of the Association for Computational Linguistics: NAACL 2025, pages 4630-4644
+Journal version DOI:  (none minted — leave blank)
+```
+
+### 38. ComPEFT: Compression for Communicating Parameter Efficient Updates via Sparsification and Quantization — cited 21
 
 <https://arxiv.org/abs/2311.13171> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -392,7 +401,7 @@ Journal-ref:          Transactions on Machine Learning Research, 2025
 Journal version DOI:  (none minted — leave blank)
 ```
 
-### 38. Label Sleuth: From Unlabeled Text to a Classifier in a Few Hours — cited 21
+### 39. Label Sleuth: From Unlabeled Text to a Classifier in a Few Hours — cited 21
 
 <https://arxiv.org/abs/2208.01483> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -401,7 +410,7 @@ Journal-ref:          Proceedings of the 2022 Conference on Empirical Methods in
 Journal version DOI:  10.18653/v1/2022.emnlp-demos.16
 ```
 
-### 39. Automatically Extracting Challenge Sets for Non-Local Phenomena in Neural Machine Translation — cited 20
+### 40. Automatically Extracting Challenge Sets for Non-Local Phenomena in Neural Machine Translation — cited 20
 
 <https://arxiv.org/abs/1909.06814> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -410,21 +419,12 @@ Journal-ref:          Proceedings of the 23rd Conference on Computational Natura
 Journal version DOI:  10.18653/v1/k19-1028
 ```
 
-### 40. LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content — cited 19
+### 41. LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content — cited 19
 
 <https://arxiv.org/abs/2410.10783> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
 ```
 Journal-ref:          The Thirteenth International Conference on Learning Representations, 2025
-Journal version DOI:  (none minted — leave blank)
-```
-
-### 41. Beneath the Surface of Consistency: Exploring Cross-lingual Knowledge Representation Sharing in LLMs — cited 19
-
-<https://arxiv.org/abs/2408.10646> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
-
-```
-Journal-ref:          Findings of the Association for Computational Linguistics: NAACL 2025, pages 4630-4644
 Journal version DOI:  (none minted — leave blank)
 ```
 
@@ -518,7 +518,16 @@ Journal-ref:          Proceedings of the 63rd Annual Meeting of the Association 
 Journal version DOI:  10.18653/v1/2025.acl-demo.17
 ```
 
-### 52. Holmes: A Benchmark to Assess the Linguistic Competence of Language Models — cited 8
+### 52. CommonLID: Re-evaluating State-of-the-Art Language Identification Performance on Web Data — cited 8
+
+<https://arxiv.org/abs/2601.18026> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
+
+```
+Journal-ref:          Proceedings of the 64th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 33063-33080, 2026
+Journal version DOI:  10.18653/v1/2026.acl-long.1527
+```
+
+### 53. Holmes: A Benchmark to Assess the Linguistic Competence of Language Models — cited 8
 
 <https://arxiv.org/abs/2404.18923> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -527,7 +536,7 @@ Journal-ref:          Trans. Assoc. Comput. Linguistics 12 (2024) 1616-1647
 Journal version DOI:  10.1162/TACL_A_00718
 ```
 
-### 53. Enhancing the Transformer Decoder with Transition-based Syntax — cited 8
+### 54. Enhancing the Transformer Decoder with Transition-based Syntax — cited 8
 
 <https://arxiv.org/abs/2101.12640> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -536,7 +545,7 @@ Journal-ref:          Proceedings of the 26th Conference on Computational Natura
 Journal version DOI:  10.18653/v1/2022.conll-1.27
 ```
 
-### 54. GrASP: A Library for Extracting and Exploring Human-Interpretable Textual Patterns — cited 8
+### 55. GrASP: A Library for Extracting and Exploring Human-Interpretable Textual Patterns — cited 8
 
 <https://arxiv.org/abs/2104.03958> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -545,22 +554,13 @@ Journal-ref:          Proceedings of the Thirteenth Language Resources and Evalu
 Journal version DOI:  10.63317/3n2tjf9emh64
 ```
 
-### 55. Reinforcement Learning with Large Action Spaces for Neural Machine Translation — cited 8
+### 56. Reinforcement Learning with Large Action Spaces for Neural Machine Translation — cited 8
 
 <https://arxiv.org/abs/2210.03053> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
 ```
 Journal-ref:          Proceedings of the 29th International Conference on Computational Linguistics, pages 4544-4556, 2022
 Journal version DOI:  (none minted — leave blank)
-```
-
-### 56. CommonLID: Re-evaluating State-of-the-Art Language Identification Performance on Web Data — cited 7
-
-<https://arxiv.org/abs/2601.18026> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
-
-```
-Journal-ref:          Proceedings of the 64th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 33063-33080, 2026
-Journal version DOI:  10.18653/v1/2026.acl-long.1527
 ```
 
 ### 57. Pretraining Language Models for Diachronic Linguistic Change Discovery — cited 5
@@ -581,7 +581,7 @@ Journal-ref:          Proceedings of the 64th Annual Meeting of the Association 
 Journal version DOI:  10.18653/v1/2026.acl-long.706
 ```
 
-### 59. Will it Merge? On The Causes of Model Mergeability — cited 2
+### 59. Will it Merge? On The Causes of Model Mergeability — cited 3
 
 <https://arxiv.org/abs/2601.06672> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -627,7 +627,7 @@ moves into the list above on its own once a DOI appears.
 If you know better than the test -- the event happened, the proceedings are up --
 the values are here and they are as good as any above.
 
-### 1. Beyond Binary Rewards: Training LMs to Reason About Their Uncertainty — cited 100
+### 1. Beyond Binary Rewards: Training LMs to Reason About Their Uncertainty — cited 102
 
 <https://arxiv.org/abs/2507.16806> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 

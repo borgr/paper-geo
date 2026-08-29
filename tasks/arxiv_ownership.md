@@ -1,6 +1,6 @@
-# arXiv: claim ownership of 0 papers
+# arXiv: claim ownership of 1 papers
 
-Registered as author on **105** of **105** arXiv papers.
+Registered as author on **105** of **106** arXiv papers.
 Public list: <https://arxiv.org/a/0000-0002-0085-6496>
 
 ## Why this is first, not last
@@ -35,5 +35,6 @@ that is a different form: <https://arxiv.org/auth/change-author-status>.
 For your own future submissions: share the paper password with every co-author
 in the announcement email. It costs nothing and saves them this page.
 
-## The 0 papers, citation-ordered
+## The 1 papers, citation-ordered
 
+- [ ]    0 cites — [`2608.25832`](https://arxiv.org/abs/2608.25832) Skill Issue: Are Skills Language-Invariant in LLMs?

@@ -17,32 +17,29 @@ count more. Where it counts less, the difference is on another record.
 
 | gap | Scholar | index | paper | search |
 |---|---|---|---|---|
-| 94 | 200 | 294 | tinyBenchmarks: evaluating LLMs with fewer examples | [search](https://scholar.google.com/scholar?q=%22tinyBenchmarks%3A%20evaluating%20LLMs%20with%20fewer%20examples%22) |
-| 37 | 31 | 68 | Elements of World Knowledge (EWoK): A Cognition-Inspired Fra | [search](https://scholar.google.com/scholar?q=%22Elements%20of%20World%20Knowledge%20%28EWoK%29%3A%20A%20Cognition-Inspired%20Framework%20for%20Evaluating%20Basic%20World%20Knowledge%20in%20Language%20Models%22) |
+| 97 | 200 | 297 | tinyBenchmarks: evaluating LLMs with fewer examples | [search](https://scholar.google.com/scholar?q=%22tinyBenchmarks%3A%20evaluating%20LLMs%20with%20fewer%20examples%22) |
+| 40 | 31 | 71 | Elements of World Knowledge (EWoK): A Cognition-Inspired Fra | [search](https://scholar.google.com/scholar?q=%22Elements%20of%20World%20Knowledge%20%28EWoK%29%3A%20A%20Cognition-Inspired%20Framework%20for%20Evaluating%20Basic%20World%20Knowledge%20in%20Language%20Models%22) |
 | 13 | 0 | 13 | The Mighty ToRR: A Benchmark for Table Reasoning and Robustn | [search](https://scholar.google.com/scholar?q=%22The%20Mighty%20ToRR%3A%20A%20Benchmark%20for%20Table%20Reasoning%20and%20Robustness%22) |
-| 6 | 13 | 19 | Beneath the Surface of Consistency: Exploring Cross-lingual  | [search](https://scholar.google.com/scholar?q=%22Beneath%20the%20Surface%20of%20Consistency%3A%20Exploring%20Cross-lingual%20Knowledge%20Representation%20Sharing%20in%20LLMs%22) |
-| 4 | 3 | 7 | CommonLID: Re-evaluating State-of-the-Art Language Identific | [search](https://scholar.google.com/scholar?q=%22CommonLID%3A%20Re-evaluating%20State-of-the-Art%20Language%20Identification%20Performance%20on%20Web%20Data%22) |
+| 9 | 13 | 22 | Beneath the Surface of Consistency: Exploring Cross-lingual  | [search](https://scholar.google.com/scholar?q=%22Beneath%20the%20Surface%20of%20Consistency%3A%20Exploring%20Cross-lingual%20Knowledge%20Representation%20Sharing%20in%20LLMs%22) |
+| 5 | 3 | 8 | CommonLID: Re-evaluating State-of-the-Art Language Identific | [search](https://scholar.google.com/scholar?q=%22CommonLID%3A%20Re-evaluating%20State-of-the-Art%20Language%20Identification%20Performance%20on%20Web%20Data%22) |
 | 3 | 16 | 19 | LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Paper | [search](https://scholar.google.com/scholar?q=%22LiveXiv%20--%20A%20Multi-Modal%20Live%20Benchmark%20Based%20on%20Arxiv%20Papers%20Content%22) |
 | 3 | 13 | 16 | Mediators in Determining what Processing BERT Performs First | [search](https://scholar.google.com/scholar?q=%22Mediators%20in%20Determining%20what%20Processing%20BERT%20Performs%20First%22) |
 
 ## Copies of your papers filed under another form of your name (0)
 
-Nothing at Crossref, and OpenAlex refused every query: it meters its search
-endpoint at 100 free queries a day, and today's are spent. This pass saw one
-of its two sources.
+api.openalex.org did not answer this run, so an empty list here is not a
+finding. Re-run `python scripts/scholar_strays.py`.
 
 ## Filed under your name forms but not in the bibliography (0)
 
-Nothing at Crossref, and OpenAlex refused every query: it meters its search
-endpoint at 100 free queries a day, and today's are spent. This pass saw one
-of its two sources.
+api.openalex.org did not answer this run, so an empty list here is not a
+finding. Re-run `python scripts/scholar_strays.py`.
 
-## Papers OpenAlex holds twice (39)
+## Papers OpenAlex holds twice (50)
 
-**Partial: 92 of 111 papers checked.** OpenAlex meters its search endpoint at
-100 free queries a day, and today's are spent. Every answer is cached, so
-re-running `python scripts/scholar_strays.py` tomorrow resumes where this one
-stopped.
+**Partial: 107 of 112 papers checked.** OpenAlex did not answer for the rest.
+Every answer is cached, so re-running `python scripts/scholar_strays.py`
+resumes where this one stopped.
 
 A paper split at OpenAlex is usually split at Scholar too, for the same
 reason: the metadata a parser read differs between copies.
@@ -124,6 +121,9 @@ reason: the metadata a parser read differs between copies.
 - [ ] `prequel-quality-estimation-of-machine-translation-outputs-in` — [search Scholar](https://scholar.google.com/scholar?q=%22PreQuEL%3A%20Quality%20Estimation%20of%20Machine%20Translation%20Outputs%20in%20Advance%22)
       - 4 cites — PreQuEL: Quality Estimation of Machine Translation Outputs in Advance — <https://openalex.org/W4385573457>
       - 0 cites — PreQuEL: Quality Estimation of Machine Translation Outputs in Advance — <https://openalex.org/W4281261410>
+- [ ] `semeval-2019-shared-task-cross-lingual-semantic-parsing-with` — [search Scholar](https://scholar.google.com/scholar?q=%22SemEval%202019%20Shared%20Task%3A%20Cross-lingual%20Semantic%20Parsing%20with%20UCCA%20-%20Call%20for%20Participation%22)
+      - 2 cites — SemEval 2019 Shared Task: Cross-lingual Semantic Parsing with UCCA - C — <https://openalex.org/W2807309509>
+      - 2 cites — SemEval 2019 Shared Task: Cross-lingual Semantic Parsing with UCCA -\n — <https://openalex.org/W4293323043>
 - [ ] `data-contamination-report-from-the-2024-conda-shared-task` — [search Scholar](https://scholar.google.com/scholar?q=%22Data%20Contamination%20Report%20from%20the%202024%20CONDA%20Shared%20Task%22)
       - 2 cites — Data Contamination Report from the 2024 CONDA Shared Task — <https://openalex.org/W4402671052>
       - 0 cites — Data Contamination Report from the 2024 CONDA Shared Task — <https://openalex.org/W4401306664>
@@ -170,4 +170,36 @@ reason: the metadata a parser read differs between copies.
 - [ ] `robustness-as-an-emergent-property-of-task-performance` — [search Scholar](https://scholar.google.com/scholar?q=%22Robustness%20as%20an%20Emergent%20Property%20of%20Task%20Performance%22)
       - 0 cites — Robustness as an Emergent Property of Task Performance — <https://openalex.org/W7127619843>
       - 0 cites — Robustness as an Emergent Property of Task Performance — <https://openalex.org/W7127739829>
+- [ ] `every-eval-ever-a-unifying-schema-and-community-repository-f` — [search Scholar](https://scholar.google.com/scholar?q=%22Every%20Eval%20Ever%3A%20A%20Unifying%20Schema%20and%20Community%20Repository%20for%20AI%20Evaluation%20Results%22)
+      - 0 cites — Every Eval Ever: A Unifying Schema and Community Repository for AI Eva — <https://openalex.org/W7164838414>
+      - 0 cites — Every Eval Ever: A Unifying Schema and Community Repository for AI Eva — <https://openalex.org/W7164974068>
+- [ ] `a-latent-variable-framework-for-scaling-laws-in-large-langua` — [search Scholar](https://scholar.google.com/scholar?q=%22A%20Latent%20Variable%20Framework%20for%20Scaling%20Laws%20in%20Large%20Language%20Models%22)
+      - 0 cites — A Latent Variable Framework for Scaling Laws in Large Language Models — <https://openalex.org/W7113915261>
+      - 0 cites — A Latent Variable Framework for Scaling Laws in Large Language Models — <https://openalex.org/W7111156187>
+- [ ] `resolving-interference-ri-disentangling-models-for-improved` — [search Scholar](https://scholar.google.com/scholar?q=%22Resolving%20Interference%20%28RI%29%3A%20Disentangling%20Models%20for%20Improved%20Model%20Merging%22)
+      - 0 cites — Resolving Interference (RI): Disentangling Models for Improved Model M — <https://openalex.org/W7139145332>
+      - 0 cites — Resolving Interference (RI): Disentangling Models for Improved Model M — <https://openalex.org/W7138233437>
+- [ ] `babylm-turns-4-and-goes-multilingual-call-for-papers-for-the` — [search Scholar](https://scholar.google.com/scholar?q=%22BabyLM%20Turns%204%20and%20Goes%20Multilingual%3A%20Call%20for%20Papers%20for%20the%202026%20BabyLM%20Workshop%22)
+      - 0 cites — BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026 Bab — <https://openalex.org/W7131404560>
+      - 0 cites — BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026 Bab — <https://openalex.org/W7131319326>
+- [ ] `cross-lingual-exploration-for-parametric-knowledge` — [search Scholar](https://scholar.google.com/scholar?q=%22Cross-Lingual%20Exploration%20for%20Parametric%20Knowledge%22)
+      - 0 cites — Cross-Lingual Exploration for Parametric Knowledge — <https://openalex.org/W7165973310>
+      - 0 cites — Cross-Lingual Exploration for Parametric Knowledge — <https://openalex.org/W7165758602>
+- [ ] `automated-discovery-has-no-universally-superior-harness` — [search Scholar](https://scholar.google.com/scholar?q=%22Automated%20Discovery%20Has%20No%20Universally%20Superior%20Harness%22)
+      - 0 cites — Automated Discovery Has No Universally Superior Harness — <https://openalex.org/W7170111140>
+      - 0 cites — Automated Discovery Has No Universally Superior Harness — <https://openalex.org/W7169874844>
+- [ ] `growing-pains-extensible-and-efficient-llm-benchmarking-via` — [search Scholar](https://scholar.google.com/scholar?q=%22Growing%20Pains%3A%20Extensible%20and%20Efficient%20LLM%20Benchmarking%20Via%20Fixed%20Parameter%20Calibration%22)
+      - 0 cites — Growing Pains: Extensible and Efficient LLM Benchmarking Via Fixed Par — <https://openalex.org/W7154463862>
+      - 0 cites — Growing Pains: Extensible and Efficient LLM Benchmarking Via Fixed Par — <https://openalex.org/W7154789716>
+- [ ] `evaluation-cards-an-interpretive-layer-for-ai-evaluation-rep` — [search Scholar](https://scholar.google.com/scholar?q=%22Evaluation%20Cards%3A%20An%20Interpretive%20Layer%20for%20AI%20Evaluation%20Reporting%22)
+      - 0 cites — Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting — <https://openalex.org/W7164018997>
+      - 0 cites — Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting — <https://openalex.org/W7164447656>
+- [ ] `stop-guessing-when-to-stop-testing-efficient-model-evaluatio` — [search Scholar](https://scholar.google.com/scholar?q=%22Stop%20Guessing%20When%20to%20Stop%20Testing%3A%20Efficient%20Model%20Evaluation%20with%20Just%20Enough%20Data%22)
+      - 0 cites — Stop Guessing When to Stop Testing: Efficient Model Evaluation with Ju — <https://openalex.org/W7166854554>
+      - 0 cites — Stop Guessing When to Stop Testing: Efficient Model Evaluation with Ju — <https://openalex.org/W7168054044>
+      - 0 cites — Stop Guessing When to Stop Testing: Efficient Model Evaluation with Ju — <https://openalex.org/W7168675644>
+      - 0 cites — Stop Guessing When to Stop Testing: Efficient Model Evaluation with Ju — <https://openalex.org/W7167886915>
+- [ ] `muler-detailed-and-scalable-reference-based-evaluation` — [search Scholar](https://scholar.google.com/scholar?q=%22MuLER%3A%20Detailed%20and%20Scalable%20Reference-based%20Evaluation%22)
+      - 0 cites — MuLER: Detailed and Scalable Reference-based Evaluation — <https://openalex.org/W4389521045>
+      - 0 cites — MuLER: Detailed and Scalable Reference-based Evaluation — <https://openalex.org/W4378465242>
 

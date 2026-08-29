@@ -7,7 +7,7 @@ so each one below gets an item.
 Every one of them has an item already. What is left is below, where a name
 Wikidata already carries needs an answer no record settles.
 
-## Already have a same-name item (22)
+## Already have a same-name item (23)
 
 Wikidata has a human item under each of these names. Where it states no ORCID
 it is often this same person, reached from a paper rather than from a profile
@@ -51,6 +51,9 @@ settles which is which.
   - [Q103328754](https://www.wikidata.org/wiki/Q103328754) — Ph.D. University of California, Berkeley 2016 · computer scientist · at Georgia Tech
   - [Q22097391](https://www.wikidata.org/wiki/Q22097391) — American filmmaker and arts activist · film director · studied at Northeastern University
   - [Q6304478](https://www.wikidata.org/wiki/Q6304478) — American artist · sculptor · studied at Grinnell College
+- **Omer Goldman** ([0000-0001-5863-4856](https://orcid.org/0000-0001-5863-4856), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
+  - that ORCID record states nothing public beyond the name
+  - [Q7090102](https://www.wikidata.org/wiki/Q7090102) — Israeli activist · film actor, television actor, television director · studied at Kibbutzim College of Education, Tel Aviv University
 - **Charles Jochim** ([0000-0001-8376-4505](https://orcid.org/0000-0001-8376-4505), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
   - that ORCID record states "Probability Statements Extraction with Constrained…" · "Extracting Dependence Relations from Unstructured…"
   - [Q137017900](https://www.wikidata.org/wiki/Q137017900) — states nothing beyond the name

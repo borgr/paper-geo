@@ -7,7 +7,7 @@ which is why it can be re-run — the fixes all need one.
 | surface | state | |
 |---|---|---|
 | ORCID works (public) | 116 | ok |
-| ORCID holds your papers | 113 of 113 | ok |
+| ORCID holds your papers | 113 of 114 | **fix** |
 | ORCID identifiers point at the right paper | 116 of 116 works | ok |
 | ORCID canonical URL | present | ok |
 | ORCID name variants | 2 listed | ok |
@@ -16,14 +16,14 @@ which is why it can be re-run — the fixes all need one.
 | ORCID employment | 3 listed, 0 missing | ok |
 | ORCID education | 2 listed, 0 missing, 0 incomplete, 1 institution-asserted | ok |
 | ORCID works added by Crossref/DataCite | 0 | nothing yet |
-| arXiv registered author | 105 of 105 | ok |
+| arXiv registered author | 105 of 106 | **fix** |
 | Wikidata author item | Q140867203 | ok |
 | Wikidata item complete | 0 gaps | ok |
-| Wikidata paper items | 112 of 113 | optional |
-| HF pages indexed | 105 of 105 | ok |
-| HF pages claimed | 105 of 105 claimable | ok |
-| arXiv records misspelling your name | 0 | ok |
-| arXiv records omitting you | 0 | ok |
+| Wikidata paper items | 113 of 114 | optional |
+| HF pages indexed | 106 of 106 | ok |
+| HF pages claimed | 105 of 106 claimable | **fix** |
+| arXiv records misspelling your name | 0 of 106 read | ok |
+| arXiv records omitting you | 0 of 106 read | ok |
 | ORCID works we cannot place | 2 | **check** |
 | ORCID works ORCID already merged | 6 | optional |
 | Semantic Scholar records | 2 | **fix** |
@@ -99,7 +99,13 @@ Do not delete it and re-add your own: that trades a vouched-for entry for a
 self-asserted one, which is a downgrade in exactly the signal this section
 exists to provide.
 
-## Wikidata paper coverage: 112 of 113
+## arXiv: 1 papers you are not registered as author on
+
+The biggest finding here, and a prerequisite rather than a task: you cannot
+add a journal-ref to a paper you do not own. Full list and both claim
+routes: [arxiv_ownership.md](arxiv_ownership.md).
+
+## Wikidata paper coverage: 113 of 114
 
 Matched on DOI and arXiv id, not on name. This number matters because it
 decides which Wikidata job is worth doing: relinking author strings on
@@ -109,6 +115,11 @@ One trap worth writing down — scholarly articles were moved out of
 Wikidata's main query graph, so a publication query against
 `query.wikidata.org` returns zero rows with a 200, and looks like an
 answer. This uses `query-scholarly.wikidata.org`.
+
+## Hugging Face: 0 to index, 1 to claim, 0 blocked
+
+Live counts, not the ones cached in `papers.yaml`. Lists:
+[hf_worklist.md](hf_worklist.md).
 
 ## 2 works on your ORCID we cannot place
 
@@ -126,4 +137,20 @@ bibliography never held is fixed **upstream, in the bibliography** — deleting
 it from ORCID loses a real work. Anything that is not a paper (a workshop
 listing, a proceedings volume) is a deletion. Titles and put-codes:
 [orcid_remove.md](orcid_remove.md).
+
+## 1 of your papers is missing from ORCID
+
+Measured by identifier, not by counting: each of these has no work group on
+the record carrying its DOI or arXiv id.
+
+This is the row that matters most on the page and the one a works *count*
+hides. ORCID is the key Semantic Scholar disambiguates on and the key OpenAlex
+is running profile merges from, so a paper absent here is a paper those two
+have no authoritative reason to attach to you — which is the same failure the
+split S2 record is made of.
+
+Highest citations first; the full list with DOIs is
+[orcid_missing.md](orcid_missing.md).
+
+- [ ]    0 cites — Skill Issue: Are Skills Language-Invariant in LLMs?
 
