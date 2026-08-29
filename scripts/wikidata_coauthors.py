@@ -153,7 +153,7 @@ def openalex_orcids(papers: list[dict]) -> tuple[dict[str, dict[str, str]], list
     """Per paper slug, the ORCIDs its OpenAlex record carries, keyed by `keys_for`. Plus
     the slugs OpenAlex did not answer for.
 
-    By-id lookups only, which are free where OpenAlex meters its search endpoints. A key
+    By-id lookups only, which are the shape OpenAlex does not price. A key
     that two ORCIDs in the same paper answer to is dropped rather than guessed at.
 
     OpenAlex meters even by-id lookups and refuses every request for the rest of the day

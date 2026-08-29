@@ -5334,3 +5334,36 @@ class TestAnUnreadRecordIsNotAnEmptyOne(unittest.TestCase):
             self.assertIs(False, p["hf_indexed"])
         finally:
             collect.get_status = old
+
+
+class TestAPricedCallIsNotRetriedOnAHostThatSaidNo(unittest.TestCase):
+    """Once OpenAlex has refused one call for want of credits, every priced call that day
+    is refused too, and `metered` is what decides which to stop sending. It has to name
+    the free shapes exactly: too narrow wastes a round trip per call, too wide suppresses
+    the by-id lookups that keep answering with $0 left.
+    """
+
+    def test_every_list_query_is_priced_and_every_by_id_path_is_free(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import common
+        for url in ("https://api.openalex.org/works?filter=title.search:merging+models",
+                    "https://api.openalex.org/works?per-page=100"
+                    "&filter=raw_author_name.search:Choshen",
+                    "https://api.openalex.org/works?per-page=1"
+                    "&filter=author.orcid:0000-0003-4311-3876"):
+            self.assertTrue(common.metered(url), url)
+        for url in ("https://api.openalex.org/works/doi:10.18653/v1/2023.acl-long.1",
+                    "https://api.openalex.org/authors/orcid:0000-0003-4311-3876",
+                    "https://api.openalex.org/works/doi:10.1/a-search-for-meaning"):
+            self.assertFalse(common.metered(url), url)
+
+    def test_no_script_asks_for_an_author_by_the_form_openalex_prices(self):
+        """`authors/https://orcid.org/<id>` is priced and `authors/orcid:<id>` is free, and
+        both answer the same record. The priced one carries no query string, so `metered`
+        cannot see it and the call is sent and refused once the day's credits are spent."""
+        for path in sorted(glob.glob(os.path.join(ROOT, "scripts", "*.py"))):
+            src = source(path)
+            for line in src.splitlines():
+                if "api.openalex.org/authors/" in line:
+                    self.assertIn("authors/orcid:", line,
+                                  "%s asks by a priced form" % os.path.basename(path))

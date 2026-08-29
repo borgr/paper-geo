@@ -238,11 +238,12 @@ PACE = {"api.semanticscholar.org": 1.05, "arxiv.org": 3.0,
 POLITE = ("api.openalex.org", "api.crossref.org")
 _last_hit: dict[str, float] = {}
 _CONTACT: str | None = None
-# host -> seconds until its budget resets. OpenAlex meters its search endpoints: a
-# `.search:` filter costs 10 credits against a free daily 1000 ($0.10), so the 113rd
-# per-paper query of a day is refused however slowly it is paced. The refusal is a 429
-# whose `retryAfter` is hours, so retrying it is the one case where backoff cannot win
-# and every later call to the same host is already answered.
+# host -> seconds until its budget resets. OpenAlex prices every list query against a
+# free daily 1000 credits ($0.10, reset at midnight UTC): 1 credit for a `filter=` and
+# 10 for a `.search:`, so the 101st per-paper title search of a day is refused however
+# slowly it is paced. The refusal is a 429 whose `retryAfter` is hours, so retrying it
+# is the one case where backoff cannot win and every later call to the same host is
+# already answered.
 _BUDGET_OUT: dict[str, int] = {}
 
 
@@ -279,12 +280,14 @@ def _pace(url: str) -> None:
 def metered(url: str) -> bool:
     """Whether this URL spends credits, as opposed to being free on the same host.
 
-    OpenAlex prices per endpoint, not per host: a `.search:` filter costs credits and a
-    `/works/doi:` lookup is free and keeps answering after the credits are gone. Only
-    the priced shape is worth skipping once a host has refused one. Read from the query
+    OpenAlex prices per endpoint, not per host. A by-id path -- `/works/doi:<doi>`,
+    `/authors/orcid:<id>` -- is free and keeps answering after the credits are gone, and
+    every list query is priced, a `filter=` at 1 credit and a `.search:` at 10. Only the
+    priced shapes are worth skipping once a host has refused one. Read from the query
     string alone, so a DOI with `search` in it stays free.
     """
-    return "search" in url.partition("?")[2].lower()
+    q = url.partition("?")[2].lower()
+    return "search" in q or "filter=" in q
 
 
 def _out_of_budget(e: urllib.error.HTTPError) -> bool:
