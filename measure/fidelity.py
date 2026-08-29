@@ -41,7 +41,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "scripts"))
-from common import BUILD, DATA, ROOT, load_config, read_yaml  # noqa: E402
+from common import BUILD, DATA, ROOT, load_config, read_yaml, write_json  # noqa: E402
 from llm import client, decodable, first_json, with_retries  # noqa: E402
 
 TASKS = os.path.join(BUILD, "fidelity_tasks.json")
@@ -206,10 +206,10 @@ def main() -> None:
             tasks = tasks[:args.limit]
         if args.mode == "api":
             run_api(tasks, args.answer_model, args.grade_model)
-        os.makedirs(BUILD, exist_ok=True)
-        with open(TASKS, "w") as f:
-            json.dump({"grade_system": GRADE_SYSTEM, "schema": SCORE_SCHEMA,
-                       "tasks": tasks}, f, indent=1)
+        write_json(
+            TASKS,
+            {"grade_system": GRADE_SYSTEM, "schema": SCORE_SCHEMA,
+             "tasks": tasks}, indent=1)
         print(f"wrote {TASKS}: {len(tasks)} paper(s)")
         if args.mode == "api":
             print(f"Now: python {os.path.relpath(__file__, ROOT)} --ingest")

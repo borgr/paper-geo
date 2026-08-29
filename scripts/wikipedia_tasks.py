@@ -26,7 +26,6 @@ from __future__ import annotations
 
 import argparse
 import glob
-import json
 import os
 import re
 import sys
@@ -35,7 +34,8 @@ import urllib.parse
 import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import BUILD, DATA, ROOT, TASKS, get_json, load_config, read_yaml  # noqa: E402
+from common import (BUILD, DATA, ROOT, TASKS, get_json, load_config,  # noqa: E402
+                    read_yaml, write_json)
 
 API = "https://en.wikipedia.org/w/api.php"
 OUT = os.path.join(TASKS, "wikipedia.md")
@@ -248,13 +248,13 @@ def main() -> None:
     for term, p in sorted(absent, key=lambda t: -(t[1].get("citations") or 0)):
         L.append(f"- {term} — {p.get('citations') or 0} citations")
 
-    os.makedirs(BUILD, exist_ok=True)
-    with open(STATE, "w") as f:
-        json.dump({"checks": [{"term": t, "citations": p.get("citations") or 0,
-                               "articles": [h["title"] for h in f_]}
-                              for t, p, f_ in checks],
-                   "already_mentions": [h["title"] for h in mine],
-                   "absent": len(absent)}, f, indent=1)
+    write_json(
+        STATE,
+        {"checks": [{"term": t, "citations": p.get("citations") or 0,
+                     "articles": [h["title"] for h in f_]}
+                    for t, p, f_ in checks],
+         "already_mentions": [h["title"] for h in mine],
+         "absent": len(absent)}, indent=1)
     os.makedirs(TASKS, exist_ok=True)
     open(OUT, "w").write("\n".join(L) + "\n")
     print(f"wrote {os.path.relpath(OUT, ROOT)}: {len(mine)} article(s) naming you, "

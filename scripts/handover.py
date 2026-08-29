@@ -38,7 +38,7 @@ import urllib.parse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from common import ROOT, get_json, norm_name  # noqa: E402
+from common import ROOT, get_json, norm_name, write_json  # noqa: E402
 
 S2 = "https://api.semanticscholar.org/graph/v1"
 # Words that carry no facet when they appear in a title. Not a general stoplist: these are
@@ -483,8 +483,7 @@ def main() -> None:
         f.write(readme_text(args.name, found))
     with open(os.path.join(d, "MESSAGE.md"), "w") as f:
         f.write(message_text(args.name, found))
-    with open(os.path.join(d, "records.json"), "w") as f:
-        json.dump(found, f, indent=1)
+    write_json(os.path.join(d, "records.json"), found, indent=1)
     print(f"wrote {os.path.relpath(d, ROOT)}/ -- config.yaml, README.md, "
           f"MESSAGE.md, records.json")
     todo = sum(1 for line in open(os.path.join(d, "config.yaml")) if "CONFIRM" in line)

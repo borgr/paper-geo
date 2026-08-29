@@ -47,7 +47,7 @@ import tempfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from common import (BUILD, DATA, get, get_json, load_config, paper_doi,  # noqa: E402
-                   read_yaml)
+                   read_yaml, write_json)
 
 CACHE = os.path.join(BUILD, "fulltext")
 LOCAL = os.path.join(DATA, "fulltext")
@@ -395,11 +395,9 @@ def _read_json(path: str) -> dict:
 
 
 def _remember(slug: str, source: str, chars: int, version: int = EXTRACTOR) -> None:
-    os.makedirs(CACHE, exist_ok=True)
     idx = _read_json(INDEX)
     idx[slug] = {"source": source, "chars": chars, "extractor": version}
-    with open(INDEX, "w") as f:
-        json.dump(idx, f, indent=1, sort_keys=True)
+    write_json(INDEX, idx, indent=1, sort_keys=True)
 
 
 def source_of(slug: str) -> str:

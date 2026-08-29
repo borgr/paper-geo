@@ -51,7 +51,7 @@ import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (DATA, ROOT, gh_json, load_config, note_fetch,  # noqa: E402
-                    read_yaml, write_yaml)
+                    read_yaml, write_json, write_yaml)
 from fulltext import resolve as resolve_fulltext  # noqa: E402
 
 BUILD = os.path.join(ROOT, "build")
@@ -184,8 +184,7 @@ class RepoFacts:
                 self.cache = {}
 
     def save(self) -> None:
-        os.makedirs(BUILD, exist_ok=True)
-        json.dump(self.cache, open(GH_CACHE, "w"), indent=1, sort_keys=True)
+        write_json(GH_CACHE, self.cache, indent=1, sort_keys=True)
 
     def get(self, full: str) -> dict:
         if full in self.cache:
@@ -320,8 +319,7 @@ class PageFacts:
                 self.cache = {}
 
     def save(self) -> None:
-        os.makedirs(BUILD, exist_ok=True)
-        json.dump(self.cache, open(PAGE_CACHE, "w"), indent=1, sort_keys=True)
+        write_json(PAGE_CACHE, self.cache, indent=1, sort_keys=True)
 
     def get(self, url: str) -> dict:
         if url in self.cache:
@@ -704,11 +702,11 @@ def save_decisions(papers: list[dict], results: dict, prev: dict) -> None:
     for slug, keep in prev.items():           # never drop a hand decision
         rows.setdefault(slug, {k: v for k, v in keep.items()
                               if k not in ("score", "why", "page_why")})
-    os.makedirs(BUILD, exist_ok=True)
-    with open(WHY, "w") as f:
-        json.dump({"generated_by": "scripts/paper_code.py -- the audit trail behind "
-                                   "data/paper_code.yaml. Derived, so not committed.",
-                   "papers": dict(sorted(why.items()))}, f, indent=1)
+    write_json(
+        WHY,
+        {"generated_by": "scripts/paper_code.py -- the audit trail behind "
+                         "data/paper_code.yaml. Derived, so not committed.",
+         "papers": dict(sorted(why.items()))}, indent=1)
     write_yaml(DECISIONS, {
         "generated_by": "scripts/paper_code.py -- `reviewed: true` freezes a row and "
                         "makes its `repo`/`project_page` the URLs --apply pushes, so a "

@@ -16,7 +16,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import re
 import subprocess
@@ -31,7 +30,7 @@ from common import (ARXIV_NS, BUILD, DATA, ROOT, arxiv_id,  # noqa: E402
                     authors_truncated, clean_bibtex, clean_latex, get, get_json,
                     is_preprint_venue, load_config, name_match, norm_title,
                     parse_bibtex, read_yaml, short_venue, slugify, split_authors,
-                    write_yaml)
+                    write_json, write_yaml)
 # The only OpenReview reader in the repo. Imported rather than reimplemented because the
 # filters are the load-bearing part -- a strict title match, an author list, and a venue
 # that is not a withdrawn or still-under-review submission -- and a second copy of them
@@ -898,22 +897,22 @@ def authorship_gate(papers: list[dict], cfg: dict, ov: dict) -> list[dict]:
         else:
             rejected.append(p)
     if rejected:
-        os.makedirs(BUILD, exist_ok=True)
         # `n_authors` and `confidence` are the two facts a reviewer needs and the old
         # four-name sample hid: it printed "authors: 4" for a 561-author paper, so every
         # row looked like a small paper whose list might be truncated. `confidence` says
         # which rows are a judgement and which are a fact, so a reviewer reads three rows
         # instead of sixteen.
-        with open(os.path.join(BUILD, "not_mine.json"), "w") as f:
-            json.dump([{"title": p.get("title"), "key": p.get("key"),
-                        "confidence": reject_confidence(p),
-                        "arxiv": p.get("arxiv"), "doi": p.get("doi"),
-                        "n_authors": len(p.get("authors") or []),
-                        "corporate_author": corporate_authors(p.get("authors") or []),
-                        "authors_sample": (p.get("authors") or [])[:4],
-                        "to_keep_anyway": "add the title under `also_mine` in "
-                                          "data/overrides.yaml"}
-                       for p in rejected], f, indent=1)
+        write_json(
+            os.path.join(BUILD, "not_mine.json"),
+            [{"title": p.get("title"), "key": p.get("key"),
+              "confidence": reject_confidence(p),
+              "arxiv": p.get("arxiv"), "doi": p.get("doi"),
+              "n_authors": len(p.get("authors") or []),
+              "corporate_author": corporate_authors(p.get("authors") or []),
+              "authors_sample": (p.get("authors") or [])[:4],
+              "to_keep_anyway": "add the title under `also_mine` in "
+                                "data/overrides.yaml"}
+             for p in rejected], indent=1)
     return kept, rejected
 
 
@@ -1136,9 +1135,9 @@ def main() -> None:
     for p in papers:
         p.pop("_arxiv_title", None)
     if tdiffs:
-        os.makedirs(BUILD, exist_ok=True)
-        with open(os.path.join(BUILD, "title_diffs.json"), "w") as f:
-            json.dump(tdiffs, f, indent=2, ensure_ascii=False)
+        write_json(
+            os.path.join(BUILD, "title_diffs.json"),
+            tdiffs, indent=2, ensure_ascii=False)
 
     n_retired = record_slug_moves(papers, out)
     if n_retired:

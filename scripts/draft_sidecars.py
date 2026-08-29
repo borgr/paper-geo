@@ -58,7 +58,7 @@ from llm import JSON_ONLY, decodable, first_json, with_retries  # noqa: E402
 from llm import client as llm_client  # noqa: E402
 from common import (BUILD, DATA, ROOT, get,  # noqa: E402
                     has_live_sidecar, load_config, phrasings, qa_loci, read_yaml,
-                    rules_block)
+                    rules_block, write_json)
 from fulltext import LIMIT as FULLTEXT_LIMIT  # noqa: E402
 from fulltext import cut_chars  # noqa: E402
 from fulltext import resolve as resolve_fulltext  # noqa: E402
@@ -361,10 +361,10 @@ def emit_tasks(pairs: list[tuple[dict, str]], cfg) -> str:
             t["findings"] = found
             t["job"] = ("repair" if found else "already clean -- leave it alone")
         tasks.append(t)
-    with open(TASKS, "w") as f:
-        json.dump({"_contract": CONTRACT, "system": system_prompt(),
-                   "user_template": USER, "schema": schema(), "tasks": tasks},
-                  f, indent=1)
+    write_json(
+        TASKS,
+        {"_contract": CONTRACT, "system": system_prompt(),
+         "user_template": USER, "schema": schema(), "tasks": tasks}, indent=1)
     return TASKS
 
 

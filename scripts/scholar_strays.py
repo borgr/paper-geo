@@ -44,7 +44,8 @@ import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, TASKS, budget_reset, clean_latex, get_json,  # noqa: E402
-                    load_config, name_match, norm_title, read_yaml, title_tokens)
+                    load_config, name_match, norm_title, read_yaml, title_tokens,
+                    write_json)
 
 # Below this the gap is indexing lag rather than a split record. Both conditions have
 # to hold: two citations is noise on a 200-cite paper, and 20% is noise on a 3-cite one.
@@ -235,9 +236,7 @@ def split_records(papers, mailto, limit=None) -> dict:
                         for w in (d or {}).get("results") or []
                         if same_work(want, w.get("display_name"))]}
     if asked:
-        os.makedirs(BUILD, exist_ok=True)
-        with open(cache_path, "w") as f:
-            json.dump(cache, f, indent=1)
+        write_json(cache_path, cache, indent=1)
 
     # Filtered again on the way out, so tightening the rule takes effect on the next run
     # instead of after a second day of credits.
@@ -400,9 +399,7 @@ def main() -> int:
         sp = split_records(papers, mailto, args.limit)
         state["split_records"], state["openalex"] = sp.pop("rows"), sp
     state["openalex"]["budget_reset"] = budget_reset("api.openalex.org")
-    os.makedirs(BUILD, exist_ok=True)
-    with open(os.path.join(BUILD, "scholar_strays.json"), "w") as f:
-        json.dump(state, f, indent=1)
+    write_json(os.path.join(BUILD, "scholar_strays.json"), state, indent=1)
     path = write_page(state)
 
     stray = [r for r in state["typo_records"] if r.get("matched")]

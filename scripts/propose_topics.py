@@ -32,7 +32,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, gh_text, load_config, read_yaml,  # noqa: E402
-                    rules_block, write_yaml)
+                    rules_block, write_json, write_yaml)
 
 SCHEMA = {
     "type": "object",
@@ -162,12 +162,12 @@ def declined_to_guess(repos: list[dict]) -> list[str]:
 
 
 def emit_tasks(todo: list[dict]) -> str:
-    os.makedirs(BUILD, exist_ok=True)
     path = os.path.join(BUILD, "llm_tasks.json")
     tasks = [{"repo": r["repo"], "evidence": evidence(r), "proposal": None} for r in todo]
-    with open(path, "w") as f:
-        json.dump({"_contract": CONTRACT, "system": system_prompt(),
-                   "schema": SCHEMA, "tasks": tasks}, f, indent=1)
+    write_json(
+        path,
+        {"_contract": CONTRACT, "system": system_prompt(),
+         "schema": SCHEMA, "tasks": tasks}, indent=1)
     return path
 
 

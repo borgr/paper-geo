@@ -31,7 +31,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import BUILD, DATA, get_json, load_config, read_yaml, write_yaml  # noqa: E402
+from common import (BUILD, DATA, get_json, load_config, read_yaml,  # noqa: E402
+                    write_json, write_yaml)
 
 MANIFEST_VERSION = 1
 
@@ -86,8 +87,7 @@ def write_manifest(cfg, papers: list[dict]) -> str:
     out_dir = os.path.join(BUILD, "site")
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "paper-geo.json")
-    with open(path, "w") as f:
-        json.dump(doc, f, indent=1)
+    write_json(path, doc, indent=1)
     return path
 
 

@@ -39,7 +39,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, WD_IDENTIFIERS, declined, get,  # noqa: E402
                     get_json, load_config, name_match, norm_name, norm_title,
                     org_name, paper_doi, plural, read_yaml, synth_bibtex,
-                    title_tokens, write_yaml)
+                    title_tokens, write_json, write_yaml)
 
 TASKS = os.path.join(ROOT, "tasks")
 ATOM = {"a": "http://www.w3.org/2005/Atom"}
@@ -1832,8 +1832,7 @@ def main() -> None:
                   "wikidata_papers_creatable": (
                       sum(1 for p in wd_cov["absent"] if paper_item(p, cfg))
                       if wd_cov else None)})
-    with open(state_path, "w") as f:
-        json.dump(state, f, indent=1)
+    write_json(state_path, state, indent=1)
 
     rm_path = os.path.join(TASKS, "orcid_remove.md")
     with open(rm_path, "w") as f:

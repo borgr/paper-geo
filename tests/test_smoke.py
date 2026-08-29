@@ -97,6 +97,23 @@ class TestEveryModuleImports(unittest.TestCase):
                               f"{type(e).__name__}: {e}")
 
 
+class TestEveryJsonFileIsWrittenThroughOnePlace(unittest.TestCase):
+    """`common.write_json` creates the directory, so no caller has to remember to.
+
+    There were nineteen `os.makedirs(BUILD, exist_ok=True)` lines guarding a `json.dump`,
+    two of which also leaked the file handle. A new one is a missing directory away from a
+    step that fails on a fresh clone, which is exactly what CI does not have.
+    """
+
+    def test_nothing_but_common_calls_json_dump(self):
+        for name, path in modules():
+            if os.path.basename(path) == "common.py":
+                continue
+            with self.subTest(module=name):
+                self.assertNotIn("json.dump(", source(path),
+                                 "write the file with common.write_json instead")
+
+
 class TestNoSyntaxWarnings(unittest.TestCase):
     """Compile every module with the syntax warnings promoted to errors.
 

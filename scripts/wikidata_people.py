@@ -36,7 +36,8 @@ import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from common import BUILD, DATA, TASKS, get, get_json, read_yaml, write_yaml
+from common import (BUILD, DATA, TASKS, get, get_json, read_yaml, write_json,
+                    write_yaml)
 from wikidata_coauthors import CACHE, fill, items_by_orcid, qid_of, sparql  # noqa: F401
 from wikidata_apply import (CAL, Session, create_items,  # noqa: F401
                             logged_in, recorded)
@@ -129,8 +130,7 @@ def records(orcids: list[str], refresh: bool) -> dict[str, dict]:
     for orcid in orcids:
         if orcid not in got:
             got[orcid] = record(orcid)
-    with open(path, "w") as f:
-        json.dump(cache, f, indent=1, sort_keys=True)
+    write_json(path, cache, indent=1, sort_keys=True)
     return got
 
 
@@ -469,11 +469,12 @@ def main() -> int:
     elif os.path.exists(qs):
         os.remove(qs)
     page = write_page(people, held, skipped, papers, qs if lines else None)
-    with open(os.path.join(BUILD, "wikidata_people.json"), "w") as f:
-        json.dump({"asked": day, "create": len(people), "held": len(held),
-                   "skipped": len(skipped),
-                   "mentions": sum(papers[p["orcid"]] for p in people),
-                   "people": people, "held_people": held}, f, indent=1, sort_keys=True)
+    write_json(
+        os.path.join(BUILD, "wikidata_people.json"),
+        {"asked": day, "create": len(people), "held": len(held),
+         "skipped": len(skipped),
+         "mentions": sum(papers[p["orcid"]] for p in people),
+         "people": people, "held_people": held}, indent=1, sort_keys=True)
     if not args.quiet:
         print("%d co-author ORCIDs with no item: %d to create, %d already have a "
               "same-name item, %d left out"

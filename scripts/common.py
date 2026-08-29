@@ -157,9 +157,7 @@ def note_fetch(url: str, ok: bool, why: str = "") -> None:
         # readers of the field sit inside `health_report`'s `not r["ok"]` branch.
         r.pop("last_error", None)
     try:
-        os.makedirs(BUILD, exist_ok=True)
-        with open(HEALTH, "w") as f:
-            json.dump(h, f, indent=1, sort_keys=True)
+        write_json(HEALTH, h, indent=1, sort_keys=True)
     except OSError:
         pass          # a ledger that cannot be written must not break the run it watches
 
@@ -1048,13 +1046,17 @@ def slugify(s: str, maxlen: int = 60) -> str:
 
 
 def write_yaml(path: str, obj) -> None:
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    if d := os.path.dirname(path):
+        os.makedirs(d, exist_ok=True)
     with open(path, "w") as f:
         yaml.safe_dump(obj, f, sort_keys=False, allow_unicode=True, width=100)
 
 
 def write_json(path: str, obj, **kw) -> None:
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    """`json.dump` to `path`, creating its directory. Every build and cache file goes
+    through this, so no caller can leave the directory out."""
+    if d := os.path.dirname(path):
+        os.makedirs(d, exist_ok=True)
     with open(path, "w") as f:
         json.dump(obj, f, **kw)
 

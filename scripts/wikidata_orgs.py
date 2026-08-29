@@ -42,7 +42,7 @@ import time
 import urllib.error
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import BUILD, DATA, TASKS, read_yaml, write_yaml  # noqa: E402
+from common import BUILD, DATA, TASKS, read_yaml, write_json, write_yaml  # noqa: E402
 from wikidata_coauthors import fill, qid_of, sparql  # noqa: E402
 from wikidata_apply import create_items, logged_in, snak  # noqa: E402
 
@@ -318,9 +318,7 @@ def main() -> int:
            "ambiguous": [s for s, st in state.items() if st["ambiguous"]],
            "needs": sum(len(it.get("needs") or []) for it in items.values()),
            "state": state}
-    os.makedirs(BUILD, exist_ok=True)
-    with open(os.path.join(BUILD, "wikidata_orgs.json"), "w") as f:
-        json.dump(out, f, indent=1)
+    write_json(os.path.join(BUILD, "wikidata_orgs.json"), out, indent=1)
     if not args.quiet:
         print("%d described: %d to create, %d edges into existing items"
               % (len(items), len(out["create"]), out["edges"]))

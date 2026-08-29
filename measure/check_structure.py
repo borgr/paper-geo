@@ -21,7 +21,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "scripts"))
 from common import (BUILD, DATA, get, has_live_sidecar,  # noqa: E402
-                    load_config, read_yaml)
+                    load_config, read_yaml, write_json)
 
 SITE = os.path.join(BUILD, "site")
 AI_BOTS = ("GPTBot", "OAI-SearchBot", "ClaudeBot", "PerplexityBot", "Google-Extended")
@@ -197,8 +197,7 @@ def main() -> None:
     for r in failed:
         print(f"  {r['check']}: {r['detail']}")
     if args.json:
-        with open(args.json, "w") as f:
-            json.dump(results, f, indent=1)
+        write_json(args.json, results, indent=1)
         print(f"wrote {args.json}")
 
 

@@ -50,7 +50,7 @@ from collections import Counter
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (ARXIV_NS, BUILD, DATA, ROOT, TASKS, declined, get,  # noqa: E402
                     get_json, load_config, norm_title, note_fetch, read_yaml,
-                    synth_bibtex)
+                    synth_bibtex, write_json)
 
 
 # Scholar answers the paper-geo User-Agent with a consent interstitial and no rows.
@@ -820,13 +820,13 @@ def main() -> None:
         # about the corpus. Write what the author record could answer rather than
         # nothing: a file absent and a file reporting no gaps are indistinguishable to
         # every reader downstream, and only one of them is true.
-        os.makedirs(BUILD, exist_ok=True)
-        with open(os.path.join(BUILD, "scholar_diff.json"), "w") as f:
-            json.dump({"scholar_profile": uid, "scholar_rows": 0,
-                       "scholar_answered": False, "corpus": len(papers),
-                       "s2_answered": attributed is not None,
-                       "not_in_corpus_by_index": gaps,
-                       "index_stubs_no_id": stubs}, f, indent=1)
+        write_json(
+            os.path.join(BUILD, "scholar_diff.json"),
+            {"scholar_profile": uid, "scholar_rows": 0,
+             "scholar_answered": False, "corpus": len(papers),
+             "s2_answered": attributed is not None,
+             "not_in_corpus_by_index": gaps,
+             "index_stubs_no_id": stubs}, indent=1)
         print(f"scholar: profile unavailable; author record answered for "
               f"{len(attributed or [])} paper(s)", file=sys.stderr)
         report_gaps(gaps, stubs, args.quiet)
@@ -907,8 +907,7 @@ def main() -> None:
                        "scholar_citations": r.get("citations") or 0,
                        "scholar_url": r.get("url")}
                       for r in rows if r.get("slug")]}
-    with open(os.path.join(BUILD, "scholar_diff.json"), "w") as f:
-        json.dump(out, f, indent=1)
+    write_json(os.path.join(BUILD, "scholar_diff.json"), out, indent=1)
 
     print(f"scholar: {len(rows)} rows, {len(seen)}/{len(papers)} corpus papers "
           f"matched", file=sys.stderr)
