@@ -1600,6 +1600,34 @@ def check_prompt_blocks() -> list[str]:
     return errs
 
 
+def check_task_provenance() -> list[str]:
+    """Every `tasks/*.md` names the command that rewrites it, and that command exists.
+
+    These files are generated and tracked, so the only thing between one of them and a hand
+    edit the next run throws away is the reader seeing what wrote it. `.qs`, `.bib` and
+    `.txt` payloads are exempt on purpose -- each is pasted somewhere whole, so nothing may
+    be prepended to it.
+
+    Read from the opening lines only, past any declines banner. A command named forty lines
+    down is a step in the instructions rather than the file's provenance.
+    """
+    errs = []
+    for path in sorted(glob.glob(os.path.join(ROOT, "tasks", "*.md"))):
+        with open(path) as f:
+            head = [l for l in f.read().split("\n")[:16]
+                    if not l.startswith((">", "<!--"))]
+        named = re.findall(r"`python ((?:scripts/)?[\w./]+\.py)[^`]*`", "\n".join(head))
+        name = os.path.relpath(path, ROOT)
+        if not named:
+            errs.append(f"{name}: nothing in its opening lines names the command that "
+                        f"writes it, so a reader cannot tell it is generated -- and "
+                        f"`CLAUDE.md` says these are never hand-edited")
+        for script in named:
+            if not os.path.exists(os.path.join(ROOT, script)):
+                errs.append(f"{name}: names `python {script}`, which is not in the repo")
+    return errs
+
+
 def count_pattern(template: str) -> re.Pattern:
     """The same sentence with any number in the count's place.
 
@@ -1694,6 +1722,7 @@ def main() -> None:
     errs += check_name_lists()
     errs += check_affiliations()
     errs += check_prompt_blocks()
+    errs += check_task_provenance()
     # Kept separate from the rest: a stale number in a sentence and a sidecar outside the
     # bands are the two problem classes that do not mean something is broken. See the
     # module docstring.
