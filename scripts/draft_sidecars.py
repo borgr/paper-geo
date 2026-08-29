@@ -750,7 +750,8 @@ def accept(slugs: list[str], replace: bool = False, anyway: bool = False) -> int
     return n
 
 
-def main() -> None:
+def parser() -> argparse.ArgumentParser:
+    """Every flag this script takes, in the order the help lists them."""
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--ingest", action="store_true",
                     help="fold build/sidecar_tasks.json answers into drafts/")
@@ -810,7 +811,106 @@ def main() -> None:
                     help="after drafting, show the model its own findings and ask it to "
                          "fix them, up to N times. Stops early when a round stops "
                          "reducing the count. api and openai modes")
-    args = ap.parse_args()
+    return ap
+
+
+def llm_mode(args, cfg: dict, flag: str) -> str:
+    """The backend `flag` will call, refusing if the configured mode cannot call one."""
+    mode = args.mode or cfg["llm"]["mode"]
+    if mode not in ("api", "openai"):
+        sys.exit(f"{flag} needs a model it can call: --mode api or --mode openai")
+    if args.effort:
+        cfg["llm"]["effort"] = args.effort
+    return mode
+
+
+def backend(mode: str, cfg: dict):
+    """A backend's request function and the rung it settled on, fetching no paper text.
+
+    An empty batch is how a backend is asked for that function without drafting anything.
+    """
+    _, how, ask = (call_api if mode == "api" else call_openai)([], cfg)
+    return ask, how
+
+
+def run_reroute(args, papers: list[dict], cfg: dict) -> None:
+    """`--reroute`: move phrasings out of `ask.unsorted` in the live sidecars."""
+    mode = llm_mode(args, cfg, "--reroute")
+    legacy, unread = [], []
+    for f in live_paths():
+        fm, why = read_front_matter(f)
+        if fm is None:
+            unread.append(f"{os.path.basename(f)[:-3]} ({why})")
+        elif any(isinstance(g.get("ask"), dict) and g["ask"].get("unsorted")
+                 for g in (fm.get("qa") or [])):
+            legacy.append(os.path.basename(f)[:-3])
+    if unread:
+        # Separate from the line below, which says a sidecar was read and holds no
+        # `unsorted` group. These were not read.
+        print(f"not checked for `unsorted` groups: {', '.join(unread)}", file=sys.stderr)
+    want = args.reroute or legacy
+    unknown = [s for s in want if s not in legacy]
+    if unknown:
+        print(f"nothing to reroute in: {', '.join(unknown)}", file=sys.stderr)
+    todo = [s for s in want if s in legacy]
+    if not todo:
+        print("Nothing to reroute: no sidecar still holds phrasings in `ask.unsorted`.")
+        return
+    # No paper text is fetched at all -- see `reroute`. Over 113 papers that is the
+    # difference between a pass that takes minutes and one that re-resolves every PDF.
+    asker, how = backend(mode, cfg)
+    print(f"rerouting {len(todo)} sidecar(s) with {how}")
+    moved = clean = 0
+    for slug in todo:
+        done, found = reroute(slug, asker, how)
+        if not done:
+            print(f"  --  {slug[:56]:56} nothing usable came back")
+            continue
+        moved += done
+        clean += not found
+        print(f"  {'ok ' if not found else '   '} {slug[:56]:56} {done} group(s)"
+              + (f", {found} finding(s) to fix" if found else ""))
+    print(f"\n{moved} group(s) rerouted; {clean} of {len(todo)} draft(s) clean")
+    print(f"Read them: file://{write_review_page(papers)}")
+    return
+
+
+def run_mend(args, papers: list[dict], cfg: dict) -> None:
+    """`--mend`: ask the model to fix what `validate_draft` flags in each draft."""
+    mode = llm_mode(args, cfg, "--mend")
+    drafts = [os.path.basename(f)[:-3]
+              for f in draft_paths()]
+    want = args.mend or drafts
+    unknown = [s for s in want if s not in drafts]
+    if unknown:
+        print(f"no draft for: {', '.join(unknown)}", file=sys.stderr)
+    # Checked before any paper is fetched: a clean draft needs neither its text nor a
+    # call, and over a whole corpus that is most of them.
+    todo = [s for s in want if s in drafts
+            and sum(len(x) for x in
+                    validate_draft(draft_path(s), note=False))]
+    if not todo:
+        print("Nothing to mend: every draft asked for is clean.")
+        return
+    by_slug = {p["slug"]: p for p in papers}
+    print(f"mending {len(todo)} draft(s); resolving each paper's text first...")
+    pairs, _ = with_evidence([by_slug[s] for s in todo if s in by_slug],
+                             cfg, args.no_fulltext, None)
+    ev = {p["slug"]: e for p, e in pairs}
+    asker, how = backend(mode, cfg)
+    before = after = 0
+    for slug in todo:
+        print(f"  {slug}")
+        errs, qual = validate_draft(draft_path(slug), note=False)
+        before += len(errs) + len(qual)
+        after += mend(slug, asker, ev.get(slug, ""), how)
+    print(f"\n{before} finding(s) -> {after} across {len(todo)} draft(s)")
+    print(f"Read them: file://{write_review_page(papers)}")
+    return
+
+
+def main() -> None:
+    args = parser().parse_args()
 
     cfg = load_config()
     papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers", [])
@@ -856,88 +956,9 @@ def main() -> None:
         return
 
     if args.reroute is not None:
-        mode = args.mode or cfg["llm"]["mode"]
-        if mode not in ("api", "openai"):
-            sys.exit("--reroute needs a model it can call: --mode api or --mode openai")
-        if args.effort:
-            cfg["llm"]["effort"] = args.effort
-        legacy, unread = [], []
-        for f in live_paths():
-            fm, why = read_front_matter(f)
-            if fm is None:
-                unread.append(f"{os.path.basename(f)[:-3]} ({why})")
-            elif any(isinstance(g.get("ask"), dict) and g["ask"].get("unsorted")
-                     for g in (fm.get("qa") or [])):
-                legacy.append(os.path.basename(f)[:-3])
-        if unread:
-            # Separate from the line below, which says a sidecar was read and holds no
-            # `unsorted` group. These were not read.
-            print(f"not checked for `unsorted` groups: {', '.join(unread)}", file=sys.stderr)
-        want = args.reroute or legacy
-        unknown = [s for s in want if s not in legacy]
-        if unknown:
-            print(f"nothing to reroute in: {', '.join(unknown)}", file=sys.stderr)
-        todo = [s for s in want if s in legacy]
-        if not todo:
-            print("Nothing to reroute: no sidecar still holds phrasings in `ask.unsorted`.")
-            return
-        caller = call_api if mode == "api" else call_openai
-        # No paper text is fetched at all -- see `reroute`. Over 113 papers that is the
-        # difference between a pass that takes minutes and one that re-resolves every PDF.
-        _, how, asker = caller([], cfg)
-        print(f"rerouting {len(todo)} sidecar(s) with {how}")
-        moved = clean = 0
-        for slug in todo:
-            done, found = reroute(slug, asker, how)
-            if not done:
-                print(f"  --  {slug[:56]:56} nothing usable came back")
-                continue
-            moved += done
-            clean += not found
-            print(f"  {'ok ' if not found else '   '} {slug[:56]:56} {done} group(s)"
-                  + (f", {found} finding(s) to fix" if found else ""))
-        print(f"\n{moved} group(s) rerouted; {clean} of {len(todo)} draft(s) clean")
-        print(f"Read them: file://{write_review_page(papers)}")
-        return
-
+        return run_reroute(args, papers, cfg)
     if args.mend is not None:
-        mode = args.mode or cfg["llm"]["mode"]
-        if mode not in ("api", "openai"):
-            sys.exit("--mend needs a model it can call: --mode api or --mode openai")
-        if args.effort:
-            cfg["llm"]["effort"] = args.effort
-        drafts = [os.path.basename(f)[:-3]
-                  for f in draft_paths()]
-        want = args.mend or drafts
-        unknown = [s for s in want if s not in drafts]
-        if unknown:
-            print(f"no draft for: {', '.join(unknown)}", file=sys.stderr)
-        # Checked before any paper is fetched: a clean draft needs neither its text nor a
-        # call, and over a whole corpus that is most of them.
-        todo = [s for s in want if s in drafts
-                and sum(len(x) for x in
-                        validate_draft(draft_path(s), note=False))]
-        if not todo:
-            print("Nothing to mend: every draft asked for is clean.")
-            return
-        by_slug = {p["slug"]: p for p in papers}
-        print(f"mending {len(todo)} draft(s); resolving each paper's text first...")
-        pairs, _ = with_evidence([by_slug[s] for s in todo if s in by_slug],
-                                 cfg, args.no_fulltext, None)
-        ev = {p["slug"]: e for p, e in pairs}
-        caller = call_api if mode == "api" else call_openai
-        # An empty batch: this is how a backend is asked for its request function without
-        # drafting anything, and the provenance it returns names the rung it settled on.
-        _, how, asker = caller([], cfg)
-        before = after = 0
-        for slug in todo:
-            print(f"  {slug}")
-            errs, qual = validate_draft(draft_path(slug), note=False)
-            before += len(errs) + len(qual)
-            after += mend(slug, asker, ev.get(slug, ""), how)
-        print(f"\n{before} finding(s) -> {after} across {len(todo)} draft(s)")
-        print(f"Read them: file://{write_review_page(papers)}")
-        return
+        return run_mend(args, papers, cfg)
 
     # An explicit --slug is an instruction, not a candidate list: no limit and no
     # text-availability skip, because "draft this one anyway" is a legitimate thing to
