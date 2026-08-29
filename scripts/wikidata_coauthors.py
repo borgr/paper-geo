@@ -352,7 +352,7 @@ def dblp_pages(look: dict, refresh: bool) -> dict[str, list[str]]:
         print("  dblp: %d author page(s), %d of them left for the next run"
               % (len(left), len(left) - DBLP_PER_RUN))
     for n, d in enumerate(left[:DBLP_PER_RUN], 1):
-        code, page = get_status("https://dblp.org/pid/%s.xml" % d)
+        code, page = get_status("https://dblp.org/pid/%s.xml" % d, probe=True)
         if not page and code not in (404, 410):
             continue
         # 404 and 410 are answers, so they are cached as "this page lists nothing". Retrying

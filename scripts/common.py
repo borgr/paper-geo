@@ -303,7 +303,7 @@ def _out_of_budget(e: urllib.error.HTTPError) -> bool:
 
 
 def get_status(url: str, timeout: int = 40, retries: int = 6,
-               accept: str | None = None) -> tuple[int, bytes]:
+               accept: str | None = None, probe: bool = False) -> tuple[int, bytes]:
     """GET with exponential backoff on 429/503, as (HTTP status, body).
 
     The status is 0 when no reply arrived at all -- a timeout, a refused connection, or
@@ -314,6 +314,9 @@ def get_status(url: str, timeout: int = 40, retries: int = 6,
     shares one rate-limit pool with every anonymous client, and a 429 there makes an
     audit report "no index has this paper" about a paper an index has. Environment
     only, never `config.yaml` -- that file is committed.
+
+    `probe=True` says this URL names one thing the caller is asking about, so a 404 or 410
+    is the host answering and the ledger counts it as working.
     """
     headers = dict(UA)
     if any(h in url for h in POLITE) and _contact():
@@ -348,8 +351,12 @@ def get_status(url: str, timeout: int = 40, retries: int = 6,
             # A 404 or 410 on a URL naming one record is the server answering the question about
             # that record, so the ledger counts it as the host working. On a URL with no
             # identifier in it the same code means the endpoint itself is gone, which is what the
-            # ledger exists to notice. `source_key` draws that line: identifiers collapse to `*`.
-            note_fetch(url, e.code in (404, 410) and "*" in source_key(url), str(e.code))
+            # ledger exists to notice. `source_key` draws that line where the path shows it --
+            # identifiers collapse to `*` -- and `probe` is the caller drawing it where the path
+            # does not. `dblp.org/pid/t/JoshuaBTenenbaum.xml` carries no digit and is under the
+            # 24-character bar, so its honest 410 came back as a host to go and check.
+            note_fetch(url, e.code in (404, 410) and (probe or "*" in source_key(url)),
+                       str(e.code))
             return e.code, b""
         except Exception as e:
             if attempt < retries - 1:

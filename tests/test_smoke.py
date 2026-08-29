@@ -1631,17 +1631,8 @@ class TestConfigHasWhatTheStepsIndex(unittest.TestCase):
                                           "is probably matching the wrong thing")
 
 
-class TestLedgerAdviceMatchesTheEvidence(unittest.TestCase):
-    """The health ledger's advice has to fit what it actually recorded.
-
-    Fits this file's charter -- pure functions over one dict, no network -- and the bug
-    is a wiring bug: for four months the ledger told the reader to "check the URL, the
-    key, and whether it still exists" about `api.semanticscholar.org/graph/v1/paper/*`,
-    whose URL is correct, which plainly still exists, and which was answering 429 to
-    every anonymous caller on the internet. Advice that sends someone to inspect a
-    working URL is worse than no line at all, because they conclude the ledger is wrong
-    about everything.
-    """
+class LedgerCase(unittest.TestCase):
+    """A `common.HEALTH` ledger in a tempdir, one record at a time. No tests of its own."""
 
     def setUp(self):
         import common
@@ -1665,6 +1656,35 @@ class TestLedgerAdviceMatchesTheEvidence(unittest.TestCase):
         with open(self.common.HEALTH, "w") as f:
             json.dump({"example.org/thing": {**base, **rec}}, f)
         return self.common.health_report()
+
+    def record(self, url: str, code: int, **kw) -> dict:
+        """`get_status` against a host that answers only with `code`. Returns its ledger row."""
+        err = urllib.error.HTTPError(url, code, "no", {}, None)
+
+        def raise_it(*a, **k):
+            raise err
+
+        with mock.patch.object(self.common.urllib.request, "urlopen", raise_it), \
+                mock.patch.object(self.common, "_pace", lambda u: None), \
+                mock.patch.object(self.common.time, "sleep", lambda n: None):
+            self.common.get_status(url, retries=1, **kw)
+        with open(self.common.HEALTH) as f:
+            rows = json.load(f)
+        self.assertEqual(len(rows), 1, rows)
+        return next(iter(rows.values()))
+
+
+class TestLedgerAdviceMatchesTheEvidence(LedgerCase):
+    """The health ledger's advice has to fit what it actually recorded.
+
+    Fits this file's charter -- pure functions over one dict, no network -- and the bug
+    is a wiring bug: for four months the ledger told the reader to "check the URL, the
+    key, and whether it still exists" about `api.semanticscholar.org/graph/v1/paper/*`,
+    whose URL is correct, which plainly still exists, and which was answering 429 to
+    every anonymous caller on the internet. Advice that sends someone to inspect a
+    working URL is worse than no line at all, because they conclude the ledger is wrong
+    about everything.
+    """
 
     def test_a_rate_limited_source_is_not_reported_as_missing(self):
         line = self.write(last_error="429")
@@ -1729,6 +1749,53 @@ class TestLedgerAdviceMatchesTheEvidence(unittest.TestCase):
         self.common.note_fetch("https://example.org/thing", True)
         with open(self.common.HEALTH) as f:
             self.assertEqual(0, json.load(f)["example.org/thing"]["since_ok"])
+
+
+class TestAGoneRecordIsNotABrokenHost(LedgerCase):
+    """A 404 or 410 about one record is the host working, and the path does not always show it.
+
+    `source_key` collapses a path segment to `*` on a digit or over 24 characters, and the
+    ledger trusted that alone to tell a record from an endpoint. So DBLP's honest 410 for
+    `pid/t/JoshuaBTenenbaum.xml` -- no digit, 20 characters -- and GitHub's 404 for a
+    `README.md` in a repo carrying `README.rst` both landed as the host failing, and
+    `closing()` printed two working sources under "not coming back on their own". Advice
+    that sends someone to inspect a working URL is worse than no line at all.
+    """
+
+    GONE = "https://dblp.org/pid/t/JoshuaBTenenbaum.xml"
+
+    def test_a_probe_reads_a_gone_record_as_the_host_answering(self):
+        row = self.record(self.GONE, 410, probe=True)
+        self.assertEqual((row["ok"], row["fail"]), (1, 0))
+        self.assertEqual([], self.common.health_report())
+
+    def test_without_the_probe_the_same_answer_is_a_failing_host(self):
+        row = self.record(self.GONE, 410)
+        self.assertEqual((row["ok"], row["fail"]), (0, 1))
+
+    def test_an_identifier_in_the_path_still_speaks_for_itself(self):
+        """`probe` adds a way to say it. It does not replace the one already there."""
+        row = self.record("https://api.crossref.org/works/10.1/x", 404)
+        self.assertEqual((row["ok"], row["fail"]), (1, 0))
+
+    def test_a_probe_does_not_excuse_a_host_that_broke(self):
+        """Only 404 and 410 are answers. Everything else is the fetch not happening."""
+        row = self.record(self.GONE, 500, probe=True)
+        self.assertEqual((row["ok"], row["fail"]), (0, 1))
+        self.assertEqual(row["last_error"], "500")
+
+    def test_the_two_record_reads_declare_themselves(self):
+        want = {"scripts/wikidata_coauthors.py": "dblp.org/pid",
+                "scripts/draft_sidecars.py": "raw.githubusercontent.com"}
+        for rel, host in want.items():
+            calls = [n for n in ast.walk(ast.parse(source(os.path.join(ROOT, rel))))
+                     if isinstance(n, ast.Call) and getattr(n.func, "id", "") == "get_status"
+                     and host in ast.unparse(n)]
+            self.assertTrue(calls, f"{rel} no longer reads {host} through get_status")
+            for c in calls:
+                self.assertIn("probe=True", ast.unparse(c),
+                              f"{rel} asks about one record but the ledger will read a "
+                              f"404 there as {host} being down")
 
 
 class TestAStrayCopyIsNotEveryPaperSharingAToken(unittest.TestCase):

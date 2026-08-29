@@ -135,7 +135,7 @@ def readme(p: dict, limit: int = 6000) -> str:
             # retries=2: a repo whose default branch is `master` 404s on every name on the
             # way here, and the shared backoff would spend minutes discovering that.
             st, raw = get_status(f"https://raw.githubusercontent.com/{owner_repo}/"
-                                 f"{branch}/{name}", timeout=30, retries=2)
+                                 f"{branch}/{name}", timeout=30, retries=2, probe=True)
             if st == 200 and raw:
                 text = raw.decode("utf-8", "replace")
                 break
