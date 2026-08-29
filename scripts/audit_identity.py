@@ -1217,9 +1217,9 @@ def arxiv_author_strings(ids: list[str], batch: int = 50) -> dict[str, list[str]
     out: dict[str, list[str]] = {}
     for i in range(0, len(ids), batch):
         chunk = ids[i:i + batch]
-        raw = get("https://export.arxiv.org/api/query?id_list="
-                  f"{','.join(chunk)}&max_results={len(chunk)}", retries=3)
-        if not raw:
+        st, raw = get_status("https://export.arxiv.org/api/query?id_list="
+                             f"{','.join(chunk)}&max_results={len(chunk)}", retries=3)
+        if st != 200 or not raw:
             continue
         try:
             root = ET.fromstring(raw)
@@ -1235,8 +1235,11 @@ def arxiv_author_strings(ids: list[str], batch: int = 50) -> dict[str, list[str]
     return out
 
 
-def arxiv_name_file(papers, variants) -> tuple[str, list, list]:
+def arxiv_name_file(papers, variants) -> tuple[str, list, list, int]:
     """Papers whose arXiv author list misspells or omits your name.
+
+    Also returns how many records arXiv actually served, because zero problems out of
+    zero records read is the same number as a clean corpus.
 
     arXiv metadata is upstream of nearly every index here -- Hugging Face, Semantic Scholar,
     OpenAlex and Google Scholar all read it -- and a one-character typo creates a second
@@ -1305,7 +1308,7 @@ def arxiv_name_file(papers, variants) -> tuple[str, list, list]:
         L += ["Nothing to fix — every retrieved record names you exactly.", ""]
     with open(path, "w") as f:
         f.write("\n".join(L) + "\n")
-    return path, typo, absent
+    return path, typo, absent, len(found)
 
 
 def _rows(group, extra=lambda p: "") -> list[str]:
@@ -1451,9 +1454,10 @@ def main() -> None:
             hf_path = hf_worklist_file(hf)
 
     name_path = n_typo = n_absent = None
+    n_read = 0
     if not args.no_names:
         print("checking arXiv author lists for your name ...", flush=True)
-        name_path, n_typo, n_absent = arxiv_name_file(ax, variants)
+        name_path, n_typo, n_absent, n_read = arxiv_name_file(ax, variants)
 
     ax_path, n_gap = arxiv_ownership_file(cfg, ax, reg)
     if reg is None:
@@ -1585,10 +1589,17 @@ def main() -> None:
             L.append(f"| HF pages not claimable (name wrong upstream) | "
                      f"{len(hf['blocked'])} | see arXiv row |")
     if n_typo is not None:
-        L.append(f"| arXiv records misspelling your name | {len(n_typo)} | "
-                 f"{status(not n_typo)} |")
-        L.append(f"| arXiv records omitting you | {len(n_absent)} | "
-                 f"{status(not n_absent)} |")
+        # `of n_read`, because both counts are zero when arXiv served nothing, and a bare
+        # zero on both rows is the shape a clean corpus has. Neither row reaches "ok" on a
+        # partial read, so the next run checks the rest rather than the page saying done.
+        whole = n_read == len(ax)
+        L.append(f"| arXiv records misspelling your name | {len(n_typo)} of {n_read} "
+                 f"read | {status(not n_typo and whole)} |")
+        L.append(f"| arXiv records omitting you | {len(n_absent)} of {n_read} read | "
+                 f"{status(not n_absent and whole)} |")
+        if not whole:
+            L.append(f"| arXiv records it would not serve | {len(ax) - n_read} | "
+                     f"retried next run |")
     if stray:
         L.append(f"| arXiv papers missing from your bibliography | {len(stray)} | "
                  f"**check** |")

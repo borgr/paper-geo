@@ -5498,6 +5498,86 @@ class TestAQuietItemIsNotAnItemWithNoStatements(unittest.TestCase):
             self.assertNotIn("need 50", out.getvalue())
 
 
+class TestAQuietHostIsNotADeadLink(unittest.TestCase):
+    """`check_structure --links` called anything that did not return a body dead.
+
+    With `retries=1`, one 503 was enough to report a working canonical URL as rot -- the
+    opposite direction from the rest of this sweep, and the same root cause. Rot is a 404
+    or a 410. Everything else is the host declining to say.
+    """
+
+    def _cs(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        sys.path.insert(0, os.path.join(ROOT, "measure"))
+        import check_structure
+        return check_structure
+
+    PAPERS = [{"links": {"html": "https://a.example/x", "code": "https://b.example/y"}}]
+
+    def _run(self, cs, answers):
+        out, results = io.StringIO(), []
+        with mock.patch.object(cs, "get_status", lambda u, **kw: (answers(u), b"")), \
+             contextlib.redirect_stdout(out):
+            cs.links(self.PAPERS, results)
+        return results[0]
+
+    def test_a_host_that_would_not_answer_is_not_rot(self):
+        cs = self._cs()
+        for st in (0, 429, 500, 403):
+            r = self._run(cs, lambda _u, st=st: st)
+            self.assertTrue(r["ok"], "status %s reported as rot" % st)
+            self.assertIn("0 of 2 checked", r["detail"])
+            self.assertIn("would not answer", r["detail"])
+
+    def test_a_404_is_still_rot(self):
+        cs = self._cs()
+        r = self._run(cs, lambda u: 404 if "a.example" in u else 200)
+        self.assertFalse(r["ok"])
+        self.assertIn("1 dead", r["detail"])
+        self.assertIn("2 of 2 checked", r["detail"])
+
+    def test_every_link_answering_reads_as_checked(self):
+        cs = self._cs()
+        r = self._run(cs, lambda _u: 200)
+        self.assertTrue(r["ok"])
+        self.assertEqual("2 of 2 checked", r["detail"])
+
+
+class TestAQuietArxivIsNotACleanAuthorList(unittest.TestCase):
+    """Both arXiv name rows in the worklist table read `0` when arXiv served nothing.
+
+    `arxiv_name_file` already declines to accuse on an unread record -- "silence beats a
+    false accusation" -- but the table printed the resulting zeros beside **ok**, which is
+    the same shape a corpus with no name problems has.
+    """
+
+    def _a(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import audit_identity
+        return audit_identity
+
+    # A body on every status, including the refusals. That is the case the status check is
+    # for: an empty body already fails to parse, but a 503 maintenance page or a 429 served
+    # from a cache can be a whole valid feed, and reading it counts a record as checked.
+    FEED = ('<feed xmlns="http://www.w3.org/2005/Atom"><entry>'
+            '<id>http://arxiv.org/abs/2401.00001v1</id>'
+            '<author><name>Leshem Choshen</name></author></entry></feed>')
+
+    def test_an_unread_record_is_not_a_record_with_your_name_right(self):
+        a = self._a()
+        papers = [{"arxiv": "2401.00001", "title": "T", "slug": "s"}]
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d, True)
+        for st, n_read in ((0, 0), (429, 0), (500, 0), (200, 1)):
+            with mock.patch.object(a, "TASKS", d), \
+                 mock.patch.object(a, "get_status",
+                                   lambda _u, st=st, **kw: (st, self.FEED.encode())), \
+                 mock.patch.object(a.time, "sleep", lambda _n: None):
+                _path, typo, absent, got = a.arxiv_name_file(papers, ["Leshem Choshen"])
+            self.assertEqual(([], []), (typo, absent))
+            self.assertEqual(n_read, got, "status %s reported %d read" % (st, got))
+
+
 class TestAQuietPeerDoesNotHandOverItsPapers(unittest.TestCase):
     """`ownership` reconciles papers.yaml from the peer manifests it could read.
 

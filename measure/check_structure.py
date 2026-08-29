@@ -20,7 +20,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "scripts"))
-from common import (BUILD, DATA, get, has_live_sidecar,  # noqa: E402
+from common import (BUILD, DATA, get_status, has_live_sidecar,  # noqa: E402
                     load_config, read_yaml, write_json)
 
 SITE = os.path.join(BUILD, "site")
@@ -159,17 +159,31 @@ def claim_consistency(papers, results) -> None:
 
 
 def links(papers, results) -> None:
-    """Link rot check. Slow; opt in with --links."""
-    seen, dead = set(), []
+    """Link rot check. Slow; opt in with --links.
+
+    Only a 404 or 410 is rot. A timeout, a 429 and a 5xx are the host declining to say,
+    and calling those dead would report a working link as broken on the first bad minute.
+    """
+    seen, dead, unchecked = set(), [], []
     for p in papers:
         for k, u in (p.get("links") or {}).items():
             if k == "html_source" or not str(u).startswith("http") or u in seen:
                 continue
             seen.add(u)
-            if not get(u, retries=1, timeout=15):
+            st, _ = get_status(u, retries=1, timeout=15)
+            if st in (404, 410):
                 dead.append(u)
-    rec(results, "every link resolves", not dead,
-        f"{len(dead)}/{len(seen)} dead: {dead[:3]}" if dead else f"{len(seen)} checked")
+            elif st >= 400 or st == 0:
+                unchecked.append(u)
+    # Passes on rot alone. A host that would not answer is stated rather than counted
+    # against the check, since one bad minute anywhere would otherwise keep this red for
+    # ever and a check that is always red is a check nobody reads.
+    detail = f"{len(seen) - len(unchecked)} of {len(seen)} checked"
+    if dead:
+        detail += f", {len(dead)} dead: {dead[:3]}"
+    if unchecked:
+        detail += f"; would not answer: {unchecked[:3]}"
+    rec(results, "every link resolves", not dead, detail)
 
 
 def main() -> None:

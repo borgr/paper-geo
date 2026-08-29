@@ -319,6 +319,17 @@ PLAN = (
     ("listed twice on Scholar", "minute",
      "tick both rows on your Scholar profile and press *Merge*; both titles and the "
      "link to the second row are in the section"),
+    ("Hugging Face paper page missing", "minute",
+     "open each link while logged in — the visit is the action, there is no form. "
+     "Nothing happens logged out, so log in first or the clicking is wasted"),
+    ("Hugging Face page indexed but not claimed", "minute",
+     "one claim request per link, then wait: the author→user link only appears once "
+     "moderation grants it. Record what you asked for under `hf_claim_requested` so it "
+     "does not come back onto the list while it is pending"),
+    ("does not appear on your Scholar profile", "minute",
+     "check the profile for a record Scholar folded this paper into before adding "
+     "anything — a merged paper looks identical here to a missing one, and adding it "
+     "by hand splits future citations. Decline the line if a related record covers it"),
 )
 # Headings that are not work: context, containers, and the parked list. Every heading must
 # appear here or in the plan -- the test asserts it, so a section added later cannot
@@ -1439,7 +1450,7 @@ def step_worklist(cfg, args) -> None:
           "```", ""]),
         (bool(state.get("wikidata_papers_creatable")),
          f"### Wikidata — {state.get('wikidata_papers_creatable')} of your papers "
-         f"have no item",
+         f"{'has' if state.get('wikidata_papers_creatable') == 1 else 'have'} no item",
          # Listed under "only you can do this" for the decision, not the labour -- these are
          # permanent pages on a wiki that is not yours, and the undo is a deletion request
          # rather than a click.
@@ -1452,10 +1463,12 @@ def step_worklist(cfg, args) -> None:
           f"`{state.get('wikidata') or 'your author item'}` gets the incoming author",
           "links that make a Scholia profile and a SPARQL-answerable corpus exist at",
           "all.", ""]
-         + ([f"{wd_nokey} more have no item either and are not in the command below:",
-             "they carry neither a DOI nor an arXiv id, so there is no key to check",
-             "Wikidata against and creating one risks a duplicate nobody can find. They",
-             "arrive here once the paper is deposited anywhere.", ""]
+         # Phrased without a subject verb so one paper and forty read the same, since the
+         # count reaches 1 as the backlog drains and every agreement here would then be wrong.
+         + ([f"{wd_nokey} more with no item, and not in the command below: no DOI and no",
+             "arXiv id, so there is no key to check Wikidata against and creating an item",
+             "risks a duplicate nobody can find. Each arrives here once it is deposited",
+             "anywhere.", ""]
             if wd_nokey > 0 else [])
          + [
           "```bash",
