@@ -37,7 +37,7 @@ import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, TASKS, get_status, load_config,  # noqa: E402
-                    read_yaml, write_json)
+                    read_yaml, write_json, write_task)
 
 API = "https://en.wikipedia.org/w/api.php"
 OUT = os.path.join(TASKS, "wikipedia.md")
@@ -359,7 +359,7 @@ def main() -> None:
          "already_mentions": [{"title": h["title"], "says": h["says"]} for h in mine],
          "absent": len(absent)}, indent=1)
     os.makedirs(TASKS, exist_ok=True)
-    open(OUT, "w").write("\n".join(L) + "\n")
+    write_task(OUT, L)
     print(f"wrote {os.path.relpath(OUT, ROOT)}: {len(mine)} article(s) naming you, "
           f"{len(checks)} term(s) to check, {len(absent)} left alone")
 

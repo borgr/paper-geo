@@ -45,7 +45,7 @@ import urllib.parse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, TASKS, budget_reset, clean_latex,  # noqa: E402
                     get_status, host_of, load_config, name_match, norm_title, read_yaml,
-                    title_tokens, write_json)
+                    title_tokens, write_json, write_task)
 
 # Below this the gap is indexing lag rather than a split record. Both conditions have
 # to hold: two citations is noise on a 200-cite paper, and 20% is noise on a 3-cite one.
@@ -416,8 +416,7 @@ def write_page(state: dict) -> str:
 
     os.makedirs(TASKS, exist_ok=True)
     path = os.path.join(TASKS, "scholar_strays.md")
-    with open(path, "w") as f:
-        f.write("\n".join(L) + "\n")
+    write_task(path, L)
     return path
 
 

@@ -38,7 +38,7 @@ import urllib.parse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from common import (BUILD, DATA, TASKS, clipped, get_status, host_of, read_yaml,
-                    write_json, write_yaml)
+                    write_json, write_task, write_yaml)
 from wikidata_coauthors import (CACHE, SCHOLARLY, fill, items_by_orcid,  # noqa: F401
                                qid_of, researchers, sparql, title_key, wdqs_quiet)
 from wikidata_apply import (CAL, Session, create_items,  # noqa: F401
@@ -652,8 +652,7 @@ def write_page(people: list[dict], held: list[dict], skipped: list[dict],
                      f"*{p['later']}*, on a record that answered")
         L.append("")
     page = os.path.join(TASKS, "wikidata_people.md")
-    with open(page, "w") as f:
-        f.write("\n".join(L).rstrip() + "\n")
+    write_task(page, "\n".join(L).rstrip() + "\n")
     return page
 
 

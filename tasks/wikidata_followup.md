@@ -25,6 +25,8 @@ On <https://www.wikidata.org/wiki/Q140867203#P108>, click the statement,
 (Matched on DOI and arXiv id across 113 papers that carry one
 — exact keys, so this is coverage and not a name-search guess.)
 
+The endpoint would not answer about 1 more paper on this run, so it is neither counted above nor queued for creation. Each is retried next run.
+
 - [Q141029633](https://www.wikidata.org/wiki/Q141029633) — TIES-Merging: Resolving Interference When Merging Models
 - [Q141029634](https://www.wikidata.org/wiki/Q141029634) — tinyBenchmarks: evaluating LLMs with fewer examples
 - [Q141029635](https://www.wikidata.org/wiki/Q141029635) — Active Learning for BERT: An Empirical Study

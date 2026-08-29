@@ -40,7 +40,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, WD_IDENTIFIERS, clipped,  # noqa: E402
                     declined, get, get_json, get_status, load_config, name_match,
                     norm_name, norm_title, org_name, paper_doi, plural, read_yaml,
-                    synth_bibtex, title_tokens, write_json, write_yaml)
+                    synth_bibtex, title_tokens, write_json, write_task, write_yaml)
 
 TASKS = os.path.join(ROOT, "tasks")
 ATOM = {"a": "http://www.w3.org/2005/Atom"}
@@ -635,8 +635,7 @@ def hf_worklist_file(st: dict) -> str:
                      f"{clipped(p.get('title_display') or p['title'], 60)}")
             L.append(f"      HF lists: {', '.join(p.get('hf_authors') or [])[:150]}")
         L.append("")
-    with open(path, "w") as f:
-        f.write("\n".join(L) + "\n")
+    write_task(path, L)
     return path
 
 
@@ -838,9 +837,10 @@ def paper_link_section(q: str, cov: dict, qs_path: str | None) -> list[str]:
          f"(Matched on DOI and arXiv id across {cov['checked']} papers that carry one",
          "— exact keys, so this is coverage and not a name-search guess.)", ""]
     if cov.get("unchecked"):
-        L += [f"{len(cov['unchecked'])} more carry a key the endpoint would not answer for "
-              "on this run, so they are neither counted above nor queued for creation. "
-              "Each is retried next run.", ""]
+        u = len(cov["unchecked"])
+        L += [f"The endpoint would not answer about {plural(u, 'more paper')} on this run, so "
+              f"{'it is' if u == 1 else 'they are'} neither counted above nor queued for "
+              "creation. Retried next run.", ""]
     for p, qid in cov["present"]:
         L.append(f"- [{qid}](https://www.wikidata.org/wiki/{qid}) — "
                  f"{clipped(p.get('title_display') or p['title'], 70)}")
@@ -907,8 +907,7 @@ def _write_followup(L: list[str]) -> str:
     """Kept as its own function only so the two halves above can each end in a return."""
 
     path = os.path.join(TASKS, "wikidata_followup.md")
-    with open(path, "w") as f:
-        f.write("\n".join(L) + "\n")
+    write_task(path, L)
     return path
 
 
@@ -1065,8 +1064,7 @@ def orcid_missing_files(missing: list[dict], orcid: str) -> list[str]:
     for name, body in (("orcid_missing.md", "\n".join(md) + "\n"),
                        ("orcid_missing.bib", "\n\n".join(bib) + "\n" if bib else "")):
         path = os.path.join(TASKS, name)
-        with open(path, "w") as f:
-            f.write(body)
+        write_task(path, body)
         out.append(path)
     return out
 
@@ -1318,8 +1316,7 @@ def arxiv_name_file(papers, variants) -> tuple[str, list, list, int]:
         L.append("")
     if not (typo or absent):
         L += ["Nothing to fix — every retrieved record names you exactly.", ""]
-    with open(path, "w") as f:
-        f.write("\n".join(L) + "\n")
+    write_task(path, L)
     return path, typo, absent, len(found)
 
 
@@ -1348,8 +1345,7 @@ def arxiv_ownership_file(cfg, papers, registered: set[str] | None) -> tuple[str 
                 f"`https://arxiv.org/a/{ident['orcid']}` does not resolve yet. Link your",
                 "arXiv account to your ORCID first: <https://arxiv.org/user/confirm_orcid_id>",
                 "then re-run `python scripts/audit_identity.py`."]
-        with open(path, "w") as f:
-            f.write("\n".join(body) + "\n")
+        write_task(path, body)
         return path, 0
 
     seen, gap = set(), []
@@ -1397,8 +1393,7 @@ def arxiv_ownership_file(cfg, papers, registered: set[str] | None) -> tuple[str 
          "",
          f"## The {len(gap)} papers, citation-ordered", ""]
     L += _rows(gap)
-    with open(path, "w") as f:
-        f.write("\n".join(L) + "\n")
+    write_task(path, L)
     return path, len(gap)
 
 
@@ -1791,9 +1786,11 @@ def main() -> None:
               "`query.wikidata.org` returns zero rows with a 200, and looks like an",
               "answer. This uses `query-scholarly.wikidata.org`.", ""]
         if wd_cov.get("unchecked"):
-            L += [f"{len(wd_cov['unchecked'])} of the corpus is missing from that number "
-                  "because the endpoint would not answer for it, not because it has no "
-                  "item. Nothing is created for those until a run gets an answer.", ""]
+            u = len(wd_cov["unchecked"])
+            L += [f"The endpoint would not answer about {plural(u, 'paper')} on this run, so "
+                  f"{'it is' if u == 1 else 'they are'} missing from that number. Whether "
+                  f"{'it has' if u == 1 else 'they have'} an item is unknown, and nothing "
+                  "creates one until a run gets an answer.", ""]
         if wd_qs:
             L += [f"The {len(wd_cov['absent'])} missing items are created by "
                   "`python scripts/wikidata_apply.py --papers --apply --limit 10`, which "
@@ -1928,8 +1925,7 @@ def main() -> None:
               "[arxiv_name_fixes.md](arxiv_name_fixes.md).", ""]
 
     path = os.path.join(TASKS, "identity_audit.md")
-    with open(path, "w") as f:
-        f.write("\n".join(L) + "\n")
+    write_task(path, L)
 
     # Counts for WORKLIST.md, in build/ because they are observed state: entirely
     # re-derivable from the live APIs, so committing them would be storing someone
@@ -2033,8 +2029,7 @@ def main() -> None:
     write_json(state_path, state, indent=1)
 
     rm_path = os.path.join(TASKS, "orcid_remove.md")
-    with open(rm_path, "w") as f:
-        f.write(orcid_remove_file(o_stray, o_dups, papers, cfg))
+    write_task(rm_path, orcid_remove_file(o_stray, o_dups, papers, cfg))
     miss_paths = orcid_missing_files(o_missing, ident["orcid"]) if o_missing else []
 
     wrote = [path, rm_path] + miss_paths \

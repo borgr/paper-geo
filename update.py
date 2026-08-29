@@ -32,8 +32,9 @@ import sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
-from common import (DATA, clipped, has_live_sidecar, health_report,  # noqa: E402
-                    is_preprint_venue, load_config, norm_title, read_yaml, synth_bibtex)
+from common import (DATA, DECLINE_STAMP, clipped, has_live_sidecar,  # noqa: E402
+                    health_report, is_preprint_venue, load_config, norm_title,
+                    read_yaml, synth_bibtex)
 from sweep_github import ZENODO_KINDS  # noqa: E402
 
 STEPS = ("collect", "repos", "propose", "draft", "links", "ownership", "audit",
@@ -240,7 +241,6 @@ def due_followups() -> list[str]:
 
 
 PAYLOAD = re.compile(r"tasks/[\w.]+\.(?:md|bib|txt|qs)")
-STAMP = "<!-- declines -->"
 
 # The order to work the open sections in, and what each one costs. Three tiers, because
 # the question a reader actually arrives with is not "what is most important" -- the
@@ -389,10 +389,11 @@ def stamp_payloads(off: dict[str, str], later: dict[str, dict]) -> list[str]:
     re-derived every run from the hidden text itself, where every section with a payload
     names its own file, so a section declined in future needs no wiring.
 
-    The banner carries a marker, so a second run replaces it rather than stacking a copy and
-    clearing `declines.yaml` removes it again. Nothing is deleted, since the routes and
-    identifiers are the work. Only `sections:` and `deferred:` paths arrive here -- a section
-    that emptied item by item is already filtered by `common.declined`.
+    Markdown payloads only, and `common.write_task` is how a generator re-run keeps the
+    banner it finds. The marker means a second run replaces the banner rather than stacking a
+    copy, and clearing `declines.yaml` removes it again. Nothing is deleted, since the routes
+    and identifiers are the work. Only `sections:` and `deferred:` paths arrive here -- a
+    section that emptied item by item is already filtered by `common.declined`.
     """
     done = []
     for path, why in [*((p, ("off", w)) for p, w in off.items()),
@@ -400,19 +401,24 @@ def stamp_payloads(off: dict[str, str], later: dict[str, dict]) -> list[str]:
         full = os.path.join(ROOT, path)
         if not os.path.exists(full):
             continue                  # the section names a file this run did not write
+        # Markdown only. The other three extensions `PAYLOAD` matches are pasted somewhere
+        # whole -- a QuickStatements batch, an ORCID BibTeX import, a list of DOIs -- and a
+        # blockquote at the top of one of those is a line the far end tries to parse.
+        if not path.endswith(".md"):
+            continue
         with open(full) as f:
             body = f.read()
-        if body.startswith(STAMP):
+        if body.startswith(DECLINE_STAMP):
             body = body.split("\n\n", 1)[-1]
         kind, w = why
         if kind == "off":
-            head = [STAMP,
+            head = [DECLINE_STAMP,
                     f"> **Declined.** [`data/declines.yaml`](../data/declines.yaml) has "
                     f"`{w}` under `sections:`, so `WORKLIST.md` no longer lists this and "
                     f"nothing below is being asked of you.",
                     "> Delete that line to have it asked normally again."]
         else:
-            head = [STAMP,
+            head = [DECLINE_STAMP,
                     f"> **Deferred until {w.get('until', 'you say otherwise')}.** Parked "
                     f"on purpose in [`data/declines.yaml`](../data/declines.yaml), not "
                     f"declined — this is real work, just not before the rest.",
@@ -689,15 +695,19 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
     # title and the run has fetched it, so `stale` says which side is behind: `bib` is one edit
     # upstream, `open` is a judgement, and `scholar` is neither -- editing that row changes
     # what Scholar displays, not which citations cluster under it.
+    #
+    # Named rather than excluded. The heading below states that arXiv has no record for these,
+    # so a label meaning "arXiv was never asked" must not fall in by not being on the deny list.
     var = sc.get("title_variants") or []
     fix = [v for v in var if v.get("stale") == "bib"]
-    call = [v for v in var if v.get("stale") not in ("bib", "scholar")]
+    call = [v for v in var if v.get("stale") == "open"]
+    blind = [v for v in var if v.get("stale") == "unknown"]
     # The mirror image of `not_in_corpus`, and the half that was computed but never
     # printed: papers this pipeline has and the profile does not. It belongs on the page
     # for the same reason as its opposite -- Scholar is the surface most people actually
     # read, and a paper absent from it is absent from where the citations accrue.
     gone = sc.get("not_on_scholar") or []
-    if not (gate or miss or fix or call or dup or gone):
+    if not (gate or miss or fix or call or dup or gone or blind):
         return []
 
     def pl(n: int, word: str = "paper") -> str:
@@ -804,6 +814,11 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
               f"      - arXiv and Scholar: {clipped(v.get('scholar') or '', 56)}\n"
               f"      - the .bib entry:    {clipped(v.get('corpus') or '', 56)}"
               for v in fix] + [""]
+    if blind:
+        L += [f"{pl(len(blind))} under two titles are not split between the two headings "
+              "here, because `build/title_diffs.json` is not there and arXiv's own titles "
+              "are the only thing that separates them. Run `python update.py --step "
+              "collect` and this run again.", ""]
     if call:
         L += [f"### {pl(len(call))} under two titles, with no arXiv record to break the "
               f"tie", "",

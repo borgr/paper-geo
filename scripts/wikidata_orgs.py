@@ -42,7 +42,8 @@ import time
 import urllib.error
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import BUILD, DATA, TASKS, read_yaml, write_json, write_yaml  # noqa: E402
+from common import (BUILD, DATA, TASKS, read_yaml, write_json,  # noqa: E402
+                    write_task, write_yaml)
 from wikidata_coauthors import fill, qid_of, sparql, wdqs_quiet  # noqa: E402
 from wikidata_apply import create_items, logged_in, snak  # noqa: E402
 
@@ -269,8 +270,7 @@ def write_page(items: dict, state: dict, qs_path: str | None) -> str:
         if it.get("needs"):
             L.append("")
     page = os.path.join(TASKS, "wikidata_orgs.md")
-    with open(page, "w") as f:
-        f.write("\n".join(L).rstrip() + "\n")
+    write_task(page, "\n".join(L).rstrip() + "\n")
     return page
 
 

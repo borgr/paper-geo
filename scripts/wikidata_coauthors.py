@@ -62,7 +62,7 @@ import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, TASKS, get, get_status,  # noqa: E402
-                    host_of, norm_name, read_yaml, write_json)
+                    host_of, norm_name, read_yaml, write_json, write_task)
 from wikidata_apply import logged_in, snak  # noqa: E402
 
 WDQS = "https://query.wikidata.org/sparql"
@@ -891,8 +891,7 @@ def write_page(rows_: list[dict], qs_path: str | None) -> str:
         L += ["None. Every author string on every item is resolved.", ""]
 
     path = os.path.join(TASKS, "wikidata_coauthors.md")
-    with open(path, "w") as f:
-        f.write("\n".join(L) + "\n")
+    write_task(path, L)
     return path
 
 

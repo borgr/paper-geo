@@ -116,6 +116,8 @@ Wikidata's main query graph, so a publication query against
 `query.wikidata.org` returns zero rows with a 200, and looks like an
 answer. This uses `query-scholarly.wikidata.org`.
 
+The endpoint would not answer about 1 paper on this run, so it is missing from that number. Whether it has an item is unknown, and nothing creates one until a run gets an answer.
+
 ## Hugging Face: 0 to index, 1 to claim, 0 blocked
 
 Live counts, not the ones cached in `papers.yaml`. Lists:

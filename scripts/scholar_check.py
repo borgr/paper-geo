@@ -50,7 +50,7 @@ from collections import Counter
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (ARXIV_NS, BUILD, DATA, ROOT, TASKS, declined, get,  # noqa: E402
                     get_json, load_config, norm_title, note_fetch, read_yaml,
-                    synth_bibtex, write_json)
+                    synth_bibtex, write_json, write_task)
 
 
 # Scholar answers the paper-geo User-Agent with a consent interstitial and no rows.
@@ -257,26 +257,30 @@ def same_work(a: str, b: str) -> bool:
     return bool(same_paper(a, b) and (w := first_word(a)) and w == first_word(b))
 
 
-def arxiv_titles() -> dict[str, str]:
+def arxiv_titles() -> dict[str, str] | None:
     """slug -> the title arXiv states, for the papers where it differs from ours.
 
     `collect.py` compares every paper that carries an arXiv id and writes only the
-    disagreements to `build/title_diffs.json`, so absence from that file is itself an
-    answer rather than a gap: arXiv and the bibliography agree on that paper's title.
+    disagreements, so a slug absent from the file is an answer rather than a gap: arXiv and
+    the bibliography agree on that paper's title.
+
+    `None` means the file is not there, which is the collect step not having run. `{}` and
+    `None` would otherwise both mean "arXiv disagrees with nothing", and that reading turns
+    every title variant into `stale_side`'s reassuring outcome.
     """
     try:
         with open(os.path.join(BUILD, "title_diffs.json")) as f:
             return {d["slug"]: d["arxiv_says"] for d in json.load(f)
                     if d.get("slug") and d.get("arxiv_says")}
     except (OSError, ValueError, AttributeError, TypeError):
-        return {}
+        return None
 
 
-def stale_side(scholar: str, p: dict, diffs: dict[str, str]) -> tuple[str, str]:
+def stale_side(scholar: str, p: dict, diffs: dict[str, str] | None) -> tuple[str, str]:
     """Which of the two titles is out of date, on arXiv's evidence.
 
     arXiv holds the current title and a run has already fetched it, so this is mostly not the
-    judgement call it looks like. Three outcomes, of which only the last is a decision:
+    judgement call it looks like. Four outcomes, of which only `open` is a decision:
 
         bib      arXiv states the Scholar title, so the bibliography entry is behind. The
                  same finding `collect.py` reports as `title differs from arXiv`, and the
@@ -285,7 +289,11 @@ def stale_side(scholar: str, p: dict, diffs: dict[str, str]) -> tuple[str, str]:
                  fix: editing the row changes what it displays, not which citations Scholar
                  clusters under it.
         open     no arXiv record, or arXiv agrees with neither. Yours to decide.
+        unknown  nothing fetched arXiv's titles this run, so there is no evidence either
+                 way. Not `open`, which states that arXiv was asked.
     """
+    if diffs is None:
+        return "unknown", ""
     says = diffs.get(p.get("slug") or "")
     if says:
         return ("bib", says) if same_paper(says, scholar) else ("open", says)
@@ -770,8 +778,7 @@ def bib_payload(rows: list[dict], bib_url: str, mine: list[dict] | None,
                      "the line there and the entry comes back with a resolved BibTeX "
                      "block like the ones above.\n")
     os.makedirs(TASKS, exist_ok=True)
-    with open(path, "w") as f:
-        f.write("\n".join(out).rstrip() + "\n")
+    write_task(path, "\n".join(out).rstrip() + "\n")
     return path, len(rows), done, retry
 
 
@@ -919,6 +926,10 @@ def main() -> None:
     if stale_rows := [v for v in variants if v["stale"] == "scholar"]:
         print(f"  {len(stale_rows)} Scholar row(s) kept an older title than arXiv and "
               f"the corpus -- nothing to fix", file=sys.stderr)
+    if blind := [v for v in variants if v["stale"] == "unknown"]:
+        print(f"  {len(blind)} paper(s) under two titles that nothing asked arXiv about "
+              f"-- run `python update.py --step collect`, which writes "
+              f"build/title_diffs.json", file=sys.stderr)
     if dupes:
         print(f"  {len(dupes)} paper(s) listed twice on Scholar -- merge them there "
               f"(nothing here can):", file=sys.stderr)

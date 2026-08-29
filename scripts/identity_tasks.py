@@ -36,7 +36,7 @@ import yaml
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (DATA, TASKS, WD_IDENTIFIERS, clean_latex,  # noqa: E402
                     is_preprint_venue, load_config, org_name, paper_doi,
-                    parse_bibtex, read_yaml, synth_bibtex)
+                    parse_bibtex, read_yaml, synth_bibtex, write_task)
 
 # Verified against wbsearchentities.
 P = {"instance_of": "P31", "occupation": "P106", "employer": "P108",
@@ -384,8 +384,7 @@ def wikidata_manual(cfg) -> str:
           "are identifiers and affiliations only: nothing about importance, nothing",
           "unsourced, nothing a reader could not verify."]
     path = os.path.join(TASKS, "wikidata_manual.md")
-    with open(path, "w") as f:
-        f.write("\n".join(L) + "\n")
+    write_task(path, L)
     return path
 
 
@@ -428,8 +427,7 @@ def s2_merge(cfg, papers) -> tuple[str, int]:
           "", "## The durable fix",
           "Populate ORCID. S2's disambiguation uses it, so an ORCID with all works",
           "attached reduces the chance the split reappears after future re-clustering."]
-    with open(path, "w") as f:
-        f.write("\n".join(L) + "\n")
+    write_task(path, L)
     return path, len(strays)
 
 
@@ -463,8 +461,7 @@ def openalex_merge(cfg) -> str:
          "The duplicates hold a handful of works between them against 140+ on the main",
          "profile, so this is tidying, not a broken profile. Do it after ORCID and the",
          "Semantic Scholar merge."]
-    with open(path, "w") as f:
-        f.write("\n".join(L) + "\n")
+    write_task(path, L)
     return path
 
 
@@ -748,8 +745,7 @@ def arxiv_jref(cfg, papers, subs: dict) -> tuple[str, int, int]:
     L += ["## After filling these in", "",
           "`python update.py` re-reads the abs pages, so the next run drops each paper from",
           "this file by itself. Nothing here needs ticking off by hand."]
-    with open(path, "w") as f:
-        f.write("\n".join(L) + "\n")
+    write_task(path, L)
     return path, len(ready), len(wait)
 
 

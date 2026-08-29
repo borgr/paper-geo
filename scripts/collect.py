@@ -1168,10 +1168,11 @@ def main() -> None:
     tdiffs = title_diffs(papers)
     for p in papers:
         p.pop("_arxiv_title", None)
-    if tdiffs:
-        write_json(
-            os.path.join(BUILD, "title_diffs.json"),
-            tdiffs, indent=2, ensure_ascii=False)
+    # Written even when empty, so an absent file means this step has not run rather than
+    # "arXiv agrees with every title we hold". `scholar_check.stale_side` decides which of
+    # two titles is behind on this file, and an empty dict is its most reassuring answer.
+    write_json(os.path.join(BUILD, "title_diffs.json"), tdiffs, indent=2,
+               ensure_ascii=False)
 
     n_retired = record_slug_moves(papers, out)
     if n_retired:

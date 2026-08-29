@@ -1126,6 +1126,30 @@ def write_json(path: str, obj, **kw) -> None:
         json.dump(obj, f, **kw)
 
 
+DECLINE_STAMP = "<!-- declines -->"
+
+
+def write_task(path: str, body: "list[str] | str") -> str:
+    """Write a `tasks/` payload, keeping any declines banner already at the top of it.
+
+    `update.py`'s worklist step puts that banner on a payload whose section
+    `data/declines.yaml` has switched off, and it runs after every generator here. A plain
+    overwrite drops it, so the file goes back to asking normally until the next full run.
+
+    A list is joined with one trailing newline. Returns the path, for callers that report
+    what they wrote.
+    """
+    head = ""
+    if os.path.exists(path):
+        with open(path) as f:
+            old = f.read()
+        if old.startswith(DECLINE_STAMP):
+            head = old.split("\n\n", 1)[0] + "\n\n"
+    with open(path, "w") as f:
+        f.write(head + (body if isinstance(body, str) else "\n".join(body) + "\n"))
+    return path
+
+
 def read_yaml(path: str, default=None):
     if not os.path.exists(path):
         return default

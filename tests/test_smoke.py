@@ -2837,6 +2837,75 @@ class TestTheWorklistSaysWhatToDoFirst(unittest.TestCase):
                             f"top of WORKLIST.md silently leaves it out")
 
 
+class TestAnUnfetchedArxivTitleIsNotAgreement(unittest.TestCase):
+    """`scholar_check.stale_side` decides which of two titles is behind on one build file.
+
+    `collect.py` wrote `build/title_diffs.json` only when it found a disagreement, and
+    `arxiv_titles` returned `{}` for a file that is not there -- so a run of the audit step
+    alone, on a machine where collect had never run, made every paper carrying an arXiv id
+    come back `scholar`, whose printed line is "kept an older title than arXiv and the
+    corpus -- nothing to fix". arXiv had not been asked at all.
+
+    `build/` is gitignored, so a fresh clone is exactly that machine.
+    """
+
+    def _sc(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import scholar_check
+        return scholar_check
+
+    def test_no_evidence_is_its_own_outcome(self):
+        sc = self._sc()
+        paper = {"slug": "s", "arxiv": "2501.00001", "title": "Ours"}
+        self.assertEqual("unknown", sc.stale_side("Theirs", paper, None)[0],
+                         "an unfetched arXiv was read as arXiv agreeing with the corpus")
+        self.assertEqual("scholar", sc.stale_side("Theirs", paper, {})[0])
+        self.assertEqual("bib", sc.stale_side("Theirs", paper, {"s": "Theirs"})[0])
+        self.assertEqual("open", sc.stale_side("Theirs", paper, {"s": "A third name"})[0])
+
+    def test_an_absent_build_file_is_not_an_empty_one(self):
+        import tempfile
+        sc = self._sc()
+        with tempfile.TemporaryDirectory() as d:
+            old, sc.BUILD = sc.BUILD, d
+            try:
+                self.assertIsNone(sc.arxiv_titles(), "a missing file read as full agreement")
+                with open(os.path.join(d, "title_diffs.json"), "w") as f:
+                    f.write("[]")
+                self.assertEqual({}, sc.arxiv_titles())
+            finally:
+                sc.BUILD = old
+
+    def test_collect_writes_the_file_even_with_nothing_to_report(self):
+        """Which is what makes absence mean the step has not run.
+
+        Structural, because the write sits at the end of `main()` behind a live fetch of
+        every arXiv id in the corpus.
+        """
+        tree = ast.parse(source(os.path.join(ROOT, "scripts", "collect.py")))
+        guarded = []
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.If):
+                continue
+            for inner in ast.walk(node):
+                if (isinstance(inner, ast.Call) and getattr(inner.func, "id", "") == "write_json"
+                        and any(isinstance(a, ast.Constant) and a.value == "title_diffs.json"
+                                for a in ast.walk(inner))):
+                    guarded.append(node.lineno)
+        self.assertEqual([], guarded, "title_diffs.json is written conditionally again")
+
+    def test_the_worklist_does_not_call_it_a_missing_arxiv_record(self):
+        """The heading states arXiv has no record, so only `open` may reach it."""
+        import update
+        var = [{"slug": "a", "stale": "unknown", "scholar": "Theirs", "corpus": "Ours"},
+               {"slug": "b", "stale": "open", "scholar": "Theirs", "corpus": "Ours"}]
+        out = "\n".join(update.scholar_gaps({"title_variants": var}))
+        self.assertIn("no arXiv record to break the tie", out)
+        self.assertIn("- [ ] `b`", out)
+        self.assertNotIn("- [ ] `a`", out, "arXiv was never asked about this one")
+        self.assertIn("title_diffs.json", out, "and it vanished without a word")
+
+
 class TestADeclinedSectionTakesItsPayloadWithIt(unittest.TestCase):
     """The worklist hides a section; the file that section handed you is committed.
 
@@ -2881,10 +2950,10 @@ class TestADeclinedSectionTakesItsPayloadWithIt(unittest.TestCase):
 
     def test_stamping_twice_does_not_stack_two_banners(self):
         """`--step worklist` twice without the step that rewrites `tasks/` in between."""
-        import update
-        _, out = self._stamp(f"{update.STAMP}\n> **Declined.** an older wording\n\n# Form\n",
+        from common import DECLINE_STAMP
+        _, out = self._stamp(f"{DECLINE_STAMP}\n> **Declined.** an older wording\n\n# Form\n",
                              off={"tasks/thing.md": "OpenAlex"})
-        self.assertEqual(1, out.count(update.STAMP))
+        self.assertEqual(1, out.count(DECLINE_STAMP))
         self.assertNotIn("older wording", out)
         self.assertIn("# Form", out)
 
@@ -2893,6 +2962,70 @@ class TestADeclinedSectionTakesItsPayloadWithIt(unittest.TestCase):
         got, out = self._stamp("# Form\n", off={"tasks/absent.md": "OpenAlex"})
         self.assertEqual([], got)
         self.assertEqual("# Form\n", out)
+
+    def test_a_paste_in_payload_is_never_stamped(self):
+        """A `.qs`, `.bib`, or `.txt` payload is pasted somewhere whole.
+
+        `PAYLOAD` matches all four extensions because the worklist links all four, so a
+        declined section naming a QuickStatements batch used to get a markdown blockquote
+        prepended to it -- three lines QuickStatements reads as commands. The decision is
+        recorded in `declines.yaml` and in the worklist either way.
+        """
+        import tempfile
+
+        import update
+        for name in ("batch.qs", "import.bib", "dois.txt"):
+            with tempfile.TemporaryDirectory() as d:
+                os.makedirs(os.path.join(d, "tasks"))
+                path = os.path.join(d, "tasks", name)
+                with open(path, "w") as f:
+                    f.write("Q1\tP31\tQ5\n")
+                old, update.ROOT = update.ROOT, d
+                try:
+                    got = update.stamp_payloads({f"tasks/{name}": "Wikidata"}, {})
+                finally:
+                    update.ROOT = old
+                self.assertEqual([], got, f"stamped tasks/{name}")
+                with open(path) as f:
+                    self.assertEqual("Q1\tP31\tQ5\n", f.read())
+
+    def test_a_regenerated_payload_keeps_the_banner(self):
+        """The generators run before the worklist step, so they meet a banner from last run.
+
+        A plain overwrite drops it, and the file spends the rest of the run asking for work
+        that was declined -- which is what `tasks/openalex_merge.md` did.
+        """
+        import tempfile
+
+        from common import DECLINE_STAMP, write_task
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "thing.md")
+            with open(path, "w") as f:
+                f.write(f"{DECLINE_STAMP}\n> **Declined.** `OpenAlex`\n\n# Old body\n")
+            write_task(path, ["# New body", "", "Route 1."])
+            with open(path) as f:
+                out = f.read()
+        self.assertTrue(out.startswith(DECLINE_STAMP), "the banner was overwritten")
+        self.assertIn("`OpenAlex`", out)
+        self.assertIn("# New body", out)
+        self.assertNotIn("# Old body", out)
+
+    def test_every_markdown_payload_is_written_through_write_task(self):
+        """So the next generator added does not silently drop the banner.
+
+        Per file rather than per call: a module that writes two payloads and routes one of
+        them past `write_task` gets through here, which is what the two tests above cover for
+        the mechanism itself.
+        """
+        offenders = []
+        for path in sorted(glob.glob(os.path.join(ROOT, "scripts", "*.py"))):
+            src = source(path)
+            if not re.search(r'os\.path\.join\(TASKS, "[\w.]+\.md"\)|TASKS, name\)', src) \
+                    and 'OUT = os.path.join(TASKS' not in src:
+                continue
+            if "write_task" not in src:
+                offenders.append(os.path.relpath(path, ROOT))
+        self.assertEqual([], offenders, "writes a tasks/*.md without keeping its banner")
 
     def test_every_real_payload_extension_is_matchable(self):
         """The paths come out of rendered prose, so the pattern is the whole coupling.
