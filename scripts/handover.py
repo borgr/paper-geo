@@ -38,9 +38,13 @@ import urllib.parse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from common import ROOT, get_json, norm_name, write_json  # noqa: E402
+from common import ROOT, get_status, host_of, norm_name, write_json  # noqa: E402
 
 S2 = "https://api.semanticscholar.org/graph/v1"
+# Set to the first lookup that did not answer. All four below read an empty result as a
+# fact -- no ORCID under this name, no DBLP page, no arXiv papers -- and the bundle is a
+# note sent to a colleague, so `main` writes nothing while this is set.
+_refused = ""
 # Words that carry no facet when they appear in a title. Not a general stoplist: these are
 # the ones that turn up in every ML title and would otherwise be every colleague's top
 # "keyword", which is worse than an empty list because it looks derived.
@@ -50,26 +54,43 @@ using use used learning model models language large deep neural network networks
 method methods framework study analysis paper towards case""".split())
 
 
+def fetched(url: str, **kw) -> dict:
+    """One JSON lookup, `{}` if it did not answer, with the refusal recorded.
+
+    All four sources answer 200 with an empty result set for a name they do not have, so
+    any other status is a refusal rather than a report.
+    """
+    global _refused
+    st, raw = get_status(url, accept="application/json", **kw)
+    try:
+        d = json.loads(raw) if st == 200 and raw else None
+    except ValueError:
+        d = None
+    if d is None:
+        _refused = f"{host_of(url)} -> HTTP {st}"
+    return d or {}
+
+
 def s2_records(name: str) -> list[dict]:
     """Every Semantic Scholar author record matching the name, largest corpus first."""
     q = urllib.parse.quote(name)
-    d = get_json(f"{S2}/author/search?query={q}&limit=20&fields="
-                 f"name,paperCount,citationCount,hIndex,homepage,externalIds") or {}
+    d = fetched(f"{S2}/author/search?query={q}&limit=20&fields="
+                f"name,paperCount,citationCount,hIndex,homepage,externalIds")
     want = norm_name(name)
     out = [a for a in (d.get("data") or []) if norm_name(a.get("name") or "") == want]
     return sorted(out, key=lambda a: -(a.get("paperCount") or 0))
 
 
 def s2_papers(author_id: str) -> list[dict]:
-    d = get_json(f"{S2}/author/{author_id}/papers?limit=500&fields="
-                 f"title,year,citationCount,externalIds") or {}
+    d = fetched(f"{S2}/author/{author_id}/papers?limit=500&fields="
+                f"title,year,citationCount,externalIds")
     return d.get("data") or []
 
 
 def dblp_pid(name: str) -> tuple[str | None, str | None]:
     """(dblp name, pid) -- the pid is what `audit_identity` needs; the name is the label."""
-    d = get_json("https://dblp.org/search/author/api?format=json&q="
-                 + urllib.parse.quote(name)) or {}
+    d = fetched("https://dblp.org/search/author/api?format=json&q="
+                + urllib.parse.quote(name))
     hits = ((d.get("result") or {}).get("hits") or {}).get("hit") or []
     want = norm_name(name)
     for h in hits:
@@ -85,8 +106,8 @@ def orcids(name: str) -> list[dict]:
     """ORCID records under this name. More than one means a human has to pick."""
     parts = name.split()
     q = f"family-name:{parts[-1]} AND given-names:{parts[0]}"
-    d = get_json("https://pub.orcid.org/v3.0/expanded-search/?q="
-                 + urllib.parse.quote(q)) or {}
+    d = fetched("https://pub.orcid.org/v3.0/expanded-search/?q="
+                + urllib.parse.quote(q))
     out = []
     for r in d.get("expanded-result") or []:
         full = f"{r.get('given-names') or ''} {r.get('family-names') or ''}".strip()
@@ -451,6 +472,10 @@ def main() -> None:
     args = ap.parse_args()
 
     recs = s2_records(args.name)
+    if _refused:
+        sys.exit(f"semantic scholar did not answer ({_refused}), so nothing is written. "
+                 f"Every value in the bundle comes from a lookup, and an unanswered one "
+                 f"reads in the bundle as a fact about them. Re-run it.")
     if not recs:
         sys.exit(f"no Semantic Scholar author record matches {args.name!r} exactly. "
                  f"Check the spelling their papers use -- the lookup is name-exact on "
@@ -474,6 +499,10 @@ def main() -> None:
                        for p in sorted(papers,
                                        key=lambda p: -(p.get("citationCount") or 0))[:15]],
     }
+    if _refused:
+        sys.exit(f"a lookup did not answer ({_refused}), so nothing is written. The bundle "
+                 f"would have said they have no ORCID, no DBLP page, or no arXiv papers, "
+                 f"and it is a note you send them. Re-run it.")
     d = os.path.join(args.out, slugify(args.name))
     os.makedirs(d, exist_ok=True)
     extra = facts(d)

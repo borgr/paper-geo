@@ -3908,6 +3908,54 @@ class TestAHandoverBundleDecidesNothing(unittest.TestCase):
         self.assertIsNone(yaml.safe_load(text)["identity"]["orcid"])
         self.assertIn("0000-0001-0000-0002", text)
 
+    def test_a_lookup_that_did_not_answer_is_not_a_fact_about_them(self):
+        """An empty result reads as a fact in all four lookups -- no ORCID under this name,
+        no DBLP page, no arXiv papers -- and the bundle is a note the author sends. So a
+        refusal writes nothing rather than a bundle that tells a colleague to register the
+        ORCID they have had for ten years."""
+        import handover
+
+        def refuse(no):
+            """A lookup that answers or refuses, setting `_refused` the way `fetched` does."""
+            def f(*a, **kw):
+                handover._refused = "example.org -> HTTP 500" if no else ""
+                return [] if no else [{"authorId": "1", "paperCount": 9}]
+            return f
+
+        old = handover._refused
+        try:
+            for st in (0, 429, 500):
+                handover._refused = ""
+                with mock.patch.object(handover, "get_status", lambda _u, **kw: (st, b"")):
+                    self.assertEqual([], handover.orcids("Ada Example Lovelace"))
+                    self.assertEqual((None, None), handover.dblp_pid("Ada Example Lovelace"))
+                self.assertTrue(handover._refused, "status %s passed as an answer" % st)
+
+            # Both guards, each reached the way a run reaches it: Semantic Scholar refusing,
+            # which decides whether there is a corpus at all, and Semantic Scholar answering
+            # while ORCID refuses, where the absence has already been read into `found`.
+            for s2_refused in (True, False):
+                handover._refused = ""
+                with tempfile.TemporaryDirectory() as d:
+                    argv = ["handover.py", "Ada Example Lovelace", "--out", d]
+                    with mock.patch.object(sys, "argv", argv), \
+                         mock.patch.object(handover, "s2_records", refuse(s2_refused)), \
+                         mock.patch.object(handover, "s2_papers", lambda a: []), \
+                         mock.patch.object(handover, "dblp_pid", lambda n: (None, None)), \
+                         mock.patch.object(handover, "orcids", refuse(True)):
+                        with self.assertRaises(SystemExit) as e:
+                            handover.main()
+                    self.assertIn("did not answer", str(e.exception.code))
+                    self.assertEqual([], os.listdir(d), "a refusal wrote a bundle")
+
+            handover._refused = ""
+            with mock.patch.object(handover, "get_status",
+                                   lambda _u, **kw: (200, b'{"result": {}}')):
+                self.assertEqual((None, None), handover.dblp_pid("Ada Example Lovelace"))
+            self.assertEqual("", handover._refused)
+        finally:
+            handover._refused = old
+
 
 class TestAnalyticsIsOptAndWhitelisted(unittest.TestCase):
     """The one config value that becomes executable script on every published page.
