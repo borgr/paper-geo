@@ -37,10 +37,10 @@ import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from common import (BUILD, DATA, TASKS, clipped, get, get_status, read_yaml, write_json,
-                    write_yaml)
+from common import (BUILD, DATA, TASKS, clipped, get_status, host_of, read_yaml,
+                    write_json, write_yaml)
 from wikidata_coauthors import (CACHE, SCHOLARLY, fill, items_by_orcid,  # noqa: F401
-                               qid_of, researchers, sparql, title_key)
+                               qid_of, researchers, sparql, title_key, wdqs_quiet)
 from wikidata_apply import (CAL, Session, create_items,  # noqa: F401
                             logged_in, recorded)
 from wikidata_orgs import labels_of
@@ -214,6 +214,28 @@ def cased(rec: dict) -> str:
             else orcid_name) or " ".join((rec.get("openalex_label") or "").split())
 
 
+# Set to the first search-index call Wikidata did not answer. An item nobody found is an
+# item this pass creates, so `main` creates nothing while this or `wdqs_quiet()` is set.
+_refused = ""
+
+
+def asked(url: str) -> dict:
+    """One `w/api.php` call, `{}` if it did not answer, with the refusal recorded.
+
+    The API answers 200 with an empty `search` for a name it carries no item under, so any
+    other status is a refusal rather than a report.
+    """
+    global _refused
+    st, raw = get_status(url, accept="application/json")
+    try:
+        d = json.loads(raw) if st == 200 and raw else None
+    except ValueError:
+        d = None
+    if d is None:
+        _refused = _refused or f"{host_of(url)} -> HTTP {st}"
+    return d or {}
+
+
 def namesakes(labels: list[str]) -> dict[str, list[dict]]:
     """Name to every human item carrying it, with the ORCID and description each states.
 
@@ -229,9 +251,8 @@ def namesakes(labels: list[str]) -> dict[str, list[dict]]:
     """
     found: dict[str, set[str]] = {}
     for n in labels:
-        d = json.loads(get(WIKI + "?action=wbsearchentities&type=item&language=en"
-                           "&uselang=en&limit=20&format=json&search="
-                           + urllib.parse.quote(n)) or "{}")
+        d = asked(WIKI + "?action=wbsearchentities&type=item&language=en"
+                  "&uselang=en&limit=20&format=json&search=" + urllib.parse.quote(n))
         for h in d.get("search") or []:
             for form in (h.get("label"), h.get("match", {}).get("text"),
                          h.get("aliases", [None])[0]):
@@ -241,8 +262,8 @@ def namesakes(labels: list[str]) -> dict[str, list[dict]]:
     qids = sorted({q for qs in found.values() for q in qs})
     seen: dict[str, dict] = {}
     for i in range(0, len(qids), 50):
-        d = json.loads(get(WIKI + "?action=wbgetentities&props=claims|descriptions"
-                           "&languages=en&format=json&ids=" + "|".join(qids[i:i + 50])) or "{}")
+        d = asked(WIKI + "?action=wbgetentities&props=claims|descriptions"
+                  "&languages=en&format=json&ids=" + "|".join(qids[i:i + 50]))
         for q, e in (d.get("entities") or {}).items():
             cl = e.get("claims") or {}
             if not any((c["mainsnak"].get("datavalue") or {}).get("value", {}).get("id") == HUMAN
@@ -690,6 +711,15 @@ def main() -> int:
     later = [p for p in made if "later" in p]
     for p in ok:
         p["papers"] = papers.get(p["orcid"], 0)
+    quiet = _refused or wdqs_quiet()
+    if quiet:
+        # Every list here rests on a Wikidata read. A refusal reads as no item stating this
+        # ORCID and no item under this name, which is the exact state this pass creates an
+        # item for -- and a second item for somebody who already has one can only be undone
+        # by an administrator.
+        print("wikidata did not answer (%s), so nothing is written and nothing is created"
+              % quiet, file=sys.stderr)
+        return 1
     day = datetime.date.today().isoformat()
     lines = batch(people, day)
     qs = os.path.join(TASKS, "wikidata_people.qs")
@@ -787,10 +817,16 @@ def resync(s, day: str) -> tuple[int, int]:
     ids = sorted(set(mine.values()))
     live = {}
     for i in range(0, len(ids), 50):
-        d = json.loads(get(WIKI + "?action=wbgetentities&format=json&languages=en"
-                           "&props=labels|descriptions|claims&ids="
-                           + "|".join(ids[i:i + 50])) or "{}")
+        d = asked(WIKI + "?action=wbgetentities&format=json&languages=en"
+                  "&props=labels|descriptions|claims&ids=" + "|".join(ids[i:i + 50]))
         live.update(d.get("entities") or {})
+    # Read again here rather than trusting `main`'s check, because these three reads are
+    # this function's own. `stale` retracts an employer statement that is not in the
+    # employers it was given, and a query service that went quiet gives it none of them.
+    quiet = _refused or wdqs_quiet()
+    if quiet:
+        print("  wikidata did not answer (%s), so nothing is edited" % quiet)
+        return 0, 0
     todo = []
     for orcid, qid in sorted(mine.items()):
         p = described(orcid, recs[orcid], employers)

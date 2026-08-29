@@ -62,7 +62,7 @@ import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, TASKS, get, get_json, get_status,  # noqa: E402
-                    norm_name, read_yaml, write_json)
+                    host_of, norm_name, read_yaml, write_json)
 from wikidata_apply import logged_in, snak  # noqa: E402
 
 WDQS = "https://query.wikidata.org/sparql"
@@ -89,18 +89,39 @@ DBLP_PER_RUN = 40
 SHAPE = 8
 
 
+# Set to the first query the service did not answer. `[]` is also what a query answers with
+# when nothing matches, so a caller reading an empty result as a fact about Wikidata has to
+# ask -- see `wdqs_quiet`.
+_quiet = ""
+
+
 def sparql(query: str, endpoint: str = "") -> list[dict]:
     """Rows of a SPARQL query against WDQS, or `[]` if it did not answer.
 
     `endpoint` names a different service. The scholarly one is the only one that answers
     `author` (P50), which the main service returns nothing for.
+
+    A query that did not answer is recorded in `wdqs_quiet()` as well as returning `[]`.
     """
-    raw = get(f"{endpoint or WDQS}?" + urllib.parse.urlencode({"query": query}),
-              accept="application/sparql-results+json")
+    global _quiet
+    url = f"{endpoint or WDQS}?" + urllib.parse.urlencode({"query": query})
+    st, raw = get_status(url, accept="application/sparql-results+json")
     try:
-        return json.loads(raw)["results"]["bindings"]
+        rows = json.loads(raw)["results"]["bindings"] if st == 200 else None
     except (ValueError, KeyError, TypeError):
+        rows = None
+    if rows is None:
+        _quiet = _quiet or f"{host_of(url)} -> HTTP {st}"
         return []
+    return rows
+
+
+def wdqs_quiet() -> str:
+    """The first SPARQL query of this run that did not answer, or `""`.
+
+    Checked by anything that would write on the strength of a query finding nothing.
+    """
+    return _quiet
 
 
 def qid_of(uri: str) -> str:
