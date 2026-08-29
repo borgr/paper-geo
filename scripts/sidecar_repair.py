@@ -87,20 +87,16 @@ def repair(slug: str, rounds: int, again, evidence: str = "",
            source: str = "a model") -> int:
     """Re-ask the model to fix what the checker found, up to `rounds` times.
 
-    `again(prompt_extra)` is the caller's own one-paper call, so this knows nothing about
-    which backend it drives.
+    Returns the number of findings left on the draft. `again(prompt_extra)` is the caller's
+    own one-paper call, so this knows nothing about which backend it drives.
 
-    `evidence` is the same paper text the draft was written from, and it is what decides
-    which findings are fixable: without it the loop can only re-word what it already wrote,
-    so a finding asking for a fact -- a dropped magnitude, the real conditions behind a
-    thin scope -- is unfixable by construction. Measured on Qwen 2.5 72B, one paper: 20
-    findings, then 5, then 2. The residue is the honest kind, where the fix is a number from
-    a table the model will not invent.
+    `evidence` is the paper text the draft was written from, and it decides which findings
+    are fixable. Without it the loop can only re-word what it already wrote, so a finding
+    asking for a fact -- a dropped magnitude, the real conditions behind a thin scope --
+    stays open by construction.
 
-    Stops when a round stops reducing the count, because past that point the loop optimises
-    against the proxies rather than fixing anything -- it once converged on one scope that
-    cleared the wording rules and pasted it across eight claims, which is why
-    `validate.py` now checks for shared scopes.
+    Stops when a round stops reducing the count, past which the loop optimises against the
+    proxies rather than fixing anything.
     """
     path = draft_path(slug)
     best = None
@@ -317,18 +313,14 @@ def where(finding: str, fm: dict | None = None) -> str | None:
     """The single field a finding is about, as a locus, or None if it is about no one field.
 
     A locus is `claim/<id>/text`, `claim/<id>/scope`, `qa/<i>/ask/<role>`,
-    `qa/<i>/ask/unsorted/<j>`, `misreadings/<i>` or `term/<name>` -- a path whose leaf is
-    always a string, which is what lets the patch schema stay a flat list of replacements.
+    `qa/<i>/ask/unsorted/<j>`, `misreadings/<i>` or `term/<name>`, always a path whose leaf
+    is a string.
 
-    Two kinds of finding are addressable. Most name their field (`claim \'x\': ...`), with
-    the colon optional because the invented-figure check omits it (`claim \'x\' states 29`).
-    The self-containment checks instead open with the offending string, then ` -- `, then
-    the complaint, so those are located by looking the string up in `fm` -- and without
-    `fm` they return None rather than a guess.
-
-    None is the useful half: a finding about the whole set of claims -- band counts, an
-    orphan claim -- must not be answered by rewriting whichever claim it was handed. Where
-    the set is computable, `spread` names it instead.
+    Most findings name their field (`claim 'x': ...`), with the colon optional because the
+    invented-figure check omits it (`claim 'x' states 29`). The self-containment checks
+    instead open with the offending string, then ` -- `, then the complaint, so those are
+    located by looking the string up in `fm`, and return None without it. A finding about
+    the whole set of claims returns None too, and `spread` names that set where it can.
     """
     m = re.match(r"^claim '([^']+)'(?:: | )(.*)", finding)
     if m:

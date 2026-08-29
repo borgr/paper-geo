@@ -286,21 +286,19 @@ def record_created(slug: str, qid: str) -> None:
 
 
 def wikidata_paper_coverage(papers, chunk: int = 50) -> dict:
-    """How many of your papers exist as Wikidata items -- measured, not assumed.
+    """How many of the corpus papers exist as Wikidata items, measured rather than assumed.
 
-    Returns {} when the endpoint does not answer, so a timeout never reads as evidence of
-    absence. Matching is on DOI (P356) and arXiv id (P818), never name; DOIs go in twice, as
-    given and uppercased, since Wikidata's convention is uppercase and SPARQL string match
-    is not.
+    Returns {} when the endpoint does not answer, so a timeout never reads as absence.
+    Matching is on DOI (P356) and arXiv id (P818), never name. DOIs go in twice, as given
+    and uppercased, since Wikidata's convention is uppercase and SPARQL match is not.
 
-    The endpoint must be query-scholarly, not `query.wikidata.org`: scholarly articles have
-    their own graph now, and the main endpoint answers a publication query with zero rows
-    and HTTP 200.
+    The endpoint must be query-scholarly. Scholarly articles have their own graph now, and
+    `query.wikidata.org` answers a publication query with zero rows and HTTP 200.
 
-    Items from `data/wikidata_created.yaml` are folded in whatever the query says. The
-    scholarly endpoint can take hours to index a new item, and a second run inside that
-    window would recreate the batch -- a duplicate publication item is the one failure here
-    that somebody else has to merge.
+    Items from `data/wikidata_created.yaml` are folded in whatever the query says, since the
+    scholarly endpoint can take hours to index a new item and a second run inside that
+    window would recreate the batch. A duplicate publication item needs somebody else to
+    merge it.
     """
     keys: dict[str, dict] = {}
     for p in papers:
@@ -344,21 +342,19 @@ def wikidata_paper_coverage(papers, chunk: int = 50) -> dict:
 
 
 def paper_item(p: dict, cfg) -> dict | None:
-    """The Wikidata item one paper should become -- one description, two renderers.
+    """The Wikidata item one paper should become, as one dict two renderers share.
 
-    Returns None for a paper carrying neither a DOI nor an arXiv id: a resolvable external
-    identifier is what makes a publication item uncontroversially in scope, and it is the
-    key coverage is measured on, so an item without one could be a duplicate nothing can
-    detect.
+    Returns None for a paper carrying neither a DOI nor an arXiv id. A resolvable external
+    identifier is what puts a publication item uncontroversially in scope, and it is the key
+    coverage is measured on, so an item without one could be a duplicate nothing detects.
 
-    One dict, rendered by both creators -- the QuickStatements batch below and
-    `wikidata_apply.py --papers` -- so the file you read to check the batch cannot describe
-    different items from the ones the API path creates.
+    Both creators render this dict -- the QuickStatements batch below and `wikidata_apply.py
+    --papers` -- so the file read to check the batch cannot describe different items from
+    the ones the API path creates.
 
-    Co-authors go in as `author name string` (P2093) with a series-ordinal qualifier, not as
-    `author` (P50): pointing P50 at a guessed person item welds someone else's item to your
-    paper. Strings are what the Crossref importers deposit, and a later disambiguator
-    upgrades them safely.
+    Co-authors go in as `author name string` (P2093) with a series-ordinal qualifier rather
+    than `author` (P50), which would weld a guessed person item to the paper. A later
+    disambiguator upgrades the strings safely.
     """
     if not (p.get("doi") or p.get("arxiv")):
         return None
@@ -440,24 +436,18 @@ HF_CLAIM_DONE = {"claimed_verified", "admin_assigned"}
 
 
 def hf_state(papers, me: str, variants, requested=()) -> dict[str, list]:
-    """Live per-paper Hugging Face state, by what you can actually do about it.
-
-    Five buckets, because "not claimed" hid three situations and only one is a click:
+    """Live per-paper Hugging Face state, keyed by what can be done about it.
 
         missing    no page at all -- visit it while logged in
-        unclaimed  page exists, your name is in the author list, no user linked
-        pending    you are linked but not yet verified -- wait, do not redo
-        blocked    no author string resembles your name, so there is no claim control to
-                   press: the upstream metadata is wrong and that is the real task
+        unclaimed  page exists, the author list carries your name, no user linked
+        pending    you are linked, not yet verified -- wait, do not redo
+        blocked    no author string resembles your name, so no claim control exists and
+                   the upstream metadata is the task
         claimed    done
 
-    `requested` (data/overrides.yaml -> hf_claim_requested) is the one thing here that
-    cannot be read from outside: HF exposes the `user` link only after moderation, so a
-    request sent an hour ago looks over the API like one never made. Those pages move to
-    `pending`.
-
-    Live rather than read from papers.yaml, because this list is worked by hand over days
-    and a stale copy sends you back to pages you already did.
+    `requested` (data/overrides.yaml -> hf_claim_requested) moves a page to `pending`. HF
+    exposes the `user` link only after moderation, so a request sent an hour ago reads over
+    the API exactly like one never made.
     """
     me = me.lower()
     out = {k: [] for k in ("missing", "unclaimed", "pending", "blocked", "claimed")}
@@ -765,27 +755,19 @@ def _write_followup(L: list[str]) -> str:
 
 
 def orcid_strays(orc: dict, papers) -> list[tuple]:
-    """Works on the ORCID record that are not in your corpus.
+    """Works on the ORCID record that are not in the corpus.
 
-    Returns `(strays, duplicate_groups, matched_slugs, misfiled, merged_versions)`.
-    Matching is identifier first, then exact title, then content-word set (`title_tokens`),
-    which is the pass that places a paper of the author's own that was retitled.
-
+    Returns `(strays, duplicate_groups, matched_slugs, misfiled, merged_versions)`. A work
+    matches a corpus paper by identifier, then exact title, then content-word set
+    (`title_tokens`), the pass that places a paper of the author's own that was retitled.
     Each stray is tagged `confirmed` (the collector rejected it on author name too),
     `declined` (`data/declines.yaml` records its absence as a decision), or `unknown`.
 
-    The three duplicate classes are separate because only two are problems:
-
-        duplicate_groups  one corpus paper in two ORCID groups -- two profile entries,
-                          double-counted downstream
-        merged_versions   two works in one group -- one entry, already unified
+        duplicate_groups  one corpus paper in two ORCID groups, double-counted downstream
+        merged_versions   two works in one group, already unified
         misfiled          a work whose identifier belongs to a different paper, so it sits
-                          inside that paper's group and its own title is never compared.
-                          Detected on exact title disagreement only; looser disagreement is
-                          ordinary preprint/proceedings drift.
-
-    `matched_slugs` is the other direction: which corpus papers the record lacks, which a
-    works count cannot answer, since missing and listed-twice both move it.
+                          in that paper's group and its own title is never compared
+        matched_slugs     the other direction, which corpus papers the record lacks
     """
     ARXIV_DOI = re.compile(r"10\.48550/arxiv\.(.+)$", re.I)
     by_doi = {p["doi"].lower(): p for p in papers if p.get("doi")}

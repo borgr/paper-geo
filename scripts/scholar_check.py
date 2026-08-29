@@ -365,21 +365,16 @@ def attributed_gaps(attributed: list[dict], papers: list[dict], corpus: dict[str
                     gated: dict[str, str]) -> tuple[list[dict], list[dict]]:
     """Papers an index attributes to you that the corpus has never received.
 
-    Returns `(gaps, unverifiable)`: the rows worth acting on, and the rows S2 holds with no
-    external identifier, which are counted on stderr and written to
+    Returns `(gaps, unverifiable)` -- the rows worth acting on, and the rows S2 holds with
+    no external identifier, which are counted on stderr and written to
     `build/scholar_diff.json` but not listed.
 
-    The same question as the Scholar leg's `not_in_corpus`, asked of an endpoint that answers
-    unattended -- Google serves a datacenter IP a challenge page. A floor, not a substitute:
-    on this corpus the Scholar leg finds three absent papers and this leg finds none of them,
-    because S2's author record does not hold them. What it does catch is a *new* paper that
-    reached an index and not the bibliography.
+    A floor rather than a substitute for the Scholar leg's `not_in_corpus`. On this corpus
+    Scholar finds three absent papers and this leg finds none of them, because S2's author
+    record does not hold them. What it catches is a new paper that reached an index and not
+    the bibliography.
 
-    An identifier is required, since a row without one cannot be added to a bibliography from
-    this list anyway; in practice those are S2's citation-derived stubs. Patents and
-    proceedings volumes are dropped for the reason the Scholar leg drops them: "add it to the
-    bibliography" is wrong for a patent and harmful for a volume, which would enter as a
-    paper whose every claim is somebody else's.
+    Rows carrying no identifier, patents, and proceedings volumes are all dropped.
     """
     ids = {v.lower() for p in papers for v in
            (p.get("arxiv"), (p.get("doi") or "").removeprefix("doi:")) if v}

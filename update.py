@@ -369,20 +369,15 @@ def next_steps(lines: list[str]) -> list[str]:
 def stamp_payloads(off: dict[str, str], later: dict[str, dict]) -> list[str]:
     """Put the decision at the top of the payload file a hidden section pointed at.
 
-    `apply_declines` takes a section out of `WORKLIST.md`, but the `tasks/` file that section
-    handed you was written by an earlier step that knows nothing about the decision -- so it
-    stays in the repo telling a reader to fill in a form the author ruled out.
-    `tasks/openalex_merge.md` is the live case.
+    `apply_declines` removes the section from `WORKLIST.md`, and the `tasks/` file it handed
+    the reader stays in the repo -- `tasks/openalex_merge.md` is the live case. The paths are
+    re-derived every run from the hidden text itself, where every section with a payload
+    names its own file, so a section declined in future needs no wiring.
 
-    The paths come out of the hidden text itself -- every section with a payload names its file
-    in its own body -- so a section declined in future needs no wiring. Re-derived every run,
-    and the marker makes a second run replace the banner rather than stack a copy on it, so
-    deleting the line in `declines.yaml` removes it again.
-
-    Not a deletion: the routes and identifiers are the work, and `deferred:` means the decision
-    will be revisited. Only `sections:` and `deferred:` paths reach here -- a section that
-    vanished because every *item* in it was declined is not stamped, since `common.declined`
-    already filters those row by row.
+    The banner carries a marker, so a second run replaces it rather than stacking a copy and
+    clearing `declines.yaml` removes it again. Nothing is deleted, since the routes and
+    identifiers are the work. Only `sections:` and `deferred:` paths arrive here -- a section
+    that emptied item by item is already filtered by `common.declined`.
     """
     done = []
     for path, why in [*((p, ("off", w)) for p, w in off.items()),
@@ -414,26 +409,18 @@ def stamp_payloads(off: dict[str, str], later: dict[str, dict]) -> list[str]:
 
 
 def apply_declines(lines: list[str]) -> list[str]:
-    """Drop what data/declines.yaml says has been decided against.
-
-    The worklist is generated from live state, so it cannot tell "not done yet" from "looked at
-    and declined", and a skipped decision reappears every run as though it were open.
-
-    A post-filter over the rendered markdown rather than a check in each of the fifteen
-    emitters: one place to read, and a decline matches the text the reader saw.
+    """Drop from the rendered worklist what data/declines.yaml has decided against.
 
       sections: ["OpenAlex"]        # any heading containing this, and its body
       items:    ["2306.01708"]      # any list item containing this
       deferred: [{match: "Repo labels", until: "the papers are settled"}]
 
-    `items` matches any bullet, not only `- [ ]` ones, so the sections that list papers rather
-    than tasks can be declined too. `deferred` is a third state -- real work, not before
-    something else -- and that section moves to the bottom intact, under the condition that
-    releases it, still generated from live state so it stays accurate while it waits.
+    `items` matches any bullet, not only `- [ ]` ones, so a section listing papers rather
+    than tasks can be declined too. A `deferred` section is real work waiting on something
+    else, and moves to the bottom intact under the condition that releases it, still
+    generated from live state.
 
-    Two things are reported rather than done silently: what was hidden, because a decision that
-    leaves no trace is indistinguishable from a bug that ate a task; and patterns that matched
-    nothing, which means either a typo or work that got done.
+    Reports what it hid, and which patterns matched nothing.
     """
     d = read_yaml(os.path.join(DATA, "declines.yaml")) or {}
     secs = [s for s in (d.get("sections") or []) if s]

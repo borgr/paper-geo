@@ -153,20 +153,16 @@ def orcid_files(cfg, papers) -> tuple[str, str, int]:
 def wikidata_qs(cfg, papers) -> str:
     """QuickStatements v1 commands for the author item.
 
-    Deliberately minimal: identity plus external identifiers. No claims about importance, no
-    unsourced biography -- the item exists to be a stable anchor other statements can point
-    at, which is what Wikidata's structural-need criterion covers.
+    Identity and external identifiers only. No claims about importance and no unsourced
+    biography, so the item stays the stable anchor other statements point at.
 
-    Targets the existing item when `ids.wikidata` names one, and only falls back to `CREATE`
-    when it does not. An unconditional `CREATE` would make a *second* person on Wikidata once
-    the item exists, which is the normal state; duplicates need a merge request rather than an
-    edit, and QuickStatements gives no warning because from its side a second create is
-    valid. Addressed to the QID the same statements are a safe top-up -- QuickStatements
-    skips a statement already present.
+    Targets the item `ids.wikidata` names, and falls back to `CREATE` only when it names
+    none. Addressed to a QID the same statements are a safe top-up, since QuickStatements
+    skips a statement already present, while an unconditional `CREATE` adds a second person
+    and duplicates need a merge request rather than an edit.
 
     NOTE: QuickStatements requires an *autoconfirmed* Wikidata account (4 days old, 50
-    edits), so this file is unusable from a fresh account and the error does not explain why.
-    `wikidata_manual` below is the route that works on day one.
+    edits), and the error it gives does not say so. `wikidata_manual` below works on day one.
     """
     ident, ids = cfg["identity"], cfg["ids"]
     qid = ids.get("wikidata")

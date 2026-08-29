@@ -251,19 +251,14 @@ def ingest(repos: list[dict]) -> list[str]:
 def promote(repos: list[dict], fresh: list[str]) -> int:
     """Copy a just-arrived llm_proposal into the fields the sweep actually applies.
 
-    Only the repos named in `fresh` -- the ones whose proposal changed in this run. Promoting
-    every row on every ingest silently undid hand edits: deleting a wrong topic from
-    repos.yaml left `llm_proposal` untouched, so the next unrelated ingest copied it back.
-    Editing the file is the cheapest way to correct a label and has to survive with no
-    bookkeeping; `reviewed: true` freezes a row against future proposals, which is a different
-    thing.
+    Only the repos named in `fresh`, whose proposal changed in this run, so deleting a wrong
+    topic from repos.yaml by hand is not copied back by the next unrelated ingest.
+    `reviewed: true` is the separate, permanent freeze against future proposals.
 
     Never overwrites a reviewed repo, and never blanks an existing value with an empty
-    proposal, so a bad or partial answer degrades to "no change".
-
-    `confidence: low` is not promoted -- it is the model's one channel for saying "the README
-    is thin, I am guessing". The proposal still lands in `llm_proposal`, so the row keeps
-    showing up as needing a label instead of quietly acquiring a guessed one.
+    proposal, so a bad or partial answer degrades to "no change". `confidence: low` is not
+    promoted at all -- the proposal still lands in `llm_proposal`, so the row keeps showing
+    up as needing a label instead of quietly acquiring a guess.
     """
     want, n = set(fresh), 0
     for r in repos:
