@@ -716,20 +716,18 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
          f"**{sc.get('matched')}** of the corpus's **{sc.get('corpus')}**. Scholar is",
          "the one list of your papers that is built by a different process, so it is the",
          "only check that can see a paper this pipeline never received.", "",
-         # Was `build/scholar_diff.json` in backticks, which is a filename you cannot
-         # open: `build/` is gitignored, so it is absent on GitHub and absent after a
-         # clone, and it is where every "full detail" pointer on this page led. Naming
-         # the command that makes it is the difference between a dead end and a step.
-         "Every bucket in full, including what is truncated below:",
-         "[`build/scholar_diff.json`](build/scholar_diff.json) — local only, because",
-         "`build/` is not committed. `python update.py --step audit` writes it, and after",
-         "a fresh clone that is the one command between you and the file.", ""]
+         # Backticks, never a markdown link. `build/` is gitignored, so a link there is
+         # dead for every reader of this page on GitHub and after a clone. What makes it
+         # openable is the command that writes it, which is why that is named instead.
+         "Every bucket in full, including what is truncated below, is in",
+         "`build/scholar_diff.json` on the machine that last ran the audit. `build/` is",
+         "gitignored, so `python update.py --step audit` is the one command between a",
+         "fresh clone and the file.", ""]
     if gate:
         L += [f"### {pl(len(gate))} the authorship gate excluded  — a bug, or a "
               f"wrong Scholar row", "",
-              "Scholar says these are yours and"
-              " [`build/not_mine.json`](build/not_mine.json) — written by the same run,",
-              "local only — says they are not.",
+              "Scholar says these are yours and `build/not_mine.json`, written by the",
+              "same run and gitignored like the rest of `build/`, says they are not.",
               "One of the two is wrong. If the paper is yours, add its title under",
               "`also_mine` in [`data/overrides.yaml`](data/overrides.yaml); if Scholar has",
               "merged a namesake's paper into your profile, delete it there, because a",
@@ -755,8 +753,7 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
         L += [f"- [ ] {cites(r.get('citations'))} — {r.get('year') or '????'} — "
               f"{clipped(r.get('title') or '', 60)}" for r in miss[:12]]
         if len(miss) > 12:
-            L += [f"- … and {len(miss) - 12} more in "
-                  f"[`build/scholar_diff.json`](build/scholar_diff.json)"]
+            L += [f"- … and {len(miss) - 12} more in `build/scholar_diff.json`"]
         L += [""]
     if gone:
         cit = sum(p.get("citations") or 0 for p in gone)

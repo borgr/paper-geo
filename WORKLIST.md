@@ -43,10 +43,10 @@ Scholar lists **116** works and matched **106** of the corpus's **114**. Scholar
 the one list of your papers that is built by a different process, so it is the
 only check that can see a paper this pipeline never received.
 
-Every bucket in full, including what is truncated below:
-[`build/scholar_diff.json`](build/scholar_diff.json) — local only, because
-`build/` is not committed. `python update.py --step audit` writes it, and after
-a fresh clone that is the one command between you and the file.
+Every bucket in full, including what is truncated below, is in
+`build/scholar_diff.json` on the machine that last ran the audit. `build/` is
+gitignored, so `python update.py --step audit` is the one command between a
+fresh clone and the file.
 
 ### 1 paper whose title does not appear on your Scholar profile
 

@@ -301,6 +301,18 @@ class TestGeneratedWorklistLinks(unittest.TestCase):
                 bad.append(target)
         self.assertEqual(bad, [], f"WORKLIST.md links to missing files: {bad}")
 
+    def test_nothing_links_into_the_gitignored_build_directory(self):
+        """`test_links` only catches this where the file happens to be absent.
+
+        It is present on the machine that ran `update.py` and gone everywhere else, so a
+        link there passes locally and fails in CI. The shape is what is wrong, so checking
+        the shape fails in both places. Backticks and the command that writes the file.
+        """
+        path = os.path.join(ROOT, "WORKLIST.md")
+        if not os.path.exists(path):
+            self.skipTest("WORKLIST.md not generated yet")
+        self.assertEqual([], re.findall(r"\]\((build/[^)]*)\)", source(path)))
+
     def test_the_review_page_link_is_the_path_the_code_writes(self):
         """The one link in the worklist that no existence check can reach.
 
