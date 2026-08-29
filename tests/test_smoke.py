@@ -5318,6 +5318,51 @@ class TestPeopleItemsRestOnPublicRecordsNotOnNames(unittest.TestCase):
                       got[0]["references"][0]["snaks"]["P854"][0]["datavalue"]["value"])
 
 
+class TestAQuietItemIsNotAnItemWithNoStatements(unittest.TestCase):
+    """`wikidata_apply` replaces a wrong identifier by removing it and creating the right
+    one, two calls rather than an in-place edit. The removal reads which statements the item
+    carries, and `[]` means it carries none of them -- so a read that did not answer leaves
+    the wrong value in place beside the new one, and the audit then reports the pair as a
+    duplicate somebody has to unpick by hand.
+    """
+
+    def _wa(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import wikidata_apply
+        return wikidata_apply
+
+    def test_the_statements_to_remove_are_not_read_as_none(self):
+        wa = self._wa()
+        for st in (0, 429, 500):
+            with mock.patch.object(wa, "get_status", lambda _u, **kw: (st, b"")):
+                with self.assertRaises(RuntimeError) as e:
+                    wa.claim_guids("Q117220720", "P496")
+            self.assertIn("could not read", str(e.exception),
+                          "status %s read as no statement" % st)
+        body = json.dumps({"entities": {"Q1": {"claims": {"P496": [
+            {"id": "Q1$abc", "mainsnak": {"datavalue": {"value": "0000-0001-2345-6789"}}}]}}}})
+        with mock.patch.object(wa, "get_status", lambda _u, **kw: (200, body.encode())):
+            self.assertEqual([("Q1$abc", "0000-0001-2345-6789")],
+                             wa.claim_guids("Q1", "P496"))
+        # An item that really carries none of them still answers with none of them.
+        empty = json.dumps({"entities": {"Q1": {"claims": {}}}})
+        with mock.patch.object(wa, "get_status", lambda _u, **kw: (200, empty.encode())):
+            self.assertEqual([], wa.claim_guids("Q1", "P496"))
+
+    def test_an_unread_account_is_not_a_four_day_old_one(self):
+        """Both halves of autoconfirmed fail the same way, which is why this prints the
+        numbers rather than a verdict -- and every one of them would be blank."""
+        wa = self._wa()
+        for st in (0, 429, 500):
+            with mock.patch.object(wa, "get_status", lambda _u, **kw: (st, b"")):
+                out = io.StringIO()
+                with contextlib.redirect_stdout(out):
+                    code = wa.check_account("Ktilana")
+            self.assertEqual(1, code, "status %s reported an account" % st)
+            self.assertIn("did not answer", out.getvalue())
+            self.assertNotIn("need 50", out.getvalue())
+
+
 class TestAQuietWikidataCreatesNobody(unittest.TestCase):
     """Nothing this repo does is harder to undo than creating a person twice.
 

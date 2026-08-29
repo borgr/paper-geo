@@ -53,7 +53,7 @@ import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from common import (DATA, ROOT, UA, affil_index, get_json,  # noqa: E402
+from common import (DATA, ROOT, UA, affil_index, get_status,  # noqa: E402
                     load_config, norm_name, read_yaml, write_yaml)
 
 API = "https://www.wikidata.org/w/api.php"
@@ -153,9 +153,19 @@ def check_account(user: str | None) -> int:
         print("No account known. Set WIKIDATA_BOT_USER, or pass the account name:\n"
               "  python scripts/wikidata_apply.py --check-account --user Ktilana")
         return 1
-    d = get_json(f"{API}?action=query&list=users&ususers="
-                 f"{urllib.parse.quote(name)}&usprop=editcount|registration|groups"
-                 f"&format=json&formatversion=2") or {}
+    st, raw = get_status(f"{API}?action=query&list=users&ususers="
+                        f"{urllib.parse.quote(name)}&usprop=editcount|registration|groups"
+                        f"&format=json&formatversion=2", accept="application/json")
+    try:
+        d = json.loads(raw) if st == 200 and raw else None
+    except ValueError:
+        d = None
+    if d is None:
+        # The API answers 200 with `missing` for an account that does not exist, so any
+        # other status is a refusal -- and every line below would read as a brand-new
+        # account four days short of autoconfirmed.
+        print(f"wikidata did not answer (HTTP {st}), so nothing is known about {name}")
+        return 1
     u = ((d.get("query") or {}).get("users") or [{}])[0]
     if "missing" in u:
         print(f"No such account: {name}")
@@ -314,8 +324,21 @@ def qualifier_steps(gaps: dict, cfg: dict) -> list[dict]:
 
 
 def claim_guids(qid: str, pid: str) -> list[tuple[str, str]]:
-    """(guid, value) for every statement of one property, so a claim can be removed."""
-    d = get_json(f"https://www.wikidata.org/wiki/Special:EntityData/{qid}.json") or {}
+    """(guid, value) for every statement of one property, so a claim can be removed.
+
+    Raises when the item did not answer. `[]` means the item carries no statement of this
+    property, which is what a `REPLACE` step reads before creating the replacement -- so a
+    refusal read as `[]` leaves the wrong value in place beside the new one.
+    """
+    st, raw = get_status(f"https://www.wikidata.org/wiki/Special:EntityData/{qid}.json",
+                         accept="application/json")
+    try:
+        d = json.loads(raw) if st == 200 and raw else None
+    except ValueError:
+        d = None
+    if d is None:
+        raise RuntimeError(f"could not read {qid} (HTTP {st}), so the statements it "
+                           f"carries for {pid} are unknown")
     ent = ((d.get("entities") or {}).get(qid)) or {}
     out = []
     for c in ((ent.get("claims") or {}).get(pid) or []):
@@ -568,7 +591,10 @@ def main() -> int:
     gaps = wikidata_gaps(qid, cfg)
     if not gaps:
         sys.exit(f"could not read {qid}")
-    steps = plan(gaps, cfg)
+    try:
+        steps = plan(gaps, cfg)
+    except RuntimeError as e:
+        sys.exit(str(e))
     if not steps:
         print(f"{qid} already matches config.yaml -- nothing to do.")
         return 0
