@@ -1544,33 +1544,20 @@ def orcid_findings(cfg: dict, orc: dict, papers: list[dict]) -> dict:
                 edu_open=edu_open, edu_theirs=edu_theirs)
 
 
-def main() -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--no-hf", action="store_true",
-                    help="skip the per-paper Hugging Face checks (the slow part)")
-    ap.add_argument("--no-names", action="store_true",
-                    help="skip the arXiv author-name check (needs ~3s per 50 papers)")
-    args = ap.parse_args()
-    cfg = load_config()
+def audit_page(cfg: dict, r: dict, d: dict) -> list[str]:
+    """The audit page: one table row per surface, then one section per surface with a fix."""
     ident, ids = cfg["identity"], cfg["ids"]
-    r = read_surfaces(cfg, args)
-    if r is None:
-        return 1
-    d = orcid_findings(cfg, r["orc"], r["papers"])
     papers, ax, orc = r["papers"], r["ax"], r["orc"]
-    reg, wd, wd_path = r["reg"], r["wd"], r["wd_path"]
-    wd_gaps, wd_cov, wd_qs = r["wd_gaps"], r["wd_cov"], r["wd_qs"]
-    hf, hf_path, name_path = r["hf"], r["hf_path"], r["name_path"]
+    reg, wd, wd_gaps = r["reg"], r["wd"], r["wd_gaps"]
+    wd_cov, wd_qs, hf = r["wd_cov"], r["wd_qs"], r["hf"]
     n_typo, n_absent, n_read = r["n_typo"], r["n_absent"], r["n_read"]
-    ax_path, n_gap, stray = r["ax_path"], r["n_gap"], r["stray"]
+    n_gap, stray = r["n_gap"], r["stray"]
     canon, url_vals, has_canon = d["canon"], d["url_vals"], d["has_canon"]
     missing_variants, other_pages, want_kw = d["missing_variants"], d["other_pages"], d["want_kw"]
-    o_stray, o_dups, o_have = d["o_stray"], d["o_dups"], d["o_have"]
-    o_misfiled, o_vers, o_conf = d["o_misfiled"], d["o_vers"], d["o_conf"]
-    o_unk, o_missing, auto_src = d["o_unk"], d["o_missing"], d["auto_src"]
-    missing_empl, missing_edu, edu_open = d["missing_empl"], d["missing_edu"], d["edu_open"]
-    edu_theirs = d["edu_theirs"]
-
+    o_dups, o_misfiled, o_vers = d["o_dups"], d["o_misfiled"], d["o_vers"]
+    o_conf, o_unk, o_missing = d["o_conf"], d["o_unk"], d["o_missing"]
+    auto_src, missing_empl, missing_edu = d["auto_src"], d["missing_empl"], d["missing_edu"]
+    edu_open, edu_theirs = d["edu_open"], d["edu_theirs"]
     def status(ok: bool) -> str:
         return "ok" if ok else "**fix**"
 
@@ -1970,18 +1957,30 @@ def main() -> None:
               "creates one wrong author in all of them, holding citations that cannot be",
               "merged back. Details and the fix order:",
               "[arxiv_name_fixes.md](arxiv_name_fixes.md).", ""]
+    return L
 
-    path = os.path.join(TASKS, "identity_audit.md")
-    write_task(path, L)
 
-    # Counts for WORKLIST.md, in build/ because they are observed state: entirely
-    # re-derivable from the live APIs, so committing them would be storing someone
-    # else's data and letting it go stale. Absent file = the section is skipped.
-    os.makedirs(BUILD, exist_ok=True)
-    state_path = os.path.join(BUILD, "identity_state.json")
+def audit_state(cfg: dict, args, r: dict, d: dict, path: str) -> dict:
+    """The counts WORKLIST.md reads, carrying `path`'s numbers for whatever this run skipped.
+
+    They live in `build/` because they are observed state, re-derivable from the live APIs.
+    Committing them would store someone else's data and let it go stale, and an absent file
+    means the worklist skips the section rather than reporting a zero.
+    """
+    ids = cfg["ids"]
+    papers, ax, orc = r["papers"], r["ax"], r["orc"]
+    reg, wd, wd_gaps = r["reg"], r["wd"], r["wd_gaps"]
+    wd_cov, hf, n_typo = r["wd_cov"], r["hf"], r["n_typo"]
+    n_absent, stray = r["n_absent"], r["stray"]
+    has_canon, missing_variants = d["has_canon"], d["missing_variants"]
+    other_pages, want_kw = d["other_pages"], d["want_kw"]
+    o_dups, o_misfiled = d["o_dups"], d["o_misfiled"]
+    o_conf, o_unk, o_missing = d["o_conf"], d["o_unk"], d["o_missing"]
+    auto_src, missing_empl, missing_edu = d["auto_src"], d["missing_empl"], d["missing_edu"]
+    edu_open = d["edu_open"]
     prev = {}
     try:
-        with open(state_path) as f:
+        with open(path) as f:
             prev = json.load(f)
     except (OSError, ValueError):
         pass
@@ -2073,11 +2072,37 @@ def main() -> None:
     if quiet:
         print("wikidata did not answer (%s), so its half of this report is carried from "
               "the last run" % quiet, file=sys.stderr)
-    write_json(state_path, state, indent=1)
+    return state
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--no-hf", action="store_true",
+                    help="skip the per-paper Hugging Face checks (the slow part)")
+    ap.add_argument("--no-names", action="store_true",
+                    help="skip the arXiv author-name check (needs ~3s per 50 papers)")
+    args = ap.parse_args()
+    cfg = load_config()
+    r = read_surfaces(cfg, args)
+    if r is None:
+        return 1
+    d = orcid_findings(cfg, r["orc"], r["papers"])
+    papers, wd_path, hf_path = r["papers"], r["wd_path"], r["hf_path"]
+    name_path, ax_path = r["name_path"], r["ax_path"]
+    o_stray, o_dups, o_missing = d["o_stray"], d["o_dups"], d["o_missing"]
+
+    L = audit_page(cfg, r, d)
+    path = os.path.join(TASKS, "identity_audit.md")
+    write_task(path, L)
+
+    os.makedirs(BUILD, exist_ok=True)
+    state_path = os.path.join(BUILD, "identity_state.json")
+    write_json(state_path, audit_state(cfg, args, r, d, state_path), indent=1)
 
     rm_path = os.path.join(TASKS, "orcid_remove.md")
     write_task(rm_path, orcid_remove_file(o_stray, o_dups, papers, cfg))
-    miss_paths = orcid_missing_files(o_missing, ident["orcid"]) if o_missing else []
+    miss_paths = (orcid_missing_files(o_missing, cfg["identity"]["orcid"])
+                  if o_missing else [])
 
     wrote = [path, rm_path] + miss_paths \
         + [q for q in (ax_path, hf_path, name_path, wd_path) if q]
