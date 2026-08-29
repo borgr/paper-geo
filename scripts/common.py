@@ -299,14 +299,17 @@ def _out_of_budget(e: urllib.error.HTTPError) -> bool:
     return True
 
 
-def get(url: str, timeout: int = 40, retries: int = 6, accept: str | None = None) -> bytes:
-    """GET with exponential backoff on 429/503. Returns b'' on final failure.
+def get_status(url: str, timeout: int = 40, retries: int = 6,
+               accept: str | None = None) -> tuple[int, bytes]:
+    """GET with exponential backoff on 429/503, as (HTTP status, body).
 
-    Sends the Semantic Scholar key to Semantic Scholar when `S2_API_KEY` is in the
-    environment. Unauthenticated S2 access is a rate-limit pool shared with every
-    other anonymous caller, and the visible cost is not a slow run but a wrong
-    statement: the search endpoint answers 429 to a whole audit and the report then
-    has to say "no index has this paper" about a paper an index has. Environment
+    The status is 0 when no reply arrived at all -- a timeout, a refused connection, or
+    a host already over its metered budget -- so a caller can tell the server saying
+    "this record is gone" from the fetch not happening. The body is b'' on any failure.
+
+    `S2_API_KEY` in the environment is sent to Semantic Scholar. Without it the caller
+    shares one rate-limit pool with every anonymous client, and a 429 there makes an
+    audit report "no index has this paper" about a paper an index has. Environment
     only, never `config.yaml` -- that file is committed.
     """
     headers = dict(UA)
@@ -321,39 +324,44 @@ def get(url: str, timeout: int = 40, retries: int = 6, accept: str | None = None
         # Noted, not silent: `health_report` reads absence of a line as "every source
         # answered recently", and skipping 111 fetches is the opposite of that.
         note_fetch(url, False, "429 budget")
-        return b""
+        return 0, b""
     delay = 4.0
     for attempt in range(retries):
         try:
             _pace(url)
             req = urllib.request.Request(url, headers=headers)
-            body = urllib.request.urlopen(req, timeout=timeout).read()
+            r = urllib.request.urlopen(req, timeout=timeout)
+            body = r.read()
             note_fetch(url, True)
-            return body
+            return getattr(r, "status", 200) or 200, body
         except urllib.error.HTTPError as e:
             if e.code == 429 and _out_of_budget(e):
                 note_fetch(url, False, "429 budget")
-                return b""
+                return 0, b""
             if e.code in (429, 503) and attempt < retries - 1:
                 time.sleep(delay)
                 delay *= 2
                 continue
             # A 404 or 410 on a URL naming one record is the server answering the question about
-            # that record -- the source is working when it says so, and counting it as a failure
-            # calls a host broken as soon as a run asks about papers it does not index. On a URL
-            # with no identifier in it the same code means the endpoint is gone, which is what the
+            # that record, so the ledger counts it as the host working. On a URL with no
+            # identifier in it the same code means the endpoint itself is gone, which is what the
             # ledger exists to notice. `source_key` draws that line: identifiers collapse to `*`.
             note_fetch(url, e.code in (404, 410) and "*" in source_key(url), str(e.code))
-            return b""
+            return e.code, b""
         except Exception as e:
             if attempt < retries - 1:
                 time.sleep(delay)
                 delay *= 2
                 continue
             note_fetch(url, False, type(e).__name__)
-            return b""
+            return 0, b""
     note_fetch(url, False)
-    return b""
+    return 0, b""
+
+
+def get(url: str, **kw) -> bytes:
+    """The body from `get_status`, b'' on any failure."""
+    return get_status(url, **kw)[1]
 
 
 def get_json(url: str, **kw) -> dict | list | None:

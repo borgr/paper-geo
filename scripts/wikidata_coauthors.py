@@ -61,8 +61,8 @@ import urllib.error
 import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, TASKS, get, get_json, norm_name,  # noqa: E402
-                    read_yaml, write_json)
+from common import (BUILD, DATA, TASKS, get, get_json, get_status,  # noqa: E402
+                    norm_name, read_yaml, write_json)
 from wikidata_apply import logged_in, snak  # noqa: E402
 
 WDQS = "https://query.wikidata.org/sparql"
@@ -284,9 +284,11 @@ def dblp_pages(look: dict, refresh: bool) -> dict[str, list[str]]:
         print("  dblp: %d author page(s), %d of them left for the next run"
               % (len(left), len(left) - DBLP_PER_RUN))
     for n, d in enumerate(left[:DBLP_PER_RUN], 1):
-        page = get("https://dblp.org/pid/%s.xml" % d)
-        if not page:
+        code, page = get_status("https://dblp.org/pid/%s.xml" % d)
+        if not page and code not in (404, 410):
             continue
+        # 404 and 410 are answers, so they are cached as "this page lists nothing". Retrying
+        # a disabled author page costs a paced fetch every run and never converges.
         titles[d] = sorted({title_key(x) for x in
                             re.findall(r"<title>(.*?)</title>",
                                        page.decode("utf-8", "replace"), re.S)} - {""})

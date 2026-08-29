@@ -4097,6 +4097,49 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
                         "research": ["Q7259"], "dblp": {"Q7259": [""]}})
         self.assertEqual(rows[0]["edits"], [])
 
+    def test_a_dblp_page_the_server_says_is_gone_is_not_asked_for_again(self):
+        """DBLP answers 410 for an author page it has disabled, and that is an answer.
+
+        Cached as "lists nothing", the page leaves the queue. Treated as a failed fetch it
+        stays in it, costing one paced request every run for a page that will never load.
+        """
+        wc = self._module()
+        with tempfile.TemporaryDirectory() as d:
+            wc.BUILD = d
+            asked = []
+
+            def fetch(url, **_kw):
+                asked.append(url)
+                return (410, b"") if "Gone" in url else (200, b"<title>A Paper</title>")
+
+            wc.get_status = fetch
+            wc.dblp_ids = lambda qids: {"Q1": "g/Gone", "Q2": "h/Here"}
+            look = {"by_name": {"Ada Lovelace": [{"qid": "Q1"}, {"qid": "Q2"}]}}
+            first = wc.dblp_pages(look, False)
+            self.assertEqual(len(asked), 2)
+            self.assertEqual(first, {"Q2": ["a paper"]}, "an empty page is no evidence")
+            with open(os.path.join(d, wc.DBLP_CACHE)) as f:
+                self.assertEqual(json.load(f)["titles"]["g/Gone"], [])
+            self.assertEqual(wc.dblp_pages(look, False), first)
+            self.assertEqual(len(asked), 2, "re-asked for a page the server said was gone")
+
+    def test_a_dblp_page_that_did_not_answer_is_asked_for_again(self):
+        wc = self._module()
+        with tempfile.TemporaryDirectory() as d:
+            wc.BUILD = d
+            asked = []
+
+            def fetch(url, **_kw):
+                asked.append(url)
+                return 0, b""
+
+            wc.get_status = fetch
+            wc.dblp_ids = lambda qids: {"Q1": "t/Timeout"}
+            look = {"by_name": {"Ada Lovelace": [{"qid": "Q1"}]}}
+            self.assertEqual(wc.dblp_pages(look, False), {})
+            self.assertEqual(wc.dblp_pages(look, False), {})
+            self.assertEqual(len(asked), 2, "gave up on a page that never answered")
+
     def test_an_orcid_match_survives_a_middle_initial_on_the_byline(self):
         wc = self._module()
         rows = self._fixture(
