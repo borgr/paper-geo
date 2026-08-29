@@ -1313,6 +1313,25 @@ class TestEveryBackendCanBeRepaired(unittest.TestCase):
         self.assertIn("caller = call_api if mode == \"api\" else call_openai", src)
 
 
+class TestNobodyReDerivesARootPathByHand(unittest.TestCase):
+    """`common.py` exports ROOT, DATA, BUILD and TASKS, and every script imports them.
+
+    `sweep_github.phase_apply` reached `build/` as `DATA/../build` instead, which is the
+    same directory by a route nothing else in the repo takes -- so a grep for what writes
+    under `build/` missed it, and moving either constant would have left it behind.
+    """
+
+    def test_no_script_walks_up_out_of_a_root_it_already_has(self):
+        offenders = []
+        for rel in sorted(glob.glob(os.path.join(ROOT, "scripts", "*.py"))) + \
+                [os.path.join(ROOT, "update.py")]:
+            for i, ln in enumerate(source(rel).splitlines(), 1):
+                if re.search(r'os\.path\.join\([A-Z_]+,\s*"\.\."', ln):
+                    offenders.append(f"{os.path.relpath(rel, ROOT)}:{i}")
+        self.assertEqual([], offenders,
+                         "these re-derive a path `common.py` already exports")
+
+
 class TestAGateThatRejectedNothingSaysNothing(unittest.TestCase):
     """`build/not_mine.json` was written only on runs that rejected something.
 

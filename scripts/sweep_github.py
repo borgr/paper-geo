@@ -405,9 +405,9 @@ def phase_apply(cfg, yes: bool) -> None:
             if "CITATION.cff" in ch:
                 body = r.get("_cff_body")
                 if body:
-                    path = os.path.join(BUILDCFF := os.path.join(DATA, "..", "build",
-                                                                 "citation_cff"), f"{r['paper_slug']}.cff")
-                    os.makedirs(BUILDCFF, exist_ok=True)
+                    path = os.path.join(BUILD, "citation_cff",
+                                        f"{r['paper_slug']}.cff")
+                    os.makedirs(os.path.dirname(path), exist_ok=True)
                     with open(path, "w") as f:
                         f.write(body)
                     # The Contents API refuses a PUT over an existing file without its
