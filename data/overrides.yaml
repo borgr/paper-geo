@@ -220,7 +220,13 @@ fields:
 #
 #   0000-0001-2345-6789: Q102070311   # the same person -- their ORCID is added to Q102070311
 #   0000-0002-3456-7890: new          # a different person -- a separate item is created
+#   0000-0003-4567-8901: no           # not this co-author's ORCID at all -- drop it
 #
 # Nothing else follows by hand either way. The next run resolves the ORCID to the item and
 # writes the `author` statements from it.
+#
+# `no` is for a namesake's identifier. These ORCIDs come from OpenAlex reading a paper whose
+# own metadata carries no author identifiers, so on a common name it can resolve to the
+# wrong person -- the worklist prints what each ORCID record states, and a record in an
+# unrelated field is one of those. Nothing is created and nothing is written for it.
 wikidata_people: {}

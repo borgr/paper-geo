@@ -5104,3 +5104,84 @@ class TestPeopleItemsRestOnPublicRecordsNotOnNames(unittest.TestCase):
                if c["mainsnak"]["property"] == "P108"]
         self.assertIn("openalex.org",
                       got[0]["references"][0]["snaks"]["P854"][0]["datavalue"]["value"])
+
+
+class TestACoauthorOrcidIsShownForWhatItSays(unittest.TestCase):
+    """Every one of those ORCIDs came from OpenAlex resolving a bare name.
+
+    Crossref carries no author identifiers for the ACL Anthology, arXiv, and MIT Press
+    DOIs in this corpus, so nothing confirms the match and on a common name it lands on a
+    namesake -- one of them is a pediatric emergency physician. No join settles it: the
+    person's own work list overlaps the candidate item's authored works for none of the 22,
+    and all 22 records list no employer. So the row prints what the ORCID record itself
+    states, where a paper in an unrelated field is visible without opening anything.
+    """
+
+    def _job(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import wikidata_people as wp
+        return wp
+
+    def test_the_line_names_the_field_the_record_is_in(self):
+        wp = self._job()
+        self.assertEqual(
+            'University of California, San Francisco · "Research Dissemination Strategies '
+            'in Pediatric Emergency…"',
+            wp.states({"employers": ["University of California, San Francisco"],
+                       "work_titles": ["Research Dissemination Strategies in Pediatric "
+                                       "Emergency Medicine"]}))
+
+    def test_a_record_with_nothing_on_it_says_so_rather_than_reading_as_blank(self):
+        wp = self._job()
+        self.assertEqual("4 work(s), no employer and no title", wp.states({"works": 4}))
+        self.assertEqual("nothing public beyond the name", wp.states({}))
+
+    def test_the_worklist_row_carries_it_instead_of_a_bare_link(self):
+        import update
+        out = "\n".join(update.wikidata_people(
+            {"held_people": [{"label": "Michelle Lin", "papers": 4,
+                              "orcid": "0000-0002-8376-107X", "namesakes": [{"qid": "Q7"}],
+                              "record_says": "UCSF · \"Pediatric Emergency Medicine\""}]}))
+        self.assertIn("states UCSF · \"Pediatric Emergency Medicine\"", out)
+        self.assertIn("`no`", out)
+
+    def test_no_drops_the_orcid_out_of_all_three_fates(self):
+        """`new` overrides the hold, a QID links to it, and `no` is neither -- so nothing is
+        created, nothing is written, and the name is never asked about again."""
+        wp = self._job()
+        ok = [{"orcid": "A", "namesakes": [{"qid": "Q1"}]},
+              {"orcid": "B", "namesakes": [{"qid": "Q2"}]},
+              {"orcid": "C", "namesakes": [{"qid": "Q3"}]},
+              {"orcid": "D", "namesakes": []}]
+        people, link, held = wp.sorted_out(ok, {"A": "no", "B": "new", "C": "Q3"})
+        self.assertEqual(["B", "D"], [p["orcid"] for p in people])
+        self.assertEqual([("C", "Q3")], [(p["orcid"], q) for p, q in link])
+        self.assertEqual([], held)
+
+    def test_a_typo_stops_the_run_rather_than_reading_as_no(self):
+        """`No`, `none`, `q125454034` all mean nothing here. Treated as `no` they would drop
+        a co-author silently, and the output cannot be told from a correct one."""
+        wp = self._job()
+        with self.assertRaises(ValueError) as e:
+            wp.sorted_out([{"orcid": "A", "namesakes": [{"qid": "Q1"}]}], {"A": "None"})
+        self.assertIn("is not a QID, `new` or `no`", str(e.exception))
+
+    def test_a_refusal_is_used_this_run_and_never_written_to_the_cache(self):
+        """OpenAlex is metered and answers 429 for the rest of the day once the budget is
+        spent. Read as an empty record that is 22 co-authors dropped, and cached it is 22
+        dropped for CACHE_DAYS."""
+        wp = self._job()
+        with tempfile.TemporaryDirectory() as d:
+            real_build, real_record = wp.BUILD, wp.record
+            try:
+                wp.BUILD = d
+                wp.record = lambda o: {"partial": o == "B", "label": o, "works": 0,
+                                       "openalex_works": 0}
+                got = wp.records(["A", "B"], refresh=True)
+                self.assertEqual({"A", "B"}, set(got))
+                with open(os.path.join(d, wp.CACHE_PEOPLE)) as f:
+                    kept = json.load(f)["records"]
+            finally:
+                wp.BUILD, wp.record = real_build, real_record
+        self.assertEqual(["A"], sorted(kept))
+        self.assertNotIn("partial", kept["A"])

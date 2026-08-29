@@ -29,6 +29,7 @@ import argparse
 import datetime
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -36,7 +37,7 @@ import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from common import (BUILD, DATA, TASKS, get, get_json, read_yaml, write_json,
+from common import (BUILD, DATA, TASKS, clipped, get, get_status, read_yaml, write_json,
                     write_yaml)
 from wikidata_coauthors import (CACHE, SCHOLARLY, fill, items_by_orcid,  # noqa: F401
                                qid_of, researchers, sparql, title_key)
@@ -57,7 +58,7 @@ LEDGER_NOTE = (
 CACHE_PEOPLE = "orcid_records.json"
 CACHE_DAYS = 30
 # Bump to re-ask when `record` starts reading a different field.
-SHAPE = 1
+SHAPE = 3
 # What a same-name item states about itself, beside its description -- occupation,
 # educated at, employer. Enough to tell a naturalist from an NLP researcher.
 FACTS = ("occupations", "education", "employers")
@@ -91,8 +92,14 @@ def record(orcid: str) -> dict:
     a locked-down record can still belong to somebody with hundreds of papers. OpenAlex
     answers for the same ORCID and is asked as well, so a private work list does not read
     as an empty one.
+
+    `partial` is set when either side did not answer. Everything here reads an absence as a
+    statement -- no works means this ORCID publishes nothing, so leave the person out -- and
+    OpenAlex refuses the whole day once its budget is spent, which would drop half the
+    co-authors from a run and cache that answer for a month.
     """
-    t = get("https://pub.orcid.org/v3.0/%s/record" % orcid, accept="application/json")
+    st, t = get_status("https://pub.orcid.org/v3.0/%s/record" % orcid,
+                       accept="application/json")
     if isinstance(t, bytes):
         t = t.decode("utf-8", "replace")
     d = json.loads(t or "{}")
@@ -107,8 +114,23 @@ def record(orcid: str) -> dict:
             # A closed employment is where they used to be, which does not describe them.
             if not e.get("end-date"):
                 now.append(((e.get("organization") or {}).get("name") or "").strip())
-    oa = get_json("https://api.openalex.org/authors/https://orcid.org/" + orcid) or {}
-    return {"label": val("credit-name") or " ".join(
+    # Newest first, and only a couple: the point is to show what field this record is in,
+    # which the author reads against the co-author they remember. A title also carries a
+    # year often enough to sort on, and an untitled group is dropped by the `if v`.
+    dated = []
+    for group in ((acts.get("works") or {}).get("group") or []):
+        for w in group.get("work-summary") or []:
+            v = ((w.get("title") or {}).get("title") or {}).get("value")
+            y = (((w.get("publication-date") or {}).get("year") or {}).get("value") or "")
+            if v:
+                dated.append((y, v))
+            break
+    oa_st, oa_raw = get_status(
+        "https://api.openalex.org/authors/https://orcid.org/" + orcid,
+        accept="application/json")
+    oa = (json.loads(oa_raw or b"{}") if oa_st == 200 else {}) or {}
+    return {"partial": st != 200 or oa_st != 200,
+            "label": val("credit-name") or " ".join(
                 x for x in (val("given-names"), val("family-name")) if x).strip(),
             "openalex_label": oa.get("display_name") or "",
             "employers": sorted({o for o in now if o}),
@@ -116,6 +138,7 @@ def record(orcid: str) -> dict:
                                           for i in oa.get("last_known_institutions") or []
                                           if i.get("display_name")}),
             "works": len(((acts.get("works") or {}).get("group") or [])),
+            "work_titles": [v for _y, v in sorted(dated, reverse=True)[:2]],
             "openalex_works": oa.get("works_count") or 0}
 
 
@@ -131,11 +154,17 @@ def records(orcids: list[str], refresh: bool) -> dict[str, dict]:
     if refresh or cache.get("shape") != SHAPE or cache.get("asked", "") < fresh:
         cache = {"shape": SHAPE, "asked": datetime.date.today().isoformat(), "records": {}}
     got = cache.setdefault("records", {})
+    out = dict(got)
     for orcid in orcids:
-        if orcid not in got:
-            got[orcid] = record(orcid)
+        if orcid not in out:
+            r = record(orcid)
+            out[orcid] = r
+            # Used this run, never written: a record built on a fetch that did not happen
+            # would answer for CACHE_DAYS as though the source had said nothing.
+            if not r["partial"]:
+                got[orcid] = {k: v for k, v in r.items() if k != "partial"}
     write_json(path, cache, indent=1, sort_keys=True)
-    return got
+    return out
 
 
 def employer_items(names: list[str]) -> dict[str, str]:
@@ -331,8 +360,33 @@ def summary(n: dict) -> str:
     return " · ".join(bits) or "states nothing beyond the name"
 
 
+def sorted_out(ok: list[dict], answered: dict[str, str]) -> tuple[list, list, list]:
+    """The three fates of a co-author with an ORCID: create, link, or still ask.
+
+    An answer given by hand overrides the hold it was asked about. `no` says the ORCID is a
+    namesake's, so that person is in none of the three and is never asked about again.
+
+    Raises on anything else written under `wikidata_people`, because a typo reads as `no` and
+    drops somebody silently, which is the one outcome the output cannot be told apart from.
+    """
+    bad = {o: v for o, v in answered.items()
+           if not (re.fullmatch(r"Q[1-9]\d*", str(v)) or v in ("new", "no"))}
+    if bad:
+        raise ValueError("data/overrides.yaml %s: %s is not a QID, `new` or `no`"
+                         % (DECIDED, ", ".join("%s: %s" % kv for kv in sorted(bad.items()))))
+    return ([p for p in ok if not p["namesakes"] or answered.get(p["orcid"]) == "new"],
+            [(p, answered[p["orcid"]]) for p in ok
+             if p["namesakes"] and (answered.get(p["orcid"]) or "").startswith("Q")],
+            [p for p in ok if p["namesakes"] and not answered.get(p["orcid"])])
+
+
 def decided() -> dict[str, str]:
-    """ORCID to the answer given by hand for a held person: a QID, or `new`."""
+    """ORCID to the answer given by hand for a held person.
+
+    A QID puts the ORCID on that item, `new` creates one, and `no` says the identifier
+    belongs to a namesake rather than to the co-author, which drops the person from every
+    list here — no item created, no statement written, and no question asked again.
+    """
     return ((read_yaml(os.path.join(DATA, "overrides.yaml")) or {}).get(DECIDED) or {})
 
 
@@ -358,6 +412,22 @@ def keeps(p: dict, same: list[dict]) -> list[dict]:
             if not s["orcid"] or s["description"] == p["description"]]
 
 
+def states(rec: dict) -> str:
+    """What the ORCID record itself says, on one line, beside the same-name candidates.
+
+    The ORCID on a co-author's name came from OpenAlex reading a paper whose own metadata
+    carries no author identifiers, so on a common name it can be a namesake's. A record
+    listing emergency-medicine papers under a name on an evaluation paper says so at a
+    glance, where the bare identifier says nothing either way.
+    """
+    bits = list(rec.get("employers") or [])[:2]
+    bits += ['"%s"' % clipped(t, 58) for t in (rec.get("work_titles") or [])[:2]]
+    if not bits:
+        bits = ["%d work(s), no employer and no title" % (rec.get("works") or 0)
+                if rec.get("works") else "nothing public beyond the name"]
+    return " · ".join(bits)
+
+
 def described(orcid: str, rec: dict, employers: dict[str, dict]) -> dict:
     """One person's item, or the reason the public records do not describe a person.
 
@@ -367,9 +437,14 @@ def described(orcid: str, rec: dict, employers: dict[str, dict]) -> dict:
     first, and OpenAlex stands in only where it names exactly one institution. Each carries
     whichever of the two said it.
     """
+    # A record built on a fetch that did not happen settles nothing, so the two outcomes
+    # that rest on a record being silent are deferred to a run where both sides answered.
+    # A person the record does describe stands either way, because ORCID answers for the
+    # name and the employer and OpenAlex only ever stands in where ORCID is silent.
+    out = "later" if rec.get("partial") else "skip"
     label = cased(rec)
     if not label:
-        return {"orcid": orcid, "skip": "neither ORCID nor OpenAlex gives a name"}
+        return {"orcid": orcid, out: "neither ORCID nor OpenAlex gives a name"}
     who = "https://orcid.org/" + orcid
     oa = "https://openalex.org/authors/https://orcid.org/" + orcid
     if rec.get("works"):
@@ -377,7 +452,7 @@ def described(orcid: str, rec: dict, employers: dict[str, dict]) -> dict:
     elif rec.get("openalex_works"):
         works = oa
     else:
-        return {"orcid": orcid, "skip": "no works on either record"}
+        return {"orcid": orcid, out: "no works on either record"}
     at = [dict(employers[e], ref=who) for e in rec["employers"] if e in employers]
     # OpenAlex lists every institution its own author disambiguation has seen, so more than
     # one means it is unsure and none of them can be stated -- the list for one co-author
@@ -391,6 +466,7 @@ def described(orcid: str, rec: dict, employers: dict[str, dict]) -> dict:
              (rec["employers"] or (oa_at if len(oa_at) == 1 else []) or [""])[0])
     return {"orcid": orcid, "label": label, "works": works,
             "description": "researcher at " + where if where else "researcher",
+            "record_says": states(rec),
             "employers": [(e["label"], e["qid"], e["ref"]) for e in at]}
 
 
@@ -471,7 +547,8 @@ def stale(p: dict, live: dict, day: str) -> dict:
 
 
 def write_page(people: list[dict], held: list[dict], skipped: list[dict],
-               decisions: list[dict], papers: dict[str, int], qs_path: str | None) -> str:
+               decisions: list[dict], papers: dict[str, int], qs_path: str | None,
+               later: list[dict] | None = None) -> str:
     L = ["# Wikidata items for the co-authors", "",
          fill("Generated by `python scripts/wikidata_people.py`. A co-author with an ORCID "
               "and no Wikidata item cannot be an `author` statement on the papers you "
@@ -515,6 +592,7 @@ def write_page(people: list[dict], held: list[dict], skipped: list[dict],
                      f"{papers.get(p['orcid'], 0)} papers with you) — "
                      f"{len(p['namesakes'])} item(s) carry the name, "
                      f"{len(near)} of them stating no ORCID")
+            L.append(f"  - that ORCID record states {p.get('record_says') or 'nothing'}")
             for n in p["namesakes"][:8]:
                 L.append(f"  - [{n['qid']}](https://www.wikidata.org/wiki/{n['qid']}) — "
                          f"{n['says']}")
@@ -540,6 +618,15 @@ def write_page(people: list[dict], held: list[dict], skipped: list[dict],
                    "be an identifier and nothing else."), ""]
         for p in sorted(skipped, key=lambda x: x["orcid"]):
             L.append(f"- [{p['orcid']}](https://orcid.org/{p['orcid']}) — {p['skip']}")
+        L.append("")
+    if later:
+        L += [f"## Not asked yet ({len(later)})", "",
+              fill("One of the two records did not answer this run, and these are the "
+                   "outcomes that rest on a record being silent. Nothing is concluded "
+                   "about them and nothing is cached, so the next run asks again."), ""]
+        for p in sorted(later, key=lambda x: x["orcid"]):
+            L.append(f"- [{p['orcid']}](https://orcid.org/{p['orcid']}) — would be "
+                     f"*{p['later']}*, on a record that answered")
         L.append("")
     page = os.path.join(TASKS, "wikidata_people.md")
     with open(page, "w") as f:
@@ -570,7 +657,7 @@ def main() -> int:
     employers = employer_items(sorted({e for o in todo for e in
                                        recs[o]["employers"] + (recs[o].get("openalex_employers") or [])}))
     made = [described(o, recs[o], employers) for o in todo]
-    ok = [p for p in made if "skip" not in p]
+    ok = [p for p in made if not ("skip" in p or "later" in p)]
     taken = namesakes(sorted({p["label"] for p in ok}))
     for p in ok:
         p["namesakes"] = keeps(p, taken.get(p["label"]) or [])
@@ -592,13 +679,13 @@ def main() -> int:
         if v and not answered.get(p["orcid"]):
             p["verdict"] = v
             answered[p["orcid"]] = v["qid"]
-    # An answer given by hand overrides the hold it was asked about.
-    people = [p for p in ok
-              if not p["namesakes"] or answered.get(p["orcid"]) == "new"]
-    link = [(p, answered[p["orcid"]]) for p in ok
-            if p["namesakes"] and (answered.get(p["orcid"]) or "").startswith("Q")]
-    held = [p for p in ok if p["namesakes"] and not answered.get(p["orcid"])]
+    try:
+        people, link, held = sorted_out(ok, answered)
+    except ValueError as e:
+        print(e, file=sys.stderr)
+        return 1
     skipped = [p for p in made if "skip" in p]
+    later = [p for p in made if "later" in p]
     for p in ok:
         p["papers"] = papers.get(p["orcid"], 0)
     day = datetime.date.today().isoformat()
@@ -610,11 +697,12 @@ def main() -> int:
     elif os.path.exists(qs):
         os.remove(qs)
     decisions = [p for p in ok if p.get("verdict")]
-    page = write_page(people, held, skipped, decisions, papers, qs if lines else None)
+    page = write_page(people, held, skipped, decisions, papers, qs if lines else None,
+                      later)
     write_json(
         os.path.join(BUILD, "wikidata_people.json"),
         {"asked": day, "create": len(people), "held": len(held),
-         "skipped": len(skipped), "decided": len(decisions),
+         "skipped": len(skipped), "later": len(later), "decided": len(decisions),
          "mentions": sum(papers[p["orcid"]] for p in people),
          "people": people, "held_people": held,
          "decisions": [{"label": p["label"], "orcid": p["orcid"], "papers": p["papers"],
@@ -622,8 +710,9 @@ def main() -> int:
         indent=1, sort_keys=True)
     if not args.quiet:
         print("%d co-author ORCIDs with no item: %d to create, %d already have a "
-              "same-name item, %d left out"
-              % (len(todo), len(people), len(held), len(skipped)))
+              "same-name item, %d left out%s"
+              % (len(todo), len(people), len(held), len(skipped),
+                 ", %d not asked (a source did not answer)" % len(later) if later else ""))
         for p in sorted(ok, key=lambda x: x["label"]):
             if p.get("verdict"):
                 print("  %s is %s — %s"

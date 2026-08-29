@@ -929,6 +929,11 @@ def wikidata_people(st: dict) -> list[str]:
          "says about itself, the ones stating a research occupation first. The answer is",
          "which line is them, or `new` if none is.",
          "",
+         "Each name also carries what its ORCID record states. That identifier came from",
+         "OpenAlex reading a paper whose own metadata names no author identifiers, so on a",
+         "common name it can be a namesake's — a record listing papers in another field",
+         "entirely is one, and the answer for it is `no`, which drops the ORCID for good.",
+         "",
          "Paste into [`data/overrides.yaml`](data/overrides.yaml) under `wikidata_people`,",
          "correcting the QIDs that are wrong:",
          "",
@@ -941,12 +946,13 @@ def wikidata_people(st: dict) -> list[str]:
         L.append(f"  {p['orcid']}: {p['namesakes'][0]['qid']}   # {p['label']}"
                  + (" — or " + ", ".join(rest) if rest else "")
                  + (", …" if len(p["namesakes"]) > 4 else "")
-                 + ", or new")
+                 + ", or new, or no")
     L += ["```", ""]
     for p in held:
         papers = p.get("papers", 0)
         L.append(f"- [ ] **{p['label']}** ({papers} paper{'' if papers == 1 else 's'} with "
-                 f"you, [their ORCID record](https://orcid.org/{p['orcid']}))")
+                 f"you) — [their ORCID record](https://orcid.org/{p['orcid']}) states "
+                 f"{p.get('record_says') or 'nothing public beyond the name'}")
         for n in p["namesakes"]:
             L.append(f"  - [{n['qid']}](https://www.wikidata.org/wiki/{n['qid']}) — "
                      f"{n.get('says') or 'states nothing beyond the name'}")
