@@ -379,6 +379,10 @@ def get_json(url: str, **kw) -> dict | list | None:
 
 # ---------------------------------------------------------------- the gh CLI
 
+# Every README name a repo in this corpus actually uses, most common first. Three
+# call sites read one, and each used to carry its own shorter list.
+README_NAMES = ("README.md", "README.rst", "readme.md", "README.txt")
+
 def gh(*args: str, check: bool = False, timeout: int = 60) -> tuple[int, str]:
     """Run `gh` and return (exit code, output) -- stdout when it worked, stderr when not.
 

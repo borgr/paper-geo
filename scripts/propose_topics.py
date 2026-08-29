@@ -31,8 +31,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, gh_text, load_config, read_yaml,  # noqa: E402
-                    rules_block, write_json, write_yaml)
+from common import (BUILD, DATA, README_NAMES, gh_text, load_config,  # noqa: E402
+                    read_yaml, rules_block, write_json, write_yaml)
 
 SCHEMA = {
     "type": "object",
@@ -103,7 +103,7 @@ def evidence(repo: dict) -> str:
     """Assemble what the model gets to see. Kept small and factual."""
     name = repo["repo"]
     readme = ""
-    for fn in ("README.md", "README.rst", "readme.md", "README.txt"):
+    for fn in README_NAMES:
         b64 = gh_text("api", f"repos/{name}/contents/{fn}", "-q", ".content")
         if b64:
             try:

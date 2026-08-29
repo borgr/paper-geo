@@ -56,7 +56,7 @@ import yaml  # noqa: E402
 
 from llm import JSON_ONLY, decodable, first_json, with_retries  # noqa: E402
 from llm import client as llm_client  # noqa: E402
-from common import (BUILD, DATA, ROOT, get,  # noqa: E402
+from common import (BUILD, DATA, README_NAMES, ROOT, get_status,  # noqa: E402
                     has_live_sidecar, load_config, phrasings, qa_loci, read_yaml,
                     rules_block, write_json)
 from fulltext import LIMIT as FULLTEXT_LIMIT  # noqa: E402
@@ -115,6 +115,10 @@ def readme(p: dict, limit: int = 6000) -> str:
     Worth the fetch for one field in particular: a method's *name* and how the authors
     themselves gloss it usually reads better in the README than in the paper, and
     `terminology` is exactly the field that wants the authors' own gloss.
+
+    Nothing is cached unless GitHub answered about every name. A 404 says the repo carries
+    no README under that name. A refusal says nothing, and caching it would hold every
+    later draft to the paper's own wording for as long as the cache lives.
     """
     repo = (p.get("links") or {}).get("code") or p.get("hf_github_repo")
     if not repo or "github.com" not in repo:
@@ -125,20 +129,22 @@ def readme(p: dict, limit: int = 6000) -> str:
         with open(path) as f:
             return f.read()[:limit]
     owner_repo = repo.rstrip("/").split("github.com/")[-1].removesuffix(".git")
-    text = ""
+    text, refused = "", False
     for branch in ("main", "master"):
-        for name in ("README.md", "readme.md"):
-            # retries=2: a repo whose default branch is `master` 404s twice on the way
-            # here, and the shared backoff would spend two minutes discovering that.
-            raw = get(f"https://raw.githubusercontent.com/{owner_repo}/"
-                      f"{branch}/{name}", timeout=30, retries=2)
-            if raw:
+        for name in README_NAMES:
+            # retries=2: a repo whose default branch is `master` 404s on every name on the
+            # way here, and the shared backoff would spend minutes discovering that.
+            st, raw = get_status(f"https://raw.githubusercontent.com/{owner_repo}/"
+                                 f"{branch}/{name}", timeout=30, retries=2)
+            if st == 200 and raw:
                 text = raw.decode("utf-8", "replace")
                 break
+            refused = refused or st not in (404, 410)
         if text:
             break
-    with open(path, "w") as f:
-        f.write(text)
+    if text or not refused:
+        with open(path, "w") as f:
+            f.write(text)
     return text[:limit]
 
 

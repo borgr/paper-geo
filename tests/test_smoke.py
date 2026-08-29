@@ -1300,6 +1300,73 @@ class TestEveryBackendCanBeRepaired(unittest.TestCase):
         self.assertIn("caller = call_api if mode == \"api\" else call_openai", src)
 
 
+class TestAQuietGithubIsNotARepoWithNoReadme(unittest.TestCase):
+    """`readme` caches what it fetched, and it used to cache an empty result too.
+
+    `with_evidence` says the opposite for the full text -- "nothing is remembered as
+    hopeless. Each is retried next run" -- and the README path had no such retry. One refusal
+    held every later draft of that paper to the paper's own wording, because the cache file
+    is the whole of the freshness check.
+    """
+
+    def _ds(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import draft_sidecars
+        return draft_sidecars
+
+    def _fetched(self, ds, answers):
+        """Run `readme` against a cache dir of its own, returning (text, cached-or-None)."""
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d, True)
+        p = {"slug": "s", "links": {"code": "https://github.com/o/r"}}
+        with mock.patch.object(ds, "CACHE", d), \
+             mock.patch.object(ds, "get_status", lambda u, **kw: answers(u)):
+            text = ds.readme(p)
+        path = os.path.join(d, "s.readme.txt")
+        if not os.path.exists(path):
+            return text, None
+        with open(path) as f:
+            return text, f.read()
+
+    def test_a_refusal_is_not_cached_as_a_repo_with_no_readme(self):
+        ds = self._ds()
+        for st in (0, 429, 500):
+            text, cached = self._fetched(ds, lambda _u, st=st: (st, b""))
+            self.assertEqual("", text)
+            self.assertIsNone(cached, "status %s was cached as no README" % st)
+
+    def test_a_404_on_every_name_is_cached_as_a_repo_with_no_readme(self):
+        """Eight fetches that all answered are an answer, and re-asking every run would
+        spend eight requests per paper on a repo that has none."""
+        ds = self._ds()
+        text, cached = self._fetched(ds, lambda _u: (404, b""))
+        self.assertEqual("", text)
+        self.assertEqual("", cached, "a repo GitHub answered about is re-fetched every run")
+
+    def test_a_readme_under_any_of_the_names_is_found(self):
+        """Three call sites read a README and each carried its own shorter list of names.
+        `ibm/benchbench` has only `README.rst`, which is how its 1,486 bytes of the authors'
+        own naming reached no draft."""
+        from common import README_NAMES
+        ds = self._ds()
+        self.assertEqual(README_NAMES, ds.README_NAMES)
+        for name in README_NAMES:
+            text, cached = self._fetched(
+                ds, lambda u, n=name: (200, b"# gloss") if u.endswith("/" + n)
+                else (404, b""))
+            self.assertEqual("# gloss", text, "%s was never asked for" % name)
+            self.assertEqual("# gloss", cached)
+
+    def test_a_readme_found_after_a_refusal_is_still_cached(self):
+        """The refusal only matters when nothing was found. A `master`-default repo whose
+        `main` fetches were refused still has its README once `master` answers."""
+        ds = self._ds()
+        text, cached = self._fetched(
+            ds, lambda u: (200, b"# gloss") if "/master/README.md" in u else (500, b""))
+        self.assertEqual("# gloss", text)
+        self.assertEqual("# gloss", cached)
+
+
 class TestTheEvidencePackHandsOverThePapersNumbering(unittest.TestCase):
     """What the drafter is given before it writes, which is where `code > agent` lands.
 

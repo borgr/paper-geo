@@ -30,7 +30,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from build_site import LINK_LABELS, read_sidecar  # noqa: E402
-from common import BUILD, DATA, gh, load_config, read_yaml  # noqa: E402
+from common import BUILD, DATA, README_NAMES, gh, load_config, read_yaml  # noqa: E402
 
 START = "<!-- paper-geo:links:start -->"
 END = "<!-- paper-geo:links:end -->"
@@ -100,7 +100,7 @@ def targets(cfg):
 
 
 def fetch_readme(repo: str) -> tuple[str, str | None]:
-    for name in ("README.md", "readme.md", "README.rst"):
+    for name in README_NAMES:
         code, out = gh("api", f"repos/{repo}/contents/{name}", "-q", ".content+\"|\"+.sha")
         if code == 0 and "|" in out:
             b64, sha = out.rsplit("|", 1)
