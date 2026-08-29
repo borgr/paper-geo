@@ -1553,7 +1553,9 @@ class TestTheSplitPassResumesTomorrow(unittest.TestCase):
 
     None of it runs for real until the credits reset, which is precisely why it is pinned
     here: a resume that silently re-asks every paper never finishes, and one that never
-    re-asks keeps reporting a split after OpenAlex merges it.
+    re-asks keeps reporting a split after OpenAlex merges it. The same scarcity is why the
+    title rule is applied to the cache on the way out and not only to the answer on the
+    way in.
     """
 
     def _module(self, cache, answers):
@@ -1607,6 +1609,41 @@ class TestTheSplitPassResumesTomorrow(unittest.TestCase):
                          "records are not ordered by citations")
         with open(os.path.join(d, "openalex_splits.json")) as f:
             self.assertEqual(sorted(json.load(f)), ["p0", "p1"], "the cache did not persist")
+
+    def test_a_record_with_a_word_the_title_lacks_is_a_different_paper(self):
+        import scholar_strays as ss
+        want = ss.title_tokens("Efficient Benchmarking (of Language Models)")
+        self.assertTrue(ss.same_work(want, "Efficient Benchmarking of Language Models"))
+        for other in ["Benchmarking Large-Language Models for Resource-Efficient Medical "
+                      "AI for Edge Deployment",
+                      "Efficient Benchmarking of Language Model Pruning",
+                      "Inherent Biases in Efficient Benchmarking of Language Models and "
+                      "Text Simplification"]:
+            self.assertFalse(ss.same_work(want, other), other)
+
+    def test_a_title_cut_short_is_still_the_same_paper(self):
+        import scholar_strays as ss
+        full = ("On the Weaknesses of Reinforcement Learning for Neural Machine "
+                "Translation")
+        want = ss.title_tokens(full)
+        self.assertTrue(ss.same_work(want, full))
+        self.assertTrue(ss.same_work(want, full[:full.index(" Translation")]))
+        self.assertFalse(ss.same_work(want, "On the Weaknesses of Reinforcement Learning"))
+        self.assertFalse(ss.same_work(want, None))
+        self.assertFalse(ss.same_work(ss.title_tokens(""), full))
+
+    def test_a_cached_answer_is_filtered_again_before_it_is_reported(self):
+        title = "A sufficiently long paper title number 0"
+        today = datetime.date.today().isoformat()
+        cached = {"p0": {"asked": today, "records": [
+            {"id": "W1", "title": title, "citations": 9, "year": 2024},
+            {"id": "W2", "title": title + " and its consequences", "citations": 4,
+             "year": 2024}]}}
+        ss, asked, _d = self._module(cached, [])
+        out = ss.split_records(self._papers(1), None)
+        self.assertEqual(asked, [], "re-asked a paper answered today")
+        self.assertEqual(out["rows"], [],
+                         "a record naming a different paper was reported as a split")
 
     def test_the_pass_stops_at_the_first_refusal_and_keeps_what_it_paid_for(self):
         ss, asked, d = self._module({}, [{"results": []}])

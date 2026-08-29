@@ -37,10 +37,137 @@ Nothing at Crossref, and OpenAlex refused every query: it meters its search
 endpoint at 100 free queries a day, and today's are spent. This pass saw one
 of its two sources.
 
-## Papers OpenAlex holds twice (0)
+## Papers OpenAlex holds twice (39)
 
-**Partial: 0 of 111 papers checked.** OpenAlex meters its search endpoint at
+**Partial: 92 of 111 papers checked.** OpenAlex meters its search endpoint at
 100 free queries a day, and today's are spent. Every answer is cached, so
 re-running `python scripts/scholar_strays.py` tomorrow resumes where this one
 stopped.
+
+A paper split at OpenAlex is usually split at Scholar too, for the same
+reason: the metadata a parser read differs between copies.
+
+- [ ] `ties-merging-resolving-interference-when-merging-models` — [search Scholar](https://scholar.google.com/scholar?q=%22TIES-Merging%3A%20Resolving%20Interference%20When%20Merging%20Models%22)
+      - 31 cites — TIES-Merging: Resolving Interference When Merging Models — <https://openalex.org/W7133200254>
+      - 23 cites — TIES-Merging: Resolving Interference When Merging Models — <https://openalex.org/W4379528218>
+- [ ] `dora-the-explorer-directed-outreaching-reinforcement-action` — [search Scholar](https://scholar.google.com/scholar?q=%22DORA%20The%20Explorer%3A%20Directed%20Outreaching%20Reinforcement%20Action-Selection%22)
+      - 37 cites — DORA The Explorer: Directed Outreaching Reinforcement Action-Selection — <https://openalex.org/W2787236409>
+      - 15 cites — DORA The Explorer: Directed Outreaching Reinforcement Action-Selection — <https://openalex.org/W2964336776>
+- [ ] `semeval-2019-task-1-cross-lingual-semantic-parsing-with-ucca` — [search Scholar](https://scholar.google.com/scholar?q=%22SemEval-2019%20Task%201%3A%20Cross-lingual%20Semantic%20Parsing%20with%20UCCA%22)
+      - 41 cites — SemEval-2019 Task 1: Cross-lingual Semantic Parsing with UCCA — <https://openalex.org/W2918919089>
+      - 4 cites — SemEval-2019 Task 1: Cross-lingual Semantic Parsing with UCCA — <https://openalex.org/W2953486176>
+- [ ] `corpus-wide-argument-mining-a-working-solution` — [search Scholar](https://scholar.google.com/scholar?q=%22Corpus%20Wide%20Argument%20Mining%20-%20A%20Working%20Solution%22)
+      - 42 cites — Corpus Wide Argument Mining—A Working Solution — <https://openalex.org/W2997020034>
+      - 1 cites — Corpus Wide Argument Mining—A Working Solution — <https://openalex.org/W2990216970>
+- [ ] `on-the-weaknesses-of-reinforcement-learning-for-neural-machi` — [search Scholar](https://scholar.google.com/scholar?q=%22On%20the%20Weaknesses%20of%20Reinforcement%20Learning%20for%20Neural%20Machine%20Translation%22)
+      - 21 cites — On the Weaknesses of Reinforcement Learning for Neural Machine\n Trans — <https://openalex.org/W4288288444>
+      - 10 cites — On the Weaknesses of Reinforcement Learning for Neural Machine Transla — <https://openalex.org/W2954124977>
+- [ ] `disentqa-disentangling-parametric-and-contextual-knowledge-w` — [search Scholar](https://scholar.google.com/scholar?q=%22DisentQA%3A%20Disentangling%20Parametric%20and%20Contextual%20Knowledge%20with%20Counterfactual%20Question%20Answering%22)
+      - 24 cites — DisentQA: Disentangling Parametric and Contextual Knowledge with Count — <https://openalex.org/W4385565472>
+      - 2 cites — DisentQA: Disentangling Parametric and Contextual Knowledge with Count — <https://openalex.org/W4308830160>
+- [ ] `reference-less-measure-of-faithfulness-for-grammatical-error` — [search Scholar](https://scholar.google.com/scholar?q=%22Reference-less%20Measure%20of%20Faithfulness%20for%20Grammatical%20Error%20Correction%22)
+      - 18 cites — Reference-less Measure of Faithfulness for Grammatical Error Correctio — <https://openalex.org/W2798040809>
+      - 4 cites — Reference-less Measure of Faithfulness for Grammatical Error Correctio — <https://openalex.org/W2950219718>
+- [ ] `human-learning-by-model-feedback-the-dynamics-of-iterative-p` — [search Scholar](https://scholar.google.com/scholar?q=%22Human%20Learning%20by%20Model%20Feedback%3A%20The%20Dynamics%20of%20Iterative%20Prompting%20with%20Midjourney%22)
+      - 16 cites — Human Learning by Model Feedback: The Dynamics of Iterative Prompting  — <https://openalex.org/W4389518721>
+      - 1 cites — Human Learning by Model Feedback: The Dynamics of Iterative Prompting  — <https://openalex.org/W4388927605>
+- [ ] `global-mmlu-understanding-and-addressing-cultural-and-lingui` — [search Scholar](https://scholar.google.com/scholar?q=%22Global%20MMLU%3A%20Understanding%20and%20Addressing%20Cultural%20and%20Linguistic%20Biases%20in%20Multilingual%20Evaluation%22)
+      - 10 cites — Global MMLU: Understanding and Addressing Cultural and Linguistic Bias — <https://openalex.org/W4412944984>
+      - 6 cites — Global MMLU: Understanding and Addressing Cultural and Linguistic Bias — <https://openalex.org/W4405089755>
+- [ ] `cluster-tune-boost-cold-start-performance-in-text-classifica` — [search Scholar](https://scholar.google.com/scholar?q=%22Cluster%20%26%20Tune%3A%20Boost%20Cold%20Start%20Performance%20in%20Text%20Classification%22)
+      - 15 cites — Cluster & Tune: Boost Cold Start Performance in Text Classification — <https://openalex.org/W4285206744>
+      - 1 cites — Cluster & Tune: Boost Cold Start Performance in Text Classification — <https://openalex.org/W4221143454>
+- [ ] `the-grammar-learning-trajectories-of-neural-language-models` — [search Scholar](https://scholar.google.com/scholar?q=%22The%20Grammar-Learning%20Trajectories%20of%20Neural%20Language%20Models%22)
+      - 14 cites — The Grammar-Learning Trajectories of Neural Language Models — <https://openalex.org/W3199373335>
+      - 0 cites — The Grammar-Learning Trajectories of Neural Language Models — <https://openalex.org/W4286979335>
+- [ ] `cold-fusion-collaborative-descent-for-distributed-multitask` — [search Scholar](https://scholar.google.com/scholar?q=%22ColD%20Fusion%3A%20Collaborative%20Descent%20for%20Distributed%20Multitask%20Finetuning%22)
+      - 13 cites — ColD Fusion: Collaborative Descent for Distributed Multitask Finetunin — <https://openalex.org/W4385572602>
+      - 0 cites — ColD Fusion: Collaborative Descent for Distributed Multitask Finetunin — <https://openalex.org/W4310746928>
+- [ ] `bigger-is-not-always-better-the-importance-of-human-scale-la` — [search Scholar](https://scholar.google.com/scholar?q=%22Bigger%20is%20not%20always%20better%3A%20The%20importance%20of%20human-scale%20language%20modeling%20for%20psycholinguistics%22)
+      - 7 cites — Bigger is not always better: The importance of human-scale language mo — <https://openalex.org/W4410635628>
+      - 4 cites — Bigger is not always better: The importance of human-scale language mo — <https://openalex.org/W4400740453>
+      - 1 cites — Bigger is not always better: The importance of human-scale language mo — <https://openalex.org/W4409291146>
+      - 0 cites — Bigger is not always better: The importance of human-scale language mo — <https://openalex.org/W4409291343>
+- [ ] `label-sleuth-from-unlabeled-text-to-a-classifier-in-a-few-ho` — [search Scholar](https://scholar.google.com/scholar?q=%22Label%20Sleuth%3A%20From%20Unlabeled%20Text%20to%20a%20Classifier%20in%20a%20Few%20Hours%22)
+      - 10 cites — Label Sleuth: From Unlabeled Text to a Classifier in a Few Hours — <https://openalex.org/W4385572926>
+      - 2 cites — Label Sleuth: From Unlabeled Text to a Classifier in a Few Hours — <https://openalex.org/W4289785279>
+- [ ] `jump-to-conclusions-short-cutting-transformers-with-linear-t` — [search Scholar](https://scholar.google.com/scholar?q=%22Jump%20to%20Conclusions%3A%20Short-Cutting%20Transformers%20with%20Linear%20Transformations%22)
+      - 9 cites — Jump to Conclusions: Short-Cutting Transformers With Linear Transforma — <https://openalex.org/W4327811009>
+      - 2 cites — Jump to Conclusions: Short-Cutting Transformers with Linear Transforma — <https://openalex.org/W7131777177>
+- [ ] `efficient-multi-prompt-evaluation-of-llms` — [search Scholar](https://scholar.google.com/scholar?q=%22Efficient%20multi-prompt%20evaluation%20of%20LLMs%22)
+      - 8 cites — Efficient multi-prompt evaluation of LLMs — <https://openalex.org/W4415798641>
+      - 3 cites — Efficient multi-prompt evaluation of LLMs — <https://openalex.org/W4399116440>
+- [ ] `let-s-agree-to-agree-neural-networks-share-classification-or` — [search Scholar](https://scholar.google.com/scholar?q=%22Let%27s%20Agree%20to%20Agree%3A%20Neural%20Networks%20Share%20Classification%20Order%20on%20Real%20Datasets%22)
+      - 6 cites — Let's Agree to Agree: Neural Networks Share Classification Order on Re — <https://openalex.org/W4288347751>
+      - 5 cites — Let's Agree to Agree: Neural Networks Share Classification Order on Re — <https://openalex.org/W3033342474>
+- [ ] `semantics-aware-attention-improves-neural-machine-translatio` — [search Scholar](https://scholar.google.com/scholar?q=%22Semantics-aware%20Attention%20Improves%20Neural%20Machine%20Translation%22)
+      - 10 cites — Semantics-aware Attention Improves Neural Machine Translation — <https://openalex.org/W3205374364>
+      - 0 cites — Semantics-aware Attention Improves Neural Machine Translation — <https://openalex.org/W4286904566>
+- [ ] `knowledge-is-a-region-in-weight-space-for-fine-tuned-languag` — [search Scholar](https://scholar.google.com/scholar?q=%22Knowledge%20is%20a%20Region%20in%20Weight%20Space%20for%20Fine-tuned%20Language%20Models%22)
+      - 8 cites — Knowledge is a Region in Weight Space for Fine-tuned Language Models — <https://openalex.org/W4389520179>
+      - 1 cites — Knowledge is a Region in Weight Space for Fine-tuned Language Models — <https://openalex.org/W4320343033>
+- [ ] `efficient-benchmarking-of-language-models` — [search Scholar](https://scholar.google.com/scholar?q=%22Efficient%20Benchmarking%20%28of%20Language%20Models%29%22)
+      - 7 cites — Efficient Benchmarking (of Language Models) — <https://openalex.org/W4401042935>
+      - 0 cites — Efficient Benchmarking of Language Models — <https://openalex.org/W4386150511>
+- [ ] `zipnn-lossless-compression-for-ai-models` — [search Scholar](https://scholar.google.com/scholar?q=%22ZipNN%3A%20Lossless%20Compression%20for%20AI%20Models%22)
+      - 5 cites — ZipNN: Lossless Compression for AI Models — <https://openalex.org/W4413360405>
+      - 1 cites — ZipNN: Lossless Compression for AI Models — <https://openalex.org/W4404389294>
+- [ ] `holmes-a-benchmark-to-assess-the-linguistic-competence-of-la` — [search Scholar](https://scholar.google.com/scholar?q=%22Holmes%3A%20A%20Benchmark%20to%20Assess%20the%20Linguistic%20Competence%20of%20Language%20Models%22)
+      - 6 cites — Holmes ⌕ A Benchmark to Assess the Linguistic Competence of Language M — <https://openalex.org/W4405205232>
+      - 0 cites — Holmes: A Benchmark to Assess the Linguistic Competence of Language Mo — <https://openalex.org/W4396821301>
+- [ ] `the-future-of-open-human-feedback` — [search Scholar](https://scholar.google.com/scholar?q=%22The%20Future%20of%20Open%20Human%20Feedback%22)
+      - 5 cites — The future of open human feedback — <https://openalex.org/W4411497326>
+      - 0 cites — The Future of Open Human Feedback — <https://openalex.org/W4403160720>
+- [ ] `fuse-to-forget-bias-reduction-and-selective-memorization-thr` — [search Scholar](https://scholar.google.com/scholar?q=%22Fuse%20to%20Forget%3A%20Bias%20Reduction%20and%20Selective%20Memorization%20through%20Model%20Fusion%22)
+      - 4 cites — Fuse to Forget: Bias Reduction and Selective Memorization through Mode — <https://openalex.org/W4404782420>
+      - 0 cites — Fuse to Forget: Bias Reduction and Selective Memorization through Mode — <https://openalex.org/W4388717782>
+- [ ] `prequel-quality-estimation-of-machine-translation-outputs-in` — [search Scholar](https://scholar.google.com/scholar?q=%22PreQuEL%3A%20Quality%20Estimation%20of%20Machine%20Translation%20Outputs%20in%20Advance%22)
+      - 4 cites — PreQuEL: Quality Estimation of Machine Translation Outputs in Advance — <https://openalex.org/W4385573457>
+      - 0 cites — PreQuEL: Quality Estimation of Machine Translation Outputs in Advance — <https://openalex.org/W4281261410>
+- [ ] `data-contamination-report-from-the-2024-conda-shared-task` — [search Scholar](https://scholar.google.com/scholar?q=%22Data%20Contamination%20Report%20from%20the%202024%20CONDA%20Shared%20Task%22)
+      - 2 cites — Data Contamination Report from the 2024 CONDA Shared Task — <https://openalex.org/W4402671052>
+      - 0 cites — Data Contamination Report from the 2024 CONDA Shared Task — <https://openalex.org/W4401306664>
+- [ ] `label-efficient-model-selection-for-text-generation` — [search Scholar](https://scholar.google.com/scholar?q=%22Label-Efficient%20Model%20Selection%20for%20Text%20Generation%22)
+      - 1 cites — Label-Efficient Model Selection for Text Generation — <https://openalex.org/W4402671586>
+      - 0 cites — Label-Efficient Model Selection for Text Generation — <https://openalex.org/W4391801229>
+- [ ] `enhancing-the-transformer-decoder-with-transition-based-synt` — [search Scholar](https://scholar.google.com/scholar?q=%22Enhancing%20the%20Transformer%20Decoder%20with%20Transition-based%20Syntax%22)
+      - 1 cites — Enhancing the Transformer Decoder with Transition-based Syntax — <https://openalex.org/W4385573002>
+      - 0 cites — Enhancing the Transformer Decoder with Transition-based Syntax — <https://openalex.org/W4287364715>
+- [ ] `grasp-a-library-for-extracting-and-exploring-human-interpret` — [search Scholar](https://scholar.google.com/scholar?q=%22GrASP%3A%20A%20Library%20for%20Extracting%20and%20Exploring%20Human-Interpretable%20Textual%20Patterns%22)
+      - 1 cites — GrASP: A Library for Extracting and Exploring Human-Interpretable\n Te — <https://openalex.org/W4287235716>
+      - 0 cites — GrASP: A Library for Extracting and Exploring Human-Interpretable Text — <https://openalex.org/W3143648230>
+- [ ] `pretraining-language-models-for-diachronic-linguistic-change` — [search Scholar](https://scholar.google.com/scholar?q=%22Pretraining%20Language%20Models%20for%20Diachronic%20Linguistic%20Change%20Discovery%22)
+      - 1 cites — Pretraining Language Models for Diachronic Linguistic Change Discovery — <https://openalex.org/W4417239904>
+      - 0 cites — Pretraining Language Models for Diachronic Linguistic Change Discovery — <https://openalex.org/W7140084338>
+      - 0 cites — Pretraining Language Models for Diachronic Linguistic Change Discovery — <https://openalex.org/W7155449040>
+- [ ] `on-neurons-invariant-to-sentence-structural-changes-in-neura` — [search Scholar](https://scholar.google.com/scholar?q=%22On%20Neurons%20Invariant%20to%20Sentence%20Structural%20Changes%20in%20Neural%20Machine%20Translation%22)
+      - 1 cites — On Neurons Invariant to Sentence Structural Changes in Neural Machine  — <https://openalex.org/W4385573437>
+      - 0 cites — On Neurons Invariant to Sentence Structural Changes in Neural Machine  — <https://openalex.org/W3201989688>
+- [ ] `when-ai-benchmarks-plateau-a-systematic-study-of-benchmark-s` — [search Scholar](https://scholar.google.com/scholar?q=%22When%20AI%20Benchmarks%20Plateau%3A%20A%20Systematic%20Study%20of%20Benchmark%20Saturation%22)
+      - 0 cites — When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation — <https://openalex.org/W7130763018>
+      - 0 cites — When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation — <https://openalex.org/W7130678642>
+- [ ] `unsupervised-expressive-rules-provide-explainability-and-ass` — [search Scholar](https://scholar.google.com/scholar?q=%22Unsupervised%20Expressive%20Rules%20Provide%20Explainability%20and%20Assist%20Human%20Experts%20Grasping%20New%20Domains%22)
+      - 0 cites — Unsupervised Expressive Rules Provide Explainability and Assist Human  — <https://openalex.org/W3094580790>
+      - 0 cites — Unsupervised Expressive Rules Provide Explainability and Assist Human\ — <https://openalex.org/W4287637531>
+- [ ] `commonlid-re-evaluating-state-of-the-art-language-identifica` — [search Scholar](https://scholar.google.com/scholar?q=%22CommonLID%3A%20Re-evaluating%20State-of-the-Art%20Language%20Identification%20Performance%20on%20Web%20Data%22)
+      - 0 cites — CommonLID: Re-evaluating State-of-the-Art Language Identification Perf — <https://openalex.org/W7166880635>
+      - 0 cites — CommonLID: Re-evaluating State-of-the-Art Language Identification Perf — <https://openalex.org/W7125878514>
+      - 0 cites — CommonLID: Re-evaluating State-of-the-Art Language Identification Perf — <https://openalex.org/W7125796550>
+- [ ] `errormap-and-erroratlas-charting-the-failure-landscape-of-la` — [search Scholar](https://scholar.google.com/scholar?q=%22ErrorMap%20and%20ErrorAtlas%3A%20Charting%20the%20Failure%20Landscape%20of%20Large%20Language%20Models%22)
+      - 0 cites — ErrorMap and ErrorAtlas: Charting the Failure Landscape of Large Langu — <https://openalex.org/W7125556273>
+      - 0 cites — ErrorMap and ErrorAtlas: Charting the Failure Landscape of Large Langu — <https://openalex.org/W7125566769>
+- [ ] `cube-a-standard-for-unifying-agent-benchmarks` — [search Scholar](https://scholar.google.com/scholar?q=%22CUBE%3A%20A%20Standard%20for%20Unifying%20Agent%20Benchmarks%22)
+      - 0 cites — CUBE: A Standard for Unifying Agent Benchmarks — <https://openalex.org/W7138914621>
+      - 0 cites — CUBE: A Standard for Unifying Agent Benchmarks — <https://openalex.org/W7139144430>
+- [ ] `mediocrity-is-the-key-for-llm-as-a-judge-anchor-selection` — [search Scholar](https://scholar.google.com/scholar?q=%22Mediocrity%20is%20the%20key%20for%20LLM%20as%20a%20Judge%20Anchor%20Selection%22)
+      - 0 cites — Mediocrity is the key for LLM as a Judge Anchor Selection — <https://openalex.org/W7138850705>
+      - 0 cites — Mediocrity is the key for LLM as a Judge Anchor Selection — <https://openalex.org/W7139147519>
+      - 0 cites — Mediocrity is the key for LLM as a Judge Anchor Selection — <https://openalex.org/W7166835632>
+      - 0 cites — Mediocrity is the key for LLM as a Judge Anchor Selection — <https://openalex.org/W7168410421>
+- [ ] `mindgames-a-live-arena-for-evaluating-social-and-strategic-r` — [search Scholar](https://scholar.google.com/scholar?q=%22MINDGAMES%3A%20A%20Live%20Arena%20for%20Evaluating%20Social%20and%20Strategic%20Reasoning%20in%20Multi-Agent%20LLMs%22)
+      - 0 cites — MINDGAMES: A Live Arena for Evaluating Social and Strategic Reasoning  — <https://openalex.org/W7162786612>
+      - 0 cites — MINDGAMES: A Live Arena for Evaluating Social and Strategic Reasoning  — <https://openalex.org/W7162893185>
+- [ ] `robustness-as-an-emergent-property-of-task-performance` — [search Scholar](https://scholar.google.com/scholar?q=%22Robustness%20as%20an%20Emergent%20Property%20of%20Task%20Performance%22)
+      - 0 cites — Robustness as an Emergent Property of Task Performance — <https://openalex.org/W7127619843>
+      - 0 cites — Robustness as an Emergent Property of Task Performance — <https://openalex.org/W7127739829>
 

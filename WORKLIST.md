@@ -26,20 +26,24 @@ is ordered so that stopping early still captures most of the value.
 3. **Wikidata author strings (965 by hand)** — one Author Disambiguator pass per paper, most-cited first, at the link the section gives for each. Everything an ORCID or a DBLP author page could settle is already on Wikidata, so what is left is the part where the name is all there is to go on.
 4. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
 5. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
-6. **Citations on a Scholar record you cannot see (7, ~161 citations)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
+6. **Citations on a Scholar record you cannot see (46, ~247 citations)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
 
 ## Waiting on the outside world
 
 - **2026-10-04** — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.
 - **2026-11-04** — Crossref and DataCite auto-update only fire on newly deposited metadata that already carries your iD, so the proof is a work whose ORCID source is Crossref or DataCite rather than your own name -- which cannot appear until something you publish is deposited.
 
-## Citations on a Scholar record you cannot see (7, ~161 citations)
+## Citations on a Scholar record you cannot see (46, ~247 citations)
 
 Scholar indexes preprints and theses the APIs do not, so a profile row should
 always count *more* than OpenAlex and Semantic Scholar. Where it counts less,
 the rest of the count is on a second record Scholar parsed out of somebody's
 reference list — a mangled title, a misspelled author, initials only. Merging
 the two adds those citations to yours.
+
+OpenAlex holding one title twice is the same fault from the other side. A parser
+that split the record there usually split it at Scholar too, and the count on
+the smaller copy is what a merge recovers.
 
 Each row is a search. Open it, and if a result is your paper under a second
 record, tick your own row and that one on your profile and press *Merge*. A
@@ -55,21 +59,46 @@ your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).
 - [ ] **37 citations** — Elements of World Knowledge (EWoK): A Cognition-Inspired Framewo
       - Scholar 31 vs 68 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Elements%20of%20World%20Knowledge%20%28EWoK%29%3A%20A%20Cognition-Inspired%20Framework%20for%20Evaluating%20Basic%20World%20Knowledge%20in%20Language%20Models%22)
+- [ ] **23 citations** — TIES-Merging: Resolving Interference When Merging Models
+      - 2 OpenAlex records for one title
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22TIES-Merging%3A%20Resolving%20Interference%20When%20Merging%20Models%22)
+- [ ] **15 citations** — DORA The Explorer: Directed Outreaching Reinforcement Action-Sel
+      - 2 OpenAlex records for one title
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22DORA%20The%20Explorer%3A%20Directed%20Outreaching%20Reinforcement%20Action-Selection%22)
 - [ ] **13 citations** — The Mighty ToRR: A Benchmark for Table Reasoning and Robustness
       - Scholar 0 vs 13 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22The%20Mighty%20ToRR%3A%20A%20Benchmark%20for%20Table%20Reasoning%20and%20Robustness%22)
+- [ ] **10 citations** — On the Weaknesses of Reinforcement Learning for Neural Machine T
+      - 2 OpenAlex records for one title
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22On%20the%20Weaknesses%20of%20Reinforcement%20Learning%20for%20Neural%20Machine%20Translation%22)
 - [ ] **6 citations** — Beneath the Surface of Consistency: Exploring Cross-lingual Know
       - Scholar 13 vs 19 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Beneath%20the%20Surface%20of%20Consistency%3A%20Exploring%20Cross-lingual%20Knowledge%20Representation%20Sharing%20in%20LLMs%22)
+- [ ] **6 citations** — Global MMLU: Understanding and Addressing Cultural and Linguisti
+      - 2 OpenAlex records for one title
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Global%20MMLU%3A%20Understanding%20and%20Addressing%20Cultural%20and%20Linguistic%20Biases%20in%20Multilingual%20Evaluation%22)
+- [ ] **5 citations** — Bigger is not always better: The importance of human-scale langu
+      - 4 OpenAlex records for one title
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Bigger%20is%20not%20always%20better%3A%20The%20importance%20of%20human-scale%20language%20modeling%20for%20psycholinguistics%22)
+- [ ] **5 citations** — Let's Agree to Agree: Neural Networks Share Classification Order
+      - 2 OpenAlex records for one title
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Let%27s%20Agree%20to%20Agree%3A%20Neural%20Networks%20Share%20Classification%20Order%20on%20Real%20Datasets%22)
 - [ ] **4 citations** — CommonLID: Re-evaluating State-of-the-Art Language Identificatio
       - Scholar 3 vs 7 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22CommonLID%3A%20Re-evaluating%20State-of-the-Art%20Language%20Identification%20Performance%20on%20Web%20Data%22)
+- [ ] **4 citations** — SemEval-2019 Task 1: Cross-lingual Semantic Parsing with UCCA
+      - 2 OpenAlex records for one title
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22SemEval-2019%20Task%201%3A%20Cross-lingual%20Semantic%20Parsing%20with%20UCCA%22)
+- [ ] **4 citations** — Reference-less Measure of Faithfulness for Grammatical Error Cor
+      - 2 OpenAlex records for one title
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Reference-less%20Measure%20of%20Faithfulness%20for%20Grammatical%20Error%20Correction%22)
 - [ ] **3 citations** — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Co
       - Scholar 16 vs 19 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22LiveXiv%20--%20A%20Multi-Modal%20Live%20Benchmark%20Based%20on%20Arxiv%20Papers%20Content%22)
 - [ ] **3 citations** — Mediators in Determining what Processing BERT Performs First
       - Scholar 13 vs 16 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Mediators%20in%20Determining%20what%20Processing%20BERT%20Performs%20First%22)
+- … and 31 more in [`tasks/scholar_strays.md`](tasks/scholar_strays.md), same order
 
 ## Wikidata author strings (965 by hand)
 

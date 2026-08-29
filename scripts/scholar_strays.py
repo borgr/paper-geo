@@ -184,6 +184,16 @@ def typo_records(cfg, papers, mailto) -> list[dict]:
     return sorted(out, key=lambda r: -(r.get("citations") or 0))
 
 
+def same_work(want: set[str], title: str | None) -> bool:
+    """Whether a record OpenAlex returned names this corpus paper or a different one.
+
+    `want` is the corpus title's content words. A record may drop words, since a
+    truncated title is the mangling this pass looks for, and may not add any.
+    """
+    got = title_tokens(title or "")
+    return bool(want) and not got - want and len(want & got) / len(want) > 0.8
+
+
 def split_records(papers, mailto, limit=None) -> dict:
     """Corpus titles that OpenAlex holds more than one record for.
 
@@ -223,21 +233,25 @@ def split_records(papers, mailto, limit=None) -> dict:
                          "year": w.get("publication_year"),
                          "citations": w.get("cited_by_count") or 0}
                         for w in (d or {}).get("results") or []
-                        if want
-                        and len(want & title_tokens(w.get("display_name"))) / len(want) > 0.8]}
+                        if same_work(want, w.get("display_name"))]}
     if asked:
         os.makedirs(BUILD, exist_ok=True)
         with open(cache_path, "w") as f:
             json.dump(cache, f, indent=1)
 
-    def records(slug):
-        return (cache.get(slug) or {}).get("records") or []
+    # Filtered again on the way out, so tightening the rule takes effect on the next run
+    # instead of after a second day of credits.
+    def records(p):
+        want = title_tokens(p.get("title") or "")
+        return sorted((w for w in (cache.get(p.get("slug")) or {}).get("records") or []
+                       if same_work(want, w.get("title"))),
+                      key=lambda w: -w["citations"])
 
     out = [{"slug": p.get("slug"),
             "title": p.get("title_display") or p.get("title"),
-            "records": sorted(records(p.get("slug")), key=lambda w: -w["citations"]),
+            "records": records(p),
             "search": scholar_query(p.get("title_display") or p.get("title"))}
-           for p in papers[:limit] if len(records(p.get("slug"))) > 1]
+           for p in papers[:limit] if len(records(p)) > 1]
     checkable = [p for p in papers[:limit] if len(p.get("title") or "") >= 25]
     return {"rows": sorted(out, key=lambda r: -sum(x["citations"] for x in r["records"])),
             "budget_reset": budget_reset("api.openalex.org"),
