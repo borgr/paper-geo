@@ -371,11 +371,11 @@ since these are lists a human works through over days — plus one from
 | `wikidata_manual.md` | creating the author item by hand — **start here** |
 | `wikidata.qs` | the same item as a batch; needs an autoconfirmed account |
 | `wikidata_coauthors.md` | co-author strings on your paper items and the items they resolve to |
-| `wikidata_coauthors.qs` | the record-settled half of that as a batch, written only while something is still unwritten |
+| `wikidata_coauthors.qs` | the same statements `--apply` writes, as a batch for a machine with no bot password |
 | `wikidata_orgs.md` | items for the groups the work belongs to, each statement with its source |
-| `wikidata_orgs.qs` | the same as a batch, written only while something is still uncreated |
+| `wikidata_orgs.qs` | the same statements `--apply` writes, as a batch for a machine with no bot password |
 | `wikidata_people.md` | co-authors with an ORCID and no item, with the record each value came from |
-| `wikidata_people.qs` | the same as a batch, written only while something is still uncreated |
+| `wikidata_people.qs` | the same statements `--apply` writes, as a batch for a machine with no bot password |
 | `s2_merge.md` | papers to pull onto the claimed Semantic Scholar page |
 | `scholar_strays.md` | Scholar searches that surface a second record for one paper, from `scholar_strays.py` |
 | `openalex_merge.md` | what to paste into the OpenAlex correction form |

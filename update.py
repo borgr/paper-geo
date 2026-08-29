@@ -881,43 +881,34 @@ def scholar_split_records(st: dict) -> list[str]:
 def wikidata_coauthors(st: dict) -> list[str]:
     """The worklist section for `build/wikidata_coauthors.json`, or nothing.
 
-    Ranked by the batch first, because that half needs no judgement at all.
+    Only the strings a name is all there is to go on. The rest -- an ORCID or a DBLP page
+    matched, a venue resolved, a language read off the bibliography -- is written by
+    `scripts/wikidata_coauthors.py --apply` and reported here without a checkbox.
     """
     left = (st.get("review") or 0) + (st.get("leftover") or 0)
-    if not (st.get("edits") or left or st.get("venues") or st.get("fills")):
+    batch = (st.get("edits") or 0) + (st.get("venues") or 0) + (st.get("fills") or 0)
+    # No section when only the batchable half is outstanding: this page asks the author for
+    # things, and a statement `--apply` writes is not one of them.
+    if not left:
         return []
-    counts = [f"{st['edits']} batchable"] if st.get("edits") else []
-    counts += [f"{left} by hand"] if left else []
-    L = [f"## Wikidata author strings ({', '.join(counts)})", "",
+    L = [f"## Wikidata author strings ({left} by hand)", "",
          "Every paper item lists you as *author* and each co-author as *author name",
          "string*, which is a literal nothing can join on — so each item hangs off your",
          "item alone. Resolving a string to that person's own item is what connects them,",
          "and many independent paths into your item is the point of having them at all.", ""]
-    if st.get("edits"):
-        dblp, orcid = st.get("dblp") or 0, st["edits"] - (st.get("dblp") or 0)
-        how = [f"{orcid} matched ORCID to ORCID"] if orcid else []
-        how += [f"{dblp} confirmed by a DBLP author page listing the same paper"] if dblp \
-            else []
-        L += [f"- [ ] **{st['edits']} authors, no judgement needed** — paste "
-              "[`tasks/wikidata_coauthors.qs`](tasks/wikidata_coauthors.qs) into "
-              "QuickStatements",
-              "      - " + ", ".join(how) + ", and no name compared in either"]
-    if st.get("venues"):
-        L += [f"- [ ] **{st['venues']} papers get their venue** — in the same paste, "
-              "*published in* pointing at the proceedings volume or journal",
-              "      - resolved from the venue name already in the bibliography"]
-    if st.get("fills"):
-        L += [f"- [ ] **{st['fills']} language and full-text statements** — also in that "
-              "paste, *language of work* and *full work available at*",
-              "      - both taken straight from the bibliography"]
-    if left:
-        L += [f"- [ ] **{left} strings across {st.get('papers_left', 0)} papers** — one "
-              "Author Disambiguator pass per paper, most-cited first",
-              "      - the links, and the candidate items found for each name: "
-              "[`tasks/wikidata_coauthors.md`](tasks/wikidata_coauthors.md)"]
-        if st.get("dropped"):
-            L += [f"      - {st['dropped']} name matches are left out as namesakes, on a "
-                  "stated occupation nothing like research"]
+    L += [f"- [ ] **{left} strings across {st.get('papers_left', 0)} papers** — one "
+          "Author Disambiguator pass per paper, most-cited first",
+          "      - the links, and the candidate items found for each name: "
+          "[`tasks/wikidata_coauthors.md`](tasks/wikidata_coauthors.md)"]
+    if st.get("dropped"):
+        L += [f"      - {st['dropped']} name matches are left out as namesakes, on a "
+              "stated occupation nothing like research"]
+    if batch:
+        L += ["",
+              f"{batch} more statement{'s' * (batch != 1)} need no decision from you — an "
+              "ORCID or a DBLP",
+              "page matched the name, or the value came straight from the bibliography.",
+              "`python scripts/wikidata_coauthors.py --apply` writes them."]
     return L + [""]
 
 
@@ -972,23 +963,19 @@ def wikidata_people(st: dict) -> list[str]:
 
 
 def wikidata_orgs(st: dict) -> list[str]:
-    """The worklist section for `build/wikidata_orgs.json`, or nothing."""
-    if not (st.get("create") or st.get("edges") or st.get("ambiguous")):
+    """The worklist section for `build/wikidata_orgs.json`, or nothing.
+
+    Only the two things a public page cannot settle -- a name matching several items, and a
+    fact only the author knows. Creating the items and writing the edges into them is
+    `scripts/wikidata_orgs.py --apply`, reported here without a checkbox.
+    """
+    asks = (st.get("ambiguous") or []), (st.get("needs") or 0)
+    if not any(asks):
         return []
-    names = [st["state"][s].get("label") or s for s in st.get("create") or []]
-    L = [f"## Wikidata items for the groups ({len(st.get('create') or [])} to create)", "",
+    L = ["## Wikidata items for the groups", "",
          "Some of the work in the corpus is run by groups Wikidata has no item for, so a",
          "paper cannot say what it is part of and a group cannot say what it produced.",
-         "Every statement in the batch cites the public page it came from.", ""]
-    if st.get("create"):
-        L += [f"- [ ] **create {', '.join(names)}** — paste "
-              "[`tasks/wikidata_orgs.qs`](tasks/wikidata_orgs.qs) into QuickStatements",
-              "      - the statements and their sources, and the facts still missing: "
-              "[`tasks/wikidata_orgs.md`](tasks/wikidata_orgs.md)"]
-    if st.get("edges"):
-        L += [f"- [ ] **{st['edges']} edges into those items** — in the same paste, "
-              "*main subject* on each paper about them and *organizer* on each event",
-              "      - resolved through the item ledger, so nothing to look up"]
+         "Every statement written cites the public page it came from.", ""]
     if st.get("ambiguous"):
         L += [f"- [ ] **{len(st['ambiguous'])} names match more than one item** — pick the "
               "right one by hand, or the group has an item already",
@@ -999,6 +986,16 @@ def wikidata_orgs(st: dict) -> list[str]:
               "add them to [`data/wikidata_orgs.yaml`](data/wikidata_orgs.yaml)",
               "      - each one, and why the public pages do not settle it: "
               "[`tasks/wikidata_orgs.md`](tasks/wikidata_orgs.md)"]
+    todo = (len(st.get("create") or []), st.get("edges") or 0)
+    if any(todo):
+        names = [st["state"][s].get("label") or s for s in st.get("create") or []]
+        L += ["",
+              ("%s and %d edge%s into them wait on nothing"
+               % (", ".join(names) or "No item", todo[1], "s" * (todo[1] != 1))
+               if todo[0] else
+               "%d edge%s into those items wait on nothing"
+               % (todo[1], "s" * (todo[1] != 1))) + " —",
+              "`python scripts/wikidata_orgs.py --apply` creates and writes them."]
     return L + [""]
 
 

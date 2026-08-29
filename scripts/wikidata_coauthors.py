@@ -745,10 +745,10 @@ def write_page(rows_: list[dict], qs_path: str | None) -> str:
         n_lang = sum(1 for r in fills if "P407" in r["fills"])
         n_url = sum(1 for r in fills if "P953" in r["fills"])
         L += [f"## Language and full text ({n_lang + n_url})", "",
-              fill(f"Also in the same paste, and also nothing to decide. {n_lang} item(s) "
-                   f"do not say what language the paper is in, and {n_url} carry no link to "
-                   "a free copy — the publisher-hosted one, since a doi.org or arxiv.org "
-                   "link only restates an identifier the item already has."), ""]
+              fill(f"Written by `--apply` along with the rest. {n_lang} item(s) do not say "
+                   f"what language the paper is in, and {n_url} carry no link to a free "
+                   "copy — the publisher-hosted one, since a doi.org or arxiv.org link "
+                   "only restates an identifier the item already has."), ""]
 
     n_dblp = sum(1 for r in rows_ for e in r["edits"] if e["via"].startswith("DBLP"))
     L += [f"## Settled by a record rather than a name ({n_edits})", ""]
@@ -759,16 +759,16 @@ def write_page(rows_: list[dict], qs_path: str | None) -> str:
                    f"Wikidata item stating it. {n_dblp} came from DBLP, where exactly one "
                    "candidate's author page lists this same paper -- DBLP separates its "
                    "own namesakes, so a shared publication is a shared person."), ""]
-        if qs_path:
-            L += [fill(f"Paste [`{os.path.relpath(qs_path)}`]({os.path.relpath(qs_path)}) "
-                       "into <https://quickstatements.toolforge.org/#/batch>. Each author "
-                       "is two lines, one adding *author* with the printed name kept as "
-                       "an *object named as* qualifier, one dropping the string it "
-                       "replaces."), ""]
+        L += [fill("`python scripts/wikidata_coauthors.py --apply` writes them. Each "
+                   "author becomes *author* with the printed name kept as an *object "
+                   "named as* qualifier, and the string it replaces is dropped."
+                   + (f" [`{os.path.relpath(qs_path)}`]({os.path.relpath(qs_path)}) is "
+                      "the same batch for <https://quickstatements.toolforge.org/#/batch>, "
+                      "for a machine with no bot password." if qs_path else "")), ""]
         for r in rows_:
             if not r["edits"]:
                 continue
-            L.append(f"- [ ] **{r['citations']} citations** — {(r['title'] or '')[:64]}")
+            L.append(f"- **{r['citations']} citations** — {(r['title'] or '')[:64]}")
             for e in r["edits"]:
                 L.append(f"      - {e['name']} → [{e['label'] or e['qid']}]"
                          f"(https://www.wikidata.org/wiki/{e['qid']}) "

@@ -2512,6 +2512,43 @@ class TestEveryOpenItemIsWorkableWhereItStands(unittest.TestCase):
             ["## Parent", "prose", "### Child", "more prose"], **quiet))
 
 
+class TestNoItemAsksForAWikidataWriteTheCodeCanDo(unittest.TestCase):
+    """`CLAUDE.md` puts Wikidata on this side of the line, `--apply` and all.
+
+    Three sections used to hand over a QuickStatements batch -- author statements matched
+    ORCID to ORCID, a venue resolved, a language read off the bibliography -- none of
+    which is a judgement anyone has to make. The same rows go out through the API
+    instead, and the emitters keep only what a public record cannot settle.
+    """
+
+    def test_no_open_item_hands_over_a_quickstatements_batch(self):
+        path = os.path.join(ROOT, "WORKLIST.md")
+        if not os.path.exists(path):
+            self.skipTest("no WORKLIST.md yet; run python update.py")
+        for ln in source(path).splitlines():
+            if ln.lstrip().startswith(("- [ ]", "- [x]")):
+                self.assertNotRegex(ln, r"(?i)quickstatements|\.qs\b",
+                                    "an item asks for a paste of statements "
+                                    "`--apply` writes")
+
+    def test_a_batch_with_nothing_by_hand_is_no_section_at_all(self):
+        """The section exists to ask, so a run with only writable rows left prints none."""
+        import update
+        self.assertEqual([], update.wikidata_coauthors(
+            {"edits": 4, "venues": 2, "fills": 1, "review": 0, "leftover": 0}))
+        self.assertEqual([], update.wikidata_orgs(
+            {"create": ["a"], "edges": 9, "state": {"a": {"label": "A"}}}))
+
+    def test_what_the_code_writes_is_still_reported_without_a_checkbox(self):
+        """Silence would read as done. The count stays, the ask goes."""
+        import update
+        out = "\n".join(update.wikidata_coauthors(
+            {"edits": 4, "review": 1, "leftover": 0, "papers_left": 1}))
+        self.assertIn("4 more statement", out)
+        self.assertIn("--apply", out)
+        self.assertEqual(1, out.count("- [ ]"), out)
+
+
 class TestTheWorklistSaysWhatToDoFirst(unittest.TestCase):
     """A page of eighteen well-explained items still does not say where to start.
 
