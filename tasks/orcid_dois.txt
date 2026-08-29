@@ -105,6 +105,7 @@
 10.48550/arXiv.2605.11206	Instructions Shape Production of Language, not Processing
 10.48550/arXiv.2604.12843	Growing Pains: Extensible and Efficient LLM Benchmarking Via Fixed Parameter Calibration
 10.48550/arXiv.2606.09809	Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting
+10.2139/ssrn.6176178	Position: Agentic Systems Should be General
 10.18653/V1/2026.FINDINGS-ACL.43	Stop Guessing When to Stop Testing: Efficient Model Evaluation with Just Enough Data
 10.48550/ARXIV.2606.24579	Cross-Lingual Exploration for Parametric Knowledge
 10.48550/arXiv.2507.08037	CRISP: Complex Reasoning with Interpretable Step-based Plans

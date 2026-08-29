@@ -32,8 +32,8 @@ import sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
-from common import (DATA, has_live_sidecar, health_report, is_preprint_venue,  # noqa: E402
-                    load_config, norm_title, read_yaml, synth_bibtex)
+from common import (DATA, clipped, has_live_sidecar, health_report,  # noqa: E402
+                    is_preprint_venue, load_config, norm_title, read_yaml, synth_bibtex)
 from sweep_github import ZENODO_KINDS  # noqa: E402
 
 STEPS = ("collect", "repos", "propose", "draft", "links", "ownership", "audit",
@@ -270,9 +270,10 @@ PLAN = (
      "gives for each. Everything an ORCID or a DBLP author page could settle is already on "
      "Wikidata, so what is left is the part where the name is all there is to go on"),
     ("Co-authors who may already have a Wikidata item", "minute",
-     "open each item and write the QID beside the ORCID in `data/overrides.yaml`, or "
-     "`new` where the papers on it are somebody else's. The lines are in the section "
-     "ready to paste, and answering the top few is worth doing on its own — each answer "
+     "pick the line that is them and paste the QID into `data/overrides.yaml`, or `new` "
+     "where none is. What every candidate item states about itself is in the section, so "
+     "most rows need nothing opened, and answering the top few is worth doing on its own "
+     "— each answer "
      "turns one co-author into `author` statements on the papers you share"),
     ("Sidecar drafts awaiting your verification", "minute",
      "read the draft and `--accept` it. The only place on this page where your "
@@ -722,7 +723,7 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
               "`also_mine` in [`data/overrides.yaml`](data/overrides.yaml); if Scholar has",
               "merged a namesake's paper into your profile, delete it there, because a",
               "wrong row misleads every human who reads it too.", ""]
-        L += [f"- [ ] {cites(r.get('citations'))} — {(r.get('title') or '')[:66]}"
+        L += [f"- [ ] {cites(r.get('citations'))} — {clipped(r.get('title') or '', 66)}"
               for r in gate] + [""]
     if miss:
         L += [f"### {pl(len(miss))} absent from the source bibliography", "",
@@ -741,7 +742,7 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
         if edit.startswith("https://github.com/"):
             L += [f"Edit it here: <{edit}>", ""]
         L += [f"- [ ] {cites(r.get('citations'))} — {r.get('year') or '????'} — "
-              f"{(r.get('title') or '')[:60]}" for r in miss[:12]]
+              f"{clipped(r.get('title') or '', 60)}" for r in miss[:12]]
         if len(miss) > 12:
             L += [f"- … and {len(miss) - 12} more in "
                   f"[`build/scholar_diff.json`](build/scholar_diff.json)"]
@@ -783,7 +784,7 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
                    else f" <https://doi.org/{p['doi']}>" if p.get("doi")
                    else f" <{p['url']}>" if p.get("url") else "")
             L += [f"- [ ] {cites(p.get('citations'))} — {p.get('year') or '????'} — "
-                  f"{(p.get('title_display') or p.get('title') or '')[:58]}{ref}"]
+                  f"{clipped(p.get('title_display') or p.get('title') or '', 58)}{ref}"]
         L += [""]
     if fix:
         L += [f"### {pl(len(fix))} whose bibliography title is behind arXiv", "",
@@ -792,8 +793,8 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
               "bibliography and re-run. Until then the two surfaces answer a title query",
               "differently, which is the exact failure this repo exists to prevent.", ""]
         L += [f"- [ ] `{v.get('slug')}`\n"
-              f"      - arXiv and Scholar: {(v.get('scholar') or '')[:56]}\n"
-              f"      - the .bib entry:    {(v.get('corpus') or '')[:56]}"
+              f"      - arXiv and Scholar: {clipped(v.get('scholar') or '', 56)}\n"
+              f"      - the .bib entry:    {clipped(v.get('corpus') or '', 56)}"
               for v in fix] + [""]
     if call:
         L += [f"### {pl(len(call))} under two titles, with no arXiv record to break the "
@@ -802,8 +803,8 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
               "judgement. Decide which is canonical and set it in",
               "[`data/overrides.yaml`](data/overrides.yaml).", ""]
         L += [f"- [ ] `{v.get('slug')}`\n"
-              f"      - scholar: {(v.get('scholar') or '')[:64]}\n"
-              f"      - corpus:  {(v.get('corpus') or '')[:64]}" for v in call] + [""]
+              f"      - scholar: {clipped(v.get('scholar') or '', 64)}\n"
+              f"      - corpus:  {clipped(v.get('corpus') or '', 64)}" for v in call] + [""]
     if dup:
         L += [f"### {pl(len(dup))} listed twice on Scholar", "",
               "Two rows for one paper splits its citation count, and nothing here can fix",
@@ -868,7 +869,7 @@ def scholar_split_records(st: dict) -> list[str]:
                f"filed as *{r.get('searched_as')}* at {r.get('index')}"
                if r["kind"] == "name form" else
                f"{len(r['records'])} OpenAlex records for one title")
-        L += [f"- [ ] **{gap} citations** — {(r.get('title') or '')[:64]}",
+        L += [f"- [ ] **{gap} citations** — {clipped(r.get('title') or '', 64)}",
               f"      - {why}",
               f"      - [search Scholar for it]({r['search']})"]
     if len(rows) > 15:
@@ -1037,7 +1038,7 @@ def upstream_gaps(papers: list[dict], cfg) -> list[str]:
         # keep: the bibliography assigns keys, and the reason these records carry no
         # `bibtex` of their own is that an invented key competing with the published one
         # is the split this project exists to avoid. Paste the fields, not the key.
-        L += [f"- [ ] **{(p.get('title_display') or p.get('title') or '')[:66]}** — "
+        L += [f"- [ ] **{clipped(p.get('title_display') or p.get('title') or '', 66)}** — "
               f"`{p['_override']}`, {p.get('citations') or 0} cites", "",
               "  ```bibtex", *(f"  {ln}" for ln in synth_bibtex(p).splitlines()),
               "  ```", ""]
@@ -1068,7 +1069,9 @@ def upstream_gaps(papers: list[dict], cfg) -> list[str]:
               "output; leaving it means the next reader cannot tell which lines are still",
               "load-bearing, which is how a stopgap becomes part of the design.", ""]
         for k, v in spent:
-            L.append(f"- [ ] `{k}:` delete `{v[:60]}`")
+            # Whole, not clipped: this is the line to find and delete, so a fragment of it
+            # is not something the reader can search for.
+            L.append(f"- [ ] `{k}:` delete `{v}`")
         L.append("")
 
     # A `fields:` correction the bibliography could carry itself. Matched on the value
@@ -1086,7 +1089,11 @@ def upstream_gaps(papers: list[dict], cfg) -> list[str]:
             priv.append((rec, slug, want))
     if priv:
         n = sum(len(w) for _r, _s, w in priv)
-        L += [f"## {n} field correction{'s' * (n != 1)} the bibliography does not carry", "",
+        # Both numbers, because they differ and the reader can see only one of them: two
+        # corrections in one entry is one visit, and a header saying 2 above a single
+        # checkbox reads as a miscount.
+        L += [f"## {n} field correction{'s' * (n != 1)} the bibliography does not carry "
+              f"({len(priv)} entr{'y' if len(priv) == 1 else 'ies'})", "",
               "`fields:` in [`data/overrides.yaml`](data/overrides.yaml) corrects these for",
               "the corpus and nothing else. Scholar, Semantic Scholar and OpenAlex read the",
               "paper's own record, so a correction that stays here is one they never get.",
@@ -1094,7 +1101,7 @@ def upstream_gaps(papers: list[dict], cfg) -> list[str]:
         if edit.startswith("https://github.com/"):
             L += [f"Edit the bibliography here: <{edit}>", ""]
         for rec, slug, want in priv:
-            title = (rec.get("title_display") or rec.get("title") or slug)[:60]
+            title = clipped(rec.get("title_display") or rec.get("title") or slug, 60)
             key = rec.get("key") or ""
             L += [f"- [ ] **{title}**" + (f" — entry `{key}`" if key else ""), "",
                   "  ```bibtex"]
@@ -1118,13 +1125,13 @@ def orcid_missing_items(slugs: list[str], by_slug: dict) -> list[str]:
     rows = [by_slug.get(s) or {"slug": s} for s in slugs]
     if len(rows) > 3:
         return ([f"- [ ] {p.get('citations') or 0} cites — "
-                 f"{(p.get('title') or p['slug'])[:66]}" for p in rows[:8]]
+                 f"{clipped(p.get('title') or p['slug'], 66)}" for p in rows[:8]]
                 + ([f"- … and {len(rows) - 8} more in "
                     "[`tasks/orcid_missing.md`](tasks/orcid_missing.md)"]
                    if len(rows) > 8 else []))
     out = []
     for p in rows:
-        out += [f"- [ ] **{(p.get('title') or p['slug'])[:66]}** — "
+        out += [f"- [ ] **{clipped(p.get('title') or p['slug'], 66)}** — "
                 f"{p.get('citations') or 0} cites — what the file will add:", "",
                 "  ```bibtex",
                 *(f"  {ln}" for ln in (p.get("bibtex") or synth_bibtex(p)).strip().splitlines()),
@@ -1175,6 +1182,22 @@ def wikipedia_checks(wiki: dict) -> list[str]:
                 "[`tasks/wikipedia.md`](tasks/wikipedia.md) as deliberately not "
                 "actionable, along with",
                 "the field articles you could improve with other people's sources.", ""]
+
+
+def same_or_different(papers: list[dict]) -> list[str]:
+    """Title pairs close enough that one of them may be the other, for one decision each.
+
+    Both titles whole rather than clipped to a row width: the decision is whether they name
+    one paper, and a clip can fall exactly where they differ.
+    """
+    review = [p for p in papers if p.get("similar_but_distinct")]
+    if not review:
+        return []
+    L = ["## Same paper or different? (decide once in data/overrides.yaml)", ""]
+    for p in review:
+        for o in p["similar_but_distinct"]:
+            L.append(f"- [ ] `{p.get('title_display') or p['title']}`  vs  `{o}`")
+    return L + [""]
 
 
 def step_worklist(cfg, args) -> None:
@@ -1247,13 +1270,13 @@ def step_worklist(cfg, args) -> None:
         """
         p = by_slug.get(b.get("should_be")) or {}
         title = p.get("title_display") or p.get("title") or b.get("should_be") or "?"
-        out = [f"- [ ] **{title[:66]}** — put-code `{b['put']}`"]
+        out = [f"- [ ] **{clipped(title, 66)}** — put-code `{b['put']}`"]
         doi = b.get("carried_doi")
         if doi:
             # Linked, because the link is the evidence: following the identifier that is
             # on your own record lands on a paper that is not this one.
             out.append(f"      - remove `{doi}` — it resolves to "
-                       f"[{(b.get('carried_title') or 'another paper')[:44]}]"
+                       f"[{clipped(b.get('carried_title') or 'another paper', 44)}]"
                        f"(https://doi.org/{doi}), a different paper")
         else:
             out.append("      - remove the identifier it carries: "
@@ -1273,12 +1296,12 @@ def step_worklist(cfg, args) -> None:
     def dup_item(r: dict) -> list[str]:
         """One ORCID duplicate pair: which entry to open, and the one value to paste."""
         if r.get("doi"):
-            return [f"- [ ] **{r['title'][:60]}** — open put-code `{r['keep']}` "
-                    f"(*{r['keep_title'][:38]}*) and add the DOI `{r['doi']}`, which is "
-                    f"the one on put-code `{r['folds']}` (*{r['folds_title'][:38]}*)", ""]
+            return [f"- [ ] **{clipped(r['title'], 60)}** — open put-code `{r['keep']}` "
+                    f"(*{clipped(r['keep_title'], 38)}*) and add the DOI `{r['doi']}`, which is "
+                    f"the one on put-code `{r['folds']}` (*{clipped(r['folds_title'], 38)}*)", ""]
         # No arXiv-DOI entry, or more than two: naming every entry is the honest form,
         # because which one has the venue is a judgement and this is not making it.
-        return [f"- [ ] **{r['title'][:60]}** — {len(r['entries'])} entries: "
+        return [f"- [ ] **{clipped(r['title'], 60)}** — {len(r['entries'])} entries: "
                 + "; ".join(f"`{e['put']}` ({e['doi'] or 'no DOI'})"
                             for e in r["entries"])
                 + ". Open whichever has the venue and add one of the others' DOIs.", ""]
@@ -1391,7 +1414,7 @@ def step_worklist(cfg, args) -> None:
           "**Do not claim the second page as well** — a second claimed record is harder to",
           "undo than an unclaimed one, and it makes the split look deliberate.", ""])
          + [f"- [ ] {p.get('citations') or 0} cites — "
-            f"{(p.get('title_display') or p['title'])[:56]} — "
+            f"{clipped(p.get('title_display') or p['title'], 56)} — "
             + (f"<https://www.semanticscholar.org/paper/{p['s2_corpus_id']}>"
                if p.get("s2_corpus_id") else
                "**no S2 id known** — search the title on the Add Papers form")
@@ -1490,7 +1513,7 @@ def step_worklist(cfg, args) -> None:
         for t in typos:
             p = by_slug.get(t.get("slug")) or {}
             lines.append(f"- [ ] [`{t['arxiv']}`](https://arxiv.org/abs/{t['arxiv']}) — "
-                         f"reads **{t.get('reads')}** — {(p.get('title') or '')[:52]}")
+                         f"reads **{t.get('reads')}** — {clipped(p.get('title') or '', 52)}")
         lines += ["", "Full detail: `tasks/arxiv_name_fixes.md`.", ""]
 
     if state.get("arxiv_registered") is not None and unowned:
@@ -1693,14 +1716,7 @@ def step_worklist(cfg, args) -> None:
             lines.append(f"- [ ] <https://hf.co/papers/{p['arxiv']}>  ({p.get('citations') or 0} cites)")
         lines.append("")
 
-    review = [p for p in papers if p.get("similar_but_distinct")]
-    if review:
-        lines += ["## Same paper or different? (decide once in data/overrides.yaml)", ""]
-        for p in review:
-            for o in p["similar_but_distinct"]:
-                lines.append(f"- [ ] `{(p.get('title_display') or p['title'])[:64]}`"
-                             f"  vs  `{o[:64]}`")
-        lines.append("")
+    lines += same_or_different(papers)
 
     # Two different asks, and conflating them is what made this section unusable:
     # verifying a draft is minutes, writing one from a blank file is not. Drafts are
@@ -1749,7 +1765,7 @@ def step_worklist(cfg, args) -> None:
             # refuses it without `--replace` for the same reason.
             mark = "  **replaces the live sidecar**" if has_live_sidecar(slug) else ""
             title = p.get("title_display") or p.get("title") or slug
-            lines.append(f"- [ ] **{title[:60]}** — "
+            lines.append(f"- [ ] **{clipped(title, 60)}** — "
                          f"{p.get('citations') or 0} cites{mark}")
             lines.append(f"      - read: [in the review page](file://{page}#{slug}) · "
                          f"[raw draft](data/sidecars/drafts/{slug}.md)")
@@ -1795,7 +1811,7 @@ def step_worklist(cfg, args) -> None:
                   "its own.", ""]
         for p in sorted(todraft, key=lambda p: -(p.get("citations") or 0))[:6]:
             lines.append(f"- `{p['slug']}` — {p.get('citations') or 0} cites — "
-                         f"{(p.get('title_display') or p['title'])[:56]}")
+                         f"{clipped(p.get('title_display') or p['title'], 56)}")
         lines.append("")
 
     # Papers whose text no fetcher can reach, upstream of the two sidecar sections above: a
@@ -1836,7 +1852,8 @@ def step_worklist(cfg, args) -> None:
                   "read before any network source, so the next run picks it up and the paper",
                   "joins the drafting queue.", ""]
         for p in sorted(starved, key=lambda p: -(p.get("citations") or 0)):
-            lines.append(f"- [ ] **{(p.get('title_display') or p.get('title') or '')[:60]}** "
+            title = clipped(p.get("title_display") or p.get("title") or "", 60)
+            lines.append(f"- [ ] **{title}** "
                          f"— {p.get('citations') or 0} cites, "
                          f"{p.get('venue_display') or 'no venue'}")
             # Where the file is, not just where it goes. "You already have the PDF" is

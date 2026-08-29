@@ -17,7 +17,7 @@ count more. Where it counts less, the difference is on another record.
 
 | gap | Scholar | index | paper | search |
 |---|---|---|---|---|
-| 95 | 199 | 294 | tinyBenchmarks: evaluating LLMs with fewer examples | [search](https://scholar.google.com/scholar?q=%22tinyBenchmarks%3A%20evaluating%20LLMs%20with%20fewer%20examples%22) |
+| 94 | 200 | 294 | tinyBenchmarks: evaluating LLMs with fewer examples | [search](https://scholar.google.com/scholar?q=%22tinyBenchmarks%3A%20evaluating%20LLMs%20with%20fewer%20examples%22) |
 | 37 | 31 | 68 | Elements of World Knowledge (EWoK): A Cognition-Inspired Fra | [search](https://scholar.google.com/scholar?q=%22Elements%20of%20World%20Knowledge%20%28EWoK%29%3A%20A%20Cognition-Inspired%20Framework%20for%20Evaluating%20Basic%20World%20Knowledge%20in%20Language%20Models%22) |
 | 13 | 0 | 13 | The Mighty ToRR: A Benchmark for Table Reasoning and Robustn | [search](https://scholar.google.com/scholar?q=%22The%20Mighty%20ToRR%3A%20A%20Benchmark%20for%20Table%20Reasoning%20and%20Robustness%22) |
 | 6 | 13 | 19 | Beneath the Surface of Consistency: Exploring Cross-lingual  | [search](https://scholar.google.com/scholar?q=%22Beneath%20the%20Surface%20of%20Consistency%3A%20Exploring%20Cross-lingual%20Knowledge%20Representation%20Sharing%20in%20LLMs%22) |

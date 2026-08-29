@@ -643,7 +643,7 @@ def main() -> int:
             "create item for a co-author, from their ORCID record", LEDGER_NOTE)
         print("%d/%d created" % (made, wanted_n))
     if link:
-        print("adding the ORCID to %d item(s) answered by hand" % len(link))
+        print("adding the ORCID to %d same-name item(s)" % len(link))
         add_orcids(s, link, day)
     fixed, off = resync(s, day)
     if off:
@@ -652,7 +652,7 @@ def main() -> int:
 
 
 def add_orcids(s, link: list[tuple[dict, str]], day: str) -> int:
-    """Add each person's ORCID to the item a hand-given answer says they are.
+    """Add each person's ORCID to the item said to be theirs.
 
     Recorded in the same ledger as a creation, which means the same thing either way: this
     ORCID now resolves to this item, hours before the query service says so.
@@ -661,9 +661,13 @@ def add_orcids(s, link: list[tuple[dict, str]], day: str) -> int:
     d = read_yaml(path) or {}
     ok = 0
     for p, qid in link:
+        # The summary is the only trace an edit leaves for whoever reviews it, so it names
+        # the record that settled it where one did, and the override file otherwise.
+        why = ("add ORCID, %s (paper-geo)" % p["verdict"]["why"] if p.get("verdict")
+               else "add ORCID from data/overrides.yaml (paper-geo)")
         try:
             s.edit("wbeditentity", id=qid, data=json.dumps(linked(p, day)),
-                   summary="add ORCID from data/overrides.yaml (paper-geo)")
+                   summary=why)
             d.setdefault("items", {})[p["orcid"]] = qid
             d.setdefault("labels", {})[qid] = p["label"]
             write_yaml(path, d)

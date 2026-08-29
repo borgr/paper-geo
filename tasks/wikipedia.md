@@ -6,15 +6,9 @@ citation to your own work, or asks for a mention that nobody independent thought
 was due -- WP:COI and WP:SELFCITE, and see the module docstring for why the
 insert-a-mention version of this page was dropped.
 
-## Articles that mention Choshen (1)
+## Articles that mention Choshen (0)
 
-Read each one and check it describes the work correctly. If it does, there is
-nothing to do. If it does not, the talk page gets the correction and the page
-or table it comes from -- never the article itself. The quoted line is the
-text that names you, excerpted by the search, so it may start mid-sentence.
-
-- [ ] [Argument technology](https://en.wikipedia.org/wiki/Argument_technology) — [talk](https://en.wikipedia.org/wiki/Talk:Argument_technology)
-  > m|first4=Roy|last5=Bogin|first5=Ben|last6=Bonin|first6=Francesca|last7=Choshen|first7=Leshem|last8=Cohen-Karlik|first8=Edo|last9=Dankin|first9=Lena|l
+None found. That is the expected state and not a gap to close.
 
 ## Coined here and written up by someone else (2)
 
@@ -32,8 +26,6 @@ term — enough to tick most rows without opening anything.
     > been growing rapidly, with, for example, IBM's Grand Challenge, Project Debater, results for which were published in Nature
   - [ ] [Open to Debate](https://en.wikipedia.org/wiki/Open_to_Debate) — [talk](https://en.wikipedia.org/wiki/Talk:Open_to_Debate)
     > intelligence and a human being, in partnership with IBM's "Project Debater".
-  - [ ] [Noam Slonim](https://en.wikipedia.org/wiki/Noam_Slonim) — [talk](https://en.wikipedia.org/wiki/Talk:Noam_Slonim)
-    > Jerusalem | doctoral_advisor = Naftali Tishby | known_for = Project Debater | awards = IBM Distinguished Engineer Noam Slonim
 - **PromptEval** (85 citations)
   - [ ] [Prompt engineering](https://en.wikipedia.org/wiki/Prompt_engineering) — [talk](https://en.wikipedia.org/wiki/Talk:Prompt_engineering)
     > more comprehensive performance interval. Similarly, PromptEval estimates performance distributions across diverse prompts, enabling robust

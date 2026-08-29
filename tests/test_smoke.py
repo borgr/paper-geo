@@ -2755,6 +2755,37 @@ class TestReviewPageShowsEachThingOnce(unittest.TestCase):
                               f"{slug}: claim {c['id']} is on no surface of the page")
 
 
+class TestAClippedTitleStillReads(unittest.TestCase):
+    """A row is scanned against what the destination shows it, so a title cut mid-word is a
+    title the reader cannot match. `Numerica` reads as a different paper from `Numerical`,
+    and 40-odd emitter rows used to cut on the character count alone.
+    """
+
+    def test_the_cut_lands_on_a_space_and_says_it_happened(self):
+        from common import clipped
+        self.assertEqual("NumeroLogic: Number Encoding for Enhanced LLMs'…",
+                         clipped("NumeroLogic: Number Encoding for Enhanced LLMs' "
+                                 "Numerical Reasoning", 56))
+        self.assertEqual("short enough", clipped("short enough", 56))
+        self.assertEqual("", clipped(None))
+        # One word longer than the whole width is an identifier or a URL, not a title, and
+        # the hard cut is the only thing left to do with it.
+        self.assertEqual("AAAAAAAAAAAAAAAAAAA…", clipped("A" * 40, 20))
+
+    def test_a_payload_the_reader_has_to_match_is_never_clipped(self):
+        """Some rows carry a value rather than a label, and a clip breaks them. The decision
+        here is whether two titles name one paper, so a clip could fall exactly where they
+        differ. The override line to delete is the same case and is left whole too."""
+        import update
+        long = ("Deliberately Long Title That Runs Past Any Sensible Row Width So The "
+                "Clip Would Fire Here")
+        out = "\n".join(update.same_or_different(
+            [{"slug": "a", "title": long, "similar_but_distinct": [long + " Two"]}]))
+        self.assertIn(long + "`", out)
+        self.assertIn(long + " Two`", out)
+        self.assertNotIn("…", out)
+
+
 class TestGeneratedFilesRenderTitles(unittest.TestCase):
     """No generated file may print a title's raw BibTeX form.
 
@@ -3952,6 +3983,39 @@ class TestWikipediaAsksOnlyForCorrections(unittest.TestCase):
                          w.plain('<ref name="auto" /> Similarly, PromptEval estimates'))
         self.assertEqual("Roy Bogin – joined",
                          w.plain(w.snippet({"snippet": "Roy Bogin &amp;ndash; joined"})))
+
+    def test_a_name_inside_a_citation_or_an_infobox_is_not_a_claim_to_check(self):
+        """A row quoting `m|first4=Roy|last5=Bogin` asks nothing answerable. The match is in
+        a reference's author list or an infobox field, which cites the work rather than
+        describing it, and the snippet carries no `{{` for the template rule to find."""
+        w = self._mod()
+        self.assertEqual("m |l", w.plain("m|first4=Roy|last5=Bogin|first5=Ben|"
+                                        "last7=Choshen|first7=Leshem|l"))
+        with mock.patch.object(w, "search", lambda q, limit=20: [
+                {"title": "Noam Slonim",
+                 "snippet": "Jerusalem | known_for = Project Debater | awards = IBM"}]), \
+             mock.patch.object(w, "in_domain", lambda t: True):
+            self.assertEqual([], w.mentions("Project Debater"))
+        # A table cell is content and stays: no `name = value`, so nothing matches.
+        self.assertEqual("| Project Debater || 2018 || IBM",
+                         w.plain("| Project Debater || 2018 || IBM"))
+
+    def test_a_see_also_link_or_a_category_is_not_a_claim_to_check(self):
+        """A footer match is one bare link among others. An outline entry with a gloss is a
+        description and stays, which is what separates the two."""
+        w = self._mod()
+        with mock.patch.object(w, "search", lambda q, limit=20: [
+                {"title": "Artificial intelligence and moral enhancement",
+                 "snippet": "Multi-agent systems [[Project Debater]] ==References== "
+                            "[[Category:Bioethics]]"}]), \
+             mock.patch.object(w, "in_domain", lambda t: True):
+            self.assertEqual([], w.mentions("Project Debater"))
+        with mock.patch.object(w, "search", lambda q, limit=20: [
+                {"title": "Outline of artificial intelligence",
+                 "snippet": "* [[Project Debater]] (2018) – artificially intelligent "
+                            "computer system"}]), \
+             mock.patch.object(w, "in_domain", lambda t: True):
+            self.assertEqual(1, len(w.mentions("Project Debater")))
 
     def test_every_worklist_row_carries_what_the_article_says(self):
         """A row asking whether a description is wrong, without the description, is a bug.

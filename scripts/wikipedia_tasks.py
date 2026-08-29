@@ -83,6 +83,12 @@ def exists(title: str) -> dict | None:
 # and an outline row as `*** [[Machine learning]] *`.
 MARKUP = [(re.compile(r"<ref[^>]*>.*?</ref>|<[^>]*>", re.S), ""),
           (re.compile(r"\{\{[^{}]*(\}\})?"), " "),
+          # A hit can land *inside* a citation or an infobox, where the snippet carries no
+          # `{{` for the rule above to find -- `m|first4=Roy|last5=Bogin|first5=Ben`. Those
+          # runs go, which leaves nothing the name or the term is in, and the row drops. A
+          # name in a reference's author list is a citation of the work, not a claim about
+          # it, so there is nothing there to check. `=` is required, so a table cell stays.
+          (re.compile(r"\|\s*[A-Za-z][\w -]*\s*=\s*[^|]*"), " "),
           (re.compile(r"\[\[[^\]|]*\|([^\]|]*)\]\]"), r"\1"),
           (re.compile(r"\[\[([^\]|]*)\]\]"), r"\1"),
           (re.compile(r"'{2,}|\[\[|\]\]|\{\{|\}\}"), ""),
@@ -103,6 +109,13 @@ def plain(text: str) -> str:
     for pat, rep in MARKUP:
         text = pat.sub(rep, text)
     return " ".join(html.unescape(text).split())
+
+
+# A match that reaches an article's footer is in its see-also list or its categories, where
+# the term is one bare link among others and nothing is stated about it to check. `==` and
+# `Category:` occur nowhere else.
+FOOTER = re.compile(r"==\s*(references|see also|external links|further reading|notes|"
+                    r"bibliography)|\bCategor(y|ies):", re.I)
 
 
 def saying(text: str, term: str) -> str:
@@ -130,7 +143,7 @@ def mentions(term: str, limit: int = 5) -> list[dict]:
         # In-domain as well as case-exact: `RLCR` matched five articles about sculpture and
         # a rotisserie oven, and an accuracy check aimed at "Brushstrokes in Flight" is not
         # a task, it is a reason to stop trusting the page.
-        if term in snip and in_domain(h["title"]):
+        if term in snip and not FOOTER.search(snip) and in_domain(h["title"]):
             out.append(dict(h, says=snip))
     return out[:limit]
 
@@ -218,9 +231,13 @@ def main() -> None:
     # 1. Where the author is named. Being an author makes you the best-placed person to
     #    notice a misstatement and the worst-placed one to fix it, so it is a talk-page item
     #    -- but a correction of fact is the proposal editors accept most readily.
-    hits = search(f'insource:"{surname}" insource:"arxiv"', limit=30)
-    mine = [dict(h, says=plain(snippet(h))) for h in hits
-            if surname.lower() in plain(snippet(h)).lower()]
+    mine = []
+    for h in search(f'insource:"{surname}" insource:"arxiv"', limit=30):
+        snip = plain(snippet(h))
+        # The same two rejections `mentions` applies: the name has to survive the markup
+        # strip, and a footer match is a category line rather than a description.
+        if surname.lower() in snip.lower() and not FOOTER.search(snip):
+            mine.append(dict(h, says=snip))
     L += [f"## Articles that mention {surname} ({len(mine)})", ""]
     if mine:
         L += ["Read each one and check it describes the work correctly. If it does, there is",

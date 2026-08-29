@@ -13,12 +13,31 @@ string, which is the correct end state for them.
 
 None to add.
 
-## Settled by a record rather than a name (0)
+## Language and full text (2)
 
-None left. Every co-author an ORCID or a DBLP page could reach is already
-resolved.
+Also in the same paste, and also nothing to decide. 1 item(s) do not say what
+language the paper is in, and 1 carry no link to a free copy — the
+publisher-hosted one, since a doi.org or arxiv.org link only restates an
+identifier the item already has.
 
-## Remaining, one paper at a time (105 papers, 965 strings)
+## Settled by a record rather than a name (2)
+
+Two kinds of evidence and no name compared in either, so none of these needs a
+judgement. 2 came from the paper's OpenAlex record giving the co-author's
+ORCID, with exactly one Wikidata item stating it. 0 came from DBLP, where
+exactly one candidate's author page lists this same paper -- DBLP separates
+its own namesakes, so a shared publication is a shared person.
+
+Paste [`tasks/wikidata_coauthors.qs`](tasks/wikidata_coauthors.qs) into
+<https://quickstatements.toolforge.org/#/batch>. Each author is two lines, one
+adding *author* with the printed name kept as an *object named as* qualifier,
+one dropping the string it replaces.
+
+- [ ] **0 citations** — Position: Agentic Systems Should be General
+      - Margaret Mitchell → [Margaret Mitchell](https://www.wikidata.org/wiki/Q50346871) (ORCID 0000-0001-7043-6545)
+      - Michal Shmueli-Scheuer → [Michal Shmueli-Scheuer](https://www.wikidata.org/wiki/Q141203675) (ORCID 0000-0002-6386-8726)
+
+## Remaining, one paper at a time (106 papers, 970 strings)
 
 The *disambiguate* link opens Author Disambiguator on the paper item. It
 matches name forms an exact label search cannot -- a byline reading *Colin A.
@@ -31,15 +50,16 @@ matches found here. A namesake matches identically, so open the item and check
 the person before accepting. Two candidates on one name sometimes means two
 items for one person, which is a merge rather than a choice.
 
-171 name matches are not listed. Each states an occupation nothing like
+164 name matches are not listed. Each states an occupation nothing like
 research -- footballer, actor, politician -- so the name is a coincidence. An
 item stating no occupation at all is still listed.
 
 - [ ] **897 citations** — TIES-Merging: Resolving Interference When Merging Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029633)
-      - Mohit Bansal → [Q67386311](https://www.wikidata.org/wiki/Q67386311) — researcher, natural language processing and , [Q131168113](https://www.wikidata.org/wiki/Q131168113) — researcher (ORCID 0009-0009-2965-5354), [Q92117908](https://www.wikidata.org/wiki/Q92117908) — researcher (ORCID 0000-0002-8403-0316) … +2
+      - Mohit Bansal → [Q131168113](https://www.wikidata.org/wiki/Q131168113) — researcher (ORCID 0009-0009-2965-5354), [Q67386311](https://www.wikidata.org/wiki/Q67386311) — researcher, natural language processing and , [Q92117908](https://www.wikidata.org/wiki/Q92117908) — researcher (ORCID 0000-0002-8403-0316) … +2
 - [ ] **294 citations** — tinyBenchmarks: evaluating LLMs with fewer examples — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029634)
       - Yuekai Sun → [Q102433700](https://www.wikidata.org/wiki/Q102433700) — statistician
       - Gongjun Xu → [Q100674149](https://www.wikidata.org/wiki/Q100674149) — researcher
+      - Mikhail Yurochkin → [Q103330754](https://www.wikidata.org/wiki/Q103330754) — statistician
 - [ ] **244 citations** — Active Learning for BERT: An Empirical Study — 7 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029635)
 - [ ] **238 citations** — Findings of the BabyLM Challenge: Sample-Efficient Pretraini — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029636)
 - [ ] **190 citations** — Global MMLU: Understanding and Addressing Cultural and Lingu — 11 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029638)
@@ -55,13 +75,15 @@ item stating no occupation at all is still listed.
 - [ ] **117 citations** — Model merging with SVD to tie the Knots — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029643)
       - J. Hoffman → [Q59556470](https://www.wikidata.org/wiki/Q59556470) — researcher ORCID ID = 0000-0002-1571-6808, [Q76142038](https://www.wikidata.org/wiki/Q76142038) — Peerage person ID=560424, [Q138575927](https://www.wikidata.org/wiki/Q138575927) — researcher
 - [ ] **100 citations** — Beyond Binary Rewards: Training LMs to Reason About Their Un — 3 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029645)
-      - Yoon Kim → [Q130808559](https://www.wikidata.org/wiki/Q130808559) — researcher (ORCID 0009-0003-8583-6324), [Q88771001](https://www.wikidata.org/wiki/Q88771001) — researcher (ORCID 0000-0002-7404-8432), [Q91553362](https://www.wikidata.org/wiki/Q91553362) — researcher (ORCID 0000-0002-0679-6594) … +2
+      - Yoon Kim → [Q88771001](https://www.wikidata.org/wiki/Q88771001) — researcher (ORCID 0000-0002-7404-8432), [Q91553362](https://www.wikidata.org/wiki/Q91553362) — researcher (ORCID 0000-0002-0679-6594), [Q60973630](https://www.wikidata.org/wiki/Q60973630) — South Korean researcher and politician … +2
       - Jacob Andreas → [Q125454034](https://www.wikidata.org/wiki/Q125454034) — AI researcher
 - [ ] **100 citations** — Jump to Conclusions: Short-Cutting Transformers with Linear  — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029646)
       - Alexander Yom Din → [Q102662940](https://www.wikidata.org/wiki/Q102662940) — Israeli mathematician
 - [ ] **92 citations** — Asymmetry in Low-Rank Adapters of Foundation Models — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029647)
+      - Mikhail Yurochkin → [Q103330754](https://www.wikidata.org/wiki/Q103330754) — statistician
 - [ ] **85 citations** — Efficient multi-prompt evaluation of LLMs — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029648)
       - Yuekai Sun → [Q102433700](https://www.wikidata.org/wiki/Q102433700) — statistician
+      - Mikhail Yurochkin → [Q103330754](https://www.wikidata.org/wiki/Q103330754) — statistician
 - [ ] **78 citations** — Are You Convinced? Choosing the More Convincing Evidence wit — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029650)
 - [ ] **73 citations** — Knowledge is a Region in Weight Space for Fine-tuned Languag — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029651)
 - [ ] **72 citations** — Will it Blend? Blending Weak and Strong Labeled Data in a Ne — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029652)
@@ -74,5 +96,5 @@ item stating no occupation at all is still listed.
       - Jennifer Hu → [Q102309422](https://www.wikidata.org/wiki/Q102309422) — Cognitive Science researcher; Ph.D. Universi
       - Maria Ryskina → [Q130838678](https://www.wikidata.org/wiki/Q130838678) — researcher
       - Ekin Akyürek → [Q141203667](https://www.wikidata.org/wiki/Q141203667) — researcher at Massachusetts Institute of Tec
-- … and 85 more papers, same order, in `build/wikidata_coauthors.json`
+- … and 86 more papers, same order, in `build/wikidata_coauthors.json`
 

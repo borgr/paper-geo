@@ -16,25 +16,25 @@ holds the instructions; nothing here repeats them.
 **One edit each, and each one closes a section outright.** This is where
 the page gets visibly shorter.
 
-1. **Co-authors who may already have a Wikidata item (22)** — open each item and write the QID beside the ORCID in `data/overrides.yaml`, or `new` where the papers on it are somebody else's. The lines are in the section ready to paste, and answering the top few is worth doing on its own — each answer turns one co-author into `author` statements on the papers you share.
-2. **2 field corrections the bibliography does not carry** — one paste per line, into the entry `orig.bib` already has for that paper. Every line is given ready to drop in, and the override lines go after. Worth more than its size — Scholar, Semantic Scholar and OpenAlex all read the paper's own record, and none of them reads this repo.
-3. **Wikipedia mentions 3 of your coinages across 6 article(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
+1. **Co-authors who may already have a Wikidata item (22)** — pick the line that is them and paste the QID into `data/overrides.yaml`, or `new` where none is. What every candidate item states about itself is in the section, so most rows need nothing opened, and answering the top few is worth doing on its own — each answer turns one co-author into `author` statements on the papers you share.
+2. **2 field corrections the bibliography does not carry (1 entry)** — one paste per line, into the entry `orig.bib` already has for that paper. Every line is given ready to drop in, and the override lines go after. Worth more than its size — Scholar, Semantic Scholar and OpenAlex all read the paper's own record, and none of them reads this repo.
+3. **Wikipedia mentions 2 of your coinages across 5 article(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
 
 **As much as you have patience for.** Per-paper clicking, because
 no write API can make the judgement each one needs — and every section
 is ordered so that stopping early still captures most of the value.
 
-4. **Wikidata author strings (965 by hand)** — one Author Disambiguator pass per paper, most-cited first, at the link the section gives for each. Everything an ORCID or a DBLP author page could settle is already on Wikidata, so what is left is the part where the name is all there is to go on.
+4. **Wikidata author strings (2 batchable, 970 by hand)** — one Author Disambiguator pass per paper, most-cited first, at the link the section gives for each. Everything an ORCID or a DBLP author page could settle is already on Wikidata, so what is left is the part where the name is all there is to go on.
 5. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
 6. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
-7. **Citations on a Scholar record you cannot see (46, ~247 citations)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
+7. **Citations on a Scholar record you cannot see (46, ~246 citations)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
 
 ## Waiting on the outside world
 
 - **2026-10-04** — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.
 - **2026-11-04** — Crossref and DataCite auto-update only fire on newly deposited metadata that already carries your iD, so the proof is a work whose ORCID source is Crossref or DataCite rather than your own name -- which cannot appear until something you publish is deposited.
 
-## Citations on a Scholar record you cannot see (46, ~247 citations)
+## Citations on a Scholar record you cannot see (46, ~246 citations)
 
 Scholar indexes preprints and theses the APIs do not, so a profile row should
 always count *more* than OpenAlex and Semantic Scholar. Where it counts less,
@@ -54,46 +54,46 @@ merge attaches somebody else's paper to your name.
 Full detail, including the 200-odd records filed under an initials-only form of
 your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).
 
-- [ ] **95 citations** — tinyBenchmarks: evaluating LLMs with fewer examples
-      - Scholar 199 vs 294 at the APIs
+- [ ] **94 citations** — tinyBenchmarks: evaluating LLMs with fewer examples
+      - Scholar 200 vs 294 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22tinyBenchmarks%3A%20evaluating%20LLMs%20with%20fewer%20examples%22)
-- [ ] **37 citations** — Elements of World Knowledge (EWoK): A Cognition-Inspired Framewo
+- [ ] **37 citations** — Elements of World Knowledge (EWoK): A Cognition-Inspired…
       - Scholar 31 vs 68 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Elements%20of%20World%20Knowledge%20%28EWoK%29%3A%20A%20Cognition-Inspired%20Framework%20for%20Evaluating%20Basic%20World%20Knowledge%20in%20Language%20Models%22)
 - [ ] **23 citations** — TIES-Merging: Resolving Interference When Merging Models
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22TIES-Merging%3A%20Resolving%20Interference%20When%20Merging%20Models%22)
-- [ ] **15 citations** — DORA The Explorer: Directed Outreaching Reinforcement Action-Sel
+- [ ] **15 citations** — DORA The Explorer: Directed Outreaching Reinforcement…
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22DORA%20The%20Explorer%3A%20Directed%20Outreaching%20Reinforcement%20Action-Selection%22)
 - [ ] **13 citations** — The Mighty ToRR: A Benchmark for Table Reasoning and Robustness
       - Scholar 0 vs 13 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22The%20Mighty%20ToRR%3A%20A%20Benchmark%20for%20Table%20Reasoning%20and%20Robustness%22)
-- [ ] **10 citations** — On the Weaknesses of Reinforcement Learning for Neural Machine T
+- [ ] **10 citations** — On the Weaknesses of Reinforcement Learning for Neural Machine…
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22On%20the%20Weaknesses%20of%20Reinforcement%20Learning%20for%20Neural%20Machine%20Translation%22)
-- [ ] **6 citations** — Beneath the Surface of Consistency: Exploring Cross-lingual Know
+- [ ] **6 citations** — Beneath the Surface of Consistency: Exploring Cross-lingual…
       - Scholar 13 vs 19 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Beneath%20the%20Surface%20of%20Consistency%3A%20Exploring%20Cross-lingual%20Knowledge%20Representation%20Sharing%20in%20LLMs%22)
-- [ ] **6 citations** — Global MMLU: Understanding and Addressing Cultural and Linguisti
+- [ ] **6 citations** — Global MMLU: Understanding and Addressing Cultural and…
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Global%20MMLU%3A%20Understanding%20and%20Addressing%20Cultural%20and%20Linguistic%20Biases%20in%20Multilingual%20Evaluation%22)
-- [ ] **5 citations** — Bigger is not always better: The importance of human-scale langu
+- [ ] **5 citations** — Bigger is not always better: The importance of human-scale…
       - 4 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Bigger%20is%20not%20always%20better%3A%20The%20importance%20of%20human-scale%20language%20modeling%20for%20psycholinguistics%22)
-- [ ] **5 citations** — Let's Agree to Agree: Neural Networks Share Classification Order
+- [ ] **5 citations** — Let's Agree to Agree: Neural Networks Share Classification…
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Let%27s%20Agree%20to%20Agree%3A%20Neural%20Networks%20Share%20Classification%20Order%20on%20Real%20Datasets%22)
-- [ ] **4 citations** — CommonLID: Re-evaluating State-of-the-Art Language Identificatio
+- [ ] **4 citations** — CommonLID: Re-evaluating State-of-the-Art Language…
       - Scholar 3 vs 7 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22CommonLID%3A%20Re-evaluating%20State-of-the-Art%20Language%20Identification%20Performance%20on%20Web%20Data%22)
 - [ ] **4 citations** — SemEval-2019 Task 1: Cross-lingual Semantic Parsing with UCCA
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22SemEval-2019%20Task%201%3A%20Cross-lingual%20Semantic%20Parsing%20with%20UCCA%22)
-- [ ] **4 citations** — Reference-less Measure of Faithfulness for Grammatical Error Cor
+- [ ] **4 citations** — Reference-less Measure of Faithfulness for Grammatical Error…
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Reference-less%20Measure%20of%20Faithfulness%20for%20Grammatical%20Error%20Correction%22)
-- [ ] **3 citations** — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Co
+- [ ] **3 citations** — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers…
       - Scholar 16 vs 19 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22LiveXiv%20--%20A%20Multi-Modal%20Live%20Benchmark%20Based%20on%20Arxiv%20Papers%20Content%22)
 - [ ] **3 citations** — Mediators in Determining what Processing BERT Performs First
@@ -101,16 +101,20 @@ your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Mediators%20in%20Determining%20what%20Processing%20BERT%20Performs%20First%22)
 - … and 31 more in [`tasks/scholar_strays.md`](tasks/scholar_strays.md), same order
 
-## Wikidata author strings (965 by hand)
+## Wikidata author strings (2 batchable, 970 by hand)
 
 Every paper item lists you as *author* and each co-author as *author name
 string*, which is a literal nothing can join on — so each item hangs off your
 item alone. Resolving a string to that person's own item is what connects them,
 and many independent paths into your item is the point of having them at all.
 
-- [ ] **965 strings across 105 papers** — one Author Disambiguator pass per paper, most-cited first
+- [ ] **2 authors, no judgement needed** — paste [`tasks/wikidata_coauthors.qs`](tasks/wikidata_coauthors.qs) into QuickStatements
+      - 2 matched ORCID to ORCID, and no name compared in either
+- [ ] **2 language and full-text statements** — also in that paste, *language of work* and *full work available at*
+      - both taken straight from the bibliography
+- [ ] **970 strings across 106 papers** — one Author Disambiguator pass per paper, most-cited first
       - the links, and the candidate items found for each name: [`tasks/wikidata_coauthors.md`](tasks/wikidata_coauthors.md)
-      - 171 name matches are left out as namesakes, on a stated occupation nothing like research
+      - 164 name matches are left out as namesakes, on a stated occupation nothing like research
 
 ## Co-authors who may already have a Wikidata item (22)
 
@@ -229,11 +233,7 @@ wikidata_people:
 Nothing else follows by hand. The next run adds the ORCID to the item named, or
 creates a separate one, and writes the *author* statements from it.
 
-2 more needed no answer -- a paper or an employer both records
-name says which item they are, and [`tasks/wikidata_people.md`](tasks/wikidata_people.md)
-lists which and why.
-
-## 2 field corrections the bibliography does not carry
+## 2 field corrections the bibliography does not carry (1 entry)
 
 `fields:` in [`data/overrides.yaml`](data/overrides.yaml) corrects these for
 the corpus and nothing else. Scholar, Semantic Scholar and OpenAlex read the
@@ -278,20 +278,20 @@ Highest-citation first, so stopping early still captures most of the loss.
 **Do not claim the second page as well** — a second claimed record is harder to
 undo than an unclaimed one, and it makes the split look deliberate.
 
-- [ ] 46 cites — NumeroLogic: Number Encoding for Enhanced LLMs' Numerica — <https://www.semanticscholar.org/paper/268819308>
-- [ ] 27 cites — Sloth: scaling laws for LLM skills to predict multi-benc — <https://www.semanticscholar.org/paper/274597594>
-- [ ] 22 cites — When AI Benchmarks Plateau: A Systematic Study of Benchm — <https://www.semanticscholar.org/paper/285787943>
+- [ ] 46 cites — NumeroLogic: Number Encoding for Enhanced LLMs'… — <https://www.semanticscholar.org/paper/268819308>
+- [ ] 27 cites — Sloth: scaling laws for LLM skills to predict… — <https://www.semanticscholar.org/paper/274597594>
+- [ ] 22 cites — When AI Benchmarks Plateau: A Systematic Study of… — <https://www.semanticscholar.org/paper/285787943>
 - [ ] 22 cites — A Hitchhiker's Guide to Scaling Law Estimation — <https://www.semanticscholar.org/paper/273350789>
-- [ ] 22 cites — Benchmark Agreement Testing Done Right: A Guide for LLM  — <https://www.semanticscholar.org/paper/287923131>
-- [ ] 21 cites — DOVE: A Large-Scale Multi-Dimensional Predictions Datase — <https://www.semanticscholar.org/paper/276774995>
-- [ ] 19 cites — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv P — <https://www.semanticscholar.org/paper/273345528>
+- [ ] 22 cites — Benchmark Agreement Testing Done Right: A Guide for… — <https://www.semanticscholar.org/paper/287923131>
+- [ ] 21 cites — DOVE: A Large-Scale Multi-Dimensional Predictions… — <https://www.semanticscholar.org/paper/276774995>
+- [ ] 19 cites — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv… — <https://www.semanticscholar.org/paper/273345528>
 - [ ] 16 cites — Label-Efficient Model Selection for Text Generation — <https://www.semanticscholar.org/paper/267627835>
-- [ ] 13 cites — The Mighty ToRR: A Benchmark for Table Reasoning and Rob — <https://www.semanticscholar.org/paper/276617897>
+- [ ] 13 cites — The Mighty ToRR: A Benchmark for Table Reasoning and… — <https://www.semanticscholar.org/paper/276617897>
 - [ ] 8 cites — NeurIPS 2023 LLM Efficiency Fine-tuning Competition — <https://www.semanticscholar.org/paper/277104779>
-- [ ] 8 cites — Holmes: A Benchmark to Assess the Linguistic Competence  — <https://www.semanticscholar.org/paper/274625741>
+- [ ] 8 cites — Holmes: A Benchmark to Assess the Linguistic… — <https://www.semanticscholar.org/paper/274625741>
 - … and 22 more in [`tasks/s2_merge.md`](tasks/s2_merge.md), same order
 
-## Wikipedia mentions 3 of your coinages across 6 article(s) — check the facts
+## Wikipedia mentions 2 of your coinages across 5 article(s) — check the facts
 
 Wikipedia carries roughly half the citations in AI answers, and WP:COI
 means you may not edit these. What you *can* do is the thing only an
@@ -303,8 +303,6 @@ A correction goes on the talk page, with the corrected value and the page
 or table it comes from. Never in the article, and never a citation of your
 own work — that is the edit that gets reverted on sight.
 
-- [ ] [Argument technology](https://en.wikipedia.org/wiki/Argument_technology) ([talk](https://en.wikipedia.org/wiki/Talk:Argument_technology))
-  > m|first4=Roy|last5=Bogin|first5=Ben|last6=Bonin|first6=Francesca|last7=Choshen|first7=Leshem|last8=Cohen-Karlik|first8=Edo|last9=Dankin|first9=Lena|l
 - [ ] [Project Debater](https://en.wikipedia.org/wiki/Project_Debater) ([talk](https://en.wikipedia.org/wiki/Talk:Project_Debater))
   > Project Debater is an IBM artificial intelligence project, designed to participate in a full live debate with expert human debaters.
 - [ ] **Project Debater** in [Outline of artificial intelligence](https://en.wikipedia.org/wiki/Outline_of_artificial_intelligence) ([talk](https://en.wikipedia.org/wiki/Talk:Outline_of_artificial_intelligence))
@@ -313,8 +311,6 @@ own work — that is the edit that gets reverted on sight.
   > been growing rapidly, with, for example, IBM's Grand Challenge, Project Debater, results for which were published in Nature
 - [ ] **Project Debater** in [Open to Debate](https://en.wikipedia.org/wiki/Open_to_Debate) ([talk](https://en.wikipedia.org/wiki/Talk:Open_to_Debate))
   > intelligence and a human being, in partnership with IBM's "Project Debater".
-- [ ] **Project Debater** in [Noam Slonim](https://en.wikipedia.org/wiki/Noam_Slonim) ([talk](https://en.wikipedia.org/wiki/Talk:Noam_Slonim))
-  > Jerusalem | doctoral_advisor = Naftali Tishby | known_for = Project Debater | awards = IBM Distinguished Engineer Noam Slonim
 - [ ] **PromptEval** in [Prompt engineering](https://en.wikipedia.org/wiki/Prompt_engineering) ([talk](https://en.wikipedia.org/wiki/Talk:Prompt_engineering))
   > more comprehensive performance interval. Similarly, PromptEval estimates performance distributions across diverse prompts, enabling robust
 

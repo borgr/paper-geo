@@ -534,6 +534,21 @@ def _fold_title(s: str) -> str:
     return _LATEX.sub(" ", s).lower()
 
 
+def clipped(s: str | None, width: int = 64) -> str:
+    """A title short enough for one worklist row, cut at a space rather than mid-word.
+
+    A row is scanned against what the destination shows, and `Numerica` reads as a different
+    paper from `Numerical`. The ellipsis says the cut happened.
+    """
+    s = " ".join((s or "").split())
+    if len(s) <= width:
+        return s
+    cut = s[:width - 1]
+    # Falls back to the hard cut only for a single word longer than the whole width, which
+    # is a URL or an identifier rather than a title.
+    return (cut[:cut.rfind(" ")] if " " in cut else cut) + "…"
+
+
 def norm_title(s: str | None) -> str:
     """Aggressive normalization for cross-source title matching."""
     if not s:

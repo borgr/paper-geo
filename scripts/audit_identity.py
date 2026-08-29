@@ -37,7 +37,8 @@ import xml.etree.ElementTree as ET
 from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, ROOT, WD_IDENTIFIERS, declined, get,  # noqa: E402
+from common import (BUILD, DATA, ROOT, WD_IDENTIFIERS, clipped,  # noqa: E402
+                    declined, get,
                     get_json, load_config, name_match, norm_name, norm_title,
                     org_name, paper_doi, plural, read_yaml, synth_bibtex,
                     title_tokens, write_json, write_yaml)
@@ -513,7 +514,7 @@ def hf_worklist_file(st: dict) -> str:
         box = "- [ ] " if task else "- "
         return [f"{box}{p.get('citations') or 0:>4} cites — "
                 f"<https://hf.co/papers/{p['arxiv']}> — "
-                f"{(p.get('title_display') or p['title'])[:70]}" for p in group]
+                f"{clipped(p.get('title_display') or p['title'], 70)}" for p in group]
 
     n = {k: len(v) for k, v in st.items()}
     path = os.path.join(TASKS, "hf_worklist.md")
@@ -554,7 +555,7 @@ def hf_worklist_file(st: dict) -> str:
             # No checkbox for the same reason as `pending`: there is no control on the
             # page to press, so the action is the arXiv one and lives in that file.
             L.append(f"- <https://hf.co/papers/{p['arxiv']}> — "
-                     f"{(p.get('title_display') or p['title'])[:60]}")
+                     f"{clipped(p.get('title_display') or p['title'], 60)}")
             L.append(f"      HF lists: {', '.join(p.get('hf_authors') or [])[:150]}")
         L.append("")
     with open(path, "w") as f:
@@ -761,7 +762,7 @@ def paper_link_section(q: str, cov: dict, qs_path: str | None) -> list[str]:
          "— exact keys, so this is coverage and not a name-search guess.)", ""]
     for p, qid in cov["present"]:
         L.append(f"- [{qid}](https://www.wikidata.org/wiki/{qid}) — "
-                 f"{(p.get('title_display') or p['title'])[:70]}")
+                 f"{clipped(p.get('title_display') or p['title'], 70)}")
     L += ["",
           "Two facts follow from that number, and both cut against the usual advice.",
           "",
@@ -969,7 +970,7 @@ def orcid_missing_files(missing: list[dict], orcid: str) -> list[str]:
         # paper's identifier is how you end up checking the wrong one on ORCID.
         ident = paper_doi(p) or "— none —"
         md.append(f"| {i} | {p.get('citations') or 0} | "
-                  f"{(p.get('title_display') or p['title'])[:64]} | `{ident}` |")
+                  f"{clipped(p.get('title_display') or p['title'], 64)} | `{ident}` |")
     noid = [p for p in missing if not paper_doi(p)]
     if noid:
         md += ["",
@@ -1115,15 +1116,16 @@ def orcid_remove_file(strays: list[tuple], dups: dict, papers, cfg) -> str:
         # Rows from `dup_pairs`, which the state file reads too -- the table and the
         # worklist have to name the same put-code or one of them is lying.
         for row in dup_pairs(dups, papers):
-            t = row["title"][:44]
+            t = clipped(row["title"], 44)
             if row.get("doi"):
-                L.append(f"| {t} | `{row['keep']}` — {row['keep_title'][:30]} | "
-                         f"`{row['folds']}` — {row['folds_title'][:30]} | `{row['doi']}` |")
+                L.append(f"| {t} | `{row['keep']}` — {clipped(row['keep_title'], 30)} | "
+                         f"`{row['folds']}` — {clipped(row['folds_title'], 30)} "
+                         f"| `{row['doi']}` |")
             else:
                 # No arXiv DOI, or more than two entries: say so rather than guess which
                 # to keep. Either way the fix is the same shape, one identifier.
                 L.append(f"| {t} | "
-                         + " | ".join(f"`{e['put']}` — {e['title'][:28]} "
+                         + " | ".join(f"`{e['put']}` — {clipped(e['title'], 28)} "
                                       f"({e['doi'] or 'no DOI'})" for e in row["entries"])
                          + " | *pick the entry with the venue; add the other's DOI* |")
         L += ["", "If you would rather have one entry than a grouped pair, delete the",
@@ -1216,7 +1218,7 @@ def arxiv_name_file(papers, variants) -> tuple[str, list, list]:
         for p in typo:
             L.append(f"- [ ] [`{p['arxiv']}`](https://arxiv.org/abs/{p['arxiv']}) — "
                      f"reads **{p['near_miss']}** — "
-                     f"{(p.get('title_display') or p['title'])[:60]}")
+                     f"{clipped(p.get('title_display') or p['title'], 60)}")
         L.append("")
     if absent:
         L += [f"## Missing you entirely — {len(absent)}", "",
@@ -1227,7 +1229,7 @@ def arxiv_name_file(papers, variants) -> tuple[str, list, list]:
               "an ownership request will fail the name match.", ""]
         for p in absent:
             L.append(f"- [ ] [`{p['arxiv']}`](https://arxiv.org/abs/{p['arxiv']}) — "
-                     f"{(p.get('title_display') or p['title'])[:60]}")
+                     f"{clipped(p.get('title_display') or p['title'], 60)}")
             L.append(f"      arXiv lists: {', '.join(p['arxiv_authors'])[:150]}")
         L.append("")
     if not (typo or absent):
@@ -1240,7 +1242,7 @@ def arxiv_name_file(papers, variants) -> tuple[str, list, list]:
 def _rows(group, extra=lambda p: "") -> list[str]:
     return [f"- [ ] {p.get('citations') or 0:>4} cites — "
             f"[`{p['arxiv']}`](https://arxiv.org/abs/{p['arxiv']}) "
-            f"{(p.get('title_display') or p['title'])[:72]}{extra(p)}"
+            f"{clipped(p.get('title_display') or p['title'], 72)}{extra(p)}"
             for p in group]
 
 
@@ -1732,7 +1734,7 @@ def main() -> None:
         for title, put, ids, right, wrong in o_misfiled:
             want = paper_doi(right) or "— the paper has no DOI to set —"
             full = right.get("title_display") or right["title"]
-            other = (wrong.get("title_display") or wrong["title"])[:52]
+            other = clipped(wrong.get("title_display") or wrong["title"], 52)
             # The DOI the work actually carries, resolved -- not the other paper's
             # canonical DOI, which is a different string and would send you somewhere
             # that does not demonstrate the problem. The point of this link is that
@@ -1745,7 +1747,7 @@ def main() -> None:
             # form against the full ORCID title made every long title look like a mismatch
             # and printed the same words twice.
             if norm_title(title) != norm_title(full):
-                L.append(f"      - on ORCID it is titled {title[:70]!r}")
+                L.append(f"      - on ORCID it is titled {clipped(title, 70)!r}")
             L += [f"      - put-code `{put}`",
                   f"      - carries `{has}` — that identifier is {blame}",
                   f"      - should carry `{want}`",
@@ -1769,7 +1771,7 @@ def main() -> None:
               "[orcid_missing.md](orcid_missing.md).", ""]
         for p in o_missing[:10]:
             L.append(f"- [ ] {(p.get('citations') or 0):>4} cites — "
-                     f"{(p.get('title_display') or p['title'])[:66]}")
+                     f"{clipped(p.get('title_display') or p['title'], 66)}")
         if len(o_missing) > 10:
             L.append(f"- … and {len(o_missing) - 10} more")
         L.append("")
