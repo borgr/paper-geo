@@ -5511,6 +5511,119 @@ class TestAQuietItemIsNotAnItemWithNoStatements(unittest.TestCase):
             self.assertNotIn("need 50", out.getvalue())
 
 
+class TestARefusedHuggingFaceReadIsNotAnAnswer(unittest.TestCase):
+    """`paper_code.hf_siblings` and `paper_code.hf_get` both returned emptiness on failure.
+
+    Siblings exist to *defer*: an owner publishing two datasets for one paper means nobody
+    can tell from a score which is the project page. A refused index looked like an owner
+    with nothing else, so the candidate was accepted and `--apply` POSTed one split of a
+    multi-part release as the whole of it.
+
+    `hf_get` is worse, because `hf_put_links` echoes the field it is not changing back out
+    of the record it reads -- both fields are nullable and omitting one may clear it. On a
+    refused read that echo is None, so a push meant to add a project page deletes the repo
+    link that was already there.
+    """
+
+    PAGE = "https://huggingface.co/datasets/o/global-piqa"
+
+    def _pc(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import paper_code
+        return paper_code
+
+    @staticmethod
+    def _answer(payload):
+        class R:
+            def read(self):
+                return json.dumps(payload).encode()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+        return lambda *a, **k: R()
+
+    @staticmethod
+    def _raise(exc):
+        def boom(*a, **k):
+            raise exc
+        return boom
+
+    def _cases(self):
+        """(urlopen stand-in, expected refusal) for an answer, a status, and no reply."""
+        return ((self._raise(urllib.error.HTTPError(self.PAGE, 429, "slow down", {}, None)),
+                 "HTTP 429"),
+                (self._raise(urllib.error.URLError("no such host")), "no reply"))
+
+    def test_hf_siblings_says_when_the_owner_index_would_not_load(self):
+        pc = self._pc()
+        with mock.patch.object(pc, "note_fetch", lambda *a, **k: None):
+            listing = [{"id": "o/global-piqa"}, {"id": "o/global-piqa-parallel"}]
+            with mock.patch("urllib.request.urlopen", self._answer(listing)):
+                sibs, quiet = pc.hf_siblings(self.PAGE, {"global", "piqa"})
+            self.assertEqual((["https://huggingface.co/datasets/o/global-piqa-parallel"], ""),
+                             (sibs, quiet))
+            for opener, want in self._cases():
+                with mock.patch("urllib.request.urlopen", opener):
+                    sibs, quiet = pc.hf_siblings(self.PAGE, {"global", "piqa"})
+                self.assertEqual(([], want), (sibs, quiet))
+
+    def test_a_refused_owner_index_holds_the_page_for_review(self):
+        """The whole point of siblings is deferral, so a refusal must defer too."""
+        pc = self._pc()
+        paper = {"slug": "s", "title": "Global PIQA", "abstract": "we release it"}
+
+        def run(answer):
+            with mock.patch.object(pc, "resolve_fulltext", lambda *a, **k: ("", None)), \
+                 mock.patch.object(pc, "candidates", lambda *a, **k: []), \
+                 mock.patch.object(pc, "page_candidates",
+                                   lambda *a, **k: [{"page": self.PAGE, "score": 9,
+                                                     "why": []}]), \
+                 mock.patch.object(pc, "confirm_page",
+                                   lambda c, *a, **k: c.update(exists=True) or c), \
+                 mock.patch.object(pc, "hf_siblings", lambda *a, **k: answer):
+                return pc.deduce([paper], None, None, None)["s"]["page_verdict"]
+
+        self.assertEqual("accept", run(([], "")))
+        self.assertEqual("review", run((["https://huggingface.co/datasets/o/x"], "")))
+        self.assertEqual("review", run(([], "HTTP 429")),
+                         "a refused sibling index was read as an unambiguous page")
+
+    def test_hf_get_separates_not_indexed_from_would_not_say(self):
+        pc = self._pc()
+        with mock.patch.object(pc, "note_fetch", lambda *a, **k: None):
+            with mock.patch("urllib.request.urlopen", self._answer({"upvotes": 3})):
+                self.assertEqual(({"upvotes": 3}, ""), pc.hf_get("2501.00001"))
+            gone = urllib.error.HTTPError(self.PAGE, 404, "nope", {}, None)
+            with mock.patch("urllib.request.urlopen", self._raise(gone)):
+                # A 404 is HF saying the paper is not indexed, which is an answer.
+                self.assertEqual((None, ""), pc.hf_get("2501.00001"))
+            for opener, want in self._cases():
+                with mock.patch("urllib.request.urlopen", opener):
+                    self.assertEqual((None, want), pc.hf_get("2501.00001"))
+
+    def test_push_sends_nothing_for_a_paper_hf_would_not_read_out(self):
+        """Because the POST has to echo back the link it is not changing."""
+        pc = self._pc()
+        results = {"s": {"paper": {"arxiv": "2501.00001", "citations": 1}}}
+        eff = {"s": {"verdict": "accept", "repo": "https://github.com/o/n",
+                     "page_verdict": "none", "page": None}}
+        for got, sent in ((({"githubRepo": None}, ""), 1), ((None, ""), 1),
+                          ((None, "HTTP 429"), 0), ((None, "no reply"), 0)):
+            calls = []
+            with mock.patch.object(pc, "hf_get", lambda *a, **k: got), \
+                 mock.patch.object(pc, "hf_put_links",
+                                   lambda *a, **k: calls.append(a) or "ok 200"), \
+                 mock.patch.object(pc.time, "sleep", lambda _s: None), \
+                 contextlib.redirect_stdout(io.StringIO()) as out:
+                pc.push(results, eff, "t")
+            self.assertEqual(sent, len(calls), "hf_get %r pushed %d" % (got, len(calls)))
+            if not sent:
+                self.assertIn("would not say what is already linked", out.getvalue())
+
+
 class TestAQuietGitHubIsNotAReadmeToCreate(unittest.TestCase):
     """`links_block.fetch_readme` returned ("", None) for a repo with no README and for a
     repo GitHub would not talk about.

@@ -471,8 +471,12 @@ def page_candidates(paper: dict, text: str, repo_url: str | None) -> list[dict]:
 HF_SIB_RX = re.compile(r"huggingface\.co/(datasets|spaces)/([^/]+)/([^/?#]+)", re.I)
 
 
-def hf_siblings(url: str, title_toks: set[str]) -> list[str]:
+def hf_siblings(url: str, title_toks: set[str]) -> tuple[list[str], str]:
     """Other datasets or spaces by the same owner that also look like this paper's.
+
+    Returns (siblings, refusal), where the refusal is "" when Hugging Face answered. An
+    owner who publishes nothing else and an index that would not load both come back with
+    no siblings, and only the first one means the page is unambiguous.
 
     Global PIQA released a parallel split and a non-parallel one, as two dataset repos;
     the extracted text names one. Picking that one as *the* project page would publish a
@@ -482,16 +486,21 @@ def hf_siblings(url: str, title_toks: set[str]) -> list[str]:
     """
     m = HF_SIB_RX.search(url)
     if not m:
-        return []
+        return [], ""
     kind, owner, name = m.group(1), m.group(2), m.group(3)
     api = f"https://huggingface.co/api/{kind}?author={owner}&limit=200"
     try:
         with urllib.request.urlopen(api, timeout=25) as r:
             items = json.load(r)
         note_fetch(api, True)
+    except urllib.error.HTTPError as e:
+        # No 404 exemption here, unlike the per-repo reads. This endpoint answers `[]` for
+        # an owner it has never heard of, so any status at all is the endpoint not working.
+        note_fetch(api, False)
+        return [], f"HTTP {e.code}"
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError):
         note_fetch(api, False)
-        return []
+        return [], "no reply"
     # A sibling has to be a variant of *this* artifact, not just another dataset the
     # owner happens to publish -- `commoncrawl` publishes dozens, and matching on a
     # title word alone makes every one of them look like a competing project page.
@@ -507,7 +516,7 @@ def hf_siblings(url: str, title_toks: set[str]) -> list[str]:
         toks = name_tokens(short.replace("-", " ").replace("_", " ")) - STOP_TOKS
         if toks & title_toks and toks & own:
             out.append(f"https://huggingface.co/{kind}/{rid}")
-    return out
+    return out, ""
 
 
 def confirm_page(c: dict, paper: dict, pages: PageFacts) -> dict:
@@ -652,13 +661,19 @@ def deduce(papers: list[dict], only: str | None, facts: RepoFacts,
         pverdict = "none"
         if ptop and ptop.get("exists") and ptop["score"] >= ACCEPT:
             prunner = pc[1]["score"] if len(pc) > 1 else -99
-            sibs = hf_siblings(
+            sibs, quiet = hf_siblings(
                 ptop["page"], name_tokens(p.get("title_display") or p.get("title")))
             if sibs:
                 ptop["siblings"] = sibs[:4]
                 ptop["why"].append(f"the same owner publishes {len(sibs)} more for this "
                                    f"paper -- which is the page is yours to pick")
-            pverdict = ("accept" if ptop["score"] - prunner >= 2 and not sibs
+            elif quiet:
+                # Held, because `--apply` POSTs an accepted page to Hugging Face and this
+                # is the only check that a multi-part release is not being published as
+                # one part of itself.
+                ptop["why"].append(f"Hugging Face would not list the owner's other "
+                                   f"releases ({quiet}) -- held, retried next run")
+            pverdict = ("accept" if ptop["score"] - prunner >= 2 and not sibs and not quiet
                         else "review")
         elif ptop and ptop.get("exists") and ptop["score"] > 0:
             pverdict = "review"
@@ -783,29 +798,28 @@ def hf_token() -> str | None:
     return None
 
 
-def hf_get(arxiv: str) -> dict | None:
-    """HF's record for one paper, or None -- recorded either way.
+def hf_get(arxiv: str) -> tuple[dict | None, str]:
+    """HF's record for one paper, or None, with a refusal that is "" when HF answered.
 
-    A paper with no HF record and a paper HF would not answer for look identical to
-    every caller here: both are None. Only the ledger can tell them apart, and the
-    difference matters, because this is where the upvote counts and the existing
-    githubRepo/projectPage links come from.
+    A paper HF has not indexed comes back (None, ""). A paper it would not talk about
+    comes back with the reason, and no caller may read that as a record carrying no
+    links: the upvote counts and the existing githubRepo/projectPage links are here.
     """
     url = f"https://huggingface.co/api/papers/{arxiv}"
     try:
         with urllib.request.urlopen(url, timeout=30) as r:
             doc = json.load(r)
         note_fetch(url, True)
-        return doc
+        return doc, ""
     except urllib.error.HTTPError as e:
         # A 404 is HF saying this paper is not indexed, which is a real answer about
         # this paper rather than a fault in the source. Counting it as a failure would
         # bury the host in failures the moment a run touches a few unindexed papers.
         note_fetch(url, e.code == 404)
-        return None
+        return None, "" if e.code == 404 else f"HTTP {e.code}"
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError):
         note_fetch(url, False)
-        return None
+        return None, "no reply"
 
 
 def hf_put_links(arxiv: str, repo: str | None, page: str | None, token: str) -> str:
@@ -829,6 +843,81 @@ def hf_put_links(arxiv: str, repo: str | None, page: str | None, token: str) -> 
         return f"HTTP {e.code} {e.read()[:200].decode('utf-8', 'replace')}"
     except (urllib.error.URLError, TimeoutError, OSError) as e:
         return f"error {e}"
+
+
+def push(results: dict, eff: dict, token: str) -> None:
+    """POST every accepted link to Hugging Face, one paper at a time.
+
+    Reached only from `--apply`, so every line printed here is a public write.
+    """
+    pushed = skipped = failed = 0
+
+    def wanted(slug: str, r: dict) -> tuple[str | None, str | None]:
+        """The repo and page this run would publish for one paper, or None each.
+
+        A row marked `reviewed: true` *is* the decision, so its own `repo` and
+        `project_page` are what get pushed -- including a URL that appears nowhere in
+        the deduction, which is the point: the right project page is often a site the
+        paper mentions once and the detector ranks second. A frozen row with the key
+        deleted means "deliberately no link", and nothing is pushed for it.
+        """
+        e = eff[slug]
+        return (e["repo"] if e["verdict"] == "accept" else None,
+                e["page"] if e["page_verdict"] == "accept" else None)
+
+    def same(a: str | None, b: str | None) -> bool:
+        # HF lowercases the URL it stores, so a case-sensitive comparison re-POSTs a
+        # link that is already there and gets a 409 back.
+        return bool(a) and (b or "").rstrip("/").lower() == a.rstrip("/").lower()
+
+    no_arxiv, refused = [], []
+    for slug, r in sorted(results.items(),
+                          key=lambda x: -(x[1]["paper"].get("citations") or 0)):
+        p = r["paper"]
+        repo, page = wanted(slug, r)
+        if not (repo or page):
+            continue
+        if not p.get("arxiv"):
+            # HF's endpoint is keyed on the arXiv id, so there is no page to write to.
+            # Say so rather than skipping quietly: the link is real and does reach the
+            # site, which reads this file directly, and a silent skip reads as "no link".
+            no_arxiv.append(slug)
+            continue
+        live, quiet = hf_get(p["arxiv"])
+        if quiet:
+            # Nothing is pushed. `hf_put_links` echoes back the field it is not changing
+            # out of this record, because omitting one may clear it -- so a POST built on
+            # a refused read is exactly how one link gets traded for the other.
+            refused.append(f"{slug} ({quiet})")
+            continue
+        live = live or {}
+        new_repo = repo if repo and not same(repo, live.get("githubRepo")) else None
+        new_page = page if page and not same(page, live.get("projectPage")) else None
+        if not (new_repo or new_page):
+            skipped += 1
+            continue
+        res = hf_put_links(p["arxiv"],
+                           new_repo or live.get("githubRepo"),
+                           new_page or live.get("projectPage"), token)
+        # 409 is HF saying the link is already there -- the same outcome as a skip, not
+        # a failure. It happens when its stored URL differs only in case.
+        if "already linked to this paper" in res:
+            skipped += 1
+            continue
+        ok = res.startswith("ok")
+        pushed += ok
+        failed += not ok
+        what = " + ".join(x for x in (new_repo and "repo", new_page and "page") if x)
+        print(f"{'->' if ok else '!!'} {p['arxiv']:<12} {what:<11} "
+              f"{(new_repo or new_page):<52} {res}")
+        time.sleep(0.5)
+    print(f"\npushed {pushed}, already correct {skipped}, failed {failed}")
+    if refused:
+        print(f"HF would not say what is already linked ({len(refused)}), so nothing was "
+              f"pushed for them; retried next run: " + ", ".join(sorted(refused)))
+    if no_arxiv:
+        print(f"not on arXiv, so HF has no page to link ({len(no_arxiv)}); the link is "
+              f"on the site: " + ", ".join(sorted(no_arxiv)))
 
 
 def main() -> None:
@@ -920,64 +1009,7 @@ def main() -> None:
     token = hf_token()
     if not token:
         sys.exit("no HF token: set HF_TOKEN or log in with `hf auth login`")
-    pushed = skipped = failed = 0
-
-    def wanted(slug: str, r: dict) -> tuple[str | None, str | None]:
-        """The repo and page this run would publish for one paper, or None each.
-
-        A row marked `reviewed: true` *is* the decision, so its own `repo` and
-        `project_page` are what get pushed -- including a URL that appears nowhere in
-        the deduction, which is the point: the right project page is often a site the
-        paper mentions once and the detector ranks second. A frozen row with the key
-        deleted means "deliberately no link", and nothing is pushed for it.
-        """
-        e = eff[slug]
-        return (e["repo"] if e["verdict"] == "accept" else None,
-                e["page"] if e["page_verdict"] == "accept" else None)
-
-    def same(a: str | None, b: str | None) -> bool:
-        # HF lowercases the URL it stores, so a case-sensitive comparison re-POSTs a
-        # link that is already there and gets a 409 back.
-        return bool(a) and (b or "").rstrip("/").lower() == a.rstrip("/").lower()
-
-    no_arxiv = []
-    for slug, r in sorted(results.items(),
-                          key=lambda x: -(x[1]["paper"].get("citations") or 0)):
-        p = r["paper"]
-        repo, page = wanted(slug, r)
-        if not (repo or page):
-            continue
-        if not p.get("arxiv"):
-            # HF's endpoint is keyed on the arXiv id, so there is no page to write to.
-            # Say so rather than skipping quietly: the link is real and does reach the
-            # site, which reads this file directly, and a silent skip reads as "no link".
-            no_arxiv.append(slug)
-            continue
-        live = hf_get(p["arxiv"]) or {}
-        new_repo = repo if repo and not same(repo, live.get("githubRepo")) else None
-        new_page = page if page and not same(page, live.get("projectPage")) else None
-        if not (new_repo or new_page):
-            skipped += 1
-            continue
-        res = hf_put_links(p["arxiv"],
-                           new_repo or live.get("githubRepo"),
-                           new_page or live.get("projectPage"), token)
-        # 409 is HF saying the link is already there -- the same outcome as a skip, not
-        # a failure. It happens when its stored URL differs only in case.
-        if "already linked to this paper" in res:
-            skipped += 1
-            continue
-        ok = res.startswith("ok")
-        pushed += ok
-        failed += not ok
-        what = " + ".join(x for x in (new_repo and "repo", new_page and "page") if x)
-        print(f"{'->' if ok else '!!'} {p['arxiv']:<12} {what:<11} "
-              f"{(new_repo or new_page):<52} {res}")
-        time.sleep(0.5)
-    print(f"\npushed {pushed}, already correct {skipped}, failed {failed}")
-    if no_arxiv:
-        print(f"not on arXiv, so HF has no page to link ({len(no_arxiv)}); the link is "
-              f"on the site: " + ", ".join(sorted(no_arxiv)))
+    push(results, eff, token)
 
 
 if __name__ == "__main__":
