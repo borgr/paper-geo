@@ -133,6 +133,62 @@ class TestEveryJsonFileIsWrittenThroughOnePlace(unittest.TestCase):
                 self.assertNotIn("json.dump(", source(path),
                                  "write the file with common.write_json instead")
 
+    def test_a_failed_write_leaves_the_previous_file_readable(self):
+        """It writes beside the target and renames.
+
+        A run killed mid-dump left a truncated file, and the next `json.load` throws one
+        away wholesale. For `build/openalex_splits.json` that is a day of OpenAlex
+        credits, since the search endpoint is metered at 100 queries.
+        """
+        import common
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "cache.json")
+            common.write_json(path, {"kept": 1})
+            with self.assertRaises(TypeError):
+                common.write_json(path, {"kept": 1, "unserializable": object()})
+            with open(path) as fh:
+                self.assertEqual({"kept": 1}, json.load(fh),
+                                 "the previous file survives a dump that raised")
+            self.assertEqual(["cache.json"], sorted(os.listdir(d)),
+                             "and no .tmp is left behind")
+
+
+class TestAConcurrentRunDoesNotCostADayOfOpenAlexCredits(unittest.TestCase):
+    """`split_records` re-reads its cache before writing it.
+
+    Two entry points reach it, `scholar_strays.py` and `update.py --step audit`, and each
+    loads the whole cache at the top. Whichever wrote second replaced the other's answers
+    with the view it had loaded. OpenAlex meters the search endpoint at 100 queries a day,
+    so a dropped entry is a day of waiting to win it back.
+    """
+
+    TITLE = "A Title Long Enough To Clear The Twenty Five Character Floor"
+
+    def test_an_entry_another_run_cached_meanwhile_survives(self):
+        import scholar_strays as S
+        with tempfile.TemporaryDirectory() as d:
+            cache = os.path.join(d, "openalex_splits.json")
+
+            def lookup(url):
+                """Stands in for the fetch, and writes as a second run would while it is
+                in flight."""
+                with open(cache, "w") as fh:
+                    json.dump({"another-run": {"asked": "2999-01-01", "search": "x",
+                                               "records": []}}, fh)
+                return {"results": [{"id": "https://openalex.org/W1",
+                                     "display_name": self.TITLE,
+                                     "publication_year": 2020, "cited_by_count": 3}]}
+
+            with mock.patch.object(S, "BUILD", d), \
+                 mock.patch.object(S, "lookup", lookup), \
+                 mock.patch.object(S, "budget_reset", lambda host: None):
+                S.split_records([{"slug": "s1", "title": self.TITLE}], "")
+            with open(cache) as fh:
+                got = json.load(fh)
+        self.assertIn("s1", got, "this run's own answer is written")
+        self.assertIn("another-run", got,
+                      "and the concurrent run's answer is not overwritten")
+
 
 class TestNoSyntaxWarnings(unittest.TestCase):
     """Compile every module with the syntax warnings promoted to errors.

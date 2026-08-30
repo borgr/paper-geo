@@ -1182,11 +1182,21 @@ def write_yaml(path: str, obj) -> None:
 
 def write_json(path: str, obj, **kw) -> None:
     """`json.dump` to `path`, creating its directory. Every build and cache file goes
-    through this, so no caller can leave the directory out."""
+    through this, so no caller can leave the directory out.
+
+    Written beside the target and renamed, so a run killed mid-dump leaves the previous
+    file rather than a truncated one that the next `json.load` throws away.
+    """
     if d := os.path.dirname(path):
         os.makedirs(d, exist_ok=True)
-    with open(path, "w") as f:
-        json.dump(obj, f, **kw)
+    tmp = f"{path}.tmp"
+    try:
+        with open(tmp, "w") as f:
+            json.dump(obj, f, **kw)
+        os.replace(tmp, path)
+    finally:
+        if os.path.exists(tmp):
+            os.remove(tmp)
 
 
 DECLINE_STAMP = "<!-- declines -->"

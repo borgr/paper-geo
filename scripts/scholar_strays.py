@@ -265,7 +265,7 @@ def split_records(papers, mailto, limit=None) -> dict:
         return (e.get("asked", "") >= fresh
                 and e.get("search") == searchable(p.get("title") or "", 12))
 
-    asked = 0
+    asked: set[str] = set()
     for p in papers[:limit]:
         title, slug = p.get("title") or "", p.get("slug")
         if len(title) < 25 or answered(p):
@@ -282,7 +282,7 @@ def split_records(papers, mailto, limit=None) -> dict:
             # nothing would ask again for CACHE_DAYS. The budget case above resumes
             # tomorrow; any other refusal is retried on the next run.
             continue
-        asked += 1
+        asked.add(slug)
         want = title_tokens(title)
         cache[slug] = {
             "asked": datetime.date.today().isoformat(), "search": ask,
@@ -292,7 +292,16 @@ def split_records(papers, mailto, limit=None) -> dict:
                         for w in (d or {}).get("results") or []
                         if same_work(want, w.get("display_name"))]}
     if asked:
-        write_json(cache_path, cache, indent=1)
+        # Re-read before writing. Another run reaching here -- `update.py --step audit`
+        # does -- may have cached papers this one never asked about, and a plain overwrite
+        # drops them, which costs a day of credits to win back.
+        try:
+            with open(cache_path) as f:
+                merged = json.load(f)
+        except (OSError, ValueError):
+            merged = {}
+        merged.update({s: cache[s] for s in asked})
+        write_json(cache_path, merged, indent=1)
 
     # Filtered again on the way out, so tightening the rule takes effect on the next run
     # instead of after a second day of credits.
