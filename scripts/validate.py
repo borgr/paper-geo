@@ -110,15 +110,31 @@ def regressions(papers: list[dict], repos: list[dict]) -> list[str]:
 
 
 def selftest() -> list[str]:
-    """Assertions about code paths that broke once and are not data-visible."""
-    errs = []
+    """Assertions about code paths that broke once and are not data-visible.
+
+    One subject per function below, in the order their messages print. Each imports what
+    it checks, so a check reads as one self-contained regression.
+    """
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    return (_topics_args() + _latex_names() + _mangled_latex() + _slugs_are_urls()
+            + _bibtex_repair() + _dedupe_merges() + _venues() + _venue_tags()
+            + _affiliations())
+
+
+def _topics_args() -> list[str]:
+    """The topics endpoint takes one `-f names[]=` per topic."""
     from sweep_github import gh_topics_args
     args = gh_topics_args(["a-b", "c"])
     if args != ["-f", "names[]=a-b", "-f", "names[]=c"]:
-        errs.append(f"sweep_github.gh_topics_args regressed: {args!r} -- a "
-                    "comma-joined value is rejected 422 by the topics endpoint")
-    from common import clean_latex, clean_bibtex, norm_title, slugify
+        return [f"sweep_github.gh_topics_args regressed: {args!r} -- a "
+                "comma-joined value is rejected 422 by the topics endpoint"]
+    return []
+
+
+def _latex_names() -> list[str]:
+    """`clean_latex` on braces, math, accented names and ordinary commands."""
+    from common import clean_latex
+    errs = []
     if clean_latex("{DORA} The $x$ Explorer") != "DORA The x Explorer":
         errs.append("common.clean_latex regressed on braces or math")
     # Co-author names are published in JSON-LD, highwire tags and the page body, so a
@@ -139,18 +155,34 @@ def selftest() -> list[str]:
     # pass runs first and must not have made a letter command look like an accent.
     if clean_latex(r"a \emph{real} \& proper 50\% case") != "a real & proper 50% case":
         errs.append("common.clean_latex regressed on ordinary commands or escapes")
-    # A bibliography entry whose `{\textdollar}` lost its backslash to a tab leaves the
-    # word `extdollar` behind, and that word reached a published URL. It has to vanish
-    # from all three derived strings or they disagree about which paper this is -- the
-    # first fix cleaned only the display title, so the slug kept it.
-    mangled = "{ extdollar}Q2{ extdollar}: Evaluating"
+    return errs
+
+
+# A bibliography entry whose `{\textdollar}` lost its backslash to a tab leaves the word
+# `extdollar` behind, and that word reached a published URL. It has to vanish from all three
+# derived strings or they disagree about which paper this is -- the first fix cleaned only
+# the display title, so the slug kept it.
+_MANGLED = "{ extdollar}Q2{ extdollar}: Evaluating"
+
+
+def _mangled_latex() -> list[str]:
+    """`clean_latex`, `slugify` and `norm_title` all drop the mangled command."""
+    from common import clean_latex, norm_title, slugify
+    errs = []
     for fn, want in ((clean_latex, "Q2: Evaluating"), (slugify, "q2-evaluating"),
                      (norm_title, "q2evaluating")):
-        if fn(mangled) != want:
+        if fn(_MANGLED) != want:
             errs.append(f"common.{fn.__name__} leaves mangled LaTeX in: "
-                        f"{fn(mangled)!r} (want {want!r})")
+                        f"{fn(_MANGLED)!r} (want {want!r})")
     if slugify("extra credit") != "extra-credit":
         errs.append("common.strip_mangled is eating ordinary words starting with 'ext'")
+    return errs
+
+
+def _slugs_are_urls() -> list[str]:
+    """`slugify` keeps the token a reader would search for, and holds still on a repair."""
+    from common import slugify
+    errs = []
     # A slug is a published URL. Braces protect capitals inside a word, so replacing
     # them with a separator splits the exact token someone would search for: nine live
     # URLs read `findings-of-the-b-aby-lm-challenge`, none containing `babylm`.
@@ -163,15 +195,29 @@ def selftest() -> list[str]:
     # The two spellings of one title -- damaged in the .bib, and repaired upstream --
     # have to slug identically, or fixing the bibliography moves a live URL as a side
     # effect. A superscript two is the digit two as far as an address is concerned.
-    if slugify(r"Q\({}^{\mbox{2}}\): Evaluating") != slugify(mangled):
+    if slugify(r"Q\({}^{\mbox{2}}\): Evaluating") != slugify(_MANGLED):
         errs.append("common.slugify: repairing the Q2 title upstream moves its URL")
-    # Published BibTeX is the exception: repair the command rather than delete it, or
-    # the entry someone copies has a literal tab in it and renders `extdollarQ2`.
+    return errs
+
+
+def _bibtex_repair() -> list[str]:
+    """Published BibTeX is the exception -- it repairs the command rather than deleting it.
+
+    An entry someone copies otherwise has a literal tab in it and renders `extdollarQ2`.
+    """
+    from common import clean_bibtex
+    errs = []
     fixed = clean_bibtex("@a{k,\n  title={{ extdollar}Q2{ extdollar}: T}\n}")
     if "extdollar" not in fixed or "\\textdollar" not in fixed:
         errs.append(f"common.clean_bibtex no longer repairs mangled LaTeX: {fixed!r}")
     if "pretitle" in clean_bibtex("@a{k,\n  pretitle={\\COL},\n  title={T}\n}"):
         errs.append("common.clean_bibtex no longer strips pretitle")
+    return errs
+
+
+def _dedupe_merges() -> list[str]:
+    """`collect` merges on a shared arXiv id, and a self-merging group keeps its paper."""
+    errs = []
     # A retitled preprint shares its arXiv id with the published version and nothing
     # else. The title-similarity pass scores that pair near zero, so identifier
     # equality has to merge it on its own -- it did not, once, and the corpus carried
@@ -198,11 +244,18 @@ def selftest() -> list[str]:
     if len(kept) != 1:
         errs.append(f"collect.apply_overrides dropped a paper on a self-merging "
                     f"force_merge group: {len(kept)} records out (want 1)")
-    # The venue is published in the page body, in JSON-LD `isPartOf` and in the highwire
-    # tag Scholar matches citations on, so a 110-character truncation of a proceedings
-    # name is a metadata defect on three surfaces at once. These are the real strings the
-    # sources return, and each one broke a different way while this was being written.
+    return errs
+
+
+def _venues() -> list[str]:
+    """`short_venue` on the real strings the sources return, each of which broke once.
+
+    The venue is published in the page body, in JSON-LD `isPartOf` and in the highwire tag
+    Scholar matches citations on, so a 110-character truncation of a proceedings name is a
+    metadata defect on three surfaces at once.
+    """
     from common import short_venue
+    errs = []
     for src, year, want in (
             # The acronym is in the string, and the pattern also fits a word that is not
             # one: "... Systems 36: Annual Conference on ... Systems 2023" -> Systems 2023.
@@ -248,10 +301,15 @@ def selftest() -> list[str]:
         if got != want:
             errs.append(f"common.short_venue regressed: {got!r} (want {want!r}) "
                         f"for {src[:60]!r}")
-    # Which highwire tag the venue gets. The entry type is unreliable in exactly the
-    # direction that matters: `@article` + `journal={ICLR}` is common, `@inproceedings`
-    # on a journal paper is not.
+    return errs
+
+
+def _venue_tags() -> list[str]:
+    """Which highwire tag the venue gets."""
+    # The entry type is unreliable in exactly the direction that matters: `@article` +
+    # `journal={ICLR}` is common, `@inproceedings` on a journal paper is not.
     from common import venue_is_conference
+    errs = []
     for venue, typ, want in (("ICML 2025", "article", True),
                              ("SurgLLM@ICML", "misc", True),
                              ("EACL", None, True),
@@ -263,13 +321,20 @@ def selftest() -> list[str]:
         if venue_is_conference(venue, typ) != want:
             errs.append(f"common.venue_is_conference({venue!r}, {typ!r}) is "
                         f"{not want} -- Scholar would file this under the wrong tag")
-    # An affiliation may be a name or a mapping, and its two readers must not disagree.
-    # `org_name` feeds the byline, the ORCID employment diff and the Wikidata P108 lookup, so
-    # a mapping leaking through it publishes `{'name': 'IBM Research'}` as visible text;
-    # `org_ld` feeds JSON-LD, where a dropped identifier is invisible and is the whole reason
-    # the mapping form exists. Neither failure shows up in the config file.
+    return errs
+
+
+def _affiliations() -> list[str]:
+    """An affiliation may be a name or a mapping, and its two readers must not disagree.
+
+    `org_name` feeds the byline, the ORCID employment diff and the Wikidata P108 lookup, so
+    a mapping leaking through it publishes `{'name': 'IBM Research'}` as visible text.
+    `org_ld` feeds JSON-LD, where a dropped identifier is invisible and is the whole reason
+    the mapping form exists. Neither failure shows up in the config file.
+    """
     from common import org_name
     from build_site import org_ld
+    errs = []
     aff = {"name": "Weizmann Institute of Science", "url": "https://www.weizmann.ac.il/",
            "ror": "0316ej306", "wikidata": "Q4182"}
     if org_name(aff) != aff["name"] or org_name(aff["name"]) != aff["name"]:
