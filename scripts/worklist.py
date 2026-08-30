@@ -12,7 +12,7 @@ import re
 import textwrap
 
 from common import (DATA, ROOT, clipped, has_live_sidecar, is_preprint_venue, norm_title,
-                    read_overrides, read_yaml, synth_bibtex, title_of)
+                    plural, read_overrides, read_yaml, synth_bibtex, title_of)
 from sweep_github import ZENODO_KINDS
 
 def held_until(fragment: str) -> str | None:
@@ -47,183 +47,229 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
     papers that are not presented at all, and no amount of work on the other sections
     reaches them. It is also the only section whose items are *upstream of the
     pipeline* -- the fix is an edit to the source bibliography, not to anything here.
+
+    One subsection per `_bucket` function below, in the order they print. Each returns
+    nothing when its bucket is empty, so a bucket with no work cannot print a heading and
+    the whole section disappears when every bucket is empty.
     """
     if not sc:
         return []
     if not sc.get("scholar_answered", True):
-        # Without this the section is simply absent, which on a page of open items reads
-        # as Scholar agreeing with the corpus. Every bucket below rests on a title being
-        # absent from the profile listing, and none of them can be computed from a
-        # listing that did not arrive.
-        got = sc.get("scholar_rows") or 0
-        why = (f"{got} row(s) arrived and then a page refused. Every bucket here rests on "
-               "a title being absent from the listing, so a listing missing a page is no "
-               "more usable than none."
-               if got else
-               "Scholar refuses most machines most of the time, and a refusal says nothing "
-               "about the corpus.")
-        # The last two lines are not wrapped. A command or a markdown link split across a
-        # newline is a link the reader has to repair before they can use it.
-        lead = (f"**Google Scholar did not answer this run, so the coverage section is "
-                f"missing rather than empty.** {why}")
-        return [f"> {ln}" for ln in textwrap.wrap(lead, 76)] + [
-            "> Re-run `python update.py --step audit`. What the Semantic Scholar author",
-            "> record could answer is in [tasks/identity_audit.md](tasks/identity_audit.md).",
-            ""]
-    gate, miss = sc.get("gate_dropped") or [], sc.get("not_in_corpus") or []
-    miss = [r for r in miss if (r.get("kind") or "paper") == "paper"]
-    dup = sc.get("scholar_duplicates") or []
-    # A title variant is only work when nobody has already decided it. arXiv holds the current
-    # title and the run has fetched it, so `stale` says which side is behind: `bib` is one edit
-    # upstream, `open` is a judgement, and `scholar` is neither -- editing that row changes
-    # what Scholar displays, not which citations cluster under it.
-    #
-    # Named rather than excluded. The heading below states that arXiv has no record for these,
-    # so a label meaning "arXiv was never asked" must not fall in by not being on the deny list.
+        return _scholar_refused(sc)
+    # `stale` says which side of a title variant is behind. `bib` is one edit upstream,
+    # `open` is a judgement, and `scholar` is neither -- editing that row changes what
+    # Scholar displays, not which citations cluster under it. `unknown` means arXiv was
+    # never asked, and is named rather than dropped, because both headings below claim to
+    # know what arXiv holds.
     var = sc.get("title_variants") or []
-    fix = [v for v in var if v.get("stale") == "bib"]
-    call = [v for v in var if v.get("stale") == "open"]
-    blind = [v for v in var if v.get("stale") == "unknown"]
-    # The mirror image of `not_in_corpus`, and the half that was computed but never
-    # printed: papers this pipeline has and the profile does not. It belongs on the page
-    # for the same reason as its opposite -- Scholar is the surface most people actually
-    # read, and a paper absent from it is absent from where the citations accrue.
-    gone = sc.get("not_on_scholar") or []
-    if not (gate or miss or fix or call or dup or gone or blind):
+    buckets = [
+        _gate_excluded(sc.get("gate_dropped") or []),
+        _absent_from_bib([r for r in (sc.get("not_in_corpus") or [])
+                          if (r.get("kind") or "paper") == "paper"], cfg),
+        _not_on_profile(sc.get("not_on_scholar") or [], sc),
+        _bib_behind_arxiv([v for v in var if v.get("stale") == "bib"]),
+        _no_arxiv_titles([v for v in var if v.get("stale") == "unknown"]),
+        _title_is_a_ruling([v for v in var if v.get("stale") == "open"]),
+        _listed_twice(sc.get("scholar_duplicates") or [], sc),
+    ]
+    if not any(buckets):
         return []
+    return _coverage_top(sc) + [ln for b in buckets for ln in b]
 
-    def pl(n: int, word: str = "paper") -> str:
-        return f"{n} {word}{'s' * (n != 1)}"
 
-    def cites(n) -> str:
-        return f"{n or 0} cite{'s' * ((n or 0) != 1)}"
+def _cites(n) -> str:
+    """`1 cite`, `0 cites` -- a citation count, agreeing, and reading 0 when absent."""
+    return plural(n or 0, "cite")
 
-    # No total in the heading: it summed six buckets, and `declines.yaml` filters this file
-    # *after* it is built, so declining a bucket left a heading counting papers no longer under
-    # it and no way to recount an ad-hoc phrasing. The two numbers in the body measure Scholar
-    # rather than this list, and each subsection carries its own count.
-    L = ["## Coverage: Google Scholar and the corpus disagree",
+
+def _scholar_refused(sc: dict) -> list[str]:
+    """A blockquote saying the coverage section is missing rather than empty.
+
+    Without it the section is simply absent, which on a page of open items reads as
+    Scholar agreeing with the corpus. Every bucket rests on a title being absent from the
+    profile listing, and none of them can be computed from a listing that did not arrive.
+    """
+    got = sc.get("scholar_rows") or 0
+    why = (f"{got} row(s) arrived and then a page refused. Every bucket here rests on "
+           "a title being absent from the listing, so a listing missing a page is no "
+           "more usable than none."
+           if got else
+           "Scholar refuses most machines most of the time, and a refusal says nothing "
+           "about the corpus.")
+    # The last two lines are not wrapped. A command or a markdown link split across a
+    # newline is a link the reader has to repair before they can use it.
+    lead = (f"**Google Scholar did not answer this run, so the coverage section is "
+            f"missing rather than empty.** {why}")
+    return [f"> {ln}" for ln in textwrap.wrap(lead, 76)] + [
+        "> Re-run `python update.py --step audit`. What the Semantic Scholar author",
+        "> record could answer is in [tasks/identity_audit.md](tasks/identity_audit.md).",
+        ""]
+
+
+def _coverage_top(sc: dict) -> list[str]:
+    """The heading, and the two numbers that measure Scholar rather than this list."""
+    # No total in the heading. `declines.yaml` filters this file *after* it is built, so a
+    # count of the buckets below is a count of papers that may no longer be under them.
+    return ["## Coverage: Google Scholar and the corpus disagree",
+            "",
+            f"Scholar lists **{sc.get('scholar_rows')}** works and matched "
+            f"**{sc.get('matched')}** of the corpus's **{sc.get('corpus')}**. Scholar is",
+            "the one list of your papers that is built by a different process, so it is the",
+            "only check that can see a paper this pipeline never received.", "",
+            # Backticks, never a markdown link. `build/` is gitignored, so a link there is
+            # dead for every reader of this page on GitHub and after a clone. What makes it
+            # openable is the command that writes it, which is why that is named instead.
+            "Every bucket in full, including what is truncated below, is in",
+            "`build/scholar_diff.json` on the machine that last ran the audit. `build/` is",
+            "gitignored, so `python update.py --step audit` is the one command between a",
+            "fresh clone and the file.", ""]
+
+
+def _gate_excluded(gate: list[dict]) -> list[str]:
+    """Rows Scholar says are the author's that `build/not_mine.json` rejected."""
+    if not gate:
+        return []
+    L = [f"### {plural(len(gate), 'paper')} the authorship gate excluded  — a bug, or a "
+         f"wrong Scholar row", "",
+         "Scholar says these are yours and `build/not_mine.json`, written by the",
+         "same run and gitignored like the rest of `build/`, says they are not.",
+         "One of the two is wrong. If the paper is yours, add its title under",
+         "`also_mine` in [`data/overrides.yaml`](data/overrides.yaml); if Scholar has",
+         "merged a namesake's paper into your profile, delete it there, because a",
+         "wrong row misleads every human who reads it too.", ""]
+    return L + [f"- [ ] {_cites(r.get('citations'))} — {clipped(r.get('title') or '', 66)}"
+                for r in gate] + [""]
+
+
+def _absent_from_bib(miss: list[dict], cfg: dict | None) -> list[str]:
+    """Papers Scholar lists that never reached the corpus, and where to add them."""
+    if not miss:
+        return []
+    L = [f"### {plural(len(miss), 'paper')} absent from the source bibliography", "",
+         "Not in the corpus and not rejected — they never arrived. The bibliography",
+         "is this pipeline's only input, so the fix is one entry there; adding them",
+         "to `data/` would be overwritten on the next run. A BibTeX entry for each,",
+         "resolved from arXiv, Crossref or Semantic Scholar where any of them has",
+         "it, is in [`tasks/bib_missing.md`](tasks/bib_missing.md) — check the",
+         "author list before pasting: it is the index's, not yours.", ""]
+    # Derived from `sources.bibtex_url` rather than written out, because the one
+    # external file this whole pipeline depends on is the one link worth never
+    # letting drift. raw.githubusercontent -> the GitHub editor for the same file.
+    edit = re.sub(r"^https://raw\.githubusercontent\.com/([^/]+/[^/]+)/(.+)$",
+                  r"https://github.com/\1/edit/\2",
+                  ((cfg or {}).get("sources") or {}).get("bibtex_url") or "")
+    if edit.startswith("https://github.com/"):
+        L += [f"Edit it here: <{edit}>", ""]
+    L += [f"- [ ] {_cites(r.get('citations'))} — {r.get('year') or '????'} — "
+          f"{clipped(r.get('title') or '', 60)}" for r in miss[:12]]
+    if len(miss) > 12:
+        L += [f"- … and {len(miss) - 12} more in `build/scholar_diff.json`"]
+    return L + [""]
+
+
+def _not_on_profile(gone: list[dict], sc: dict) -> list[str]:
+    """The corpus's papers whose title is not in the profile listing.
+
+    The mirror of `_absent_from_bib`. The listing shows one title per record, so a paper
+    Scholar has folded into another record is indistinguishable here from one Scholar does
+    not have, and the heading claims only what the check knows.
+    """
+    if not gone:
+        return []
+    cit = sum(p.get("citations") or 0 for p in gone)
+    # An upper bound, never a loss. On a merged record the citations are present, counted,
+    # and on the surviving title.
+    total = ([f"Together these carry **{cit} citations** in the corpus. Treat that as",
+              "the most this could be worth, not as citations you are missing — on a",
+              "merged record they are already counted under the surviving title."]
+             if cit else [])
+    L = [f"### {plural(len(gone), 'paper')} whose title does not appear on your Scholar "
+         "profile",
          "",
-         f"Scholar lists **{sc.get('scholar_rows')}** works and matched "
-         f"**{sc.get('matched')}** of the corpus's **{sc.get('corpus')}**. Scholar is",
-         "the one list of your papers that is built by a different process, so it is the",
-         "only check that can see a paper this pipeline never received.", "",
-         # Backticks, never a markdown link. `build/` is gitignored, so a link there is
-         # dead for every reader of this page on GitHub and after a clone. What makes it
-         # openable is the command that writes it, which is why that is named instead.
-         "Every bucket in full, including what is truncated below, is in",
-         "`build/scholar_diff.json` on the machine that last ran the audit. `build/` is",
-         "gitignored, so `python update.py --step audit` is the one command between a",
-         "fresh clone and the file.", ""]
-    if gate:
-        L += [f"### {pl(len(gate))} the authorship gate excluded  — a bug, or a "
-              f"wrong Scholar row", "",
-              "Scholar says these are yours and `build/not_mine.json`, written by the",
-              "same run and gitignored like the rest of `build/`, says they are not.",
-              "One of the two is wrong. If the paper is yours, add its title under",
-              "`also_mine` in [`data/overrides.yaml`](data/overrides.yaml); if Scholar has",
-              "merged a namesake's paper into your profile, delete it there, because a",
-              "wrong row misleads every human who reads it too.", ""]
-        L += [f"- [ ] {cites(r.get('citations'))} — {clipped(r.get('title') or '', 66)}"
-              for r in gate] + [""]
-    if miss:
-        L += [f"### {pl(len(miss))} absent from the source bibliography", "",
-              "Not in the corpus and not rejected — they never arrived. The bibliography",
-              "is this pipeline's only input, so the fix is one entry there; adding them",
-              "to `data/` would be overwritten on the next run. A BibTeX entry for each,",
-              "resolved from arXiv, Crossref or Semantic Scholar where any of them has",
-              "it, is in [`tasks/bib_missing.md`](tasks/bib_missing.md) — check the",
-              "author list before pasting: it is the index's, not yours.", ""]
-        # Derived from `sources.bibtex_url` rather than written out, because the one
-        # external file this whole pipeline depends on is the one link worth never
-        # letting drift. raw.githubusercontent -> the GitHub editor for the same file.
-        edit = re.sub(r"^https://raw\.githubusercontent\.com/([^/]+/[^/]+)/(.+)$",
-                      r"https://github.com/\1/edit/\2",
-                      ((cfg or {}).get("sources") or {}).get("bibtex_url") or "")
-        if edit.startswith("https://github.com/"):
-            L += [f"Edit it here: <{edit}>", ""]
-        L += [f"- [ ] {cites(r.get('citations'))} — {r.get('year') or '????'} — "
-              f"{clipped(r.get('title') or '', 60)}" for r in miss[:12]]
-        if len(miss) > 12:
-            L += [f"- … and {len(miss) - 12} more in `build/scholar_diff.json`"]
-        L += [""]
-    if gone:
-        cit = sum(p.get("citations") or 0 for p in gone)
-        # Stated as an upper bound, not as a loss. The old wording called these citations
-        # "absent from the profile", which is exactly the inference this section can no
-        # longer make: on a merged record the citations are present, counted, and on the
-        # surviving title. Claiming a loss made the sum an argument for adding papers that
-        # were already there.
-        held = ([f"Together these carry **{cit} citations** in the corpus. Treat that as",
-                 "the most this could be worth, not as citations you are missing — on a",
-                 "merged record they are already counted under the surviving title."]
-                if cit else [])
-        L += [f"### {pl(len(gone))} whose title does not appear on your Scholar profile",
-              "",
-              "That is all this check knows, and the heading says so deliberately. It reads",
-              "the profile listing, which shows **one title per record** — so a paper Scholar",
-              "has folded into another record is indistinguishable here from a paper Scholar",
-              "does not have. Both look like a title that is not in the list.",
-              "",
-              "**So check for a merge before adding anything.** Scholar merges a call for",
-              "papers into the findings paper of the same workshop, and a preprint into its",
-              "retitled successor — the citations are all on the surviving record, which is",
-              "the outcome you want. Adding the folded paper by hand does not recover",
-              "anything; it creates a second record that splits future citations.",
-              "",
-              "Open <https://scholar.google.com/citations?user="
-              f"{sc.get('scholar_profile')}&view_op=list_works&sortby=pubdate> and look for",
-              "the related record — the findings paper, the newer title. If your paper is",
-              "inside it, decline the line here and you will not be asked again. Only if",
-              "nothing on the profile covers it is *+ → Add article manually* the fix."]
-        L += held + ["",
-                     "Declining is one line in [`data/declines.yaml`](data/declines.yaml)"
-                     " under `items:`.", ""]
-        for p in gone:
-            ref = (f" <https://arxiv.org/abs/{p['arxiv']}>" if p.get("arxiv")
-                   else f" <https://doi.org/{p['doi']}>" if p.get("doi")
-                   else f" <{p['url']}>" if p.get("url") else "")
-            L += [f"- [ ] {cites(p.get('citations'))} — {p.get('year') or '????'} — "
-                  f"{clipped(title_of(p), 58)}{ref}"]
-        L += [""]
-    if fix:
-        L += [f"### {pl(len(fix))} whose bibliography title is behind arXiv", "",
-              "arXiv states the title Scholar shows, so the source entry is the stale",
-              "one and there is nothing to decide: correct the title in the source",
-              "bibliography and re-run. Until then the two surfaces answer a title query",
-              "differently, which is the exact failure this repo exists to prevent.", ""]
-        L += [f"- [ ] `{v.get('slug')}`\n"
-              f"      - arXiv and Scholar: {clipped(v.get('scholar') or '', 56)}\n"
-              f"      - the .bib entry:    {clipped(v.get('corpus') or '', 56)}"
-              for v in fix] + [""]
-    if blind:
-        L += [f"{pl(len(blind))} under two titles are not split between the two headings "
-              "here, because `build/title_diffs.json` is not there and arXiv's own titles "
-              "are the only thing that separates them. Run `python update.py --step "
-              "collect` and this run again.", ""]
-    if call:
-        L += [f"### {pl(len(call))} under two titles, with no arXiv record to break the "
-              f"tie", "",
-              "Same paper, two names, and arXiv confirms neither — so this one is a",
-              "judgement. Decide which is canonical and set it in",
-              "[`data/overrides.yaml`](data/overrides.yaml).", ""]
-        L += [f"- [ ] `{v.get('slug')}`\n"
-              f"      - scholar: {clipped(v.get('scholar') or '', 64)}\n"
-              f"      - corpus:  {clipped(v.get('corpus') or '', 64)}" for v in call] + [""]
-    if dup:
-        L += [f"### {pl(len(dup))} listed twice on Scholar", "",
-              "Two rows for one paper splits its citation count, and nothing here can fix",
-              "it: tick both rows and press *Merge*. Both titles are below, because on the",
-              "profile they sort apart and neither reads as the other's duplicate.", "",
-              "Open <https://scholar.google.com/citations?user="
-              f"{sc.get('scholar_profile')}&view_op=list_works&sortby=title>.", ""]
-        for d in dup:
-            L += [f"- [ ] `{d.get('slug')}`",
-                  f"      - one row: {(d.get('corpus') or '')[:64]}",
-                  f"      - the other: {(d.get('scholar') or '')[:64]}"
-                  + (f" — <{d['scholar_url']}>" if d.get("scholar_url") else "")]
-        L += [""]
-    return L
+         "That is all this check knows, and the heading says so deliberately. It reads",
+         "the profile listing, which shows **one title per record** — so a paper Scholar",
+         "has folded into another record is indistinguishable here from a paper Scholar",
+         "does not have. Both look like a title that is not in the list.",
+         "",
+         "**So check for a merge before adding anything.** Scholar merges a call for",
+         "papers into the findings paper of the same workshop, and a preprint into its",
+         "retitled successor — the citations are all on the surviving record, which is",
+         "the outcome you want. Adding the folded paper by hand does not recover",
+         "anything; it creates a second record that splits future citations.",
+         "",
+         "Open <https://scholar.google.com/citations?user="
+         f"{sc.get('scholar_profile')}&view_op=list_works&sortby=pubdate> and look for",
+         "the related record — the findings paper, the newer title. If your paper is",
+         "inside it, decline the line here and you will not be asked again. Only if",
+         "nothing on the profile covers it is *+ → Add article manually* the fix."]
+    L += total + ["",
+                  "Declining is one line in [`data/declines.yaml`](data/declines.yaml)"
+                  " under `items:`.", ""]
+    for p in gone:
+        ref = (f" <https://arxiv.org/abs/{p['arxiv']}>" if p.get("arxiv")
+               else f" <https://doi.org/{p['doi']}>" if p.get("doi")
+               else f" <{p['url']}>" if p.get("url") else "")
+        L += [f"- [ ] {_cites(p.get('citations'))} — {p.get('year') or '????'} — "
+              f"{clipped(title_of(p), 58)}{ref}"]
+    return L + [""]
+
+
+def _bib_behind_arxiv(fix: list[dict]) -> list[str]:
+    """Title variants arXiv confirms Scholar on, so the .bib entry is the stale side."""
+    if not fix:
+        return []
+    L = [f"### {plural(len(fix), 'paper')} whose bibliography title is behind arXiv", "",
+         "arXiv states the title Scholar shows, so the source entry is the stale",
+         "one and there is nothing to decide: correct the title in the source",
+         "bibliography and re-run. Until then the two surfaces answer a title query",
+         "differently, which is the exact failure this repo exists to prevent.", ""]
+    return L + [f"- [ ] `{v.get('slug')}`\n"
+                f"      - arXiv and Scholar: {clipped(v.get('scholar') or '', 56)}\n"
+                f"      - the .bib entry:    {clipped(v.get('corpus') or '', 56)}"
+                for v in fix] + [""]
+
+
+def _no_arxiv_titles(blind: list[dict]) -> list[str]:
+    """One line saying which side is behind cannot be known without arXiv's own titles."""
+    if not blind:
+        return []
+    return [f"{plural(len(blind), 'paper')} under two titles are not split between the "
+            "two headings here, because `build/title_diffs.json` is not there and arXiv's "
+            "own titles are the only thing that separates them. Run `python update.py "
+            "--step collect` and this run again.", ""]
+
+
+def _title_is_a_ruling(call: list[dict]) -> list[str]:
+    """Title variants arXiv confirms neither of, so which is canonical is a judgement."""
+    if not call:
+        return []
+    L = [f"### {plural(len(call), 'paper')} under two titles, with no arXiv record to "
+         "break the tie", "",
+         "Same paper, two names, and arXiv confirms neither — so this one is a",
+         "judgement. Decide which is canonical and set it in",
+         "[`data/overrides.yaml`](data/overrides.yaml).", ""]
+    return L + [f"- [ ] `{v.get('slug')}`\n"
+                f"      - scholar: {clipped(v.get('scholar') or '', 64)}\n"
+                f"      - corpus:  {clipped(v.get('corpus') or '', 64)}"
+                for v in call] + [""]
+
+
+def _listed_twice(dup: list[dict], sc: dict) -> list[str]:
+    """Papers with two rows on the profile, and the sort that puts the two side by side."""
+    if not dup:
+        return []
+    L = [f"### {plural(len(dup), 'paper')} listed twice on Scholar", "",
+         "Two rows for one paper splits its citation count, and nothing here can fix",
+         "it: tick both rows and press *Merge*. Both titles are below, because on the",
+         "profile they sort apart and neither reads as the other's duplicate.", "",
+         "Open <https://scholar.google.com/citations?user="
+         f"{sc.get('scholar_profile')}&view_op=list_works&sortby=title>.", ""]
+    for d in dup:
+        L += [f"- [ ] `{d.get('slug')}`",
+              f"      - one row: {(d.get('corpus') or '')[:64]}",
+              f"      - the other: {(d.get('scholar') or '')[:64]}"
+              + (f" — <{d['scholar_url']}>" if d.get("scholar_url") else "")]
+    return L + [""]
 
 
 def scholar_split_records(st: dict) -> list[str]:
