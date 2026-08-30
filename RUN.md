@@ -563,6 +563,8 @@ the one place the review is genuinely cheap.
 
 | Command | Does | Writes anything? |
 |---|---|---|
+| `scripts/bootstrap_fork.py [--yes] [--check]` | empty the previous author's corpus and judgement out of a fork, so it holds yours. `--check` reports every `config.yaml` line that still names them. Without `--yes` it only says what it would do | `--yes`: local only |
+| `scripts/handover.py <name> [--github H] [--homepage U] [--dry-run]` | look a colleague up in the public records and write them a starter bundle under `handover/<slug>/` | local only |
 | `update.py` | all ten steps | no |
 | `update.py --step <name>` | one step | no |
 | `update.py --refresh-bib` | read the bibliography from its local checkout | no |
@@ -581,6 +583,7 @@ the one place the review is genuinely cheap.
 | `scripts/scholar_check.py [--quiet]` | diff your Google Scholar profile against the corpus — the only check that can see a paper the pipeline never received | local only |
 | `scripts/scholar_strays.py [--quiet] [--skip-openalex] [--limit N]` | copies of your papers that Scholar indexed separately, found by citation gap against the APIs; needs `scholar_check.py` first, and its OpenAlex pass resumes across days | local only |
 | `scripts/identity_tasks.py [--user-page FILE]` | payloads for the one-time identity fixes; `--user-page` reads a saved copy of your arXiv articles list so the journal-ref list can deep-link each form | local only |
+| `scripts/wikipedia_tasks.py [--min-citations N]` | articles that already cite or describe this work, and whether they get it right. Corrections only, because WP:COI and WP:SELFCITE forbid the rest | local only |
 | `scripts/wikidata_apply.py [--apply] [--check-account]` | apply the Wikidata diff | apply: **yes, Wikidata** |
 | `scripts/wikidata_coauthors.py [--quiet] [--refresh] [--apply] [--limit N]` | co-author name strings on your paper items, matched to author items by ORCID where one exists, by a shared DBLP publication where it does not, and left for Author Disambiguator otherwise; needs paper items to exist. `--apply` writes the two matched halves | apply: **yes, Wikidata** |
 | `scripts/wikidata_orgs.py [--quiet] [--apply]` | items for the groups in `data/wikidata_orgs.yaml`, creating those Wikidata lacks and connecting those it has | apply: **yes, Wikidata** |

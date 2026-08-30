@@ -4,8 +4,9 @@
 answer engines and scholarly indexes?** This is a pipeline that audits the gap,
 fixes the automatable part, and hands you a ranked list of what only you can do.
 
-Built for one researcher's corpus (114 papers, 33 repos) but config-driven: fork
-it, replace `config.yaml` and `data/`, and it runs for yours.
+Built for one researcher's corpus (114 papers, 33 repos) and config-driven, so it
+runs for yours too. [Set it up for your own papers](#set-it-up-for-your-own-papers)
+is the five-step version of that.
 
 ## Start here
 
@@ -18,7 +19,8 @@ pip install -r requirements.txt
 python update.py
 ```
 
-That first run is read-only in the sense that matters. It writes only inside this
+That runs against the corpus already in `data/`, which is the quickest way to see the
+output before deciding whether you want it for your own. It writes only inside this
 checkout — `data/` holds the derived records, `build/` is gitignored scratch plus the
 rendered site, `tasks/` holds payloads to paste, and `WORKLIST.md` is the ranked list
 of what is left. No write reaches GitHub, arXiv, ORCID or Hugging Face until you pass
@@ -28,13 +30,67 @@ Then read two files. **`WORKLIST.md`** is what needs you, ranked by citations.
 **`build/site/index.html`** is the corpus as a reader meets it. [RUN.md](RUN.md) is
 the manual for everything after that.
 
-To point it at your own corpus, replace `identity` and `ids` in `config.yaml` and
-point `sources.bibtex_url` at your own `.bib`. Empty the `papers:` list in
-`data/papers.yaml` so the first run rebuilds it from that bibliography, and pass
-`python scripts/collect.py --allow-shrink` once, because the guard that refuses a run
-holding much less data than the last commit is otherwise doing its job.
-[docs/SETUP.md](docs/SETUP.md) is the account-by-account checklist that has to happen
-alongside it.
+## Set it up for your own papers
+
+Five steps, in order. None of them writes outward, so a wrong answer here costs a
+re-run and nothing else.
+
+**1. Fork [borgr/paper-geo](https://github.com/borgr/paper-geo) and clone your fork**,
+then `pip install -r requirements.txt`.
+
+**2. Empty the previous author's data.** This is the step that matters.
+
+```bash
+python scripts/bootstrap_fork.py         # prints what it would do, changes nothing
+python scripts/bootstrap_fork.py --yes   # do it
+```
+
+`data/` holds three kinds of file and all three have to go. The derived records
+(`papers.yaml`, `repos.yaml`, `fulltext/`) cost one slow run to rebuild. The receipts
+(`slug_history.yaml`, `wikidata_created.yaml`, `arxiv_submissions.yaml`) are true
+statements about someone else's records, and kept, they redirect your URLs to their
+retired pages and skip creating items you do not have. The decision files
+(`paper_code.yaml`, `overrides.yaml`, `declines.yaml`, `followups.yaml`, `sidecars/`)
+are one researcher's judgement about their own work, several of them decisions *not*
+to publish something — inherited, they publish that judgement under your name and
+nothing downstream can tell the difference. The comment block at the head of each
+file is kept, which is how you find out what the file is for.
+
+**3. Put yourself in `config.yaml`.** `identity` and `ids` are who you are.
+`sources.bibtex_url` points at your own `.bib`. `site.repo` and `site.base_url` decide
+where the site lands, and [Where the site ends up](#where-the-site-ends-up) is worth
+reading before you set `site.repo`, because deploying over a Pages repo that already
+serves a page replaces that page.
+
+**4. Check nothing of theirs survived.**
+
+```bash
+python scripts/bootstrap_fork.py --check
+```
+
+It exits non-zero and prints every `config.yaml` line still carrying the previous
+author's name, ORCID, ids or URLs. No other check in the repo catches those, because
+for them those values were correct.
+
+**5. Build.**
+
+```bash
+python update.py
+```
+
+`collect` compares each run against the last committed `papers.yaml` and refuses to
+write when coverage drops sharply, which is what a source outage looks like. It stands
+down on its own when the two corpora share no slug at all. If you have co-authored
+with the previous author some slugs do overlap, so pass
+`python scripts/collect.py --allow-shrink` once and then re-run.
+
+Then work through [docs/SETUP.md](docs/SETUP.md), the one-time checklist for the
+surfaces themselves. Its first three items fix *who you are* across every index, and
+nothing downstream resolves properly until that does.
+
+To hand a colleague a bundle with their own records already looked up,
+`python scripts/handover.py "Their Name"` builds one —
+[handover/tamar-rott-shaham/](handover/tamar-rott-shaham/) is what it produces.
 
 ## Where the site ends up
 
@@ -88,6 +144,23 @@ splitting the publication list in half, an ORCID with zero works, no Wikidata it
 on), nearly half the papers with no Hugging Face page, zero GitHub topics across
 every repo, and a venue name sitting in an index as a paper title. The full baseline
 is [docs/EVIDENCE.md §6](docs/EVIDENCE.md#6-the-baseline-what-the-corpus-looked-like-before-any-of-this).
+
+### The core, and everything else
+
+The part that carries the effect is small. One accurate record per paper, a page per
+paper carrying structured data an answer engine can read, and an identity that
+resolves to one person across the indexes. That is the `collect`, `audit`, `render`
+and `worklist` steps, `build_site.py --deploy`, and items 1–3 of
+[docs/SETUP.md](docs/SETUP.md). A corpus with those done is findable and correctly
+attributed, and stopping there is reasonable.
+
+The rest is worth doing and none of it is a prerequisite. Repo labels (`repos`,
+`propose`, `sweep_github.py`) matter for code nobody has described. Per-paper sidecars
+(`draft`) are the strongest lever on being described *correctly* and also the most
+expensive, because they need a model gateway and the author's approval on every claim.
+The code-and-project-page deduction (`links`), co-author reconciliation (`ownership`),
+Wikidata items, Hugging Face paper pages and the two measurement scripts are each a
+surface to pick up once the core is in place.
 
 ## Documentation
 

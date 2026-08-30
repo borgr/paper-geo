@@ -292,6 +292,28 @@ class TestReferencedScriptsExist(unittest.TestCase):
                                   + "\n  ".join(bad))
 
 
+class TestEveryRunnableScriptIsInTheReference(unittest.TestCase):
+    """Every script with a `__main__` block appears in RUN.md's command reference.
+
+    The test above checks the other direction, so a script could be written, wired and
+    never mentioned -- which is how `bootstrap_fork.py`, the first thing a fork has to
+    run, stayed unreachable from every page a new reader starts at.
+    """
+
+    def test_all_listed(self):
+        run = source(os.path.join(ROOT, "RUN.md"))
+        ref = run[run.index("## 12. Command reference"):]
+        missing = []
+        for _, path in modules():
+            if 'if __name__ == "__main__":' not in source(path):
+                continue
+            rel = os.path.relpath(path, ROOT)
+            if rel not in ref:
+                missing.append(rel)
+        self.assertEqual(missing, [], "runnable scripts missing from RUN.md §12:\n  "
+                                      + "\n  ".join(missing))
+
+
 class TestDocLinksResolve(unittest.TestCase):
     """Relative markdown links in the hand-written docs point at files that exist.
 

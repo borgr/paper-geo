@@ -6,6 +6,10 @@ independent of this tool — it just generates the payloads and tracks what's le
 Ordered by leverage ÷ effort. Items 1–3 fix *who you are* across every index, and
 nothing downstream works properly until identity resolves to one person.
 
+On a fork holding somebody else's corpus, the five setup steps in
+[README](../README.md#set-it-up-for-your-own-papers) come first. This page assumes
+`config.yaml` already names you.
+
 Two commands support this page:
 
 ```bash
