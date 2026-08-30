@@ -1167,145 +1167,179 @@ def arxiv_ownership(state: dict, ident: dict, unowned: set) -> list[str]:
     return L
 
 
+def _needs_jr(p: dict) -> bool:
+    """Is this paper published, on arXiv, and still declaring no venue there?
+
+    A paper with no published venue has no journal-ref to declare, and listing it invited
+    exactly the wrong edit: two entries read `-> ArXiv` and `-> CoRR`, which are the *absence*
+    of a venue written out as if it were one.
+    """
+    return bool(p.get("arxiv") and not p.get("arxiv_journal_ref")
+                and p.get("venue") and not is_preprint_venue(p["venue"]))
+
+
+def _jref_submission_step(papers: list[dict]) -> list[str]:
+    """The five-minute step that turns "find the row" into a link, or nothing.
+
+    The submission id the journal-ref form is addressed by appears on exactly one page in the
+    world, your own articles list, and `robots.txt` disallows it -- so the only route is a copy
+    of the page saved by hand, and the only reason to save it is that it removes a search from
+    every one of sixty rows. Stated as a step of its own, rather than as a closing sentence,
+    which is where a prerequisite goes to be skipped.
+
+    Empty once every listed paper has an id -- empty rather than "all done", which would be one
+    more line asserting that something you cannot see is fine.
+    """
+    want = [str(p["arxiv"]) for p in papers if _needs_jr(p)]
+    have = read_yaml(os.path.join(DATA, "arxiv_submissions.yaml")) or {}
+    n = sum(1 for a in want if a in have)
+    if not want or n >= len(want):
+        return []
+    # Agrees with itself at n == 1, which is the number this actually runs at: two
+    # ids got cached while the ingester was being tested, so the first thing anyone
+    # reads under this heading is the sentence about the other sixty.
+    one = n == 1
+    return [
+        f"**Five minutes first, if you are doing more than a couple.** {n} of the",
+        f"{len(want)} rows {'has' if one else 'have'} a direct link into "
+        f"{'its' if one else 'their'} own form;",
+        f"the other {len(want) - n} have to be found by eye on that list. The id the",
+        "form is addressed by is only ever shown on your own articles page, and arXiv's",
+        "`robots.txt` disallows fetching it — so the route is a copy you save:",
+        "",
+        "1. Sign in and open <https://arxiv.org/user>.",
+        "2. Save the page — ⌘S, *Page Source* is enough.",
+        "3. `python scripts/identity_tasks.py --user-page ~/Downloads/arxiv-user.html`",
+        "",
+        "Submission ids never change, so this is once and not per run, and nothing is",
+        "requested on your behalf at any point — the code reads the file you saved.",
+        "After it, every entry in [`tasks/arxiv_jref.md`](tasks/arxiv_jref.md) opens",
+        "its own form.",
+        "",
+    ]
+
+
+def _jref_intro(papers: list[dict], scholar: dict) -> list[str]:
+    """The heading, what the edit costs, and the three things it buys, honestly ranked.
+
+    The cost line comes first and is measured, because the earlier version of this section led
+    with "Google Scholar keeps two records" and that turned out to be the weakest of the three
+    reasons *for this corpus*: the profile has almost no split pairs. Selling the
+    strongest-sounding argument rather than the true one is how a list of 64 items gets read
+    once and never again.
+    """
+    n = sum(1 for p in papers if _needs_jr(p))
+    dups = len(scholar.get("scholar_duplicates") or [])
+    seen_n = scholar.get("corpus")
+    split = ([f"   Measured on your own profile: **{dups} split pair"
+              f"{'s' * (dups != 1)} out of {seen_n}**, so for this",
+              "   corpus that is mostly already handled — do not do this for that reason."]
+             if seen_n else
+             ["   Scholar appears to have merged most of yours already, so this is not "
+              "the reason to do it."])
+    return [f"## arXiv journal-ref missing ({n} papers)",
+            "",
+            "**It is a metadata edit, not a new version.** No recompile, no file upload,",
+            "no new version number, no re-announcement — v2 stays v2, per arXiv's own",
+            "help page. That is the whole cost, about a minute each, and it is worth",
+            "knowing because the size of this list is not the size of the job.",
+            "",
+            "The form is per-paper and lives behind your account: open",
+            "<https://arxiv.org/user>, find the row, follow its *journal ref* link.",
+            "There is no paste-an-identifier page — `/jref` on its own redirects to that",
+            "list — which is also why no script can do this for you.",
+            ""] + _jref_submission_step(papers) + [
+            "**What it buys, honestly ranked.**",
+            "",
+            "1. *Weak here.* Scholar merges preprint and published versions largely on",
+            "   venue agreement, and a venue-less arXiv record can stay a separate",
+            "   cluster with the citations split across the two."] + split + [
+            "2. **The arXiv DataCite record gains a `container-title`.** This is the real",
+            "   one and it is not visible on Scholar at all: that field is what flows to",
+            "   OpenAlex, to ORCID auto-update, and to every Crossref-derived tool, and",
+            "   a venue-less record is filtered out by anything ranking on venue.",
+            "3. **Answer engines cite venue as authority.** \"Published at ACL 2024\" in",
+            "   the metadata is what makes a model's answer name the venue instead of",
+            "   calling it a preprint.",
+            "",
+            "**Recommendation:** the top few, when you are already logged in, and stop.",
+            "There is no write API, so the clicking is the one part of this list code",
+            "cannot take off you — but the typing is not: both field values are below,",
+            "per paper, built from the publisher's own bibtex. The same for all",
+            f"{n} is in "
+            "[`tasks/arxiv_jref.md`](tasks/arxiv_jref.md).",
+            ""]
+
+
+def _jref_blocked_note(blocked: int) -> list[str]:
+    """The papers whose form will refuse, because arXiv does not list you as an author."""
+    if not blocked:
+        return []
+    return [f"**{blocked} of these are marked (blocked)**: you are not a registered",
+            "author on them, so the form will refuse. Claim ownership first (above).",
+            ""]
+
+
+def _jref_rows(missing_jr: list[dict], unowned: set) -> list[str]:
+    """One paper per bullet, with the form link and both field values under it.
+
+    The two field values inline rather than a pointer to `tasks/arxiv_jref.md`. A row saying
+    only "-> ACL 2025" leaves the reader to work out what arXiv wants in a field it calls
+    `Journal-ref:`, and the answer is a citation string this code already builds from the
+    publisher's bibtex. The section they work from has to be the one that knows it.
+    """
+    from identity_tasks import journal_doi, journal_ref  # noqa: E402
+    subs = read_yaml(os.path.join(DATA, "arxiv_submissions.yaml")) or {}
+    L = []
+    for p in missing_jr:
+        flag = "  **(blocked)**" if p["arxiv"] in unowned else ""
+        title = (title_of(p)).strip()
+        L.append(f"- [ ] **{p.get('citations') or 0} cites** — {title}{flag}")
+        sub = subs.get(p["arxiv"])
+        # Nested bullets rather than indented prose: a continuation line at this
+        # indent is a lazy paragraph continuation, so the form link rendered glued to
+        # the end of the title.
+        L.append(f"      - the form: <https://arxiv.org/submit/{sub}/jref>" if sub else
+                 f"      - the form: find `{p['arxiv']}` on <https://arxiv.org/user> "
+                 f"→ its *journal ref* link "
+                 f"([abs](https://arxiv.org/abs/{p['arxiv']}))")
+        if jr := journal_ref(p):
+            L.append(f"      - `Journal-ref:` `{jr}`")
+        else:
+            # Said rather than omitted: an absent line reads as "nothing to paste",
+            # and the reader types the venue name, which is not a journal-ref.
+            venue = p.get("venue_display") or p.get("venue") or "?"
+            L.append(f"      - `Journal-ref:` — not derivable from the bibliography "
+                     f"(venue is *{venue}*); type the proceedings title yourself")
+        doi = journal_doi(p)
+        L.append(f"      - `Journal version DOI:` `{doi}`" if doi else
+                 "      - `Journal version DOI:` — none minted, leave blank")
+    return L
+
+
+# `Report number:` means an *institutional* preprint number, a lab's own report series,
+# and nothing in this corpus has one -- so it is answered once here rather than per row.
+_JREF_FOOTER = ["", "`Report number:` stays blank on all of them: it means an "
+                    "*institutional* preprint", "number (a lab's own report series) and none "
+                    "of these has one.", ""]
+
+
 def arxiv_journal_refs(papers: list[dict], scholar: dict, unowned: set) -> list[str]:
     """Published papers whose arXiv record still declares no venue, both field values inline.
 
     A metadata edit rather than a new version, about a minute each, and there is no write API
     -- so the clicking is the reader's and the typing is not.
+
+    Four parts in the order they print: why the edit is cheap and what it buys, the papers
+    whose form will refuse, a bullet per paper, and one line about the field nobody has to
+    fill in.
     """
-    L = []
-    # A paper with no published venue has no journal-ref to declare, and listing it here
-    # invited exactly the wrong edit: two entries read `-> ArXiv` and `-> CoRR`, which are
-    # the *absence* of a venue written out as if it were one.
-    def needs_jr(p) -> bool:
-        return bool(p.get("arxiv") and not p.get("arxiv_journal_ref")
-                    and p.get("venue") and not is_preprint_venue(p["venue"]))
-
-    def subm_ids() -> list[str]:
-        """The five-minute step that turns "find the row" into a link, or nothing.
-
-        The submission id the journal-ref form is addressed by appears on exactly one page in the
-        world, your own articles list, and `robots.txt` disallows it -- so the only route is a copy
-        of the page saved by hand, and the only reason to save it is that it removes a search from
-        every one of sixty rows. Stated as a step of its own, rather than as a closing sentence,
-        which is where a prerequisite goes to be skipped.
-
-        Empty once every listed paper has an id -- empty rather than "all done", which would be one
-        more line asserting that something you cannot see is fine.
-        """
-        want = [str(p["arxiv"]) for p in papers if needs_jr(p)]
-        have = read_yaml(os.path.join(DATA, "arxiv_submissions.yaml")) or {}
-        n = sum(1 for a in want if a in have)
-        if not want or n >= len(want):
-            return []
-        # Agrees with itself at n == 1, which is the number this actually runs at: two
-        # ids got cached while the ingester was being tested, so the first thing anyone
-        # reads under this heading is the sentence about the other sixty.
-        one = n == 1
-        return [
-            f"**Five minutes first, if you are doing more than a couple.** {n} of the",
-            f"{len(want)} rows {'has' if one else 'have'} a direct link into "
-            f"{'its' if one else 'their'} own form;",
-            f"the other {len(want) - n} have to be found by eye on that list. The id the",
-            "form is addressed by is only ever shown on your own articles page, and arXiv's",
-            "`robots.txt` disallows fetching it — so the route is a copy you save:",
-            "",
-            "1. Sign in and open <https://arxiv.org/user>.",
-            "2. Save the page — ⌘S, *Page Source* is enough.",
-            "3. `python scripts/identity_tasks.py --user-page ~/Downloads/arxiv-user.html`",
-            "",
-            "Submission ids never change, so this is once and not per run, and nothing is",
-            "requested on your behalf at any point — the code reads the file you saved.",
-            "After it, every entry in [`tasks/arxiv_jref.md`](tasks/arxiv_jref.md) opens",
-            "its own form.",
-            "",
-        ]
-
-    missing_jr = by_citations(papers, needs_jr, 12)
-    if missing_jr:
-        blocked = sum(1 for p in papers if p.get("arxiv") in unowned and needs_jr(p))
-        # The cost line comes first and is measured, because the earlier version of this
-        # section led with "Google Scholar keeps two records" and that turned out to be
-        # the weakest of the three reasons *for this corpus*: the profile has almost no
-        # split pairs. Selling the strongest-sounding argument rather than the true one
-        # is how a list of 64 items gets read once and never again.
-        dups = len(scholar.get("scholar_duplicates") or [])
-        seen_n = scholar.get("corpus")
-        split = ([f"   Measured on your own profile: **{dups} split pair"
-                  f"{'s' * (dups != 1)} out of {seen_n}**, so for this",
-                  "   corpus that is mostly already handled — do not do this for that reason."]
-                 if seen_n else
-                 ["   Scholar appears to have merged most of yours already, so this is not "
-                  "the reason to do it."])
-        L += [f"## arXiv journal-ref missing ({sum(1 for p in papers if needs_jr(p))} papers)",
-                  "",
-                  "**It is a metadata edit, not a new version.** No recompile, no file upload,",
-                  "no new version number, no re-announcement — v2 stays v2, per arXiv's own",
-                  "help page. That is the whole cost, about a minute each, and it is worth",
-                  "knowing because the size of this list is not the size of the job.",
-                  "",
-                  "The form is per-paper and lives behind your account: open",
-                  "<https://arxiv.org/user>, find the row, follow its *journal ref* link.",
-                  "There is no paste-an-identifier page — `/jref` on its own redirects to that",
-                  "list — which is also why no script can do this for you.",
-                  ""] + subm_ids() + [
-                  "**What it buys, honestly ranked.**",
-                  "",
-                  "1. *Weak here.* Scholar merges preprint and published versions largely on",
-                  "   venue agreement, and a venue-less arXiv record can stay a separate",
-                  "   cluster with the citations split across the two."] + split + [
-                  "2. **The arXiv DataCite record gains a `container-title`.** This is the real",
-                  "   one and it is not visible on Scholar at all: that field is what flows to",
-                  "   OpenAlex, to ORCID auto-update, and to every Crossref-derived tool, and",
-                  "   a venue-less record is filtered out by anything ranking on venue.",
-                  "3. **Answer engines cite venue as authority.** \"Published at ACL 2024\" in",
-                  "   the metadata is what makes a model's answer name the venue instead of",
-                  "   calling it a preprint.",
-                  "",
-                  "**Recommendation:** the top few, when you are already logged in, and stop.",
-                  "There is no write API, so the clicking is the one part of this list code",
-                  "cannot take off you — but the typing is not: both field values are below,",
-                  "per paper, built from the publisher's own bibtex. The same for all",
-                  f"{sum(1 for p in papers if needs_jr(p))} is in "
-                  "[`tasks/arxiv_jref.md`](tasks/arxiv_jref.md).",
-                  ""]
-        if blocked:
-            L += [f"**{blocked} of these are marked (blocked)**: you are not a registered",
-                      "author on them, so the form will refuse. Claim ownership first (above).",
-                      ""]
-        # The two field values inline rather than a pointer to `tasks/arxiv_jref.md`. A row
-        # saying only "-> ACL 2025" leaves the reader to work out what arXiv wants in a field it
-        # calls `Journal-ref:`, and the answer is a citation string this code already builds from
-        # the publisher's bibtex. The section they work from has to be the one that knows it.
-        from identity_tasks import journal_doi, journal_ref  # noqa: E402
-        subs = read_yaml(os.path.join(DATA, "arxiv_submissions.yaml")) or {}
-        for p in missing_jr:
-            flag = "  **(blocked)**" if p["arxiv"] in unowned else ""
-            title = (title_of(p)).strip()
-            L.append(f"- [ ] **{p.get('citations') or 0} cites** — {title}{flag}")
-            sub = subs.get(p["arxiv"])
-            # Nested bullets rather than indented prose: a continuation line at this
-            # indent is a lazy paragraph continuation, so the form link rendered glued to
-            # the end of the title.
-            L.append(f"      - the form: <https://arxiv.org/submit/{sub}/jref>" if sub else
-                         f"      - the form: find `{p['arxiv']}` on <https://arxiv.org/user> "
-                         f"→ its *journal ref* link "
-                         f"([abs](https://arxiv.org/abs/{p['arxiv']}))")
-            if jr := journal_ref(p):
-                L.append(f"      - `Journal-ref:` `{jr}`")
-            else:
-                # Said rather than omitted: an absent line reads as "nothing to paste",
-                # and the reader types the venue name, which is not a journal-ref.
-                venue = p.get("venue_display") or p.get("venue") or "?"
-                L.append(f"      - `Journal-ref:` — not derivable from the bibliography "
-                             f"(venue is *{venue}*); type the proceedings title yourself")
-            doi = journal_doi(p)
-            L.append(f"      - `Journal version DOI:` `{doi}`" if doi else
-                         "      - `Journal version DOI:` — none minted, leave blank")
-        L += ["", "`Report number:` stays blank on all of them: it means an "
-                  "*institutional* preprint", "number (a lab's own report series) and none "
-                  "of these has one.", ""]
-    return L
+    missing_jr = by_citations(papers, _needs_jr, 12)
+    if not missing_jr:
+        return []
+    blocked = sum(1 for p in papers if p.get("arxiv") in unowned and _needs_jr(p))
+    return (_jref_intro(papers, scholar) + _jref_blocked_note(blocked)
+            + _jref_rows(missing_jr, unowned) + _JREF_FOOTER)
 
 
 def hf_pages(papers: list[dict], state: dict) -> list[str]:
