@@ -290,9 +290,42 @@ class TestEverySectionIsWired(unittest.TestCase):
     def tree(self, rel):
         return ast.parse(source(os.path.join(ROOT, rel)))
 
+    @staticmethod
+    def _own(scope):
+        """The nodes of one scope, stopping at every nested function and class."""
+        out, todo = [], list(ast.iter_child_nodes(scope))
+        while todo:
+            n = todo.pop()
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda,
+                              ast.ClassDef)):
+                continue
+            out.append(n)
+            todo += list(ast.iter_child_nodes(n))
+        return out
+
     def names(self, rel):
-        """Every bare name `rel` mentions, whether it calls it or passes it along."""
-        return {n.id for n in ast.walk(self.tree(rel)) if isinstance(n, ast.Name)}
+        """Every bare name `rel` reads while nothing nearer than an import defines it.
+
+        A read inside a function that assigns, loops over, or takes that name as an argument
+        reaches the local and is not counted. An import is the one binding that does count,
+        wherever it sits: `update.py` imports `held` inside the function that calls it.
+        """
+        tree, used = self.tree(rel), set()
+        for scope in [tree] + [n for n in ast.walk(tree) if isinstance(
+                n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef))]:
+            own = self._own(scope)
+            bound = {n.id for n in own
+                     if isinstance(n, ast.Name) and not isinstance(n.ctx, ast.Load)}
+            bound |= {n.name for n in own if isinstance(n, ast.ExceptHandler) and n.name}
+            if not isinstance(scope, (ast.Module, ast.ClassDef)):
+                bound |= {a.arg for a in ast.walk(scope.args) if isinstance(a, ast.arg)}
+            # `global x` in a function is a statement that the module-level name is the one
+            # being written, so a read there does reach the import.
+            bound -= {x for n in own if isinstance(n, (ast.Global, ast.Nonlocal))
+                      for x in n.names}
+            used |= {n.id for n in own if isinstance(n, ast.Name)
+                     and isinstance(n.ctx, ast.Load)} - bound
+        return used
 
     def test_no_section_is_orphaned(self):
         reached = set().union(*(self.names(rel) for rel in self.MODULES))

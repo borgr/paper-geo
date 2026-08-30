@@ -28,7 +28,7 @@ from common import (BUILD, ROOT, answered_by, has_live_sidecar, phrasings, qa_lo
 from sidecar_io import (CACHE, draft_path, draft_paths, front_matter, held,  # noqa: E402
                         live_path, live_paths, oneline, quote, read_front_matter,
                         spec_sha, validate_draft)
-from sidecar_repair import at, rule_of  # noqa: E402
+from sidecar_repair import rule_of  # noqa: E402
 
 
 def checked(slug: str) -> dict | str:

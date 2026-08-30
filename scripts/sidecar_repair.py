@@ -25,9 +25,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from common import QA_ROLES, qa_loci, rules_block  # noqa: E402
 from llm import JSON_ONLY  # noqa: E402
-from sidecar_io import (RULES_DOC, draft_path, front_matter, held,  # noqa: E402
-                        live_path, oneline, read_front_matter, validate_draft,
-                        write_draft)
+from sidecar_io import (RULES_DOC, draft_path, front_matter, live_path,  # noqa: E402
+                        oneline, read_front_matter, validate_draft, write_draft)
 
 REPAIR = ("Here is the paper, a sidecar you drafted from it, and the findings an "
           "automated checker raised against the sidecar. Fix exactly what the findings "
@@ -499,6 +498,88 @@ def spliced(slug: str, fm: dict, path: str, source: str) -> list[str]:
     return [str(x).split(".md: ")[-1] for x in errs + qual]
 
 
+def _by_field(errs: list, qual: list, fm: dict) -> tuple[dict, dict]:
+    """Findings split by whether one field is at fault, as `locus -> findings` each way.
+
+    The second dict is the fields a page-level finding is about, rewritten as a group. A
+    field named by a finding of its own is fixed on its own terms, so the group holds only
+    the fields nothing else complained about.
+    """
+    jobs: dict[str, list[str]] = {}
+    crowd: dict[str, list[str]] = {}
+    for finding in (str(x).split(".md: ")[-1] for x in errs + qual):
+        locus = where(finding, fm)
+        if locus and at(fm, locus) is not None:
+            jobs.setdefault(locus, []).append(finding)
+            continue
+        for locus in spread(finding):
+            if at(fm, locus) is not None:
+                crowd.setdefault(locus, []).append(TOGETHER)
+    return jobs, {locus: found for locus, found in crowd.items() if locus not in jobs}
+
+
+def _patch(slug: str, again, evidence: str, fm: dict, asked: dict) -> dict | None:
+    """Send each offending string with what is wrong and what bounds it, and take a reply.
+
+    Nothing the checker was happy with is in the prompt, so nothing else can come back
+    changed.
+    """
+    fields = [{"at": locus, "now": at(fm, locus), "wrong": found, "limits": limits(locus)}
+              for locus, found in asked.items()]
+    pieces = json.dumps(fields, ensure_ascii=False, indent=1)
+    ev = fits(evidence, pieces, getattr(again, "window", 0))
+    return again(MEND.format(evidence=("THE PAPER:\n" + ev) if ev
+                             else "(the paper's text is not available on this run)",
+                             pieces=pieces), f"{slug} mend", PATCH_SCHEMA)
+
+
+def _replies(fixes: list, fm: dict, asked: dict) -> dict[str, str]:
+    """`locus -> new value`, keeping a changed non-blank string at a locus that was asked."""
+    new: dict[str, str] = {}
+    for fix in fixes:
+        locus = (fix or {}).get("at") if isinstance(fix, dict) else None
+        value = fix.get("new") if isinstance(fix, dict) else None
+        if locus in asked and isinstance(value, str) and value.strip() \
+                and value.strip() != at(fm, locus):
+            new[locus] = value.strip()
+    # One replacement text landing at two loci is the pathology `validate.py`'s shared-scope
+    # check was added for: told several scopes are too long, a model can answer with one
+    # wording that clears the rules and paste it into all of them. Drop the whole group
+    # rather than pick a winner -- there is no way to tell which one it was written for.
+    seen: dict[str, list[str]] = {}
+    for locus, value in new.items():
+        seen.setdefault(value, []).append(locus)
+    for value, loci in seen.items():
+        if len(loci) > 1:
+            print(f"    mend: dropped {len(loci)} field(s) given identical text "
+                  f"({', '.join(loci)})")
+            for locus in loci:
+                del new[locus]
+    return new
+
+
+def _helps(slug: str, fm: dict, path: str, source: str, patch: dict,
+           count: int) -> int | None:
+    """The finding count after splicing this patch in, or None with the draft put back.
+
+    It is kept only if it cleared the findings against its own fields *and* the total fell.
+    The second half is what catches a fix that reads as an improvement and breaks a rule
+    next door -- a scope cut under the length floor, a claim whose figure went with the
+    sentence.
+    """
+    snapshot = open(path, encoding="utf-8").read()
+    old = {locus: at(fm, locus) for locus in patch}
+    for locus, value in patch.items():
+        put(fm, locus, value)
+    found = spliced(slug, fm, path, source)
+    if not [f for f in found if where(f, fm) in patch] and len(found) < count:
+        return len(found)
+    for locus, was in old.items():
+        put(fm, locus, was)
+    open(path, "w", encoding="utf-8").write(snapshot)
+    return None
+
+
 def mend(slug: str, again, evidence: str = "", source: str = "a model") -> int:
     """Fix what is fixable one field at a time, and keep the result only if it helped.
 
@@ -515,98 +596,41 @@ def mend(slug: str, again, evidence: str = "", source: str = "a model") -> int:
     if not before:
         return 0
     fm = front_matter(path) or {}
-    jobs: dict[str, list[str]] = {}
-    crowd: dict[str, list[str]] = {}
-    for finding in (str(x).split(".md: ")[-1] for x in errs + qual):
-        locus = where(finding, fm)
-        if locus and at(fm, locus) is not None:
-            jobs.setdefault(locus, []).append(finding)
-            continue
-        for locus in spread(finding):
-            if at(fm, locus) is not None:
-                crowd.setdefault(locus, []).append(TOGETHER)
-    # A field named by a finding of its own is fixed on its own terms; the group is only for
-    # the fields nothing else complained about.
-    crowd = {locus: found for locus, found in crowd.items() if locus not in jobs}
+    jobs, crowd = _by_field(errs, qual, fm)
     if not jobs and not crowd:
         print(f"    mend: none of the {before} finding(s) is about a single field")
         return before
-    fields = [{"at": locus, "now": at(fm, locus), "wrong": found, "limits": limits(locus)}
-              for locus, found in list(jobs.items()) + list(crowd.items())]
-    pieces = json.dumps(fields, ensure_ascii=False, indent=1)
-    ev = fits(evidence, pieces, getattr(again, "window", 0))
-    got = again(MEND.format(evidence=("THE PAPER:\n" + ev) if ev
-                            else "(the paper's text is not available on this run)",
-                            pieces=pieces), f"{slug} mend", PATCH_SCHEMA)
-    fixes = (got or {}).get("fixes")
+    asked = {**jobs, **crowd}
+    fixes = (_patch(slug, again, evidence, fm, asked) or {}).get("fixes")
     if not isinstance(fixes, list):
-        print(f"    mend: no usable reply, keeping the draft as it stands")
+        print("    mend: no usable reply, keeping the draft as it stands")
         return before
-    new: dict[str, str] = {}
-    for fix in fixes:
-        locus = (fix or {}).get("at") if isinstance(fix, dict) else None
-        value = fix.get("new") if isinstance(fix, dict) else None
-        if (locus in jobs or locus in crowd) and isinstance(value, str) and value.strip() \
-                and value.strip() != at(fm, locus):
-            new[locus] = value.strip()
-    # One replacement text landing at two loci is the pathology `validate.py`'s shared-scope
-    # check was added for: told several scopes are too long, a model can answer with one
-    # wording that clears the rules and paste it into all of them. Drop the whole group
-    # rather than pick a winner -- there is no way to tell which one it was written for.
-    seen: dict[str, list[str]] = {}
-    for locus, value in new.items():
-        seen.setdefault(value, []).append(locus)
-    for value, loci in seen.items():
-        if len(loci) > 1:
-            print(f"    mend: dropped {len(loci)} field(s) given identical text "
-                  f"({', '.join(loci)})")
-            for locus in loci:
-                del new[locus]
+    new = _replies(fixes, fm, asked)
     if not new:
         print(f"    mend: nothing usable came back, keeping the {before}-finding draft")
         return before
-    singles = {locus: value for locus, value in new.items() if locus in jobs}
-    bulk = {locus: value for locus, value in new.items() if locus in crowd}
+
     # Each field's rewrite stands or falls on its own, spliced and checked one at a time.
     # Judging the patch whole loses both ways: it discards five good fixes because a sixth
     # traded one finding for another, and keeps five rewrites that changed nothing because a
     # sixth happened to help -- churn in a draft a human then has to re-read.
     kept, undone, count = [], [], before
-    for locus, value in singles.items():
-        snapshot, held = open(path, encoding="utf-8").read(), at(fm, locus)
-        put(fm, locus, value)
-        found = spliced(slug, fm, path, source)
-        mine = [f for f in found if where(f, fm) == locus]
-        # Cleared its own complaint, and cost nothing anywhere else. The second half is
-        # what catches a fix that reads as an improvement and breaks a rule next door --
-        # a scope cut under the length floor, a claim whose figure went with the sentence.
-        if not mine and len(found) < count:
-            kept.append(locus)
-            count = len(found)
-        else:
-            put(fm, locus, held)
-            open(path, "w", encoding="utf-8").write(snapshot)
-            undone.append(locus)
+    for locus, value in new.items():
+        if locus not in jobs:
+            continue
+        fell = _helps(slug, fm, path, source, {locus: value}, count)
+        kept.append(locus) if fell is not None else undone.append(locus)
+        count = fell if fell is not None else count
     # The group is the one exception, and it has to be: no single added magnitude clears a
     # ratio finding, so field-by-field verification would revert every one of them and the
     # largest family of findings in the corpus would stay untouched. So they stand or fall
     # together, and the falling half matters -- a magnitude the paper does not contain shows
     # up as its own finding, the count fails to drop, and the whole group goes back.
+    bulk = {locus: value for locus, value in new.items() if locus in crowd}
     if bulk:
-        snapshot = open(path, encoding="utf-8").read()
-        held = {locus: at(fm, locus) for locus in bulk}
-        for locus, value in bulk.items():
-            put(fm, locus, value)
-        found = spliced(slug, fm, path, source)
-        mine = [f for f in found if where(f, fm) in bulk]
-        if not mine and len(found) < count:
-            kept += list(bulk)
-            count = len(found)
-        else:
-            for locus, was in held.items():
-                put(fm, locus, was)
-            open(path, "w", encoding="utf-8").write(snapshot)
-            undone += list(bulk)
+        fell = _helps(slug, fm, path, source, bulk, count)
+        (kept if fell is not None else undone).extend(bulk)
+        count = fell if fell is not None else count
     if undone:
         print(f"    mend: {len(undone)} rewrite(s) did not fix what was asked, reverted "
               f"({', '.join(undone)})")
