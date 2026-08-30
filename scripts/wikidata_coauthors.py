@@ -460,23 +460,16 @@ def year_of(row: dict) -> int:
         return 0
 
 
-def venue_items(names: list[str]) -> dict[str, list[dict]]:
-    """Venue name to every journal, proceedings or conference item labelled with it.
+def typed_items(rows: list[dict], key) -> dict[str, list[dict]]:
+    """`key(row)` to the `?p` items its rows name, each carrying every `?t` type it matched.
 
-    Each candidate carries every one of these types it has, since a volume is often also a
-    `version, edition or translation` and a journal often also `open-access journal`.
+    A QID arrives once per type it has, since a volume is often also a `version, edition or
+    translation` and a journal often also `open-access journal`.
     """
     out: dict[str, list[dict]] = {}
-    types = items_block(PUBLICATION_TYPES + EVENT_TYPES)
-    for r in batched(names, lambda ns:
-                     "SELECT ?name ?p ?pLabel ?t ?date WHERE { VALUES ?name { %s } "
-                     "{ ?p rdfs:label ?name } UNION { ?p skos:altLabel ?name } "
-                     "?p wdt:P31/wdt:P279* ?t . VALUES ?t { %s } "
-                     "OPTIONAL { ?p wdt:P577 ?date } "
-                     'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }'
-                     % (values(ns), types), size=60):
+    for r in rows:
+        got = out.setdefault(key(r), [])
         qid, t = qid_of(r["p"]["value"]), qid_of(r["t"]["value"])
-        got = out.setdefault(r["name"]["value"], [])
         cand = next((c for c in got if c["qid"] == qid), None)
         if cand is None:
             cand = {"qid": qid, "label": r.get("pLabel", {}).get("value", ""),
@@ -485,6 +478,20 @@ def venue_items(names: list[str]) -> dict[str, list[dict]]:
         if t not in cand["types"]:
             cand["types"].append(t)
     return out
+
+
+def venue_items(names: list[str]) -> dict[str, list[dict]]:
+    """Venue name to every journal, proceedings or conference item labelled with it."""
+    types = items_block(PUBLICATION_TYPES + EVENT_TYPES)
+    return typed_items(
+        batched(names, lambda ns:
+                "SELECT ?name ?p ?pLabel ?t ?date WHERE { VALUES ?name { %s } "
+                "{ ?p rdfs:label ?name } UNION { ?p skos:altLabel ?name } "
+                "?p wdt:P31/wdt:P279* ?t . VALUES ?t { %s } "
+                "OPTIONAL { ?p wdt:P577 ?date } "
+                'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }'
+                % (values(ns), types), size=60),
+        lambda r: r["name"]["value"])
 
 
 def publications(cands: list[dict]) -> list[dict]:
@@ -505,24 +512,15 @@ def proceedings_of(events: list[str]) -> dict[str, list[dict]]:
     is the name nobody writes. The conference item knows its own volumes, so this is the
     route from one to the other.
     """
-    out: dict[str, list[dict]] = {}
     types = items_block(PUBLICATION_TYPES)
-    for r in batched(events, lambda es:
-                     "SELECT ?c ?p ?pLabel ?t ?date WHERE { VALUES ?c { %s } "
-                     "?p wdt:P4745 ?c . ?p wdt:P31/wdt:P279* ?t . VALUES ?t { %s } "
-                     "OPTIONAL { ?p wdt:P577 ?date } "
-                     'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }'
-                     % (items_block(es), types), size=60):
-        got = out.setdefault(qid_of(r["c"]["value"]), [])
-        qid, t = qid_of(r["p"]["value"]), qid_of(r["t"]["value"])
-        cand = next((c for c in got if c["qid"] == qid), None)
-        if cand is None:
-            cand = {"qid": qid, "label": r.get("pLabel", {}).get("value", ""),
-                    "year": year_of(r), "types": []}
-            got.append(cand)
-        if t not in cand["types"]:
-            cand["types"].append(t)
-    return out
+    return typed_items(
+        batched(events, lambda es:
+                "SELECT ?c ?p ?pLabel ?t ?date WHERE { VALUES ?c { %s } "
+                "?p wdt:P4745 ?c . ?p wdt:P31/wdt:P279* ?t . VALUES ?t { %s } "
+                "OPTIONAL { ?p wdt:P577 ?date } "
+                'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }'
+                % (items_block(es), types), size=60),
+        lambda r: qid_of(r["c"]["value"]))
 
 
 def venue_forms(paper: dict) -> list[str]:

@@ -5658,6 +5658,23 @@ class TestVenueResolutionTargetsAPublication(unittest.TestCase):
         cands = [{"qid": "Q9", "label": "TACL", "types": ["Q5633421", "Q773668"]}]
         self.assertEqual(wc.pick_venue(wc.publications(cands))["qid"], "Q9")
 
+    def test_one_item_typed_twice_is_one_candidate(self):
+        """A row arrives per type, so a volume that is also a `version, edition or
+        translation` comes back twice. Left unmerged it is two candidates of equal rank,
+        which is the shape this class treats as a question the author has to answer."""
+        wc = self._module()
+        # The third row repeats a type: `P31/P279*` reaches one supertype once per P31 value
+        # the item carries, so the same pair comes back more than once.
+        rows = [{"name": {"value": "TACL"}, "p": {"value": "http://www.wikidata.org/entity/Q9"},
+                 "pLabel": {"value": "TACL"}, "t": {"value": t}, "date": {"value": "2013-01-01"}}
+                for t in ("http://www.wikidata.org/entity/Q5633421",
+                          "http://www.wikidata.org/entity/Q773668",
+                          "http://www.wikidata.org/entity/Q5633421")]
+        got = wc.typed_items(rows, lambda r: r["name"]["value"])
+        self.assertEqual([{"qid": "Q9", "label": "TACL", "year": 2013,
+                           "types": ["Q5633421", "Q773668"]}], got["TACL"])
+        self.assertEqual("Q9", wc.pick_venue(wc.publications(got["TACL"]))["qid"])
+
 
 class TestFullTextUrlSkipsIdentifierMirrors(unittest.TestCase):
     """P953 is worth a statement only when it adds a copy the item does not already imply.
