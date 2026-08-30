@@ -34,9 +34,9 @@ from html.parser import HTMLParser
 import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (DATA, TASKS, WD_IDENTIFIERS, clean_latex,  # noqa: E402
-                    is_preprint_venue, load_config, org_name, paper_doi,
-                    parse_bibtex, read_yaml, synth_bibtex, write_task)
+from common import (DATA, TASKS, WD_IDENTIFIERS, clean_latex, is_preprint_venue,  # noqa: E402
+                    load_config, org_name, paper_doi, parse_bibtex, read_papers, read_yaml,
+                    synth_bibtex, title_of, write_task)
 
 # Verified against wbsearchentities.
 P = {"instance_of": "P31", "occupation": "P106", "employer": "P108",
@@ -141,7 +141,7 @@ def orcid_files(cfg, papers) -> tuple[str, str, int]:
         d = (paper_doi(p) or "").strip()
         if d and d.lower() not in seen:
             seen.add(d.lower())
-            dois.append(f"{d}\t{p.get('title_display') or p['title']}")
+            dois.append(f"{d}\t{title_of(p)}")
     doi_path = os.path.join(TASKS, "orcid_dois.txt")
     with open(doi_path, "w") as f:
         f.write("# The bulk route is orcid_import.bib -- one upload instead of this\n"
@@ -441,7 +441,7 @@ def s2_merge(cfg, papers) -> tuple[str, int]:
     for p in strays:
         s2 = (f"https://www.semanticscholar.org/paper/{p['s2_corpus_id']}"
               if p.get("s2_corpus_id") else "—")
-        title = (p.get("title_display") or p["title"]).replace("|", "/")
+        title = (title_of(p)).replace("|", "/")
         L.append(f"| {p.get('citations') or 0} | {title[:70]} | {s2} |")
     L += ["", "## Why bother",
           "Every Semantic-Scholar-backed tool -- Elicit, Consensus, SciSpace, and most",
@@ -727,7 +727,7 @@ def arxiv_jref(cfg, papers, subs: dict) -> tuple[str, int, int]:
         L += ["> Submission ids not known yet, so the links below go to the abs page. Do the",
               "> three steps above once and they become one-click.", ""]
     def block(n: int, p: dict, jr: str, doi: str) -> list[str]:
-        title = (p.get("title_display") or p["title"]).strip()
+        title = (title_of(p)).strip()
         cites = p.get("citations")
         sub = subs.get(p["arxiv"])
         # Only the fields that are actually empty, and the one that is not gets a line
@@ -782,7 +782,7 @@ def main() -> None:
     args = ap.parse_args()
 
     cfg = load_config()
-    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {})["papers"]
+    papers = read_papers()
     os.makedirs(TASKS, exist_ok=True)
     bib, dois, n = orcid_files(cfg, papers)
     qs = wikidata_qs(cfg, papers)

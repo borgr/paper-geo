@@ -17,9 +17,8 @@ import sys
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, TASKS, clipped, declined, norm_title,  # noqa: E402
-                    org_name, paper_doi, plural, replied, synth_bibtex, title_tokens,
-                    write_task)
+from common import (BUILD, TASKS, clipped, declined, norm_title, org_name, paper_doi,  # noqa: E402
+                    plural, replied, synth_bibtex, title_of, title_tokens, write_task)
 def _org_match(a: str, b: str) -> bool:
     """Loose organisation-name match.
 
@@ -268,7 +267,7 @@ def orcid_missing_files(missing: list[dict], orcid: str) -> list[str]:
         # paper's identifier is how you end up checking the wrong one on ORCID.
         ident = paper_doi(p) or "— none —"
         md.append(f"| {i} | {p.get('citations') or 0} | "
-                  f"{clipped(p.get('title_display') or p['title'], 64)} | `{ident}` |")
+                  f"{clipped(title_of(p), 64)} | `{ident}` |")
     noid = [p for p in missing if not paper_doi(p)]
     if noid:
         md += ["",

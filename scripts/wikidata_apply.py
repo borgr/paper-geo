@@ -53,8 +53,8 @@ import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from common import (DATA, ROOT, UA, affil_index, load_config,  # noqa: E402
-                    mw_replied, norm_name, read_yaml, write_yaml)
+from common import (ROOT, UA, affil_index, load_config, mw_replied, norm_name,  # noqa: E402
+                    read_papers, read_yaml, write_yaml)
 
 API = "https://www.wikidata.org/w/api.php"
 CREDS_FILE = os.path.join(ROOT, ".wikidata_bot")
@@ -420,7 +420,7 @@ def papers_plan(cfg: dict, limit: int | None = None) -> list[dict] | None:
     yields only the papers it answered about, so a refused chunk is never created twice.
     """
     from audit_identity import paper_item, wikidata_paper_coverage
-    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers") or []
+    papers = read_papers()
     if not papers:
         sys.exit("data/papers.yaml is empty -- run `python update.py --step collect` first.")
     cov = wikidata_paper_coverage(papers)

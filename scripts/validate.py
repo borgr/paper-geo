@@ -30,8 +30,8 @@ import sys
 import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (DATA, QA_ROLES, ROOT, answered_by, load_config,  # noqa: E402
-                    norm_name, phrasings, read_yaml, rules_block)
+from common import (DATA, QA_ROLES, ROOT, answered_by, load_config, norm_name,  # noqa: E402
+                    phrasings, read_papers, read_yaml, rules_block)
 
 SCHEMA_DIR = os.path.join(ROOT, "schema")
 
@@ -374,7 +374,7 @@ def check_overrides() -> list[str]:
                        f" (known keys: {', '.join(sorted(OVERRIDE_KEYS))})"))
     # A slug in `fields` that matches no paper is the same class of silent no-op: the
     # hand correction is applied by slug, and a slug moves when a title is corrected.
-    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers") or []
+    papers = read_papers()
     if papers:
         live = {p.get("slug") for p in papers}
         hist = (read_yaml(os.path.join(DATA, "slug_history.yaml")) or {}).get("retired") or {}
@@ -399,7 +399,7 @@ def check_slug_history() -> list[str]:
     passes, and everything else that resolves nowhere is reported with the two honest fixes.
     """
     hist = (read_yaml(os.path.join(DATA, "slug_history.yaml")) or {}).get("retired")
-    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers") or []
+    papers = read_papers()
     if not (hist and papers):
         return []
     live = {p.get("slug") for p in papers}
@@ -418,7 +418,7 @@ def check_wikidata_created() -> list[str]:
     `slug_history.yaml` is honoured, since a rename that went through the chain still resolves.
     """
     items = (read_yaml(os.path.join(DATA, "wikidata_created.yaml")) or {}).get("items")
-    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers") or []
+    papers = read_papers()
     if not (items and papers):
         return []
     hist = (read_yaml(os.path.join(DATA, "slug_history.yaml")) or {}).get("retired") or {}

@@ -48,9 +48,9 @@ import xml.etree.ElementTree as ET
 from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (ARXIV_NS, BUILD, DATA, ROOT, TASKS, declined, get,  # noqa: E402
-                    get_json, load_config, norm_title, note_fetch, read_yaml,
-                    synth_bibtex, write_json, write_task)
+from common import (ARXIV_NS, BUILD, ROOT, TASKS, declined, get, get_json,  # noqa: E402
+                    load_config, norm_title, note_fetch, read_papers, synth_bibtex, title_of,
+                    write_json, write_task)
 
 
 # Scholar answers the paper-geo User-Agent with a consent interstitial and no rows.
@@ -889,7 +889,7 @@ def main() -> None:
               file=sys.stderr)
         return
 
-    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers", [])
+    papers = read_papers()
     mine = index(p.get("title") for p in papers)
     slug = {norm_title(p.get("title")): p.get("slug") for p in papers}
     try:
@@ -926,7 +926,7 @@ def main() -> None:
     # "Add article manually" form wants a link. A title alone would make the reader
     # search for their own paper.
     absent = [{"slug": p.get("slug"), "title": p.get("title"),
-               "title_display": p.get("title_display") or p.get("title"),
+               "title_display": title_of(p),
                "year": p.get("year"),
                "citations": p.get("citations"), "arxiv": p.get("arxiv"),
                "doi": p.get("doi"), "url": p.get("url")}
@@ -1038,7 +1038,7 @@ def main() -> None:
         if cited and not args.quiet:
             for p in cited[:10]:
                 print(f"    [{p['citations']:>5} cites] "
-                      f"{(p.get('title_display') or p['title'] or '')[:60]}",
+                      f"{(title_of(p))[:60]}",
                       file=sys.stderr)
     # Reported on both paths. On this one it is a cross-check of the Scholar leg rather
     # than a substitute for it: a paper both sources agree the corpus lacks is not a

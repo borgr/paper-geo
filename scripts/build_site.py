@@ -38,9 +38,9 @@ import urllib.parse
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, ROOT, answered_by, is_preprint_venue,  # noqa: E402
-                    load_config, norm_title, note_fetch, org_name, paper_doi,
-                    phrasings, read_yaml, short_venue, slugify, social_url,
+from common import (BUILD, DATA, ROOT, answered_by, is_preprint_venue, load_config,  # noqa: E402
+                    norm_title, note_fetch, org_name, paper_doi, phrasings, read_overrides,
+                    read_papers, read_yaml, short_venue, slugify, social_url, title_of,
                     venue_is_conference)
 from ownership import write_manifest  # noqa: E402
 
@@ -163,7 +163,7 @@ def year_sections(papers: list) -> list:
         of_year = [p for p in papers if (p.get("year") or 0) == year]
         out.append(f"<h3>{year or 'Undated'}</h3><ul>")
         for p in sorted(of_year, key=lambda q: -(q.get("citations") or 0)):
-            title = p.get("title_display") or p["title"]
+            title = title_of(p)
             href = p.get("canonical_page") or f"/papers/{p['slug']}/"
             out.append(f'<li><a href="{E(href)}">{E(title)}</a> '
                        f'<span class="meta">{E(venue_of(p))}</span></li>')
@@ -369,8 +369,8 @@ def article_jsonld(p: dict, sc: dict, cfg) -> dict:
         "@context": "https://schema.org",
         "@type": "ScholarlyArticle",
         "@id": f"{base}/{p['slug']}/#article",
-        "name": p.get("title_display") or p["title"],
-        "headline": p.get("title_display") or p["title"],
+        "name": title_of(p),
+        "headline": title_of(p),
         "author": authors,
         "isAccessibleForFree": True,
     }
@@ -434,7 +434,7 @@ def faq_jsonld(p: dict, sc: dict, cfg) -> dict | None:
         return None
     return {"@context": "https://schema.org", "@type": "FAQPage",
             "@id": f"{url}#faq", "url": url,
-            "name": f"Questions answered by {p.get('title_display') or p['title']}",
+            "name": f"Questions answered by {title_of(p)}",
             "mainEntity": entities}
 
 
@@ -453,7 +453,7 @@ def terms_jsonld(p: dict, sc: dict, cfg) -> dict | None:
     return {
         "@context": "https://schema.org", "@type": "DefinedTermSet",
         "@id": f"{url}#terms", "url": url,
-        "name": f"Terminology in {p.get('title_display') or p['title']}",
+        "name": f"Terminology in {title_of(p)}",
         "hasDefinedTerm": [
             {"@type": "DefinedTerm", "name": t,
              "description": " ".join(str(d).split()),
@@ -474,7 +474,7 @@ def highwire(p: dict, cfg) -> str:
     """
     if not (p.get("title") and p.get("authors") and p.get("year")):
         return ""
-    out = [f'  <meta name="citation_title" content="{E(p.get("title_display") or p["title"])}">']
+    out = [f'  <meta name="citation_title" content="{E(title_of(p))}">']
     for a in p["authors"]:
         out.append(f'  <meta name="citation_author" content="{E(a)}">')
     out.append(f'  <meta name="citation_publication_date" content="{p["year"]}">')
@@ -519,7 +519,7 @@ def paper_page(p: dict, sc: dict, cfg) -> str:
     links = dict(p.get("links") or {})
     links.update(sc.get("links_extra") or {})
 
-    disp = p.get("title_display") or p["title"]
+    disp = title_of(p)
     b = [f"<h1>{E(disp)}</h1>"]
     if sc.get("gloss"):
         b.append(f'<p class="sub">{E(sc["gloss"])}</p>')
@@ -605,7 +605,7 @@ def paper_page(p: dict, sc: dict, cfg) -> str:
 
 def paper_llms_txt(p: dict, sc: dict, cfg) -> str:
     """The sidecar as plain text: author-written orientation, not a crawler directive."""
-    L = [f"# {p.get('title_display') or p['title']}", ""]
+    L = [f"# {title_of(p)}", ""]
     if sc.get("gloss"):
         L += [sc["gloss"], ""]
     L += [f"Authors: {', '.join(p.get('authors') or [])}",
@@ -659,7 +659,7 @@ def retired_slugs(papers: list[dict]) -> dict[str, str]:
     hist = read_yaml(os.path.join(DATA, "slug_history.yaml")) or {}
     out: dict[str, str] = {k: v for k, v in (hist.get("retired") or {}).items()
                            if v in live and k not in live}
-    ov = read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
+    ov = read_overrides()
     for group in ov.get("force_merge") or []:
         norms = {norm_title(t) for t in group}
         survivor = next((p for p in papers if norm_title(p.get("title")) in norms), None)
@@ -686,7 +686,7 @@ def redirect_stub(site: str, new_slug: str, title: str) -> str:
 def build(cfg) -> dict:
     global _ANALYTICS
     _ANALYTICS = analytics_snippet(cfg)      # every page, so it is set before any is written
-    papers = [p for p in (read_yaml(os.path.join(DATA, "papers.yaml")) or {})["papers"]]
+    papers = read_papers()
     repos = (read_yaml(os.path.join(DATA, "repos.yaml")) or {}).get("repos", [])
     ident = cfg["identity"]
     site = cfg["site"]["base_url"].rstrip("/")
@@ -700,7 +700,7 @@ def build(cfg) -> dict:
     index_rows, llms, questions = [], [], []
 
     for p in sorted(papers, key=lambda p: (-(p.get("citations") or 0))):
-        ptitle = p.get("title_display") or p["title"]
+        ptitle = title_of(p)
         title, slug = ptitle, p["slug"]
         if p.get("canonical_page"):
             # Owned by a collaborator: link to theirs, publish nothing competing.
@@ -741,8 +741,7 @@ def build(cfg) -> dict:
         os.makedirs(d, exist_ok=True)
         surv = by_slug.get(new) or {}
         with open(os.path.join(d, "index.html"), "w") as f:
-            f.write(redirect_stub(site, new, surv.get("title_display")
-                                  or surv.get("title") or "this paper"))
+            f.write(redirect_stub(site, new, title_of(surv) or "this paper"))
         stats["redirects"] += 1
 
     # ---- paper index

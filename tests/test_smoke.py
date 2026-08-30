@@ -2591,18 +2591,18 @@ class TestAStopgapCannotGoQuiet(unittest.TestCase):
         """`upstream_gaps` against a synthetic corpus and a synthetic overrides file."""
         import tempfile
 
+        import common
         import worklist
-        from common import write_yaml
         with tempfile.TemporaryDirectory() as d:
-            write_yaml(os.path.join(d, "overrides.yaml"), overrides)
-            # `worklist.DATA`, since that is where the function reads it from. Patching the
-            # name in whichever module re-exports it reads the live `data/overrides.yaml`
-            # and passes anyway, against Leshem's own papers.
-            old, worklist.DATA = worklist.DATA, d
+            common.write_yaml(os.path.join(d, "overrides.yaml"), overrides)
+            # `common.DATA`, since `read_overrides` resolves the name there. Patching
+            # `worklist.DATA` leaves the live `data/overrides.yaml` in play and passes
+            # anyway, against Leshem's own papers.
+            old, common.DATA = common.DATA, d
             try:
                 return "\n".join(worklist.upstream_gaps(papers, {}))
             finally:
-                worklist.DATA = old
+                common.DATA = old
 
     def test_a_paper_only_an_override_supplies_is_reported(self):
         out = self._render(
@@ -4632,7 +4632,8 @@ class TestACitationFileIsWrittenOnlyWhenItWouldChange(unittest.TestCase):
         entry = {"repo": "a/b", "write_citation_cff": True, "paper_slug": "s"}
         paper = {"slug": "s", "title_display": "T", "authors": ["Leshem Choshen"]}
         with mock.patch.object(sweep_github, "read_yaml",
-                               side_effect=[{"repos": [entry]}, {"papers": [paper]}]), \
+                               return_value={"repos": [entry]}), \
+             mock.patch.object(sweep_github, "read_papers", return_value=[paper]), \
              mock.patch.object(sweep_github, "list_repos",
                                return_value=[{"full_name": "a/b", "name": "b",
                                               "topics": [], "description": None,
@@ -7191,9 +7192,9 @@ class TestAQuietWikidataLeavesTheWorkOnThePage(unittest.TestCase):
                     f.write("Q1\tP50\tQ2\n")
                 with mock.patch.object(wc, "TASKS", d), \
                      mock.patch.object(wc, "BUILD", d), \
-                     mock.patch.object(wc, "read_yaml", lambda p: (
-                         {"items": {"s1": "Q1"}} if "created" in p
-                         else {"papers": [{"slug": "s1", "title": "T", "citations": 1}]})), \
+                     mock.patch.object(wc, "read_yaml", lambda p: {"items": {"s1": "Q1"}}), \
+                     mock.patch.object(wc, "read_papers", lambda: [
+                         {"slug": "s1", "title": "T", "citations": 1}]), \
                      mock.patch.object(wc, "item_state", lambda q: {}), \
                      mock.patch.object(wc, "lookups", lambda n, p, r: {"asked": "d"}), \
                      mock.patch.object(wc, "api_quiet", lambda: quiet), \

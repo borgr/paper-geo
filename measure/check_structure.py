@@ -20,8 +20,8 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "scripts"))
-from common import (BUILD, DATA, get_status, has_live_sidecar,  # noqa: E402
-                    load_config, read_yaml, write_json)
+from common import (BUILD, DATA, get_status, has_live_sidecar, load_config,  # noqa: E402
+                    read_papers, write_json)
 
 SITE = os.path.join(BUILD, "site")
 AI_BOTS = ("GPTBot", "OAI-SearchBot", "ClaudeBot", "PerplexityBot", "Google-Extended")
@@ -192,7 +192,7 @@ def main() -> None:
     ap.add_argument("--json", help="write results to this path")
     args = ap.parse_args()
     load_config()
-    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {})["papers"]
+    papers = read_papers()
     results: list[dict] = []
 
     print("\n== coverage (a work queue, not a regression)")

@@ -56,8 +56,8 @@ import yaml  # noqa: E402
 
 from llm import JSON_ONLY, decodable, first_json, with_retries  # noqa: E402
 from llm import client as llm_client  # noqa: E402
-from common import (BUILD, DATA, README_NAMES, ROOT, get_status,  # noqa: E402
-                    load_config, read_yaml, rules_block, write_json)
+from common import (BUILD, README_NAMES, ROOT, get_status, load_config, read_papers,  # noqa: E402
+                    rules_block, title_of, write_json)
 from fulltext import LIMIT as FULLTEXT_LIMIT  # noqa: E402
 from fulltext import cut_chars  # noqa: E402
 from fulltext import resolve as resolve_fulltext  # noqa: E402
@@ -216,7 +216,7 @@ def evidence(p: dict, cfg: dict, no_fulltext: bool = False) -> str:
     from validate import deline
     ft, ft_source = ("", "") if no_fulltext else fulltext(p, cfg)
     rm = "" if no_fulltext else readme(p)
-    parts = [f"title: {p.get('title_display') or p['title']}",
+    parts = [f"title: {title_of(p)}",
              f"authors: {', '.join(p.get('authors') or []) or '(unknown)'}",
              f"venue: {p.get('venue_display') or p.get('venue') or '(preprint)'}",
              f"year: {p.get('year') or '?'}",
@@ -349,7 +349,7 @@ def emit_tasks(pairs: list[tuple[dict, str]], cfg) -> str:
     tasks = []
     for p, ev in pairs:
         fm, found = standing(p["slug"])
-        t = {"slug": p["slug"], "title": p.get("title_display") or p["title"],
+        t = {"slug": p["slug"], "title": title_of(p),
              "evidence": ev, "sidecar": fm}
         if fm is not None:
             # A group still in `unsorted` is not a clean group: it is a group written
@@ -912,7 +912,7 @@ def main() -> None:
     args = parser().parse_args()
 
     cfg = load_config()
-    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers", [])
+    papers = read_papers()
 
     if args.page:
         print(f"file://{write_review_page(papers)}")

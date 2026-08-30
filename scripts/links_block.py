@@ -30,8 +30,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from build_site import LINK_LABELS, read_sidecar  # noqa: E402
-from common import (BUILD, DATA, README_NAMES, gh, gh_status,  # noqa: E402
-                    load_config, read_yaml)
+from common import (BUILD, DATA, README_NAMES, gh, gh_status, load_config,  # noqa: E402
+                    read_papers, read_yaml, title_of)
 
 START = "<!-- paper-geo:links:start -->"
 END = "<!-- paper-geo:links:end -->"
@@ -53,7 +53,7 @@ def render(p: dict, sc: dict, cfg) -> str:
     links["paper_page"] = page
     LINK_LABELS.setdefault("paper_page", "Paper page")
 
-    L = [START, "", f'## {p.get("title_display") or p["title"]}', ""]
+    L = [START, "", f'## {title_of(p)}', ""]
     if sc.get("one_liner"):
         # Verbatim from the sidecar, never reworded: the same sentence on a second
         # domain is corroboration; a paraphrase is a competing near-duplicate.
@@ -90,8 +90,7 @@ def splice(readme: str, block: str) -> str:
 
 
 def targets(cfg):
-    papers = {p["slug"]: p for p in
-              (read_yaml(os.path.join(DATA, "papers.yaml")) or {})["papers"]}
+    papers = {p["slug"]: p for p in read_papers()}
     for r in (read_yaml(os.path.join(DATA, "repos.yaml")) or {}).get("repos", []):
         if r.get("skip") or not r.get("write_links_block"):
             continue

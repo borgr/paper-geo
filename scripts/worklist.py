@@ -11,8 +11,8 @@ import os
 import re
 import textwrap
 
-from common import (DATA, ROOT, clipped, has_live_sidecar, is_preprint_venue,
-                    norm_title, read_yaml, synth_bibtex)
+from common import (DATA, ROOT, clipped, has_live_sidecar, is_preprint_venue, norm_title,
+                    read_overrides, read_yaml, synth_bibtex, title_of)
 from sweep_github import ZENODO_KINDS
 
 def held_until(fragment: str) -> str | None:
@@ -184,7 +184,7 @@ def scholar_gaps(sc: dict, cfg: dict | None = None) -> list[str]:
                    else f" <https://doi.org/{p['doi']}>" if p.get("doi")
                    else f" <{p['url']}>" if p.get("url") else "")
             L += [f"- [ ] {cites(p.get('citations'))} — {p.get('year') or '????'} — "
-                  f"{clipped(p.get('title_display') or p.get('title') or '', 58)}{ref}"]
+                  f"{clipped(title_of(p), 58)}{ref}"]
         L += [""]
     if fix:
         L += [f"### {pl(len(fix))} whose bibliography title is behind arXiv", "",
@@ -437,7 +437,7 @@ def upstream_gaps(papers: list[dict], cfg) -> list[str]:
         # keep: the bibliography assigns keys, and the reason these records carry no
         # `bibtex` of their own is that an invented key competing with the published one
         # is the split this project exists to avoid. Paste the fields, not the key.
-        L += [f"- [ ] **{clipped(p.get('title_display') or p.get('title') or '', 66)}** — "
+        L += [f"- [ ] **{clipped(title_of(p), 66)}** — "
               f"`{p['_override']}`, {p.get('citations') or 0} cites", "",
               "  ```bibtex", *(f"  {ln}" for ln in synth_bibtex(p).splitlines()),
               "  ```", ""]
@@ -449,7 +449,7 @@ def upstream_gaps(papers: list[dict], cfg) -> list[str]:
     # keys `collect.py` adds by -- an arXiv id, a normalised title -- so a line that never
     # resolved to a paper at all is not reported here as done. That one is already loud:
     # the collector prints `! extra_openreview: OpenReview has no accepted paper titled`.
-    ov = read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
+    ov = read_overrides()
     from_bib = [p for p in papers if not p.get("_override")]
     ids = {p["arxiv"] for p in from_bib if p.get("arxiv")}
     titles = {norm_title(p.get("title") or "") for p in from_bib}
@@ -500,7 +500,7 @@ def upstream_gaps(papers: list[dict], cfg) -> list[str]:
         if edit.startswith("https://github.com/"):
             L += [f"Edit the bibliography here: <{edit}>", ""]
         for rec, slug, want in priv:
-            title = clipped(rec.get("title_display") or rec.get("title") or slug, 60)
+            title = clipped(title_of(rec) or slug, 60)
             key = rec.get("key") or ""
             L += [f"- [ ] **{title}**" + (f" — entry `{key}`" if key else ""), "",
                   "  ```bibtex"]
@@ -637,7 +637,7 @@ def sidecar_drafts(papers: list[dict]) -> list[str]:
             # of which is already published, rather than checking a new page. `--accept`
             # refuses it without `--replace` for the same reason.
             mark = "  **replaces the live sidecar**" if has_live_sidecar(slug) else ""
-            title = p.get("title_display") or p.get("title") or slug
+            title = title_of(p) or slug
             L.append(f"- [ ] **{clipped(title, 60)}** — "
                          f"{p.get('citations') or 0} cites{mark}")
             L.append(f"      - read: [in the review page](file://{page}#{slug}) · "
@@ -684,7 +684,7 @@ def sidecar_drafts(papers: list[dict]) -> list[str]:
                   "its own.", ""]
         for p in sorted(todraft, key=lambda p: -(p.get("citations") or 0))[:6]:
             L.append(f"- `{p['slug']}` — {p.get('citations') or 0} cites — "
-                         f"{clipped(p.get('title_display') or p['title'], 56)}")
+                         f"{clipped(title_of(p), 56)}")
         L.append("")
     return L
 
@@ -734,7 +734,7 @@ def starving_papers(papers: list[dict]) -> list[str]:
                   "read before any network source, so the next run picks it up and the paper",
                   "joins the drafting queue.", ""]
         for p in sorted(starved, key=lambda p: -(p.get("citations") or 0)):
-            title = clipped(p.get("title_display") or p.get("title") or "", 60)
+            title = clipped(title_of(p), 60)
             L.append(f"- [ ] **{title}** "
                          f"— {p.get('citations') or 0} cites, "
                          f"{p.get('venue_display') or 'no venue'}")
@@ -789,7 +789,7 @@ def identity_surfaces(papers: list[dict], state: dict, ids: dict) -> list[str]:
         instruction "replace the DOI" had no object.
         """
         p = by_slug.get(b.get("should_be")) or {}
-        title = p.get("title_display") or p.get("title") or b.get("should_be") or "?"
+        title = title_of(p) or b.get("should_be") or "?"
         out = [f"- [ ] **{clipped(title, 66)}** — put-code `{b['put']}`"]
         doi = b.get("carried_doi")
         if doi:
@@ -934,7 +934,7 @@ def identity_surfaces(papers: list[dict], state: dict, ids: dict) -> list[str]:
           "**Do not claim the second page as well** — a second claimed record is harder to",
           "undo than an unclaimed one, and it makes the split look deliberate.", ""])
          + [f"- [ ] {p.get('citations') or 0} cites — "
-            f"{clipped(p.get('title_display') or p['title'], 56)} — "
+            f"{clipped(title_of(p), 56)} — "
             + (f"<https://www.semanticscholar.org/paper/{p['s2_corpus_id']}>"
                if p.get("s2_corpus_id") else
                "**no S2 id known** — search the title on the Add Papers form")
@@ -1190,7 +1190,7 @@ def arxiv_journal_refs(papers: list[dict], scholar: dict, unowned: set) -> list[
         subs = read_yaml(os.path.join(DATA, "arxiv_submissions.yaml")) or {}
         for p in missing_jr:
             flag = "  **(blocked)**" if p["arxiv"] in unowned else ""
-            title = (p.get("title_display") or p["title"]).strip()
+            title = (title_of(p)).strip()
             L.append(f"- [ ] **{p.get('citations') or 0} cites** — {title}{flag}")
             sub = subs.get(p["arxiv"])
             # Nested bullets rather than indented prose: a continuation line at this
@@ -1297,5 +1297,5 @@ def same_or_different(papers: list[dict]) -> list[str]:
     L = ["## Same paper or different? (decide once in data/overrides.yaml)", ""]
     for p in review:
         for o in p["similar_but_distinct"]:
-            L.append(f"- [ ] `{p.get('title_display') or p['title']}`  vs  `{o}`")
+            L.append(f"- [ ] `{title_of(p)}`  vs  `{o}`")
     return L + [""]

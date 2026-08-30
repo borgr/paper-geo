@@ -26,11 +26,10 @@ import xml.etree.ElementTree as ET
 import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (ARXIV_NS, BUILD, DATA, ROOT, arxiv_id,  # noqa: E402
-                    authors_truncated, clean_bibtex, clean_latex, get, get_json,
-                    get_status, is_preprint_venue, load_config, name_match, norm_title,
-                    parse_bibtex, read_yaml, replied, short_venue, slugify,
-                    split_authors, write_json, write_yaml)
+from common import (ARXIV_NS, BUILD, DATA, ROOT, arxiv_id, authors_truncated,  # noqa: E402
+                    clean_bibtex, clean_latex, get, get_json, get_status, is_preprint_venue,
+                    load_config, name_match, norm_title, parse_bibtex, read_overrides, read_yaml,
+                    replied, short_venue, slugify, split_authors, write_json, write_yaml)
 # The only OpenReview reader in the repo. Imported rather than reimplemented because the
 # filters are the load-bearing part -- a strict title match, an author list, and a venue
 # that is not a withdrawn or still-under-review submission -- and a second copy of them
@@ -1019,7 +1018,7 @@ def from_papers_yaml(path: str) -> list[dict]:
     on already-merged records, so only the field corrections bite.
     """
     papers = (read_yaml(path) or {}).get("papers", [])
-    papers = apply_overrides(papers, read_yaml(os.path.join(DATA, "overrides.yaml")) or {})
+    papers = apply_overrides(papers, read_overrides())
     return papers
 
 
@@ -1035,7 +1034,7 @@ def from_sources(cfg: dict, args) -> list[dict]:
     # Before the merges, so an id added here gets the same S2 counts, dedupe and
     # authorship check as a bibliography entry -- including being rejected if it
     # turns out not to be yours.
-    ov_early = read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
+    ov_early = read_overrides()
     n_extra = from_arxiv_ids(papers, ov_early.get("extra_arxiv") or [])
     if n_extra:
         print(f"  + {n_extra} from overrides.extra_arxiv", file=sys.stderr)
@@ -1058,7 +1057,7 @@ def from_sources(cfg: dict, args) -> list[dict]:
     # display, and that has to reach dedupe rather than only apply_overrides: once
     # identifiers merge a group here, apply_overrides never sees two records to
     # choose between, and the LaTeX-mangled variant can win the title by accident.
-    _ov = read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
+    _ov = read_overrides()
     papers, n_merged, n_flagged = dedupe(
         papers, prefer=[g[0] for g in (_ov.get("force_merge") or []) if g])
     print(f"  merged {n_merged} duplicate records; flagged {n_flagged} similar-but-distinct pairs",
@@ -1068,7 +1067,7 @@ def from_sources(cfg: dict, args) -> list[dict]:
         merge_hf(papers, cfg)
     build_links(papers)
     flag_problems(papers)
-    ov = read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
+    ov = read_overrides()
     before = len(papers)
     papers = apply_overrides(papers, ov)
     print(f"  overrides: {before - len(papers)} records folded or dropped", file=sys.stderr)

@@ -61,8 +61,8 @@ import urllib.error
 import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, TASKS, get_status, host_of,  # noqa: E402
-                    in_halves, mw_replied, norm_name, read_yaml, write_json, write_task)
+from common import (BUILD, DATA, TASKS, get_status, host_of, in_halves, mw_replied,  # noqa: E402
+                    norm_name, read_papers, read_yaml, title_of, write_json, write_task)
 from wikidata_apply import logged_in, snak  # noqa: E402
 
 WDQS = "https://query.wikidata.org/sparql"
@@ -667,7 +667,7 @@ def rows(papers: list[dict], created: dict, look: dict,
             continue
         edits, review, leftover, dropped = [], [], [], 0
         known = (look["orcids"] or {}).get(slug) or {}
-        here = title_key(p.get("title_display") or p.get("title"))
+        here = title_key(title_of(p))
         for s in st["strings"]:
             orcid = next((known[k] for k in keys_for(s["name"]) if k in known), None)
             hit = (look["by_orcid"] or {}).get(orcid or "")
@@ -733,7 +733,7 @@ def rows(papers: list[dict], created: dict, look: dict,
             venue, vcands = None, []
         if edits or review or leftover or venue or fills or vcands:
             out.append({"slug": slug, "qid": qid, "fills": fills,
-                        "title": p.get("title_display") or p.get("title"),
+                        "title": title_of(p),
                         "citations": p.get("citations") or 0,
                         "edits": edits, "review": review,
                         "leftover": len(leftover), "dropped": dropped,
@@ -958,7 +958,7 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=0,
                     help="with --apply, stop after this many paper items")
     args = ap.parse_args()
-    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers") or []
+    papers = read_papers()
     created = ((read_yaml(os.path.join(DATA, "wikidata_created.yaml")) or {})
                .get("items") or {})
     if not created:

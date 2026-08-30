@@ -31,8 +31,8 @@ import sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
-from common import (DATA, DECLINE_STAMP, health_report,  # noqa: E402
-                    load_config, read_yaml)
+from common import (DATA, DECLINE_STAMP, health_report, load_config, read_papers,  # noqa: E402
+                    read_yaml)
 from worklist import (arxiv_journal_refs, arxiv_name_typos,  # noqa: E402
                       arxiv_ownership, hf_pages, identity_surfaces,
                       repo_gaps, same_or_different, scholar_gaps,
@@ -757,7 +757,7 @@ def step_worklist(cfg, args) -> None:
 
     The body is one call per section, in the order the page prints them.
     """
-    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers", [])
+    papers = read_papers()
     repos = (read_yaml(os.path.join(DATA, "repos.yaml")) or {}).get("repos", [])
     ident, ids = cfg["identity"], cfg["ids"]
     # Written by the audit step. Absent (audit skipped) = fall back to stored state

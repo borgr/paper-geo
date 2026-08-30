@@ -41,7 +41,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "scripts"))
-from common import BUILD, DATA, ROOT, load_config, read_yaml, write_json  # noqa: E402
+from common import BUILD, DATA, ROOT, load_config, read_papers, title_of, write_json  # noqa: E402
 from llm import client, decodable, first_json, with_retries  # noqa: E402
 
 TASKS = os.path.join(BUILD, "fidelity_tasks.json")
@@ -182,8 +182,7 @@ def main() -> None:
     ap.add_argument("--limit", type=int, help="first N papers only, for a smoke run")
     args = ap.parse_args()
     cfg = load_config()
-    papers = {p["slug"]: p for p in
-              (read_yaml(os.path.join(DATA, "papers.yaml")) or {})["papers"]}
+    papers = {p["slug"]: p for p in read_papers()}
     sc = sidecars()
     if not sc:
         sys.exit("no sidecars with claims yet -- nothing to check fidelity against")
@@ -195,7 +194,7 @@ def main() -> None:
             tasks.append({
                 "slug": slug,
                 "engine": args.engine,
-                "ask": ASK.format(title=p.get("title_display") or p.get("title") or slug),
+                "ask": ASK.format(title=title_of(p) or slug),
                 "authored_claims": [{"claim_id": c["id"], "text": " ".join(c["text"].split()),
                                      "scope": " ".join(c["scope"].split())}
                                     for c in fm["claims"]],

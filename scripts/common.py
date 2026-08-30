@@ -655,6 +655,13 @@ def title_tokens(s: str | None) -> frozenset:
     return frozenset(_NONWORD.sub(" ", _fold_title(s or "")).split()) - _STOP
 
 
+def title_of(p: dict) -> str:
+    """A paper's title as a reader should see it, which is the LaTeX-cleaned form when
+    `collect` has written one and the raw bibliography title until then.
+    """
+    return p.get("title_display") or p.get("title") or ""
+
+
 def split_authors(bibtex_author: str | None) -> list[str]:
     """`Last, First and Other, Name` -> ['First Last', 'Name Other'].
 
@@ -1211,6 +1218,16 @@ def read_yaml(path: str, default=None):
         return default
     with open(path) as f:
         return yaml.safe_load(f)
+
+
+def read_papers() -> list[dict]:
+    """Every record in `data/papers.yaml`, or [] before the first collect run."""
+    return (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers") or []
+
+
+def read_overrides() -> dict:
+    """The hand decisions in `data/overrides.yaml`, which every run re-applies."""
+    return read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
 
 
 def has_live_sidecar(slug: str) -> bool:

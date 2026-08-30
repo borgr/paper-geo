@@ -43,8 +43,8 @@ import textwrap
 import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, ROOT, TASKS, budget_reset, clean_latex,  # noqa: E402
-                    host_of, load_config, name_match, norm_title, read_yaml, replied,
+from common import (BUILD, ROOT, TASKS, budget_reset, clean_latex, host_of,  # noqa: E402
+                    load_config, name_match, norm_title, read_papers, replied, title_of,
                     title_tokens, write_json, write_task)
 
 # Below this the gap is indexing lag rather than a split record. Both conditions have
@@ -124,10 +124,10 @@ def undercounted(papers, diff) -> list[dict]:
         gap = api - sc
         if gap >= GAP_MIN and api and gap / api >= GAP_FRAC:
             out.append({"slug": r["slug"],
-                        "title": p.get("title_display") or p.get("title"),
+                        "title": title_of(p),
                         "scholar_citations": sc, "index_citations": api, "gap": gap,
                         "scholar_url": r.get("scholar_url"),
-                        "search": scholar_query(p.get("title_display") or p.get("title"))})
+                        "search": scholar_query(title_of(p))})
     return sorted(out, key=lambda r: -r["gap"])
 
 
@@ -303,9 +303,9 @@ def split_records(papers, mailto, limit=None) -> dict:
                       key=lambda w: -w["citations"])
 
     out = [{"slug": p.get("slug"),
-            "title": p.get("title_display") or p.get("title"),
+            "title": title_of(p),
             "records": records(p),
-            "search": scholar_query(p.get("title_display") or p.get("title"))}
+            "search": scholar_query(title_of(p))}
            for p in papers[:limit] if len(records(p)) > 1]
     checkable = [p for p in papers[:limit] if len(p.get("title") or "") >= 25]
     return {"rows": sorted(out, key=lambda r: -sum(x["citations"] for x in r["records"])),
@@ -473,7 +473,7 @@ def main() -> int:
     args = ap.parse_args()
 
     cfg = load_config()
-    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers") or []
+    papers = read_papers()
     mailto = (cfg.get("identity") or {}).get("email")
     try:
         with open(os.path.join(BUILD, "scholar_diff.json")) as f:

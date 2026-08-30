@@ -35,8 +35,8 @@ import urllib.parse
 import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (DATA, ROOT, TASKS, load_config, read_yaml, replied,  # noqa: E402
-                    write_json, write_task)
+from common import (DATA, ROOT, TASKS, load_config, read_papers, replied, write_json,  # noqa: E402
+                    write_task)
 
 API = "https://en.wikipedia.org/w/api.php"
 OUT = os.path.join(TASKS, "wikipedia.md")
@@ -228,8 +228,7 @@ def main() -> None:
     args = ap.parse_args()
     cfg = load_config()
     ident = cfg["identity"]
-    papers = {p["slug"]: p for p in
-              (read_yaml(os.path.join(DATA, "papers.yaml")) or {})["papers"]}
+    papers = {p["slug"]: p for p in read_papers()}
     surname = ident["name"].split()[-1]
 
     L = ["# Wikipedia", "",

@@ -38,9 +38,9 @@ import time
 import xml.etree.ElementTree as ET
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, ROOT, TASKS, clipped, get_status,  # noqa: E402
-                    in_halves, load_config, name_match, norm_title, paper_doi, plural,
-                    read_yaml, replied, write_json, write_task)
+from common import (BUILD, ROOT, TASKS, clipped, get_status, in_halves, load_config,  # noqa: E402
+                    name_match, norm_title, paper_doi, plural, read_overrides, read_papers,
+                    replied, title_of, write_json, write_task)
 from orcid_audit import (asserted_by_them, dup_pairs, orcid_findings,  # noqa: E402
                          orcid_missing_files, orcid_public, orcid_remove_file)
 from wikidata_audit import (carry_wikidata, paper_item,  # noqa: E402
@@ -178,7 +178,7 @@ def hf_worklist_file(st: dict) -> str:
         box = "- [ ] " if task else "- "
         return [f"{box}{p.get('citations') or 0:>4} cites — "
                 f"<https://hf.co/papers/{p['arxiv']}> — "
-                f"{clipped(p.get('title_display') or p['title'], 70)}" for p in group]
+                f"{clipped(title_of(p), 70)}" for p in group]
 
     n = {k: len(v) for k, v in st.items()}
     path = os.path.join(TASKS, "hf_worklist.md")
@@ -219,7 +219,7 @@ def hf_worklist_file(st: dict) -> str:
             # No checkbox for the same reason as `pending`: there is no control on the
             # page to press, so the action is the arXiv one and lives in that file.
             L.append(f"- <https://hf.co/papers/{p['arxiv']}> — "
-                     f"{clipped(p.get('title_display') or p['title'], 60)}")
+                     f"{clipped(title_of(p), 60)}")
             L.append(f"      HF lists: {', '.join(p.get('hf_authors') or [])[:150]}")
         L.append("")
     write_task(path, L)
@@ -332,7 +332,7 @@ def arxiv_name_file(papers, variants) -> tuple[str, list, list, int]:
         for p in typo:
             L.append(f"- [ ] [`{p['arxiv']}`](https://arxiv.org/abs/{p['arxiv']}) — "
                      f"reads **{p['near_miss']}** — "
-                     f"{clipped(p.get('title_display') or p['title'], 60)}")
+                     f"{clipped(title_of(p), 60)}")
         L.append("")
     if absent:
         L += [f"## Missing you entirely — {len(absent)}", "",
@@ -343,7 +343,7 @@ def arxiv_name_file(papers, variants) -> tuple[str, list, list, int]:
               "an ownership request will fail the name match.", ""]
         for p in absent:
             L.append(f"- [ ] [`{p['arxiv']}`](https://arxiv.org/abs/{p['arxiv']}) — "
-                     f"{clipped(p.get('title_display') or p['title'], 60)}")
+                     f"{clipped(title_of(p), 60)}")
             L.append(f"      arXiv lists: {', '.join(p['arxiv_authors'])[:150]}")
         L.append("")
     if not (typo or absent):
@@ -355,7 +355,7 @@ def arxiv_name_file(papers, variants) -> tuple[str, list, list, int]:
 def _rows(group, extra=lambda p: "") -> list[str]:
     return [f"- [ ] {p.get('citations') or 0:>4} cites — "
             f"[`{p['arxiv']}`](https://arxiv.org/abs/{p['arxiv']}) "
-            f"{clipped(p.get('title_display') or p['title'], 72)}{extra(p)}"
+            f"{clipped(title_of(p), 72)}{extra(p)}"
             for p in group]
 
 
@@ -441,7 +441,7 @@ def read_surfaces(cfg: dict, args) -> dict | None:
     writes nothing and the last one's numbers stand.
     """
     ident, ids = cfg["identity"], cfg["ids"]
-    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {})["papers"]
+    papers = read_papers()
     # One row per arXiv id, not per record: a few papers legitimately carry two
     # records (a retitled version), and checking the same page twice reads as two
     # separate jobs on a worklist worked by hand.
@@ -479,9 +479,7 @@ def read_surfaces(cfg: dict, args) -> dict | None:
     hf_path = None
     if not args.no_hf:
         print(f"checking {len(ax)} Hugging Face paper pages ...", flush=True)
-        requested = {str(a) for a in
-                     ((read_yaml(os.path.join(DATA, "overrides.yaml")) or {})
-                      .get("hf_claim_requested") or [])}
+        requested = {str(a) for a in read_overrides().get("hf_claim_requested") or []}
         hf = hf_state(ax, ids["huggingface"], variants, requested)
         if hf["refused"]:
             # Read as "no page yet", these would put every one of them on the author's
@@ -987,8 +985,8 @@ def orcid_misfiled(o_misfiled: list) -> list[str]:
               "papers and a title matching another one character-for-character.", ""]
         for title, put, ids, right, wrong in o_misfiled:
             want = paper_doi(right) or "— the paper has no DOI to set —"
-            full = right.get("title_display") or right["title"]
-            other = clipped(wrong.get("title_display") or wrong["title"], 52)
+            full = title_of(right)
+            other = clipped(title_of(wrong), 52)
             # The DOI the work actually carries, resolved -- not the other paper's
             # canonical DOI, which is a different string and would send you somewhere
             # that does not demonstrate the problem. The point of this link is that
@@ -1031,7 +1029,7 @@ def orcid_missing(o_missing: list) -> list[str]:
               "[orcid_missing.md](orcid_missing.md).", ""]
         for p in o_missing[:10]:
             L.append(f"- [ ] {(p.get('citations') or 0):>4} cites — "
-                     f"{clipped(p.get('title_display') or p['title'], 66)}")
+                     f"{clipped(title_of(p), 66)}")
         if len(o_missing) > 10:
             L.append(f"- … and {len(o_missing) - 10} more")
         L.append("")
@@ -1148,8 +1146,7 @@ def audit_state(cfg: dict, args, r: dict, d: dict, path: str) -> dict:
                                           "carries": [f"{t}:{v}" for t, v in ids],
                                           "carried_doi": next((v for t, v in ids
                                                                if t == "doi"), None),
-                                          "carried_title": (wrong.get("title_display")
-                                                            or wrong["title"])}
+                                          "carried_title": (title_of(wrong))}
                                          for _t, put, ids, right, wrong in o_misfiled],
                   "orcid_missing_papers": [p["slug"] for p in o_missing],
                   "orcid_autoupdate_works": sum(auto_src.values()),

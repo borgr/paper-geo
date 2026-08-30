@@ -22,8 +22,8 @@ import urllib.parse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
-from common import (BUILD, ROOT, answered_by, has_live_sidecar,  # noqa: E402
-                    phrasings, qa_loci)
+from common import (BUILD, ROOT, answered_by, has_live_sidecar, phrasings, qa_loci,  # noqa: E402
+                    title_of)
 from sidecar_io import (CACHE, draft_path, draft_paths, front_matter, held,  # noqa: E402
                         live_path, live_paths, oneline, quote, read_front_matter,
                         spec_sha, stale, validate_draft)
@@ -342,7 +342,7 @@ def review_page(papers: list[dict]) -> str:
             p = by_slug.get(d["slug"]) or {}
             bad = _flags(d)
             out.append(f"<li><a href='#{e(d['slug'])}'>"
-                       f"{e((p.get('title_display') or p.get('title') or d['slug'])[:70])}"
+                       f"{e((title_of(p) or d['slug'])[:70])}"
                        f"</a> — {p.get('citations') or 0} cites"
                        + (f" · <span class=bad>{e('; '.join(bad))}</span>" if bad else "")
                        + "</li>")
@@ -352,7 +352,7 @@ def review_page(papers: list[dict]) -> str:
         p = by_slug.get(d["slug"]) or {}
         slug = d["slug"]
         out += [f"<div class=paper id='{e(slug)}'>",
-                f"<h2>{e(p.get('title_display') or p.get('title') or slug)}</h2>",
+                f"<h2>{e(title_of(p) or slug)}</h2>",
                 f"<p class=sub>{p.get('citations') or 0} cites · "
                 f"<code>{e(d['path'])}</code></p>"]
         if bad := _flags(d):
@@ -529,7 +529,7 @@ def review_page(papers: list[dict]) -> str:
         for s in live:
             p = by_slug.get(s) or {}
             built = os.path.join(BUILD, "site", "papers", s, "index.html")
-            title = e((p.get("title_display") or p.get("title") or s)[:70])
+            title = e((title_of(p) or s)[:70])
             if os.path.exists(built):
                 out.append(f"<li><a href='file://{e(built)}'>{title}</a> · "
                            f"<a href='file://{e(os.path.dirname(built))}/llms.txt'>llms.txt"

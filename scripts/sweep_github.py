@@ -25,8 +25,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, clean_latex, gh, gh_json, gh_text,  # noqa: E402
-                    load_config, norm_title, paper_doi, read_yaml, write_task,
-                    write_yaml)
+                    load_config, norm_title, paper_doi, read_papers, read_yaml, title_of,
+                    write_task, write_yaml)
 
 # Topics and descriptions are decided in `propose_topics.py`, not here. A reader auditing
 # "how does a public topic get chosen?" opens this file first, which is why the note
@@ -136,7 +136,7 @@ def citation_cff(paper: dict, repo: dict, cfg, entry: dict | None = None) -> str
               # file goes to a public repo and is parsed by GitHub, Zenodo and every
               # citation manager, so "{DORA} The Explorer" and "{ICLR} 2018" would have
               # shipped the brace convention into other people's bibliographies.
-              f'  title: "{_cff_str(paper.get("title_display") or paper.get("title"))}"',
+              f'  title: "{_cff_str(title_of(paper))}"',
               "  authors:"]
     for a in paper.get("authors") or [ident["name"]]:
         parts = a.split()
@@ -234,7 +234,7 @@ def phase_propose(cfg) -> None:
 
     Re-runnable: new repos get a fresh entry, existing entries keep their edits.
     """
-    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers", [])
+    papers = read_papers()
     out = os.path.join(DATA, "repos.yaml")
     prior = {r["repo"]: r for r in (read_yaml(out) or {}).get("repos", [])}
     repos = list_repos(cfg)
@@ -300,8 +300,7 @@ def _changes(cfg):
     """Yield (entry, live, changes) by comparing desired state to LIVE GitHub state."""
     prop = (read_yaml(os.path.join(DATA, "repos.yaml")) or {}).get("repos", [])
     live = {r["full_name"]: r for r in list_repos(cfg)}
-    papers = {p["slug"]: p for p in
-              (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers", [])}
+    papers = {p["slug"]: p for p in read_papers()}
     for r in prop:
         cur = live.get(r["repo"])
         if r.get("skip") or cur is None:

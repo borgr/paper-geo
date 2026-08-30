@@ -37,8 +37,8 @@ import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from common import (BUILD, DATA, TASKS, clipped, get_status, read_yaml,
-                    write_json, write_task, write_yaml)
+from common import (BUILD, DATA, TASKS, clipped, get_status, read_overrides, read_papers,
+                    read_yaml, write_json, write_task, write_yaml)
 from wikidata_coauthors import (API, CACHE, SCHOLARLY, api_quiet, asked,  # noqa: F401
                                batched, entities, fill, items_block, items_by_orcid,
                                qid_of, researchers, title_key, values, wdqs_quiet)
@@ -323,9 +323,7 @@ def coauthored() -> dict[str, set[str]]:
     """
     with open(os.path.join(BUILD, CACHE)) as f:
         by_slug = (json.load(f).get("orcids") or {})
-    titles = {p["slug"]: title_key(p.get("title") or "")
-              for p in ((read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers")
-                        or [])}
+    titles = {p["slug"]: title_key(p.get("title") or "") for p in read_papers()}
     out: dict[str, set[str]] = {}
     for slug, names in by_slug.items():
         for orcid in (names or {}).values():
@@ -417,7 +415,7 @@ def decided() -> dict[str, str]:
     belongs to a namesake rather than to the co-author, which drops the person from every
     list here — no item created, no statement written, and no question asked again.
     """
-    return ((read_yaml(os.path.join(DATA, "overrides.yaml")) or {}).get(DECIDED) or {})
+    return read_overrides().get(DECIDED) or {}
 
 
 def linked(p: dict, day: str) -> dict:

@@ -17,9 +17,8 @@ import textwrap
 from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (DATA, ROOT, TASKS, WD_IDENTIFIERS, clipped,  # noqa: E402
-                    get_json, mw_replied, norm_name, org_name, plural, read_yaml,
-                    write_task, write_yaml)
+from common import (DATA, ROOT, TASKS, WD_IDENTIFIERS, clipped, get_json, mw_replied,  # noqa: E402
+                    norm_name, org_name, plural, read_yaml, title_of, write_task, write_yaml)
 
 # Set to the first Wikidata call that did not answer. Both readings below report an
 # absence -- no item claims this identifier, this item states no gaps -- and every way of
@@ -276,7 +275,7 @@ def paper_item(p: dict, cfg) -> dict | None:
     if not (p.get("doi") or p.get("arxiv")):
         return None
     me = cfg["ids"].get("wikidata")
-    title = (p.get("title_display") or p["title"]).replace('"', "'").strip()
+    title = (title_of(p)).replace('"', "'").strip()
     authors = []
     for i, a in enumerate(p.get("authors") or [], 1):
         a = a.replace('"', "'").strip()
@@ -551,7 +550,7 @@ def paper_link_section(q: str, cov: dict, qs_path: str | None) -> list[str]:
               "creation. Retried next run.", ""]
     for p, qid in cov["present"]:
         L.append(f"- [{qid}](https://www.wikidata.org/wiki/{qid}) — "
-                 f"{clipped(p.get('title_display') or p['title'], 70)}")
+                 f"{clipped(title_of(p), 70)}")
     L += ["",
           "Two facts follow from that number, and both cut against the usual advice.",
           "",

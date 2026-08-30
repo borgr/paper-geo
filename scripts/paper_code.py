@@ -52,8 +52,8 @@ import urllib.error
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (DATA, ROOT, gh, gh_status, load_config, note_fetch,  # noqa: E402
-                    read_yaml, write_json, write_yaml)
+from common import (DATA, ROOT, gh, gh_status, load_config, note_fetch, read_papers,  # noqa: E402
+                    read_yaml, title_of, write_json, write_yaml)
 from fulltext import resolve as resolve_fulltext  # noqa: E402
 
 BUILD = os.path.join(ROOT, "build")
@@ -290,7 +290,7 @@ def author_logins(authors: list[str]) -> set[str]:
 
 def candidates(paper: dict, text: str) -> list[dict]:
     """Every github.com/owner/name in the text, scored for being *this paper's*."""
-    title_toks = name_tokens(paper.get("title_display") or paper.get("title"))
+    title_toks = name_tokens(title_of(paper))
     logins = author_logins(paper.get("authors"))
     n = max(len(text), 1)
     found: dict[str, dict] = {}
@@ -406,7 +406,7 @@ class PageFacts:
 
 def page_candidates(paper: dict, text: str, repo_url: str | None) -> list[dict]:
     """Every plausible project-page URL in the text, scored for being this paper's."""
-    title_toks = name_tokens(paper.get("title_display") or paper.get("title"))
+    title_toks = name_tokens(title_of(paper))
     n = max(len(text), 1)
     found: dict[str, dict] = {}
     for m in PAGE_RX.finditer(text):
@@ -527,7 +527,7 @@ def confirm_page(c: dict, paper: dict, pages: PageFacts) -> dict:
         c["why"].append(f"unreachable ({f.get('status')}) -- rejected")
         c["score"] -= 10
         return c
-    title = (paper.get("title_display") or paper.get("title") or "").lower()
+    title = (title_of(paper)).lower()
     title_key = " ".join(re.sub(r"[^a-z0-9 ]", " ", title).split()[:5])
     body = f.get("text") or ""
     if title_key and title_key in body:
@@ -568,7 +568,7 @@ def confirm(c: dict, paper: dict, facts: RepoFacts) -> dict:
     c["fork"] = f.get("fork", False)
     # The repo's own metadata naming the paper is the strongest single confirmation,
     # because it cannot happen by accident.
-    title = (paper.get("title_display") or paper.get("title") or "").lower()
+    title = (title_of(paper)).lower()
     title_key = " ".join(re.sub(r"[^a-z0-9 ]", " ", title).split()[:5])
     hay = (f.get("description", "") + " " + f.get("homepage", "") + " "
            + " ".join(f.get("topics", []))).lower()
@@ -662,7 +662,7 @@ def deduce(papers: list[dict], only: str | None, facts: RepoFacts,
         if ptop and ptop.get("exists") and ptop["score"] >= ACCEPT:
             prunner = pc[1]["score"] if len(pc) > 1 else -99
             sibs, quiet = hf_siblings(
-                ptop["page"], name_tokens(p.get("title_display") or p.get("title")))
+                ptop["page"], name_tokens(title_of(p)))
             if sibs:
                 ptop["siblings"] = sibs[:4]
                 ptop["why"].append(f"the same owner publishes {len(sibs)} more for this "
@@ -927,7 +927,7 @@ def main() -> None:
     ap.add_argument("--slug", help="one paper only")
     args = ap.parse_args()
 
-    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers") or []
+    papers = read_papers()
     facts = RepoFacts()
     pages = PageFacts()
     prev = load_decisions()

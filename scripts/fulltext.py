@@ -46,8 +46,8 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from common import (BUILD, DATA, get, get_json, load_config, paper_doi,  # noqa: E402
-                   read_yaml, write_json)
+from common import (BUILD, DATA, get, get_json, load_config, paper_doi, read_papers,  # noqa: E402
+                    write_json)
 
 CACHE = os.path.join(BUILD, "fulltext")
 LOCAL = os.path.join(DATA, "fulltext")
@@ -590,7 +590,7 @@ def main() -> None:
     args = ap.parse_args()
 
     cfg = load_config()
-    papers = (read_yaml(os.path.join(DATA, "papers.yaml")) or {}).get("papers", [])
+    papers = read_papers()
     by_slug = {p["slug"]: p for p in papers}
 
     if args.abstracts:
