@@ -4882,10 +4882,6 @@ class TestAQuoteLinksIntoThePaper(unittest.TestCase):
 
 
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
-
-
 class TestADroppedConnectionIsNotARefusal(unittest.TestCase):
     """One `RemoteProtocolError` mid-stream used to spend a paper's whole repair budget."""
 
@@ -8048,6 +8044,19 @@ class TestTheAuditKeepsThePagesItCouldNotRead(unittest.TestCase):
                 ai.TASKS = old
 
 
+class TestTheSuiteCollectsAllOfItself(unittest.TestCase):
+    """A `__main__` block anywhere but last silently shortens the suite that runs after it."""
+
+    def test_nothing_is_defined_after_the_main_block(self):
+        src = source(os.path.abspath(__file__).replace(".pyc", ".py"))
+        body = ast.parse(src).body
+        guards = [i for i, n in enumerate(body) if isinstance(n, ast.If)
+                  and '__main__' in ast.dump(n.test)]
+        self.assertEqual([len(body) - 1], guards,
+                         "a `__main__` block mid-file makes a direct run collect only the "
+                         "classes above it -- 255 of 448, reported as 17 errors")
+
+
 class TestAFilledInFidelityRunIsNotOverwritten(unittest.TestCase):
     """A blank task file and a filled-in one are the same shape, so the loss left no trace.
 
@@ -8100,3 +8109,6 @@ class TestAFilledInFidelityRunIsNotOverwritten(unittest.TestCase):
         self.assertEqual(0, fidelity.answered(junk))
         self.assertEqual(0, fidelity.answered(os.path.join(d, "absent.json")))
 
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
