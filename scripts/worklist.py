@@ -753,40 +753,80 @@ def starving_papers(papers: list[dict]) -> list[str]:
 def identity_surfaces(papers: list[dict], state: dict, ids: dict) -> list[str]:
     """One section per external surface with something open, or one line saying none has.
 
-    Each entry of `ident_items` is (predicate, heading, body). Built as data so adding a surface
-    is one tuple, and so a surface with nothing open cannot print a heading.
+    Each surface below returns (predicate, heading, body). Built as data so adding a surface
+    is one entry in the list, and so a surface with nothing open cannot print a heading. They
+    are defined after this function, in the order they print.
     """
-    L = []
-    # The papers themselves and not just their count: the URL to paste into the Add
-    # Papers form is a field on each one, so a section that reports only how many there
-    # are has sent the reader to a second file for the one thing it is asking them to do.
-    strays = sorted([p for p in papers if p.get("s2_author_record") in
-                     [a for a in ids["semantic_scholar"]
-                      if a != ids["semantic_scholar_primary"]]],
-                    key=lambda p: -(p.get("citations") or 0))
-    n_strays = len(strays)
-
-    # Each entry: (predicate, heading, body lines). Built as data so the whole
-    # identity block is one loop and adding a surface is one tuple -- the previous
-    # version inlined every surface unconditionally, which is how it went stale.
-    o_miss = state.get("orcid_missing_papers") or []
-    o_conf = state.get("orcid_strays_confirmed") or []
-    o_dupg = state.get("orcid_duplicate_groups") or []
-    o_bad = state.get("orcid_misfiled_ids") or []
-    facets = ((state.get("orcid_missing_variants") or [])
-              + (state.get("orcid_missing_keywords") or [])
-              + (state.get("orcid_missing_other_pages") or [])
-              + ([] if state.get("orcid_has_canonical_url", True) else ["canonical URL"]))
     by_slug = {p["slug"]: p for p in papers}
+    surfaces = [
+        orcid_missing(state, papers, by_slug),
+        orcid_wrong_works(state),
+        orcid_misfiled(state, by_slug),
+        orcid_duplicates(state),
+        orcid_facets(state),
+        s2_second_record(papers, ids),
+        wikidata_statement_gaps(state),
+        wikidata_missing_papers(state),
+        openalex_duplicate_profiles(ids),
+    ]
+    open_items = [(h, b) for pred, h, b in surfaces if pred]
+    if not open_items:
+        return ["## Identity surfaces", "",
+                "Nothing open. ORCID, Semantic Scholar, Wikidata and OpenAlex all match",
+                "`config.yaml` as of the last audit.", ""]
+    L = [f"## Identity surfaces ({len(open_items)} open)", "",
+         "Each is blocked on an account you are logged into, not on knowing what to",
+         "do. `python scripts/identity_tasks.py` regenerates every payload under",
+         "`tasks/` — committed, so browsable on GitHub.", ""]
+    for h, b in open_items:
+        L += [h, ""] + b
+    return L
 
-    def misfiled_item(b: dict) -> list[str]:
-        """One misfiled ORCID identifier, carrying every value the edit needs.
 
-        This section used to say what the failure was, then send you to
-        `tasks/identity_audit.md` for the put-code, the DOI to take off and the DOI to
-        put on. Three values, one line each, and the file that has them is a second file
-        -- so the item on the page you are working from named none of them and the
-        instruction "replace the DOI" had no object.
+def orcid_missing(state: dict, papers: list[dict], by_slug: dict) -> tuple[bool, str, list[str]]:
+    """The papers absent from the ORCID record, as one BibTeX upload."""
+    o_miss = state.get("orcid_missing_papers") or []
+    body = [
+        "Highest leverage on this page. Semantic Scholar's disambiguation and",
+        "OpenAlex's profile merges are both ORCID-driven, so this is the one fix that",
+        "makes the others more likely to fix themselves.", "",
+        "One upload, not one form per paper. At <https://orcid.org/my-orcid#works>:",
+        "*+ Add → Add BibTeX → Choose file* →",
+        "[`tasks/orcid_missing.bib`](tasks/orcid_missing.bib) (only the missing ones) or",
+        "[`tasks/orcid_import.bib`](tasks/orcid_import.bib) (all of them; ORCID groups on",
+        "shared identifiers, so re-importing what is already there merges rather than",
+        "duplicates). It previews the entries and you confirm — nothing lands unseen.",
+        "Why it matters, once:",
+        "[docs/SETUP.md §1](docs/SETUP.md#1-orcid--populate-it-then-wire-it-everywhere).", "",
+    ] + orcid_missing_items(o_miss, by_slug)
+    return (bool(o_miss),
+            f"### ORCID is missing {len(o_miss)} of your {len(papers)} papers", body)
+
+
+def orcid_wrong_works(state: dict) -> tuple[bool, str, list[str]]:
+    """Works the ORCID record claims that are not the author's."""
+    o_conf = state.get("orcid_strays_confirmed") or []
+    head = (f"### ORCID lists {len(o_conf)} work that is not yours" if len(o_conf) == 1 else
+            f"### ORCID lists {len(o_conf)} works that are not yours")
+    body = [
+        "A wrong work on your record is worse than a missing one: it is the thing that",
+        "makes an automated merge distrust the record. *Works → the entry → Delete.*",
+        "Put-codes and titles: `tasks/orcid_remove.md`.", "",
+    ]
+    return bool(o_conf), head, body
+
+
+def orcid_misfiled(state: dict, by_slug: dict) -> tuple[bool, str, list[str]]:
+    """Works whose identifier belongs to a different paper.
+
+    Prints before the duplicate and the missing-paper surfaces, because it is what puts
+    entries in them and each of their obvious fixes makes it worse.
+    """
+    o_bad = state.get("orcid_misfiled_ids") or []
+
+    def item(b: dict) -> list[str]:
+        """One misfiled identifier, carrying every value the edit needs -- the put-code, the
+        identifier to take off, and the one to put on.
         """
         p = by_slug.get(b.get("should_be")) or {}
         title = title_of(p) or b.get("should_be") or "?"
@@ -813,8 +853,37 @@ def identity_surfaces(papers: list[dict], state: dict, ids: dict) -> list[str]:
                        "id, so taking the wrong one off is the whole fix")
         return out + [""]
 
-    def dup_item(r: dict) -> list[str]:
-        """One ORCID duplicate pair: which entry to open, and the one value to paste."""
+    head = (f"### {len(o_bad)} work on your ORCID carries another paper's identifier"
+            if len(o_bad) == 1 else
+            f"### {len(o_bad)} works on your ORCID carry another paper's identifier")
+    body = [
+        "**Do this before the rest of this section.** A work whose DOI belongs to a",
+        "different paper is filed by ORCID into *that* paper's group — grouping is on",
+        "shared identifiers and there is nothing else it can go on. So the real paper",
+        "ends up with no identifier on the record and reads as missing, the group that",
+        "absorbed it reads as listed twice, and both of the obvious fixes make it",
+        "worse: adding the paper creates a second copy, merging the group destroys a",
+        "distinct work.", "",
+        "Each item below is one edit, and every value it needs is in the item — the",
+        "work to open, the identifier to take off it, the one to put on. Open",
+        "<https://orcid.org/my-orcid#works>, find the work by its title, then the pencil",
+        "icon → under *Identifiers* replace the DOI → *Save changes*. **Edit it; do not",
+        "delete and re-add** — the put-code is what carries the entry's citations and its",
+        "source attribution, and a new entry starts with neither.", "",
+        "The carried DOI is linked so you can see for yourself that it resolves to",
+        "somebody else's paper before you touch anything. Nothing else needs deleting:",
+        "one identifier is replaced by another and the work itself stays.", "",
+    ] + [ln for b in o_bad for ln in item(b)]
+    return bool(o_bad), head, body
+
+
+def orcid_duplicates(state: dict) -> tuple[bool, str, list[str]]:
+    """Papers the ORCID record holds as two groups, to be merged rather than deleted."""
+    o_dupg = state.get("orcid_duplicate_groups") or []
+    o_bad = state.get("orcid_misfiled_ids") or []
+
+    def item(r: dict) -> list[str]:
+        """One duplicate pair: which entry to open, and the one value to paste."""
         if r.get("doi"):
             return [f"- [ ] **{clipped(r['title'], 60)}** — open put-code `{r['keep']}` "
                     f"(*{clipped(r['keep_title'], 38)}*) and add the DOI `{r['doi']}`, which is "
@@ -826,190 +895,166 @@ def identity_surfaces(papers: list[dict], state: dict, ids: dict) -> list[str]:
                             for e in r["entries"])
                 + ". Open whichever has the venue and add one of the others' DOIs.", ""]
 
-    # Absent from Wikidata and not creatable: no DOI, no arXiv id, so no key to check
-    # against. Named here rather than inline because the difference between the two
-    # counts is the only honest way to say why the command below creates fewer items
-    # than the paragraph above it describes.
-    wd_nokey = ((state.get("wikidata_papers_absent") or 0)
-                - (state.get("wikidata_papers_creatable") or 0))
-
-    ident_items = [
-        (bool(o_miss),
-         f"### ORCID is missing {len(o_miss)} of your {len(papers)} papers",
-         ["Highest leverage on this page. Semantic Scholar's disambiguation and",
-          "OpenAlex's profile merges are both ORCID-driven, so this is the one fix that",
-          "makes the others more likely to fix themselves.", "",
-          "One upload, not one form per paper. At <https://orcid.org/my-orcid#works>:",
-          "*+ Add → Add BibTeX → Choose file* →",
-          "[`tasks/orcid_missing.bib`](tasks/orcid_missing.bib) (only the missing ones) or",
-          "[`tasks/orcid_import.bib`](tasks/orcid_import.bib) (all of them; ORCID groups on",
-          "shared identifiers, so re-importing what is already there merges rather than",
-          "duplicates). It previews the entries and you confirm — nothing lands unseen.",
-          "Why it matters, once:",
-          "[docs/SETUP.md §1](docs/SETUP.md#1-orcid--populate-it-then-wire-it-everywhere).", ""]
-         + orcid_missing_items(o_miss, by_slug)),
-        (bool(o_conf),
-         f"### ORCID lists {len(o_conf)} work that is not yours"
-         if len(o_conf) == 1 else
-         f"### ORCID lists {len(o_conf)} works that are not yours",
-         ["A wrong work on your record is worse than a missing one: it is the thing that",
-          "makes an automated merge distrust the record. *Works → the entry → Delete.*",
-          "Put-codes and titles: `tasks/orcid_remove.md`.", ""]),
-        # Before the duplicate and the missing-paper sections, because it is what puts
-        # entries in them -- and it was the one **fix** in the audit table that this page
-        # never listed, so the only way to meet it was to open `identity_audit.md` on
-        # your own initiative. A worklist that omits the item it tells you to do first is
-        # worse than one that omits it silently.
-        (bool(o_bad),
-         f"### {len(o_bad)} work on your ORCID carries another paper's identifier"
-         if len(o_bad) == 1 else
-         f"### {len(o_bad)} works on your ORCID carry another paper's identifier",
-         ["**Do this before the rest of this section.** A work whose DOI belongs to a",
-          "different paper is filed by ORCID into *that* paper's group — grouping is on",
-          "shared identifiers and there is nothing else it can go on. So the real paper",
-          "ends up with no identifier on the record and reads as missing, the group that",
-          "absorbed it reads as listed twice, and both of the obvious fixes make it",
-          "worse: adding the paper creates a second copy, merging the group destroys a",
-          "distinct work.", "",
-          "Each item below is one edit, and every value it needs is in the item — the",
-          "work to open, the identifier to take off it, the one to put on. Open",
-          "<https://orcid.org/my-orcid#works>, find the work by its title, then the pencil",
-          "icon → under *Identifiers* replace the DOI → *Save changes*. **Edit it; do not",
-          "delete and re-add** — the put-code is what carries the entry's citations and its",
-          "source attribution, and a new entry starts with neither.", "",
-          "The carried DOI is linked so you can see for yourself that it resolves to",
-          "somebody else's paper before you touch anything. Nothing else needs deleting:",
-          "one identifier is replaced by another and the work itself stays.", ""]
-         + [ln for b in o_bad for ln in misfiled_item(b)]),
-        (bool(o_dupg),
-         f"### ORCID lists {len(o_dupg)} of your papers twice",
-         ["ORCID groups works that share an identifier. Two groups for one paper means",
-          "one copy carries the arXiv DataCite DOI (`10.48550/arXiv.<id>`) and the other",
-          "the publisher DOI, so they share no key.", "",
-          "**Merge, do not delete.** Both titles are real — one is the preprint's, one is",
-          "what the paper was called on acceptance — and adding one entry's DOI to the",
-          "other folds them into a single work carrying both, with no entry losing its",
-          "citations or its source attribution. Open the **keep** entry at",
-          "<https://orcid.org/my-orcid#works>, the pencil icon → **+ Add identifier** →",
-          "type `doi` → paste the value below → *Save*. The pair collapses on the next",
-          "page load.", ""]
-         + [ln for r in (state.get("orcid_duplicate_pairs") or []) for ln in dup_item(r)]
-         + ["Delete instead only if you would rather have one entry than a grouped pair —",
-            "same number of clicks, and the preprint title stops being findable on your",
-            "record.",
-            "",
-          # Points at the section above when there is one, and at the audit when there is
-          # not. A "do that first" whose target is not on the page is an instruction the
-          # reader has to go and look for, and the answer is usually "there was nothing".
-          ("**Do the misfiled-identifier section above first.**" if o_bad else
-           "If [the misfiled-identifier section](tasks/identity_audit.md) ever has"
-           " anything in it, do that first."),
-          "A work carrying the wrong DOI lands in another paper's group and shows up",
-          "here as a duplicate that merging would destroy.", ""]),
-        (bool(facets),
-         f"### ORCID facet fields ({len(facets)} still empty)",
-         ["Separate from works, and two minutes: *Also known as*, *Keywords*, *Websites*.",
-          "Exactly which are missing, with the values ready to paste:",
-          "`tasks/identity_audit.md`.", ""]),
-        (n_strays > 0,
-         f"### Semantic Scholar — {n_strays} papers on a second author record",
-         (["Every S2-backed tool (Elicit, Consensus, SciSpace, most literature agents)",
-           "resolves you to one page, so each currently sees about half the corpus.",
-           "Support has already been asked to merge the two records and declined, so the",
-           "self-service route is the only one: a claimed page can pull papers across one",
-           "at a time.", ""]
-          + ([f"**Worth waiting until {held_until('Semantic Scholar —')} before starting.**",
-              "S2 re-clusters authors off ORCID, the ORCID record already asserts every",
-              "paper here, and re-clustering would move all of them at no cost to you. It",
-              "cannot merge the two records, so the second one stays either way — but the",
-              "pastes below may be work that does itself.", ""]
-             if held_until("Semantic Scholar —") else []) + [
-          f"1. Open your claimed page: <https://www.semanticscholar.org/author/"
-          f"{ids['semantic_scholar_primary']}>",
-          "2. *Edit Author Page → Add Papers*.",
-          "3. Paste a paper's S2 URL, pick it, and choose *the author is correct, but the",
-          "   paper is missing from my author page*. Changes appear in about 24 hours.",
-          "",
-          "Highest-citation first, so stopping early still captures most of the loss.",
-          "**Do not claim the second page as well** — a second claimed record is harder to",
-          "undo than an unclaimed one, and it makes the split look deliberate.", ""])
-         + [f"- [ ] {p.get('citations') or 0} cites — "
-            f"{clipped(title_of(p), 56)} — "
-            + (f"<https://www.semanticscholar.org/paper/{p['s2_corpus_id']}>"
-               if p.get("s2_corpus_id") else
-               "**no S2 id known** — search the title on the Add Papers form")
-            for p in strays[:12]]
-         + ([f"- … and {len(strays) - 12} more in "
-             "[`tasks/s2_merge.md`](tasks/s2_merge.md), same order"]
-            if len(strays) > 12 else []) + [""]),
-        (bool(state.get("wikidata_gaps")),
-         f"### Wikidata — {state.get('wikidata_gaps')} statement gaps on "
-         f"{state.get('wikidata') or 'your item'}",
-         ["Now automatic, and it does **not** need an autoconfirmed account — that is a",
-          "QuickStatements rule, not a MediaWiki one. Create a bot password once at",
-          "<https://www.wikidata.org/wiki/Special:BotPasswords> (grants: edit existing",
-          "pages, create/edit pages), export `WIKIDATA_BOT_USER` and",
-          "`WIKIDATA_BOT_PASSWORD`, then:", "",
-          "```bash",
-          "python scripts/wikidata_apply.py            # dry run: exactly what changes",
-          "python scripts/wikidata_apply.py --apply    # write it",
-          "```", ""]),
-        (bool(state.get("wikidata_papers_creatable")),
-         f"### Wikidata — {state.get('wikidata_papers_creatable')} of your papers "
-         f"{'has' if state.get('wikidata_papers_creatable') == 1 else 'have'} no item",
-         # Listed under "only you can do this" for the decision, not the labour -- these are
-         # permanent pages on a wiki that is not yours, and the undo is a deletion request
-         # rather than a click.
-         #
-         # The count is `creatable`, not `absent`: a paper with neither a DOI nor an arXiv id
-         # stays absent, and a heading of 109 over a command that creates 108 is a count that
-         # does not match its list.
-         ["Same bot password, and the same statements as the QuickStatements batch in",
-          "`tasks/wikidata_papers.qs` — which is now only the fallback. This is where",
-          f"`{state.get('wikidata') or 'your author item'}` gets the incoming author",
-          "links that make a Scholia profile and a SPARQL-answerable corpus exist at",
-          "all.", ""]
-         # Phrased without a subject verb so one paper and forty read the same, since the
-         # count reaches 1 as the backlog drains and every agreement here would then be wrong.
-         + ([f"{wd_nokey} more with no item, and not in the command below: no DOI and no",
-             "arXiv id, so there is no key to check Wikidata against and creating an item",
-             "risks a duplicate nobody can find. Each arrives here once it is deposited",
-             "anywhere.", ""]
-            if wd_nokey > 0 else [])
-         + [
-          "```bash",
-          "python scripts/wikidata_apply.py --papers                    # what it would create",
-          "python scripts/wikidata_apply.py --papers --apply --limit 10  # ten of them",
-          "```", "",
-          "In batches, and this is the reason: ten items finds a wrong statement on item",
-          "3 rather than on item 103, and an item is harder to retract than anything else",
-          "here. Each one is recorded in `data/wikidata_created.yaml` as it lands, so",
-          "stopping and resuming creates nothing twice — the query service lags hours",
-          "behind the edit and that file is what covers the gap.", "",
-          "Once this list is empty the monthly CI run keeps up with new papers by itself.",
-          "It refuses while a backlog exists, so it is doing nothing until you start.",
-          "Cautions worth reading once: [`tasks/wikidata_followup.md`]"
-          "(tasks/wikidata_followup.md).", ""]),
-        (bool(ids.get("openalex_duplicates")),
-         f"### OpenAlex — {len(ids.get('openalex_duplicates') or [])} duplicate profiles",
-         ["Lowest priority, and the preferred route is to do nothing here: OpenAlex",
-          "disambiguation is ORCID-driven and they are running ORCID-based merges, so",
-          "fixing ORCID above may resolve it. If you want it now, the profile IDs to",
-          "paste into their *Fix errors* form are in `tasks/openalex_merge.md`.", ""]),
+    body = [
+        "ORCID groups works that share an identifier. Two groups for one paper means",
+        "one copy carries the arXiv DataCite DOI (`10.48550/arXiv.<id>`) and the other",
+        "the publisher DOI, so they share no key.", "",
+        "**Merge, do not delete.** Both titles are real — one is the preprint's, one is",
+        "what the paper was called on acceptance — and adding one entry's DOI to the",
+        "other folds them into a single work carrying both, with no entry losing its",
+        "citations or its source attribution. Open the **keep** entry at",
+        "<https://orcid.org/my-orcid#works>, the pencil icon → **+ Add identifier** →",
+        "type `doi` → paste the value below → *Save*. The pair collapses on the next",
+        "page load.", "",
+    ] + [ln for r in (state.get("orcid_duplicate_pairs") or []) for ln in item(r)] + [
+        "Delete instead only if you would rather have one entry than a grouped pair —",
+        "same number of clicks, and the preprint title stops being findable on your",
+        "record.",
+        "",
+        # Points at the section above when there is one, and at the audit when there is not.
+        # A "do that first" whose target is not on the page is an instruction the reader has
+        # to go and look for, and the answer is usually "there was nothing".
+        ("**Do the misfiled-identifier section above first.**" if o_bad else
+         "If [the misfiled-identifier section](tasks/identity_audit.md) ever has"
+         " anything in it, do that first."),
+        "A work carrying the wrong DOI lands in another paper's group and shows up",
+        "here as a duplicate that merging would destroy.", "",
     ]
-    open_items = [(h, b) for pred, h, b in ident_items if pred]
-    if open_items:
-        L += [f"## Identity surfaces ({len(open_items)} open)", "",
-                  "Each is blocked on an account you are logged into, not on knowing what to",
-                  "do. `python scripts/identity_tasks.py` regenerates every payload under",
-                  "`tasks/` — committed, so browsable on GitHub.", ""]
-        for h, b in open_items:
-            L += [h, ""] + b
-    else:
-        L += ["## Identity surfaces", "",
-                  "Nothing open. ORCID, Semantic Scholar, Wikidata and OpenAlex all match",
-                  "`config.yaml` as of the last audit.", ""]
-    return L
+    return bool(o_dupg), f"### ORCID lists {len(o_dupg)} of your papers twice", body
+
+
+def orcid_facets(state: dict) -> tuple[bool, str, list[str]]:
+    """The ORCID fields beside works -- other names, keywords, websites, canonical URL."""
+    facets = ((state.get("orcid_missing_variants") or [])
+              + (state.get("orcid_missing_keywords") or [])
+              + (state.get("orcid_missing_other_pages") or [])
+              + ([] if state.get("orcid_has_canonical_url", True) else ["canonical URL"]))
+    body = [
+        "Separate from works, and two minutes: *Also known as*, *Keywords*, *Websites*.",
+        "Exactly which are missing, with the values ready to paste:",
+        "`tasks/identity_audit.md`.", "",
+    ]
+    return bool(facets), f"### ORCID facet fields ({len(facets)} still empty)", body
+
+
+def s2_second_record(papers: list[dict], ids: dict) -> tuple[bool, str, list[str]]:
+    """The papers Semantic Scholar files under an author record other than the claimed one.
+
+    Names the papers and not just their count, because the URL to paste into the Add Papers
+    form is a field on each one.
+    """
+    strays = sorted([p for p in papers if p.get("s2_author_record") in
+                     [a for a in ids["semantic_scholar"]
+                      if a != ids["semantic_scholar_primary"]]],
+                    key=lambda p: -(p.get("citations") or 0))
+    held = held_until("Semantic Scholar —")
+    body = [
+        "Every S2-backed tool (Elicit, Consensus, SciSpace, most literature agents)",
+        "resolves you to one page, so each currently sees about half the corpus.",
+        "Support has already been asked to merge the two records and declined, so the",
+        "self-service route is the only one: a claimed page can pull papers across one",
+        "at a time.", "",
+    ] + ([
+        f"**Worth waiting until {held} before starting.**",
+        "S2 re-clusters authors off ORCID, the ORCID record already asserts every",
+        "paper here, and re-clustering would move all of them at no cost to you. It",
+        "cannot merge the two records, so the second one stays either way — but the",
+        "pastes below may be work that does itself.", "",
+    ] if held else []) + [
+        f"1. Open your claimed page: <https://www.semanticscholar.org/author/"
+        f"{ids['semantic_scholar_primary']}>",
+        "2. *Edit Author Page → Add Papers*.",
+        "3. Paste a paper's S2 URL, pick it, and choose *the author is correct, but the",
+        "   paper is missing from my author page*. Changes appear in about 24 hours.",
+        "",
+        "Highest-citation first, so stopping early still captures most of the loss.",
+        "**Do not claim the second page as well** — a second claimed record is harder to",
+        "undo than an unclaimed one, and it makes the split look deliberate.", "",
+    ] + [
+        f"- [ ] {p.get('citations') or 0} cites — "
+        f"{clipped(title_of(p), 56)} — "
+        + (f"<https://www.semanticscholar.org/paper/{p['s2_corpus_id']}>"
+           if p.get("s2_corpus_id") else
+           "**no S2 id known** — search the title on the Add Papers form")
+        for p in strays[:12]
+    ] + ([f"- … and {len(strays) - 12} more in "
+          "[`tasks/s2_merge.md`](tasks/s2_merge.md), same order"]
+         if len(strays) > 12 else []) + [""]
+    return (len(strays) > 0,
+            f"### Semantic Scholar — {len(strays)} papers on a second author record", body)
+
+
+def wikidata_statement_gaps(state: dict) -> tuple[bool, str, list[str]]:
+    """Statements missing from the author's own Wikidata item."""
+    body = [
+        "Now automatic, and it does **not** need an autoconfirmed account — that is a",
+        "QuickStatements rule, not a MediaWiki one. Create a bot password once at",
+        "<https://www.wikidata.org/wiki/Special:BotPasswords> (grants: edit existing",
+        "pages, create/edit pages), export `WIKIDATA_BOT_USER` and",
+        "`WIKIDATA_BOT_PASSWORD`, then:", "",
+        "```bash",
+        "python scripts/wikidata_apply.py            # dry run: exactly what changes",
+        "python scripts/wikidata_apply.py --apply    # write it",
+        "```", "",
+    ]
+    return (bool(state.get("wikidata_gaps")),
+            f"### Wikidata — {state.get('wikidata_gaps')} statement gaps on "
+            f"{state.get('wikidata') or 'your item'}", body)
+
+
+def wikidata_missing_papers(state: dict) -> tuple[bool, str, list[str]]:
+    """Papers with no Wikidata item, which is the author's call and not only their labour.
+
+    These are permanent pages on a wiki that is not the author's, and the undo is a deletion
+    request rather than a click. The count is `creatable` rather than `absent`: a paper with
+    neither a DOI nor an arXiv id has no key to check Wikidata against, and the difference is
+    reported in the body so the heading and the command under it cannot disagree.
+    """
+    creatable = state.get("wikidata_papers_creatable")
+    nokey = (state.get("wikidata_papers_absent") or 0) - (creatable or 0)
+    body = [
+        "Same bot password, and the same statements as the QuickStatements batch in",
+        "`tasks/wikidata_papers.qs` — which is now only the fallback. This is where",
+        f"`{state.get('wikidata') or 'your author item'}` gets the incoming author",
+        "links that make a Scholia profile and a SPARQL-answerable corpus exist at",
+        "all.", "",
+    # Phrased without a subject verb so one paper and forty read the same, since the count
+    # reaches 1 as the backlog drains and every agreement here would then be wrong.
+    ] + ([
+        f"{nokey} more with no item, and not in the command below: no DOI and no",
+        "arXiv id, so there is no key to check Wikidata against and creating an item",
+        "risks a duplicate nobody can find. Each arrives here once it is deposited",
+        "anywhere.", "",
+    ] if nokey > 0 else []) + [
+        "```bash",
+        "python scripts/wikidata_apply.py --papers                    # what it would create",
+        "python scripts/wikidata_apply.py --papers --apply --limit 10  # ten of them",
+        "```", "",
+        "In batches, and this is the reason: ten items finds a wrong statement on item",
+        "3 rather than on item 103, and an item is harder to retract than anything else",
+        "here. Each one is recorded in `data/wikidata_created.yaml` as it lands, so",
+        "stopping and resuming creates nothing twice — the query service lags hours",
+        "behind the edit and that file is what covers the gap.", "",
+        "Once this list is empty the monthly CI run keeps up with new papers by itself.",
+        "It refuses while a backlog exists, so it is doing nothing until you start.",
+        "Cautions worth reading once: [`tasks/wikidata_followup.md`]"
+        "(tasks/wikidata_followup.md).", "",
+    ]
+    return (bool(creatable),
+            f"### Wikidata — {creatable} of your papers "
+            f"{'has' if creatable == 1 else 'have'} no item", body)
+
+
+def openalex_duplicate_profiles(ids: dict) -> tuple[bool, str, list[str]]:
+    """OpenAlex author profiles that should be one."""
+    dupes = ids.get("openalex_duplicates") or []
+    body = [
+        "Lowest priority, and the preferred route is to do nothing here: OpenAlex",
+        "disambiguation is ORCID-driven and they are running ORCID-based merges, so",
+        "fixing ORCID above may resolve it. If you want it now, the profile IDs to",
+        "paste into their *Fix errors* form are in `tasks/openalex_merge.md`.", "",
+    ]
+    return bool(dupes), f"### OpenAlex — {len(dupes)} duplicate profiles", body
 
 
 def arxiv_name_typos(papers: list[dict], state: dict) -> list[str]:
