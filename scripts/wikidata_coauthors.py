@@ -95,25 +95,66 @@ SHAPE = 8
 _quiet = ""
 
 
-def sparql(query: str, endpoint: str = "") -> list[dict]:
-    """Rows of a SPARQL query against WDQS, or `[]` if it did not answer.
+def answered(query: str, endpoint: str = "",
+             retries: int = 6) -> tuple[list[dict] | None, str]:
+    """Rows of a SPARQL query and `""`, or `None` and why no results came back.
 
-    `endpoint` names a different service. The scholarly one is the only one that answers
-    `author` (P50), which the main service returns nothing for.
+    `[]` is the service reporting that nothing matches. `None` is no report at all, which
+    `batched` re-asks in halves before latching it into `wdqs_quiet()`.
 
-    A query that did not answer is recorded in `wdqs_quiet()` as well as returning `[]`.
+    A body that stops mid-JSON is named as such. It arrives under HTTP 200 with a
+    matching `Content-Length`, so calling it "HTTP 200" says nothing a reader can act on.
+    """
+    url = f"{endpoint or WDQS}?" + urllib.parse.urlencode({"query": query})
+    st, raw = get_status(url, accept="application/sparql-results+json", retries=retries)
+    try:
+        return json.loads(raw)["results"]["bindings"], ""
+    except (ValueError, KeyError, TypeError):
+        pass
+    cut = f"an answer that stopped after {len(raw)} bytes" if raw else f"HTTP {st}"
+    return None, f"{host_of(url)} -> {cut}"
+
+
+def values(items: list[str], lang: str = "@en") -> str:
+    """A `VALUES` block body from strings, quoted and escaped.
+
+    `lang=""` for a plain literal such as an ORCID, `"@en"` for a label to match.
+    """
+    return " ".join('"%s"%s' % (i.replace("\\", "\\\\").replace('"', '\\"'), lang)
+                    for i in items)
+
+
+def items_block(qids: list[str] | tuple[str, ...]) -> str:
+    """A `VALUES` block body from QIDs."""
+    return " ".join("wd:" + q for q in qids)
+
+
+def batched(items: list[str], ask, size: int = 100, endpoint: str = "") -> list[dict]:
+    """Every row `ask(chunk)` answers over `items` in chunks, `[]` if a chunk went unanswered.
+
+    `ask` takes a chunk and returns the query for it. A chunk the service did not answer is
+    halved and asked again, because a `VALUES` batch matching many items produces more rows
+    than one response body carries -- 100 institution names came back cut off at 64 KiB, and
+    50 of them came back as a dropped connection. A chunk of one that still goes unanswered
+    is the service being down, and is recorded in `wdqs_quiet()`.
     """
     global _quiet
-    url = f"{endpoint or WDQS}?" + urllib.parse.urlencode({"query": query})
-    st, raw = get_status(url, accept="application/sparql-results+json")
-    try:
-        rows = json.loads(raw)["results"]["bindings"] if st == 200 else None
-    except (ValueError, KeyError, TypeError):
-        rows = None
-    if rows is None:
-        _quiet = _quiet or f"{host_of(url)} -> HTTP {st}"
-        return []
-    return rows
+    out: list[dict] = []
+    todo = [items[i:i + size] for i in range(0, len(items), size)]
+    while todo:
+        chunk = todo.pop(0)
+        # Two retries rather than six: re-asking a query whose answer was too large to
+        # deliver gets the same answer, where halving the chunk gets a smaller one.
+        rows, why = answered(ask(chunk), endpoint, retries=2 if len(chunk) > 1 else 6)
+        if rows is not None:
+            out += rows
+        elif len(chunk) > 1:
+            half = len(chunk) // 2
+            todo[:0] = [chunk[:half], chunk[half:]]
+        else:
+            _quiet = _quiet or why
+            return []
+    return out
 
 
 def wdqs_quiet() -> str:
@@ -243,14 +284,13 @@ def items_by_orcid(orcids: list[str]) -> dict[str, dict]:
     """
     found: dict[str, set] = {}
     labels: dict[str, str] = {}
-    for i in range(0, len(orcids), 150):
-        vals = " ".join('"%s"' % o for o in orcids[i:i + 150])
-        for r in sparql("SELECT ?o ?p ?pLabel WHERE { VALUES ?o { %s } ?p wdt:P496 ?o . "
-                        'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". '
-                        "} }" % vals):
-            q = qid_of(r["p"]["value"])
-            found.setdefault(r["o"]["value"], set()).add(q)
-            labels[q] = r.get("pLabel", {}).get("value", q)
+    for r in batched(orcids, lambda os_:
+                     "SELECT ?o ?p ?pLabel WHERE { VALUES ?o { %s } ?p wdt:P496 ?o . "
+                     'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }'
+                     % values(os_, ""), size=150):
+        q = qid_of(r["p"]["value"])
+        found.setdefault(r["o"]["value"], set()).add(q)
+        labels[q] = r.get("pLabel", {}).get("value", q)
     led = read_yaml(os.path.join(DATA, "wikidata_people_created.yaml")) or {}
     named = led.get("labels") or {}
     want = set(orcids)
@@ -265,20 +305,18 @@ def items_by_orcid(orcids: list[str]) -> dict[str, dict]:
 def items_by_name(names: list[str]) -> dict[str, list[dict]]:
     """Name string to every human item whose label or alias is exactly that string."""
     out: dict[str, list[dict]] = {}
-    for i in range(0, len(names), 120):
-        vals = " ".join('"%s"@en' % n.replace('"', "") for n in names[i:i + 120])
-        rows = sparql(
-            "SELECT ?name ?p ?d ?orcid WHERE { VALUES ?name { %s } "
-            "{ ?p rdfs:label ?name } UNION { ?p skos:altLabel ?name } ?p wdt:P31 wd:Q5 . "
-            'OPTIONAL { ?p schema:description ?d FILTER(lang(?d) = "en") } '
-            "OPTIONAL { ?p wdt:P496 ?orcid } }" % vals)
-        for r in rows:
-            cand = {"qid": qid_of(r["p"]["value"]),
-                    "description": r.get("d", {}).get("value", ""),
-                    "orcid": r.get("orcid", {}).get("value", "")}
-            got = out.setdefault(r["name"]["value"], [])
-            if cand["qid"] not in {c["qid"] for c in got}:
-                got.append(cand)
+    for r in batched(names, lambda ns:
+                     "SELECT ?name ?p ?d ?orcid WHERE { VALUES ?name { %s } "
+                     "{ ?p rdfs:label ?name } UNION { ?p skos:altLabel ?name } "
+                     "?p wdt:P31 wd:Q5 . "
+                     'OPTIONAL { ?p schema:description ?d FILTER(lang(?d) = "en") } '
+                     "OPTIONAL { ?p wdt:P496 ?orcid } }" % values(ns), size=120):
+        cand = {"qid": qid_of(r["p"]["value"]),
+                "description": r.get("d", {}).get("value", ""),
+                "orcid": r.get("orcid", {}).get("value", "")}
+        got = out.setdefault(r["name"]["value"], [])
+        if cand["qid"] not in {c["qid"] for c in got}:
+            got.append(cand)
     return out
 
 
@@ -310,10 +348,10 @@ RESEARCH_ROOTS = ("Q1650915", "Q3400985", "Q901", "Q81096", "Q1622272", "Q108289
 def dblp_ids(qids: list[str]) -> dict[str, str]:
     """Item to the DBLP author id it states, empty string for one that states none."""
     out = {q: "" for q in qids}
-    for i in range(0, len(qids), 200):
-        vals = " ".join("wd:" + q for q in qids[i:i + 200])
-        for r in sparql("SELECT ?p ?d WHERE { VALUES ?p {%s} ?p wdt:P2456 ?d }" % vals):
-            out[qid_of(r["p"]["value"])] = r["d"]["value"]
+    for r in batched(qids, lambda qs:
+                     "SELECT ?p ?d WHERE { VALUES ?p {%s} ?p wdt:P2456 ?d }"
+                     % items_block(qs), size=200):
+        out[qid_of(r["p"]["value"])] = r["d"]["value"]
     return out
 
 
@@ -373,14 +411,15 @@ def researchers(qids: list[str]) -> set[str]:
     statement is not evidence against, and 185 of the candidates have no occupation.
     """
     stated, research = set(), set()
-    roots = " ".join("wd:" + q for q in RESEARCH_ROOTS)
-    for i in range(0, len(qids), 200):
-        vals = " ".join("wd:" + q for q in qids[i:i + 200])
-        for r in sparql("SELECT ?p WHERE { VALUES ?p {%s} ?p wdt:P106 [] }" % vals):
-            stated.add(qid_of(r["p"]["value"]))
-        for r in sparql("SELECT DISTINCT ?p WHERE { VALUES ?p {%s} VALUES ?r {%s} "
-                        "?p wdt:P106/wdt:P279* ?r }" % (vals, roots)):
-            research.add(qid_of(r["p"]["value"]))
+    roots = items_block(RESEARCH_ROOTS)
+    for r in batched(qids, lambda qs:
+                     "SELECT ?p WHERE { VALUES ?p {%s} ?p wdt:P106 [] }" % items_block(qs),
+                     size=200):
+        stated.add(qid_of(r["p"]["value"]))
+    for r in batched(qids, lambda qs:
+                     "SELECT DISTINCT ?p WHERE { VALUES ?p {%s} VALUES ?r {%s} "
+                     "?p wdt:P106/wdt:P279* ?r }" % (items_block(qs), roots), size=200):
+        research.add(qid_of(r["p"]["value"]))
     return (set(qids) - stated) | research
 
 
@@ -399,26 +438,23 @@ def venue_items(names: list[str]) -> dict[str, list[dict]]:
     `version, edition or translation` and a journal often also `open-access journal`.
     """
     out: dict[str, list[dict]] = {}
-    for i in range(0, len(names), 60):
-        vals = " ".join('"%s"@en' % n.replace('"', "") for n in names[i:i + 60])
-        types = " ".join("wd:" + t for t in PUBLICATION_TYPES + EVENT_TYPES)
-        rows_ = sparql(
-            "SELECT ?name ?p ?pLabel ?t ?date WHERE { VALUES ?name { %s } "
-            "{ ?p rdfs:label ?name } UNION { ?p skos:altLabel ?name } "
-            "?p wdt:P31/wdt:P279* ?t . VALUES ?t { %s } "
-            "OPTIONAL { ?p wdt:P577 ?date } "
-            'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }'
-            % (vals, types))
-        for r in rows_:
-            qid, t = qid_of(r["p"]["value"]), qid_of(r["t"]["value"])
-            got = out.setdefault(r["name"]["value"], [])
-            cand = next((c for c in got if c["qid"] == qid), None)
-            if cand is None:
-                cand = {"qid": qid, "label": r.get("pLabel", {}).get("value", ""),
-                        "year": year_of(r), "types": []}
-                got.append(cand)
-            if t not in cand["types"]:
-                cand["types"].append(t)
+    types = items_block(PUBLICATION_TYPES + EVENT_TYPES)
+    for r in batched(names, lambda ns:
+                     "SELECT ?name ?p ?pLabel ?t ?date WHERE { VALUES ?name { %s } "
+                     "{ ?p rdfs:label ?name } UNION { ?p skos:altLabel ?name } "
+                     "?p wdt:P31/wdt:P279* ?t . VALUES ?t { %s } "
+                     "OPTIONAL { ?p wdt:P577 ?date } "
+                     'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }'
+                     % (values(ns), types), size=60):
+        qid, t = qid_of(r["p"]["value"]), qid_of(r["t"]["value"])
+        got = out.setdefault(r["name"]["value"], [])
+        cand = next((c for c in got if c["qid"] == qid), None)
+        if cand is None:
+            cand = {"qid": qid, "label": r.get("pLabel", {}).get("value", ""),
+                    "year": year_of(r), "types": []}
+            got.append(cand)
+        if t not in cand["types"]:
+            cand["types"].append(t)
     return out
 
 
@@ -441,23 +477,22 @@ def proceedings_of(events: list[str]) -> dict[str, list[dict]]:
     route from one to the other.
     """
     out: dict[str, list[dict]] = {}
-    for i in range(0, len(events), 60):
-        vals = " ".join("wd:" + q for q in events[i:i + 60])
-        for r in sparql(
-                "SELECT ?c ?p ?pLabel ?t ?date WHERE { VALUES ?c { %s } "
-                "?p wdt:P4745 ?c . ?p wdt:P31/wdt:P279* ?t . VALUES ?t { %s } "
-                "OPTIONAL { ?p wdt:P577 ?date } "
-                'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }'
-                % (vals, " ".join("wd:" + t for t in PUBLICATION_TYPES))):
-            got = out.setdefault(qid_of(r["c"]["value"]), [])
-            qid, t = qid_of(r["p"]["value"]), qid_of(r["t"]["value"])
-            cand = next((c for c in got if c["qid"] == qid), None)
-            if cand is None:
-                cand = {"qid": qid, "label": r.get("pLabel", {}).get("value", ""),
-                        "year": year_of(r), "types": []}
-                got.append(cand)
-            if t not in cand["types"]:
-                cand["types"].append(t)
+    types = items_block(PUBLICATION_TYPES)
+    for r in batched(events, lambda es:
+                     "SELECT ?c ?p ?pLabel ?t ?date WHERE { VALUES ?c { %s } "
+                     "?p wdt:P4745 ?c . ?p wdt:P31/wdt:P279* ?t . VALUES ?t { %s } "
+                     "OPTIONAL { ?p wdt:P577 ?date } "
+                     'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }'
+                     % (items_block(es), types), size=60):
+        got = out.setdefault(qid_of(r["c"]["value"]), [])
+        qid, t = qid_of(r["p"]["value"]), qid_of(r["t"]["value"])
+        cand = next((c for c in got if c["qid"] == qid), None)
+        if cand is None:
+            cand = {"qid": qid, "label": r.get("pLabel", {}).get("value", ""),
+                    "year": year_of(r), "types": []}
+            got.append(cand)
+        if t not in cand["types"]:
+            cand["types"].append(t)
     return out
 
 

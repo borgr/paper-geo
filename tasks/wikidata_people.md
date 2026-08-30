@@ -7,7 +7,7 @@ so each one below gets an item.
 Every one of them has an item already. What is left is below, where a name
 Wikidata already carries needs an answer no record settles.
 
-## Already have a same-name item (23)
+## Already have a same-name item (22)
 
 Wikidata has a human item under each of these names. Where it states no ORCID
 it is often this same person, reached from a paper rather than from a profile
@@ -15,9 +15,6 @@ it is often this same person, reached from a paper rather than from a profile
 one would split a person in two. Where the name has many bearers, nothing here
 settles which is which.
 
-- **Omri Abend** ([0000-0003-4311-3876](https://orcid.org/0000-0003-4311-3876), 54 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
-  - that ORCID record states The Hebrew University of Jerusalem · "On the Weaknesses of Reinforcement Learning for Neural…" · "The Language of Legal and Illegal Activity on the Darknet"
-  - [Q102687062](https://www.wikidata.org/wiki/Q102687062) — Ph.D. Hebrew University 2013 · studied at Hebrew University of Jerusalem
 - **Mikhail Yurochkin** ([0000-0003-0153-6811](https://orcid.org/0000-0003-0153-6811), 14 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
   - that ORCID record states nothing public beyond the name
   - [Q103330754](https://www.wikidata.org/wiki/Q103330754) — statistician · studied at Moscow Institute of Physics and Technology, University of Michigan · at IBM Research
@@ -116,3 +113,12 @@ settles which is which.
 - **Ran Levy** ([0009-0008-7352-2586](https://orcid.org/0009-0008-7352-2586), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
   - that ORCID record states Amazon · "The Power of Summary-Source Alignments" · "Multi-Review Fusion-in-Context"
   - [Q118928179](https://www.wikidata.org/wiki/Q118928179) — naturalist
+
+## Answered from the records (1)
+
+A paper, or an institution both records name, means the same-name item is this
+person, so the ORCID goes on it -- `--apply` adds it. The other direction is
+never concluded here: a second item for somebody who already has one takes an
+administrator to merge, and a stated occupation is not enough to risk it.
+
+- **Omri Abend** — [Q102687062](https://www.wikidata.org/wiki/Q102687062), because it and their ORCID record name the same institution, Hebrew University of Jerusalem

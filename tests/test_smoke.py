@@ -5859,7 +5859,7 @@ class TestNamesakesAreLeftOffThePageNotGuessedAt(unittest.TestCase):
                 return [{"p": {"value": "http://www.wikidata.org/entity/Q2"}}]
             return [{"p": {"value": "http://www.wikidata.org/entity/Q2"}}]
 
-        wc.sparql = fake
+        wc.answered = lambda q, endpoint="", retries=6: (fake(q), "")
         self.assertEqual(wc.researchers(["Q1", "Q2"]), {"Q1", "Q2"})
 
     def test_an_item_whose_only_occupation_is_unrelated_is_dropped(self):
@@ -5871,13 +5871,13 @@ class TestNamesakesAreLeftOffThePageNotGuessedAt(unittest.TestCase):
                         for i in (1, 2)]
             return [{"p": {"value": "http://www.wikidata.org/entity/Q1"}}]
 
-        wc.sparql = fake
+        wc.answered = lambda q, endpoint="", retries=6: (fake(q), "")
         self.assertEqual(wc.researchers(["Q1", "Q2"]), {"Q1"})
 
     def test_the_roots_are_asked_of_wikidatas_own_subclass_tree(self):
         wc = self._module()
         seen = []
-        wc.sparql = lambda q: seen.append(q) or []
+        wc.answered = lambda q, endpoint="", retries=6: (seen.append(q) or [], "")
         wc.researchers(["Q1"])
         tree = [q for q in seen if "P279*" in q]
         self.assertEqual(len(tree), 1)
@@ -5973,6 +5973,42 @@ class TestPeopleItemsRestOnPublicRecordsNotOnNames(unittest.TestCase):
         self.assertEqual(got["description"], "researcher at Hebrew University of Jerusalem")
         self.assertIn("LAST\tP108\tQ174158", "\n".join(wp.batch([got], "2026-08-28")))
 
+    def test_openalexs_country_never_reaches_a_wikidata_description(self):
+        """OpenAlex writes "IBM (United States)" for the same employer Wikidata calls IBM.
+        The parenthetical is its own disambiguation, so an item resolved through it reads
+        the way Wikidata reads, and an unresolved name loses it before being written."""
+        wp = self._job()
+        self.assertEqual("IBM", wp.plain("IBM (United States)"))
+        self.assertEqual("", wp.plain("Weizmann Institute of Science"))
+        self.assertEqual("", wp.plain("University of North Carolina (UNC) Chapel Hill"))
+        rec = self._rec(employers=[], openalex_employers=["IBM (United States)"])
+        emp = {"IBM (United States)": {"qid": "Q37156", "label": "IBM"}}
+        self.assertEqual("researcher at IBM",
+                         wp.described("0000-0001-0000-0007", rec, emp)["description"])
+        self.assertEqual("researcher at Gaia Dynamics",
+                         wp.described("0000-0001-0000-0008",
+                                      self._rec(employers=[],
+                                                openalex_employers=["Gaia Dynamics (Israel)"]),
+                                      {})["description"])
+
+    def test_the_name_as_written_outranks_the_form_it_was_rewritten_to(self):
+        """Both forms are asked because either can be the one Wikidata carries. Pooling the
+        answers would drop an employer whose two forms are two organisations, where the name
+        the record actually used answered on its own."""
+        wp = self._job()
+        rows = [{"n": {"value": "Coherent (United States)"},
+                 "i": {"value": "http://www.wikidata.org/entity/Q1"}},
+                {"n": {"value": "Coherent"},
+                 "i": {"value": "http://www.wikidata.org/entity/Q2"}},
+                {"n": {"value": "Coherent"},
+                 "i": {"value": "http://www.wikidata.org/entity/Q3"}}]
+        with mock.patch.object(wp, "batched",
+                              lambda items, ask, size=100, endpoint="": rows), \
+             mock.patch.object(wp, "labels_of", lambda q: {"Q1": "Coherent Corp."}):
+            got = wp.employer_items(["Coherent (United States)"])
+        self.assertEqual({"Coherent (United States)":
+                          {"qid": "Q1", "label": "Coherent Corp."}}, got)
+
     def test_somebody_who_got_an_item_since_the_last_pass_is_not_created_twice(self):
         wp = self._job()
         cache = {"by_orcid": {"0000-0000-0000-0003": {"qid": "Q9"}},
@@ -6019,6 +6055,28 @@ class TestPeopleItemsRestOnPublicRecordsNotOnNames(unittest.TestCase):
         got = wp.verdict(p, set())
         self.assertEqual("Q7", got["qid"])
         self.assertIn("IBM Research", got["why"])
+
+    def test_where_they_studied_is_the_same_institution_as_where_they_work(self):
+        """The item names an alma mater where ORCID names an employer, which for a researcher
+        is one place often enough to be the strongest thing either record says. Both put this
+        name at this institution, and neither role is the claim being tested."""
+        wp = self._job()
+        p = self._held(
+            employers=[("Hebrew University of Jerusalem", "Q174158", "https://orcid.org/x")],
+            item={"education": {"Q174158": "Hebrew University of Jerusalem"}})
+        got = wp.verdict(p, set())
+        self.assertEqual("Q7", got.get("qid"), got)
+        self.assertIn("Hebrew University of Jerusalem", got["why"])
+
+    def test_a_second_same_name_item_leaves_the_institution_unanswered(self):
+        """One name, two items, and an institution match on one of them. Which of the two
+        the shared institution belongs to is not settled by a name."""
+        wp = self._job()
+        p = self._held(
+            employers=[("Hebrew University of Jerusalem", "Q174158", "https://orcid.org/x")],
+            item={"education": {"Q174158": "Hebrew University of Jerusalem"}})
+        p["namesakes"].append(dict(p["namesakes"][0], qid="Q8", education={}))
+        self.assertEqual({}, wp.verdict(p, set()))
 
     def test_nothing_here_ever_concludes_that_a_namesake_is_one(self):
         """An occupation nothing like research reads as a different person and is not enough
@@ -6943,16 +7001,61 @@ class TestAQuietWikidataCreatesNobody(unittest.TestCase):
         wc, _ = self._mods()
         importlib.reload(wc)
         self.addCleanup(importlib.reload, wc)
+        ask = (lambda c: "SELECT ?x WHERE {}")
         for st in (0, 429, 500):
             wc._quiet = ""
             with mock.patch.object(wc, "get_status", lambda _u, **kw: (st, b"")):
-                self.assertEqual([], wc.sparql("SELECT ?x WHERE {}"))
+                self.assertEqual([], wc.batched(["a"], ask))
             self.assertTrue(wc.wdqs_quiet(), "status %s passed as an answer" % st)
         wc._quiet = ""
         empty = b'{"results": {"bindings": []}}'
         with mock.patch.object(wc, "get_status", lambda _u, **kw: (200, empty)):
-            self.assertEqual([], wc.sparql("SELECT ?x WHERE {}"))
+            self.assertEqual([], wc.batched(["a"], ask))
         self.assertEqual("", wc.wdqs_quiet())
+
+    def test_a_batch_too_large_to_come_back_whole_is_asked_again_in_halves(self):
+        """A `VALUES` batch matching many items produces more rows than the response body
+        carries, and the cut-off arrives as HTTP 200 with a matching `Content-Length`. The
+        rows are there to be had in a smaller ask, so a batch is halved before the service
+        is called quiet -- and what is reported names the truncation rather than the 200."""
+        wc, _ = self._mods()
+        importlib.reload(wc)
+        self.addCleanup(importlib.reload, wc)
+        def answer(url, **kw):
+            asked = url.count("%22") // 2
+            if asked > 2:
+                return 200, b'{"results": {"bindi'
+            rows = ", ".join('{"n": {"value": "%d"}}' % i for i in range(asked))
+            return 200, ('{"results": {"bindings": [%s]}}' % rows).encode()
+        with mock.patch.object(wc, "get_status", answer):
+            rows = wc.batched(["a", "b", "c", "d"], lambda c: wc.values(c), size=4)
+        self.assertEqual(4, len(rows), "a halved batch lost rows")
+        self.assertEqual("", wc.wdqs_quiet(), "a batch that answered in halves was called quiet")
+        wc._quiet = ""
+        with mock.patch.object(wc, "get_status",
+                               lambda _u, **kw: (200, b'{"results": {"bindi')):
+            self.assertEqual([], wc.batched(["a", "b"], lambda c: wc.values(c)))
+        self.assertIn("stopped after 19 bytes", wc.wdqs_quiet())
+
+    def test_the_chunks_that_did_answer_are_not_returned_as_the_whole_answer(self):
+        """Half the rows read as all of them is the same mistake as no rows read as none:
+        a caller drops an employer, or writes a name Wikidata already carries, from a
+        result that is short for a reason nothing to do with what Wikidata holds."""
+        wc, _ = self._mods()
+        importlib.reload(wc)
+        self.addCleanup(importlib.reload, wc)
+        one = b'{"results": {"bindings": [{"n": {"value": "x"}}]}}'
+        with mock.patch.object(wc, "get_status",
+                               lambda url, **kw: (200, one) if "%22a%22" in url else (0, b"")):
+            self.assertEqual([], wc.batched(["a", "b"], lambda c: wc.values(c), size=1))
+        self.assertTrue(wc.wdqs_quiet())
+
+    def test_a_name_with_a_quote_in_it_is_asked_for_as_written(self):
+        """Dropping the quote asks about a different name and reads the answer as this one's."""
+        wc, _ = self._mods()
+        self.assertEqual('"Bar\\"s" "a\\\\b"', wc.values(['Bar"s', "a\\b"], ""))
+        self.assertEqual('"IBM"@en', wc.values(["IBM"]))
+        self.assertEqual("wd:Q1 wd:Q2", wc.items_block(["Q1", "Q2"]))
 
     def test_a_search_index_that_did_not_answer_is_not_a_name_nobody_carries(self):
         _, wp = self._mods()
@@ -7034,6 +7137,121 @@ class TestAQuietWikidataCreatesNobody(unittest.TestCase):
             self.assertEqual([], edits, "a quiet read retracted a statement")
         finally:
             wp._refused = old
+
+    def test_a_lookup_that_resolved_nothing_is_not_the_records_dropping_the_employer(self):
+        """The statement names an item where the records name a string, so a retraction rests
+        on every institution in the records having resolved. One that did not leaves this run
+        unable to tell an employer the records dropped from one it could not look up -- and
+        the two seen so far were a property-path query answering short, and an item somebody
+        had removed the English label from."""
+        _, wp = self._mods()
+        rec = {"partial": False, "label": "Ada Example Lovelace", "openalex_label": "",
+               "employers": ["McGill University", "Mila - Quebec AI Institute"],
+               "openalex_employers": [], "works": 3, "work_titles": [], "openalex_works": 0}
+        emp = {"McGill University": {"qid": "Q201492", "label": "McGill University"}}
+        p = wp.described("0000-0001-5522-1351", rec, emp)
+        self.assertEqual(["Mila - Quebec AI Institute"], p["unnamed"])
+        self.assertEqual([], self._removed(wp.stale(p, self._item("Q49110"), "2026-08-29")),
+                         "an institution nothing resolved retracted a statement")
+        both = wp.described("0000-0001-5522-1351", rec,
+                            dict(emp, **{"Mila - Quebec AI Institute":
+                                         {"qid": "Q30289943", "label": "Mila"}}))
+        self.assertEqual([], both["unnamed"])
+        self.assertEqual([], self._removed(wp.stale(both, self._item("Q201492"),
+                                                    "2026-08-29")),
+                         "an employer the records still name was retracted")
+        self.assertEqual([{"id": "Q1$x", "remove": ""}],
+                         self._removed(wp.stale(both, self._item("Q49110"), "2026-08-29")),
+                         "every name resolved, so an employer neither names is gone")
+        gone = dict(rec, employers=["McGill University"])
+        self.assertEqual([{"id": "Q1$x", "remove": ""}],
+                         self._removed(wp.stale(wp.described("0000-0001-5522-1351", gone, emp),
+                                                self._item("Q49110"), "2026-08-29")))
+
+    def test_a_record_whose_source_went_quiet_retracts_no_employer(self):
+        """ORCID answers for the employer and OpenAlex only ever stands in where ORCID is
+        silent, which is enough to describe somebody and not enough to retract: an ORCID that
+        did not answer is silent in exactly the same way as one that has nothing to say."""
+        _, wp = self._mods()
+        rec = {"partial": True, "label": "", "openalex_label": "Ada Example Lovelace",
+               "employers": [], "openalex_employers": ["Boston University"],
+               "works": 0, "work_titles": [], "openalex_works": 7}
+        orcid = "0000-0001-5522-1351"
+        emp = {"Boston University": {"qid": "Q49110", "label": "Boston University"}}
+        p = wp.described(orcid, rec, emp)
+        self.assertEqual((True, []), (p["partial"], p["unnamed"]))
+        self.assertEqual([], self._removed(wp.stale(p, self._item("Q174158"), "2026-08-29")),
+                         "a source that went quiet retracted a statement")
+        led = {"items": {orcid: "Q1"}, "labels": {"Q1": "Ada Example Lovelace"}}
+        old = wp._refused
+        try:
+            wp._refused = ""
+            edits = []
+            session = mock.Mock()
+            session.edit.side_effect = lambda *a, **kw: edits.append(kw)
+            with mock.patch.object(wp, "read_yaml", lambda p: led), \
+                 mock.patch.object(wp, "records", lambda o, r: {orcid: rec}), \
+                 mock.patch.object(wp, "employer_items", lambda n: emp), \
+                 mock.patch.object(wp, "asked",
+                                   lambda u: {"entities": {"Q1": self._item("Q201492")}}), \
+                 mock.patch.object(wp, "wdqs_quiet", lambda: ""):
+                wp.resync(session, "2026-08-29")
+            self.assertEqual([], [k for k in edits if "remove" in k.get("data", "")],
+                             "a quiet source retracted a statement through resync")
+        finally:
+            wp._refused = old
+
+    def test_a_person_neither_record_names_is_left_out_of_the_resync(self):
+        """`described` returns a reason rather than a person when nothing gives a name, and
+        `resync` reads the reason instead of the keys a person would have had."""
+        _, wp = self._mods()
+        rec = {"partial": True, "label": "", "openalex_label": "",
+               "employers": [], "openalex_employers": [], "works": 0,
+               "work_titles": [], "openalex_works": 0}
+        orcid = "0000-0001-5522-1351"
+        self.assertIn("later", wp.described(orcid, rec, {}))
+        led = {"items": {orcid: "Q1"}, "labels": {"Q1": "Ada Example Lovelace"}}
+        old = wp._refused
+        try:
+            wp._refused = ""
+            session = mock.Mock()
+            with mock.patch.object(wp, "read_yaml", lambda p: led), \
+                 mock.patch.object(wp, "records", lambda o, r: {orcid: rec}), \
+                 mock.patch.object(wp, "employer_items", lambda n: {}), \
+                 mock.patch.object(wp, "asked",
+                                   lambda u: {"entities": {"Q1": self._item("Q49110")}}), \
+                 mock.patch.object(wp, "wdqs_quiet", lambda: ""):
+                self.assertEqual((0, 0), wp.resync(session, "2026-08-29"))
+            self.assertEqual([], session.edit.call_args_list)
+        finally:
+            wp._refused = old
+
+    def test_the_records_wording_of_an_institution_is_asked_as_wikidata_spells_it(self):
+        """ORCID writes the article Wikidata drops and OpenAlex adds a country, so a name is
+        asked for in every spelling, the one the record used first."""
+        _, wp = self._mods()
+        self.assertEqual(["IBM (United States)", "IBM"], wp.spellings("IBM (United States)"))
+        self.assertEqual(["The Hebrew University of Jerusalem",
+                          "Hebrew University of Jerusalem"],
+                         wp.spellings("The Hebrew University of Jerusalem"))
+        self.assertEqual(["Weizmann Institute of Science"],
+                         wp.spellings("  Weizmann Institute   of Science "))
+
+    def _removed(self, data: dict) -> list[dict]:
+        """The retractions in a `stale` payload, apart from the statements it adds."""
+        return [c for c in data.get("claims") or [] if "remove" in c]
+
+    def _item(self, qid: str) -> dict:
+        """A live item carrying one employer statement, referenced to the person's ORCID."""
+        return {"labels": {"en": {"language": "en", "value": "Ada Example Lovelace"}},
+                "descriptions": {"en": {"language": "en",
+                                        "value": "researcher at McGill University"}},
+                "claims": {"P108": [{"id": "Q1$x",
+                                     "mainsnak": {"property": "P108", "datavalue":
+                                                  {"value": {"id": qid}}},
+                                     "references": [{"snaks": {"P854": [{"datavalue":
+                                         {"value": "https://orcid.org/0000-0001-5522-1351"}
+                                     }]}}]}]}}
 
 
 class TestACoauthorOrcidIsShownForWhatItSays(unittest.TestCase):

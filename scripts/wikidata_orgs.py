@@ -44,7 +44,8 @@ import urllib.error
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, TASKS, read_yaml, write_json,  # noqa: E402
                     write_task, write_yaml)
-from wikidata_coauthors import fill, qid_of, sparql, wdqs_quiet  # noqa: E402
+from wikidata_coauthors import (batched, fill, items_block,  # noqa: E402
+                                qid_of, values, wdqs_quiet)
 from wikidata_apply import create_items, logged_in, snak  # noqa: E402
 
 ORGS = "wikidata_orgs.yaml"
@@ -77,11 +78,11 @@ def value_qids(items: dict) -> list[str]:
 def labels_of(qids: list[str]) -> dict[str, str]:
     """QID to its live English label, for the QIDs that have one."""
     out = {}
-    for i in range(0, len(qids), 200):
-        vals = " ".join("wd:" + q for q in qids[i:i + 200])
-        for r in sparql("SELECT ?i ?l WHERE { VALUES ?i {%s} "
-                        "?i rdfs:label ?l FILTER(LANG(?l) = 'en') }" % vals):
-            out[qid_of(r["i"]["value"])] = r["l"]["value"]
+    for r in batched(qids, lambda qs:
+                     "SELECT ?i ?l WHERE { VALUES ?i {%s} "
+                     "?i rdfs:label ?l FILTER(LANG(?l) = 'en') }" % items_block(qs),
+                     size=200):
+        out[qid_of(r["i"]["value"])] = r["l"]["value"]
     return out
 
 
@@ -108,11 +109,10 @@ def found(items: dict) -> dict[str, list[str]]:
              for slug, it in items.items()}
     every = sorted({n for ns in names.values() for n in ns})
     hits: dict[str, set[str]] = {}
-    for i in range(0, len(every), 100):
-        vals = " ".join('"%s"@en' % n.replace('"', '\\"') for n in every[i:i + 100])
-        for r in sparql("SELECT ?n ?i WHERE { VALUES ?n {%s} "
-                        "{ ?i rdfs:label ?n } UNION { ?i skos:altLabel ?n } }" % vals):
-            hits.setdefault(r["n"]["value"], set()).add(qid_of(r["i"]["value"]))
+    for r in batched(every, lambda ns:
+                     "SELECT ?n ?i WHERE { VALUES ?n {%s} "
+                     "{ ?i rdfs:label ?n } UNION { ?i skos:altLabel ?n } }" % values(ns)):
+        hits.setdefault(r["n"]["value"], set()).add(qid_of(r["i"]["value"]))
     return {slug: sorted({q for n in ns for q in hits.get(n, ())})
             for slug, ns in names.items()}
 
@@ -126,11 +126,10 @@ def edges_present(pairs: list[tuple[str, str, str]]) -> set[tuple[str, str, str]
     got = set()
     for prop in sorted({p for _, p, _ in pairs}):
         subj = sorted({s for s, p, _ in pairs if p == prop})
-        for i in range(0, len(subj), 200):
-            vals = " ".join("wd:" + s for s in subj[i:i + 200])
-            for r in sparql("SELECT ?s ?o WHERE { VALUES ?s {%s} ?s wdt:%s ?o }"
-                            % (vals, prop)):
-                got.add((qid_of(r["s"]["value"]), prop, qid_of(r["o"]["value"])))
+        for r in batched(subj, lambda ss, prop=prop:
+                         "SELECT ?s ?o WHERE { VALUES ?s {%s} ?s wdt:%s ?o }"
+                         % (items_block(ss), prop), size=200):
+            got.add((qid_of(r["s"]["value"]), prop, qid_of(r["o"]["value"])))
     return got & set(pairs)
 
 

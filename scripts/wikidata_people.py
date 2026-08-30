@@ -39,8 +39,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from common import (BUILD, DATA, TASKS, clipped, get_status, host_of, read_yaml,
                     write_json, write_task, write_yaml)
-from wikidata_coauthors import (CACHE, SCHOLARLY, fill, items_by_orcid,  # noqa: F401
-                               qid_of, researchers, sparql, title_key, wdqs_quiet)
+from wikidata_coauthors import (CACHE, SCHOLARLY, batched, fill,  # noqa: F401
+                               items_block, items_by_orcid, qid_of, researchers,
+                               title_key, values, wdqs_quiet)
 from wikidata_apply import (CAL, Session, create_items,  # noqa: F401
                             logged_in, recorded)
 from wikidata_orgs import labels_of
@@ -169,6 +170,27 @@ def records(orcids: list[str], refresh: bool) -> dict[str, dict]:
     return out
 
 
+def plain(name: str) -> str:
+    """An institution name without OpenAlex's disambiguating country, or "" if it has none.
+
+    OpenAlex writes "IBM (United States)", which is no Wikidata label and no alias -- so the
+    name resolves to nothing, and the parenthetical reaches a description meant to read the
+    way the rest of Wikidata does.
+    """
+    m = re.fullmatch(r"(.+?) \([^()]+\)", name.strip())
+    return m.group(1) if m else ""
+
+
+def spellings(name: str) -> list[str]:
+    """Every spelling of an institution name worth matching, the name as written first.
+
+    ORCID writes "The Hebrew University of Jerusalem" where Wikidata drops the article, and
+    OpenAlex writes "IBM (United States)" where Wikidata has "IBM".
+    """
+    n = " ".join(name.split())
+    return [n] + [v for v in (n[4:] if n.startswith("The ") else "", plain(n)) if v]
+
+
 def employer_items(names: list[str]) -> dict[str, str]:
     """Organisation name to the single organisation item carrying it as a label or alias.
 
@@ -177,19 +199,21 @@ def employer_items(names: list[str]) -> dict[str, str]:
     for a co-author. A name two items carry is dropped, as is one no item carries -- the
     employer then goes unstated rather than guessed at.
     """
-    # ORCID records often write "The Hebrew University of Jerusalem" where Wikidata drops
-    # the article, so both forms are asked and the answers pooled.
-    forms = {n: {n} | ({n[4:]} if n.startswith("The ") else set()) for n in names}
+    forms = {n: spellings(n) for n in names}
     every = sorted({f for fs in forms.values() for f in fs})
     hits: dict[str, set[str]] = {}
-    for i in range(0, len(every), 100):
-        vals = " ".join('"%s"@en' % f.replace('"', '\\"') for f in every[i:i + 100])
-        for r in sparql("SELECT ?n ?i WHERE { VALUES ?n {%s} "
-                        "{ ?i rdfs:label ?n } UNION { ?i skos:altLabel ?n } "
-                        "?i wdt:P31/wdt:P279* wd:Q43229 }" % vals):
-            hits.setdefault(r["n"]["value"], set()).add(qid_of(r["i"]["value"]))
-    got = {n: {q for f in fs for q in hits.get(f, ())} for n, fs in forms.items()}
-    one = {n: next(iter(q)) for n, q in got.items() if len(q) == 1}
+    for r in batched(every, lambda fs:
+                     "SELECT ?n ?i WHERE { VALUES ?n {%s} "
+                     "{ ?i rdfs:label ?n } UNION { ?i skos:altLabel ?n } "
+                     "?i wdt:P31/wdt:P279* wd:Q43229 }" % values(fs)):
+        hits.setdefault(r["n"]["value"], set()).add(qid_of(r["i"]["value"]))
+    # The name as written is read first, and a rewritten form only where it answered
+    # nothing. Pooling them would drop a name whose two forms are two organisations.
+    one = {}
+    for n, fs in forms.items():
+        answered = next((hits[f] for f in fs if hits.get(f)), set())
+        if len(answered) == 1:
+            one[n] = next(iter(answered))
     # Wikidata's own label rather than ORCID's wording, so the description reads the way
     # the rest of Wikidata does.
     live = labels_of(sorted(set(one.values())))
@@ -307,12 +331,11 @@ def about(qids: list[str]) -> dict[str, dict]:
         return {}
     plausible = researchers(qids)
     titles: dict[str, list[str]] = {}
-    for i in range(0, len(qids), 50):
-        vals = " ".join("wd:" + q for q in qids[i:i + 50])
-        for r in sparql("SELECT ?p ?t WHERE { VALUES ?p {%s} ?w wdt:P50 ?p . "
-                        "?w rdfs:label ?t FILTER(LANG(?t) = 'en') }" % vals,
-                        endpoint=SCHOLARLY):
-            titles.setdefault(qid_of(r["p"]["value"]), []).append(r["t"]["value"])
+    for r in batched(qids, lambda qs:
+                     "SELECT ?p ?t WHERE { VALUES ?p {%s} ?w wdt:P50 ?p . "
+                     "?w rdfs:label ?t FILTER(LANG(?t) = 'en') }" % items_block(qs),
+                     size=50, endpoint=SCHOLARLY):
+        titles.setdefault(qid_of(r["p"]["value"]), []).append(r["t"]["value"])
     return {q: {"works": sorted(set(titles.get(q) or [])), "research": q in plausible}
             for q in qids}
 
@@ -337,6 +360,16 @@ def coauthored() -> dict[str, set[str]]:
     return out
 
 
+def where_at(n: dict) -> dict[str, str]:
+    """Every institution a same-name item names, as employer and as alma mater alike.
+
+    ORCID names where somebody works and the item often names where they studied, which for
+    one researcher is frequently the same place. Neither role is the claim being tested --
+    the claim is that both records put this name at this institution.
+    """
+    return {**(n.get("employers") or {}), **(n.get("education") or {})}
+
+
 def verdict(p: dict, mine: set[str]) -> dict:
     """Which same-name item this person is, where the public records settle it.
 
@@ -357,12 +390,12 @@ def verdict(p: dict, mine: set[str]) -> dict:
             return {"qid": n["qid"],
                     "why": 'it is stated as an author of "%s"' % shared[n["qid"]]}
     at = {q for _label, q, _ref in p["employers"]}
-    both = [n for n in same if at & set(n["employers"])]
+    both = [n for n in same if at & set(where_at(n))]
     if len(same) == 1 and len(both) == 1:
-        shares = sorted(at & set(both[0]["employers"]))
+        named = where_at(both[0])
         return {"qid": both[0]["qid"],
-                "why": "it and their ORCID record name the same employer, "
-                       + ", ".join(both[0]["employers"][q] for q in shares)}
+                "why": "it and their ORCID record name the same institution, "
+                       + ", ".join(sorted(named[q] for q in at & set(named)))}
     return {}
 
 
@@ -485,11 +518,13 @@ def described(orcid: str, rec: dict, employers: dict[str, dict]) -> dict:
         at = [dict(employers[oa_at[0]], ref=oa)]
     # The description is free text where `employer` needs an item to point at, so an
     # employer Wikidata has never heard of still distinguishes two same-name researchers.
-    where = (at[0]["label"] if at else
-             (rec["employers"] or (oa_at if len(oa_at) == 1 else []) or [""])[0])
+    said = (rec["employers"] or (oa_at if len(oa_at) == 1 else []) or [""])[0]
+    where = at[0]["label"] if at else (plain(said) or said)
     return {"orcid": orcid, "label": label, "works": works,
             "description": "researcher at " + where if where else "researcher",
             "record_says": states(rec),
+            "partial": bool(rec.get("partial")),
+            "unnamed": sorted({n for n in rec["employers"] + oa_at if n not in employers}),
             "employers": [(e["label"], e["qid"], e["ref"]) for e in at]}
 
 
@@ -543,9 +578,13 @@ def payload(p: dict, day: str) -> dict:
 def stale(p: dict, live: dict, day: str) -> dict:
     """A `wbeditentity` payload bringing one created item in line with the rules, or {}.
 
-    Both directions, because a rule that improves also retracts: an employer the rules no
-    longer support is removed, and only where the reference on it names this person's own
-    ORCID -- somebody else's statement on the same item is not ours to touch.
+    Both directions, because a rule that improves also retracts. Three things have to hold
+    before an employer statement is removed. The reference on it names this person's own
+    ORCID, since somebody else's statement is not ours to touch. Both records answered, so
+    a source that went quiet is not read as the person having left. And every institution
+    the records name resolved to an item, because the statement is named by an item where
+    the records name a string -- one name this run could not resolve is a run that cannot
+    tell a retracted employer from an unresolved one.
     """
     data: dict = {}
     have = {}
@@ -563,7 +602,8 @@ def stale(p: dict, live: dict, day: str) -> dict:
               if c["mainsnak"]["property"] == "P108"
               and c["mainsnak"]["datavalue"]["value"]["id"] not in have]
     claims += [{"id": guid, "remove": ""} for q, (guid, urls) in have.items()
-               if q not in want and any(p["orcid"] in u for u in urls)]
+               if q not in want and not p["partial"] and not p["unnamed"]
+               and any(p["orcid"] in u for u in urls)]
     if claims:
         data["claims"] = claims
     return data
@@ -624,8 +664,8 @@ def write_page(people: list[dict], held: list[dict], skipped: list[dict],
         L.append("")
     if decisions:
         L += [f"## Answered from the records ({len(decisions)})", "",
-              fill("A paper or an employer both records name means the same-name item is "
-                   "this person, so the ORCID goes on it -- `--apply` adds it. The other "
+              fill("A paper, or an institution both records name, means the same-name item "
+                   "is this person, so the ORCID goes on it -- `--apply` adds it. The other "
                    "direction is never concluded here: a second item for somebody who "
                    "already has one takes an administrator to merge, and a stated occupation "
                    "is not enough to risk it."), ""]
@@ -829,7 +869,9 @@ def resync(s, day: str) -> tuple[int, int]:
     todo = []
     for orcid, qid in sorted(mine.items()):
         p = described(orcid, recs[orcid], employers)
-        if "skip" in p or qid not in live:
+        # `later` as well as `skip`: a record built on a source that did not answer would
+        # correct a description, and retract an employer, from half the evidence.
+        if "skip" in p or "later" in p or qid not in live:
             continue
         data = stale(p, live[qid], day)
         if data:
