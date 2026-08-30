@@ -213,6 +213,39 @@ class TestUpdateWiring(unittest.TestCase):
         self.assertEqual(self.update.STEPS[-1], "worklist")
 
 
+class TestEverySectionIsWired(unittest.TestCase):
+    """Every function `scripts/worklist.py` defines is reached from `update.py`.
+
+    A section nothing calls prints nothing, and a section printing nothing is what a
+    finished section looks like -- so the worklist reports the work as done. Emptying one
+    emitter's return breaks no other test, which is why this one reads the call graph
+    rather than the output.
+    """
+
+    def calls(self, rel):
+        """Every plain function name called anywhere in `rel`."""
+        tree = ast.parse(source(os.path.join(ROOT, rel)))
+        return {n.func.id for n in ast.walk(tree)
+                if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+
+    def test_no_section_is_orphaned(self):
+        tree = ast.parse(source(os.path.join(ROOT, "scripts", "worklist.py")))
+        defined = {n.name for n in tree.body if isinstance(n, ast.FunctionDef)}
+        reached = self.calls("update.py") | self.calls(os.path.join("scripts", "worklist.py"))
+        self.assertEqual(set(), defined - reached,
+                         "worklist.py defines a section nothing calls, so the page reports "
+                         "its work as finished")
+
+    def test_no_section_is_imported_and_dropped(self):
+        tree = ast.parse(source(os.path.join(ROOT, "update.py")))
+        named = {a.name for n in ast.walk(tree)
+                 if isinstance(n, ast.ImportFrom) and n.module == "worklist"
+                 for a in n.names}
+        self.assertEqual(set(), named - self.calls("update.py"),
+                         "update.py imports a section it never calls, which is the shape a "
+                         "dropped call leaves behind")
+
+
 class TestReferencedScriptsExist(unittest.TestCase):
     """Every `scripts/x.py` named anywhere -- code, prose, generated output -- is real.
 
@@ -2522,15 +2555,19 @@ class TestAStopgapCannotGoQuiet(unittest.TestCase):
     def _render(self, papers, overrides):
         """`upstream_gaps` against a synthetic corpus and a synthetic overrides file."""
         import tempfile
-        import update
+
+        import worklist
         from common import write_yaml
         with tempfile.TemporaryDirectory() as d:
             write_yaml(os.path.join(d, "overrides.yaml"), overrides)
-            old, update.DATA = update.DATA, d
+            # `worklist.DATA`, since that is where the function reads it from. Patching the
+            # name in whichever module re-exports it reads the live `data/overrides.yaml`
+            # and passes anyway, against Leshem's own papers.
+            old, worklist.DATA = worklist.DATA, d
             try:
-                return "\n".join(update.upstream_gaps(papers, {}))
+                return "\n".join(worklist.upstream_gaps(papers, {}))
             finally:
-                update.DATA = old
+                worklist.DATA = old
 
     def test_a_paper_only_an_override_supplies_is_reported(self):
         out = self._render(
