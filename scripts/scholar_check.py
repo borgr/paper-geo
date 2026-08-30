@@ -877,19 +877,13 @@ def pair_leftovers(missing: list, papers: list,
     return variants, dupes, taken
 
 
-def main() -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--quiet", action="store_true",
-                    help="write build/scholar_diff.json, print only the counts")
-    args = ap.parse_args()
-    cfg = load_config()
-    uid = (cfg.get("ids") or {}).get("google_scholar")
-    if not uid:
-        print("scholar: no ids.google_scholar in config.yaml -- nothing to check",
-              file=sys.stderr)
-        return
+def _corpus_index(papers: list) -> tuple[dict, dict, dict]:
+    """The three title indexes the comparison reads: ours, slug by title, and the gate.
 
-    papers = read_papers()
+    `gated` is what `collect.py`'s authorship gate rejected, from `build/not_mine.json`, so a
+    Scholar row it dropped is named as a decision rather than as a paper nobody has. Absent
+    file means an empty gate, which is the state before `collect` has run.
+    """
     mine = index(p.get("title") for p in papers)
     slug = {norm_title(p.get("title")): p.get("slug") for p in papers}
     try:
@@ -897,20 +891,18 @@ def main() -> None:
             dropped = json.load(f)
     except (OSError, ValueError):
         dropped = []
-    gated = index(r.get("title") for r in dropped)
+    return mine, slug, index(r.get("title") for r in dropped)
 
-    # Fetched before the Scholar leg and used by both, so that the expensive half of
-    # this check still produces an answer on the runs where Google refuses. One request
-    # per author id, and `bib_payload` below reuses the same list rather than asking
-    # again.
-    attributed = s2_mine(cfg)
-    gaps, stubs = attributed_gaps(attributed or [], papers, mine, gated)
 
-    rows, whole = scholar_rows(uid)
-    if not rows or not whole:
-        partial_answer(uid, rows, papers, attributed, gaps, stubs, args.quiet)
-        return
+def _compare(rows: list, papers: list, mine: dict, slug: dict, gated: dict) -> dict:
+    """Every Scholar row and every corpus paper in the bucket that says who has the work.
 
+    Six keys, each of them also a key of `build/scholar_diff.json`: `matched` holds the corpus
+    titles a row hit, `gate_dropped` the rows the authorship gate rejected, `title_variants`
+    one paper under two titles, `scholar_duplicates` one paper listed twice on Scholar,
+    `not_in_corpus` the rows with no corpus paper behind them once the pairs are out, and
+    `not_on_scholar` the corpus papers no row reached.
+    """
     seen, in_gate, missing = sort_rows(rows, mine, slug, gated)
     absent = [p for p in papers if norm_title(p.get("title")) not in seen]
     unmatched = {p["slug"]: p for p in absent}
@@ -920,28 +912,37 @@ def main() -> None:
         v["stale"], v["arxiv_says"] = stale_side(v["scholar"], unmatched[v["slug"]],
                                                  diffs)
     paired = {v["scholar"] for v in variants} | {d["scholar"] for d in dupes}
-    missing = [r for r in missing if r["title"] not in paired]
     # The identifier travels with the row because this list is the only one here whose
     # remedy is *adding* something to Scholar rather than correcting it, and Scholar's
     # "Add article manually" form wants a link. A title alone would make the reader
     # search for their own paper.
-    absent = [{"slug": p.get("slug"), "title": p.get("title"),
-               "title_display": title_of(p),
-               "year": p.get("year"),
-               "citations": p.get("citations"), "arxiv": p.get("arxiv"),
-               "doi": p.get("doi"), "url": p.get("url")}
-              for p in absent if p["slug"] not in taken]
+    return {"matched": seen, "gate_dropped": in_gate, "title_variants": variants,
+            "scholar_duplicates": dupes,
+            "not_in_corpus": [r for r in missing if r["title"] not in paired],
+            "not_on_scholar": [{"slug": p.get("slug"), "title": p.get("title"),
+                                "title_display": title_of(p),
+                                "year": p.get("year"),
+                                "citations": p.get("citations"), "arxiv": p.get("arxiv"),
+                                "doi": p.get("doi"), "url": p.get("url")}
+                               for p in absent if p["slug"] not in taken]}
 
+
+def _write_diff(uid: str, rows: list, papers: list, attributed: list | None,
+                gaps: list, stubs: list, found: dict) -> None:
+    """`build/scholar_diff.json`: the whole comparison, every list most-cited first."""
     os.makedirs(BUILD, exist_ok=True)
     out = {"scholar_profile": uid, "scholar_rows": len(rows), "scholar_answered": True,
-           "corpus": len(papers), "matched": len(seen),
+           "corpus": len(papers), "matched": len(found["matched"]),
            "s2_answered": attributed is not None,
            "not_in_corpus_by_index": gaps, "index_stubs_no_id": stubs,
-           "gate_dropped": sorted(in_gate, key=lambda r: -r["citations"]),
-           "title_variants": sorted(variants, key=lambda v: -v["score"]),
-           "scholar_duplicates": sorted(dupes, key=lambda v: -v["score"]),
-           "not_in_corpus": sorted(missing, key=lambda r: -r["citations"]),
-           "not_on_scholar": sorted(absent, key=lambda p: -(p.get("citations") or 0)),
+           "gate_dropped": sorted(found["gate_dropped"], key=lambda r: -r["citations"]),
+           "title_variants": sorted(found["title_variants"], key=lambda v: -v["score"]),
+           "scholar_duplicates": sorted(found["scholar_duplicates"],
+                                        key=lambda v: -v["score"]),
+           "not_in_corpus": sorted(found["not_in_corpus"],
+                                   key=lambda r: -r["citations"]),
+           "not_on_scholar": sorted(found["not_on_scholar"],
+                                    key=lambda p: -(p.get("citations") or 0)),
            # Per-row counts for the matched rows, which no other file has: Scholar
            # normally counts *more* than the API indexes, so a row counting fewer is
            # the signature of a split Scholar record. `scholar_strays.py` reads it.
@@ -951,8 +952,14 @@ def main() -> None:
                       for r in rows if r.get("slug")]}
     write_json(os.path.join(BUILD, "scholar_diff.json"), out, indent=1)
 
-    print(f"scholar: {len(rows)} rows, {len(seen)}/{len(papers)} corpus papers "
-          f"matched", file=sys.stderr)
+
+def _say_variants(variants: list, quiet: bool) -> None:
+    """One paper under two titles, split by which side `stale_side` found to be behind.
+
+    Two of the four outcomes carry work and get the pairs printed under them. The other two
+    are named with a count only, because `scholar` is nothing to fix and `unknown` is the
+    collect step not having run.
+    """
     for side, what in (("bib", "the bibliography title is behind arXiv -- fix the "
                                "entry in the source .bib"),
                        ("open", "decide which is canonical, then set it in "
@@ -961,7 +968,7 @@ def main() -> None:
         if not group:
             continue
         print(f"  {len(group)} paper(s) under two titles -- {what}:", file=sys.stderr)
-        if not args.quiet:
+        if not quiet:
             for v in group:
                 print(f"    scholar: {v['scholar'][:64]}", file=sys.stderr)
                 print(f"    corpus : {v['corpus'][:64]}   ({v['why']})",
@@ -975,24 +982,39 @@ def main() -> None:
         print(f"  {len(blind)} paper(s) under two titles that nothing asked arXiv about "
               f"-- run `python update.py --step collect`, which writes "
               f"build/title_diffs.json", file=sys.stderr)
+
+
+def _say_duplicates(dupes: list, quiet: bool) -> None:
+    """One paper listed twice on Scholar. Only the author can merge the two rows."""
     if dupes:
         print(f"  {len(dupes)} paper(s) listed twice on Scholar -- merge them there "
               f"(nothing here can):", file=sys.stderr)
-        if not args.quiet:
+        if not quiet:
             for d in dupes:
                 print(f"    {d['slug']}  <-  {d['scholar'][:56]}", file=sys.stderr)
+
+
+def _say_gate_dropped(in_gate: list, quiet: bool) -> None:
+    """Scholar rows the authorship gate rejected, most cited first."""
     if in_gate:
         print(f"  {len(in_gate)} Scholar paper(s) the authorship gate excluded "
               f"-- this is the one that matters:", file=sys.stderr)
-        if not args.quiet:
+        if not quiet:
             for r in in_gate:
                 print(f"    [{r['citations']:>5} cites] {r['title'][:66]}",
                       file=sys.stderr)
-    # Split on `data/declines.yaml` before resolving anything. A row the author has ruled
-    # out of the bibliography is not a gap: it was costing an arXiv and a Crossref round
-    # trip every run to produce a pasteable entry for a paste that is never going to
-    # happen, and `WORKLIST.md` -- which reads the same file -- had already stopped
-    # listing it, so the payload and the summary disagreed about how many were open.
+
+
+def _say_absent_from_bib(missing: list, cfg: dict, attributed: list | None,
+                         quiet: bool) -> None:
+    """Scholar papers the bibliography lacks, and the `tasks/bib_missing.md` payload for them.
+
+    Split on `data/declines.yaml` before resolving anything. A row the author has ruled out of
+    the bibliography is not a gap: resolving one was costing an arXiv and a Crossref round
+    trip every run to produce a pasteable entry for a paste that is never going to happen, and
+    `WORKLIST.md` -- which reads the same file -- had already stopped listing it, so the
+    payload and the summary disagreed about how many were open.
+    """
     real, ruled_out = [], []
     for r in sorted((r for r in missing if r["kind"] == "paper"),
                     key=lambda r: -(r.get("citations") or 0)):
@@ -1011,19 +1033,27 @@ def main() -> None:
                "none of them known to any index")
         print(f"  {len(real)} Scholar paper(s) absent from the bibliography, {how} "
               f"-- {os.path.relpath(path, ROOT)}:", file=sys.stderr)
-        if not args.quiet:
+        if not quiet:
             for r in real[:20]:
                 print(f"    [{r['citations']:>5} cites] {r['year'] or '????'} "
                       f"{r['title'][:60]}", file=sys.stderr)
             if len(real) > 20:
                 print(f"    ... and {len(real) - 20} more in "
                       f"build/scholar_diff.json", file=sys.stderr)
+
+
+def _say_non_papers(missing: list) -> None:
+    """Counted by kind, never listed. Patents, theses, blog posts, proceedings volumes."""
     other = [r for r in missing if r["kind"] != "paper"]
     if other:
         kinds = Counter(r["kind"] for r in other)
         how = ", ".join(f"{n} {k}" + "s" * (n != 1) for k, n in kinds.most_common())
         print(f"  {len(other)} Scholar row(s) that are not papers ({how}) "
               f"-- ignored on purpose", file=sys.stderr)
+
+
+def _say_absent_from_scholar(absent: list, quiet: bool) -> None:
+    """Corpus papers whose title is not in the listing, the cited ones named."""
     if absent:
         cited = [p for p in absent if (p.get("citations") or 0) > 0]
         # "with no Scholar row" is the measurement; "worth adding to your profile" is an
@@ -1035,11 +1065,50 @@ def main() -> None:
               + (f", {len(cited)} of them cited -- check for a merge before adding any"
                  if cited else " (Scholar indexes on its own schedule)"),
               file=sys.stderr)
-        if cited and not args.quiet:
+        if cited and not quiet:
             for p in cited[:10]:
                 print(f"    [{p['citations']:>5} cites] "
                       f"{(title_of(p))[:60]}",
                       file=sys.stderr)
+
+
+def main() -> None:
+    """Scholar's profile against the corpus, one section per kind of disagreement."""
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--quiet", action="store_true",
+                    help="write build/scholar_diff.json, print only the counts")
+    args = ap.parse_args()
+    cfg = load_config()
+    uid = (cfg.get("ids") or {}).get("google_scholar")
+    if not uid:
+        print("scholar: no ids.google_scholar in config.yaml -- nothing to check",
+              file=sys.stderr)
+        return
+
+    papers = read_papers()
+    mine, slug, gated = _corpus_index(papers)
+    # Fetched before the Scholar leg and used by both, so that the expensive half of
+    # this check still produces an answer on the runs where Google refuses. One request
+    # per author id, and `bib_payload` below reuses the same list rather than asking
+    # again.
+    attributed = s2_mine(cfg)
+    gaps, stubs = attributed_gaps(attributed or [], papers, mine, gated)
+
+    rows, whole = scholar_rows(uid)
+    if not rows or not whole:
+        partial_answer(uid, rows, papers, attributed, gaps, stubs, args.quiet)
+        return
+
+    found = _compare(rows, papers, mine, slug, gated)
+    _write_diff(uid, rows, papers, attributed, gaps, stubs, found)
+    print(f"scholar: {len(rows)} rows, {len(found['matched'])}/{len(papers)} corpus "
+          f"papers matched", file=sys.stderr)
+    _say_variants(found["title_variants"], args.quiet)
+    _say_duplicates(found["scholar_duplicates"], args.quiet)
+    _say_gate_dropped(found["gate_dropped"], args.quiet)
+    _say_absent_from_bib(found["not_in_corpus"], cfg, attributed, args.quiet)
+    _say_non_papers(found["not_in_corpus"])
+    _say_absent_from_scholar(found["not_on_scholar"], args.quiet)
     # Reported on both paths. On this one it is a cross-check of the Scholar leg rather
     # than a substitute for it: a paper both sources agree the corpus lacks is not a
     # Scholar indexing quirk.
