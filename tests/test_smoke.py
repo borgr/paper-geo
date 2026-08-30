@@ -4838,19 +4838,17 @@ class TestAQuoteLinksIntoThePaper(unittest.TestCase):
         self.assertEqual("", at_sentence(self.HTML, "   "))
 
     def test_only_the_review_page_links_quotes(self):
-        # Module-level functions only, so a call inside a nested helper is attributed to
-        # the function that owns it: `review_page` builds a helper per claim block, and
-        # walking every def counts that helper as a second caller.
+        # By module, not by function name: the review page is built by one renderer per
+        # block and which of them holds the claim list is an internal arrangement. What
+        # must not happen is a call from anything that writes into `build/site/`.
         callers = set()
         for path in glob.glob(os.path.join(ROOT, "scripts", "*.py")):
             with open(path, encoding="utf-8") as fh:
                 tree = ast.parse(fh.read())
-            callers |= {fn.name for fn in tree.body
-                        if isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef))
-                        for n in ast.walk(fn)
-                        if isinstance(n, ast.Call)
-                        and getattr(n.func, "id", "") == "at_sentence"}
-        self.assertEqual({"review_page"}, callers)
+            if any(isinstance(n, ast.Call) and getattr(n.func, "id", "") == "at_sentence"
+                   for n in ast.walk(tree)):
+                callers.add(os.path.basename(path))
+        self.assertEqual({"sidecar_review.py"}, callers)
 
 
 if __name__ == "__main__":
