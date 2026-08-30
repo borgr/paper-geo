@@ -38,7 +38,7 @@ from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, WD_IDENTIFIERS, clipped,  # noqa: E402
-                    declined, get_json, get_status, load_config, mw_replied,
+                    declined, get_json, get_status, in_halves, load_config, mw_replied,
                     name_match, norm_name, norm_title, org_name, paper_doi, plural,
                     read_yaml, replied, synth_bibtex, title_tokens, write_json,
                     write_task, write_yaml)
@@ -1217,32 +1217,28 @@ def arxiv_author_strings(ids: list[str], batch: int = 50) -> dict[str, list[str]
 
     A chunk that arrived but did not parse is halved and asked again. 50 entries carry 50
     abstracts and run to 120 KB, and a body too large to deliver comes back cut off under
-    HTTP 200. A refusal is not halved, because a smaller ask does not answer it.
+    HTTP 200. A refusal answers `[]` rather than None, because a smaller ask does not
+    answer it, and what it does not carry is left out rather than reported as absent.
     """
-    out: dict[str, list[str]] = {}
-    todo = [ids[i:i + batch] for i in range(0, len(ids), batch)]
-    while todo:
-        chunk = todo.pop(0)
+    def one(chunk: list[str]) -> tuple[list | None, str]:
         st, raw = get_status("https://export.arxiv.org/api/query?id_list="
                              f"{','.join(chunk)}&max_results={len(chunk)}", retries=3)
+        time.sleep(3)
         if st != 200 or not raw:
-            time.sleep(3)
-            continue
+            return [], f"HTTP {st}"
         try:
-            root = ET.fromstring(raw)
+            return ET.fromstring(raw).findall("a:entry", ATOM), ""
         except ET.ParseError:
-            if len(chunk) > 1:
-                half = len(chunk) // 2
-                todo[:0] = [chunk[:half], chunk[half:]]
-            time.sleep(3)
-            continue
-        for e in root.findall("a:entry", ATOM):
+            return None, f"an answer that stopped after {len(raw)} bytes"
+
+    out: dict[str, list[str]] = {}
+    for _chunk, entries, _why in in_halves(ids, one, batch):
+        for e in entries or []:
             m = _ABS.search(e.findtext("a:id", "", ATOM) or "")
             if not m:
                 continue
             out[m.group(1)] = [a.findtext("a:name", "", ATOM) or ""
                                for a in e.findall("a:author", ATOM)]
-        time.sleep(3)
     return out
 
 

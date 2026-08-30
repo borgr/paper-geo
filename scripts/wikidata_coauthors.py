@@ -62,7 +62,7 @@ import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, TASKS, get_status, host_of,  # noqa: E402
-                    mw_replied, norm_name, read_yaml, write_json, write_task)
+                    in_halves, mw_replied, norm_name, read_yaml, write_json, write_task)
 from wikidata_apply import logged_in, snak  # noqa: E402
 
 WDQS = "https://query.wikidata.org/sparql"
@@ -133,27 +133,20 @@ def batched(items: list[str], ask, size: int = 100, endpoint: str = "") -> list[
     """Every row `ask(chunk)` answers over `items` in chunks, `[]` if a chunk went unanswered.
 
     `ask` takes a chunk and returns the query for it. A chunk the service did not answer is
-    halved and asked again, because a `VALUES` batch matching many items produces more rows
-    than one response body carries -- 100 institution names came back cut off at 64 KiB, and
-    50 of them came back as a dropped connection. A chunk of one that still goes unanswered
-    is the service being down, and is recorded in `wdqs_quiet()`.
+    halved and asked again -- 100 institution names came back cut off at 64 KiB, and 50 of
+    them came back as a dropped connection, so a refusal is halved here too. A chunk of one
+    that still goes unanswered is the service being down, and is in `wdqs_quiet()`.
     """
     global _quiet
     out: list[dict] = []
-    todo = [items[i:i + size] for i in range(0, len(items), size)]
-    while todo:
-        chunk = todo.pop(0)
-        # Two retries rather than six: re-asking a query whose answer was too large to
-        # deliver gets the same answer, where halving the chunk gets a smaller one.
-        rows, why = answered(ask(chunk), endpoint, retries=2 if len(chunk) > 1 else 6)
-        if rows is not None:
-            out += rows
-        elif len(chunk) > 1:
-            half = len(chunk) // 2
-            todo[:0] = [chunk[:half], chunk[half:]]
-        else:
+    # Two retries rather than six while a chunk can still be halved: re-asking a query whose
+    # answer was too large to deliver gets the same answer, where halving gets a smaller one.
+    for _chunk, rows, why in in_halves(
+            items, lambda c: answered(ask(c), endpoint, retries=2 if len(c) > 1 else 6), size):
+        if rows is None:
             _quiet = _quiet or why
             return []
+        out += rows
     return out
 
 
@@ -201,21 +194,19 @@ def entities(qids: list[str], props: str, languages: str = "",
     which is what a caller writes over.
     """
     global _api_quiet
-    out: dict[str, dict] = {}
-    todo = [qids[i:i + size] for i in range(0, len(qids), size)]
-    while todo:
-        chunk = todo.pop(0)
+
+    def one(chunk: list[str]) -> tuple[dict | None, str]:
         _st, d, why = mw_replied(f"{API}?action=wbgetentities&format=json&props={props}"
                                  + (f"&languages={languages}" if languages else "")
                                  + "&ids=" + "|".join(chunk))
-        if d is not None:
-            out.update(d.get("entities") or {})
-        elif len(chunk) > 1:
-            half = len(chunk) // 2
-            todo[:0] = [chunk[:half], chunk[half:]]
-        else:
+        return d, why
+
+    out: dict[str, dict] = {}
+    for _chunk, d, why in in_halves(qids, one, size):
+        if d is None:
             _api_quiet = _api_quiet or f"{host_of(API)} -> {why}"
             return {}
+        out.update(d.get("entities") or {})
     return out
 
 

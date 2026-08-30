@@ -412,6 +412,27 @@ def get_json(url: str, **kw) -> dict | list | None:
     return replied(url, **kw)[1]
 
 
+def in_halves(items: list, ask, size: int):
+    """Yield `(chunk, answer, why)` over `items` in chunks of `size`, halving what None.
+
+    `ask(chunk)` returns `(answer, why)`. `None` for the answer means ask the same items in
+    two smaller chunks -- a batch matching many items produces more rows than one response
+    body carries, so the same ask returns the same truncated answer and a smaller one is
+    what answers. What counts as halveable is `ask`'s call, since it is the one that knows
+    what its service does with a batch too large. A chunk of one is yielded with its `None`
+    for the caller to record.
+    """
+    todo = [items[i:i + size] for i in range(0, len(items), size)]
+    while todo:
+        chunk = todo.pop(0)
+        answer, why = ask(chunk)
+        if answer is None and len(chunk) > 1:
+            half = len(chunk) // 2
+            todo[:0] = [chunk[:half], chunk[half:]]
+        else:
+            yield chunk, answer, why
+
+
 # ---------------------------------------------------------------- the gh CLI
 
 # Every README name a repo in this corpus actually uses, most common first. Three
