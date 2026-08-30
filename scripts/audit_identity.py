@@ -38,9 +38,10 @@ from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, WD_IDENTIFIERS, clipped,  # noqa: E402
-                    declined, get, get_json, get_status, load_config, name_match,
-                    norm_name, norm_title, org_name, paper_doi, plural, read_yaml,
-                    synth_bibtex, title_tokens, write_json, write_task, write_yaml)
+                    declined, get_json, get_status, load_config, mw_replied,
+                    name_match, norm_name, norm_title, org_name, paper_doi, plural,
+                    read_yaml, replied, synth_bibtex, title_tokens, write_json,
+                    write_task, write_yaml)
 
 TASKS = os.path.join(ROOT, "tasks")
 ATOM = {"a": "http://www.w3.org/2005/Atom"}
@@ -76,12 +77,8 @@ def orcid_public(orcid: str) -> dict:
     what the audit reports is read from this record, and an unread one reports the whole
     corpus as absent from ORCID and every work as self-asserted.
     """
-    st, raw = get_status(f"https://pub.orcid.org/v3.0/{orcid}/record",
-                         accept="application/json")
-    try:
-        d = json.loads(raw or b"{}") if st == 200 else {}
-    except ValueError:
-        d = {}
+    st, doc, why = replied(f"https://pub.orcid.org/v3.0/{orcid}/record")
+    d = doc or {}
     act, person = d.get("activities-summary") or {}, d.get("person") or {}
     urls = [(u.get("url-name"), (u.get("url") or {}).get("value"))
             for u in ((person.get("researcher-urls") or {}).get("researcher-url") or [])]
@@ -155,7 +152,7 @@ def orcid_public(orcid: str) -> dict:
         "keywords": [k.get("content") for k in
                      ((person.get("keywords") or {}).get("keyword") or [])],
         "biography": bool(person.get("biography")),
-        "reachable": st == 200 and bool(d),
+        "reachable": not why and bool(d),
         "status": st,
     }
 
@@ -203,14 +200,9 @@ def wd_asked(url: str) -> dict:
     other status is a refusal rather than a report.
     """
     global _wd_quiet
-    st, raw = get_status(url, accept="application/json")
-    try:
-        d = json.loads(raw) if st == 200 and raw else None
-    except ValueError:
-        d = None
-    if d is None:
-        _wd_quiet = _wd_quiet or (f"an answer that stopped after {len(raw)} bytes"
-                                  if st == 200 and raw else f"HTTP {st}")
+    _st, d, why = mw_replied(url)
+    if why:
+        _wd_quiet = _wd_quiet or why
     return d or {}
 
 
@@ -552,13 +544,8 @@ def hf_state(papers, me: str, variants, requested=()) -> dict[str, list]:
     out = {k: [] for k in ("missing", "unclaimed", "pending", "blocked", "claimed",
                            "refused")}
     for p in papers:
-        st, raw = get_status(f"https://huggingface.co/api/papers/{p['arxiv']}", retries=1,
-                             accept="application/json")
-        try:
-            j = json.loads(raw) if st == 200 and raw else None
-        except ValueError:
-            j = None
-        if j is None:
+        st, j, why = replied(f"https://huggingface.co/api/papers/{p['arxiv']}", retries=1)
+        if why:
             out["missing" if st in (404, 410) else "refused"].append(p)
             continue
         authors = j.get("authors") or []

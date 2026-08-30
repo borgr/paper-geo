@@ -44,7 +44,7 @@ import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (BUILD, DATA, ROOT, TASKS, budget_reset, clean_latex,  # noqa: E402
-                    get_status, host_of, load_config, name_match, norm_title, read_yaml,
+                    host_of, load_config, name_match, norm_title, read_yaml, replied,
                     title_tokens, write_json, write_task)
 
 # Below this the gap is indexing lag rather than a split record. Both conditions have
@@ -74,12 +74,8 @@ def lookup(url: str) -> dict | None:
     other refusal to `_silent`, which is the difference between a query to fix and a run
     to repeat.
     """
-    st, raw = get_status(url, accept="application/json")
-    try:
-        d = json.loads(raw) if st == 200 and raw else None
-    except ValueError:
-        d = None
-    if d is None:
+    st, d, why = replied(url)
+    if why:
         (_rejected if st == 400 else _silent).add(host_of(url))
     return d
 

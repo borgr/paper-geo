@@ -76,14 +76,23 @@ def source(path: str) -> str:
         return f.read()
 
 
-def answering(status: int, body: bytes = b""):
-    """One status and body for every JSON read, patched at the one seam they share.
+@contextlib.contextmanager
+def answering(status, body: bytes = b"", mods=()):
+    """Every read answers `status` and `body`, or whatever `status` returns when it is
+    callable.
 
-    Readers that go through `common.replied` hold no `get_status` of their own, so a test
-    that patches the module it is exercising patches a name that is not there.
+    A reader that goes through `common.replied` reaches the seam in `common`; one that calls
+    `get_status` itself reaches the name its own module imported, which is a separate object.
+    Patching one of the two leaves the other module's reads live, so `mods` names any module
+    whose own copy has to answer too.
     """
     import common
-    return mock.patch.object(common, "get_status", lambda _u, **kw: (status, body))
+    f = status if callable(status) else (lambda _u, **kw: (status, body))
+    with contextlib.ExitStack() as stack:
+        for m in (common,) + tuple(mods):
+            if hasattr(m, "get_status"):
+                stack.enter_context(mock.patch.object(m, "get_status", f))
+        yield
 
 
 class TestEveryModuleImports(unittest.TestCase):
@@ -1965,7 +1974,7 @@ class TestTheSplitPassResumesTomorrow(unittest.TestCase):
         import scholar_strays as ss
         importlib.reload(ss)
         self.addCleanup(importlib.reload, ss)
-        with mock.patch.object(ss, "get_status", lambda _u, **kw: (400, b"")):
+        with answering(400, mods=(ss,)):
             self.assertIsNone(ss.lookup("https://api.openalex.org/works?filter=x"))
         self.assertEqual({"api.openalex.org"}, ss._rejected)
         self.assertEqual(set(), ss._silent, "a rejected query was reported as an outage")
@@ -2027,12 +2036,11 @@ class TestTheSplitPassResumesTomorrow(unittest.TestCase):
         self.addCleanup(importlib.reload, ss)
         for st in (0, 429, 500):
             ss._silent.clear()
-            with mock.patch.object(ss, "get_status", lambda _u, **kw: (st, b"")):
+            with answering(st, mods=(ss,)):
                 self.assertIsNone(ss.lookup("https://api.crossref.org/works?rows=1"))
             self.assertEqual({"api.crossref.org"}, ss._silent, "status %s answered" % st)
         ss._silent.clear()
-        with mock.patch.object(ss, "get_status",
-                               lambda _u, **kw: (200, b'{"message": {"items": []}}')):
+        with answering(200, b'{"message": {"items": []}}', mods=(ss,)):
             self.assertEqual({"message": {"items": []}},
                              ss.lookup("https://api.crossref.org/works"))
         self.assertEqual(set(), ss._silent)
@@ -2040,7 +2048,7 @@ class TestTheSplitPassResumesTomorrow(unittest.TestCase):
         d = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, d, True)
         with mock.patch.object(ss, "BUILD", d), mock.patch.object(ss, "TASKS", d), \
-             mock.patch.object(ss, "get_status", lambda _u, **kw: (500, b"")), \
+             answering(500, mods=(ss,)), \
              mock.patch.object(sys, "argv", ["scholar_strays.py", "--quiet", "--limit", "1"]):
             self.assertEqual(0, ss.main())
         with open(os.path.join(d, "scholar_strays.json")) as f:
@@ -6251,7 +6259,7 @@ class TestPeopleItemsRestOnPublicRecordsNotOnNames(unittest.TestCase):
         # Patched on `wikidata_coauthors`, which owns the one `w/api.php` reader both the
         # search and the entity read go through. Patching `wp` leaves both live.
         wc = sys.modules["wikidata_coauthors"]
-        with mock.patch.object(wc, "get_status", fake):
+        with answering(fake, mods=(wc,)):
             return wp.namesakes(sorted({n for n in answers}))
 
     def test_a_namesake_is_held_whatever_it_says_the_person_does(self):
@@ -6346,19 +6354,19 @@ class TestAQuietItemIsNotAnItemWithNoStatements(unittest.TestCase):
     def test_the_statements_to_remove_are_not_read_as_none(self):
         wa = self._wa()
         for st in (0, 429, 500):
-            with mock.patch.object(wa, "get_status", lambda _u, **kw: (st, b"")):
+            with answering(st, mods=(wa,)):
                 with self.assertRaises(RuntimeError) as e:
                     wa.claim_guids("Q117220720", "P496")
             self.assertIn("could not read", str(e.exception),
                           "status %s read as no statement" % st)
         body = json.dumps({"entities": {"Q1": {"claims": {"P496": [
             {"id": "Q1$abc", "mainsnak": {"datavalue": {"value": "0000-0001-2345-6789"}}}]}}}})
-        with mock.patch.object(wa, "get_status", lambda _u, **kw: (200, body.encode())):
+        with answering(200, body.encode(), mods=(wa,)):
             self.assertEqual([("Q1$abc", "0000-0001-2345-6789")],
                              wa.claim_guids("Q1", "P496"))
         # An item that really carries none of them still answers with none of them.
         empty = json.dumps({"entities": {"Q1": {"claims": {}}}})
-        with mock.patch.object(wa, "get_status", lambda _u, **kw: (200, empty.encode())):
+        with answering(200, empty.encode(), mods=(wa,)):
             self.assertEqual([], wa.claim_guids("Q1", "P496"))
 
     def test_an_unread_account_is_not_a_four_day_old_one(self):
@@ -6366,7 +6374,7 @@ class TestAQuietItemIsNotAnItemWithNoStatements(unittest.TestCase):
         numbers rather than a verdict -- and every one of them would be blank."""
         wa = self._wa()
         for st in (0, 429, 500):
-            with mock.patch.object(wa, "get_status", lambda _u, **kw: (st, b"")):
+            with answering(st, mods=(wa,)):
                 out = io.StringIO()
                 with contextlib.redirect_stdout(out):
                     code = wa.check_account("Ktilana")
@@ -6393,6 +6401,11 @@ class TestOneReaderForEveryJsonSource(unittest.TestCase):
         self.assertEqual("an answer that stopped after 18 bytes", why)
         with answering(503, b""):
             self.assertEqual((503, None, "HTTP 503"), common.replied("https://example.org/x"))
+        # A body that never started arrives under 200 as well, so neither shape may be
+        # named by the status a reader would take for success.
+        with answering(200, b""):
+            self.assertEqual((200, None, "an empty body under HTTP 200"),
+                             common.replied("https://example.org/x"))
         with answering(200, b'{"ok": []}'):
             self.assertEqual((200, {"ok": []}, ""), common.replied("https://example.org/x"))
 
@@ -6980,12 +6993,12 @@ class TestAQuietWikidataDoesNotBlankALabel(unittest.TestCase):
         old = a._wd_quiet
         try:
             a._wd_quiet = ""
-            with mock.patch.object(a, "get_status", lambda _u, **kw: (500, b"")):
+            with answering(500, mods=(a,)):
                 self.assertEqual({}, a.wd_labels(["Q1"]))
             self.assertEqual("HTTP 500", a._wd_quiet, "the refusal was never recorded")
             a._wd_quiet = ""
             body = json.dumps({"entities": {"Q1": {"labels": {"en": {"value": "IBM"}}}}})
-            with mock.patch.object(a, "get_status", lambda _u, **kw: (200, body.encode())):
+            with answering(200, body.encode(), mods=(a,)):
                 self.assertEqual({"Q1": "IBM"}, a.wd_labels(["Q1"]))
             self.assertEqual("", a._wd_quiet)
         finally:
@@ -7013,12 +7026,12 @@ class TestAQuietWikidataLeavesTheWorkOnThePage(unittest.TestCase):
         try:
             for st in (0, 429, 500):
                 wc._api_quiet = ""
-                with mock.patch.object(wc, "get_status", lambda _u, **kw: (st, b"")):
+                with answering(st, mods=(wc,)):
                     self.assertEqual({}, wc.item_state(["Q1"]))
                 self.assertTrue(wc.api_quiet(), "status %s passed as an answer" % st)
             wc._api_quiet = ""
             body = json.dumps({"entities": {"Q1": {"claims": {}}}}).encode()
-            with mock.patch.object(wc, "get_status", lambda _u, **kw: (200, body)):
+            with answering(200, body, mods=(wc,)):
                 self.assertIn("Q1", wc.item_state(["Q1"]))
             self.assertEqual("", wc.api_quiet())
         finally:
@@ -7108,12 +7121,12 @@ class TestAQuietWikidataCreatesNobody(unittest.TestCase):
         ask = (lambda c: "SELECT ?x WHERE {}")
         for st in (0, 429, 500):
             wc._quiet = ""
-            with mock.patch.object(wc, "get_status", lambda _u, **kw: (st, b"")):
+            with answering(st, mods=(wc,)):
                 self.assertEqual([], wc.batched(["a"], ask))
             self.assertTrue(wc.wdqs_quiet(), "status %s passed as an answer" % st)
         wc._quiet = ""
         empty = b'{"results": {"bindings": []}}'
-        with mock.patch.object(wc, "get_status", lambda _u, **kw: (200, empty)):
+        with answering(200, empty, mods=(wc,)):
             self.assertEqual([], wc.batched(["a"], ask))
         self.assertEqual("", wc.wdqs_quiet())
 
@@ -7131,7 +7144,7 @@ class TestAQuietWikidataCreatesNobody(unittest.TestCase):
                 return 200, b'{"results": {"bindi'
             rows = ", ".join('{"n": {"value": "%d"}}' % i for i in range(asked))
             return 200, ('{"results": {"bindings": [%s]}}' % rows).encode()
-        with mock.patch.object(wc, "get_status", answer):
+        with answering(answer, mods=(wc,)):
             rows = wc.batched(["a", "b", "c", "d"], lambda c: wc.values(c), size=4)
         self.assertEqual(4, len(rows), "a halved batch lost rows")
         self.assertEqual("", wc.wdqs_quiet(), "a batch that answered in halves was called quiet")
@@ -7167,12 +7180,11 @@ class TestAQuietWikidataCreatesNobody(unittest.TestCase):
         try:
             for st in (0, 429, 500):
                 wc._api_quiet = ""
-                with mock.patch.object(wc, "get_status", lambda _u, **kw: (st, b"")):
+                with answering(st, mods=(wc,)):
                     self.assertEqual({}, wc.asked(wc.API + "?search=Ada"))
                 self.assertTrue(wc.api_quiet(), "status %s passed as an answer" % st)
             wc._api_quiet = ""
-            with mock.patch.object(wc, "get_status",
-                                   lambda _u, **kw: (200, b'{"search": []}')):
+            with answering(200, b'{"search": []}', mods=(wc,)):
                 self.assertEqual({"search": []}, wc.asked(wc.API + "?search=Ada"))
             self.assertEqual("", wc.api_quiet())
         finally:
@@ -7187,7 +7199,7 @@ class TestAQuietWikidataCreatesNobody(unittest.TestCase):
         try:
             wc._api_quiet = ""
             body = b'{"error": {"code": "readonly", "info": "The wiki is in read-only mode"}}'
-            with mock.patch.object(wc, "get_status", lambda _u, **kw: (200, body)):
+            with answering(200, body, mods=(wc,)):
                 self.assertEqual({}, wc.entities(["Q1"], "claims"))
             self.assertIn("readonly", wc.api_quiet())
         finally:
@@ -7208,13 +7220,12 @@ class TestAQuietWikidataCreatesNobody(unittest.TestCase):
                     return 200, b'{"entities": {"Q1"'
                 ents = ", ".join('"%s": {"claims": {}}' % q for q in ids)
                 return 200, ('{"entities": {%s}}' % ents).encode()
-            with mock.patch.object(wc, "get_status", answer):
+            with answering(answer, mods=(wc,)):
                 got = wc.entities(["Q1", "Q2", "Q3", "Q4"], "claims", size=4)
             self.assertEqual(4, len(got), "a halved batch lost items")
             self.assertEqual("", wc.api_quiet(), "a batch that answered in halves was quiet")
             wc._api_quiet = ""
-            with mock.patch.object(wc, "get_status",
-                                   lambda _u, **kw: (200, b'{"entities": {"Q1"')):
+            with answering(200, b'{"entities": {"Q1"', mods=(wc,)):
                 self.assertEqual({}, wc.entities(["Q1", "Q2"], "claims"))
             self.assertIn("stopped after 18 bytes", wc.api_quiet())
         finally:
@@ -7228,8 +7239,8 @@ class TestAQuietWikidataCreatesNobody(unittest.TestCase):
         try:
             wc._api_quiet = ""
             one = b'{"entities": {"Q1": {"claims": {}}}}'
-            with mock.patch.object(wc, "get_status",
-                                   lambda u, **kw: (200, one) if "Q1" in u else (0, b"")):
+            with answering(lambda u, **kw: (200, one) if "Q1" in u else (0, b""),
+                           mods=(wc,)):
                 self.assertEqual({}, wc.entities(["Q1", "Q2"], "claims", size=1))
             self.assertTrue(wc.api_quiet())
         finally:
@@ -7572,16 +7583,12 @@ class TestAnUnreadRecordIsNotAnEmptyOne(unittest.TestCase):
         sys.path.insert(0, os.path.join(ROOT, "scripts"))
         import audit_identity as ai
         read = {"person": {}, "activities-summary": {"works": {"group": []}}}
-        old = ai.get_status
-        try:
-            ai.get_status = lambda _u, **kw: (429, b'{"error": "Rate limit exceeded"}')
+        with answering(429, b'{"error": "Rate limit exceeded"}', mods=(ai,)):
             refused = ai.orcid_public("0000-0002-3491-0632")
-            ai.get_status = lambda _u, **kw: (0, b"")
+        with answering(0, mods=(ai,)):
             silent = ai.orcid_public("0000-0002-3491-0632")
-            ai.get_status = lambda _u, **kw: (200, json.dumps(read).encode())
+        with answering(200, json.dumps(read).encode(), mods=(ai,)):
             empty = ai.orcid_public("0000-0002-3491-0632")
-        finally:
-            ai.get_status = old
         self.assertEqual((False, 429), (refused["reachable"], refused["status"]))
         self.assertEqual((False, 0), (silent["reachable"], silent["status"]))
         self.assertEqual((True, 0), (empty["reachable"], empty["works"]))
@@ -7610,19 +7617,15 @@ class TestAnUnreadRecordIsNotAnEmptyOne(unittest.TestCase):
         sys.path.insert(0, os.path.join(ROOT, "scripts"))
         import collect
         cfg = {"ids": {"huggingface": "someone"}}
-        old = collect.get_status
-        try:
-            for st in (0, 429, 500):
-                collect.get_status = lambda _u, **kw: (st, b"")
+        for st in (0, 429, 500):
+            with answering(st, mods=(collect,)):
                 p = {"slug": "a", "arxiv": "2401.00001"}
                 collect.merge_hf([p], cfg)
-                self.assertNotIn("hf_indexed", p, "status %s wrote the flag" % st)
-            collect.get_status = lambda _u, **kw: (404, b"")
+            self.assertNotIn("hf_indexed", p, "status %s wrote the flag" % st)
+        with answering(404, mods=(collect,)):
             p = {"slug": "a", "arxiv": "2401.00001"}
             collect.merge_hf([p], cfg)
-            self.assertIs(False, p["hf_indexed"])
-        finally:
-            collect.get_status = old
+        self.assertIs(False, p["hf_indexed"])
 
 
 class TestAPricedCallIsNotRetriedOnAHostThatSaidNo(unittest.TestCase):
@@ -7670,14 +7673,8 @@ class TestTheAuditKeepsThePagesItCouldNotRead(unittest.TestCase):
         import audit_identity
         return audit_identity
 
-    @contextlib.contextmanager
     def _answering(self, ai, status, body=b""):
-        old = ai.get_status
-        ai.get_status = lambda _u, **kw: (status, body)
-        try:
-            yield
-        finally:
-            ai.get_status = old
+        return answering(status, body, mods=(ai,))
 
     def test_only_a_404_puts_a_paper_on_the_list_of_pages_to_go_and_create(self):
         ai = self._ai()

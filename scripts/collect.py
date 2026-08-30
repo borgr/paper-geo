@@ -16,7 +16,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import re
 import subprocess
@@ -30,8 +29,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (ARXIV_NS, BUILD, DATA, ROOT, arxiv_id,  # noqa: E402
                     authors_truncated, clean_bibtex, clean_latex, get, get_json,
                     get_status, is_preprint_venue, load_config, name_match, norm_title,
-                    parse_bibtex, read_yaml, short_venue, slugify, split_authors,
-                    write_json, write_yaml)
+                    parse_bibtex, read_yaml, replied, short_venue, slugify,
+                    split_authors, write_json, write_yaml)
 # The only OpenReview reader in the repo. Imported rather than reimplemented because the
 # filters are the load-bearing part -- a strict title match, an author list, and a venue
 # that is not a withdrawn or still-under-review submission -- and a second copy of them
@@ -566,13 +565,8 @@ def merge_hf(papers: list[dict], cfg) -> None:
     for p in papers:
         if not p.get("arxiv"):
             continue
-        st, raw = get_status(f"https://huggingface.co/api/papers/{p['arxiv']}", retries=1,
-                             accept="application/json")
-        try:
-            d = json.loads(raw) if st == 200 and raw else None
-        except ValueError:
-            d = None
-        if d is None:
+        st, d, why = replied(f"https://huggingface.co/api/papers/{p['arxiv']}", retries=1)
+        if why:
             if st in (404, 410):
                 p["hf_indexed"] = False
         else:

@@ -53,8 +53,8 @@ import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from common import (DATA, ROOT, UA, affil_index, get_status,  # noqa: E402
-                    load_config, norm_name, read_yaml, write_yaml)
+from common import (DATA, ROOT, UA, affil_index, load_config,  # noqa: E402
+                    mw_replied, norm_name, read_yaml, write_yaml)
 
 API = "https://www.wikidata.org/w/api.php"
 CREDS_FILE = os.path.join(ROOT, ".wikidata_bot")
@@ -153,18 +153,14 @@ def check_account(user: str | None) -> int:
         print("No account known. Set WIKIDATA_BOT_USER, or pass the account name:\n"
               "  python scripts/wikidata_apply.py --check-account --user Ktilana")
         return 1
-    st, raw = get_status(f"{API}?action=query&list=users&ususers="
-                        f"{urllib.parse.quote(name)}&usprop=editcount|registration|groups"
-                        f"&format=json&formatversion=2", accept="application/json")
-    try:
-        d = json.loads(raw) if st == 200 and raw else None
-    except ValueError:
-        d = None
-    if d is None:
-        # The API answers 200 with `missing` for an account that does not exist, so any
-        # other status is a refusal -- and every line below would read as a brand-new
+    _st, d, why = mw_replied(f"{API}?action=query&list=users&ususers="
+                          f"{urllib.parse.quote(name)}&usprop=editcount|registration|groups"
+                          f"&format=json&formatversion=2")
+    if why:
+        # The API answers 200 with `missing` for an account that does not exist, so a
+        # refusal is something else -- and every line below would read as a brand-new
         # account four days short of autoconfirmed.
-        print(f"wikidata did not answer (HTTP {st}), so nothing is known about {name}")
+        print(f"wikidata did not answer ({why}), so nothing is known about {name}")
         return 1
     u = ((d.get("query") or {}).get("users") or [{}])[0]
     if "missing" in u:
@@ -330,14 +326,10 @@ def claim_guids(qid: str, pid: str) -> list[tuple[str, str]]:
     property, which is what a `REPLACE` step reads before creating the replacement -- so a
     refusal read as `[]` leaves the wrong value in place beside the new one.
     """
-    st, raw = get_status(f"https://www.wikidata.org/wiki/Special:EntityData/{qid}.json",
-                         accept="application/json")
-    try:
-        d = json.loads(raw) if st == 200 and raw else None
-    except ValueError:
-        d = None
-    if d is None:
-        raise RuntimeError(f"could not read {qid} (HTTP {st}), so the statements it "
+    _st, d, why = mw_replied(
+        f"https://www.wikidata.org/wiki/Special:EntityData/{qid}.json")
+    if why:
+        raise RuntimeError(f"could not read {qid} ({why}), so the statements it "
                            f"carries for {pid} are unknown")
     ent = ((d.get("entities") or {}).get(qid)) or {}
     out = []

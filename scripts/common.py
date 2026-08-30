@@ -382,16 +382,30 @@ def replied(url: str, **kw) -> tuple[int, dict | list | None, str]:
     reason and stop reporting an absence they never read.
 
     The reason carries no host, so a caller can prefix whichever of the URL, the host or
-    the parameters identifies the call on its page. A body that stops mid-JSON arrives
-    under HTTP 200, so it is named as a truncation rather than as the status.
+    the parameters identifies the call on its page. It never reads "HTTP 200", because a
+    body that stopped mid-JSON and a body that never started both arrive under that status.
     """
     st, raw = get_status(url, accept="application/json", **kw)
-    if st == 200 and raw:
-        try:
-            return st, json.loads(raw), ""
-        except json.JSONDecodeError:
-            return st, None, f"an answer that stopped after {len(raw)} bytes"
-    return st, None, f"HTTP {st}"
+    if st != 200:
+        return st, None, f"HTTP {st}"
+    if not raw:
+        return st, None, "an empty body under HTTP 200"
+    try:
+        return st, json.loads(raw), ""
+    except json.JSONDecodeError:
+        return st, None, f"an answer that stopped after {len(raw)} bytes"
+
+
+def mw_replied(url: str, **kw) -> tuple[int, dict | None, str]:
+    """`replied` for a MediaWiki call, where an `error` body is a third way of saying no.
+
+    The API declines under maxlag or read-only with HTTP 200 and an `error` object. Read as
+    an answer that is Wikidata carrying nothing under whatever was asked for.
+    """
+    st, d, why = replied(url, **kw)
+    if not why and isinstance(d, dict) and d.get("error"):
+        return st, None, d["error"].get("code") or "an error"
+    return st, d, why
 
 
 def get_json(url: str, **kw) -> dict | list | None:

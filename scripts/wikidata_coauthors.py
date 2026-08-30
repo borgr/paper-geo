@@ -61,8 +61,8 @@ import urllib.error
 import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, TASKS, get, get_status,  # noqa: E402
-                    host_of, norm_name, read_yaml, write_json, write_task)
+from common import (BUILD, DATA, TASKS, get_status, host_of,  # noqa: E402
+                    mw_replied, norm_name, read_yaml, write_json, write_task)
 from wikidata_apply import logged_in, snak  # noqa: E402
 
 WDQS = "https://query.wikidata.org/sparql"
@@ -180,32 +180,11 @@ def api_quiet() -> str:
     return _api_quiet
 
 
-def replied(url: str) -> tuple[dict | None, str]:
-    """The JSON one `w/api.php` call answered and `""`, or `None` and why nothing came back.
-
-    The API answers 200 with an empty result for a name it carries no item under, so an
-    empty answer is a report and only an unreadable one is a refusal. Two shapes are
-    unreadable. A body that stops mid-JSON arrives under HTTP 200, so naming it "HTTP 200"
-    tells a reader nothing. An `error` body is the API declining -- maxlag, read-only --
-    which read as an answer would look like Wikidata holding nothing.
-    """
-    st, raw = get_status(url, accept="application/json")
-    try:
-        d = json.loads(raw)
-        if not (isinstance(d, dict) and d.get("error")):
-            return d, ""
-        return None, "%s -> %s" % (host_of(url), d["error"].get("code") or "an error")
-    except ValueError:
-        pass
-    cut = f"an answer that stopped after {len(raw)} bytes" if raw else f"HTTP {st}"
-    return None, f"{host_of(url)} -> {cut}"
-
-
 def asked(url: str) -> dict:
     """One `w/api.php` call, `{}` if it did not answer, with the refusal in `api_quiet()`."""
     global _api_quiet
-    d, why = replied(url)
-    _api_quiet = _api_quiet or why
+    _st, d, why = mw_replied(url)
+    _api_quiet = _api_quiet or (f"{host_of(url)} -> {why}" if why else "")
     return d or {}
 
 
@@ -226,16 +205,16 @@ def entities(qids: list[str], props: str, languages: str = "",
     todo = [qids[i:i + size] for i in range(0, len(qids), size)]
     while todo:
         chunk = todo.pop(0)
-        d, why = replied(f"{API}?action=wbgetentities&format=json&props={props}"
-                         + (f"&languages={languages}" if languages else "")
-                         + "&ids=" + "|".join(chunk))
+        _st, d, why = mw_replied(f"{API}?action=wbgetentities&format=json&props={props}"
+                                 + (f"&languages={languages}" if languages else "")
+                                 + "&ids=" + "|".join(chunk))
         if d is not None:
             out.update(d.get("entities") or {})
         elif len(chunk) > 1:
             half = len(chunk) // 2
             todo[:0] = [chunk[:half], chunk[half:]]
         else:
-            _api_quiet = _api_quiet or why
+            _api_quiet = _api_quiet or f"{host_of(API)} -> {why}"
             return {}
     return out
 
