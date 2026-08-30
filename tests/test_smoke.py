@@ -4046,6 +4046,24 @@ class TestDecliningTheLastItemTakesTheSection(unittest.TestCase):
         self.assertIn("prose that is not a list", body)
         self.assertIn("Survives", body)
 
+    def test_a_heading_that_counts_its_subsections_is_recounted(self):
+        """"Identity surfaces (4 open)" over three surfaces is a header the reader can see
+        is wrong, which is what stops them trusting the counts they cannot see.
+        """
+        lines = self.declined(
+            'sections: ["OpenAlex"]\n',
+            ["## Identity surfaces (4 open)", "",
+             "### ORCID", "", "- [ ] one thing", "",
+             "### OpenAlex", "", "- [ ] a split", "",
+             "### arXiv", "", "- [ ] another thing", "",
+             "### Wikidata", "", "- [ ] a third", "",
+             "## Repos (2 open)", "", "### Labels", "", "- [ ] label a/b", ""])
+        body = "\n".join(lines).split("---", 1)[0]
+        self.assertIn("## Identity surfaces (3 open)", body)
+        self.assertNotIn("(4 open)", body)
+        # The count below the declined one is its own section's, so it must not move.
+        self.assertIn("## Repos (1 open)", body)
+
     def test_a_heading_that_counts_its_list_is_recounted(self):
         """A count in a heading is a promise about the list under it.
 

@@ -523,10 +523,29 @@ def apply_declines(lines: list[str]) -> list[str]:
                 continue
         out.append(ln)
 
-    # A section that lost its last item goes with it: a heading, four paragraphs of
-    # instructions and a citation total standing over an empty list reads as an open task,
-    # which is the one thing this file must not contain. Only sections that *had* items -- a
-    # heading whose body is prose and a pointer has nothing to count.
+    dropped_secs += drop_emptied(out, emptied)
+    recount_lists(out, seen_n, cut_n)
+    recount_open(out)
+
+    if held:
+        out += ["", "## Deferred", "",
+                "Real work, parked on purpose. Regenerated from live state like",
+                "everything else, so it stays accurate while it waits.", *held, ""]
+
+    dead = [p for p in secs + items + [x["match"] for x in defs] if p not in used]
+    return out + ["---", "", *declines_note(dropped_secs, dropped_items, held_secs,
+                                            off, later, dead), ""]
+
+
+def drop_emptied(out: list[str], emptied: list[str]) -> list[str]:
+    """Delete, in place, the headings that lost their last item. Returns what went.
+
+    A heading, four paragraphs of instructions and a citation total standing over an empty
+    list reads as an open task, which is the one thing this file must not contain. Only
+    sections that *had* items -- a heading whose body is prose and a pointer has nothing
+    to count.
+    """
+    gone = []
     for head in emptied:
         try:
             i = out.index(head)
@@ -537,16 +556,21 @@ def apply_declines(lines: list[str]) -> list[str]:
                   if re.match(r"##+ \S", out[k])
                   and len(out[k]) - len(out[k].lstrip("#")) <= depth), len(out))
         if not any(l.lstrip().startswith("- ") for l in out[i + 1:j]):
-            dropped_secs.append(head.lstrip("# ").strip() + " — every item declined")
+            gone.append(head.lstrip("# ").strip() + " — every item declined")
             del out[i:j]
+    return gone
 
-    # A subsection heading that counts its own list ("3 papers absent from the source
-    # bibliography") over a list some of whose items were declined. The count is the
-    # emitter's `pl(n)` and cannot just be dropped -- it is what tells you the size of the
-    # job before reading it -- so recount it here, where what survived is known.
-    #
-    # Only when the number *was* the length of the list: a heading opening with a digit that
-    # means something else ("2 of your 5 repos") is not a count of the bullets under it.
+
+def recount_lists(out: list[str], seen_n: dict[str, int], cut_n: dict[str, int]) -> None:
+    """Rewrite, in place, a heading stating the length of its own filtered list.
+
+    "3 papers absent from the source bibliography" over a list some of whose items were
+    declined. The count is the emitter's `pl(n)` and cannot just be dropped -- it is what
+    tells you the size of the job before reading it.
+
+    Only when the number *was* the length of the list: a heading opening with a digit that
+    means something else ("2 of your 5 repos") is not a count of the bullets under it.
+    """
     for head, cut in cut_n.items():
         m = re.match(r"(#+ )(\d+) ([A-Za-z]+)(?= |$)", head)
         if not m or int(m.group(2)) != seen_n.get(head):
@@ -561,10 +585,13 @@ def apply_declines(lines: list[str]) -> list[str]:
         stem = m.group(3)[:-1] if m.group(3).endswith("s") else m.group(3)
         out[i] = f"{m.group(1)}{n} {stem}{'s' * (n != 1)}{head[m.end():]}"
 
-    # A heading that counts its own subsections ("Identity surfaces (4 open)") now
-    # counts one that is no longer there, and a header disagreeing with the list under
-    # it is exactly the kind of small wrongness that makes a reader stop trusting the
-    # rest of the page. Recount from what survived.
+
+def recount_open(out: list[str]) -> None:
+    """Rewrite, in place, a heading counting its own subsections ("Identity surfaces (4 open)").
+
+    A header disagreeing with the list under it is exactly the kind of small wrongness that
+    makes a reader stop trusting the rest of the page.
+    """
     for i, ln in enumerate(out):
         m = re.match(r"(## .*\()(\d+)( open\))", ln)
         if not m:
@@ -576,11 +603,11 @@ def apply_declines(lines: list[str]) -> list[str]:
             n += bool(re.match(r"###+ \S", l))
         out[i] = f"{m.group(1)}{n}{m.group(3)}{ln[m.end():]}"
 
-    if held:
-        out += ["", "## Deferred", "",
-                "Real work, parked on purpose. Regenerated from live state like",
-                "everything else, so it stays accurate while it waits.", *held, ""]
 
+def declines_note(dropped_secs: list[str], dropped_items: int, held_secs: list[str],
+                  off: dict[str, str], later: dict[str, dict],
+                  dead: list[str]) -> list[str]:
+    """The footnote saying what `data/declines.yaml` hid, and which patterns did nothing."""
     hid = []
     if dropped_secs:
         hid.append(f"{len(dropped_secs)} section"
@@ -601,14 +628,13 @@ def apply_declines(lines: list[str]) -> list[str]:
         note.append("marked in " + ", ".join(f"`{p}`" for p in stamped))
     tail = [f"*Per `data/declines.yaml` — {'. '.join(note) or 'nothing hidden'}. "
             f"Delete a line there to have it asked normally again.*"]
-    dead = [p for p in secs + items + [x["match"] for x in defs] if p not in used]
     if dead:
         tail += ["", "*Matching nothing this run, so doing nothing: "
                  + ", ".join(f"`{p}`" for p in dead)
                  + ". Either the work got done, or the pattern misses its line — titles"
                    " are truncated in this file, so a pattern aimed past the cut never"
                    " matches. Check before trusting it as declined.*"]
-    return out + ["---", "", *tail, ""]
+    return tail
 
 
 # Sections that ask for nothing on purpose, and are worth their space anyway: one says
