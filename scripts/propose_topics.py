@@ -91,10 +91,9 @@ CONTRACT = [
 
 
 def system_prompt() -> str:
-    """The framing plus the rules, which live in docs/RULES.md §11.2, not here.
+    """The framing plus the rules text, which lives only in docs/RULES.md §11.2.
 
-    Same one-source rule as draft_sidecars.py: the doc is the only copy, so editing
-    the rules changes the prompt in the same commit. Raises if the markers are gone.
+    Raises if the prompt markers there are gone.
     """
     return FRAMING.format(doc=RULES_DOC) + rules_block(RULES_DOC)
 

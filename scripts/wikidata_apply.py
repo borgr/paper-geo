@@ -455,15 +455,20 @@ def create_papers(s: "Session", items: list[dict]) -> int:
     return ok
 
 
-def logged_in() -> "Session":
-    """A logged-in session, or exit saying which credential is missing."""
-    user, password = read_creds()
+def logged_in(user: str | None = None, password: str | None = None) -> "Session":
+    """A logged-in session, or exit saying which credential is missing.
+
+    Reads the credential from the environment or `.wikidata_bot` when not handed one.
+    """
+    if not (user and password):
+        user, password = read_creds()
     if not (user and password):
         sys.exit("no bot credential. Set WIKIDATA_BOT_USER and WIKIDATA_BOT_PASSWORD, or "
                  "put them in .wikidata_bot -- see the module docstring of "
                  "scripts/wikidata_apply.py")
     s = Session()
     s.login(user, password)
+    print(f"logged in as {s.user}\n")
     return s
 
 
@@ -540,12 +545,7 @@ def papers_main(args, cfg: dict, user: str | None, password: str | None) -> int:
               "Same statements as tasks/wikidata_papers.qs, which is the "
               "paste-it-yourself route.")
         return 0
-    if not (user and password):
-        sys.exit("--apply needs WIKIDATA_BOT_USER and WIKIDATA_BOT_PASSWORD "
-                 "(see the header of this file).")
-    s = Session()
-    s.login(user, password)
-    print(f"logged in as {s.user}\n")
+    s = logged_in(user, password)
     ok = create_papers(s, items)
     print(f"\n{ok}/{len(items)} created, recorded in data/wikidata_created.yaml.\n"
           f"Commit that file -- it is what stops the next run recreating them while "
@@ -607,12 +607,7 @@ def main() -> int:
                   "(or put them in .wikidata_bot).")
         return 0
 
-    if not (user and password):
-        sys.exit("--apply needs WIKIDATA_BOT_USER and WIKIDATA_BOT_PASSWORD "
-                 "(see the header of this file).")
-    s = Session()
-    s.login(user, password)
-    print(f"logged in as {s.user}\n")
+    s = logged_in(user, password)
 
     ok = 0
     for i, step in enumerate(steps, 1):

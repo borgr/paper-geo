@@ -86,11 +86,9 @@ Return JSON matching the schema."""
 
 
 def system_prompt() -> str:
-    """The framing plus the rules, which live in the doc rather than here.
+    """The framing plus the rules text, which lives only in docs/SIDECAR.md.
 
-    This file used to carry its own prose copy of the rules while docs/SIDECAR.md
-    carried a second and the schema descriptions a third; the three had already
-    drifted. Now there is one copy, and `common.rules_block` raises if it is gone.
+    Raises if the prompt markers there are gone.
     """
     return FRAMING.format(doc=RULES_DOC) + rules_block(RULES_DOC)
 

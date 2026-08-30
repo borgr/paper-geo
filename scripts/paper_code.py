@@ -288,6 +288,49 @@ def author_logins(authors: list[str]) -> set[str]:
     return out
 
 
+def note_mention(found: dict, key: str, kind: str, pos: int, n: int, text: str) -> dict:
+    """Fold one mention of `key` at `pos` into `found`, merging with any earlier ones.
+
+    `kind` is the field a candidate names its subject with, "repo" or "page". Counts
+    hits, keeps `first_pos` as the earliest fraction into the text, sets `release` when
+    a release phrase precedes the mention, and `credited_elsewhere` when the text hands
+    it to somebody else instead.
+    """
+    c = found.setdefault(key, {kind: key, "hits": 0, "release": False,
+                               "first_pos": pos / n, "why": []})
+    c["hits"] += 1
+    before = text[max(0, pos - WINDOW):pos]
+    credited = CREDIT_RX.search(text[max(0, pos - CREDIT_WINDOW):pos])
+    if credited:
+        c["credited_elsewhere"] = credited.group(0)
+    elif RELEASE_RX.search(before):
+        if not c["release"]:
+            c["why"].append("release phrase: ..." + " ".join(before.split())[-70:])
+        c["release"] = True
+    c["first_pos"] = min(c["first_pos"], pos / n)
+    return c
+
+
+def position_score(c: dict) -> int:
+    """The part of a candidate's score that comes from where it is mentioned and how
+    often, which reads the same for a repo and for a project page. Appends its reasons
+    to `c["why"]`.
+    """
+    score = 0
+    if c["first_pos"] < 0.20:
+        score += 1
+        c["why"].append(f"appears {c['first_pos']:.0%} into the text")
+    if c["hits"] > 2:
+        score += 1
+    if c["first_pos"] > 0.85 and not c["release"]:
+        score -= 3
+        c["why"].append("late in the text with no release phrase (bibliography?)")
+    if c.get("credited_elsewhere"):
+        score -= 3
+        c["why"].append(f"text credits it to someone else: '{c['credited_elsewhere']}'")
+    return score
+
+
 def candidates(paper: dict, text: str) -> list[dict]:
     """Every github.com/owner/name in the text, scored for being *this paper's*."""
     title_toks = name_tokens(title_of(paper))
@@ -303,19 +346,7 @@ def candidates(paper: dict, text: str) -> list[dict]:
         if ANON_RX.search(owner) or ANON_RX.search(name):
             continue
         full = f"{owner}/{name}"
-        pos = m.start()
-        before = text[max(0, pos - WINDOW):pos]
-        c = found.setdefault(full, {"repo": full, "hits": 0, "release": False,
-                                    "first_pos": pos / n, "why": []})
-        c["hits"] += 1
-        credited = CREDIT_RX.search(text[max(0, pos - CREDIT_WINDOW):pos])
-        if credited:
-            c["credited_elsewhere"] = credited.group(0)
-        elif RELEASE_RX.search(before):
-            if not c["release"]:
-                c["why"].append("release phrase: ..." + " ".join(before.split())[-70:])
-            c["release"] = True
-        c["first_pos"] = min(c["first_pos"], pos / n)
+        note_mention(found, full, "repo", m.start(), n, text)
 
     for c in found.values():
         owner, name = c["repo"].split("/", 1)
@@ -333,19 +364,7 @@ def candidates(paper: dict, text: str) -> list[dict]:
             score += 2
             c["why"].append(f"repo name shares '{'/'.join(sorted(nt & title_toks))}' "
                             f"with the title")
-        if c["first_pos"] < 0.20:
-            score += 1
-            c["why"].append(f"appears {c['first_pos']:.0%} into the text")
-        if c["hits"] > 2:
-            score += 1
-        if c["first_pos"] > 0.85 and not c["release"]:
-            score -= 3
-            c["why"].append("late in the text with no release phrase (bibliography?)")
-        if c.get("credited_elsewhere"):
-            score -= 3
-            c["why"].append(f"text credits it to someone else: "
-                            f"'{c['credited_elsewhere']}'")
-        c["score"] = score
+        c["score"] = score + position_score(c)
     return sorted(found.values(), key=lambda c: -c["score"])
 
 
@@ -422,19 +441,7 @@ def page_candidates(paper: dict, text: str, repo_url: str | None) -> list[dict]:
             continue
         if repo_url and url.rstrip("/").lower() == repo_url.rstrip("/").lower():
             continue
-        pos = m.start()
-        before = text[max(0, pos - WINDOW):pos]
-        c = found.setdefault(url, {"page": url, "hits": 0, "release": False,
-                                   "first_pos": pos / n, "why": []})
-        c["hits"] += 1
-        credited = CREDIT_RX.search(text[max(0, pos - CREDIT_WINDOW):pos])
-        if credited:
-            c["credited_elsewhere"] = credited.group(0)
-        elif RELEASE_RX.search(before):
-            if not c["release"]:
-                c["why"].append("release phrase: ..." + " ".join(before.split())[-70:])
-            c["release"] = True
-        c["first_pos"] = min(c["first_pos"], pos / n)
+        note_mention(found, url, "page", m.start(), n, text)
 
     for c in found.values():
         score = 4 if c["release"] else 0
@@ -452,19 +459,7 @@ def page_candidates(paper: dict, text: str, repo_url: str | None) -> list[dict]:
         if shared:
             score += 2
             c["why"].append(f"URL shares '{'/'.join(sorted(shared))}' with the title")
-        if c["first_pos"] < 0.20:
-            score += 1
-            c["why"].append(f"appears {c['first_pos']:.0%} into the text")
-        if c["hits"] > 2:
-            score += 1
-        if c["first_pos"] > 0.85 and not c["release"]:
-            score -= 3
-            c["why"].append("late in the text with no release phrase (bibliography?)")
-        if c.get("credited_elsewhere"):
-            score -= 3
-            c["why"].append(f"text credits it to someone else: "
-                            f"'{c['credited_elsewhere']}'")
-        c["score"] = score
+        c["score"] = score + position_score(c)
     return sorted([c for c in found.values() if c["own"]], key=lambda c: -c["score"])
 
 
