@@ -1022,6 +1022,7 @@ def main() -> int:
            "review": sum(len(r["review"]) for r in rows_),
            "leftover": sum(r["leftover"] for r in rows_),
            "papers_left": len([r for r in rows_ if r["review"] or r["leftover"]]),
+           "papers_with_candidates": len([r for r in rows_ if r["review"]]),
            "dropped": sum(r.get("dropped") or 0 for r in rows_),
            "items": len(created), "rows": rows_}
     write_json(os.path.join(BUILD, "wikidata_coauthors.json"), out, indent=1)

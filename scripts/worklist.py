@@ -327,28 +327,37 @@ def wikidata_coauthors(st: dict) -> list[str]:
     matched, a venue resolved, a language read off the bibliography -- is written by
     `scripts/wikidata_coauthors.py --apply` and reported here without a checkbox.
     """
-    left = (st.get("review") or 0) + (st.get("leftover") or 0)
+    review, over = st.get("review") or 0, st.get("leftover") or 0
+    papers, seen = st.get("papers_left", 0), st.get("papers_with_candidates", 0)
     batch = (st.get("edits") or 0) + (st.get("venues") or 0) + (st.get("fills") or 0)
     # No section when only the batchable half is outstanding: this page asks the author for
     # things, and a statement `--apply` writes is not one of them.
-    if not left:
+    if not review + over:
         return []
-    L = [f"## Wikidata author strings ({left} by hand)", "",
+    L = [f"## Wikidata author strings ({plural(papers, 'paper')} by hand)", "",
          "Every paper item lists you as *author* and each co-author as *author name",
          "string*, which is a literal nothing can join on — so each item hangs off your",
          "item alone. Resolving a string to that person's own item is what connects them,",
          "and many independent paths into your item is the point of having them at all.", ""]
-    L += [f"- [ ] **{left} strings across {st.get('papers_left', 0)} papers** — one "
-          "Author Disambiguator pass per paper, most-cited first",
-          "      - the links, and the candidate items found for each name: "
-          "[`tasks/wikidata_coauthors.md`](tasks/wikidata_coauthors.md)"]
+    # Counted in papers rather than in strings, because one pass answers every string on the
+    # paper at once. Counting strings headed the section 976 for 107 visits to one form.
+    L += [f"- [ ] **{plural(papers, 'paper')}, one Author Disambiguator pass each** — "
+          "most-cited first, and one pass answers every string on the paper"]
+    if review:
+        L += [f"      - {plural(review, 'string')} on {plural(seen, 'paper')} already have a "
+              f"candidate item found — what each of them states about itself is in "
+              "[`tasks/wikidata_coauthors.md`](tasks/wikidata_coauthors.md)"]
+    if over:
+        L += [f"      - {over} have no item under that exact name. The pass reaches name forms "
+              "an exact search cannot, and a co-author with no item at all stays a string, "
+              "which is the right answer rather than a gap."]
     if st.get("dropped"):
         L += [f"      - {st['dropped']} name matches are left out as namesakes, on a "
               "stated occupation nothing like research"]
     if batch:
         L += ["",
-              f"{batch} more statement{'s' * (batch != 1)} need no decision from you — an "
-              "ORCID or a DBLP",
+              f"{batch} more statement{'s' * (batch != 1)} need{'s' * (batch == 1)} no "
+              f"decision from you — an ORCID or a DBLP",
               "page matched the name, or the value came straight from the bibliography.",
               "`python scripts/wikidata_coauthors.py --apply` writes them."]
     return L + [""]

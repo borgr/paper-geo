@@ -3114,6 +3114,31 @@ class TestNoItemAsksForAWikidataWriteTheCodeCanDo(unittest.TestCase):
         self.assertIn("--apply", out)
         self.assertEqual(1, out.count("- [ ]"), out)
 
+    def test_the_ask_is_counted_in_papers_because_one_pass_answers_a_whole_paper(self):
+        """976 strings is 107 visits to one form, so the heading counting strings read 9x."""
+        import update
+        out = "\n".join(update.wikidata_coauthors(
+            {"review": 233, "leftover": 743, "papers_left": 107,
+             "papers_with_candidates": 77, "dropped": 166}))
+        self.assertIn("## Wikidata author strings (107 papers by hand)", out)
+        self.assertNotIn("976", out)
+        self.assertIn("233 strings on 77 papers", out)
+        # The half with no candidate is the larger one and most of it is not work at all.
+        # Rolled into one total it reads as 743 unanswered questions.
+        self.assertIn("743 have no item under that exact name", out)
+
+    def test_one_statement_needs_and_two_statements_need(self):
+        """Every count here trends to 1 as the work gets done, so it reads at 1 or never."""
+        import update
+        one = "\n".join(update.wikidata_coauthors(
+            {"edits": 1, "review": 1, "leftover": 0, "papers_left": 1,
+             "papers_with_candidates": 1}))
+        self.assertIn("1 more statement needs no decision", one)
+        many = "\n".join(update.wikidata_coauthors(
+            {"edits": 2, "review": 1, "leftover": 0, "papers_left": 1,
+             "papers_with_candidates": 1}))
+        self.assertIn("2 more statements need no decision", many)
+
 
 class TestTheWorklistSaysWhatToDoFirst(unittest.TestCase):
     """A page of eighteen well-explained items still does not say where to start.

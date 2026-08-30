@@ -27,7 +27,7 @@ the page gets visibly shorter.
 no write API can make the judgement each one needs — and every section
 is ordered so that stopping early still captures most of the value.
 
-7. **Wikidata author strings (976 by hand)** — one Author Disambiguator pass per paper, most-cited first, at the link the section gives for each. Everything an ORCID or a DBLP author page could settle is already on Wikidata, so what is left is the part where the name is all there is to go on.
+7. **Wikidata author strings (107 papers by hand)** — one Author Disambiguator pass per paper, most-cited first, at the link the section gives for each. Everything an ORCID or a DBLP author page could settle is already on Wikidata, so what is left is the part where the name is all there is to go on.
 8. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
 9. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
 10. **Citations on a Scholar record you cannot see (57, ~258 citations)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
@@ -140,18 +140,19 @@ your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Mediators%20in%20Determining%20what%20Processing%20BERT%20Performs%20First%22)
 - … and 42 more in [`tasks/scholar_strays.md`](tasks/scholar_strays.md), same order
 
-## Wikidata author strings (976 by hand)
+## Wikidata author strings (107 papers by hand)
 
 Every paper item lists you as *author* and each co-author as *author name
 string*, which is a literal nothing can join on — so each item hangs off your
 item alone. Resolving a string to that person's own item is what connects them,
 and many independent paths into your item is the point of having them at all.
 
-- [ ] **976 strings across 107 papers** — one Author Disambiguator pass per paper, most-cited first
-      - the links, and the candidate items found for each name: [`tasks/wikidata_coauthors.md`](tasks/wikidata_coauthors.md)
+- [ ] **107 papers, one Author Disambiguator pass each** — most-cited first, and one pass answers every string on the paper
+      - 233 strings on 77 papers already have a candidate item found — what each of them states about itself is in [`tasks/wikidata_coauthors.md`](tasks/wikidata_coauthors.md)
+      - 743 have no item under that exact name. The pass reaches name forms an exact search cannot, and a co-author with no item at all stays a string, which is the right answer rather than a gap.
       - 166 name matches are left out as namesakes, on a stated occupation nothing like research
 
-1 more statement need no decision from you — an ORCID or a DBLP
+1 more statement needs no decision from you — an ORCID or a DBLP
 page matched the name, or the value came straight from the bibliography.
 `python scripts/wikidata_coauthors.py --apply` writes them.
 
