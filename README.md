@@ -68,7 +68,8 @@ The comment block at the head of each file survives, so you can still read what 
 file is for.
 
 **3. Put yourself in `config.yaml`.** `identity` and `ids` are who you are.
-`sources.bibtex_url` points at your own `.bib`. `site.repo` and `site.base_url` decide
+`sources.bibtex_url` points at your own `.bib`, and setting it to `null` is fine —
+`collect` then seeds the corpus from your Semantic Scholar author record instead. `site.repo` and `site.base_url` decide
 where the site lands, and [Where the site ends up](#where-the-site-ends-up) is worth
 reading before you set `site.repo`, because deploying over a Pages repo that already
 serves a page replaces that page.
@@ -131,8 +132,9 @@ treats them as one thing.
 
 For work that is already well known, the failure mode is usually not being
 unfindable. It's being found and described **wrongly** — overstated, mis-scoped, or
-credited to the wrong result. LLM summaries overstate scientific conclusions about
-5× more often than human ones. No index can fix that for you; publishing your own
+credited to the wrong result. LLM summaries overstate scientific conclusions about 5×
+more often than human ones do ([Peters & Chin-Yee
+2025](docs/EVIDENCE.md#5-machine-readable-science-the-frontier-this-bets-on)). No index can fix that for you; publishing your own
 claims and scope conditions is the only lever.
 
 ## What it does
@@ -185,14 +187,17 @@ attributed, and stopping there is reasonable.
 The rest is worth doing and none of it is a prerequisite. Repo labels (`repos`,
 `propose`, `sweep_github.py`) matter for code nobody has described. Per-paper sidecars
 (`draft`) are the strongest lever on being described *correctly*, and also the most
-expensive, because they need a language-model API key and your sign-off on every claim.
+expensive, because every claim needs your sign-off. The drafting itself needs no API key
+on the default path, where it writes a task file for an agent session to fill in.
+[RUN.md §9](RUN.md#9-setup-once) has that and the two modes that call a model
+directly.
 Finding each paper's code repo and project page (`links`), settling ownership with
 co-authors (`ownership`), Wikidata items, Hugging Face paper pages and the two scripts
 in `measure/` are each worth picking up once the core is in place.
 
 ## Documentation
 
-Eight files, and each rule has exactly one of them as its home. Edit two of them with
+Seven files, and each rule has exactly one of them as its home. Edit two of them with
 care. The drafting rules in `docs/SIDECAR.md` §2 and the labelling rules in
 `docs/RULES.md` §11.2 are not descriptions of a prompt, they are the prompt, read out
 of the markdown when the model is called. Rewording them changes what the model is

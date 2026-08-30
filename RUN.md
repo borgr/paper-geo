@@ -445,7 +445,7 @@ canonical URL, and the id for each index (Semantic Scholar, OpenAlex, Google Sch
 DBLP, GitHub, Hugging Face, Wikidata). That file is the only place anything about you
 appears — and it is committed, so no secret goes in it.
 
-Two optional environment variables, both secrets:
+Two optional environment variables for the data sources, both secrets:
 
 ```bash
 export S2_API_KEY=…      # free, https://www.semanticscholar.org/product/api
@@ -456,6 +456,21 @@ anonymous caller; when its search refuses, the Scholar check cannot resolve a mi
 paper and has to report that no index has it. The other is `WIKIDATA_BOT_PASSWORD`,
 read from the environment or the gitignored `.wikidata_bot`. Every Wikidata write goes
 through `wikidata_apply.py`, the one place that logs in.
+
+### The two steps that call a model
+
+`propose_topics.py` (repo labels) and `draft_sidecars.py` (sidecars) are the only two,
+and `llm.mode` in `config.yaml` decides how they reach one.
+
+| `llm.mode` | Needs | What happens |
+|---|---|---|
+| `skill` (default) | nothing | writes `build/llm_tasks.json` and `build/sidecar_tasks.json` for an agent session to fill in, so a live Claude Code session is the model |
+| `api` | `pip install anthropic`, plus `ANTHROPIC_API_KEY` or an `ant auth login` profile | one Anthropic call per repo or paper, schema-enforced. This is the unattended path |
+| `openai` (sidecars only) | `PAPER_GEO_LLM_BASE_URL`, `PAPER_GEO_LLM_MODEL`, `PAPER_GEO_LLM_API_KEY`, and `PAPER_GEO_LLM_KEY_HEADER` where the gateway reads a header other than `Authorization` | the same drafting against any OpenAI-compatible gateway. Those four are environment-only on purpose, so a private endpoint cannot reach a committed file |
+
+`measure/fidelity.py --mode api` reads those same four variables rather than
+`ANTHROPIC_API_KEY`, and `--answer-model` / `--grade-model` take `MODEL_ID[@BASE_URL]`
+to override them for one run.
 
 ## 10. Unattended: what GitHub Actions does
 
