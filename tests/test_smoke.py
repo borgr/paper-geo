@@ -2736,7 +2736,7 @@ class TestTheItemIsNotAskedForWhatItAlreadyHas(unittest.TestCase):
     """
 
     def _block(self, has, unqualified, orc=None):
-        from audit_identity import disambiguating_statements
+        from wikidata_audit import disambiguating_statements
         g = {"qid": "Q1", "has": has, "unqualified": unqualified}
         ident = {"name": "Ada Lovelace", "affiliations": [{"name": "Somewhere"}],
                  "education": [{"institution": "Somewhere", "degree": "PhD"}]}
@@ -2811,7 +2811,7 @@ class TestBothWikidataWritersDescribeTheSameItem(unittest.TestCase):
 
     def _items(self):
         from common import DATA, read_yaml, load_config
-        from audit_identity import paper_item
+        from wikidata_audit import paper_item
         papers = read_yaml(os.path.join(DATA, "papers.yaml"))["papers"]
         cfg = load_config()
         return [(p, paper_item(p, cfg)) for p in papers]
@@ -2872,7 +2872,7 @@ class TestBothWikidataWritersDescribeTheSameItem(unittest.TestCase):
         -- so an item created without one cannot be recognised by a later run, and might
         already exist under a title nothing here can match.
         """
-        from audit_identity import paper_item
+        from wikidata_audit import paper_item
         from common import load_config
         cfg = load_config()
         self.assertIsNone(paper_item(
@@ -2896,7 +2896,7 @@ class TestBothWikidataWritersDescribeTheSameItem(unittest.TestCase):
         it is the one that dies mid-batch.
         """
         import tempfile
-        import audit_identity as ai
+        import wikidata_audit as ai
         with tempfile.TemporaryDirectory() as d:
             old, ai.CREATED = ai.CREATED, os.path.join(d, "wikidata_created.yaml")
             try:
@@ -2913,7 +2913,7 @@ class TestBothWikidataWritersDescribeTheSameItem(unittest.TestCase):
         # The fold-in itself: coverage adds the ledger to what SPARQL found, so a
         # recorded slug lands in `present` and never in `absent`, which is the list both
         # writers create from.
-        src = source(os.path.join(ai.ROOT, "scripts", "audit_identity.py"))
+        src = source(os.path.join(ai.ROOT, "scripts", "wikidata_audit.py"))
         body = src.split("\ndef wikidata_paper_coverage(", 1)[1].split("\ndef ", 1)[0]
         self.assertIn("created_items()", body, "coverage ignores the ledger")
         self.assertIn("setdefault", body, "the ledger must not overwrite a live answer")
@@ -6558,7 +6558,7 @@ class TestEveryFetchReachesTheHealthLedger(unittest.TestCase):
 
 
 class TestARefusedSparqlChunkIsNotAMissingItem(unittest.TestCase):
-    """`audit_identity.wikidata_paper_coverage` asks in chunks of 50 and used to treat one
+    """`wikidata_audit.wikidata_paper_coverage` asks in chunks of 50 and used to treat one
     refused chunk as fifty papers with no Wikidata item.
 
     `absent` is what `wikidata_apply.py --papers --apply` turns into item creations and what
@@ -6574,8 +6574,8 @@ class TestARefusedSparqlChunkIsNotAMissingItem(unittest.TestCase):
     @staticmethod
     def _ai():
         sys.path.insert(0, os.path.join(ROOT, "scripts"))
-        import audit_identity
-        return audit_identity
+        import wikidata_audit
+        return wikidata_audit
 
     @staticmethod
     def _bindings(*pairs):
@@ -7031,7 +7031,7 @@ class TestAQuietPeerDoesNotHandOverItsPapers(unittest.TestCase):
 class TestAQuietWikidataDoesNotBlankALabel(unittest.TestCase):
     """`wd_labels` bypassed `wd_asked`, so its refusal never reached `carry_wikidata`.
 
-    Every other Wikidata read in `audit_identity` records that it did not answer, and
+    Every other Wikidata read in `wikidata_audit` records that it did not answer, and
     `carry_wikidata` puts the last run's counts back on the strength of it. This one call
     was the exception, and a run refused only here reported a worklist row naming a bare
     QID with nothing saying why.
@@ -7039,8 +7039,8 @@ class TestAQuietWikidataDoesNotBlankALabel(unittest.TestCase):
 
     def _a(self):
         sys.path.insert(0, os.path.join(ROOT, "scripts"))
-        import audit_identity
-        return audit_identity
+        import wikidata_audit
+        return wikidata_audit
 
     def test_a_refused_label_read_is_recorded_like_every_other(self):
         a = self._a()
@@ -7727,6 +7727,11 @@ class TestTheAuditKeepsThePagesItCouldNotRead(unittest.TestCase):
         import audit_identity
         return audit_identity
 
+    def _wd(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import wikidata_audit
+        return wikidata_audit
+
     def _answering(self, ai, status, body=b""):
         return answering(status, body, mods=(ai,))
 
@@ -7747,7 +7752,7 @@ class TestTheAuditKeepsThePagesItCouldNotRead(unittest.TestCase):
         """Both readings report an absence -- no item claims this identifier, this item
         states no gaps -- so a refusal reads as an author item in order. The worklist builds
         its two Wikidata sections from the counts, and `None` takes them away."""
-        ai = self._ai()
+        ai = self._wd()
         old = ai._wd_quiet
         try:
             cfg = {"identity": {"orcid": "0000-0002-3491-0632"},
@@ -7839,7 +7844,7 @@ class TestTheAuditKeepsThePagesItCouldNotRead(unittest.TestCase):
     def test_a_wikidata_answer_that_stopped_is_not_reported_as_http_200(self):
         """A body cut off mid-JSON arrives under HTTP 200, so the reason the worklist prints
         for carrying last run's counts would be a status that means the call succeeded."""
-        ai = self._ai()
+        ai = self._wd()
         old = ai._wd_quiet
         try:
             ai._wd_quiet = ""
