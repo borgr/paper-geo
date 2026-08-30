@@ -490,10 +490,7 @@ def call_api(pairs: list[tuple[dict, str]], cfg,
             print(f"  refused: {label}", file=sys.stderr)
             return None
         if msg.stop_reason == "max_tokens":
-            # Named separately from a parse failure because the fix is different: raise
-            # `llm.max_tokens`, do not go looking for a malformed field.
-            print(f"  truncated at max_tokens: {label} -- raise llm.max_tokens "
-                  f"(now {req['max_tokens']})", file=sys.stderr)
+            too_long(label, req)
             return None
         if how_out == "tool":
             sc = next((b.input for b in msg.content if b.type == "tool_use"), None)
@@ -502,13 +499,7 @@ def call_api(pairs: list[tuple[dict, str]], cfg,
                       file=sys.stderr)
             return sc
         text = next((b.text for b in msg.content if b.type == "text"), "")
-        # `llm.first_json` rather than `json.loads` even on the enforced rung: it reads a bare
-        # object identically, and on an unenforced one the object arrives inside a fence.
-        sc = first_json(text)
-        if sc is None:
-            print(f"  no JSON object in the reply: {label} ({len(text)} chars)",
-                  file=sys.stderr)
-        return sc
+        return parsed(text, label)
 
     # Left at 0, which `fits` reads as "do not truncate the paper". Unlike the
     # OpenAI-compatible path, `max_tokens` here is a reply budget rather than part of a
@@ -526,14 +517,7 @@ def call_api(pairs: list[tuple[dict, str]], cfg,
         return (f"{cfg['llm']['model']} via the Anthropic API, {eff} effort "
                 f"({ENFORCED[RUNGS[rung][1]]})")
 
-    for p, ev in pairs:
-        sc = ask(USER.format(evidence=ev), p["slug"])
-        if sc is None:
-            continue
-        out[p["slug"]] = sc
-        print(f"  ok  {p['slug']}  ({shape(sc, 'claims')} claims, "
-              f"{shape(sc, 'qa')} question groups)")
-        handed(on_draft, p["slug"], sc, provenance(), ask)
+    drive(pairs, ask, out, on_draft, provenance)
     return out, provenance(), ask
 
 
@@ -559,6 +543,45 @@ def shape(sc: dict, field: str) -> str:
     """How many of `field` there are, or what came back instead of a list of them."""
     v = sc.get(field)
     return str(len(v)) if isinstance(v, list) else f"{type(v).__name__}, not a list of"
+
+
+def too_long(label: str, req: dict) -> None:
+    """Say the reply hit the token ceiling.
+
+    Named apart from a parse failure because the fix is different -- raise
+    `llm.max_tokens`, rather than go looking for a malformed field.
+    """
+    print(f"  truncated at max_tokens: {label} -- raise llm.max_tokens "
+          f"(now {req['max_tokens']})", file=sys.stderr)
+
+
+def parsed(text: str, label: str) -> dict | None:
+    """The sidecar object in a reply, or None with a line saying the reply carried none.
+
+    `llm.first_json` rather than `json.loads` even on the enforced rung, since it reads a
+    bare object identically and on an unenforced one the object arrives inside a fence.
+    """
+    sc = first_json(text)
+    if sc is None:
+        print(f"  no JSON object in the reply: {label} ({len(text)} chars)",
+              file=sys.stderr)
+    return sc
+
+
+def drive(pairs, ask, out: dict, on_draft, provenance, suffix: str = "") -> None:
+    """Ask for each paper in turn, giving every draft away the moment it parses.
+
+    A paper whose reply did not parse is skipped rather than fatal, so one bad reply
+    costs one paper instead of the rest of the batch.
+    """
+    for p, ev in pairs:
+        sc = ask(USER.format(evidence=ev) + suffix, p["slug"])
+        if sc is None:
+            continue
+        out[p["slug"]] = sc
+        print(f"  ok  {p['slug']}  ({shape(sc, 'claims')} claims, "
+              f"{shape(sc, 'qa')} question groups)")
+        handed(on_draft, p["slug"], sc, provenance(), ask)
 
 
 # An OpenAI-compatible backend, for gateways and open-weight models. Env vars rather than
@@ -643,30 +666,16 @@ def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
                 return None
         ch = r.choices[0]
         if ch.finish_reason == "length":
-            print(f"  truncated at max_tokens: {label} -- raise llm.max_tokens "
-                  f"(now {req['max_tokens']})", file=sys.stderr)
+            too_long(label, req)
             return None
         text = ch.message.content or ""
-        sc = first_json(text)
-        if sc is None:
-            print(f"  no JSON object in the reply: {label} ({len(text)} chars)",
-                  file=sys.stderr)
-        return sc
+        return parsed(text, label)
 
     def provenance() -> str:
         how = "schema-enforced" if enforced else "unenforced, parsed from text"
         return f"{model} via an OpenAI-compatible endpoint ({how})"
 
-    for p, ev in pairs:
-        sc = ask(USER.format(evidence=ev)
-                 + JSON_ONLY,
-                 p["slug"])
-        if sc is None:
-            continue
-        out[p["slug"]] = sc
-        print(f"  ok  {p['slug']}  ({shape(sc, 'claims')} claims, "
-              f"{shape(sc, 'qa')} question groups)")
-        handed(on_draft, p["slug"], sc, provenance(), ask)
+    drive(pairs, ask, out, on_draft, provenance, JSON_ONLY)
     # The window travels with the closure because `repair` has to fit a paper into what is
     # left of it and has no other way to know how big it is. An attribute rather than a
     # third return value: every caller wants the request, one wants its budget.

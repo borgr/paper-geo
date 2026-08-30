@@ -489,6 +489,16 @@ def limits(locus: str) -> str:
     return "keep it a single plain string, and keep the meaning."
 
 
+def spliced(slug: str, fm: dict, path: str, source: str) -> list[str]:
+    """Write the draft as it now stands and return what validate says about it.
+
+    Each finding is shorn of its `<slug>.md: ` prefix, which is how `where` reads them.
+    """
+    write_draft(slug, fm, f"{source} + a targeted repair")
+    errs, qual = validate_draft(path, note=False)
+    return [str(x).split(".md: ")[-1] for x in errs + qual]
+
+
 def mend(slug: str, again, evidence: str = "", source: str = "a model") -> int:
     """Fix what is fixable one field at a time, and keep the result only if it helped.
 
@@ -565,9 +575,7 @@ def mend(slug: str, again, evidence: str = "", source: str = "a model") -> int:
     for locus, value in singles.items():
         snapshot, held = open(path, encoding="utf-8").read(), at(fm, locus)
         put(fm, locus, value)
-        write_draft(slug, fm, f"{source} + a targeted repair")
-        errs, qual = validate_draft(path, note=False)
-        found = [str(x).split(".md: ")[-1] for x in errs + qual]
+        found = spliced(slug, fm, path, source)
         mine = [f for f in found if where(f, fm) == locus]
         # Cleared its own complaint, and cost nothing anywhere else. The second half is
         # what catches a fix that reads as an improvement and breaks a rule next door --
@@ -589,9 +597,7 @@ def mend(slug: str, again, evidence: str = "", source: str = "a model") -> int:
         held = {locus: at(fm, locus) for locus in bulk}
         for locus, value in bulk.items():
             put(fm, locus, value)
-        write_draft(slug, fm, f"{source} + a targeted repair")
-        errs, qual = validate_draft(path, note=False)
-        found = [str(x).split(".md: ")[-1] for x in errs + qual]
+        found = spliced(slug, fm, path, source)
         mine = [f for f in found if where(f, fm) in bulk]
         if not mine and len(found) < count:
             kept += list(bulk)
