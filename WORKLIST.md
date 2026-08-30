@@ -16,7 +16,7 @@ holds the instructions; nothing here repeats them.
 **One edit each, and each one closes a section outright.** This is where
 the page gets visibly shorter.
 
-1. **Co-authors who may already have a Wikidata item (23)** — pick the line that is them and paste the QID into `data/overrides.yaml`, or `new` where none is. What every candidate item states about itself is in the section, so most rows need nothing opened, and answering the top few is worth doing on its own — each answer turns one co-author into `author` statements on the papers you share.
+1. **Co-authors who may already have a Wikidata item (22)** — pick the line that is them and paste the QID into `data/overrides.yaml`, or `new` where none is. What every candidate item states about itself is in the section, so most rows need nothing opened, and answering the top few is worth doing on its own — each answer turns one co-author into `author` statements on the papers you share.
 2. **ORCID is missing 1 of your 114 papers** — one BibTeX upload. Highest leverage on the page — Semantic Scholar and OpenAlex both re-cluster off ORCID, so this is the fix that makes other sections shrink without you.
 3. **2 field corrections the bibliography does not carry (1 entry)** — one paste per line, into the entry `orig.bib` already has for that paper. Every line is given ready to drop in, and the override lines go after. Worth more than its size — Scholar, Semantic Scholar and OpenAlex all read the paper's own record, and none of them reads this repo.
 4. **Wikipedia mentions 2 of your coinages across 5 article(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
@@ -155,7 +155,7 @@ and many independent paths into your item is the point of having them at all.
 page matched the name, or the value came straight from the bibliography.
 `python scripts/wikidata_coauthors.py --apply` writes them.
 
-## Co-authors who may already have a Wikidata item (23)
+## Co-authors who may already have a Wikidata item (22)
 
 Wikidata carries a human item under each of these names and none of them states an
 ORCID, so each is either this co-author reached from a paper rather than a profile
@@ -173,7 +173,6 @@ correcting the QIDs that are wrong:
 
 ```yaml
 wikidata_people:
-  0000-0003-4311-3876: Q102687062   # Omri Abend, or new, or no
   0000-0003-0153-6811: Q103330754   # Mikhail Yurochkin, or new, or no
   0000-0002-3141-5845: Q125454034   # Jacob Andreas — or Q62754, Q112760940, or new, or no
   0000-0003-2434-2534: Q102390975   # Carlos Alzate — or Q1042683, or new, or no
@@ -198,8 +197,6 @@ wikidata_people:
   0000-0002-4712-5527: Q117414502   # Yuting Lin, or new, or no
 ```
 
-- [ ] **Omri Abend** (54 papers with you) — [their ORCID record](https://orcid.org/0000-0003-4311-3876) states The Hebrew University of Jerusalem · "On the Weaknesses of Reinforcement Learning for Neural…" · "The Language of Legal and Illegal Activity on the Darknet"
-  - [Q102687062](https://www.wikidata.org/wiki/Q102687062) — Ph.D. Hebrew University 2013 · studied at Hebrew University of Jerusalem
 - [ ] **Mikhail Yurochkin** (14 papers with you) — [their ORCID record](https://orcid.org/0000-0003-0153-6811) states nothing public beyond the name
   - [Q103330754](https://www.wikidata.org/wiki/Q103330754) — statistician · studied at Moscow Institute of Physics and Technology, University of Michigan · at IBM Research
 - [ ] **Jacob Andreas** (10 papers with you) — [their ORCID record](https://orcid.org/0000-0002-3141-5845) states "Modeling Student Learning with 3.8 Million Program Traces" · "Cooperation by non-kin during birth underpins sperm…"
