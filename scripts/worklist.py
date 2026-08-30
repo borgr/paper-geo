@@ -455,38 +455,28 @@ def wikidata_orgs(st: dict) -> list[str]:
               "`python scripts/wikidata_orgs.py --apply` creates and writes them."]
     return L + [""]
 
-
-def upstream_gaps(papers: list[dict], cfg) -> list[str]:
-    """Papers the corpus has only because an override put them there, and the field
-    corrections it carries privately.
-
-    `extra_arxiv` and `extra_openreview` cover the interval before the entry lands in the
-    bibliography, and both files say to delete the line after. Nothing else reports them,
-    since the Scholar block finds missing papers by diffing Scholar against the corpus and an
-    override closes exactly that gap.
-
-    `_override` is provenance. `collect.py` sets it on records it adds from an override and it
-    disappears once the bibliography's own entry merges, so a paper still carrying it is still
-    absent upstream. The second and third blocks read `overrides.yaml` too, for lines left
-    behind after a paste lands and for `fields:` corrections upstream has not absorbed.
-    """
-    L = []
-    pend = sorted((p for p in papers if p.get("_override")),
-                  key=lambda p: -(p.get("citations") or 0))
-    edit = re.sub(r"^https://raw\.githubusercontent\.com/([^/]+/[^/]+)/(.+)$",
+def _bib_edit_url(cfg) -> str:
+    """The GitHub edit page for the bibliography, or "" when the source is not one."""
+    return re.sub(r"^https://raw\.githubusercontent\.com/([^/]+/[^/]+)/(.+)$",
                   r"https://github.com/\1/edit/\2",
                   ((cfg or {}).get("sources") or {}).get("bibtex_url") or "")
-    if pend:
-        L += [f"## {len(pend)} paper{'s' * (len(pend) != 1)} in the corpus that the "
-              f"bibliography does not have", "",
-              "Added by `extra_arxiv` or `extra_openreview` in",
-              "[`data/overrides.yaml`](data/overrides.yaml), so each has a page and a "
-              "canonical",
-              "URL already — this is not about the site. It is that the bibliography is this",
-              "pipeline's only real input, and every run these papers depend on a line in an",
-              "override file instead. Paste the entry upstream and delete that line.", ""]
-        if edit.startswith("https://github.com/"):
-            L += [f"Edit the bibliography here: <{edit}>", ""]
+
+
+def _absent_upstream(papers: list[dict], edit: str) -> list[str]:
+    """Papers still carrying `_override`, with the entry to paste, five at most."""
+    pend = sorted((p for p in papers if p.get("_override")),
+                  key=lambda p: -(p.get("citations") or 0))
+    if not pend:
+        return []
+    L = [f"## {len(pend)} paper{'s' * (len(pend) != 1)} in the corpus that the "
+         f"bibliography does not have", "",
+         "Added by `extra_arxiv` or `extra_openreview` in",
+         "[`data/overrides.yaml`](data/overrides.yaml), so each has a page and a canonical",
+         "URL already — this is not about the site. It is that the bibliography is this",
+         "pipeline's only real input, and every run these papers depend on a line in an",
+         "override file instead. Paste the entry upstream and delete that line.", ""]
+    if edit.startswith("https://github.com/"):
+        L += [f"Edit the bibliography here: <{edit}>", ""]
     for p in pend[:5]:
         # Synthesised from the fetched record, which is why the citation key is not one to
         # keep: the bibliography assigns keys, and the reason these records carry no
@@ -498,72 +488,99 @@ def upstream_gaps(papers: list[dict], cfg) -> list[str]:
               "  ```", ""]
     if len(pend) > 5:
         L += [f"- … and {len(pend) - 5} more, listed in `data/overrides.yaml`", ""]
+    return L
 
-    # A line is spent when the corpus has its paper *without* the marker: the record came
-    # from the bibliography this run, so the override added nothing. Matched on the same
-    # keys `collect.py` adds by -- an arXiv id, a normalised title -- so a line that never
-    # resolved to a paper at all is not reported here as done. That one is already loud:
-    # the collector prints `! extra_openreview: OpenReview has no accepted paper titled`.
-    ov = read_overrides()
-    from_bib = [p for p in papers if not p.get("_override")]
-    ids = {p["arxiv"] for p in from_bib if p.get("arxiv")}
-    titles = {norm_title(p.get("title") or "") for p in from_bib}
+
+def _spent_lines(papers: list[dict], ov: dict) -> list[str]:
+    """Override lines whose paper is now in the bibliography, so the line adds nothing.
+
+    A line is spent when the corpus has its paper *without* the marker. Matched on the same
+    keys `collect.py` adds by -- an arXiv id, a normalised title -- so a line that never
+    resolved to a paper at all is not reported here as done. That one is already loud: the
+    collector prints `! extra_openreview: OpenReview has no accepted paper titled`.
+    """
+    bib = [p for p in papers if not p.get("_override")]
+    ids = {p["arxiv"] for p in bib if p.get("arxiv")}
+    titles = {norm_title(p.get("title") or "") for p in bib}
     spent = [("extra_arxiv", str(i).strip()) for i in (ov.get("extra_arxiv") or [])
              if str(i).strip() in ids]
     spent += [("extra_openreview", str(t).strip())
               for t in (ov.get("extra_openreview") or [])
               if norm_title(str(t).strip()) in titles]
-    if spent:
-        L += [f"## {len(spent)} override line{'s' * (len(spent) != 1)} the bibliography "
-              f"has made redundant", "",
-              "The good outcome, and the last step of it. Each of these is in",
-              "[`data/overrides.yaml`](data/overrides.yaml) to cover the interval before the",
-              "paper reached the bibliography, and the bibliography now has it — the corpus",
-              "record carries its published citation key. Deleting the line changes no",
-              "output; leaving it means the next reader cannot tell which lines are still",
-              "load-bearing, which is how a stopgap becomes part of the design.", ""]
-        for k, v in spent:
-            # Whole, not clipped: this is the line to find and delete, so a fragment of it
-            # is not something the reader can search for.
-            L.append(f"- [ ] `{k}:` delete `{v}`")
-        L.append("")
+    if not spent:
+        return []
+    L = [f"## {len(spent)} override line{'s' * (len(spent) != 1)} the bibliography "
+         f"has made redundant", "",
+         "The good outcome, and the last step of it. Each of these is in",
+         "[`data/overrides.yaml`](data/overrides.yaml) to cover the interval before the",
+         "paper reached the bibliography, and the bibliography now has it — the corpus",
+         "record carries its published citation key. Deleting the line changes no",
+         "output; leaving it means the next reader cannot tell which lines are still",
+         "load-bearing, which is how a stopgap becomes part of the design.", ""]
+    # Whole, not clipped: this is the line to find and delete, so a fragment of it is not
+    # something the reader can search for.
+    return L + [f"- [ ] `{k}:` delete `{v}`" for k, v in spent] + [""]
 
-    # A `fields:` correction the bibliography could carry itself. Matched on the value
-    # anywhere in the entry rather than on a field name, because a venue lives in
-    # `booktitle` in one entry and `institution` in the next -- the ICML position paper's
-    # venue is already upstream under `institution`, and only its DOI and URL are missing.
+
+def _field_fixes(papers: list[dict], ov: dict, edit: str) -> list[str]:
+    """`fields:` corrections the bibliography entry could carry itself, one row per entry.
+
+    Matched on the value appearing anywhere in the entry rather than on a field name,
+    because a venue lives in `booktitle` in one entry and `institution` in the next -- the
+    ICML position paper's venue is already upstream under `institution`, and only its DOI
+    and URL are missing.
+    """
     BIBFIELD = {"doi": "doi", "url": "url", "year": "year", "venue": "booktitle"}
     by_slug = {p.get("slug"): p for p in papers}
-    priv = []                     # one row per paper -- one visit to one entry
+    priv = []
     for slug, fix in (ov.get("fields") or {}).items():
         rec = by_slug.get(slug) or {}
         bib = (rec.get("bibtex") or "").lower()
-        want = [(f, str(v)) for f, v in (fix or {}).items() if v and str(v).lower() not in bib]
+        want = [(f, str(v)) for f, v in (fix or {}).items()
+                if v and str(v).lower() not in bib]
         if want:
             priv.append((rec, slug, want))
-    if priv:
-        n = sum(len(w) for _r, _s, w in priv)
-        # Both numbers, because they differ and the reader can see only one of them: two
-        # corrections in one entry is one visit, and a header saying 2 above a single
-        # checkbox reads as a miscount.
-        L += [f"## {n} field correction{'s' * (n != 1)} the bibliography does not carry "
-              f"({len(priv)} entr{'y' if len(priv) == 1 else 'ies'})", "",
-              "`fields:` in [`data/overrides.yaml`](data/overrides.yaml) corrects these for",
-              "the corpus and nothing else. Scholar, Semantic Scholar and OpenAlex read the",
-              "paper's own record, so a correction that stays here is one they never get.",
-              "Add them to the entry upstream, then delete the override lines.", ""]
-        if edit.startswith("https://github.com/"):
-            L += [f"Edit the bibliography here: <{edit}>", ""]
-        for rec, slug, want in priv:
-            title = clipped(title_of(rec) or slug, 60)
-            key = rec.get("key") or ""
-            L += [f"- [ ] **{title}**" + (f" — entry `{key}`" if key else ""), "",
-                  "  ```bibtex"]
-            L += [f"  {BIBFIELD[f]:<12} = {{{v}}}," if f in BIBFIELD
-                  else f"  % {f} = {v}   <- field name depends on the entry type"
-                  for f, v in want]
-            L += ["  ```", ""]
+    if not priv:
+        return []
+    n = sum(len(w) for _r, _s, w in priv)
+    # Both numbers, because they differ and the reader can see only one of them: two
+    # corrections in one entry is one visit, and a header saying 2 above a single
+    # checkbox reads as a miscount.
+    L = [f"## {n} field correction{'s' * (n != 1)} the bibliography does not carry "
+         f"({len(priv)} entr{'y' if len(priv) == 1 else 'ies'})", "",
+         "`fields:` in [`data/overrides.yaml`](data/overrides.yaml) corrects these for",
+         "the corpus and nothing else. Scholar, Semantic Scholar and OpenAlex read the",
+         "paper's own record, so a correction that stays here is one they never get.",
+         "Add them to the entry upstream, then delete the override lines.", ""]
+    if edit.startswith("https://github.com/"):
+        L += [f"Edit the bibliography here: <{edit}>", ""]
+    for rec, slug, want in priv:
+        key = rec.get("key") or ""
+        L += [f"- [ ] **{clipped(title_of(rec) or slug, 60)}**"
+              + (f" — entry `{key}`" if key else ""), "", "  ```bibtex"]
+        L += [f"  {BIBFIELD[f]:<12} = {{{v}}}," if f in BIBFIELD
+              else f"  % {f} = {v}   <- field name depends on the entry type"
+              for f, v in want]
+        L += ["  ```", ""]
     return L
+
+
+def upstream_gaps(papers: list[dict], cfg) -> list[str]:
+    """Papers the corpus has only because an override put them there, and the field
+    corrections it carries privately.
+
+    `extra_arxiv` and `extra_openreview` cover the interval before the entry lands in the
+    bibliography, and all three blocks say to delete the override line once it has. Nothing
+    else reports them, since the Scholar block finds missing papers by diffing Scholar
+    against the corpus and an override closes exactly that gap.
+
+    `_override` is provenance. `collect.py` sets it on records it adds from an override and
+    it disappears once the bibliography's own entry merges, so a paper still carrying it is
+    still absent upstream.
+    """
+    ov, edit = read_overrides(), _bib_edit_url(cfg)
+    return (_absent_upstream(papers, edit) + _spent_lines(papers, ov)
+            + _field_fixes(papers, ov, edit))
 
 
 def orcid_missing_items(slugs: list[str], by_slug: dict) -> list[str]:
