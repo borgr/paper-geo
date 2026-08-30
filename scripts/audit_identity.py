@@ -177,8 +177,11 @@ def arxiv_registered(orcid: str) -> set[str] | None:
     try:
         root = ET.fromstring(raw)
     except ET.ParseError:
-        # An unlinked ORCID serves the arXiv 404 page, which is HTML, not Atom.
-        return set()
+        # An unlinked ORCID serves the arXiv 404 page, which is HTML. A feed that stops
+        # mid-document fails to parse the same way and this one runs to 245 KB, past the
+        # size at which a body arrives cut off -- read as unlinked it puts every paper in
+        # the "claim ownership" list.
+        return None if b"<feed" in raw[:200] else set()
     out = set()
     for e in root.findall("a:entry", ATOM):
         m = _ABS.search((e.findtext("a:id", "", ATOM) or ""))
@@ -206,7 +209,8 @@ def wd_asked(url: str) -> dict:
     except ValueError:
         d = None
     if d is None:
-        _wd_quiet = _wd_quiet or f"HTTP {st}"
+        _wd_quiet = _wd_quiet or (f"an answer that stopped after {len(raw)} bytes"
+                                  if st == 200 and raw else f"HTTP {st}")
     return d or {}
 
 
@@ -1223,17 +1227,27 @@ def arxiv_author_strings(ids: list[str], batch: int = 50) -> dict[str, list[str]
     The API takes up to 100 ids per `id_list` query, so the whole corpus is two or
     three requests rather than one per paper -- which matters because arXiv asks for
     a 3-second gap between calls, and 105 sequential requests would be five minutes.
+
+    A chunk that arrived but did not parse is halved and asked again. 50 entries carry 50
+    abstracts and run to 120 KB, and a body too large to deliver comes back cut off under
+    HTTP 200. A refusal is not halved, because a smaller ask does not answer it.
     """
     out: dict[str, list[str]] = {}
-    for i in range(0, len(ids), batch):
-        chunk = ids[i:i + batch]
+    todo = [ids[i:i + batch] for i in range(0, len(ids), batch)]
+    while todo:
+        chunk = todo.pop(0)
         st, raw = get_status("https://export.arxiv.org/api/query?id_list="
                              f"{','.join(chunk)}&max_results={len(chunk)}", retries=3)
         if st != 200 or not raw:
+            time.sleep(3)
             continue
         try:
             root = ET.fromstring(raw)
         except ET.ParseError:
+            if len(chunk) > 1:
+                half = len(chunk) // 2
+                todo[:0] = [chunk[:half], chunk[half:]]
+            time.sleep(3)
             continue
         for e in root.findall("a:entry", ATOM):
             m = _ABS.search(e.findtext("a:id", "", ATOM) or "")

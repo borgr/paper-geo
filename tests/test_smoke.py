@@ -7682,6 +7682,71 @@ class TestTheAuditKeepsThePagesItCouldNotRead(unittest.TestCase):
                 self.assertIsNone(ai.arxiv_registered("0000-0002-3491-0632"),
                                   "status %s read as unlinked" % st)
 
+    def test_a_feed_that_stopped_mid_document_is_not_an_unlinked_orcid(self):
+        """This author's feed runs to 245 KB, past the size at which a body has come back cut
+        off, and a cut-off feed fails to parse exactly as the HTML 404 page does. Read as
+        unlinked it says the author registered nothing and puts every paper up to claim."""
+        ai = self._ai()
+        cut = b'<?xml version="1.0" encoding="UTF-8"?>\n<feed xmlns="http://www.w3.org/2005'
+        with self._answering(ai, 200, cut):
+            self.assertIsNone(ai.arxiv_registered("0000-0002-0085-6496"),
+                              "a feed that stopped read as an unlinked ORCID")
+        page = (b'<!DOCTYPE html>\n<html><head><meta charset="utf-8">'
+                b"<title>404 Not Found</title></head><body>Not Found<br></body></html>")
+        with self._answering(ai, 200, page):
+            self.assertEqual(set(), ai.arxiv_registered("0000-0002-0085-6496"),
+                             "the arXiv 404 page read as an outage")
+
+    def test_an_arxiv_batch_too_large_to_come_back_whole_is_asked_again_in_halves(self):
+        """50 entries carry 50 abstracts and run to 120 KB. Dropped instead of halved, 50
+        papers go unchecked for a misspelled author name and no count on the page says so.
+        A refusal is not halved -- a smaller ask does not answer it."""
+        ai = self._ai()
+        feed = ('<feed xmlns="http://www.w3.org/2005/Atom">%s</feed>')
+        entry = ('<entry><id>http://arxiv.org/abs/%s</id>'
+                 '<author><name>Leshem Choshen</name></author></entry>')
+        ids = ["2401.0000%d" % i for i in range(4)]
+        calls = []
+
+        def answer(url, **kw):
+            got = url.split("id_list=", 1)[1].split("&")[0].split(",")
+            calls.append(got)
+            if len(got) > 2:
+                return 200, b'<feed xmlns="http://www.w3.org/2005/Atom"><entry><id>'
+            return 200, (feed % "".join(entry % i for i in got)).encode()
+
+        with mock.patch.object(ai, "get_status", answer), \
+             mock.patch.object(ai.time, "sleep", lambda _s: None):
+            got = ai.arxiv_author_strings(ids, batch=4)
+        self.assertEqual(sorted(ids), sorted(got), "a halved batch lost papers")
+        calls.clear()
+
+        def refuse(url, **kw):
+            calls.append(url.split("id_list=", 1)[1].split("&")[0].split(","))
+            return 500, b""
+
+        with mock.patch.object(ai, "get_status", refuse), \
+             mock.patch.object(ai.time, "sleep", lambda _s: None):
+            self.assertEqual({}, ai.arxiv_author_strings(ids, batch=4))
+        self.assertEqual([ids], calls, "a refusal was asked again in smaller pieces")
+
+    def test_a_wikidata_answer_that_stopped_is_not_reported_as_http_200(self):
+        """A body cut off mid-JSON arrives under HTTP 200, so the reason the worklist prints
+        for carrying last run's counts would be a status that means the call succeeded."""
+        ai = self._ai()
+        old = ai._wd_quiet
+        try:
+            ai._wd_quiet = ""
+            with self._answering(ai, 200, b'{"entities": {"Q1"'):
+                self.assertEqual({}, ai.wd_asked("https://www.wikidata.org/w/api.php?x=1"))
+            self.assertEqual("an answer that stopped after 18 bytes", ai._wd_quiet)
+            ai._wd_quiet = ""
+            with self._answering(ai, 503, b""):
+                self.assertEqual({}, ai.wd_asked("https://www.wikidata.org/w/api.php?x=1"))
+            self.assertEqual("HTTP 503", ai._wd_quiet)
+        finally:
+            ai._wd_quiet = old
+
     def test_nothing_is_written_over_the_claim_list_when_arxiv_is_silent(self):
         ai = self._ai()
         cfg = {"identity": {"orcid": "0000-0002-3491-0632"}}
