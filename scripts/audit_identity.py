@@ -1103,6 +1103,123 @@ def arxiv_misspellings(n_typo: list) -> list[str]:
             "[arxiv_name_fixes.md](arxiv_name_fixes.md).", ""]
 
 
+def _last_reading(path: str) -> dict:
+    """The state file from the previous run, or `{}` when there is not one yet."""
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def _carried(prev: dict, *keys) -> dict:
+    """The previous reading for a check this run skipped.
+
+    A skipped check made no claim either way, so writing empty lists for it would report
+    "nothing to do" -- the one output indistinguishable from success, and the one that
+    quietly removes a section from WORKLIST.md. Carrying the last real reading keeps the
+    section, with numbers that were true once.
+    """
+    return {k: prev[k] for k in keys if k in prev}
+
+
+def _hf_counts(hf, prev: dict) -> dict:
+    """Which papers the Hugging Face page lists, is missing, and cannot claim."""
+    if hf is None:
+        return _carried(prev, "hf_missing", "hf_unclaimed", "hf_pending", "hf_blocked")
+    return {"hf_missing": [p["arxiv"] for p in hf["missing"]],
+            "hf_unclaimed": [p["arxiv"] for p in hf["unclaimed"]],
+            "hf_pending": [p["arxiv"] for p in hf["pending"]],
+            "hf_blocked": [p["arxiv"] for p in hf["blocked"]]}
+
+
+def _name_counts(r: dict, args, prev: dict) -> dict:
+    """Papers whose arXiv author list misspells the name or omits it."""
+    if args.no_names:
+        return _carried(prev, "arxiv_name_typos", "arxiv_name_absent")
+    # Highest-leverage arXiv item and the only one upstream of every other surface, so
+    # the worklist needs the ids, not just a count.
+    return {"arxiv_name_typos": [{"arxiv": p["arxiv"], "reads": p["near_miss"],
+                                  "slug": p["slug"]} for p in r["n_typo"]],
+            "arxiv_name_absent": [p["arxiv"] for p in r["n_absent"]]}
+
+
+def _ownership_counts(r: dict, prev: dict) -> dict:
+    """How much of the corpus the arXiv author feed claims."""
+    reg = r["reg"]
+    # An unread feed would report every paper as somebody else's and blank the section
+    # that says so, so the last reading stands.
+    if reg is None:
+        return _carried(prev, "arxiv_registered", "arxiv_unowned")
+    return {"arxiv_registered": len(reg),
+            "arxiv_unowned": [p["arxiv"] for p in r["ax"] if p["arxiv"] not in reg]}
+
+
+def _orcid_profile_counts(orc: dict, d: dict) -> dict:
+    """What the ORCID record says about the person, before its list of works."""
+    return {"orcid_public_works": orc["works"],
+            "orcid_has_canonical_url": d["has_canon"],
+            "orcid_missing_variants": d["missing_variants"],
+            "orcid_keywords": len(orc["keywords"]),
+            "orcid_missing_keywords": d["want_kw"],
+            "orcid_missing_other_pages": d["other_pages"]}
+
+
+def _orcid_work_counts(r: dict, d: dict) -> dict:
+    """Where the ORCID list of works disagrees with the corpus, with what to paste."""
+    return {"orcid_strays_confirmed": [t for t, _p, _k in d["o_conf"]],
+            "orcid_strays_unknown": [t for t, _p, _k in d["o_unk"]],
+            "orcid_duplicate_groups": sorted(d["o_dups"]),
+            # `orcid_remove.md` has the pairs in a table; the worklist had a pointer to
+            # it and no values, which reads as "there is something here" over an empty
+            # section. Both put-codes and the one DOI to paste travel with the count now,
+            # so the summary can say the whole job in a line.
+            "orcid_duplicate_pairs": dup_pairs(d["o_dups"], r["papers"]),
+            # `should_carry` as well as `should_be`, so the worklist can name the paper and give
+            # the string to paste; `carried_*` so it can link the wrong DOI. That link is the
+            # evidence for the item -- following the identifier on your own record and landing on
+            # somebody else's paper -- and without it the instruction is "trust us, replace this".
+            "orcid_misfiled_ids": [{"put": put, "should_be": right["slug"],
+                                    "should_carry": paper_doi(right),
+                                    "carries": [f"{t}:{v}" for t, v in ids],
+                                    "carried_doi": next((v for t, v in ids
+                                                         if t == "doi"), None),
+                                    "carried_title": (title_of(wrong))}
+                                   for _t, put, ids, right, wrong in d["o_misfiled"]],
+            "orcid_missing_papers": [p["slug"] for p in d["o_missing"]],
+            "orcid_autoupdate_works": sum(d["auto_src"].values()),
+            "orcid_missing_employment": d["missing_empl"],
+            "orcid_missing_education": d["missing_edu"],
+            "orcid_education_incomplete": [e["org"] for e in d["edu_open"]]}
+
+
+def _wikidata_counts(cfg: dict, r: dict) -> dict:
+    """The item, its own gaps, and how much of the corpus has an item.
+
+    Every count is None rather than 0 when the surface did not answer, which is what
+    `carry_wikidata` replaces with the previous reading.
+    """
+    gaps, cov = r["wd_gaps"], r["wd_cov"]
+    return {"wikidata": r["wd"],
+            "wikidata_gaps": (len(gaps.get("missing") or [])
+                              + len(gaps.get("wrong") or [])
+                              + len(gaps.get("dupes") or [])
+                              + len(gaps.get("bad_aliases") or [])
+                              + len(gaps.get("want_aliases") or []))
+            if gaps else None,
+            "wikidata_papers_present": (len(cov["present"]) if cov else None),
+            "wikidata_papers_absent": (len(cov["absent"]) if cov else None),
+            "wikidata_papers_unchecked": (len(cov.get("unchecked") or []) if cov
+                                          else None),
+            # How many of the absent ones can actually be created, which is smaller: a paper with
+            # neither a DOI nor an arXiv id has no key to deduplicate against, so nothing will
+            # mint an item for it. The worklist heads its section with this rather than `absent`,
+            # because a heading saying 109 over a command that creates 108 is a count that does
+            # not match its list.
+            "wikidata_papers_creatable": (
+                sum(1 for p in cov["absent"] if paper_item(p, cfg)) if cov else None)}
+
+
 def audit_state(cfg: dict, args, r: dict, d: dict, path: str) -> dict:
     """The counts WORKLIST.md reads, carrying `path`'s numbers for whatever this run skipped.
 
@@ -1110,106 +1227,15 @@ def audit_state(cfg: dict, args, r: dict, d: dict, path: str) -> dict:
     Committing them would store someone else's data and let it go stale, and an absent file
     means the worklist skips the section rather than reporting a zero.
     """
-    ids = cfg["ids"]
-    papers, ax, orc = r["papers"], r["ax"], r["orc"]
-    reg, wd, wd_gaps = r["reg"], r["wd"], r["wd_gaps"]
-    wd_cov, hf, n_typo = r["wd_cov"], r["hf"], r["n_typo"]
-    n_absent, stray = r["n_absent"], r["stray"]
-    has_canon, missing_variants = d["has_canon"], d["missing_variants"]
-    other_pages, want_kw = d["other_pages"], d["want_kw"]
-    o_dups, o_misfiled = d["o_dups"], d["o_misfiled"]
-    o_conf, o_unk, o_missing = d["o_conf"], d["o_unk"], d["o_missing"]
-    auto_src, missing_empl, missing_edu = d["auto_src"], d["missing_empl"], d["missing_edu"]
-    edu_open = d["edu_open"]
-    prev = {}
-    try:
-        with open(path) as f:
-            prev = json.load(f)
-    except (OSError, ValueError):
-        pass
-
-    def carried(*keys) -> dict:
-        """The previous reading for a check this run skipped.
-
-        A skipped check made no claim either way, so writing empty lists for it would
-        report "nothing to do" -- the one output indistinguishable from success, and
-        the one that quietly removes a section from WORKLIST.md. Carrying the last
-        real reading through keeps the section, with numbers that were true once,
-        which is the honest degradation.
-        """
-        return {k: prev[k] for k in keys if k in prev}
-
-    state = carried("hf_missing", "hf_unclaimed", "hf_pending", "hf_blocked") \
-        if hf is None else \
-        {"hf_missing": [p["arxiv"] for p in hf["missing"]],
-         "hf_unclaimed": [p["arxiv"] for p in hf["unclaimed"]],
-         "hf_pending": [p["arxiv"] for p in hf["pending"]],
-         "hf_blocked": [p["arxiv"] for p in hf["blocked"]]}
-    state.update(carried("arxiv_name_typos", "arxiv_name_absent")
-                 if args.no_names else
-                 # Highest-leverage arXiv item and the only one upstream of every
-                 # other surface, so the worklist needs the ids, not just a count.
-                 {"arxiv_name_typos": [{"arxiv": p["arxiv"], "reads": p["near_miss"],
-                                        "slug": p["slug"]} for p in n_typo],
-                  "arxiv_name_absent": [p["arxiv"] for p in n_absent]})
-    # An unread feed would report every paper as somebody else's and blank the section
-    # that says so, so the last reading stands.
-    state.update(carried("arxiv_registered", "arxiv_unowned") if reg is None else
-                 {"arxiv_registered": len(reg),
-                  "arxiv_unowned": [p["arxiv"] for p in ax if p["arxiv"] not in reg]})
-    state.update({"orcid_public_works": orc["works"],
-                  "orcid_has_canonical_url": has_canon,
-                  "orcid_missing_variants": missing_variants,
-                  "orcid_keywords": len(orc["keywords"]),
-                  "orcid_missing_keywords": want_kw,
-                  "orcid_missing_other_pages": other_pages,
-                  "arxiv_total": len({p["arxiv"] for p in ax}),
-                  "arxiv_stray": stray,
-                  "orcid_strays_confirmed": [t for t, _p, _k in o_conf],
-                  "orcid_strays_unknown": [t for t, _p, _k in o_unk],
-                  "orcid_duplicate_groups": sorted(o_dups),
-                  # `orcid_remove.md` has the pairs in a table; the worklist had a
-                  # pointer to it and no values, which reads as "there is something here"
-                  # over an empty section. Both put-codes and the one DOI to paste travel
-                  # with the count now, so the summary can say the whole job in a line.
-                  "orcid_duplicate_pairs": dup_pairs(o_dups, papers),
-                  # `should_carry` as well as `should_be`, so the worklist can name the paper and give
-                  # the string to paste; `carried_*` so it can link the wrong DOI. That link is the
-                  # evidence for the item -- following the identifier on your own record and landing on
-                  # somebody else's paper -- and without it the instruction is "trust us, replace this".
-                  "orcid_misfiled_ids": [{"put": put, "should_be": right["slug"],
-                                          "should_carry": paper_doi(right),
-                                          "carries": [f"{t}:{v}" for t, v in ids],
-                                          "carried_doi": next((v for t, v in ids
-                                                               if t == "doi"), None),
-                                          "carried_title": (title_of(wrong))}
-                                         for _t, put, ids, right, wrong in o_misfiled],
-                  "orcid_missing_papers": [p["slug"] for p in o_missing],
-                  "orcid_autoupdate_works": sum(auto_src.values()),
-                  "orcid_missing_employment": missing_empl,
-                  "orcid_missing_education": missing_edu,
-                  "orcid_education_incomplete": [r["org"] for r in edu_open],
-                  "wikidata": wd,
-                  "wikidata_gaps": (len(wd_gaps.get("missing") or [])
-                                    + len(wd_gaps.get("wrong") or [])
-                                    + len(wd_gaps.get("dupes") or [])
-                                    + len(wd_gaps.get("bad_aliases") or [])
-                                    + len(wd_gaps.get("want_aliases") or []))
-                  if wd_gaps else None,
-                  "wikidata_papers_present": (len(wd_cov["present"]) if wd_cov
-                                              else None),
-                  "wikidata_papers_absent": (len(wd_cov["absent"]) if wd_cov
-                                             else None),
-                  "wikidata_papers_unchecked": (len(wd_cov.get("unchecked") or [])
-                                                if wd_cov else None),
-                  # How many of the absent ones can actually be created, which is smaller: a paper with
-                  # neither a DOI nor an arXiv id has no key to deduplicate against, so nothing will
-                  # mint an item for it. The worklist heads its section with this rather than `absent`,
-                  # because a heading saying 109 over a command that creates 108 is a count that does
-                  # not match its list.
-                  "wikidata_papers_creatable": (
-                      sum(1 for p in wd_cov["absent"] if paper_item(p, cfg))
-                      if wd_cov else None)})
+    prev = _last_reading(path)
+    state = _hf_counts(r["hf"], prev)
+    state.update(_name_counts(r, args, prev))
+    state.update(_ownership_counts(r, prev))
+    state.update(_orcid_profile_counts(r["orc"], d))
+    state.update({"arxiv_total": len({p["arxiv"] for p in r["ax"]}),
+                  "arxiv_stray": r["stray"]})
+    state.update(_orcid_work_counts(r, d))
+    state.update(_wikidata_counts(cfg, r))
     quiet = carry_wikidata(state, prev)
     if quiet:
         print("wikidata did not answer (%s), so its half of this report is carried from "
