@@ -60,12 +60,19 @@ GAP_FRAC = 0.15
 # clean result against the paper for CACHE_DAYS.
 _silent: set[str] = set()
 
+# Hosts that rejected the request. A 400 is this code handing OpenAlex a query it will not
+# parse, and it comes back the same on every re-run, so telling a reader to re-run leaves
+# them retrying forever. Read separately -- see `blind`.
+_rejected: set[str] = set()
+
 
 def lookup(url: str) -> dict | None:
-    """One JSON lookup, None if it did not answer, with the host recorded in `_silent`.
+    """One JSON lookup, None if it did not answer, with the host recorded against the run.
 
     Both indexes answer 200 with an empty result set for a name they do not have, so any
-    other status is a refusal rather than a report.
+    other status is a refusal rather than a report. A 400 goes to `_rejected` and every
+    other refusal to `_silent`, which is the difference between a query to fix and a run
+    to repeat.
     """
     st, raw = get_status(url, accept="application/json")
     try:
@@ -73,7 +80,7 @@ def lookup(url: str) -> dict | None:
     except ValueError:
         d = None
     if d is None:
-        _silent.add(host_of(url))
+        (_rejected if st == 400 else _silent).add(host_of(url))
     return d
 
 
@@ -87,6 +94,21 @@ def scholar_query(title: str) -> str:
     plain = clean_latex(title or "").replace("{", "").replace("}", "")
     return ("https://scholar.google.com/scholar?q="
             + urllib.parse.quote(f'"{" ".join(plain.split())}"'))
+
+
+# `?`, `,` and `*` each come back HTTP 400 inside a `.search:` filter value, percent-encoded
+# or not, and `|` parses as OR -- which changes the search rather than failing it.
+RESERVED = "?,*|"
+
+
+def searchable(text: str, words: int = 0) -> str:
+    """`text` as a `.search:` filter value, cut to the first `words` words when given.
+
+    A filter matches tokens, so the characters OpenAlex reserves were never part of the
+    match and dropping them narrows nothing.
+    """
+    out = "".join(" " if c in RESERVED else c for c in text).split()
+    return " ".join(out[:words] if words else out)
 
 
 def undercounted(papers, diff) -> list[dict]:
@@ -129,7 +151,7 @@ def initials_forms(name: str) -> list[str]:
 
 def _openalex_by_name(name: str, mailto: str | None) -> list[dict]:
     q = ("https://api.openalex.org/works?per-page=100&filter=raw_author_name.search:"
-         + urllib.parse.quote(name)
+         + urllib.parse.quote(searchable(name))
          + "&select=id,doi,display_name,publication_year,cited_by_count,authorships")
     d = lookup(q + (f"&mailto={mailto}" if mailto else ""))
     out = []
@@ -236,14 +258,26 @@ def split_records(papers, mailto, limit=None) -> dict:
     except (OSError, ValueError):
         cache = {}
     fresh = (datetime.date.today() - datetime.timedelta(days=CACHE_DAYS)).isoformat()
+
+    def answered(p) -> bool:
+        """Whether the cache already holds the answer to the question this run would ask.
+
+        An entry asked under a different search string answers a different question, so a
+        change to `searchable` re-asks exactly the papers it changed and leaves the rest.
+        """
+        e = cache.get(p.get("slug")) or {}
+        return (e.get("asked", "") >= fresh
+                and e.get("search") == searchable(p.get("title") or "", 12))
+
     asked = 0
     for p in papers[:limit]:
         title, slug = p.get("title") or "", p.get("slug")
-        if len(title) < 25 or (cache.get(slug) or {}).get("asked", "") >= fresh:
+        if len(title) < 25 or answered(p):
             continue
+        ask = searchable(title, 12)
         q = ("https://api.openalex.org/works?per-page=25&select=id,display_name,"
              "cited_by_count,publication_year&filter=title.search:"
-             + urllib.parse.quote(" ".join(title.split()[:12])))
+             + urllib.parse.quote(ask))
         d = lookup(q + (f"&mailto={mailto}" if mailto else ""))
         if budget_reset("api.openalex.org") is not None:
             break
@@ -255,7 +289,7 @@ def split_records(papers, mailto, limit=None) -> dict:
         asked += 1
         want = title_tokens(title)
         cache[slug] = {
-            "asked": datetime.date.today().isoformat(),
+            "asked": datetime.date.today().isoformat(), "search": ask,
             "records": [{"url": w.get("id"), "title": w.get("display_name"),
                          "year": w.get("publication_year"),
                          "citations": w.get("cited_by_count") or 0}
@@ -280,8 +314,7 @@ def split_records(papers, mailto, limit=None) -> dict:
     checkable = [p for p in papers[:limit] if len(p.get("title") or "") >= 25]
     return {"rows": sorted(out, key=lambda r: -sum(x["citations"] for x in r["records"])),
             "budget_reset": budget_reset("api.openalex.org"),
-            "checked": len([p for p in checkable
-                            if (cache.get(p.get("slug")) or {}).get("asked", "") >= fresh]),
+            "checked": len([p for p in checkable if answered(p)]),
             "total": len(checkable)}
 
 
@@ -298,8 +331,18 @@ def out_of_credit(state: dict) -> bool:
     return (state.get("openalex") or {}).get("budget_reset") is not None
 
 
-def blind(silent: list[str]) -> list[str]:
-    """The stand-in for a count of nothing, when nothing is not what a source said."""
+def blind(silent: list[str], rejected: list[str] = ()) -> list[str]:
+    """The stand-in for a count of nothing, when nothing is not what a source said.
+
+    A rejected query says re-running is not the fix, because it comes back rejected. The
+    fix is `searchable`, which is where a character the filter reserves gets dropped.
+    """
+    if rejected:
+        return [textwrap.fill(
+            f"{' and '.join(rejected)} rejected the query, so an empty list here is not a "
+            "finding. Re-running repeats the rejection -- the search string carries a "
+            "character the filter reserves, which `searchable` is meant to drop.", 78,
+            break_on_hyphens=False)]
     return [textwrap.fill(
         f"{' and '.join(silent)} did not answer this run, so an empty list here is not a "
         "finding. Re-run `python scripts/scholar_strays.py`.", 78,
@@ -339,6 +382,7 @@ def write_page(state: dict) -> str:
         L.append("")
 
     silent = state.get("silent") or []
+    rejected = state.get("rejected") or []
     # The budget wording asserts Crossref answered with nothing, which only one of these
     # two states supports.
     half_blind = out_of_credit(state) and "api.crossref.org" not in silent
@@ -357,16 +401,16 @@ def write_page(state: dict) -> str:
         L.append("")
     elif half_blind:
         L += [*HALF_BLIND, ""]
-    elif silent:
-        L += [*blind(silent), ""]
+    elif silent or rejected:
+        L += [*blind(silent, rejected), ""]
     else:
         L += ["None found at OpenAlex or Crossref.", ""]
 
     L += [f"## Filed under your name forms but not in the bibliography ({len(other)})", ""]
     if not other and half_blind:
         L += [*HALF_BLIND, ""]
-    elif not other and silent:
-        L += [*blind(silent), ""]
+    elif not other and (silent or rejected):
+        L += [*blind(silent, rejected), ""]
     elif other:
         L += ["Either somebody else with a similar name, or a paper the bibliography never",
               "received. Only the second kind is yours to act on, and it goes into",
@@ -394,7 +438,10 @@ def write_page(state: dict) -> str:
                and (oa.get("checked") or 0) < (oa.get("total") or 0))
     if partial:
         spent = out_of_credit(state)
-        why = f"OpenAlex {METER}" if spent else "OpenAlex did not answer for the rest."
+        why = ("OpenAlex rejected the query for the rest, which a re-run repeats."
+               if "api.openalex.org" in rejected
+               else f"OpenAlex {METER}" if spent
+               else "OpenAlex did not answer for the rest.")
         L += [textwrap.fill(
             f"**Partial: {oa.get('checked')} of {oa.get('total')} papers checked.** {why} "
             f"Every answer is cached, so re-running `python scripts/scholar_strays.py` "
@@ -448,6 +495,7 @@ def main() -> int:
         state["split_records"], state["openalex"] = sp.pop("rows"), sp
     state["openalex"]["budget_reset"] = budget_reset("api.openalex.org")
     state["silent"] = sorted(_silent)
+    state["rejected"] = sorted(_rejected)
     write_json(os.path.join(BUILD, "scholar_strays.json"), state, indent=1)
     path = write_page(state)
 

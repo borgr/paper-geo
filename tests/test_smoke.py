@@ -1889,7 +1889,9 @@ class TestTheSplitPassResumesTomorrow(unittest.TestCase):
 
     def test_a_fresh_answer_is_not_paid_for_twice(self):
         today = datetime.date.today().isoformat()
-        ss, asked, _d = self._module({"p0": {"asked": today, "records": []}}, [{"results": []}])
+        ss, asked, _d = self._module(
+            {"p0": {"asked": today, "search": self._papers(1)[0]["title"], "records": []}},
+            [{"results": []}])
         out = ss.split_records(self._papers(2), None)
         self.assertEqual(len(asked), 1, "re-asked a paper answered today")
         self.assertEqual(out["checked"], 2)
@@ -1916,6 +1918,53 @@ class TestTheSplitPassResumesTomorrow(unittest.TestCase):
                          "records are not ordered by citations")
         with open(os.path.join(d, "openalex_splits.json")) as f:
             self.assertEqual(sorted(json.load(f)), ["p0", "p1"], "the cache did not persist")
+
+    def test_a_character_the_filter_reserves_never_reaches_the_query(self):
+        """`?`, `,` and `*` come back HTTP 400 from a `.search:` filter, encoded or not, and
+        `|` parses as OR -- a different search rather than a failed one. A filter matches
+        tokens, so dropping them costs no words."""
+        import scholar_strays as ss
+        self.assertEqual("Skill Issue Are Skills Language-Invariant in LLMs",
+                         ss.searchable("Skill Issue? Are Skills, Language-Invariant in LLMs"))
+        papers = [{"slug": "p0", "title_display": "P",
+                   "title": "Instructions? Shape, Production of Language* not|Processing here"}]
+        ss, asked, _d = self._module({}, [{"results": []}])
+        ss.split_records(papers, None)
+        self.assertEqual(1, len(asked))
+        got = urllib.parse.unquote(asked[0].split("title.search:", 1)[1])
+        self.assertEqual("Instructions Shape Production of Language not Processing here", got)
+
+    def test_an_answer_to_a_different_query_is_not_this_papers_answer(self):
+        """The cache holds the search string it answered, so a change to `searchable` re-asks
+        exactly the papers whose query it changed. Without it a paper stays stamped with the
+        answer to a query nobody asks any more, which reads as OpenAlex holding one record."""
+        today = datetime.date.today().isoformat()
+        title = self._papers(1)[0]["title"]
+        for search, want in ((title, 0), ("A different question entirely", 1), (None, 1)):
+            entry = {"asked": today, "records": []}
+            if search is not None:
+                entry["search"] = search
+            ss, asked, _d = self._module({"p0": entry}, [None])
+            out = ss.split_records(self._papers(1), None)
+            self.assertEqual(want, len(asked), "search=%r" % search)
+            self.assertEqual(1 - want, out["checked"], "search=%r" % search)
+
+    def test_a_rejected_query_is_not_a_quiet_host_and_no_re_run_fixes_it(self):
+        """A 400 is a malformed query, and it comes back on every re-run. Told to re-run, a
+        reader retries forever and the section stays empty as though OpenAlex had answered."""
+        import scholar_strays as ss
+        importlib.reload(ss)
+        self.addCleanup(importlib.reload, ss)
+        with mock.patch.object(ss, "get_status", lambda _u, **kw: (400, b"")):
+            self.assertIsNone(ss.lookup("https://api.openalex.org/works?filter=x"))
+        self.assertEqual({"api.openalex.org"}, ss._rejected)
+        self.assertEqual(set(), ss._silent, "a rejected query was reported as an outage")
+        text = self._page(ss, {"rejected": ["api.openalex.org"]})
+        self.assertIn("Re-running repeats the rejection", text)
+        self.assertNotIn("Re-run `python scripts/scholar_strays.py`", text)
+        partial = {"rejected": ["api.openalex.org"],
+                   "openalex": {"checked": 3, "total": 5, "budget_reset": None}}
+        self.assertIn("rejected the query for the rest", self._page(ss, partial))
 
     def test_a_search_that_did_not_answer_is_not_cached_as_no_split(self):
         """A cache entry stamped with today's date and no records stops the paper being
@@ -2023,7 +2072,7 @@ class TestTheSplitPassResumesTomorrow(unittest.TestCase):
     def test_a_cached_answer_is_filtered_again_before_it_is_reported(self):
         title = "A sufficiently long paper title number 0"
         today = datetime.date.today().isoformat()
-        cached = {"p0": {"asked": today, "records": [
+        cached = {"p0": {"asked": today, "search": title, "records": [
             {"id": "W1", "title": title, "citations": 9, "year": 2024},
             {"id": "W2", "title": title + " and its consequences", "citations": 4,
              "year": 2024}]}}
