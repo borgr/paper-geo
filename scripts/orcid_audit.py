@@ -127,8 +127,93 @@ def orcid_public(orcid: str) -> dict:
         "status": st,
     }
 
+_ARXIV_DOI = re.compile(r"10\.48550/arxiv\.(.+)$", re.I)
 
-def orcid_strays(orc: dict, papers) -> list[tuple]:
+
+def _index(papers) -> dict:
+    """The corpus keyed the four ways a work is matched: DOI, arXiv id, title, token set."""
+    # A token set two corpus papers share is dropped rather than resolved: which one an
+    # ORCID work meant would be a guess, and the guess would be invisible -- the work
+    # vanishes from this report either way, so a wrong pick reads exactly like a right one.
+    # Four tokens minimum, because the shorter the set the cheaper an accidental collision.
+    tok: dict = {}
+    for p in papers:
+        t = title_tokens(p["title"])
+        if len(t) >= 4:
+            tok.setdefault(t, []).append(p)
+    return dict(doi={p["doi"].lower(): p for p in papers if p.get("doi")},
+                arxiv={str(p["arxiv"]).lower(): p for p in papers if p.get("arxiv")},
+                title={norm_title(p["title"]): p for p in papers},
+                tokens={t: v[0] for t, v in tok.items() if len(v) == 1})
+
+
+def _rejected() -> dict:
+    """Works the collector threw out on author name, keyed by normalised title."""
+    try:
+        with open(os.path.join(BUILD, "not_mine.json")) as f:
+            return {norm_title(x["title"]): x for x in json.load(f)}
+    except (OSError, ValueError):
+        return {}
+
+
+def _by_ids(ids, ix: dict) -> dict | None:
+    """The corpus paper one of these identifiers names."""
+    for typ, val in ids:
+        v = val.lower()
+        if typ == "doi":
+            m = _ARXIV_DOI.match(v)
+            if m and m.group(1) in ix["arxiv"]:
+                return ix["arxiv"][m.group(1)]
+            if v in ix["doi"]:
+                return ix["doi"][v]
+        elif typ == "arxiv" and v.lstrip("arxiv:") in ix["arxiv"]:
+            return ix["arxiv"][v.lstrip("arxiv:")]
+    return None
+
+
+def _by_title(title: str, ix: dict) -> tuple:
+    """The corpus paper this title names, and how sure the match is.
+
+    The confidence matters to `_placed` and only for the exact case: an identifier
+    disagreeing with an *exact* title is a mistyped identifier, while an identifier
+    disagreeing with a looser match is just title drift.
+    """
+    n = norm_title(title)
+    if n in ix["title"]:
+        return ix["title"][n], "exact"
+    # Only in the containment direction: an ORCID title that is a prefix or suffix of a
+    # corpus title is a dropped subtitle, not a new paper. Guarded by length so a short
+    # title cannot swallow a long unrelated one.
+    if len(n) >= 25:
+        for cn, p in ix["title"].items():
+            if n in cn or cn in n:
+                return p, "loose"
+    # Rearranged, which both checks above read as a different paper: the string is not
+    # equal and, once the words move across the colon, neither title contains the other.
+    # Live case, and the one that motivated this -- ORCID holds "Tie the KnOTS: Model
+    # Merging with SVD" for the corpus's "Model merging with SVD to tie the Knots", and
+    # the audit called it a work it could not place.
+    p = ix["tokens"].get(title_tokens(title))
+    return (p, "loose") if p else (None, None)
+
+
+def _placed(title: str, ids, ix: dict) -> tuple:
+    """The corpus paper a work belongs to, and `(right, wrong)` when its identifier lies.
+
+    The identifier normally wins, since titles drift and identifiers do not. The exception
+    the second half exists for: an identifier pointing at paper A while the title is
+    character-for-character paper B is a wrong DOI typed into the work, and trusting the id
+    there merges two papers and reports the absorbed one as missing. Only an `exact` title
+    match overrides -- a loose match is the drift the id survives.
+    """
+    hid = _by_ids(ids, ix)
+    tid, how = _by_title(title, ix)
+    if hid is not None and tid is not None and hid["slug"] != tid["slug"]:
+        return (tid, (tid, hid)) if how == "exact" else (hid, None)
+    return hid or tid, None
+
+
+def orcid_strays(orc: dict, papers) -> tuple:
     """Works on the ORCID record that are not in the corpus.
 
     Returns `(strays, duplicate_groups, matched_slugs, misfiled, merged_versions)`. A work
@@ -143,87 +228,16 @@ def orcid_strays(orc: dict, papers) -> list[tuple]:
                           in that paper's group and its own title is never compared
         matched_slugs     the other direction, which corpus papers the record lacks
     """
-    ARXIV_DOI = re.compile(r"10\.48550/arxiv\.(.+)$", re.I)
-    by_doi = {p["doi"].lower(): p for p in papers if p.get("doi")}
-    by_arxiv = {str(p["arxiv"]).lower(): p for p in papers if p.get("arxiv")}
-    by_title = {norm_title(p["title"]): p for p in papers}
-    # Same corpus keyed by content-word set, for the reordering fallback below. A set two
-    # corpus papers share is dropped rather than resolved: which one an ORCID work meant
-    # would be a guess, and the guess would be invisible -- the work vanishes from this
-    # report either way, so a wrong pick reads exactly like a right one. Four tokens
-    # minimum, because the shorter the set the cheaper an accidental collision.
-    _tok = {}
-    for p in papers:
-        t = title_tokens(p["title"])
-        if len(t) >= 4:
-            _tok.setdefault(t, []).append(p)
-    by_tokens = {t: v[0] for t, v in _tok.items() if len(v) == 1}
-    rejected = {}
-    try:
-        with open(os.path.join(BUILD, "not_mine.json")) as f:
-            rejected = {norm_title(x["title"]): x for x in json.load(f)}
-    except (OSError, ValueError):
-        pass
-
-    def by_ids(ids):
-        for typ, val in ids:
-            v = val.lower()
-            if typ == "doi":
-                m = ARXIV_DOI.match(v)
-                if m and m.group(1) in by_arxiv:
-                    return by_arxiv[m.group(1)]
-                if v in by_doi:
-                    return by_doi[v]
-            elif typ == "arxiv" and v.lstrip("arxiv:") in by_arxiv:
-                return by_arxiv[v.lstrip("arxiv:")]
-        return None
-
-    def by_titles(title):
-        """The corpus paper this title names, and how sure the match is.
-
-        The confidence matters to one caller only, and only for the exact case: an
-        identifier disagreeing with an *exact* title is a mistyped identifier, while an
-        identifier disagreeing with a looser match is just title drift.
-        """
-        n = norm_title(title)
-        if n in by_title:
-            return by_title[n], "exact"
-        # Only in the containment direction: an ORCID title that is a prefix or suffix
-        # of a corpus title is a dropped subtitle, not a new paper. Guarded by length so
-        # a short title cannot swallow a long unrelated one.
-        if len(n) >= 25:
-            for cn, p in by_title.items():
-                if n in cn or cn in n:
-                    return p, "loose"
-        # Rearranged, which both checks above read as a different paper: the string is
-        # not equal and, once the words move across the colon, neither title contains
-        # the other. Live case, and the one that motivated this -- ORCID holds "Tie the
-        # KnOTS: Model Merging with SVD" for the corpus's "Model merging with SVD to tie
-        # the Knots", and the audit called it a work it could not place.
-        p = by_tokens.get(title_tokens(title))
-        return (p, "loose") if p else (None, None)
-
+    ix, rejected = _index(papers), _rejected()
     out, seen, misfiled = [], {}, []
     for title, put, ids, gidx in orc.get("work_titles") or []:
-        hid = by_ids(ids)
-        tid, how = by_titles(title)
-        # The identifier normally wins, since titles drift and identifiers do not. The
-        # exception this branch exists for: an identifier pointing at paper A while the title
-        # is character-for-character paper B is a wrong DOI typed into the work, and trusting
-        # the id there merges two papers and reports the absorbed one as missing. Only an
-        # `exact` title match overrides -- a loose match is the drift the id survives.
-        if hid is not None and tid is not None and hid["slug"] != tid["slug"]:
-            if how == "exact":
-                misfiled.append((title, put, ids, tid, hid))
-                hit = tid
-            else:
-                hit = hid
-        else:
-            hit = hid or tid
+        hit, wrong = _placed(title, ids, ix)
+        if wrong:
+            misfiled.append((title, put, ids, *wrong))
         if hit is None:
-            # `confirmed` outranks `declined`: "no form of your name is on this paper"
-            # is a stronger statement than "not going in the bibliography", and it is
-            # the one that ends in a deletion.
+            # `confirmed` outranks `declined`: "no form of your name is on this paper" is a
+            # stronger statement than "not going in the bibliography", and it is the one
+            # that ends in a deletion.
             out.append((title, put,
                         "confirmed" if norm_title(title) in rejected
                         else "declined" if declined(title) else "unknown"))
@@ -233,8 +247,7 @@ def orcid_strays(orc: dict, papers) -> list[tuple]:
     # paper twice; `versions` is one entry ORCID has already folded, which is worth a
     # mention and is not worth a **fix**.
     dups = {s: v for s, v in seen.items() if len({g for *_r, g in v}) > 1}
-    versions = {s: v for s, v in seen.items()
-                if s not in dups and len(v) > 1}
+    versions = {s: v for s, v in seen.items() if s not in dups and len(v) > 1}
     return out, dups, set(seen), misfiled, versions
 
 
