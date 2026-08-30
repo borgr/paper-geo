@@ -11,7 +11,9 @@ is the five-step version of that.
 ## Start here
 
 Python 3.10 or newer, and two dependencies. Everything else is the standard library,
-so a run in three years needs nothing that has since moved.
+so a run in three years needs nothing that has since moved. The GitHub steps shell out
+to the [`gh` CLI](https://cli.github.com), so run `gh auth login` once. Without it the
+`repos` step reports a failure and the other nine carry on.
 
 ```bash
 git clone https://github.com/borgr/paper-geo && cd paper-geo
