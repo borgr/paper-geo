@@ -1010,6 +1010,126 @@ def flag_problems(papers: list[dict]) -> None:
             p["metadata_problems"] = problems
 
 
+def from_papers_yaml(path: str) -> list[dict]:
+    """The last run's papers, with the hand decisions re-applied.
+
+    `--offline` is a rerun, and overrides.yaml promises a judgment call survives every
+    rerun. Without this, editing `fields` and re-deriving prints the usual summary while
+    papers.yaml comes out byte for byte unchanged. The merge and drop passes are no-ops
+    on already-merged records, so only the field corrections bite.
+    """
+    papers = (read_yaml(path) or {}).get("papers", [])
+    papers = apply_overrides(papers, read_yaml(os.path.join(DATA, "overrides.yaml")) or {})
+    return papers
+
+
+def from_sources(cfg: dict, args) -> list[dict]:
+    """Every paper the bibliography and the APIs know about, merged and gated.
+
+    Progress goes to stderr as each source is read, since this is the slow half of the
+    run.
+    """
+    print("bibtex ...", file=sys.stderr)
+    papers = from_bibtex(cfg)
+    print(f"  {len(papers)} entries", file=sys.stderr)
+    # Before the merges, so an id added here gets the same S2 counts, dedupe and
+    # authorship check as a bibliography entry -- including being rejected if it
+    # turns out not to be yours.
+    ov_early = read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
+    n_extra = from_arxiv_ids(papers, ov_early.get("extra_arxiv") or [])
+    if n_extra:
+        print(f"  + {n_extra} from overrides.extra_arxiv", file=sys.stderr)
+    n_or = from_openreview_titles(papers, ov_early.get("extra_openreview") or [])
+    if n_or:
+        print(f"  + {n_or} from overrides.extra_openreview", file=sys.stderr)
+    print("semantic scholar ...", file=sys.stderr)
+    merge_s2(papers, cfg)
+    if not args.no_arxiv:
+        print("arxiv ...", file=sys.stderr)
+        merge_arxiv(papers)
+        print("abstract backfill ...", file=sys.stderr)
+        backfill_abstracts(papers)
+    n_ax = unfold_arxiv_dois(papers)
+    if n_ax:
+        print(f"  recovered {n_ax} arXiv id(s) encoded as a DataCite DOI",
+              file=sys.stderr)
+    print("dedupe ...", file=sys.stderr)
+    # overrides.yaml documents that the first title in a force_merge group wins for
+    # display, and that has to reach dedupe rather than only apply_overrides: once
+    # identifiers merge a group here, apply_overrides never sees two records to
+    # choose between, and the LaTeX-mangled variant can win the title by accident.
+    _ov = read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
+    papers, n_merged, n_flagged = dedupe(
+        papers, prefer=[g[0] for g in (_ov.get("force_merge") or []) if g])
+    print(f"  merged {n_merged} duplicate records; flagged {n_flagged} similar-but-distinct pairs",
+          file=sys.stderr)
+    if not args.no_hf:
+        print("hugging face ...", file=sys.stderr)
+        merge_hf(papers, cfg)
+    build_links(papers)
+    flag_problems(papers)
+    ov = read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
+    before = len(papers)
+    papers = apply_overrides(papers, ov)
+    print(f"  overrides: {before - len(papers)} records folded or dropped", file=sys.stderr)
+    # After the merges, not before: Semantic Scholar routinely supplies a fuller
+    # author list than the bibliography, and gating on the short list would drop
+    # papers that are yours for want of metadata we were about to fetch anyway.
+    papers, not_mine = authorship_gate(papers, cfg, ov)
+    for p in papers:
+        if p.get("authors_from_arxiv"):
+            a = p["authors_from_arxiv"]
+            print(f"  authorship: kept {p.get('title', '')[:48]!r} -- arXiv lists "
+                  f"{a['now']} authors, the source listed {a['was']} "
+                  f"({a['why']})", file=sys.stderr)
+    if not_mine:
+        # The unverified ones named separately. The rest are a fact arXiv confirmed;
+        # these are a guess the gate had no way to check, and burying them in a count
+        # of sixteen is what made the last one invisible. The reason comes from
+        # `reject_confidence`, so the row here and the row in not_mine.json cannot
+        # disagree about why a paper was dropped.
+        blind = [p for p in not_mine
+                 if reject_confidence(p).startswith("unverified")]
+        print(f"  authorship: {len(not_mine)} records have no form of your name "
+              f"and were excluded -- review build/not_mine.json", file=sys.stderr)
+        for p in blind:
+            print(f"    unverified drop: {p.get('title', '')[:56]!r} -- "
+                  f"{reject_confidence(p).split(': ', 1)[1]}", file=sys.stderr)
+    # After the merges and the gate, deliberately: this is four API calls per paper,
+    # and a record that is about to be folded into its arXiv twin or excluded as
+    # someone else's should not cost any of them.
+    print("abstracts for the non-arXiv papers ...", file=sys.stderr)
+    backfill_abstracts_offarxiv(papers)
+    return papers
+
+
+def print_totals(out: str, papers: list[dict], args, tdiffs: list) -> None:
+    """The per-field coverage summary, over what was just written."""
+    n = len(papers)
+    ax = [p for p in papers if p.get("arxiv")]
+    def c(pred, pool): return sum(1 for p in pool if pred(p))
+    print(f"\nwrote {out}: {n} papers")
+    print(f"  with arXiv id                 {len(ax)}/{n}")
+    if not args.no_arxiv:
+        print(f"  arXiv missing journal-ref     {c(lambda p: not p.get('arxiv_journal_ref'), ax)}/{len(ax)}")
+        print(f"  arXiv missing HTML            {c(lambda p: p.get('arxiv_html') is False, ax)}/{len(ax)}")
+    if not args.no_hf:
+        print(f"  HF page missing               {c(lambda p: p.get('hf_indexed') is False, ax)}/{len(ax)}")
+        print(f"  HF page not claimed by me     {c(lambda p: p.get('hf_indexed') and not p.get('hf_claimed_by_me'), ax)}/{len(ax)}")
+        print(f"  HF knows a github repo        {c(lambda p: p.get('hf_github_repo'), ax)}/{len(ax)}")
+    print(f"  no abstract anywhere          {c(lambda p: not p.get('abstract'), papers)}/{n}")
+    print(f"  flagged metadata problems     {c(lambda p: p.get('metadata_problems'), papers)}/{n}")
+    print(f"  merged duplicate records      {c(lambda p: p.get('merged_from'), papers)} groups")
+    print(f"  similar-but-distinct flags    {c(lambda p: p.get('similar_but_distinct'), papers)}/{n}  (review these)")
+    if tdiffs:
+        print(f"  title differs from arXiv      {len(tdiffs)}/{len(ax)}  "
+              f"(review build/title_diffs.json -- either side can be the stale one)")
+    print(f"  verbatim bibtex captured      {c(lambda p: p.get('bibtex'), papers)}/{n}")
+    print(f"  crawlable HTML surface        {c(lambda p: (p.get('links') or {}).get('html'), papers)}/{n}"
+          f"  (ar5iv fallback: {c(lambda p: (p.get('links') or {}).get('html_source') == 'ar5iv', papers)})")
+    print(f"  sidecars written              {c(lambda p: p['has_sidecar'], papers)}/{n}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--offline", action="store_true",
@@ -1025,87 +1145,7 @@ def main() -> None:
     cfg = load_config()
     out = os.path.join(DATA, "papers.yaml")
 
-    if args.offline:
-        papers = (read_yaml(out) or {}).get("papers", [])
-        # Hand decisions are re-applied on this path too: `--offline` is a rerun, and
-        # overrides.yaml promises a judgment call survives every rerun. Without this, editing
-        # `fields` and re-deriving prints the usual summary while papers.yaml comes out byte
-        # for byte unchanged. The merge and drop passes are no-ops on already-merged records,
-        # so only the field corrections bite.
-        papers = apply_overrides(papers, read_yaml(os.path.join(DATA, "overrides.yaml")) or {})
-    else:
-        print("bibtex ...", file=sys.stderr)
-        papers = from_bibtex(cfg)
-        print(f"  {len(papers)} entries", file=sys.stderr)
-        # Before the merges, so an id added here gets the same S2 counts, dedupe and
-        # authorship check as a bibliography entry -- including being rejected if it
-        # turns out not to be yours.
-        ov_early = read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
-        n_extra = from_arxiv_ids(papers, ov_early.get("extra_arxiv") or [])
-        if n_extra:
-            print(f"  + {n_extra} from overrides.extra_arxiv", file=sys.stderr)
-        n_or = from_openreview_titles(papers, ov_early.get("extra_openreview") or [])
-        if n_or:
-            print(f"  + {n_or} from overrides.extra_openreview", file=sys.stderr)
-        print("semantic scholar ...", file=sys.stderr)
-        merge_s2(papers, cfg)
-        if not args.no_arxiv:
-            print("arxiv ...", file=sys.stderr)
-            merge_arxiv(papers)
-            print("abstract backfill ...", file=sys.stderr)
-            backfill_abstracts(papers)
-        n_ax = unfold_arxiv_dois(papers)
-        if n_ax:
-            print(f"  recovered {n_ax} arXiv id(s) encoded as a DataCite DOI",
-                  file=sys.stderr)
-        print("dedupe ...", file=sys.stderr)
-        # overrides.yaml documents that the first title in a force_merge group wins for
-        # display, and that has to reach dedupe rather than only apply_overrides: once
-        # identifiers merge a group here, apply_overrides never sees two records to
-        # choose between, and the LaTeX-mangled variant can win the title by accident.
-        _ov = read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
-        papers, n_merged, n_flagged = dedupe(
-            papers, prefer=[g[0] for g in (_ov.get("force_merge") or []) if g])
-        print(f"  merged {n_merged} duplicate records; flagged {n_flagged} similar-but-distinct pairs",
-              file=sys.stderr)
-        if not args.no_hf:
-            print("hugging face ...", file=sys.stderr)
-            merge_hf(papers, cfg)
-        build_links(papers)
-        flag_problems(papers)
-        ov = read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
-        before = len(papers)
-        papers = apply_overrides(papers, ov)
-        print(f"  overrides: {before - len(papers)} records folded or dropped", file=sys.stderr)
-        # After the merges, not before: Semantic Scholar routinely supplies a fuller
-        # author list than the bibliography, and gating on the short list would drop
-        # papers that are yours for want of metadata we were about to fetch anyway.
-        papers, not_mine = authorship_gate(papers, cfg, ov)
-        for p in papers:
-            if p.get("authors_from_arxiv"):
-                a = p["authors_from_arxiv"]
-                print(f"  authorship: kept {p.get('title', '')[:48]!r} -- arXiv lists "
-                      f"{a['now']} authors, the source listed {a['was']} "
-                      f"({a['why']})", file=sys.stderr)
-        if not_mine:
-            # The unverified ones named separately. The rest are a fact arXiv confirmed;
-            # these are a guess the gate had no way to check, and burying them in a count
-            # of sixteen is what made the last one invisible. The reason comes from
-            # `reject_confidence`, so the row here and the row in not_mine.json cannot
-            # disagree about why a paper was dropped.
-            blind = [p for p in not_mine
-                     if reject_confidence(p).startswith("unverified")]
-            print(f"  authorship: {len(not_mine)} records have no form of your name "
-                  f"and were excluded -- review build/not_mine.json", file=sys.stderr)
-            for p in blind:
-                print(f"    unverified drop: {p.get('title', '')[:56]!r} -- "
-                      f"{reject_confidence(p).split(': ', 1)[1]}", file=sys.stderr)
-        # After the merges and the gate, deliberately: this is four API calls per paper,
-        # and a record that is about to be folded into its arXiv twin or excluded as
-        # someone else's should not cost any of them.
-        print("abstracts for the non-arXiv papers ...", file=sys.stderr)
-        backfill_abstracts_offarxiv(papers)
-
+    papers = from_papers_yaml(out) if args.offline else from_sources(cfg, args)
     # Slugs are truncated, so two long titles can collide -- which silently made
     # one paper overwrite the other's page. Disambiguate deterministically (year,
     # then a title hash) so a slug never changes between runs.
@@ -1189,29 +1229,7 @@ def main() -> None:
 
     write_yaml(out, {"generated_by": "scripts/collect.py", "papers": papers})
 
-    n = len(papers)
-    ax = [p for p in papers if p.get("arxiv")]
-    def c(pred, pool): return sum(1 for p in pool if pred(p))
-    print(f"\nwrote {out}: {n} papers")
-    print(f"  with arXiv id                 {len(ax)}/{n}")
-    if not args.no_arxiv:
-        print(f"  arXiv missing journal-ref     {c(lambda p: not p.get('arxiv_journal_ref'), ax)}/{len(ax)}")
-        print(f"  arXiv missing HTML            {c(lambda p: p.get('arxiv_html') is False, ax)}/{len(ax)}")
-    if not args.no_hf:
-        print(f"  HF page missing               {c(lambda p: p.get('hf_indexed') is False, ax)}/{len(ax)}")
-        print(f"  HF page not claimed by me     {c(lambda p: p.get('hf_indexed') and not p.get('hf_claimed_by_me'), ax)}/{len(ax)}")
-        print(f"  HF knows a github repo        {c(lambda p: p.get('hf_github_repo'), ax)}/{len(ax)}")
-    print(f"  no abstract anywhere          {c(lambda p: not p.get('abstract'), papers)}/{n}")
-    print(f"  flagged metadata problems     {c(lambda p: p.get('metadata_problems'), papers)}/{n}")
-    print(f"  merged duplicate records      {c(lambda p: p.get('merged_from'), papers)} groups")
-    print(f"  similar-but-distinct flags    {c(lambda p: p.get('similar_but_distinct'), papers)}/{n}  (review these)")
-    if tdiffs:
-        print(f"  title differs from arXiv      {len(tdiffs)}/{len(ax)}  "
-              f"(review build/title_diffs.json -- either side can be the stale one)")
-    print(f"  verbatim bibtex captured      {c(lambda p: p.get('bibtex'), papers)}/{n}")
-    print(f"  crawlable HTML surface        {c(lambda p: (p.get('links') or {}).get('html'), papers)}/{n}"
-          f"  (ar5iv fallback: {c(lambda p: (p.get('links') or {}).get('html_source') == 'ar5iv', papers)})")
-    print(f"  sidecars written              {c(lambda p: p['has_sidecar'], papers)}/{n}")
+    print_totals(out, papers, args, tdiffs)
 
 
 if __name__ == "__main__":
