@@ -4827,6 +4827,39 @@ class TestADroppedConnectionIsNotARefusal(unittest.TestCase):
             self.assertFalse(self.L._transient(e), f"{type(e).__name__} must not be retried")
 
 
+class TestOneObjectIsPickedOutOfWhateverTheModelSaid(unittest.TestCase):
+    """`llm.first_json` is the only reader of an unconstrained reply, so it is the only
+    thing standing between a fenced or prefaced object and a lost paper's worth of claims.
+    """
+
+    def setUp(self):
+        import llm
+        self.f = llm.first_json
+
+    def test_the_object_is_found_through_whatever_surrounds_it(self):
+        for text in ('{"a": 1}', '```json\n{"a": 1}\n```', 'Let me think. {"a": 1}',
+                     '{"a": 1}\n\nThat is my answer.', '  \n{"a": 1}  '):
+            self.assertEqual({"a": 1}, self.f(text), text)
+
+    def test_a_brace_inside_claim_text_does_not_end_the_object(self):
+        self.assertEqual({"t": 'a set {1, 2}'}, self.f('{"t": "a set {1, 2}"}'))
+        self.assertEqual({"t": 'he said "hi{" then left'},
+                         self.f('{"t": "he said \\"hi{\\" then left"}'))
+        self.assertEqual({"t": "\\"}, self.f('{"t": "\\\\"}'))
+
+    def test_the_first_candidate_that_parses_wins(self):
+        # A reasoning trace mentioning {something} before the answer, and an unclosed
+        # object the model abandoned -- both are skipped rather than returned as None.
+        self.assertEqual({"a": 2}, self.f('maybe {like this} -- no: {"a": 2}'))
+        self.assertEqual({"b": 3}, self.f('{"a": 1\nscratch that\n{"b": 3}'))
+        self.assertEqual({"a": 1}, self.f('{"a": 1} {"b": 2}'))
+        self.assertEqual({}, self.f("{{}"))          # outer never closes, inner does
+
+    def test_nothing_usable_is_none_rather_than_a_crash(self):
+        for text in ("", "{", "}", "no json here", '{"a": 1', "I cannot answer."):
+            self.assertIsNone(self.f(text), text)
+
+
 class TestACountIsAMagnitudeForCoverage(unittest.TestCase):
     """A survey states its findings as counts, and the coverage rule could not see them.
 

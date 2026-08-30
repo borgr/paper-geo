@@ -94,33 +94,44 @@ def client(spec: str | None = None, model_default: str | None = None,
     return OpenAI(base_url=base, api_key=key, default_headers=headers), model
 
 
+def _obj_end(text: str, start: int) -> int | None:
+    """Index just past the brace pair that opens at `start`, or None if it never closes.
+
+    Braces inside a string literal do not count, and a backslash hides the character
+    after it.
+    """
+    depth, instr, esc = 0, False, False
+    for i in range(start, len(text)):
+        c = text[i]
+        if esc:
+            esc = False
+        elif c == "\\":
+            esc = True
+        elif c == '"':
+            instr = not instr
+        elif not instr and c in "{}":
+            depth += 1 if c == "{" else -1
+            if depth == 0:
+                return i + 1
+    return None
+
+
 def first_json(text: str):
     """The first complete JSON object in a response, or None.
 
-    Needed because a model without enforced decoding wraps the object in a ``` fence,
-    or prefaces it, or emits a reasoning trace first. Brace-matching rather than a
-    regex, since claim text legitimately contains braces.
+    A model without enforced decoding wraps the object in a ``` fence, or prefaces it,
+    or emits a reasoning trace first, so every `{` is tried in turn until one closes and
+    parses. Brace-matching rather than a regex, since claim text legitimately contains
+    braces.
     """
     start = text.find("{")
     while start != -1:
-        depth, instr, esc = 0, False, False
-        for i in range(start, len(text)):
-            c = text[i]
-            if esc:
-                esc = False
-            elif c == "\\":
-                esc = True
-            elif c == '"':
-                instr = not instr
-            elif not instr and c == "{":
-                depth += 1
-            elif not instr and c == "}":
-                depth -= 1
-                if depth == 0:
-                    try:
-                        return json.loads(text[start:i + 1])
-                    except json.JSONDecodeError:
-                        break
+        end = _obj_end(text, start)
+        if end is not None:
+            try:
+                return json.loads(text[start:end])
+            except json.JSONDecodeError:
+                pass
         start = text.find("{", start + 1)
     return None
 
