@@ -367,7 +367,7 @@ def snak(pid: str, v: str) -> dict:
 
 
 def item_json(it: dict) -> dict:
-    """One paper from `audit_identity.paper_item`, as a `wbeditentity` payload.
+    """One paper from `wikidata_audit.paper_item`, as a `wbeditentity` payload.
 
     One call per item rather than a create followed by a claim per statement. An item
     that exists with a title and no identifier is indistinguishable from a placeholder

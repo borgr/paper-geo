@@ -1390,7 +1390,7 @@ class TestAGateThatRejectedNothingSaysNothing(unittest.TestCase):
     Nothing removed it afterwards, so a run that rejected nothing left the previous run's
     list standing and both readers took it as this run's decision.
     `scholar_check.attributed_gaps` drops a gap whose title the file names, and
-    `audit_identity.orcid_strays` tags a stray `confirmed` on the strength of it, which
+    `orcid_audit.orcid_strays` tags a stray `confirmed` on the strength of it, which
     `WORKLIST.md` reports as "the collector rejected each of these because no form of your
     name appears" -- a sentence about a paper the current gate never saw.
     """
@@ -1435,7 +1435,7 @@ class TestAGateThatRejectedNothingSaysNothing(unittest.TestCase):
 
     def test_the_file_is_still_what_the_two_readers_read(self):
         """The removal only matters while something takes the file as current state."""
-        for rel in ("scripts/scholar_check.py", "scripts/audit_identity.py"):
+        for rel in ("scripts/scholar_check.py", "scripts/orcid_audit.py"):
             self.assertIn("not_mine.json", source(os.path.join(ROOT, rel)),
                           f"{rel} no longer reads the file, so check what does")
 
@@ -2805,7 +2805,7 @@ class TestBothWikidataWritersDescribeTheSameItem(unittest.TestCase):
     API. The failure mode of two emitters is that they *disagree*, so the `.qs` file a
     human reads before pasting describes items other than the ones the API path creates
     -- and on a wiki, undoing the wrong one is a deletion request rather than a click.
-    Both render `audit_identity.paper_item`, which is what makes them agree; this
+    Both render `wikidata_audit.paper_item`, which is what makes them agree; this
     measures the agreement over the real corpus rather than trusting the arrangement.
     """
 
@@ -3937,7 +3937,7 @@ class TestAWrongIdentifierIsNotAMissingPaper(unittest.TestCase):
                "doi": "10.48550/ARXIV.2603.13467", "arxiv": "2603.13467"}]
 
     def strays(self, work_titles):
-        from audit_identity import orcid_strays
+        from orcid_audit import orcid_strays
         return orcid_strays({"work_titles": work_titles, "works": len(work_titles)},
                             self.CORPUS)
 

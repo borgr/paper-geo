@@ -922,7 +922,7 @@ def authorship_gate(papers: list[dict], cfg: dict, ov: dict) -> list[dict]:
             p["arxiv_silent"] = True
     # Removed when there is nothing to write, because both readers take this file as what
     # the gate decided *this* run. `scholar_check.attributed_gaps` drops a gap whose title
-    # the file names, and `audit_identity.orcid_strays` tags a stray `confirmed` on the
+    # the file names, and `orcid_audit.orcid_strays` tags a stray `confirmed` on the
     # strength of it, which `WORKLIST.md` reports as "the collector rejected each of these".
     # Left standing after a run that rejected nothing, it puts last run's answer behind both.
     not_mine = os.path.join(BUILD, "not_mine.json")
