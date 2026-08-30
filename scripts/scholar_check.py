@@ -796,6 +796,87 @@ def bib_payload(rows: list[dict], bib_url: str, mine: list[dict] | None,
     return path, len(rows), done, retry
 
 
+def partial_answer(uid: str, rows: list, papers: list, attributed: list | None,
+                   gaps: list, stubs: list, quiet: bool) -> None:
+    """Write and report what the author record could answer when Scholar refused.
+
+    Google refusing is the normal case from a datacenter IP and says nothing about the
+    corpus, so this writes rather than nothing -- a file absent and a file reporting no gaps
+    are indistinguishable to every reader downstream, and only one of them is true.
+
+    A page that refused part-way counts the same. The profile pages at 100 and this corpus
+    is larger, so a lost second page puts every paper on it into `not_on_scholar`, under a
+    heading asking the author to add papers Scholar has.
+    """
+    write_json(
+        os.path.join(BUILD, "scholar_diff.json"),
+        {"scholar_profile": uid, "scholar_rows": len(rows),
+         "scholar_answered": False, "corpus": len(papers),
+         "s2_answered": attributed is not None,
+         "not_in_corpus_by_index": gaps,
+         "index_stubs_no_id": stubs}, indent=1)
+    read = ("profile unavailable" if not rows
+            else f"read {len(rows)} row(s), then a page refused")
+    print(f"scholar: {read}; author record answered for "
+          f"{len(attributed or [])} paper(s)", file=sys.stderr)
+    report_gaps(gaps, stubs, quiet)
+
+
+def sort_rows(rows: list, mine: dict, slug: dict,
+              gated: dict) -> tuple[set[str], list, list]:
+    """Each Scholar row against the corpus, as (matched corpus titles, gated, unmatched).
+
+    Matched rows gain a `slug`, unmatched ones a `kind`. Keyed on the *corpus* title, never
+    the Scholar one: a prefix match means the two strings differ, so recording the Scholar
+    side leaves the corpus paper looking unmatched and reports every retitle twice, in two
+    different sections.
+    """
+    seen: set[str] = set()
+    in_gate, missing = [], []
+    for r in rows:
+        n = norm_title(r["title"])
+        if not n:
+            continue
+        if hit := find(n, mine):
+            seen.add(norm_title(hit))
+            r["slug"] = slug.get(norm_title(hit))
+        elif find(n, gated):
+            in_gate.append(r)
+        else:
+            r["kind"] = not_paper(r) or "paper"
+            missing.append(r)
+    return seen, in_gate, missing
+
+
+def pair_leftovers(missing: list, papers: list,
+                   unmatched: dict) -> tuple[list, list, set]:
+    """Leftover Scholar rows paired against the corpus, as (retitles, duplicates, slugs hit).
+
+    Pairs against the whole corpus, not just its unmatched part, because which side the pair
+    lands on decides who has the work: paired with an unmatched paper it is one paper under
+    two titles, and paired with a paper that already matched another row it is Scholar
+    listing the same work twice, which nothing here can fix.
+    """
+    variants, dupes, taken = [], [], set()
+    for r in sorted(missing, key=lambda r: -r["citations"]):
+        best = None
+        for p in papers:
+            if p.get("slug") in taken:
+                continue
+            if sc := variant_score(r["title"], p.get("title") or ""):
+                if not best or sc[0] > best[0][0]:
+                    best = (sc, p)
+        if not best:
+            continue
+        (score, why), p = best
+        taken.add(p["slug"])
+        row = {"scholar": r["title"], "scholar_url": r.get("url"),
+               "corpus": p.get("title"), "slug": p["slug"],
+               "score": round(score, 2), "why": why}
+        (variants if p["slug"] in unmatched else dupes).append(row)
+    return variants, dupes, taken
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--quiet", action="store_true",
@@ -827,69 +908,13 @@ def main() -> None:
 
     rows, whole = scholar_rows(uid)
     if not rows or not whole:
-        # Google refused, which is the normal case from a datacenter IP and says nothing
-        # about the corpus. Write what the author record could answer rather than
-        # nothing -- a file absent and a file reporting no gaps are indistinguishable to
-        # every reader downstream, and only one of them is true.
-        #
-        # A page that refused part-way counts the same. The profile pages at 100 and this
-        # corpus is larger, so a lost second page puts every paper on it into
-        # `not_on_scholar`, under a heading asking the author to add papers Scholar has.
-        write_json(
-            os.path.join(BUILD, "scholar_diff.json"),
-            {"scholar_profile": uid, "scholar_rows": len(rows),
-             "scholar_answered": False, "corpus": len(papers),
-             "s2_answered": attributed is not None,
-             "not_in_corpus_by_index": gaps,
-             "index_stubs_no_id": stubs}, indent=1)
-        read = ("profile unavailable" if not rows
-                else f"read {len(rows)} row(s), then a page refused")
-        print(f"scholar: {read}; author record answered for "
-              f"{len(attributed or [])} paper(s)", file=sys.stderr)
-        report_gaps(gaps, stubs, args.quiet)
+        partial_answer(uid, rows, papers, attributed, gaps, stubs, args.quiet)
         return
 
-    missing, in_gate = [], []
-    # Keyed on the *corpus* title, never the Scholar one. A prefix match means the two
-    # strings differ, so recording the Scholar side here left the corpus paper looking
-    # unmatched and every retitle was reported twice, in two different sections.
-    seen: set[str] = set()
-    for r in rows:
-        n = norm_title(r["title"])
-        if not n:
-            continue
-        if hit := find(n, mine):
-            seen.add(norm_title(hit))
-            r["slug"] = slug.get(norm_title(hit))
-        elif find(n, gated):
-            in_gate.append(r)
-        else:
-            r["kind"] = not_paper(r) or "paper"
-            missing.append(r)
-
+    seen, in_gate, missing = sort_rows(rows, mine, slug, gated)
     absent = [p for p in papers if norm_title(p.get("title")) not in seen]
-    # Pair every leftover Scholar row against the whole corpus, not just its unmatched part,
-    # because which side the pair lands on decides who has the work: paired with an unmatched
-    # paper it is one paper under two titles, and paired with a paper that already matched
-    # another row it is Scholar listing the same work twice, which nothing here can fix.
-    variants, dupes, taken = [], [], set()
     unmatched = {p["slug"]: p for p in absent}
-    for r in sorted(missing, key=lambda r: -r["citations"]):
-        best = None
-        for p in papers:
-            if p.get("slug") in taken:
-                continue
-            if sc := variant_score(r["title"], p.get("title") or ""):
-                if not best or sc[0] > best[0][0]:
-                    best = (sc, p)
-        if not best:
-            continue
-        (score, why), p = best
-        taken.add(p["slug"])
-        row = {"scholar": r["title"], "scholar_url": r.get("url"),
-               "corpus": p.get("title"), "slug": p["slug"],
-               "score": round(score, 2), "why": why}
-        (variants if p["slug"] in unmatched else dupes).append(row)
+    variants, dupes, taken = pair_leftovers(missing, papers, unmatched)
     diffs = arxiv_titles()
     for v in variants:
         v["stale"], v["arxiv_says"] = stale_side(v["scholar"], unmatched[v["slug"]],
