@@ -519,121 +519,157 @@ def audit_page(cfg: dict, r: dict, d: dict) -> list[str]:
     """The audit page: a table of what every surface says, then a section per open fix."""
     return audit_table(cfg, r, d) + audit_fixes(cfg, r, d)
 
+def _mark(ok: bool) -> str:
+    """The verdict column for a row that is either clean or a fix."""
+    return "ok" if ok else "**fix**"
 
-def audit_table(cfg: dict, r: dict, d: dict) -> list[str]:
-    """One row per surface, each marked ok, **fix**, **check** or optional."""
-    ident, ids = cfg["identity"], cfg["ids"]
-    papers, ax, orc = r["papers"], r["ax"], r["orc"]
-    reg, wd, wd_gaps = r["reg"], r["wd"], r["wd_gaps"]
-    wd_cov, hf, n_typo = r["wd_cov"], r["hf"], r["n_typo"]
-    n_absent, n_read, n_gap = r["n_absent"], r["n_read"], r["n_gap"]
-    stray = r["stray"]
-    has_canon, missing_variants = d["has_canon"], d["missing_variants"]
-    other_pages = d["other_pages"]
-    want_kw, o_dups, o_misfiled = d["want_kw"], d["o_dups"], d["o_misfiled"]
-    o_vers, o_conf, o_unk = d["o_vers"], d["o_conf"], d["o_unk"]
-    o_missing, auto_src, missing_empl = d["o_missing"], d["auto_src"], d["missing_empl"]
-    missing_edu, edu_open, edu_theirs = d["missing_edu"], d["edu_open"], d["edu_theirs"]
-    def status(ok: bool) -> str:
-        return "ok" if ok else "**fix**"
 
-    L = ["# Identity audit", "",
-         "Live read of the surfaces you do not control. Regenerate with",
-         "`python scripts/audit_identity.py`. Every row is checkable without a login,",
-         "which is why it can be re-run — the fixes all need one.", "",
-         "| surface | state | |", "|---|---|---|",
-         f"| ORCID works (public) | {orc['works']} | {status(orc['works'] > 0)} |",
-         # Two rows, not one: the count says the record is not empty, the coverage says
-         # whether it holds your work. `105 of 117` graded "ok" for months because the
-         # check behind it only ever asked whether the count was above zero.
-         f"| ORCID holds your papers | {len(papers) - len(o_missing)} of {len(papers)} | "
-         f"{status(not o_missing)} |",
-         # Above the two rows it causes, because it is the row to act on first: a wrong
-         # identifier inflates *missing* and *listed twice* at the same time, and fixing
-         # either of those in the order the page reads them makes the record worse.
-         f"| ORCID identifiers point at the right paper | "
-         f"{orc['works'] - len(o_misfiled)} of {orc['works']} works | "
-         f"{status(not o_misfiled)} |",
-         f"| ORCID canonical URL | {'present' if has_canon else 'absent'} | {status(has_canon)} |",
-         f"| ORCID name variants | {len(orc['other_names'])} listed | {status(not missing_variants)} |",
-         f"| ORCID keywords | {len(orc['keywords'])} of "
-         f"{len(ident.get('keywords') or [])} | {status(not want_kw)} |",
-         f"| ORCID lists other personal pages | "
-         f"{len((ident.get('other_pages') or [])) - len(other_pages)} of "
-         f"{len(ident.get('other_pages') or [])} | {status(not other_pages)} |",
-         f"| ORCID employment | {orc['employments']} listed, "
-         f"{len(missing_empl)} missing | {status(not missing_empl)} |",
-         f"| ORCID education | {orc['educations']} listed, "
-         f"{len(missing_edu)} missing, {len(edu_open)} incomplete"
-         + (f", {len(edu_theirs)} institution-asserted" if edu_theirs else "") + " | "
-         f"{status(not missing_edu and not edu_open)} |",
-         f"| ORCID works added by Crossref/DataCite | {sum(auto_src.values())} | "
-         f"{'ok' if auto_src else 'nothing yet'} |",
-         # Intersection, not len(reg): the feed also lists papers that are not in the
-         # bibliography at all, and counting those made the row read "105 of 105" while
-         # still flagging a gap.
-         f"| arXiv registered author | "
-         + (f"{len({p['arxiv'] for p in ax} & reg)} of {len({p['arxiv'] for p in ax})} "
-            f"| {status(n_gap == 0)} |" if reg is not None
-            else "arXiv did not answer | re-run |"),
-         f"| Wikidata author item | {wd or 'none'} | {status(bool(wd))} |"]
-    if wd_gaps:
-        n_wd = (len(wd_gaps["missing"]) + len(wd_gaps["wrong"]) + len(wd_gaps["dupes"])
-                + len(wd_gaps["bad_aliases"]) + len(wd_gaps["want_aliases"]))
-        L.append(f"| Wikidata item complete | {n_wd} gaps | {status(not n_wd)} |")
-    elif wd:
-        # Dropping the row would read as one fewer thing to check rather than as a
-        # reading this run does not have.
-        L.append("| Wikidata item complete | Wikidata did not answer | re-run |")
-    if wd_cov:
-        # Not scored. Low coverage is a fact about Wikidata's imports, not a defect in
-        # your record, and a red mark here would read as 119 tasks you are behind on.
-        L.append(f"| Wikidata paper items | {len(wd_cov['present'])} of "
-                 f"{wd_cov['total']} | optional |")
-    if hf is not None:
-        # Claimable, not total: three of these pages carry no author string resembling
-        # your name, so they cannot be claimed at all. Scoring them against the total
-        # leaves a row that can never reach "ok" and gives no hint why.
-        claimable = len(ax) - len(hf["missing"]) - len(hf["blocked"])
-        L += [f"| HF pages indexed | {len(ax) - len(hf['missing'])} of {len(ax)} | "
-              f"{status(not hf['missing'])} |",
-              f"| HF pages claimed | {len(hf['claimed'])} of {claimable} claimable | "
-              f"{status(not hf['unclaimed'])} |"]
-        if hf["pending"]:
-            L.append(f"| HF claims in moderation | {len(hf['pending'])} | waiting |")
-        if hf["blocked"]:
-            L.append(f"| HF pages not claimable (name wrong upstream) | "
-                     f"{len(hf['blocked'])} | see arXiv row |")
+def _orcid_rows(cfg: dict, r: dict, d: dict) -> list[str]:
+    """The rows read off the ORCID record itself, in the order they should be worked."""
+    ident, orc, papers = cfg["identity"], r["orc"], r["papers"]
+    kw, pages = ident.get("keywords") or [], ident.get("other_pages") or []
+    theirs = d["edu_theirs"]
+    return [
+        f"| ORCID works (public) | {orc['works']} | {_mark(orc['works'] > 0)} |",
+        # Two rows, not one: the count says the record is not empty, the coverage says
+        # whether it holds your work. `105 of 117` graded "ok" for months because the
+        # check behind it only ever asked whether the count was above zero.
+        f"| ORCID holds your papers | {len(papers) - len(d['o_missing'])} of "
+        f"{len(papers)} | {_mark(not d['o_missing'])} |",
+        # Above the two rows it causes, because it is the row to act on first: a wrong
+        # identifier inflates *missing* and *listed twice* at the same time, and fixing
+        # either of those in the order the page reads them makes the record worse.
+        f"| ORCID identifiers point at the right paper | "
+        f"{orc['works'] - len(d['o_misfiled'])} of {orc['works']} works | "
+        f"{_mark(not d['o_misfiled'])} |",
+        f"| ORCID canonical URL | {'present' if d['has_canon'] else 'absent'} | "
+        f"{_mark(d['has_canon'])} |",
+        f"| ORCID name variants | {len(orc['other_names'])} listed | "
+        f"{_mark(not d['missing_variants'])} |",
+        f"| ORCID keywords | {len(orc['keywords'])} of {len(kw)} | "
+        f"{_mark(not d['want_kw'])} |",
+        f"| ORCID lists other personal pages | {len(pages) - len(d['other_pages'])} of "
+        f"{len(pages)} | {_mark(not d['other_pages'])} |",
+        f"| ORCID employment | {orc['employments']} listed, "
+        f"{len(d['missing_empl'])} missing | {_mark(not d['missing_empl'])} |",
+        f"| ORCID education | {orc['educations']} listed, {len(d['missing_edu'])} "
+        f"missing, {len(d['edu_open'])} incomplete"
+        + (f", {len(theirs)} institution-asserted" if theirs else "") + " | "
+        f"{_mark(not d['missing_edu'] and not d['edu_open'])} |",
+        f"| ORCID works added by Crossref/DataCite | {sum(d['auto_src'].values())} | "
+        f"{'ok' if d['auto_src'] else 'nothing yet'} |",
+    ]
+
+
+def _orcid_trouble_rows(d: dict) -> list[str]:
+    """Works on the record that are not cleanly yours, one row per kind that has any."""
+    L = []
+    if d["o_conf"]:
+        L.append(f"| ORCID works that are not yours | {len(d['o_conf'])} | **fix** |")
+    if d["o_unk"]:
+        L.append(f"| ORCID works we cannot place | {len(d['o_unk'])} | **check** |")
+    if d["o_dups"]:
+        L.append(f"| ORCID works listed twice | {len(d['o_dups'])} | **fix** |")
+    if d["o_vers"]:
+        # Not **fix**: ORCID shows these as one entry with N versions, so nothing
+        # downstream double-counts them. Listed only so this table and the profile page
+        # agree about how many works are there, which is the one reason to look.
+        L.append(f"| ORCID works ORCID already merged | {len(d['o_vers'])} | optional |")
+    return L
+
+
+def _arxiv_owner_row(r: dict) -> list[str]:
+    """How many of the corpus's arXiv ids the author feed claims."""
+    ids, reg = {p["arxiv"] for p in r["ax"]}, r["reg"]
+    # Intersection, not len(reg): the feed also lists papers that are not in the
+    # bibliography at all, and counting those made the row read "105 of 105" while
+    # still flagging a gap.
+    return [f"| arXiv registered author | "
+            + (f"{len(ids & reg)} of {len(ids)} | {_mark(r['n_gap'] == 0)} |"
+               if reg is not None else "arXiv did not answer | re-run |")]
+
+
+def _arxiv_name_rows(r: dict) -> list[str]:
+    """What the arXiv records say about the author's name, and papers the corpus is missing."""
+    ax, n_typo, L = r["ax"], r["n_typo"], []
     if n_typo is not None:
         # `of n_read`, because both counts are zero when arXiv served nothing, and a bare
         # zero on both rows is the shape a clean corpus has. Neither row reaches "ok" on a
         # partial read, so the next run checks the rest rather than the page saying done.
-        whole = n_read == len(ax)
-        L.append(f"| arXiv records misspelling your name | {len(n_typo)} of {n_read} "
-                 f"read | {status(not n_typo and whole)} |")
-        L.append(f"| arXiv records omitting you | {len(n_absent)} of {n_read} read | "
-                 f"{status(not n_absent and whole)} |")
+        read, whole = r["n_read"], r["n_read"] == len(ax)
+        L += [f"| arXiv records misspelling your name | {len(n_typo)} of {read} read | "
+              f"{_mark(not n_typo and whole)} |",
+              f"| arXiv records omitting you | {len(r['n_absent'])} of {read} read | "
+              f"{_mark(not r['n_absent'] and whole)} |"]
         if not whole:
-            L.append(f"| arXiv records it would not serve | {len(ax) - n_read} | "
+            L.append(f"| arXiv records it would not serve | {len(ax) - read} | "
                      f"retried next run |")
-    if stray:
-        L.append(f"| arXiv papers missing from your bibliography | {len(stray)} | "
+    if r["stray"]:
+        L.append(f"| arXiv papers missing from your bibliography | {len(r['stray'])} | "
                  f"**check** |")
-    if o_conf or o_unk:
-        if o_conf:
-            L.append(f"| ORCID works that are not yours | {len(o_conf)} | **fix** |")
-        if o_unk:
-            L.append(f"| ORCID works we cannot place | {len(o_unk)} | **check** |")
-    if o_dups:
-        L.append(f"| ORCID works listed twice | {len(o_dups)} | **fix** |")
-    if o_vers:
-        # Not **fix**: ORCID shows these as one entry with N versions, so nothing
-        # downstream double-counts them. Listed only so this table and the profile page
-        # agree about how many works are there, which is the one reason to look.
-        L.append(f"| ORCID works ORCID already merged | {len(o_vers)} | optional |")
-    L += [f"| Semantic Scholar records | {len(ids['semantic_scholar'])} | "
-          f"{status(len(ids['semantic_scholar']) == 1)} |", ""]
     return L
+
+
+def _wikidata_rows(r: dict) -> list[str]:
+    """The item, how complete it is, and how much of the bibliography Wikidata has imported."""
+    wd, gaps, cov = r["wd"], r["wd_gaps"], r["wd_cov"]
+    L = [f"| Wikidata author item | {wd or 'none'} | {_mark(bool(wd))} |"]
+    if gaps:
+        n = sum(len(gaps[k]) for k in
+                ("missing", "wrong", "dupes", "bad_aliases", "want_aliases"))
+        L.append(f"| Wikidata item complete | {n} gaps | {_mark(not n)} |")
+    elif wd:
+        # Dropping the row would read as one fewer thing to check rather than as a
+        # reading this run does not have.
+        L.append("| Wikidata item complete | Wikidata did not answer | re-run |")
+    if cov:
+        # Not scored. Low coverage is a fact about Wikidata's imports, not a defect in
+        # your record, and a red mark here would read as 119 tasks you are behind on.
+        L.append(f"| Wikidata paper items | {len(cov['present'])} of {cov['total']} | "
+                 f"optional |")
+    return L
+
+
+def _hf_rows(r: dict) -> list[str]:
+    """The Hugging Face paper pages, or nothing when that half of the run was skipped."""
+    ax, hf = r["ax"], r["hf"]
+    if hf is None:
+        return []
+    # Claimable, not total: three of these pages carry no author string resembling
+    # your name, so they cannot be claimed at all. Scoring them against the total
+    # leaves a row that can never reach "ok" and gives no hint why.
+    claimable = len(ax) - len(hf["missing"]) - len(hf["blocked"])
+    L = [f"| HF pages indexed | {len(ax) - len(hf['missing'])} of {len(ax)} | "
+         f"{_mark(not hf['missing'])} |",
+         f"| HF pages claimed | {len(hf['claimed'])} of {claimable} claimable | "
+         f"{_mark(not hf['unclaimed'])} |"]
+    if hf["pending"]:
+        L.append(f"| HF claims in moderation | {len(hf['pending'])} | waiting |")
+    if hf["blocked"]:
+        L.append(f"| HF pages not claimable (name wrong upstream) | "
+                 f"{len(hf['blocked'])} | see arXiv row |")
+    return L
+
+
+def audit_table(cfg: dict, r: dict, d: dict) -> list[str]:
+    """One row per surface, each marked ok, **fix**, **check** or optional.
+
+    Grouped by surface in the order a reader works them, and each group is empty rather
+    than wrong when its surface did not answer.
+    """
+    ss = cfg["ids"]["semantic_scholar"]
+    return (["# Identity audit", "",
+             "Live read of the surfaces you do not control. Regenerate with",
+             "`python scripts/audit_identity.py`. Every row is checkable without a login,",
+             "which is why it can be re-run — the fixes all need one.", "",
+             "| surface | state | |", "|---|---|---|"]
+            + _orcid_rows(cfg, r, d)
+            + _arxiv_owner_row(r)
+            + _wikidata_rows(r)
+            + _hf_rows(r)
+            + _arxiv_name_rows(r)
+            + _orcid_trouble_rows(d)
+            + [f"| Semantic Scholar records | {len(ss)} | {_mark(len(ss) == 1)} |", ""])
 
 
 def audit_fixes(cfg: dict, r: dict, d: dict) -> list[str]:
