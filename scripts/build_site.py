@@ -684,12 +684,19 @@ def redirect_stub(site: str, new_slug: str, title: str) -> str:
 
 
 def build(cfg) -> dict:
+    """Write the whole site into a freshly emptied `build/site/`, and count what it wrote.
+
+    One `_write_*` below per file or directory of files, in the order they are written.
+    `stats` is the one accumulator they share, and `urls` collects what the sitemap lists --
+    canonical pages only, never a redirect stub.
+    """
     global _ANALYTICS
     _ANALYTICS = analytics_snippet(cfg)      # every page, so it is set before any is written
     papers = read_papers()
     repos = (read_yaml(os.path.join(DATA, "repos.yaml")) or {}).get("repos", [])
     ident = cfg["identity"]
     site = cfg["site"]["base_url"].rstrip("/")
+    guides = [r for r in repos if r.get("kind") == "guide" and not r.get("skip")]
     if os.path.isdir(OUT):
         shutil.rmtree(OUT)
     os.makedirs(OUT, exist_ok=True)
@@ -697,15 +704,36 @@ def build(cfg) -> dict:
 
     stats = {"pages": 0, "with_sidecar": 0, "peer_owned": 0, "redirects": 0}
     urls = [site + "/", f"{site}/papers/", f"{site}/guides/"]
-    index_rows, llms, questions = [], [], []
+    rows, llms, questions, paper_urls = _write_paper_pages(papers, cfg, site, stats)
+    urls += paper_urls
+    _write_redirect_stubs(papers, site, stats)
+    _write_paper_index(ident, site, rows, stats)
+    _write_guides(guides, ident, site)
+    _write_home(papers, guides, cfg, site, stats)
+    _write_site_llms(ident, guides, llms, questions)
+    _write_sitemap(urls)
+    _write_robots(site)
+    write_indexnow_key(cfg)
+    stats["static"] = copy_static()
+    write_manifest(cfg, papers)
+    return stats
 
+
+def _write_paper_pages(papers: list[dict], cfg, site: str,
+                       stats: dict) -> tuple[list, list, list, list]:
+    """A directory per paper, and the three lists the rest of the site is built from.
+
+    Returns the index rows, the `llms.txt` lines, the question lines and the canonical URLs,
+    in citation order. A paper a collaborator owns gets a row pointing at their page and no
+    directory of ours.
+    """
+    rows, llms, questions, urls = [], [], [], []
     for p in sorted(papers, key=lambda p: (-(p.get("citations") or 0))):
-        ptitle = title_of(p)
-        title, slug = ptitle, p["slug"]
+        title, slug = title_of(p), p["slug"]
         if p.get("canonical_page"):
             # Owned by a collaborator: link to theirs, publish nothing competing.
-            index_rows.append(f'<li>{E(title)} — canonical page: '
-                              f'<a href="{E(p["canonical_page"])}">{E(p.get("owner") or "co-author")}</a></li>')
+            rows.append(f'<li>{E(title)} — canonical page: '
+                        f'<a href="{E(p["canonical_page"])}">{E(p.get("owner") or "co-author")}</a></li>')
             stats["peer_owned"] += 1
             continue
         sc = read_sidecar(slug)
@@ -719,7 +747,7 @@ def build(cfg) -> dict:
             f.write(paper_llms_txt(p, sc, cfg))
         stats["pages"] += 1
         urls.append(f"{site}/papers/{slug}/")
-        index_rows.append(
+        rows.append(
             f'<li><a href="/papers/{E(slug)}/">{E(title)}</a> '
             f'<span class="meta">{E(venue_of(p))}</span></li>')
         llms.append(f"- [{title}]({site}/papers/{slug}/llms.txt)"
@@ -731,10 +759,16 @@ def build(cfg) -> dict:
             first = next((" ".join(q.split()) for q in phrasings(qa)), "")
             if first:
                 questions.append(f"- {first} — [{title}]({site}/papers/{slug}/llms.txt)")
+    return rows, llms, questions, urls
 
-    # ---- redirects for URLs a merge retired. Deliberately absent from the sitemap
-    # and from the index: a sitemap should list only canonical URLs, and a redirect
-    # listed as content invites an engine to index the stub instead of the paper.
+
+def _write_redirect_stubs(papers: list[dict], site: str, stats: dict) -> None:
+    """A stub at every URL a merge retired, sending the reader to the surviving paper.
+
+    Deliberately absent from the sitemap and from the index. A sitemap should list only
+    canonical URLs, and a redirect listed as content invites an engine to index the stub
+    instead of the paper.
+    """
     by_slug = {p["slug"]: p for p in papers}
     for old, new in retired_slugs(papers).items():
         d = os.path.join(OUT, "papers", old)
@@ -744,19 +778,22 @@ def build(cfg) -> dict:
             f.write(redirect_stub(site, new, title_of(surv) or "this paper"))
         stats["redirects"] += 1
 
-    # ---- paper index
+
+def _write_paper_index(ident: dict, site: str, rows: list, stats: dict) -> None:
+    """`/papers/` -- every paper this site publishes, most cited first."""
     with open(os.path.join(OUT, "papers", "index.html"), "w") as f:
         f.write(page(f"Papers — {ident['name']}",
                      f'<h1>Papers</h1>\n<p class="meta">All {stats["pages"] + stats["peer_owned"]} '
                      f'papers, most cited first. <a href="/">The same list by year</a> · '
                      f'<a href="/llms.txt">the same list with a one-line summary of each</a></p>\n'
-                     f"<ul>\n{chr(10).join(index_rows)}\n</ul>\n"
+                     f"<ul>\n{chr(10).join(rows)}\n</ul>\n"
                      f'<footer><a href="/">{E(ident["name"])}</a><br>'
                      f'{human_note(ident, box=False)}</footer>',
                      canonical=f"{site}/papers/"))
 
-    # ---- guides: question-shaped content, its own page shape
-    guides = [r for r in repos if r.get("kind") == "guide" and not r.get("skip")]
+
+def _write_guides(guides: list[dict], ident: dict, site: str) -> None:
+    """`/guides/` -- question-shaped content, and its own page shape."""
     g = ["<h1>Guides</h1>",
          "<p>Practical guides, each answering one question.</p>", "<ul>"]
     for r in sorted(guides, key=lambda r: r["repo"]):
@@ -770,7 +807,10 @@ def build(cfg) -> dict:
         f.write(page(f"Guides — {ident['name']}", "\n".join(g),
                      canonical=f"{site}/guides/"))
 
-    # ---- entity home
+
+def _write_home(papers: list[dict], guides: list[dict], cfg, site: str, stats: dict) -> None:
+    """`/` -- the entity home, which is the canonical URL every registry points at."""
+    ident = cfg["identity"]
     home = [f"<h1>{E(ident['name'])}</h1>",
             f'<p class="sub">{E(ident["job_title"])} · '
             f'{E(", ".join(org_name(a) for a in ident["affiliations"]))}</p>']
@@ -811,7 +851,9 @@ def build(cfg) -> dict:
                      head=jsonld(person_jsonld(cfg)) + verification_meta(cfg),
                      canonical=site + "/"))
 
-    # ---- site llms.txt
+
+def _write_site_llms(ident: dict, guides: list[dict], llms: list, questions: list) -> None:
+    """`/llms.txt` -- the paper list, the question index and the guides, in plain text."""
     with open(os.path.join(OUT, "llms.txt"), "w") as f:
         f.write(f"""# {ident['name']}
 
@@ -835,14 +877,18 @@ that answers it. The answer and the conditions it holds under are on that page.
 {chr(10).join(f"- [{r['repo'].split('/')[-1]}]({r.get('homepage') or 'https://github.com/' + r['repo']}) — {r.get('description') or ''}" for r in sorted(guides, key=lambda r: r['repo']))}
 """)
 
-    # ---- sitemap
+
+def _write_sitemap(urls: list[str]) -> None:
+    """`/sitemap.xml` -- the canonical URLs, and nothing that redirects."""
     with open(os.path.join(OUT, "sitemap.xml"), "w") as f:
         f.write('<?xml version="1.0" encoding="UTF-8"?>\n'
                 '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
                 + "".join(f"  <url><loc>{E(u)}</loc></url>\n" for u in urls)
                 + "</urlset>\n")
 
-    # ---- robots: explicitly welcome the AI crawlers
+
+def _write_robots(site: str) -> None:
+    """`/robots.txt` -- explicitly welcoming the AI crawlers."""
     with open(os.path.join(OUT, "robots.txt"), "w") as f:
         f.write("User-agent: *\nAllow: /\n\n"
                 "# AI crawlers are welcome; blocking them removes this site from the\n"
@@ -851,13 +897,6 @@ that answers it. The answer and the conditions it holds under are on that page.
                           ("GPTBot", "OAI-SearchBot", "ChatGPT-User", "ClaudeBot",
                            "Claude-SearchBot", "PerplexityBot", "Google-Extended"))
                 + f"Sitemap: {site}/sitemap.xml\n")
-
-    # ---- IndexNow key file
-    write_indexnow_key(cfg)
-
-    stats["static"] = copy_static()
-    write_manifest(cfg, papers)
-    return stats
 
 
 def copy_static() -> int:
