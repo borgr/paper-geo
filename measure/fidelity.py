@@ -41,7 +41,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "scripts"))
-from common import BUILD, DATA, ROOT, load_config, read_papers, title_of, write_json  # noqa: E402
+from common import BUILD, DATA, ROOT, read_papers, title_of, write_json  # noqa: E402
 from llm import client, decodable, first_json, with_retries  # noqa: E402
 
 TASKS = os.path.join(BUILD, "fidelity_tasks.json")
@@ -169,57 +169,48 @@ def sidecars() -> list[tuple[str, dict]]:
     return out
 
 
-def main() -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--ingest", action="store_true", help="score answers, write report")
-    ap.add_argument("--mode", choices=["skill", "api"])
-    ap.add_argument("--engine", default="model-knowledge",
-                    help="label for where the answer came from")
-    ap.add_argument("--answer-model", help="MODEL_ID[@BASE_URL] to ask (--mode api); "
-                                          "defaults to $PAPER_GEO_LLM_MODEL")
-    ap.add_argument("--grade-model", help="MODEL_ID[@BASE_URL] to grade with (--mode api); "
-                                         "defaults to the answerer, which marks its own work")
-    ap.add_argument("--limit", type=int, help="first N papers only, for a smoke run")
-    args = ap.parse_args()
-    cfg = load_config()
-    papers = {p["slug"]: p for p in read_papers()}
-    sc = sidecars()
-    if not sc:
-        sys.exit("no sidecars with claims yet -- nothing to check fidelity against")
+def emit(sc: list, papers: dict, args) -> None:
+    """`build/fidelity_tasks.json`, one task per sidecar, `answer` and `score` left blank.
 
-    if not args.ingest:
-        tasks = []
-        for slug, fm in sc:
-            p = papers.get(slug, {})
-            tasks.append({
-                "slug": slug,
-                "engine": args.engine,
-                "ask": ASK.format(title=title_of(p) or slug),
-                "authored_claims": [{"claim_id": c["id"], "text": " ".join(c["text"].split()),
-                                     "scope": " ".join(c["scope"].split())}
-                                    for c in fm["claims"]],
-                "answer": None,   # fill in: what the engine actually said
-                "score": None,    # fill in against SCORE_SCHEMA
-            })
-        if args.limit:
-            tasks = tasks[:args.limit]
-        if args.mode == "api":
-            run_api(tasks, args.answer_model, args.grade_model)
-        write_json(
-            TASKS,
-            {"grade_system": GRADE_SYSTEM, "schema": SCORE_SCHEMA,
-             "tasks": tasks}, indent=1)
-        print(f"wrote {TASKS}: {len(tasks)} paper(s)")
-        if args.mode == "api":
-            print(f"Now: python {os.path.relpath(__file__, ROOT)} --ingest")
-        else:
-            print("For each task: put the engine's answer in `answer`, grade it into "
-                  "`score`, then run --ingest.")
-        return
+    `--mode api` fills both in before the file is written. Without it the file is the whole
+    point: AI Overviews and AI Mode have no API, so the only way to measure the engines this
+    project targets is a person pasting into the two blank fields.
+    """
+    tasks = []
+    for slug, fm in sc:
+        p = papers.get(slug, {})
+        tasks.append({
+            "slug": slug,
+            "engine": args.engine,
+            "ask": ASK.format(title=title_of(p) or slug),
+            "authored_claims": [{"claim_id": c["id"], "text": " ".join(c["text"].split()),
+                                 "scope": " ".join(c["scope"].split())}
+                                for c in fm["claims"]],
+            "answer": None,   # fill in: what the engine actually said
+            "score": None,    # fill in against SCORE_SCHEMA
+        })
+    if args.limit:
+        tasks = tasks[:args.limit]
+    if args.mode == "api":
+        run_api(tasks, args.answer_model, args.grade_model)
+    write_json(
+        TASKS,
+        {"grade_system": GRADE_SYSTEM, "schema": SCORE_SCHEMA,
+         "tasks": tasks}, indent=1)
+    print(f"wrote {TASKS}: {len(tasks)} paper(s)")
+    if args.mode == "api":
+        print(f"Now: python {os.path.relpath(__file__, ROOT)} --ingest")
+    else:
+        print("For each task: put the engine's answer in `answer`, grade it into "
+              "`score`, then run --ingest.")
 
-    if not os.path.exists(TASKS):
-        sys.exit(f"no {TASKS} -- run without --ingest first")
-    doc = json.load(open(TASKS))
+
+def scored(doc: dict) -> tuple[list, dict, dict]:
+    """One row per scored claim, the tally over the three scores, and the run's counts.
+
+    The counts also carry `total`, `papers` and `floor`, so the report and the console line
+    read the same numbers rather than each deriving them.
+    """
     rows, tally = [], {0: 0, 1: 0, 2: 0}
     recalled, graded, invented, ungraded, unanswered = 0, 0, 0, [], []
     engines, graders = set(), set()
@@ -244,20 +235,31 @@ def main() -> None:
         for inv in s.get("invented", []):
             invented += 1
             rows.append((t["slug"], t["engine"], "(invented)", 0, inv))
+    n = {"graded": graded, "recalled": recalled, "invented": invented,
+         "ungraded": ungraded, "unanswered": unanswered, "engines": engines,
+         "graders": graders, "total": sum(tally.values()), "papers": len(doc["tasks"])}
+    # What the table is depends on recall. With papers recognised, the scores rank them by
+    # how badly they are described and that ranking is the product. With almost none, every
+    # paper scores the same 0 and the ranking is noise -- so the report has to say it
+    # measured a floor rather than hand over a worklist ordered by nothing.
+    n["floor"] = graded and recalled <= max(2, 0.05 * graded)
+    return rows, tally, n
 
-    total = sum(tally.values())
-    papers = len(doc["tasks"])
+
+def _summary(tally: dict, n: dict) -> list[str]:
+    """The counts, who produced them, and the share at each of the three scores."""
+    graded, total = n["graded"], n["total"]
     L = ["# Claim fidelity", "",
          "Generated by `measure/fidelity.py`. A diagnostic, not an experiment.", "",
-         f"- Papers asked: **{papers}**",
+         f"- Papers asked: **{n['papers']}**",
          f"- Answered and graded: **{graded}**",
-         f"- Showed real knowledge of the paper (`recalled`): **{recalled}**"
-         + (f" — {100*recalled/graded:.0f}%" if graded else ""),
+         f"- Showed real knowledge of the paper (`recalled`): **{n['recalled']}**"
+         + (f" — {100*n['recalled']/graded:.0f}%" if graded else ""),
          f"- Claims scored: **{total}**",
-         f"- Claims the answer invented: **{invented}**", ""]
-    if engines:
-        L += [f"Answered by `{', '.join(sorted(engines))}`, graded by "
-              f"`{', '.join(sorted(graders))}`.", ""]
+         f"- Claims the answer invented: **{n['invented']}**", ""]
+    if n["engines"]:
+        L += [f"Answered by `{', '.join(sorted(n['engines']))}`, graded by "
+              f"`{', '.join(sorted(n['graders']))}`.", ""]
     if total:
         L += [f"- **2 — claim and scope correct:** {tally.get(2,0)} "
               f"({100*tally.get(2,0)/total:.0f}%)",
@@ -265,68 +267,117 @@ def main() -> None:
               f"({100*tally.get(1,0)/total:.0f}%)  ← the cell sidecars exist to move",
               f"- **0 — claim wrong or misattributed:** {tally.get(0,0)} "
               f"({100*tally.get(0,0)/total:.0f}%)", ""]
-    # What the table below is depends on recall. With papers recognised, the scores rank
-    # them by how badly they are described and that ranking is the product. With almost
-    # none, every paper scores the same 0 and the ranking is noise -- so the report has to
-    # say it measured a floor rather than hand over a worklist ordered by nothing.
-    floor = graded and recalled <= max(2, 0.05 * graded)
-    if floor:
-        L += ["## This is a floor, not a worklist", "",
-              f"{graded - recalled} of {graded} papers were not recognised at all, and the "
-              f"answers are not blank -- they are",
-              f"fluent, specific and about papers that do not exist: {invented} invented "
-              f"claims against",
-              f"{total} authored ones. So the per-claim table below ranks nothing, because "
-              f"every paper",
-              "scored the same score. What the run establishes is a baseline -- this engine "
-              "cannot",
-              "describe this corpus unaided -- which is the gap the pages exist to close.", "",
-              "For a ranking instead, ask an engine that retrieves. Answers have to be able "
-              "to differ",
-              "before their scores can.", ""]
-    if ungraded:
+    return L
+
+
+def _floor_note(n: dict) -> list[str]:
+    """Why a run nothing recognised is a baseline and not a ranking. Empty above the floor."""
+    if not n["floor"]:
+        return []
+    graded, total = n["graded"], n["total"]
+    return ["## This is a floor, not a worklist", "",
+            f"{graded - n['recalled']} of {graded} papers were not recognised at all, and "
+            f"the answers are not blank -- they are",
+            f"fluent, specific and about papers that do not exist: {n['invented']} invented "
+            f"claims against",
+            f"{total} authored ones. So the per-claim table below ranks nothing, because "
+            f"every paper",
+            "scored the same score. What the run establishes is a baseline -- this engine "
+            "cannot",
+            "describe this corpus unaided -- which is the gap the pages exist to close.", "",
+            "For a ranking instead, ask an engine that retrieves. Answers have to be able "
+            "to differ",
+            "before their scores can.", ""]
+
+
+def _excluded(n: dict) -> list[str]:
+    """The papers the numbers above leave out, named, with the denominator they are out of."""
+    L = []
+    if n["ungraded"]:
         L += ["## Answered but not graded", "",
-              f"{len(ungraded)} paper(s) got an answer the grader returned no usable score "
-              f"for. They are excluded",
-              f"from every number above, so those counts are over {graded} papers, "
-              f"not {papers}.", ""]
-        L += [f"- `{s}`" for s in ungraded] + [""]
-    if unanswered:
+              f"{len(n['ungraded'])} paper(s) got an answer the grader returned no usable "
+              f"score for. They are excluded",
+              f"from every number above, so those counts are over {n['graded']} papers, "
+              f"not {n['papers']}.", ""]
+        L += [f"- `{s}`" for s in n["ungraded"]] + [""]
+    if n["unanswered"]:
         L += ["## No answer", "",
-              f"{len(unanswered)} paper(s) produced no answer at all (a gateway error, "
+              f"{len(n['unanswered'])} paper(s) produced no answer at all (a gateway error, "
               "usually).", ""]
-        L += [f"- `{s}`" for s in unanswered] + [""]
+        L += [f"- `{s}`" for s in n["unanswered"]] + [""]
+    return L
+
+
+def _table(rows: list, n: dict) -> list[str]:
+    """A row per scored claim, worst first, and what to do before believing any of it."""
     # At the floor a row per claim is ~1200 lines saying "not recognised". The invented
     # claims differ from each other and are the only part of such a run that carries
     # information, so the table narrows to them -- and states how many rows it dropped,
     # because a cap that does not announce itself reads as "this is everything".
-    shown = [r for r in rows if r[2] == "(invented)"] if floor else rows
-    dropped = len(rows) - len(shown)
-    L += ["## What it said instead" if floor else "## Worst first", ""]
-    if floor:
-        L += [f"Only the invented claims. The other {dropped} rows score the corpus "
-              f"against a model that",
+    shown = [r for r in rows if r[2] == "(invented)"] if n["floor"] else rows
+    L = ["## What it said instead" if n["floor"] else "## Worst first", ""]
+    if n["floor"]:
+        L += [f"Only the invented claims. The other {len(rows) - len(shown)} rows score the "
+              f"corpus against a model that",
               "does not know it, so their order carries nothing to work down.", ""]
     L += ["| paper | engine | claim | score | note |", "|---|---|---|---|---|"]
     for slug, eng, cid, score, note in sorted(shown, key=lambda r: r[3]):
         L.append(f"| {slug} | {eng} | {cid} | {score} | {note.replace('|', '/')} |")
-    L += ["", "## Before trusting these numbers", "",
-          "Hand-check a stratified 20% of the scores. The grader is the measurement",
-          "instrument and needs its own validation; an unvalidated grader produces",
-          "a confident report about nothing."]
-    with open(REPORT, "w") as f:
-        f.write("\n".join(L) + "\n")
-    print(f"wrote {REPORT}: {total} claims scored over {graded} of {papers} paper(s)")
-    if total:
+    return L + ["", "## Before trusting these numbers", "",
+                "Hand-check a stratified 20% of the scores. The grader is the measurement",
+                "instrument and needs its own validation; an unvalidated grader produces",
+                "a confident report about nothing."]
+
+
+def _say(tally: dict, n: dict) -> None:
+    """The console line, and on stderr the papers the report had to leave out."""
+    print(f"wrote {REPORT}: {n['total']} claims scored over {n['graded']} of "
+          f"{n['papers']} paper(s)")
+    if n["total"]:
         print(f"  correct with scope {tally.get(2,0)} | scope dropped {tally.get(1,0)} "
-              f"| wrong {tally.get(0,0)} | invented {invented}")
-    if recalled is not None and graded:
-        print(f"  recognised the paper at all: {recalled}/{graded}")
-    if ungraded:
-        print(f"  {len(ungraded)} answered but ungraded, excluded from the above",
+              f"| wrong {tally.get(0,0)} | invented {n['invented']}")
+    if n["graded"]:
+        print(f"  recognised the paper at all: {n['recalled']}/{n['graded']}")
+    if n["ungraded"]:
+        print(f"  {len(n['ungraded'])} answered but ungraded, excluded from the above",
               file=sys.stderr)
-    if unanswered:
-        print(f"  {len(unanswered)} never answered", file=sys.stderr)
+    if n["unanswered"]:
+        print(f"  {len(n['unanswered'])} never answered", file=sys.stderr)
+
+
+def ingest() -> None:
+    """`measure/fidelity_report.md` from the filled-in answers, in four parts.
+
+    The counts, why a run that recognised nothing is a floor, the papers left out of the
+    counts, and the per-claim table.
+    """
+    if not os.path.exists(TASKS):
+        sys.exit(f"no {TASKS} -- run without --ingest first")
+    doc = json.load(open(TASKS))
+    rows, tally, n = scored(doc)
+    with open(REPORT, "w") as f:
+        f.write("\n".join(_summary(tally, n) + _floor_note(n) + _excluded(n)
+                          + _table(rows, n)) + "\n")
+    _say(tally, n)
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--ingest", action="store_true", help="score answers, write report")
+    ap.add_argument("--mode", choices=["skill", "api"])
+    ap.add_argument("--engine", default="model-knowledge",
+                    help="label for where the answer came from")
+    ap.add_argument("--answer-model", help="MODEL_ID[@BASE_URL] to ask (--mode api); "
+                                          "defaults to $PAPER_GEO_LLM_MODEL")
+    ap.add_argument("--grade-model", help="MODEL_ID[@BASE_URL] to grade with (--mode api); "
+                                         "defaults to the answerer, which marks its own work")
+    ap.add_argument("--limit", type=int, help="first N papers only, for a smoke run")
+    args = ap.parse_args()
+    papers = {p["slug"]: p for p in read_papers()}
+    sc = sidecars()
+    if not sc:
+        sys.exit("no sidecars with claims yet -- nothing to check fidelity against")
+    ingest() if args.ingest else emit(sc, papers, args)
 
 
 if __name__ == "__main__":
