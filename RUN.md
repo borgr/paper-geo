@@ -472,6 +472,27 @@ and `llm.mode` in `config.yaml` decides how they reach one.
 `ANTHROPIC_API_KEY`, and `--answer-model` / `--grade-model` take `MODEL_ID[@BASE_URL]`
 to override them for one run.
 
+### Moving to another machine
+
+Clone, `pip install -r requirements.txt`, `gh auth login`, and you are running.
+`config.yaml` is committed, so nothing about who you are needs copying. Three things do
+not travel, because they are gitignored on purpose.
+
+| | Carry it, or re-make it |
+|---|---|
+| `data/fulltext/*` | the PDFs you dropped in by hand for papers the open-access chain cannot reach. Copy the directory, or re-drop them. Without them those papers go thin again and their sidecars cannot be re-drafted |
+| `.wikidata_bot` | or set `WIKIDATA_BOT_USER` and `WIKIDATA_BOT_PASSWORD` in the new shell |
+| the keys below | one of them cannot be re-issued on demand |
+
+| Key | Needed for | If you arrive without it |
+|---|---|---|
+| `S2_API_KEY` | every run that reads Semantic Scholar | **Copy this one before you wipe the old machine.** Semantic Scholar issues it through a request form and delivers it by email, no page shows an existing key, and a repository secret cannot be read back out of GitHub — so your shell profile is the only readable copy you have |
+| `gh` login | the sweep, the HF links, the deploy | `gh auth login` again. Nothing to preserve |
+| `GH_TOKEN` | the same three under Actions | mint a new PAT. Nothing to preserve |
+| `WIKIDATA_BOT_PASSWORD` | Wikidata writes | `Special:BotPasswords` issues a replacement and retires the old one. Nothing to preserve |
+| `ANTHROPIC_API_KEY` | `llm.mode: api` only | a new key from the console. Nothing to preserve |
+| `PAPER_GEO_LLM_*` | `llm.mode: openai` only | whatever issues the gateway key |
+
 ## 10. Unattended: what GitHub Actions does
 
 | Workflow | Trigger | Does | Writes outward? |
