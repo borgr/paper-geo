@@ -76,6 +76,16 @@ def source(path: str) -> str:
         return f.read()
 
 
+def answering(status: int, body: bytes = b""):
+    """One status and body for every JSON read, patched at the one seam they share.
+
+    Readers that go through `common.replied` hold no `get_status` of their own, so a test
+    that patches the module it is exercising patches a name that is not there.
+    """
+    import common
+    return mock.patch.object(common, "get_status", lambda _u, **kw: (status, body))
+
+
 class TestEveryModuleImports(unittest.TestCase):
     """The floor: a module that will not import cannot be a step.
 
@@ -4952,7 +4962,7 @@ class TestAHandoverBundleDecidesNothing(unittest.TestCase):
         try:
             for st in (0, 429, 500):
                 handover._refused = ""
-                with mock.patch.object(handover, "get_status", lambda _u, **kw: (st, b"")):
+                with answering(st):
                     self.assertEqual([], handover.orcids("Ada Example Lovelace"))
                     self.assertEqual((None, None), handover.dblp_pid("Ada Example Lovelace"))
                 self.assertTrue(handover._refused, "status %s passed as an answer" % st)
@@ -4975,8 +4985,7 @@ class TestAHandoverBundleDecidesNothing(unittest.TestCase):
                     self.assertEqual([], os.listdir(d), "a refusal wrote a bundle")
 
             handover._refused = ""
-            with mock.patch.object(handover, "get_status",
-                                   lambda _u, **kw: (200, b'{"result": {}}')):
+            with answering(200, b'{"result": {}}'):
                 self.assertEqual((None, None), handover.dblp_pid("Ada Example Lovelace"))
             self.assertEqual("", handover._refused)
         finally:
@@ -5174,11 +5183,12 @@ class TestWikipediaAsksOnlyForCorrections(unittest.TestCase):
         try:
             for st in (0, 429, 500):
                 w._refused = ""
-                with mock.patch.object(w, "get_status", lambda _u, **kw: (st, b"")):
+                with answering(st):
                     self.assertEqual({}, w.api(titles="Project Debater"))
                 self.assertTrue(w._refused, "status %s passed as an answer" % st)
                 # One refusal stands for the run: the rest of the ~100 calls are not sent.
-                with mock.patch.object(w, "get_status",
+                import common
+                with mock.patch.object(common, "get_status",
                                        lambda _u, **kw: self.fail("kept fetching")):
                     self.assertEqual({}, w.api(titles="Sloth"))
             with tempfile.TemporaryDirectory() as d:
@@ -5191,8 +5201,7 @@ class TestWikipediaAsksOnlyForCorrections(unittest.TestCase):
                 self.assertEqual(1, e.exception.code)
                 self.assertEqual([], os.listdir(d), "a refusal wrote a page")
             w._refused = ""
-            with mock.patch.object(w, "get_status",
-                                   lambda _u, **kw: (200, b'{"query": {"pages": []}}')):
+            with answering(200, b'{"query": {"pages": []}}'):
                 self.assertEqual({"query": {"pages": []}}, w.api(titles="Sloth"))
             self.assertEqual("", w._refused)
         finally:
@@ -6366,6 +6375,52 @@ class TestAQuietItemIsNotAnItemWithNoStatements(unittest.TestCase):
             self.assertNotIn("need 50", out.getvalue())
 
 
+class TestOneReaderForEveryJsonSource(unittest.TestCase):
+    """`common.replied` is the one place a JSON read decides whether it got an answer.
+
+    Every source here answers 200 with an empty result for something it does not carry, so
+    a caller that cannot tell an empty answer from an unreadable one reports the absence as
+    a finding. The reason travels with the data for exactly that reason.
+    """
+
+    def test_an_answer_that_stopped_is_not_the_status_that_carried_it(self):
+        """A body cut off mid-JSON arrives under HTTP 200. Named by its status, the reason a
+        page prints for carrying last run's counts is a status that means the call worked."""
+        import common
+        with answering(200, b'{"entities": {"Q1"'):
+            st, d, why = common.replied("https://example.org/x")
+        self.assertEqual((200, None), (st, d))
+        self.assertEqual("an answer that stopped after 18 bytes", why)
+        with answering(503, b""):
+            self.assertEqual((503, None, "HTTP 503"), common.replied("https://example.org/x"))
+        with answering(200, b'{"ok": []}'):
+            self.assertEqual((200, {"ok": []}, ""), common.replied("https://example.org/x"))
+
+    def test_an_answer_that_stopped_reaches_the_reason_each_page_prints(self):
+        """Each caller prefixes its own context onto the reason, so a truncation has to be a
+        refusal in all of them. Read as an answer it is an empty result set, which is what
+        every one of these pages is built out of."""
+        import handover
+        import ownership
+        import wikipedia_tasks
+        cut = b'{"query": {"pages"'
+        for mod, latch, call in (
+                (wikipedia_tasks, "_refused", lambda m: m.api(titles="Sloth")),
+                (handover, "_refused", lambda m: m.dblp_pid("Ada Example Lovelace")),
+                (ownership, "_quiet", lambda m: m.fetch_peers(
+                    {"collaboration": {"peers": ["https://peer.example/m.json"]}})),
+        ):
+            old = getattr(mod, latch)
+            try:
+                setattr(mod, latch, "")
+                with answering(200, cut):
+                    call(mod)
+                self.assertIn("stopped after 18 bytes", getattr(mod, latch),
+                              "%s read a cut-off body as an answer" % mod.__name__)
+            finally:
+                setattr(mod, latch, old)
+
+
 class TestEveryFetchReachesTheHealthLedger(unittest.TestCase):
     """A direct `urllib.request.urlopen` has to call `note_fetch` about what happened.
 
@@ -6851,18 +6906,18 @@ class TestAQuietPeerDoesNotHandOverItsPapers(unittest.TestCase):
         try:
             for st in (0, 429, 500):
                 o._quiet = ""
-                with mock.patch.object(o, "get_status", lambda _u, **kw: (st, b"")):
+                with answering(st):
                     self.assertEqual({}, o.fetch_peers(self.CFG))
                 self.assertTrue(o.quiet(), "status %s passed as an answer" % st)
             for st in (404, 410):
                 o._quiet = ""
-                with mock.patch.object(o, "get_status", lambda _u, **kw: (st, b"")):
+                with answering(st):
                     self.assertEqual({}, o.fetch_peers(self.CFG))
                 self.assertEqual("", o.quiet(),
                                  "status %s is an answer and must not stop the run" % st)
             o._quiet = ""
             body = json.dumps(self.MANIFEST).encode()
-            with mock.patch.object(o, "get_status", lambda _u, **kw: (200, body)):
+            with answering(200, body):
                 self.assertEqual("them", o.fetch_peers(self.CFG)["10.1/x"]["owner"])
             self.assertEqual("", o.quiet())
         finally:

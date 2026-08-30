@@ -31,8 +31,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, get_status, host_of, load_config,  # noqa: E402
-                    read_yaml, write_json, write_yaml)
+from common import (BUILD, DATA, host_of, load_config, read_yaml,  # noqa: E402
+                    replied, write_json, write_yaml)
 
 MANIFEST_VERSION = 1
 
@@ -110,13 +110,9 @@ def fetch_peers(cfg) -> dict[str, dict]:
     global _quiet
     claimed: dict[str, dict] = {}
     for url in cfg["collaboration"].get("peers") or []:
-        st, raw = get_status(url, accept="application/json")
-        try:
-            doc = json.loads(raw) if st == 200 and raw else None
-        except ValueError:
-            doc = None
-        if doc is None and st not in (404, 410):
-            _quiet = _quiet or f"{host_of(url)} -> HTTP {st}"
+        st, doc, why = replied(url)
+        if why and st not in (404, 410):
+            _quiet = _quiet or f"{host_of(url)} -> {why}"
         if not doc or not doc.get("paper_geo_manifest"):
             print(f"  ! unreadable or not a manifest: {url}", file=sys.stderr)
             continue

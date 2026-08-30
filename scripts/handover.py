@@ -38,7 +38,7 @@ import urllib.parse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from common import ROOT, get_status, host_of, norm_name, write_json  # noqa: E402
+from common import ROOT, host_of, norm_name, replied, write_json  # noqa: E402
 
 S2 = "https://api.semanticscholar.org/graph/v1"
 # Set to the first lookup that did not answer. All four below read an empty result as a
@@ -61,13 +61,9 @@ def fetched(url: str, **kw) -> dict:
     any other status is a refusal rather than a report.
     """
     global _refused
-    st, raw = get_status(url, accept="application/json", **kw)
-    try:
-        d = json.loads(raw) if st == 200 and raw else None
-    except ValueError:
-        d = None
-    if d is None:
-        _refused = f"{host_of(url)} -> HTTP {st}"
+    _st, d, why = replied(url, **kw)
+    if why:
+        _refused = f"{host_of(url)} -> {why}"
     return d or {}
 
 

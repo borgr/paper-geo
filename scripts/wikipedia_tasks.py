@@ -27,7 +27,6 @@ from __future__ import annotations
 import argparse
 import glob
 import html
-import json
 import os
 import re
 import sys
@@ -36,8 +35,8 @@ import urllib.parse
 import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (BUILD, DATA, ROOT, TASKS, get_status, load_config,  # noqa: E402
-                    read_yaml, write_json, write_task)
+from common import (DATA, ROOT, TASKS, load_config, read_yaml, replied,  # noqa: E402
+                    write_json, write_task)
 
 API = "https://en.wikipedia.org/w/api.php"
 OUT = os.path.join(TASKS, "wikipedia.md")
@@ -70,13 +69,9 @@ def api(**params) -> dict:
     if _refused:
         return {}
     q = urllib.parse.urlencode(dict(params, action="query", format="json", formatversion="2"))
-    st, raw = get_status(f"{API}?{q}", accept="application/json")
-    try:
-        d = json.loads(raw) if st == 200 and raw else None
-    except ValueError:
-        d = None
-    if d is None:
-        _refused = f"{params} -> HTTP {st}"
+    _st, d, why = replied(f"{API}?{q}")
+    if why:
+        _refused = f"{params} -> {why}"
     return d or {}
 
 

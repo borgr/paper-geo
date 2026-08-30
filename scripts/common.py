@@ -374,14 +374,28 @@ def get(url: str, **kw) -> bytes:
     return get_status(url, **kw)[1]
 
 
+def replied(url: str, **kw) -> tuple[int, dict | list | None, str]:
+    """The status, the JSON one call answered, and why nothing came back.
+
+    Every source here answers 200 with an empty result for something it does not carry, so
+    an empty answer is a report and only an unreadable one is a refusal. Callers latch the
+    reason and stop reporting an absence they never read.
+
+    The reason carries no host, so a caller can prefix whichever of the URL, the host or
+    the parameters identifies the call on its page. A body that stops mid-JSON arrives
+    under HTTP 200, so it is named as a truncation rather than as the status.
+    """
+    st, raw = get_status(url, accept="application/json", **kw)
+    if st == 200 and raw:
+        try:
+            return st, json.loads(raw), ""
+        except json.JSONDecodeError:
+            return st, None, f"an answer that stopped after {len(raw)} bytes"
+    return st, None, f"HTTP {st}"
+
+
 def get_json(url: str, **kw) -> dict | list | None:
-    raw = get(url, accept="application/json", **kw)
-    if not raw:
-        return None
-    try:
-        return json.loads(raw)
-    except json.JSONDecodeError:
-        return None
+    return replied(url, **kw)[1]
 
 
 # ---------------------------------------------------------------- the gh CLI
