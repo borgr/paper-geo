@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 from common import (BUILD, ROOT, answered_by, has_live_sidecar,  # noqa: E402
-                    phrasings, qa_loci, read_yaml)
+                    phrasings, qa_loci)
 from sidecar_io import (CACHE, draft_path, draft_paths, front_matter, held,  # noqa: E402
                         live_path, live_paths, oneline, quote, read_front_matter,
                         spec_sha, stale, validate_draft)

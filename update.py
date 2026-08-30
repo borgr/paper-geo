@@ -31,8 +31,8 @@ import sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
-from common import (DATA, DECLINE_STAMP, clipped, health_report,  # noqa: E402
-                    load_config, norm_title, read_yaml)
+from common import (DATA, DECLINE_STAMP, health_report,  # noqa: E402
+                    load_config, read_yaml)
 from worklist import (arxiv_journal_refs, arxiv_name_typos,  # noqa: E402
                       arxiv_ownership, hf_pages, identity_surfaces,
                       repo_gaps, same_or_different, scholar_gaps,

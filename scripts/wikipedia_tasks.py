@@ -220,12 +220,6 @@ def sidecar_terms() -> dict[str, list[str]]:
     return out
 
 
-def one_liner(slug: str) -> str | None:
-    path = os.path.join(DATA, "sidecars", f"{slug}.md")
-    m = re.match(r"^---\n(.*?)\n---", open(path).read(), re.S) if os.path.exists(path) else None
-    return ((yaml.safe_load(m.group(1)) or {}).get("one_liner") if m else None)
-
-
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--min-citations", type=int, default=20,

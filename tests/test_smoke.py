@@ -214,36 +214,49 @@ class TestUpdateWiring(unittest.TestCase):
 
 
 class TestEverySectionIsWired(unittest.TestCase):
-    """Every function `scripts/worklist.py` defines is reached from `update.py`.
+    """No module defines a function, or imports one, that nothing goes on to name.
 
-    A section nothing calls prints nothing, and a section printing nothing is what a
-    finished section looks like -- so the worklist reports the work as done. Emptying one
-    emitter's return breaks no other test, which is why this one reads the call graph
-    rather than the output.
+    Both halves of a dropped page section are invisible in the output: a section nothing
+    calls prints nothing, and a section printing nothing is what a finished section looks
+    like -- so the page reports the work as done. Emptying an emitter's return breaks no
+    other test, which is why this reads the call graph instead.
     """
 
-    def calls(self, rel):
-        """Every plain function name called anywhere in `rel`."""
-        tree = ast.parse(source(os.path.join(ROOT, rel)))
-        return {n.func.id for n in ast.walk(tree)
-                if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+    MODULES = ["update.py"] + sorted(
+        os.path.join(d, os.path.basename(p)) for d in ("scripts", "measure")
+        for p in glob.glob(os.path.join(ROOT, d, "*.py")))
+
+    def tree(self, rel):
+        return ast.parse(source(os.path.join(ROOT, rel)))
+
+    def names(self, rel):
+        """Every bare name `rel` mentions, whether it calls it or passes it along."""
+        return {n.id for n in ast.walk(self.tree(rel)) if isinstance(n, ast.Name)}
 
     def test_no_section_is_orphaned(self):
-        tree = ast.parse(source(os.path.join(ROOT, "scripts", "worklist.py")))
-        defined = {n.name for n in tree.body if isinstance(n, ast.FunctionDef)}
-        reached = self.calls("update.py") | self.calls(os.path.join("scripts", "worklist.py"))
-        self.assertEqual(set(), defined - reached,
-                         "worklist.py defines a section nothing calls, so the page reports "
-                         "its work as finished")
+        reached = set().union(*(self.names(rel) for rel in self.MODULES))
+        for rel in self.MODULES:
+            defined = {n.name for n in self.tree(rel).body
+                       if isinstance(n, ast.FunctionDef)}
+            self.assertEqual(set(), defined - reached,
+                             f"{rel} defines a function nothing names, which is the shape "
+                             "a dropped section call leaves behind")
 
     def test_no_section_is_imported_and_dropped(self):
-        tree = ast.parse(source(os.path.join(ROOT, "update.py")))
-        named = {a.name for n in ast.walk(tree)
-                 if isinstance(n, ast.ImportFrom) and n.module == "worklist"
-                 for a in n.names}
-        self.assertEqual(set(), named - self.calls("update.py"),
-                         "update.py imports a section it never calls, which is the shape a "
-                         "dropped call leaves behind")
+        local = {os.path.basename(p)[:-3] for p in self.MODULES}
+        for rel in self.MODULES:
+            src, used = source(os.path.join(ROOT, rel)).splitlines(), self.names(rel)
+            for n in ast.walk(self.tree(rel)):
+                if not isinstance(n, ast.ImportFrom) or n.module not in local:
+                    continue
+                # `# noqa: F401` marks a deliberate re-export, which nothing here names
+                # on purpose -- the importers reach it as `<module>.<name>`.
+                if "noqa: F401" in src[n.lineno - 1]:
+                    continue
+                for a in n.names:
+                    self.assertIn(a.asname or a.name, used,
+                                  f"{rel} imports {a.name} from {n.module} and never "
+                                  "names it, which is what a dropped call leaves behind")
 
 
 class TestReferencedScriptsExist(unittest.TestCase):

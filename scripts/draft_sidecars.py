@@ -57,8 +57,7 @@ import yaml  # noqa: E402
 from llm import JSON_ONLY, decodable, first_json, with_retries  # noqa: E402
 from llm import client as llm_client  # noqa: E402
 from common import (BUILD, DATA, README_NAMES, ROOT, get_status,  # noqa: E402
-                    has_live_sidecar, load_config, phrasings, qa_loci, read_yaml,
-                    rules_block, write_json)
+                    load_config, read_yaml, rules_block, write_json)
 from fulltext import LIMIT as FULLTEXT_LIMIT  # noqa: E402
 from fulltext import cut_chars  # noqa: E402
 from fulltext import resolve as resolve_fulltext  # noqa: E402

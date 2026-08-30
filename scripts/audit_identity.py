@@ -640,81 +640,124 @@ def audit_table(cfg: dict, r: dict, d: dict) -> list[str]:
 
 def audit_fixes(cfg: dict, r: dict, d: dict) -> list[str]:
     """One section per surface with something open, carrying the URL, the clicks and the
-    values to paste. Empty when every row of the table above reads ok."""
-    ident, ids = cfg["identity"], cfg["ids"]
-    orc, reg, wd = r["orc"], r["reg"], r["wd"]
-    wd_gaps, wd_cov, wd_qs = r["wd_gaps"], r["wd_cov"], r["wd_qs"]
-    hf, n_typo, n_gap = r["hf"], r["n_typo"], r["n_gap"]
-    stray = r["stray"]
-    canon, url_vals, has_canon = d["canon"], d["url_vals"], d["has_canon"]
-    missing_variants, other_pages = d["missing_variants"], d["other_pages"]
-    want_kw = d["want_kw"]
-    o_dups, o_misfiled, o_conf = d["o_dups"], d["o_misfiled"], d["o_conf"]
-    o_unk, o_missing, auto_src = d["o_unk"], d["o_missing"], d["auto_src"]
-    missing_empl, missing_edu, edu_open = d["missing_empl"], d["missing_edu"], d["edu_open"]
-    edu_theirs = d["edu_theirs"]
+    values to paste. Empty when every row of the table above reads ok.
+
+    A section below returns nothing when its own surface has nothing open, so this holds
+    the order they print in and nothing else.
+    """
+    orc, name = r["orc"], cfg["identity"]["name"]
+    return (orcid_no_public_works(orc)
+            + orcid_canonical_url(d["canon"], d["url_vals"], d["has_canon"])
+            + orcid_name_variants(d["missing_variants"])
+            + orcid_keywords(d["want_kw"])
+            + orcid_auto_update(orc, d["auto_src"])
+            + orcid_affiliations(orc, name, d["missing_empl"], d["missing_edu"],
+                                 d["edu_open"], d["edu_theirs"])
+            + orcid_other_pages(d["other_pages"])
+            + arxiv_unregistered(r["reg"], r["n_gap"])
+            + wikidata_author_gaps(r["wd"], r["wd_gaps"])
+            + wikidata_paper_gaps(r["wd_cov"], r["wd_qs"])
+            + arxiv_strays(r["stray"])
+            + wikidata_no_author_item(r["wd"])
+            + hf_gaps(r["hf"])
+            + orcid_confirmed_strays(d["o_conf"])
+            + orcid_unplaceable(d["o_unk"])
+            + orcid_misfiled(d["o_misfiled"])
+            + orcid_missing(d["o_missing"])
+            + orcid_duplicates(d["o_dups"])
+            + arxiv_misspellings(r["n_typo"]))
+
+
+def orcid_no_public_works(orc: dict) -> list[str]:
+    """The one-file BibTeX import, when the public API reports no works at all."""
+    if orc["works"]:
+        return []
+    return ["## ORCID has 0 public works", "",
+            "Note the *public*: an item set to “trusted parties” is invisible to the",
+            "public API, which is the only thing Semantic Scholar, OpenAlex and Crossref",
+            "read. So before importing, set **Account settings → Visibility preferences**",
+            "to *Everyone*, or the import lands somewhere nothing can see.",
+            "",
+            "Then one upload: *Works → + Add → Add BibTeX* → `tasks/orcid_import.bib`.",
+            "Not the DOI form 100 times — every entry in that file now carries a DOI",
+            "(missing ones filled from arXiv), and ORCID groups works by identifier, so",
+            "the whole file merges with the registry copies instead of duplicating them.",
+            ""]
+
+
+def orcid_canonical_url(canon: str, url_vals: list, has_canon: bool) -> list[str]:
+    """The canonical URL is not among the researcher URLs the record lists."""
+    if has_canon:
+        return []
+    return ["## ORCID researcher URLs point somewhere else", "",
+            "Listed: " + (", ".join(f"`{u}`" for u in url_vals) or "none") + "  ",
+            f"Expected: `{canon}`", "",
+            "Two separate problems if one of those is a site-builder page. It competes",
+            "with your canonical URL for the same identity — engines cannot fuse two",
+            "candidate homepages — and Wix/Squarespace/Notion pages are JS-rendered, so",
+            "AI crawlers that do not execute JavaScript see an empty document. Add the",
+            "canonical URL, and either delete the other or make it redirect.", ""]
+
+
+def orcid_name_variants(missing_variants: list) -> list[str]:
+    """Name forms in `config.yaml` that *Also known as* does not carry."""
+    if not missing_variants:
+        return []
+    return ["## ORCID name variants not listed", "",
+            "*Also known as* is what a disambiguation model matches on when a citation",
+            "uses a different form. Add: " +
+            ", ".join(f"`{v}`" for v in missing_variants), ""]
+
+
+def orcid_keywords(want_kw: list) -> list[str]:
+    """Keywords in `config.yaml` the record does not carry."""
+    if not want_kw:
+        return []
+    return ["## ORCID keywords to add", "",
+            "One of the few facets ORCID exposes for subject search, and free. Multi-word",
+            "phrases someone would actually type — `model merging` is a query, `merging`",
+            "is not — and no coined names, which have no lexical path from any real",
+            "question. The same list fills Google Scholar's five interest slots (pick the",
+            "top five). Edit `config.yaml` → `identity.keywords` to change it.", "",
+            *[f"- [ ] {k}" for k in want_kw], ""]
+
+
+def orcid_auto_update(orc: dict, auto_src: dict) -> list[str]:
+    """No work on the record came from Crossref or DataCite rather than the author."""
+    if auto_src:
+        return []
+    return ["## Crossref / DataCite auto-update: no evidence it is live", "",
+            f"All {orc['works']} public works are **self-asserted** — the `source` on every",
+            "one of them is your own name. A work that Crossref or DataCite adds carries",
+            "*their* name instead, so this row is the only public read on whether those",
+            "connections exist. It is currently reading zero.", "",
+            "**Zero is the expected reading today, and that is the trap.** Auto-update is",
+            "not a sync and it does not backfill: it fires only when a *newly deposited*",
+            "record already contains your iD. So a granted permission and a permission",
+            "that never completed look identical until your next paper is published —",
+            "months from now, with nothing to connect the silence to the click.", "",
+            "Two checks separate them, both two minutes:", "",
+            "1. **Was the permission actually granted?** *ORCID → Account settings →",
+            "   Trusted parties*. `Crossref Metadata Search` and `DataCite` should each",
+            "   be listed there with permission to add and update your works. The wizards",
+            "   send you off to `search.crossref.org` / DataCite's own site, which is what",
+            "   makes this ambiguous: landing there proves the redirect worked, not that",
+            "   you came back and completed the OAuth grant. If they are absent from",
+            "   Trusted parties, nothing was granted — redo *Works → Search & link*.",
+            "2. **Is your iD in the deposits at all?** Permissions cannot help if",
+            "   publishers never put your iD in the metadata they deposit. Search a recent",
+            "   published DOI at <https://search.crossref.org> and look for your ORCID in",
+            "   the author list. Absent means the fix is upstream: supply your iD in the",
+            "   submission system for every future paper. That single habit is what makes",
+            "   auto-update work without you.", "",
+            "Re-run this audit after the next publication lands. A non-zero count here is",
+            "the proof; until then, Trusted parties is the evidence.", ""]
+
+
+def orcid_affiliations(orc: dict, name: str, missing_empl: list, missing_edu: list,
+                       edu_open: list, edu_theirs: list) -> list[str]:
+    """Employment and education entries the record misses or states incompletely."""
     L = []
-    if orc["works"] == 0:
-        L += ["## ORCID has 0 public works", "",
-              "Note the *public*: an item set to “trusted parties” is invisible to the",
-              "public API, which is the only thing Semantic Scholar, OpenAlex and Crossref",
-              "read. So before importing, set **Account settings → Visibility preferences**",
-              "to *Everyone*, or the import lands somewhere nothing can see.",
-              "",
-              "Then one upload: *Works → + Add → Add BibTeX* → `tasks/orcid_import.bib`.",
-              "Not the DOI form 100 times — every entry in that file now carries a DOI",
-              "(missing ones filled from arXiv), and ORCID groups works by identifier, so",
-              "the whole file merges with the registry copies instead of duplicating them.",
-              ""]
-    if not has_canon:
-        L += ["## ORCID researcher URLs point somewhere else", "",
-              "Listed: " + (", ".join(f"`{u}`" for u in url_vals) or "none") + "  ",
-              f"Expected: `{canon}`", "",
-              "Two separate problems if one of those is a site-builder page. It competes",
-              "with your canonical URL for the same identity — engines cannot fuse two",
-              "candidate homepages — and Wix/Squarespace/Notion pages are JS-rendered, so",
-              "AI crawlers that do not execute JavaScript see an empty document. Add the",
-              "canonical URL, and either delete the other or make it redirect.", ""]
-    if missing_variants:
-        L += ["## ORCID name variants not listed", "",
-              "*Also known as* is what a disambiguation model matches on when a citation",
-              "uses a different form. Add: " +
-              ", ".join(f"`{v}`" for v in missing_variants), ""]
-    if want_kw:
-        L += ["## ORCID keywords to add", "",
-              "One of the few facets ORCID exposes for subject search, and free. Multi-word",
-              "phrases someone would actually type — `model merging` is a query, `merging`",
-              "is not — and no coined names, which have no lexical path from any real",
-              "question. The same list fills Google Scholar's five interest slots (pick the",
-              "top five). Edit `config.yaml` → `identity.keywords` to change it.", "",
-              *[f"- [ ] {k}" for k in want_kw], ""]
-    if not auto_src:
-        L += ["## Crossref / DataCite auto-update: no evidence it is live", "",
-              f"All {orc['works']} public works are **self-asserted** — the `source` on every",
-              "one of them is your own name. A work that Crossref or DataCite adds carries",
-              "*their* name instead, so this row is the only public read on whether those",
-              "connections exist. It is currently reading zero.", "",
-              "**Zero is the expected reading today, and that is the trap.** Auto-update is",
-              "not a sync and it does not backfill: it fires only when a *newly deposited*",
-              "record already contains your iD. So a granted permission and a permission",
-              "that never completed look identical until your next paper is published —",
-              "months from now, with nothing to connect the silence to the click.", "",
-              "Two checks separate them, both two minutes:", "",
-              "1. **Was the permission actually granted?** *ORCID → Account settings →",
-              "   Trusted parties*. `Crossref Metadata Search` and `DataCite` should each",
-              "   be listed there with permission to add and update your works. The wizards",
-              "   send you off to `search.crossref.org` / DataCite's own site, which is what",
-              "   makes this ambiguous: landing there proves the redirect worked, not that",
-              "   you came back and completed the OAuth grant. If they are absent from",
-              "   Trusted parties, nothing was granted — redo *Works → Search & link*.",
-              "2. **Is your iD in the deposits at all?** Permissions cannot help if",
-              "   publishers never put your iD in the metadata they deposit. Search a recent",
-              "   published DOI at <https://search.crossref.org> and look for your ORCID in",
-              "   the author list. Absent means the fix is upstream: supply your iD in the",
-              "   submission system for every future paper. That single habit is what makes",
-              "   auto-update work without you.", "",
-              "Re-run this audit after the next publication lands. A non-zero count here is",
-              "the proof; until then, Trusted parties is the evidence.", ""]
     if missing_empl or missing_edu or edu_open or edu_theirs:
         L += ["## ORCID employment and education are thinner than your record", "",
               "These two sections are what institutional disambiguation matches on — the",
@@ -726,7 +769,7 @@ def audit_fixes(cfg: dict, r: dict, d: dict) -> list[str]:
                 L.append(f"- *employment* — {r['org']} · {r['role'] or 'no role title'}"
                          f" · {r['start'] or '?'}–{r['end'] or 'present'}")
             for r in orc["education_rows"]:
-                theirs = asserted_by_them(r, ident["name"])
+                theirs = asserted_by_them(r, name)
                 L.append(f"- *education* — {r['org']} · {r['role'] or 'no degree stated'}"
                          f" · {r['start'] or '?'}–{r['end'] or 'present'}"
                          + (f" · asserted by {r['source']}" if theirs else ""))
@@ -781,17 +824,33 @@ def audit_fixes(cfg: dict, r: dict, d: dict) -> list[str]:
                   "Do not delete it and re-add your own: that trades a vouched-for entry for a",
                   "self-asserted one, which is a downgrade in exactly the signal this section",
                   "exists to provide.", ""]
-    if other_pages:
-        L += ["## Other personal pages not declared on ORCID", "",
-              "Not a demand to delete them. A second page is only a problem while nothing",
-              "says it is the same person — then two candidate homepages compete. Listing it",
-              "in *Websites & social links* next to the canonical URL is what fuses them.", "",
-              *[f"- [ ] {u}" for u in other_pages], ""]
-    if reg is not None and n_gap:
-        L += [f"## arXiv: {n_gap} papers you are not registered as author on", "",
-              "The biggest finding here, and a prerequisite rather than a task: you cannot",
-              "add a journal-ref to a paper you do not own. Full list and both claim",
-              "routes: [arxiv_ownership.md](arxiv_ownership.md).", ""]
+    return L
+
+
+def orcid_other_pages(other_pages: list) -> list[str]:
+    """Personal pages the record does not list beside the canonical URL."""
+    if not other_pages:
+        return []
+    return ["## Other personal pages not declared on ORCID", "",
+            "Not a demand to delete them. A second page is only a problem while nothing",
+            "says it is the same person — then two candidate homepages compete. Listing it",
+            "in *Websites & social links* next to the canonical URL is what fuses them.", "",
+            *[f"- [ ] {u}" for u in other_pages], ""]
+
+
+def arxiv_unregistered(reg: set | None, n_gap: int) -> list[str]:
+    """How many papers the arXiv author feed does not claim, over the full list."""
+    if reg is None or not n_gap:
+        return []
+    return [f"## arXiv: {n_gap} papers you are not registered as author on", "",
+            "The biggest finding here, and a prerequisite rather than a task: you cannot",
+            "add a journal-ref to a paper you do not own. Full list and both claim",
+            "routes: [arxiv_ownership.md](arxiv_ownership.md).", ""]
+
+
+def wikidata_author_gaps(wd: str | None, wd_gaps: dict) -> list[str]:
+    """Identifiers and aliases the author item is missing, over the full diff."""
+    L = []
     if wd_gaps and (wd_gaps["missing"] or wd_gaps["wrong"] or wd_gaps["dupes"]
                     or wd_gaps["bad_aliases"] or wd_gaps["want_aliases"]):
         bad = wd_gaps["bad_aliases"]
@@ -804,6 +863,12 @@ def audit_fixes(cfg: dict, r: dict, d: dict) -> list[str]:
         L += ["Full diff, plus what the measured paper coverage means for the "
               "Author Disambiguator pass: "
               "[wikidata_followup.md](wikidata_followup.md).", ""]
+    return L
+
+
+def wikidata_paper_gaps(wd_cov: dict, wd_qs: str | None) -> list[str]:
+    """How many papers have items, and the command that creates the rest."""
+    L = []
     if wd_cov:
         n_have = len(wd_cov["present"])
         L += [f"## Wikidata paper coverage: {n_have} of {wd_cov['total']}", "",
@@ -829,55 +894,87 @@ def audit_fixes(cfg: dict, r: dict, d: dict) -> list[str]:
                   "QuickStatements batch, as a fallback. Read the cautions in "
                   "[wikidata_followup.md](wikidata_followup.md) first — these are "
                   "permanent public items.", ""]
-    if stray:
-        L += [f"## {len(stray)} arXiv papers you own are not in your bibliography", "",
-              "Read off `arxiv.org/a/<orcid>`, which is the only place this shows up: the",
-              "collector starts from the .bib, so a paper missing there is invisible to",
-              "every other check here. Add it to the bibliography (or, if the claim was a",
-              "mistake, unclaim it on arXiv).", "",
-              *[f"- [ ] <https://arxiv.org/abs/{a}>" for a in stray], ""]
-    if not wd:
-        L += ["## No Wikidata author item", "",
-              "Searched by ORCID (P496), Semantic Scholar (P4012), Google Scholar (P1960)",
-              "and GitHub (P2037) — no item claims any of them. Name search is not used",
-              "here on purpose: it returns *paper* items that merely mention you.",
-              "", "Walkthrough: [wikidata_manual.md](wikidata_manual.md).", ""]
-    if hf and (hf["missing"] or hf["unclaimed"] or hf["blocked"]):
-        L += [f"## Hugging Face: {len(hf['missing'])} to index, "
-              f"{len(hf['unclaimed'])} to claim, {len(hf['blocked'])} blocked", "",
-              "Live counts, not the ones cached in `papers.yaml`. Lists:",
-              "[hf_worklist.md](hf_worklist.md).", ""]
-    if o_conf:
-        L += [f"## {len(o_conf)} works on your ORCID are not yours", "",
-              "Imported from the bibliography before the collector checked author names —",
-              "a CV bibliography holds the works it *cites* as well as the works it lists.",
-              "ORCID is read as your authorship claim by Semantic Scholar, OpenAlex and",
-              "publisher systems, so this is worth clearing before anything else on this",
-              "page. One deletion each, put-codes included:",
-              "[orcid_remove.md](orcid_remove.md).", ""]
-    if o_unk:
-        # The summary table has carried a `**check**` on this count for as long as it has
-        # existed, and nothing under it -- the titles were only ever in `orcid_remove.md`,
-        # which the table does not link. A count flagged for attention with no way to
-        # reach the thing it counts is how a row stops being read.
-        L += [f"## {len(o_unk)} works on your ORCID we cannot place", "",
-              "Not necessarily wrong, which is why this is *check* and not *fix*: a paper",
-              "missing from your bibliography looks exactly like a work that is not yours.",
-              "",
-              "Matched against the corpus by identifier, then by title, then by the title's",
-              "content words with the order discarded — so a paper retitled between preprint",
-              "and proceedings, or rearranged around its colon, no longer lands here. What",
-              "reaches this list carries no identifier ORCID could group on, which is also",
-              "why nothing else can place it.",
-              "",
-              "Two things end up here and they have opposite fixes. A paper of yours the",
-              "bibliography never held is fixed **upstream, in the bibliography** — deleting",
-              "it from ORCID loses a real work. Anything that is not a paper (a workshop",
-              "listing, a proceedings volume) is a deletion. Titles and put-codes:",
-              "[orcid_remove.md](orcid_remove.md).", ""]
+    return L
+
+
+def arxiv_strays(stray: list) -> list[str]:
+    """arXiv papers the author is registered on that the bibliography does not hold."""
+    if not stray:
+        return []
+    return [f"## {len(stray)} arXiv papers you own are not in your bibliography", "",
+            "Read off `arxiv.org/a/<orcid>`, which is the only place this shows up: the",
+            "collector starts from the .bib, so a paper missing there is invisible to",
+            "every other check here. Add it to the bibliography (or, if the claim was a",
+            "mistake, unclaim it on arXiv).", "",
+            *[f"- [ ] <https://arxiv.org/abs/{a}>" for a in stray], ""]
+
+
+def wikidata_no_author_item(wd: str | None) -> list[str]:
+    """No item claims any identifier the author has."""
+    if wd:
+        return []
+    return ["## No Wikidata author item", "",
+            "Searched by ORCID (P496), Semantic Scholar (P4012), Google Scholar (P1960)",
+            "and GitHub (P2037) — no item claims any of them. Name search is not used",
+            "here on purpose: it returns *paper* items that merely mention you.",
+            "", "Walkthrough: [wikidata_manual.md](wikidata_manual.md).", ""]
+
+
+def hf_gaps(hf: dict | None) -> list[str]:
+    """Live Hugging Face counts, over the lists."""
+    if not hf or not (hf["missing"] or hf["unclaimed"] or hf["blocked"]):
+        return []
+    return [f"## Hugging Face: {len(hf['missing'])} to index, "
+            f"{len(hf['unclaimed'])} to claim, {len(hf['blocked'])} blocked", "",
+            "Live counts, not the ones cached in `papers.yaml`. Lists:",
+            "[hf_worklist.md](hf_worklist.md).", ""]
+
+
+def orcid_confirmed_strays(o_conf: list) -> list[str]:
+    """Works on the record that are somebody else's."""
+    if not o_conf:
+        return []
+    return [f"## {len(o_conf)} works on your ORCID are not yours", "",
+            "Imported from the bibliography before the collector checked author names —",
+            "a CV bibliography holds the works it *cites* as well as the works it lists.",
+            "ORCID is read as your authorship claim by Semantic Scholar, OpenAlex and",
+            "publisher systems, so this is worth clearing before anything else on this",
+            "page. One deletion each, put-codes included:",
+            "[orcid_remove.md](orcid_remove.md).", ""]
+
+
+def orcid_unplaceable(o_unk: list) -> list[str]:
+    """Works on the record the corpus cannot place, which is a check and not a fix."""
+    if not o_unk:
+        return []
+      # The summary table has carried a `**check**` on this count for as long as it has
+      # existed, and nothing under it -- the titles were only ever in `orcid_remove.md`,
+      # which the table does not link. A count flagged for attention with no way to
+      # reach the thing it counts is how a row stops being read.
+    return [f"## {len(o_unk)} works on your ORCID we cannot place", "",
+            "Not necessarily wrong, which is why this is *check* and not *fix*: a paper",
+            "missing from your bibliography looks exactly like a work that is not yours.",
+            "",
+            "Matched against the corpus by identifier, then by title, then by the title's",
+            "content words with the order discarded — so a paper retitled between preprint",
+            "and proceedings, or rearranged around its colon, no longer lands here. What",
+            "reaches this list carries no identifier ORCID could group on, which is also",
+            "why nothing else can place it.",
+            "",
+            "Two things end up here and they have opposite fixes. A paper of yours the",
+            "bibliography never held is fixed **upstream, in the bibliography** — deleting",
+            "it from ORCID loses a real work. Anything that is not a paper (a workshop",
+            "listing, a proceedings volume) is a deletion. Titles and put-codes:",
+            "[orcid_remove.md](orcid_remove.md).", ""]
+
+
+def orcid_misfiled(o_misfiled: list) -> list[str]:
+    """Works carrying another paper's identifier, with the put-code and the DOI to set."""
+    L = []
     if o_misfiled:
-        L += [f"## {plural(len(o_misfiled), 'work on your ORCID carries', 'works on your ORCID carry')} "
-              f"another paper's identifier", "",
+        n = plural(len(o_misfiled), "work on your ORCID carries",
+                   "works on your ORCID carry")
+        L += [f"## {n} another paper's identifier", "",
               "**Fix these before the two sections below**, because this is what puts entries",
               "in them. A work whose DOI belongs to a different paper gets filed by ORCID into",
               "that paper's group — ORCID groups on shared identifiers and has no other way to",
@@ -912,6 +1009,12 @@ def audit_fixes(cfg: dict, r: dict, d: dict) -> list[str]:
                   "        pencil icon → replace the DOI under *Identifiers* → *Save changes*.",
                   "        Edit rather than delete-and-re-add, so the put-code keeps its",
                   "        citations and its source attribution.", ""]
+    return L
+
+
+def orcid_missing(o_missing: list) -> list[str]:
+    """Papers with no work group on the record, highest citations first."""
+    L = []
     if o_missing:
         L += [f"## {plural(len(o_missing), 'of your papers is', 'of your papers are')} "
               f"missing from ORCID", "",
@@ -932,28 +1035,38 @@ def audit_fixes(cfg: dict, r: dict, d: dict) -> list[str]:
         if len(o_missing) > 10:
             L.append(f"- … and {len(o_missing) - 10} more")
         L.append("")
-    if o_dups:
-        L += [f"## {plural(len(o_dups), 'paper is', 'papers are')} listed twice on "
-              f"your ORCID", "",
-              "ORCID groups works that share an identifier. A paper whose record holds",
-              "the publisher DOI in one entry and arXiv's `10.48550/arXiv.<id>` DOI in",
-              "another shares no identifier between them, so it does not group: it shows",
-              "as two works with two different titles, and every service counting your",
-              "output counts it twice.",
-              "",
-              "This is a side effect of `orcid_import.bib` filling missing DOIs from arXiv.",
-              "It is worth fixing and it is not urgent. The fix is a merge, not a deletion:",
-              "both titles are real, and adding one entry's DOI to the other folds them into",
-              "one work with both. Which entry to open and what to paste into it:",
-              "[orcid_remove.md](orcid_remove.md).", ""]
-    if n_typo:
-        L += [f"## arXiv metadata misspells your name on {len(n_typo)} papers", "",
-              "Upstream of every other surface here — Hugging Face, Semantic Scholar,",
-              "OpenAlex and Scholar all read arXiv's author list, so one wrong character",
-              "creates one wrong author in all of them, holding citations that cannot be",
-              "merged back. Details and the fix order:",
-              "[arxiv_name_fixes.md](arxiv_name_fixes.md).", ""]
     return L
+
+
+def orcid_duplicates(o_dups: list) -> list[str]:
+    """Papers listed twice because their two entries share no identifier."""
+    if not o_dups:
+        return []
+    return [f"## {plural(len(o_dups), 'paper is', 'papers are')} listed twice on "
+            f"your ORCID", "",
+            "ORCID groups works that share an identifier. A paper whose record holds",
+            "the publisher DOI in one entry and arXiv's `10.48550/arXiv.<id>` DOI in",
+            "another shares no identifier between them, so it does not group: it shows",
+            "as two works with two different titles, and every service counting your",
+            "output counts it twice.",
+            "",
+            "This is a side effect of `orcid_import.bib` filling missing DOIs from arXiv.",
+            "It is worth fixing and it is not urgent. The fix is a merge, not a deletion:",
+            "both titles are real, and adding one entry's DOI to the other folds them into",
+            "one work with both. Which entry to open and what to paste into it:",
+            "[orcid_remove.md](orcid_remove.md).", ""]
+
+
+def arxiv_misspellings(n_typo: list) -> list[str]:
+    """arXiv author lists that misspell the name, over the fix order."""
+    if not n_typo:
+        return []
+    return [f"## arXiv metadata misspells your name on {len(n_typo)} papers", "",
+            "Upstream of every other surface here — Hugging Face, Semantic Scholar,",
+            "OpenAlex and Scholar all read arXiv's author list, so one wrong character",
+            "creates one wrong author in all of them, holding citations that cannot be",
+            "merged back. Details and the fix order:",
+            "[arxiv_name_fixes.md](arxiv_name_fixes.md).", ""]
 
 
 def audit_state(cfg: dict, args, r: dict, d: dict, path: str) -> dict:

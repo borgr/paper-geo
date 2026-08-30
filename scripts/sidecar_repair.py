@@ -23,11 +23,11 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
-from common import QA_ROLES, phrasings, qa_loci, rules_block  # noqa: E402
+from common import QA_ROLES, qa_loci, rules_block  # noqa: E402
 from llm import JSON_ONLY  # noqa: E402
 from sidecar_io import (RULES_DOC, draft_path, front_matter, held,  # noqa: E402
-                        live_path, oneline, read_front_matter, unstructure,
-                        validate_draft, write_draft)
+                        live_path, oneline, read_front_matter, validate_draft,
+                        write_draft)
 
 REPAIR = ("Here is the paper, a sidecar you drafted from it, and the findings an "
           "automated checker raised against the sidecar. Fix exactly what the findings "
