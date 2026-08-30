@@ -169,6 +169,15 @@ def sidecars() -> list[tuple[str, dict]]:
     return out
 
 
+def answered(path: str) -> int:
+    """How many answers a tasks file already holds. 0 for a file that is not one."""
+    try:
+        with open(path) as f:
+            return sum(1 for t in json.load(f)["tasks"] if (t.get("answer") or "").strip())
+    except (OSError, ValueError, KeyError, TypeError):
+        return 0
+
+
 def emit(sc: list, papers: dict, args) -> None:
     """`build/fidelity_tasks.json`, one task per sidecar, `answer` and `score` left blank.
 
@@ -176,6 +185,13 @@ def emit(sc: list, papers: dict, args) -> None:
     point: AI Overviews and AI Mode have no API, so the only way to measure the engines this
     project targets is a person pasting into the two blank fields.
     """
+    # A blank task file is the same size and shape as a filled-in one, so overwriting a run
+    # somebody spent an afternoon pasting into left no trace and no error. It happened once,
+    # to 98 graded papers whose report is still in the repo describing answers nothing holds.
+    held = answered(TASKS)
+    if held and not args.force:
+        sys.exit(f"{TASKS} already holds {held} answer(s). Score them with --ingest, or "
+                 f"pass --force to throw them away and ask again.")
     tasks = []
     for slug, fm in sc:
         p = papers.get(slug, {})
@@ -372,6 +388,8 @@ def main() -> None:
     ap.add_argument("--grade-model", help="MODEL_ID[@BASE_URL] to grade with (--mode api); "
                                          "defaults to the answerer, which marks its own work")
     ap.add_argument("--limit", type=int, help="first N papers only, for a smoke run")
+    ap.add_argument("--force", action="store_true",
+                    help="overwrite a tasks file that already holds answers")
     args = ap.parse_args()
     papers = {p["slug"]: p for p in read_papers()}
     sc = sidecars()

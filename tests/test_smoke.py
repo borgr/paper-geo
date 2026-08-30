@@ -48,7 +48,12 @@ import urllib.parse
 from unittest import mock
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# All three, so the suite runs the same whether it is discovered or the file is run
+# directly. `update.py` lives at the root and `fidelity.py` under `measure/`, and without
+# these two a direct run errored on 17 tests that only `discover` could import.
+sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
+sys.path.insert(0, os.path.join(ROOT, "measure"))
 
 # Every module that is part of the program, by the directory it lives in. `update.py`
 # is listed by hand because it is the only top-level one and importing it by filename
@@ -4876,6 +4881,7 @@ class TestAQuoteLinksIntoThePaper(unittest.TestCase):
         self.assertEqual({"sidecar_review.py"}, callers)
 
 
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
 
@@ -8040,3 +8046,57 @@ class TestTheAuditKeepsThePagesItCouldNotRead(unittest.TestCase):
                 self.assertIn("does not resolve yet", open(path).read())
             finally:
                 ai.TASKS = old
+
+
+class TestAFilledInFidelityRunIsNotOverwritten(unittest.TestCase):
+    """A blank task file and a filled-in one are the same shape, so the loss left no trace.
+
+    98 graded papers went that way once, and `measure/fidelity_report.md` still describes
+    answers the tasks file no longer holds.
+    """
+
+    class Args:
+        def __init__(self, **kw):
+            self.__dict__.update(dict(engine="e", limit=None, mode=None, force=False,
+                                      answer_model=None, grade_model=None), **kw)
+
+    def emit(self, answer, **kw):
+        import fidelity
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d)
+        path = os.path.join(d, "tasks.json")
+        with open(path, "w") as f:
+            json.dump({"tasks": [{"slug": "a", "answer": answer, "score": None}]}, f)
+        with mock.patch.object(fidelity, "TASKS", path), \
+                contextlib.redirect_stdout(io.StringIO()):
+            fidelity.emit([("a", {"claims": []})], {}, self.Args(**kw))
+        with open(path) as f:
+            return json.load(f)
+
+    def test_answers_already_pasted_in_stop_a_re_emit(self):
+        with self.assertRaises(SystemExit) as e:
+            self.emit("what the engine said")
+        self.assertIn("1 answer(s)", str(e.exception))
+        # Both ways out, because the refusal is the first time anybody learns the file is
+        # precious: score what is there, or say discard it and mean it.
+        self.assertIn("--ingest", str(e.exception))
+        self.assertIn("--force", str(e.exception))
+
+    def test_force_says_discard_them_and_means_it(self):
+        self.assertEqual([None], [t["answer"] for t in self.emit("said", force=True)["tasks"]])
+
+    def test_a_blank_file_is_overwritten_without_a_word(self):
+        for blank in (None, "", "   "):
+            self.assertEqual([None],
+                             [t["answer"] for t in self.emit(blank)["tasks"]], repr(blank))
+
+    def test_nothing_that_is_not_a_tasks_file_counts_as_answers(self):
+        import fidelity
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d)
+        junk = os.path.join(d, "junk.json")
+        with open(junk, "w") as f:
+            f.write("not json at all")
+        self.assertEqual(0, fidelity.answered(junk))
+        self.assertEqual(0, fidelity.answered(os.path.join(d, "absent.json")))
+
