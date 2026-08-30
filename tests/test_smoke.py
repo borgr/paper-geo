@@ -6190,11 +6190,11 @@ class TestPeopleItemsRestOnPublicRecordsNotOnNames(unittest.TestCase):
                 human = any(q == a[0] and a[2] for v in answers.values() for a in v)
                 out[q] = {"claims": {"P31": [claim["Q5"]()]} if human else {}}
             return 200, json.dumps({"entities": out})
-        old, wp.get_status = wp.get_status, fake
-        try:
+        # Patched on `wikidata_coauthors`, which owns the one `w/api.php` reader both the
+        # search and the entity read go through. Patching `wp` leaves both live.
+        wc = sys.modules["wikidata_coauthors"]
+        with mock.patch.object(wc, "get_status", fake):
             return wp.namesakes(sorted({n for n in answers}))
-        finally:
-            wp.get_status = old
 
     def test_a_namesake_is_held_whatever_it_says_the_person_does(self):
         """The occupation on an item is no evidence about who it is. One co-author's item
@@ -7058,35 +7058,92 @@ class TestAQuietWikidataCreatesNobody(unittest.TestCase):
         self.assertEqual("wd:Q1 wd:Q2", wc.items_block(["Q1", "Q2"]))
 
     def test_a_search_index_that_did_not_answer_is_not_a_name_nobody_carries(self):
-        _, wp = self._mods()
-        old = wp._refused
+        wc, _ = self._mods()
+        old = wc._api_quiet
         try:
             for st in (0, 429, 500):
-                wp._refused = ""
-                with mock.patch.object(wp, "get_status", lambda _u, **kw: (st, b"")):
-                    self.assertEqual({}, wp.asked(wp.WIKI + "?search=Ada"))
-                self.assertTrue(wp._refused, "status %s passed as an answer" % st)
-            wp._refused = ""
-            with mock.patch.object(wp, "get_status",
+                wc._api_quiet = ""
+                with mock.patch.object(wc, "get_status", lambda _u, **kw: (st, b"")):
+                    self.assertEqual({}, wc.asked(wc.API + "?search=Ada"))
+                self.assertTrue(wc.api_quiet(), "status %s passed as an answer" % st)
+            wc._api_quiet = ""
+            with mock.patch.object(wc, "get_status",
                                    lambda _u, **kw: (200, b'{"search": []}')):
-                self.assertEqual({"search": []}, wp.asked(wp.WIKI + "?search=Ada"))
-            self.assertEqual("", wp._refused)
+                self.assertEqual({"search": []}, wc.asked(wc.API + "?search=Ada"))
+            self.assertEqual("", wc.api_quiet())
         finally:
-            wp._refused = old
+            wc._api_quiet = old
+
+    def test_an_error_body_is_not_wikidata_carrying_nothing(self):
+        """The API answers HTTP 200 with an `error` object when it declines -- read-only,
+        maxlag, a malformed batch. Parsed as an answer it has no `entities`, which every
+        caller here reads as the item stating nothing and writes over."""
+        wc, _ = self._mods()
+        old = wc._api_quiet
+        try:
+            wc._api_quiet = ""
+            body = b'{"error": {"code": "readonly", "info": "The wiki is in read-only mode"}}'
+            with mock.patch.object(wc, "get_status", lambda _u, **kw: (200, body)):
+                self.assertEqual({}, wc.entities(["Q1"], "claims"))
+            self.assertIn("readonly", wc.api_quiet())
+        finally:
+            wc._api_quiet = old
+
+    def test_a_batch_of_items_too_large_to_come_back_whole_is_asked_again_in_halves(self):
+        """50 items of claims run to 160 KB, and a body too large to deliver arrives cut off
+        under HTTP 200 rather than refused -- the same shape that stopped the query service.
+        The items are there to be had in a smaller ask, so a chunk is halved first."""
+        wc, _ = self._mods()
+        old = wc._api_quiet
+        try:
+            wc._api_quiet = ""
+
+            def answer(url, **kw):
+                ids = url.rsplit("ids=", 1)[1].split("|")
+                if len(ids) > 2:
+                    return 200, b'{"entities": {"Q1"'
+                ents = ", ".join('"%s": {"claims": {}}' % q for q in ids)
+                return 200, ('{"entities": {%s}}' % ents).encode()
+            with mock.patch.object(wc, "get_status", answer):
+                got = wc.entities(["Q1", "Q2", "Q3", "Q4"], "claims", size=4)
+            self.assertEqual(4, len(got), "a halved batch lost items")
+            self.assertEqual("", wc.api_quiet(), "a batch that answered in halves was quiet")
+            wc._api_quiet = ""
+            with mock.patch.object(wc, "get_status",
+                                   lambda _u, **kw: (200, b'{"entities": {"Q1"')):
+                self.assertEqual({}, wc.entities(["Q1", "Q2"], "claims"))
+            self.assertIn("stopped after 18 bytes", wc.api_quiet())
+        finally:
+            wc._api_quiet = old
+
+    def test_the_items_that_did_answer_are_not_returned_as_every_item(self):
+        """An item left out of the result is an item stating nothing, so half a batch read as
+        all of it drops an employer statement or writes a name Wikidata already carries."""
+        wc, _ = self._mods()
+        old = wc._api_quiet
+        try:
+            wc._api_quiet = ""
+            one = b'{"entities": {"Q1": {"claims": {}}}}'
+            with mock.patch.object(wc, "get_status",
+                                   lambda u, **kw: (200, one) if "Q1" in u else (0, b"")):
+                self.assertEqual({}, wc.entities(["Q1", "Q2"], "claims", size=1))
+            self.assertTrue(wc.api_quiet())
+        finally:
+            wc._api_quiet = old
 
     def test_no_batch_is_written_from_a_read_that_did_not_answer(self):
         """A quiet read gives `items_by_orcid` and `namesakes` nothing, which is the exact
         state that creates an item. So the run has to end before the batch is written --
         `--apply` reads the same list `main` writes."""
-        _, wp = self._mods()
+        wc, wp = self._mods()
         rec = {"partial": False, "label": "Ada Example Lovelace", "openalex_label": "",
                "employers": [], "openalex_employers": [], "works": 3, "work_titles": [],
                "openalex_works": 0}
         orcid = "0000-0001-5522-1351"
-        old = wp._refused
+        old = wc._api_quiet
         try:
             for quiet in ("query.wikidata.org -> HTTP 500", ""):
-                wp._refused = ""
+                wc._api_quiet = ""
                 d = tempfile.mkdtemp()
                 self.addCleanup(shutil.rmtree, d, True)
                 with mock.patch.object(wp, "TASKS", d), \
@@ -7109,21 +7166,21 @@ class TestAQuietWikidataCreatesNobody(unittest.TestCase):
                     with open(os.path.join(d, "wikidata_people.qs")) as f:
                         self.assertIn("CREATE", f.read())
         finally:
-            wp._refused = old
+            wc._api_quiet = old
 
     def test_no_employer_is_retracted_from_a_read_that_did_not_answer(self):
         """`resync` asks again after `main` checked, so the outage can start in between.
         `stale` retracts an employer statement missing from the employers it was given, and
         a query service that went quiet gives it none of them."""
-        _, wp = self._mods()
+        wc, wp = self._mods()
         rec = {"partial": False, "label": "Ada Example Lovelace", "openalex_label": "",
                "employers": ["Weizmann Institute of Science"], "openalex_employers": [],
                "works": 3, "work_titles": [], "openalex_works": 0}
         orcid = "0000-0001-5522-1351"
         led = {"items": {orcid: "Q1"}, "labels": {"Q1": "Ada Example Lovelace"}}
-        old = wp._refused
+        old = wc._api_quiet
         try:
-            wp._refused = ""
+            wc._api_quiet = ""
             edits = []
             session = mock.Mock()
             session.edit.side_effect = lambda *a, **kw: edits.append(kw)
@@ -7136,7 +7193,7 @@ class TestAQuietWikidataCreatesNobody(unittest.TestCase):
                 self.assertEqual((0, 0), wp.resync(session, "2026-08-29"))
             self.assertEqual([], edits, "a quiet read retracted a statement")
         finally:
-            wp._refused = old
+            wc._api_quiet = old
 
     def test_a_lookup_that_resolved_nothing_is_not_the_records_dropping_the_employer(self):
         """The statement names an item where the records name a string, so a retraction rests
@@ -7172,7 +7229,7 @@ class TestAQuietWikidataCreatesNobody(unittest.TestCase):
         """ORCID answers for the employer and OpenAlex only ever stands in where ORCID is
         silent, which is enough to describe somebody and not enough to retract: an ORCID that
         did not answer is silent in exactly the same way as one that has nothing to say."""
-        _, wp = self._mods()
+        wc, wp = self._mods()
         rec = {"partial": True, "label": "", "openalex_label": "Ada Example Lovelace",
                "employers": [], "openalex_employers": ["Boston University"],
                "works": 0, "work_titles": [], "openalex_works": 7}
@@ -7183,9 +7240,9 @@ class TestAQuietWikidataCreatesNobody(unittest.TestCase):
         self.assertEqual([], self._removed(wp.stale(p, self._item("Q174158"), "2026-08-29")),
                          "a source that went quiet retracted a statement")
         led = {"items": {orcid: "Q1"}, "labels": {"Q1": "Ada Example Lovelace"}}
-        old = wp._refused
+        old = wc._api_quiet
         try:
-            wp._refused = ""
+            wc._api_quiet = ""
             edits = []
             session = mock.Mock()
             session.edit.side_effect = lambda *a, **kw: edits.append(kw)
@@ -7199,21 +7256,21 @@ class TestAQuietWikidataCreatesNobody(unittest.TestCase):
             self.assertEqual([], [k for k in edits if "remove" in k.get("data", "")],
                              "a quiet source retracted a statement through resync")
         finally:
-            wp._refused = old
+            wc._api_quiet = old
 
     def test_a_person_neither_record_names_is_left_out_of_the_resync(self):
         """`described` returns a reason rather than a person when nothing gives a name, and
         `resync` reads the reason instead of the keys a person would have had."""
-        _, wp = self._mods()
+        wc, wp = self._mods()
         rec = {"partial": True, "label": "", "openalex_label": "",
                "employers": [], "openalex_employers": [], "works": 0,
                "work_titles": [], "openalex_works": 0}
         orcid = "0000-0001-5522-1351"
         self.assertIn("later", wp.described(orcid, rec, {}))
         led = {"items": {orcid: "Q1"}, "labels": {"Q1": "Ada Example Lovelace"}}
-        old = wp._refused
+        old = wc._api_quiet
         try:
-            wp._refused = ""
+            wc._api_quiet = ""
             session = mock.Mock()
             with mock.patch.object(wp, "read_yaml", lambda p: led), \
                  mock.patch.object(wp, "records", lambda o, r: {orcid: rec}), \
@@ -7224,7 +7281,7 @@ class TestAQuietWikidataCreatesNobody(unittest.TestCase):
                 self.assertEqual((0, 0), wp.resync(session, "2026-08-29"))
             self.assertEqual([], session.edit.call_args_list)
         finally:
-            wp._refused = old
+            wc._api_quiet = old
 
     def test_the_records_wording_of_an_institution_is_asked_as_wikidata_spells_it(self):
         """ORCID writes the article Wikidata drops and OpenAlex adds a country, so a name is

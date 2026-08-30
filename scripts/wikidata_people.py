@@ -37,16 +37,15 @@ import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from common import (BUILD, DATA, TASKS, clipped, get_status, host_of, read_yaml,
+from common import (BUILD, DATA, TASKS, clipped, get_status, read_yaml,
                     write_json, write_task, write_yaml)
-from wikidata_coauthors import (CACHE, SCHOLARLY, batched, fill,  # noqa: F401
-                               items_block, items_by_orcid, qid_of, researchers,
-                               title_key, values, wdqs_quiet)
+from wikidata_coauthors import (API, CACHE, SCHOLARLY, api_quiet, asked,  # noqa: F401
+                               batched, entities, fill, items_block, items_by_orcid,
+                               qid_of, researchers, title_key, values, wdqs_quiet)
 from wikidata_apply import (CAL, Session, create_items,  # noqa: F401
                             logged_in, recorded)
 from wikidata_orgs import labels_of
 
-WIKI = "https://www.wikidata.org/w/api.php"
 LEDGER = "wikidata_people_created.yaml"
 # Which existing item a held co-author is, answered by hand in data/overrides.yaml.
 DECIDED = "wikidata_people"
@@ -238,28 +237,6 @@ def cased(rec: dict) -> str:
             else orcid_name) or " ".join((rec.get("openalex_label") or "").split())
 
 
-# Set to the first search-index call Wikidata did not answer. An item nobody found is an
-# item this pass creates, so `main` creates nothing while this or `wdqs_quiet()` is set.
-_refused = ""
-
-
-def asked(url: str) -> dict:
-    """One `w/api.php` call, `{}` if it did not answer, with the refusal recorded.
-
-    The API answers 200 with an empty `search` for a name it carries no item under, so any
-    other status is a refusal rather than a report.
-    """
-    global _refused
-    st, raw = get_status(url, accept="application/json")
-    try:
-        d = json.loads(raw) if st == 200 and raw else None
-    except ValueError:
-        d = None
-    if d is None:
-        _refused = _refused or f"{host_of(url)} -> HTTP {st}"
-    return d or {}
-
-
 def namesakes(labels: list[str]) -> dict[str, list[dict]]:
     """Name to every human item carrying it, with the ORCID and description each states.
 
@@ -275,7 +252,7 @@ def namesakes(labels: list[str]) -> dict[str, list[dict]]:
     """
     found: dict[str, set[str]] = {}
     for n in labels:
-        d = asked(WIKI + "?action=wbsearchentities&type=item&language=en"
+        d = asked(API + "?action=wbsearchentities&type=item&language=en"
                   "&uselang=en&limit=20&format=json&search=" + urllib.parse.quote(n))
         for h in d.get("search") or []:
             for form in (h.get("label"), h.get("match", {}).get("text"),
@@ -285,22 +262,19 @@ def namesakes(labels: list[str]) -> dict[str, list[dict]]:
                     break
     qids = sorted({q for qs in found.values() for q in qs})
     seen: dict[str, dict] = {}
-    for i in range(0, len(qids), 50):
-        d = asked(WIKI + "?action=wbgetentities&props=claims|descriptions"
-                  "&languages=en&format=json&ids=" + "|".join(qids[i:i + 50]))
-        for q, e in (d.get("entities") or {}).items():
-            cl = e.get("claims") or {}
-            if not any((c["mainsnak"].get("datavalue") or {}).get("value", {}).get("id") == HUMAN
-                       for c in cl.get("P31") or []):
-                continue
-            orcid = ""
-            for c in cl.get("P496") or []:
-                orcid = (c["mainsnak"].get("datavalue") or {}).get("value") or ""
-            seen[q] = {"qid": q, "orcid": orcid,
-                       "description": (e.get("descriptions", {}).get("en") or {}).get("value", ""),
-                       "occupations": points_at(cl, "P106"),
-                       "education": points_at(cl, "P69"),
-                       "employers": points_at(cl, "P108")}
+    for q, e in entities(qids, "claims|descriptions", "en").items():
+        cl = e.get("claims") or {}
+        if not any((c["mainsnak"].get("datavalue") or {}).get("value", {}).get("id") == HUMAN
+                   for c in cl.get("P31") or []):
+            continue
+        orcid = ""
+        for c in cl.get("P496") or []:
+            orcid = (c["mainsnak"].get("datavalue") or {}).get("value") or ""
+        seen[q] = {"qid": q, "orcid": orcid,
+                   "description": (e.get("descriptions", {}).get("en") or {}).get("value", ""),
+                   "occupations": points_at(cl, "P106"),
+                   "education": points_at(cl, "P69"),
+                   "employers": points_at(cl, "P108")}
     live = labels_of(sorted({q for it in seen.values() for k in FACTS for q in it[k]}))
     for it in seen.values():
         for k in FACTS:
@@ -750,7 +724,7 @@ def main() -> int:
     later = [p for p in made if "later" in p]
     for p in ok:
         p["papers"] = papers.get(p["orcid"], 0)
-    quiet = _refused or wdqs_quiet()
+    quiet = api_quiet() or wdqs_quiet()
     if quiet:
         # Every list here rests on a Wikidata read. A refusal reads as no item stating this
         # ORCID and no item under this name, which is the exact state this pass creates an
@@ -854,15 +828,11 @@ def resync(s, day: str) -> tuple[int, int]:
     employers = employer_items(sorted({e for r in recs.values() for e in
                                        r["employers"] + (r.get("openalex_employers") or [])}))
     ids = sorted(set(mine.values()))
-    live = {}
-    for i in range(0, len(ids), 50):
-        d = asked(WIKI + "?action=wbgetentities&format=json&languages=en"
-                  "&props=labels|descriptions|claims&ids=" + "|".join(ids[i:i + 50]))
-        live.update(d.get("entities") or {})
+    live = entities(ids, "labels|descriptions|claims", "en")
     # Read again here rather than trusting `main`'s check, because these three reads are
     # this function's own. `stale` retracts an employer statement that is not in the
     # employers it was given, and a query service that went quiet gives it none of them.
-    quiet = _refused or wdqs_quiet()
+    quiet = api_quiet() or wdqs_quiet()
     if quiet:
         print("  wikidata did not answer (%s), so nothing is edited" % quiet)
         return 0, 0

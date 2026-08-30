@@ -169,14 +169,75 @@ def qid_of(uri: str) -> str:
     return uri.rsplit("/", 1)[1]
 
 
-# Set to the first `w/api.php` call that did not answer. An item nobody read is an item
-# with no work left, so a caller reporting what is resolved has to ask -- see `api_quiet`.
+# Set to the first `w/api.php` call that did not answer. Both readings of silence here are
+# wrong in a way a caller acts on: an item nobody read is an item with no work left, and a
+# name nobody found is a name to create an item under. So callers ask -- see `api_quiet`.
 _api_quiet = ""
 
 
 def api_quiet() -> str:
     """The first Wikidata API call of this run that did not answer, or `""`."""
     return _api_quiet
+
+
+def replied(url: str) -> tuple[dict | None, str]:
+    """The JSON one `w/api.php` call answered and `""`, or `None` and why nothing came back.
+
+    The API answers 200 with an empty result for a name it carries no item under, so an
+    empty answer is a report and only an unreadable one is a refusal. Two shapes are
+    unreadable. A body that stops mid-JSON arrives under HTTP 200, so naming it "HTTP 200"
+    tells a reader nothing. An `error` body is the API declining -- maxlag, read-only --
+    which read as an answer would look like Wikidata holding nothing.
+    """
+    st, raw = get_status(url, accept="application/json")
+    try:
+        d = json.loads(raw)
+        if not (isinstance(d, dict) and d.get("error")):
+            return d, ""
+        return None, "%s -> %s" % (host_of(url), d["error"].get("code") or "an error")
+    except ValueError:
+        pass
+    cut = f"an answer that stopped after {len(raw)} bytes" if raw else f"HTTP {st}"
+    return None, f"{host_of(url)} -> {cut}"
+
+
+def asked(url: str) -> dict:
+    """One `w/api.php` call, `{}` if it did not answer, with the refusal in `api_quiet()`."""
+    global _api_quiet
+    d, why = replied(url)
+    _api_quiet = _api_quiet or why
+    return d or {}
+
+
+def entities(qids: list[str], props: str, languages: str = "",
+             size: int = 50) -> dict[str, dict]:
+    """Every entity `wbgetentities` states for `qids`, `{}` if one chunk went unanswered.
+
+    A chunk that did not answer is halved and asked again, for the reason `batched` halves
+    a `VALUES` block -- 50 items of claims run to 160 KB, and a body too large to deliver
+    arrives cut off rather than refused. A chunk of one that still goes unanswered is the
+    API being down, and is recorded in `api_quiet()`.
+
+    All of them or none. Half the items read as all of them says the rest state nothing,
+    which is what a caller writes over.
+    """
+    global _api_quiet
+    out: dict[str, dict] = {}
+    todo = [qids[i:i + size] for i in range(0, len(qids), size)]
+    while todo:
+        chunk = todo.pop(0)
+        d, why = replied(f"{API}?action=wbgetentities&format=json&props={props}"
+                         + (f"&languages={languages}" if languages else "")
+                         + "&ids=" + "|".join(chunk))
+        if d is not None:
+            out.update(d.get("entities") or {})
+        elif len(chunk) > 1:
+            half = len(chunk) // 2
+            todo[:0] = [chunk[:half], chunk[half:]]
+        else:
+            _api_quiet = _api_quiet or why
+            return {}
+    return out
 
 
 def item_state(qids: list[str]) -> dict[str, dict]:
@@ -190,31 +251,20 @@ def item_state(qids: list[str]) -> dict[str, dict]:
     has no state for -- so a refusal reads as a paper with nothing left to resolve. What did
     not answer is recorded in `api_quiet()`.
     """
-    global _api_quiet
     out: dict[str, dict] = {}
-    for i in range(0, len(qids), 40):
-        st, raw = get_status(f"{API}?action=wbgetentities&format=json&props=claims&ids="
-                             + "|".join(qids[i:i + 40]), accept="application/json")
-        try:
-            d = json.loads(raw) if st == 200 and raw else None
-        except ValueError:
-            d = None
-        if d is None:
-            _api_quiet = _api_quiet or f"{host_of(API)} -> HTTP {st}"
-            continue
-        for qid, it in (d.get("entities") or {}).items():
-            c = it.get("claims") or {}
-            strings = []
-            for s in c.get("P2093") or []:
-                name = (s["mainsnak"].get("datavalue") or {}).get("value")
-                ordinal = next((q["datavalue"]["value"] for q in
-                                (s.get("qualifiers") or {}).get("P1545") or []), "")
-                if name:
-                    strings.append({"name": name, "ordinal": ordinal, "id": s["id"]})
-            out[qid] = {"strings": strings, "venue": bool(c.get("P1433")),
-                        "has": {p for p in FILLS if c.get(p)}, "p50": {
-                            (s["mainsnak"].get("datavalue") or {}).get("value", {}).get("id")
-                            for s in c.get("P50") or []}}
+    for qid, it in entities(qids, "claims", size=40).items():
+        c = it.get("claims") or {}
+        strings = []
+        for s in c.get("P2093") or []:
+            name = (s["mainsnak"].get("datavalue") or {}).get("value")
+            ordinal = next((q["datavalue"]["value"] for q in
+                            (s.get("qualifiers") or {}).get("P1545") or []), "")
+            if name:
+                strings.append({"name": name, "ordinal": ordinal, "id": s["id"]})
+        out[qid] = {"strings": strings, "venue": bool(c.get("P1433")),
+                    "has": {p for p in FILLS if c.get(p)}, "p50": {
+                        (s["mainsnak"].get("datavalue") or {}).get("value", {}).get("id")
+                        for s in c.get("P50") or []}}
     return out
 
 
