@@ -30,7 +30,7 @@ is ordered so that stopping early still captures most of the value.
 7. **Wikidata author strings (107 papers by hand)** — one Author Disambiguator pass per paper, most-cited first, at the link the section gives for each. Everything an ORCID or a DBLP author page could settle is already on Wikidata, so what is left is the part where the name is all there is to go on.
 8. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
 9. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
-10. **Citations on a Scholar record you cannot see (64, ~263 citations)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
+10. **Citations on a Scholar record you cannot see (27 rows, 170 citations measured + 93 inferred)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
 
 ## Waiting on the outside world
 
@@ -73,7 +73,7 @@ Declining is one line in [`data/declines.yaml`](data/declines.yaml) under `items
 
 - [ ] 0 cites — 2026 — Skill Issue: Are Skills Language-Invariant in LLMs? <https://arxiv.org/abs/2608.25832>
 
-## Citations on a Scholar record you cannot see (64, ~263 citations)
+## Citations on a Scholar record you cannot see (27 rows, 170 citations measured + 93 inferred)
 
 Scholar indexes preprints and theses the APIs do not, so a profile row should
 always count *more* than OpenAlex and Semantic Scholar. Where it counts less,
@@ -81,14 +81,25 @@ the rest of the count is on a second record Scholar parsed out of somebody's
 reference list — a mangled title, a misspelled author, initials only. Merging
 the two adds those citations to yours.
 
-OpenAlex holding one title twice is the same fault from the other side. A parser
-that split the record there usually split it at Scholar too, and the count on
-the smaller copy is what a merge recovers.
+OpenAlex holding one title twice is the same fault from the other side. A
+parser that split the record there usually split it at Scholar too, and the
+count on OpenAlex's smaller copy is the closest reading of what a merge
+recovers.
 
-Each row is a search. Open it, and if a result is your paper under a second
+The two numbers in the heading are different kinds of evidence.
+The measured 170 is a profile row counting fewer citations than the
+APIs already list for the same paper.
+The inferred 93 sits on a duplicate record at an API and stands in
+for a Scholar record nothing here has seen, so it is what a merge recovers only
+if Scholar split the paper the same way.
+
+Every row is a search. Open it, and if a result is your paper under a second
 record, tick your own row and that one on your profile and press *Merge*. A
 gap can also be plain indexing lag, so read the result before merging: a wrong
 merge attaches somebody else's paper to your name.
+
+Not counted above — 37 OpenAlex splits whose smaller
+copy holds no citations, so a merge there recovers nothing.
 
 Full detail, including the 200-odd records filed under an initials-only form of
 your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).
@@ -138,7 +149,7 @@ your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).
 - [ ] **3 citations** — Mediators in Determining what Processing BERT Performs First
       - Scholar 13 vs 16 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Mediators%20in%20Determining%20what%20Processing%20BERT%20Performs%20First%22)
-- … and 49 more in [`tasks/scholar_strays.md`](tasks/scholar_strays.md), same order
+- … and 12 more in [`tasks/scholar_strays.md`](tasks/scholar_strays.md), same order
 
 ## Wikidata author strings (107 papers by hand)
 

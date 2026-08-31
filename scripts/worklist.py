@@ -272,6 +272,33 @@ def _listed_twice(dup: list[dict], sc: dict) -> list[str]:
     return L + [""]
 
 
+def _figure(r: dict) -> int:
+    """Citations a merge on this row would recover."""
+    return r.get("gap") or r.get("citations") or 0
+
+
+def _stake(measured: int, inferred: int) -> str:
+    """The heading's citation figure, naming which half of it was measured."""
+    if measured and inferred:
+        return f"{plural(measured, 'citation')} measured + {inferred} inferred"
+    if measured:
+        return f"{plural(measured, 'citation')} measured"
+    return f"{plural(inferred, 'citation')} inferred"
+
+
+def _evidence_note(measured: int, inferred: int) -> list[str]:
+    """Which of the heading's two numbers was measured, and which stands in for one."""
+    seen = [f"The measured {measured} is a profile row counting fewer citations than the",
+            "APIs already list for the same paper."]
+    guess = [f"The inferred {inferred} sits on a duplicate record at an API and stands in",
+             "for a Scholar record nothing here has seen, so it is what a merge recovers only",
+             "if Scholar split the paper the same way."]
+    if measured and inferred:
+        return ["The two numbers in the heading are different kinds of evidence.",
+                *seen, *guess, ""]
+    return [*(seen if measured else guess), ""]
+
+
 def scholar_split_records(st: dict) -> list[str]:
     """The worklist section for `build/scholar_strays.json`, or nothing.
 
@@ -284,34 +311,51 @@ def scholar_split_records(st: dict) -> list[str]:
              if r.get("matched")]
     rows += [dict(r, kind="split", gap=sum(x["citations"] for x in r["records"][1:]))
              for r in st.get("split_records") or []]
+    rows.sort(key=lambda r: -_figure(r))
+    # A duplicate record holding no citations is evidence that the title parses two ways
+    # and no evidence that anything is recoverable, so it is a record to tidy rather than
+    # an ask. Counting it here would put two thirds of the section's rows in front of the
+    # reader for nothing.
+    worth = [r for r in rows if _figure(r)]
+    nothing_to_gain = len(rows) - len(worth)
+    rows = worth
     if not rows:
         return []
-    rows.sort(key=lambda r: -(r.get("gap") or r.get("citations") or 0))
-    at_stake = sum(r.get("gap") or r.get("citations") or 0 for r in rows)
-    L = [f"## Citations on a Scholar record you cannot see ({len(rows)}, "
-         f"~{at_stake} citations)", "",
+    # Only the undercounted rows carry a number measured against the Scholar profile
+    # itself. The other two passes read a duplicate record at an API and take it as an
+    # estimate of the Scholar record behind it, so one combined total would present a
+    # guess as a reading.
+    measured = sum(_figure(r) for r in rows if r["kind"] == "undercount")
+    inferred = sum(_figure(r) for r in rows if r["kind"] != "undercount")
+    L = [f"## Citations on a Scholar record you cannot see ({plural(len(rows), 'row')}, "
+         f"{_stake(measured, inferred)})", "",
          "Scholar indexes preprints and theses the APIs do not, so a profile row should",
          "always count *more* than OpenAlex and Semantic Scholar. Where it counts less,",
          "the rest of the count is on a second record Scholar parsed out of somebody's",
          "reference list — a mangled title, a misspelled author, initials only. Merging",
-         "the two adds those citations to yours.", "",
-         "OpenAlex holding one title twice is the same fault from the other side. A parser",
-         "that split the record there usually split it at Scholar too, and the count on",
-         "the smaller copy is what a merge recovers.", "",
-         "Each row is a search. Open it, and if a result is your paper under a second",
-         "record, tick your own row and that one on your profile and press *Merge*. A",
-         "gap can also be plain indexing lag, so read the result before merging: a wrong",
-         "merge attaches somebody else's paper to your name.", "",
-         "Full detail, including the 200-odd records filed under an initials-only form of",
-         "your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).", ""]
+         "the two adds those citations to yours.", ""]
+    if any(r["kind"] == "split" for r in rows):
+        L += ["OpenAlex holding one title twice is the same fault from the other side. A",
+              "parser that split the record there usually split it at Scholar too, and the",
+              "count on OpenAlex's smaller copy is the closest reading of what a merge",
+              "recovers.", ""]
+    L += _evidence_note(measured, inferred)
+    L += ["Every row is a search. Open it, and if a result is your paper under a second",
+          "record, tick your own row and that one on your profile and press *Merge*. A",
+          "gap can also be plain indexing lag, so read the result before merging: a wrong",
+          "merge attaches somebody else's paper to your name.", ""]
+    if nothing_to_gain:
+        L += [f"Not counted above — {plural(nothing_to_gain, 'OpenAlex split')} whose smaller",
+              "copy holds no citations, so a merge there recovers nothing.", ""]
+    L += ["Full detail, including the 200-odd records filed under an initials-only form of",
+          "your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).", ""]
     for r in rows[:15]:
-        gap = r.get("gap") or r.get("citations") or 0
         why = (f"Scholar {r['scholar_citations']} vs {r['index_citations']} at the APIs"
                if r["kind"] == "undercount" else
                f"filed as *{r.get('searched_as')}* at {r.get('index')}"
                if r["kind"] == "name form" else
                f"{len(r['records'])} OpenAlex records for one title")
-        L += [f"- [ ] **{gap} citations** — {clipped(r.get('title') or '', 64)}",
+        L += [f"- [ ] **{_figure(r)} citations** — {clipped(r.get('title') or '', 64)}",
               f"      - {why}",
               f"      - [search Scholar for it]({r['search']})"]
     if len(rows) > 15:

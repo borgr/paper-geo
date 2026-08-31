@@ -467,6 +467,24 @@ def _split_rows(state: dict) -> list[str]:
     return L
 
 
+def summary_line(state: dict) -> str:
+    """The closing count, keeping the two kinds of citation figure apart.
+
+    An undercounted row is measured against the Scholar profile itself. The other two
+    passes read a duplicate record at an API and take its count as an estimate of the
+    Scholar record behind it, which nothing here has seen.
+    """
+    und = state.get("undercounted") or []
+    stray = [r for r in state.get("typo_records") or [] if r.get("matched")]
+    splits = state.get("split_records") or []
+    inferred = (sum(r["citations"] for r in stray)
+                + sum(x["citations"] for r in splits for x in r["records"][1:]))
+    return (f"scholar strays: {len(und)} undercounted row(s), {len(stray)} name-form "
+            f"duplicate(s), {len(splits)} OpenAlex split(s) — "
+            f"{sum(r['gap'] for r in und)} citations measured at Scholar, "
+            f"{inferred} more inferred from a duplicate record")
+
+
 def write_page(state: dict) -> str:
     """Write `tasks/scholar_strays.md`, one section per kind of stray, and return its path."""
     t = state["typo_records"]
@@ -514,13 +532,7 @@ def main() -> int:
     write_json(os.path.join(BUILD, "scholar_strays.json"), state, indent=1)
     path = write_page(state)
 
-    stray = [r for r in state["typo_records"] if r.get("matched")]
-    at_stake = (sum(r["gap"] for r in state["undercounted"])
-                + sum(r["citations"] for r in stray))
-    print(f"scholar strays: {len(state['undercounted'])} undercounted row(s), "
-          f"{len(stray)} name-form duplicate(s), "
-          f"{len(state['split_records'])} OpenAlex split(s) — "
-          f"~{at_stake} citations at stake")
+    print(summary_line(state))
     if not args.quiet:
         print(f"  wrote {os.path.relpath(path, ROOT)}")
     return 0
