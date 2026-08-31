@@ -642,6 +642,93 @@ def lookups(names: list[str], papers: list[dict], refresh: bool) -> dict:
     return cache
 
 
+def author_edits(p: dict, st: dict, look: dict) -> tuple[list, list, list, int]:
+    """One paper's name strings, sorted by what settles them.
+
+    Returns (edits, review, leftover, dropped). An edit is settled by an ORCID the paper
+    itself carries or by DBLP listing this very paper on the candidate's page, never by a
+    name. A review entry matched on a name alone and carries every candidate. Leftover
+    matched nothing, and dropped counts the namesakes ruled out on occupation.
+    """
+    known = (look["orcids"] or {}).get(p["slug"]) or {}
+    here = title_key(title_of(p))
+    plausible = set(look.get("research") or [])
+    dblp = look.get("dblp") or {}
+    edits, review, leftover, dropped = [], [], [], 0
+    for s in st["strings"]:
+        orcid = next((known[k] for k in keys_for(s["name"]) if k in known), None)
+        hit = (look["by_orcid"] or {}).get(orcid or "")
+        if hit and hit["qid"] not in st["p50"]:
+            edits.append(dict(s, qid=hit["qid"], label=hit["label"], orcid=orcid,
+                              via="ORCID %s" % orcid))
+            continue
+        if hit:
+            continue
+        named = [c for c in (look["by_name"] or {}).get(s["name"]) or []
+                 if c["qid"] not in st["p50"]]
+        # A candidate whose stated occupation is nothing like research is a namesake,
+        # not a lead, and the long tail of these is what makes a name unreadable.
+        cands = [c for c in named if c["qid"] in plausible]
+        dropped += len(named) - len(cands)
+        # DBLP disambiguates its own author pages, so a candidate whose page lists this
+        # very paper wrote it rather than merely sharing a name with whoever did. Two
+        # such candidates mean DBLP holds one person under two ids, which is a merge and
+        # not a choice, so the string stays a question.
+        shared = [c for c in cands if here in (dblp.get(c["qid"]) or ())]
+        if here and len(shared) == 1:
+            edits.append(dict(s, qid=shared[0]["qid"],
+                              label=shared[0].get("label") or s["name"],
+                              orcid=shared[0].get("orcid") or "",
+                              via="DBLP, which lists this paper on their page"))
+            continue
+        (review if cands else leftover).append(dict(s, candidates=cands))
+    return edits, review, leftover, dropped
+
+
+def missing_fills(p: dict, st: dict) -> dict:
+    """The language and full-text values this item does not state yet."""
+    fills = {}
+    if "P407" not in st["has"]:
+        fills["P407"] = ENGLISH
+    url = full_text(p)
+    if url and "P953" not in st["has"]:
+        fills["P953"] = '"%s"' % url
+    return fills
+
+
+def venue_match(p: dict, look: dict) -> tuple[dict | None, list]:
+    """The volume P1433 should point at, and the candidates when the name did not settle.
+
+    Each venue form is tried on its own and the first that settles wins. Pooling them
+    makes the display name and the bibliography's name look like two rival volumes.
+    """
+    venues = look.get("venues") or {}
+    procs = look.get("proceedings") or {}
+    vcands, venue = [], None
+    for form in venue_forms(p):
+        raw = venues.get(form) or []
+        cands = publications(raw)
+        if not cands:
+            # The name matched the conference and not its volume, so ask the conference.
+            found = is_findings(p)
+            cands = publications([v for c in raw
+                                  for v in (procs.get(c["qid"]) or [])
+                                  if ("Findings" in v["label"]) == found])
+        # A label naming a volume the form does not name is a guess. `Proceedings of
+        # the 56th Annual Meeting of the ACL` is an alias of the Long Papers volume, so
+        # a short paper matching on it would be filed in the wrong book.
+        named = volume_named(form)
+        cands = [c for c in cands if volume_named(c["label"]) <= named
+                 and right_year(c, p.get("year"))]
+        if not cands:
+            continue
+        vcands = vcands or cands
+        venue = pick_venue(cands)
+        if venue:
+            break
+    return venue, vcands
+
+
 def rows(papers: list[dict], created: dict, look: dict,
          state: dict | None = None) -> list[dict]:
     """One row per paper item with strings left to resolve, most-cited first.
@@ -655,77 +742,15 @@ def rows(papers: list[dict], created: dict, look: dict,
     query cannot and it works a whole paper at a time.
     """
     by_slug = {p["slug"]: p for p in papers}
-    venues = look.get("venues") or {}
-    procs = look.get("proceedings") or {}
     state = item_state(sorted(created.values())) if state is None else state
-    plausible = set(look.get("research") or [])
-    dblp = look.get("dblp") or {}
     out = []
     for slug, qid in created.items():
         p, st = by_slug.get(slug), state.get(qid)
         if not p or not st:
             continue
-        edits, review, leftover, dropped = [], [], [], 0
-        known = (look["orcids"] or {}).get(slug) or {}
-        here = title_key(title_of(p))
-        for s in st["strings"]:
-            orcid = next((known[k] for k in keys_for(s["name"]) if k in known), None)
-            hit = (look["by_orcid"] or {}).get(orcid or "")
-            if hit and hit["qid"] not in st["p50"]:
-                edits.append(dict(s, qid=hit["qid"], label=hit["label"], orcid=orcid,
-                                  via="ORCID %s" % orcid))
-                continue
-            if hit:
-                continue
-            named = [c for c in (look["by_name"] or {}).get(s["name"]) or []
-                     if c["qid"] not in st["p50"]]
-            # A candidate whose stated occupation is nothing like research is a namesake,
-            # not a lead, and the long tail of these is what makes a name unreadable.
-            cands = [c for c in named if c["qid"] in plausible]
-            dropped += len(named) - len(cands)
-            # DBLP disambiguates its own author pages, so a candidate whose page lists this
-            # very paper wrote it rather than merely sharing a name with whoever did. Two
-            # such candidates mean DBLP holds one person under two ids, which is a merge and
-            # not a choice, so the string stays a question.
-            shared = [c for c in cands if here in (dblp.get(c["qid"]) or ())]
-            if here and len(shared) == 1:
-                edits.append(dict(s, qid=shared[0]["qid"],
-                                  label=shared[0].get("label") or s["name"],
-                                  orcid=shared[0].get("orcid") or "",
-                                  via="DBLP, which lists this paper on their page"))
-                continue
-            (review if cands else leftover).append(dict(s, candidates=cands))
-        vname = (p.get("venue_display") or "").strip()
-        fills = {}
-        if "P407" not in st["has"]:
-            fills["P407"] = ENGLISH
-        url = full_text(p)
-        if url and "P953" not in st["has"]:
-            fills["P953"] = '"%s"' % url
-        vcands, venue = [], None
-        # Each form is tried on its own and the first that settles wins. Pooling them makes
-        # the display name and the bibliography's name look like two rival volumes.
-        for form in venue_forms(p):
-            raw = venues.get(form) or []
-            cands = publications(raw)
-            if not cands:
-                # The name matched the conference and not its volume, so ask the conference.
-                found = is_findings(p)
-                cands = publications([v for c in raw
-                                      for v in (procs.get(c["qid"]) or [])
-                                      if ("Findings" in v["label"]) == found])
-            # A label naming a volume the form does not name is a guess. `Proceedings of
-            # the 56th Annual Meeting of the ACL` is an alias of the Long Papers volume, so
-            # a short paper matching on it would be filed in the wrong book.
-            named = volume_named(form)
-            cands = [c for c in cands if volume_named(c["label"]) <= named
-                     and right_year(c, p.get("year"))]
-            if not cands:
-                continue
-            vcands = vcands or cands
-            venue = pick_venue(cands)
-            if venue:
-                break
+        edits, review, leftover, dropped = author_edits(p, st, look)
+        fills = missing_fills(p, st)
+        venue, vcands = venue_match(p, look)
         # An item stating a venue is settled, whichever way this pass read the name. Both the
         # answer and the candidates go, or the paper comes back next run as a question about
         # something it already says.
@@ -737,7 +762,7 @@ def rows(papers: list[dict], created: dict, look: dict,
                         "citations": p.get("citations") or 0,
                         "edits": edits, "review": review,
                         "leftover": len(leftover), "dropped": dropped,
-                        "venue_name": vname,
+                        "venue_name": (p.get("venue_display") or "").strip(),
                         "venue": venue,
                         "venue_candidates": [] if venue else vcands})
     return sorted(out, key=lambda r: -r["citations"])
