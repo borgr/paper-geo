@@ -826,10 +826,16 @@ def parser() -> argparse.ArgumentParser:
     return ap
 
 
-def llm_mode(args, cfg: dict, flag: str) -> str:
-    """The backend `flag` will call, refusing if the configured mode cannot call one."""
+def llm_mode(args, cfg: dict, flag: str = "") -> str:
+    """The backend to call, refusing if `flag` needs one and the configured mode has none.
+
+    Applies `--effort` on the way through, so a caller that has read the mode is holding a
+    config already carrying the effort that mode will draft at. Called without `flag`, a
+    mode that can call no backend comes back as it is rather than exiting -- the drafting
+    flow has a task file to fall to and the one-shot rewrites do not.
+    """
     mode = args.mode or cfg["llm"]["mode"]
-    if mode not in ("api", "openai"):
+    if flag and mode not in ("api", "openai"):
         sys.exit(f"{flag} needs a model it can call: --mode api or --mode openai")
     if args.effort:
         cfg["llm"]["effort"] = args.effort
@@ -921,6 +927,120 @@ def run_mend(args, papers: list[dict], cfg: dict) -> None:
     return
 
 
+def run_restamp(which: list[str]) -> None:
+    """Re-check the named drafts in place, and name the ones that would not stamp."""
+    done, refused = restamp(which or None)
+    print(f"re-stamped {len(done)} draft(s) against the current spec"
+          + (f": {', '.join(done)}" if done else ""))
+    for slug, why in refused:
+        print(f"  left stale: {slug} -- {why}")
+
+
+def run_accept(args) -> None:
+    """Promote the named drafts, or every draft, then exit -- non-zero on any refusal.
+
+    Promotion is the step a wrapper or a later command is entitled to depend on, and a
+    refused accept that exits 0 reads as a successful one.
+    """
+    if args.accept_all:
+        slugs = [os.path.basename(f)[:-3] for f in draft_paths()]
+        print(f"promoting {len(slugs)} draft(s):")
+        n = accept(slugs, anyway=args.anyway)
+    else:
+        slugs = args.accept
+        n = accept(slugs, replace=args.replace, anyway=args.anyway)
+    print(f"\n{n} promoted.")
+    sys.exit(0 if n == len(slugs) else 1)
+
+
+def run_ingest(papers: list[dict]) -> None:
+    """Fold the answered tasks into drafts, and rebuild the page that lists them.
+
+    The page is rebuilt here rather than left for the next full run. A draft that exists
+    beside a review page that does not know about it is the one state where reading the
+    page silently misses work.
+    """
+    n = ingest(papers)
+    print(f"wrote {n} draft(s) to data/sidecars/drafts/")
+    print(f"Read them: file://{write_review_page(papers)}")
+
+
+def queued(args, papers: list[dict]) -> tuple[list[dict], int | None]:
+    """The papers to draft this run, and the cap on them.
+
+    An explicit `--slug` is an instruction rather than a candidate list, so it carries no
+    limit and no text-availability skip -- "draft this one anyway" is a legitimate thing
+    to ask for a paper whose text you know is unreachable.
+    """
+    if not args.slug:
+        return pending(papers, args.all, None), args.limit or None
+    by_slug = {p["slug"]: p for p in papers}
+    cands = [by_slug[s] for s in args.slug if s in by_slug]
+    missing = [s for s in args.slug if s not in by_slug]
+    if missing:
+        print(f"unknown slug(s): {', '.join(missing)}", file=sys.stderr)
+    return cands, None
+
+
+def note_skipped(skipped: list[dict]) -> None:
+    """Name the papers no open source had text for, and say how to force one."""
+    if not skipped:
+        return
+    print(f"\nskipped {len(skipped)} with no text from any open source -- drop a PDF "
+          f"in data/fulltext/<slug>.pdf and rerun, or force one with --slug:")
+    for p in skipped[:8]:
+        print(f"  {(p.get('citations') or 0):>5} cites  {p['slug']}")
+    if len(skipped) > 8:
+        print(f"  ... and {len(skipped) - 8} more (python scripts/fulltext.py --report)")
+
+
+def note_batch(pairs: list[tuple[dict, str]]) -> None:
+    """List the papers about to be drafted, most cited first."""
+    print(f"\n{len(pairs)} paper(s) to draft:")
+    for p, _ in pairs[:8]:
+        print(f"  {(p.get('citations') or 0):>5} cites  {p['slug']}")
+    if len(pairs) > 8:
+        print(f"  ... and {len(pairs) - 8} more")
+    print()
+
+
+def draft_batch(args, cfg, pairs: list[tuple[dict, str]]) -> None:
+    """Draft the batch through whichever backend the mode names.
+
+    `skill` writes the task file and the drafting happens outside this process. `api` and
+    `openai` ask for each paper in turn and write each draft as it lands.
+    """
+    mode = llm_mode(args, cfg)
+    if mode not in ("api", "openai"):
+        path = emit_tasks(pairs, cfg)
+        print(f"wrote {path}")
+        print("Fill each task's `sidecar` field (the paper-geo skill does this), then:")
+        print("  python scripts/draft_sidecars.py --ingest")
+        return
+    caller = call_api if mode == "api" else call_openai
+    ev = {p["slug"]: e for p, e in pairs}
+
+    def landed(slug, sc, how_now, again):
+        """Write this draft, and repair it, before the next paper is asked for.
+
+        Each paper is durable the moment it exists. Holding the batch in memory until the
+        last reply came back meant that over 111 papers a crash, a Ctrl-C or a closed
+        laptop threw away every finished draft -- and papers are drafted most-cited
+        first, so the ones lost were the ones that mattered most.
+        """
+        write_draft(slug, sc, how_now)
+        if args.repair:
+            left = repair(slug, args.repair, again, ev.get(slug, ""), how_now)
+            print(f"      {left} finding(s) left for you")
+
+    if args.repair:
+        print(f"drafting, then repairing each against the checks, up to "
+              f"{args.repair} round(s) per paper:")
+    answers, _how, _asker = caller(pairs, cfg, landed)
+    print(f"\nwrote {len(answers)} draft(s) to data/sidecars/drafts/")
+    print("Next: python scripts/draft_sidecars.py --review")
+
+
 def main() -> None:
     args = parser().parse_args()
 
@@ -931,12 +1051,7 @@ def main() -> None:
         print(f"file://{write_review_page(papers)}")
         return
     if args.restamp is not None:
-        done, refused = restamp(args.restamp or None)
-        print(f"re-stamped {len(done)} draft(s) against the current spec"
-              + (f": {', '.join(done)}" if done else ""))
-        for slug, why in refused:
-            print(f"  left stale: {slug} -- {why}")
-        return
+        return run_restamp(args.restamp)
     if args.review:
         return review(papers)
     if args.suspect is not None:
@@ -945,44 +1060,16 @@ def main() -> None:
         for slug in args.show:
             show(slug)
         return
-    # A refusal exits non-zero. Promotion is the step a wrapper or a later command is
-    # entitled to depend on, and a refused accept that exits 0 reads as a successful one.
-    if args.accept_all:
-        slugs = [os.path.basename(f)[:-3]
-                 for f in draft_paths()]
-        print(f"promoting {len(slugs)} draft(s):")
-        n = accept(slugs, anyway=args.anyway)
-        print(f"\n{n} promoted.")
-        sys.exit(0 if n == len(slugs) else 1)
-    if args.accept:
-        n = accept(args.accept, replace=args.replace, anyway=args.anyway)
-        print(f"\n{n} promoted.")
-        sys.exit(0 if n == len(args.accept) else 1)
+    if args.accept_all or args.accept:
+        return run_accept(args)
     if args.ingest:
-        n = ingest(papers)
-        print(f"wrote {n} draft(s) to data/sidecars/drafts/")
-        # Regenerated here rather than left for the next full run: a draft that exists
-        # and a review page that does not know about it is the one state where reading
-        # the page would silently miss work.
-        print(f"Read them: file://{write_review_page(papers)}")
-        return
-
+        return run_ingest(papers)
     if args.reroute is not None:
         return run_reroute(args, papers, cfg)
     if args.mend is not None:
         return run_mend(args, papers, cfg)
 
-    # An explicit --slug is an instruction, not a candidate list: no limit and no
-    # text-availability skip, because "draft this one anyway" is a legitimate thing to
-    # ask for a paper whose text you know is unreachable.
-    if args.slug:
-        by_slug = {p["slug"]: p for p in papers}
-        cands, limit = [by_slug[s] for s in args.slug if s in by_slug], None
-        missing = [s for s in args.slug if s not in by_slug]
-        if missing:
-            print(f"unknown slug(s): {', '.join(missing)}", file=sys.stderr)
-    else:
-        cands, limit = pending(papers, args.all, None), args.limit or None
+    cands, limit = queued(args, papers)
     if not cands:
         print("Nothing to draft: every paper has a sidecar or a draft.")
         print("  python scripts/draft_sidecars.py --review")
@@ -990,58 +1077,13 @@ def main() -> None:
 
     print(f"resolving each paper's full text, most cited first "
           f"(up to {limit or len(cands)})...")
-    pairs, skipped = with_evidence(cands, cfg, args.no_fulltext,
-                                   None if args.slug else limit)
-    if skipped:
-        print(f"\nskipped {len(skipped)} with no text from any open source -- drop a PDF "
-              f"in data/fulltext/<slug>.pdf and rerun, or force one with --slug:")
-        for p in skipped[:8]:
-            print(f"  {(p.get('citations') or 0):>5} cites  {p['slug']}")
-        if len(skipped) > 8:
-            print(f"  ... and {len(skipped) - 8} more (python scripts/fulltext.py --report)")
+    pairs, skipped = with_evidence(cands, cfg, args.no_fulltext, limit)
+    note_skipped(skipped)
     if not pairs:
         print("\nNothing draftable in this batch.")
         return
-
-    print(f"\n{len(pairs)} paper(s) to draft:")
-    for p, _ in pairs[:8]:
-        print(f"  {(p.get('citations') or 0):>5} cites  {p['slug']}")
-    if len(pairs) > 8:
-        print(f"  ... and {len(pairs) - 8} more")
-    print()
-
-    mode = args.mode or cfg["llm"]["mode"]
-    if args.effort:
-        cfg["llm"]["effort"] = args.effort
-    if mode in ("api", "openai"):
-        caller = call_api if mode == "api" else call_openai
-        ev = {p["slug"]: e for p, e in pairs}
-
-        def landed(slug, sc, how_now, again):
-            """Write this draft, and repair it, before the next paper is asked for.
-
-            The batch used to be held in memory until the last paper came back, and only
-            then written and only then repaired. Over 111 papers that is hours during
-            which a crash, a Ctrl-C or a closed laptop throws away every finished draft
-            -- and the papers are drafted most-cited first, so the ones lost are the ones
-            that mattered most. Each paper is now durable the moment it exists.
-            """
-            write_draft(slug, sc, how_now)
-            if args.repair:
-                left = repair(slug, args.repair, again, ev.get(slug, ""), how_now)
-                print(f"      {left} finding(s) left for you")
-
-        if args.repair:
-            print(f"drafting, then repairing each against the checks, up to "
-                  f"{args.repair} round(s) per paper:")
-        answers, how, asker = caller(pairs, cfg, landed)
-        print(f"\nwrote {len(answers)} draft(s) to data/sidecars/drafts/")
-        print("Next: python scripts/draft_sidecars.py --review")
-    else:
-        path = emit_tasks(pairs, cfg)
-        print(f"wrote {path}")
-        print("Fill each task's `sidecar` field (the paper-geo skill does this), then:")
-        print("  python scripts/draft_sidecars.py --ingest")
+    note_batch(pairs)
+    draft_batch(args, cfg, pairs)
 
 
 if __name__ == "__main__":
