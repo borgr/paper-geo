@@ -553,7 +553,7 @@ def papers_main(args, cfg: dict, user: str | None, password: str | None) -> int:
     return 0 if ok == len(items) else 1
 
 
-def main() -> int:
+def parse_args():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--apply", action="store_true", help="write to Wikidata")
     ap.add_argument("--check-account", action="store_true",
@@ -566,15 +566,15 @@ def main() -> int:
     ap.add_argument("--max-new", type=int,
                     help="--papers: do nothing at all if more than this many are "
                          "missing. For unattended runs.")
-    args = ap.parse_args()
+    return ap.parse_args()
 
-    cfg = load_config()
-    user, password = read_creds()
-    if args.check_account:
-        return check_account(args.user or user or cfg["ids"].get("wikidata_account"))
-    if args.papers:
-        return papers_main(args, cfg, user, password)
 
+def author_plan(cfg: dict) -> tuple[str, dict, list[dict]]:
+    """The author item named in config.yaml, its gaps, and the edits that close them.
+
+    Exits rather than returning on the three ways there is nothing to plan: no item
+    configured, an item that would not read, and a config the planner refuses.
+    """
     qid = cfg["ids"].get("wikidata")
     if not qid:
         sys.exit("config.yaml has no ids.wikidata -- nothing to update.")
@@ -585,18 +585,79 @@ def main() -> int:
     if not gaps:
         sys.exit(f"could not read {qid}")
     try:
-        steps = plan(gaps, cfg)
+        return qid, gaps, plan(gaps, cfg)
     except RuntimeError as e:
         sys.exit(str(e))
-    if not steps:
-        print(f"{qid} already matches config.yaml -- nothing to do.")
-        return 0
 
+
+def show_steps(qid: str, steps: list[dict], applying: bool) -> None:
+    """Print each planned edit and the reason the planner gives for it."""
     print(f"{qid} — {len(steps)} edit{'' if len(steps) == 1 else 's'} "
-          f"{'to apply' if args.apply else 'that WOULD be applied'}:\n")
+          f"{'to apply' if applying else 'that WOULD be applied'}:\n")
     for i, s in enumerate(steps, 1):
         print(f"  {i}. {s['what']}\n     {s['why']}")
     print()
+
+
+def apply_step(s: "Session", qid: str, step: dict) -> None:
+    """Make one planned edit against `qid`."""
+    if step["action"] == "REPLACE":
+        # Remove the wrong statement and create the right one, rather than
+        # editing the snak in place: wbsetclaim needs the full claim JSON and
+        # gets it wrong in ways that are hard to see, while remove+create is
+        # two calls whose effect is obvious in the item history.
+        for guid, val in claim_guids(qid, step["pid"]):
+            if val in step["old"]:
+                s.edit("wbremoveclaims", claim=guid,
+                       summary=f"remove {step['pid']} value replaced by "
+                               f"{step['value']} (paper-geo)")
+        s.edit("wbcreateclaim", entity=qid, property=step["pid"],
+               snaktype="value", value=json.dumps(str(step["value"])),
+               summary=f"set {step['pid']} from config.yaml (paper-geo)")
+    elif step["action"] == "DEDUPE":
+        guids = [g for g, v in claim_guids(qid, step["pid"])
+                 if v == step["value"]]
+        for guid in guids[1:]:
+            s.edit("wbremoveclaims", claim=guid,
+                   summary=f"remove duplicate {step['pid']} statement "
+                           f"(paper-geo)")
+    else:
+        s.edit(step["action"],
+               summary=step.get("summary", "from config.yaml (paper-geo)"),
+               **step["post"])
+
+
+def apply_steps(s: "Session", qid: str, steps: list[dict]) -> int:
+    """Make every planned edit, reporting each, and return how many landed.
+
+    One step failing does not stop the rest: the steps are independent statements and
+    a rerun re-plans from the live item, so a partial pass leaves no half-edit behind.
+    """
+    ok = 0
+    for i, step in enumerate(steps, 1):
+        try:
+            apply_step(s, qid, step)
+            ok += 1
+            print(f"  {i}. done — {step['what']}")
+        except (RuntimeError, urllib.error.URLError) as e:
+            print(f"  {i}. FAILED — {step['what']}\n     {e}")
+    return ok
+
+
+def main() -> int:
+    args = parse_args()
+    cfg = load_config()
+    user, password = read_creds()
+    if args.check_account:
+        return check_account(args.user or user or cfg["ids"].get("wikidata_account"))
+    if args.papers:
+        return papers_main(args, cfg, user, password)
+
+    qid, gaps, steps = author_plan(cfg)
+    if not steps:
+        print(f"{qid} already matches config.yaml -- nothing to do.")
+        return 0
+    show_steps(qid, steps, args.apply)
 
     if not args.apply:
         print("Dry run. Re-run with --apply to write.")
@@ -607,39 +668,9 @@ def main() -> int:
                   "(or put them in .wikidata_bot).")
         return 0
 
-    s = logged_in(user, password)
-
-    ok = 0
-    for i, step in enumerate(steps, 1):
-        try:
-            if step["action"] == "REPLACE":
-                # Remove the wrong statement and create the right one, rather than
-                # editing the snak in place: wbsetclaim needs the full claim JSON and
-                # gets it wrong in ways that are hard to see, while remove+create is
-                # two calls whose effect is obvious in the item history.
-                for guid, val in claim_guids(gaps["qid"], step["pid"]):
-                    if val in step["old"]:
-                        s.edit("wbremoveclaims", claim=guid,
-                               summary=f"remove {step['pid']} value replaced by "
-                                       f"{step['value']} (paper-geo)")
-                s.edit("wbcreateclaim", entity=gaps["qid"], property=step["pid"],
-                       snaktype="value", value=json.dumps(str(step["value"])),
-                       summary=f"set {step['pid']} from config.yaml (paper-geo)")
-            elif step["action"] == "DEDUPE":
-                guids = [g for g, v in claim_guids(gaps["qid"], step["pid"])
-                         if v == step["value"]]
-                for guid in guids[1:]:
-                    s.edit("wbremoveclaims", claim=guid,
-                           summary=f"remove duplicate {step['pid']} statement "
-                                   f"(paper-geo)")
-            else:
-                s.edit(step["action"],
-                       summary=step.get("summary", "from config.yaml (paper-geo)"),
-                       **step["post"])
-            ok += 1
-            print(f"  {i}. done — {step['what']}")
-        except (RuntimeError, urllib.error.URLError) as e:
-            print(f"  {i}. FAILED — {step['what']}\n     {e}")
+    # The item the gaps were read from, which is what a redirect makes different from
+    # the one config.yaml names.
+    ok = apply_steps(logged_in(user, password), gaps["qid"], steps)
     print(f"\n{ok}/{len(steps)} applied. Re-run "
           f"`python scripts/audit_identity.py` to confirm the diff cleared.")
     return 0 if ok == len(steps) else 1
