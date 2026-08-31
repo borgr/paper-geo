@@ -37,22 +37,12 @@ def _org_match(a: str, b: str) -> bool:
     return wa <= wb or wb <= wa
 
 
-def orcid_public(orcid: str) -> dict:
-    """Read the public ORCID record.
+def _work_rows(act: dict) -> tuple[list[tuple], dict[str, int]]:
+    """The works on the record, and a tally of who asserted each one.
 
-    The public API is what Semantic Scholar, OpenAlex and Crossref see. An item
-    whose visibility is "trusted parties" is invisible here -- so a works count of
-    0 does not distinguish "empty" from "private", and both fail identically.
-
-    `reachable` is the third case, which the other two must never be confused with. Half of
-    what the audit reports is read from this record, and an unread one reports the whole
-    corpus as absent from ORCID and every work as self-asserted.
+    Returns (titles, sources). Each entry of `titles` is (title, put-code, the external
+    ids that work itself carries, the index of the group ORCID filed it under).
     """
-    st, doc, why = replied(f"https://pub.orcid.org/v3.0/{orcid}/record")
-    d = doc or {}
-    act, person = d.get("activities-summary") or {}, d.get("person") or {}
-    urls = [(u.get("url-name"), (u.get("url") or {}).get("value"))
-            for u in ((person.get("researcher-urls") or {}).get("researcher-url") or [])]
     # Titles, not just the count. A bulk BibTeX import is one click and cannot be
     # undone in one click, so the record can silently end up asserting authorship of
     # works that were in the source file by mistake -- and nothing on ORCID will ever
@@ -87,28 +77,52 @@ def orcid_public(orcid: str) -> dict:
             # output counts both; two in the *same* group are one entry with "2 versions". Same
             # slug, two severities, so they cannot share a report section.
             titles.append((t, s.get("put-code"), own or ids, gidx))
-    affs = {}
-    for sect in ("employments", "educations"):
-        rows = []
-        for g in ((act.get(sect) or {}).get("affiliation-group") or []):
-            for summary in (g.get("summaries") or []):
-                v = next(iter(summary.values()), {}) or {}
-                sd, ed = v.get("start-date") or {}, v.get("end-date") or {}
-                # Who asserted the entry. An affiliation added by the institution
-                # itself is read-only for the researcher: ORCID offers *Delete*, and
-                # no *Edit*. Reporting "add the degree to the Role field" on one of
-                # those sends someone looking for a control that is not there.
-                src = ((v.get("source") or {}).get("source-name") or {}).get("value")
-                rows.append({
-                    "org": ((v.get("organization") or {}).get("name")),
-                    "role": v.get("role-title"),
-                    "dept": v.get("department-name"),
-                    "start": (sd.get("year") or {}).get("value"),
-                    "end": (ed.get("year") or {}).get("value") if ed else None,
-                    "source": src,
-                    "put": v.get("put-code"),
-                })
-        affs[sect] = rows
+    return titles, sources
+
+
+def _affiliation_rows(act: dict, sect: str) -> list[dict]:
+    """One affiliation section, flattened out of ORCID's group-of-summaries shape."""
+    rows = []
+    for g in ((act.get(sect) or {}).get("affiliation-group") or []):
+        for summary in (g.get("summaries") or []):
+            v = next(iter(summary.values()), {}) or {}
+            sd, ed = v.get("start-date") or {}, v.get("end-date") or {}
+            # Who asserted the entry. An affiliation added by the institution
+            # itself is read-only for the researcher: ORCID offers *Delete*, and
+            # no *Edit*. Reporting "add the degree to the Role field" on one of
+            # those sends someone looking for a control that is not there.
+            src = ((v.get("source") or {}).get("source-name") or {}).get("value")
+            rows.append({
+                "org": ((v.get("organization") or {}).get("name")),
+                "role": v.get("role-title"),
+                "dept": v.get("department-name"),
+                "start": (sd.get("year") or {}).get("value"),
+                "end": (ed.get("year") or {}).get("value"),
+                "source": src,
+                "put": v.get("put-code"),
+            })
+    return rows
+
+
+def orcid_public(orcid: str) -> dict:
+    """Read the public ORCID record.
+
+    The public API is what Semantic Scholar, OpenAlex and Crossref see. An item
+    whose visibility is "trusted parties" is invisible here -- so a works count of
+    0 does not distinguish "empty" from "private", and both fail identically.
+
+    `reachable` is the third case, which the other two must never be confused with. Half of
+    what the audit reports is read from this record, and an unread one reports the whole
+    corpus as absent from ORCID and every work as self-asserted.
+    """
+    st, doc, why = replied(f"https://pub.orcid.org/v3.0/{orcid}/record")
+    d = doc or {}
+    act, person = d.get("activities-summary") or {}, d.get("person") or {}
+    urls = [(u.get("url-name"), (u.get("url") or {}).get("value"))
+            for u in ((person.get("researcher-urls") or {}).get("researcher-url") or [])]
+    titles, sources = _work_rows(act)
+    affs = {sect: _affiliation_rows(act, sect)
+            for sect in ("employments", "educations")}
     return {
         "works": len((act.get("works") or {}).get("group") or []),
         "work_titles": titles,
