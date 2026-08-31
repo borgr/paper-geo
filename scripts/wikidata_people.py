@@ -668,6 +668,122 @@ def write_page(people: list[dict], held: list[dict], skipped: list[dict],
     return page
 
 
+def gathered(papers: dict, refresh: bool) -> tuple[list[str], dict]:
+    """Every co-author ORCID with no Wikidata item, described as an item to create.
+
+    Returns the ORCIDs looked at, then those descriptions grouped under `ok` (creatable),
+    `skipped` (nothing to create an item from) and `later` (a source did not answer).
+    """
+    recs = records(sorted(papers), refresh)
+    # Asked live rather than trusted from the cache, so a person who got an item since the
+    # last pass is not created twice.
+    claimed = items_by_orcid(sorted(papers))
+    todo = [o for o in sorted(papers) if not claimed.get(o)]
+    employers = employer_items(sorted({e for o in todo for e in recs[o]["employers"]
+                                       + (recs[o].get("openalex_employers") or [])}))
+    made = [described(o, recs[o], employers) for o in todo]
+    return todo, {"ok": [p for p in made if not ("skip" in p or "later" in p)],
+                  "skipped": [p for p in made if "skip" in p],
+                  "later": [p for p in made if "later" in p]}
+
+
+def name_matches(ok: list[dict]) -> None:
+    """Attach each person's same-name items, with what Wikidata says about them."""
+    taken = namesakes(sorted({p["label"] for p in ok}))
+    for p in ok:
+        p["namesakes"] = keeps(p, taken.get(p["label"]) or [])
+    facts = about(sorted({n["qid"] for p in ok for n in p["namesakes"]}))
+    for p in ok:
+        for n in p["namesakes"]:
+            n.update(facts.get(n["qid"]) or {"works": [], "research": True})
+            # Written into the state so the worklist prints the same line as the task page.
+            n["says"] = summary(n)
+        # The likely answer first: an item stating an occupation nothing like research is
+        # still shown, because the tree that says so has holes.
+        p["namesakes"].sort(key=lambda n: (not n["research"], n["qid"]))
+
+
+def settled(ok: list[dict]) -> dict:
+    """The same-name hold each ORCID resolves to, tagging the person it resolved.
+
+    A hold the records themselves settle is not a question. Answered here rather than
+    asked, and only where an answer given by hand has not already said otherwise.
+    """
+    answered = decided()
+    mine = coauthored()
+    for p in ok:
+        v = verdict(p, mine.get(p["orcid"]) or set()) if p["namesakes"] else {}
+        if v and not answered.get(p["orcid"]):
+            p["verdict"] = v
+            answered[p["orcid"]] = v["qid"]
+    return answered
+
+
+def quickstatements(people: list[dict], day: str) -> str | None:
+    """Write the QuickStatements batch, or clear a stale one and return None."""
+    lines = batch(people, day)
+    qs = os.path.join(TASKS, "wikidata_people.qs")
+    if lines:
+        with open(qs, "w") as f:
+            f.write("\n".join(lines) + "\n")
+        return qs
+    if os.path.exists(qs):
+        os.remove(qs)
+    return None
+
+
+def state_file(day: str, groups: dict, people: list[dict], held: list[dict],
+               decisions: list[dict], papers: dict) -> None:
+    """The counts the worklist reads, in `build/wikidata_people.json`."""
+    write_json(
+        os.path.join(BUILD, "wikidata_people.json"),
+        {"asked": day, "create": len(people), "held": len(held),
+         "skipped": len(groups["skipped"]), "later": len(groups["later"]),
+         "decided": len(decisions),
+         "mentions": sum(papers[p["orcid"]] for p in people),
+         "people": people, "held_people": held,
+         "decisions": [{"label": p["label"], "orcid": p["orcid"], "papers": p["papers"],
+                        "verdict": p["verdict"]} for p in decisions]},
+        indent=1, sort_keys=True)
+
+
+def report(todo: list[str], groups: dict, people: list[dict], held: list[dict],
+           page: str, qs: str | None) -> None:
+    """The closing count, and every same-name hold the records settled on their own."""
+    later = groups["later"]
+    print("%d co-author ORCIDs with no item: %d to create, %d already have a "
+          "same-name item, %d left out%s"
+          % (len(todo), len(people), len(held), len(groups["skipped"]),
+             ", %d not asked (a source did not answer)" % len(later) if later else ""))
+    for p in sorted(groups["ok"], key=lambda x: x["label"]):
+        if p.get("verdict"):
+            print("  %s is %s — %s"
+                  % (p["label"], p["verdict"]["qid"], p["verdict"]["why"]))
+    print("wrote %s%s" % (page, " and " + qs if qs else ""))
+
+
+def apply_creates(people: list[dict], link: list, limit: int | None, day: str) -> int:
+    """Create the items, link the same-name ones, and mend anything already created."""
+    s = logged_in()
+    print("acting as %s" % s.user)
+    made, wanted_n = 0, 0
+    if people:
+        make = people[:limit] if limit else people
+        wanted_n = len(make)
+        made = create_items(
+            s, [(p["orcid"], p["label"], payload(p, day)) for p in make],
+            os.path.join(DATA, LEDGER),
+            "create item for a co-author, from their ORCID record", LEDGER_NOTE)
+        print("%d/%d created" % (made, wanted_n))
+    if link:
+        print("adding the ORCID to %d same-name item(s)" % len(link))
+        add_orcids(s, link, day)
+    fixed, off = resync(s, day)
+    if off:
+        print("%d/%d already-created items brought up to date" % (fixed, off))
+    return 0 if made == wanted_n and fixed == off else 1
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--apply", action="store_true",
@@ -683,43 +799,14 @@ def main() -> int:
         print("run scripts/wikidata_coauthors.py first -- its cache is what names the "
               "ORCIDs to look up")
         return 1
-    recs = records(sorted(papers), args.refresh)
-    # Asked live rather than trusted from the cache, so a person who got an item since the
-    # last pass is not created twice.
-    claimed = items_by_orcid(sorted(papers))
-    todo = [o for o in sorted(papers) if not claimed.get(o)]
-    employers = employer_items(sorted({e for o in todo for e in
-                                       recs[o]["employers"] + (recs[o].get("openalex_employers") or [])}))
-    made = [described(o, recs[o], employers) for o in todo]
-    ok = [p for p in made if not ("skip" in p or "later" in p)]
-    taken = namesakes(sorted({p["label"] for p in ok}))
-    for p in ok:
-        p["namesakes"] = keeps(p, taken.get(p["label"]) or [])
-    facts = about(sorted({n["qid"] for p in ok for n in p["namesakes"]}))
-    for p in ok:
-        for n in p["namesakes"]:
-            n.update(facts.get(n["qid"]) or {"works": [], "research": True})
-            # Written into the state so the worklist prints the same line as the task page.
-            n["says"] = summary(n)
-        # The likely answer first: an item stating an occupation nothing like research is
-        # still shown, because the tree that says so has holes.
-        p["namesakes"].sort(key=lambda n: (not n["research"], n["qid"]))
-    answered = decided()
-    mine = coauthored()
-    # A hold the records themselves settle is not a question. Answered here rather than
-    # asked, and only where an answer given by hand has not already said otherwise.
-    for p in ok:
-        v = verdict(p, mine.get(p["orcid"]) or set()) if p["namesakes"] else {}
-        if v and not answered.get(p["orcid"]):
-            p["verdict"] = v
-            answered[p["orcid"]] = v["qid"]
+    todo, groups = gathered(papers, args.refresh)
+    ok = groups["ok"]
+    name_matches(ok)
     try:
-        people, link, held = sorted_out(ok, answered)
+        people, link, held = sorted_out(ok, settled(ok))
     except ValueError as e:
         print(e, file=sys.stderr)
         return 1
-    skipped = [p for p in made if "skip" in p]
-    later = [p for p in made if "later" in p]
     for p in ok:
         p["papers"] = papers.get(p["orcid"], 0)
     quiet = api_quiet() or wdqs_quiet()
@@ -732,55 +819,14 @@ def main() -> int:
               % quiet, file=sys.stderr)
         return 1
     day = datetime.date.today().isoformat()
-    lines = batch(people, day)
-    qs = os.path.join(TASKS, "wikidata_people.qs")
-    if lines:
-        with open(qs, "w") as f:
-            f.write("\n".join(lines) + "\n")
-    elif os.path.exists(qs):
-        os.remove(qs)
+    qs = quickstatements(people, day)
     decisions = [p for p in ok if p.get("verdict")]
-    page = write_page(people, held, skipped, decisions, papers, qs if lines else None,
-                      later)
-    write_json(
-        os.path.join(BUILD, "wikidata_people.json"),
-        {"asked": day, "create": len(people), "held": len(held),
-         "skipped": len(skipped), "later": len(later), "decided": len(decisions),
-         "mentions": sum(papers[p["orcid"]] for p in people),
-         "people": people, "held_people": held,
-         "decisions": [{"label": p["label"], "orcid": p["orcid"], "papers": p["papers"],
-                        "verdict": p["verdict"]} for p in decisions]},
-        indent=1, sort_keys=True)
+    page = write_page(people, held, groups["skipped"], decisions, papers, qs,
+                      groups["later"])
+    state_file(day, groups, people, held, decisions, papers)
     if not args.quiet:
-        print("%d co-author ORCIDs with no item: %d to create, %d already have a "
-              "same-name item, %d left out%s"
-              % (len(todo), len(people), len(held), len(skipped),
-                 ", %d not asked (a source did not answer)" % len(later) if later else ""))
-        for p in sorted(ok, key=lambda x: x["label"]):
-            if p.get("verdict"):
-                print("  %s is %s — %s"
-                      % (p["label"], p["verdict"]["qid"], p["verdict"]["why"]))
-        print("wrote %s%s" % (page, " and " + qs if lines else ""))
-    if not args.apply:
-        return 0
-    s = logged_in()
-    print("acting as %s" % s.user)
-    made, wanted_n = 0, 0
-    if people:
-        make = people[:args.limit] if args.limit else people
-        wanted_n = len(make)
-        made = create_items(
-            s, [(p["orcid"], p["label"], payload(p, day)) for p in make],
-            os.path.join(DATA, LEDGER),
-            "create item for a co-author, from their ORCID record", LEDGER_NOTE)
-        print("%d/%d created" % (made, wanted_n))
-    if link:
-        print("adding the ORCID to %d same-name item(s)" % len(link))
-        add_orcids(s, link, day)
-    fixed, off = resync(s, day)
-    if off:
-        print("%d/%d already-created items brought up to date" % (fixed, off))
-    return 0 if made == wanted_n and fixed == off else 1
+        report(todo, groups, people, held, page, qs)
+    return apply_creates(people, link, args.limit, day) if args.apply else 0
 
 
 def add_orcids(s, link: list[tuple[dict, str]], day: str) -> int:
