@@ -915,36 +915,49 @@ def push(results: dict, eff: dict, token: str) -> None:
               f"on the site: " + ", ".join(sorted(no_arxiv)))
 
 
-def main() -> None:
+def parse_args():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true",
                     help="POST accepted links to Hugging Face")
     ap.add_argument("--slug", help="one paper only")
-    args = ap.parse_args()
+    return ap.parse_args()
 
+
+def deduce_all(slug: str | None) -> tuple[list[dict], dict, dict, dict]:
+    """Every paper's repo and project-page candidates, with both caches written back.
+
+    Returns (papers, results, prev, eff). `prev` is the decisions file as it stood and
+    `eff` folds it over this run, so a row the author already settled keeps their answer.
+    """
     papers = read_papers()
     facts = RepoFacts()
     pages = PageFacts()
     prev = load_decisions()
-    results = deduce(papers, args.slug, facts, pages)
+    results = deduce(papers, slug, facts, pages)
     facts.save()
     pages.save()
+    return papers, results, prev, {s: effective(s, r, prev)
+                                  for s, r in results.items()}
 
-    eff = {s: effective(s, r, prev) for s, r in results.items()}
+
+def repo_line(slug: str, r: dict, e: dict) -> str:
+    """One row of a repo table. '*' marks the author's own decision, '=' the link the
+    Hugging Face page already carries."""
+    p = r["paper"]
+    have = (p.get("hf_github_repo") or "").rstrip("/").lower()
+    mark = "*" if e["frozen"] else (
+        "=" if have and e["repo"] and e["repo"].lower().endswith(
+            have.split("github.com/")[-1]) else " ")
+    return (f"{mark} {p.get('citations') or 0:>4} cites  {slug[:52]:<52} "
+            f"{e['repo'] or '-':<52} "
+            f"{'your decision' if e['frozen'] else 'score ' + str(e['score'])}")
+
+
+def show_repos(results: dict, eff: dict) -> None:
+    """What --apply would publish, what needs a decision, and the repos still private."""
+    by_cites = lambda x: -(x[1]["paper"].get("citations") or 0)  # noqa: E731
     acc = [(s, results[s]) for s, e in eff.items() if e["verdict"] == "accept"]
     rev = [(s, results[s]) for s, e in eff.items() if e["verdict"] == "review"]
-    non = [(s, results[s]) for s, e in eff.items() if e["verdict"] == "none"]
-
-    def line(slug, r):
-        p, e = r["paper"], eff[slug]
-        have = (p.get("hf_github_repo") or "").rstrip("/").lower()
-        mark = "*" if e["frozen"] else (
-            "=" if have and e["repo"] and e["repo"].lower().endswith(
-                have.split("github.com/")[-1]) else " ")
-        return (f"{mark} {p.get('citations') or 0:>4} cites  {slug[:52]:<52} "
-                f"{e['repo'] or '-':<52} "
-                f"{'your decision' if e['frozen'] else 'score ' + str(e['score'])}")
-
     # "will publish" is a description of what --apply would do, not a queue of things
     # waiting on the reader: nothing in this list needs them, and the ones marked '*' are
     # rows they already reviewed. Saying so is the difference between a settled list and
@@ -952,11 +965,11 @@ def main() -> None:
     print(f"== will publish on --apply ({len(acc)})  -- nothing here needs you. "
           f"'*' = you already reviewed it,\n   the rest earned it with a release phrase "
           f"plus corroboration")
-    for s, r in sorted(acc, key=lambda x: -(x[1]["paper"].get("citations") or 0)):
-        print(line(s, r))
+    for s, r in sorted(acc, key=by_cites):
+        print(repo_line(s, r, eff[s]))
     print(f"\n== review ({len(rev)})  -- your call, never pushed")
-    for s, r in sorted(rev, key=lambda x: -(x[1]["paper"].get("citations") or 0)):
-        print(line(s, r))
+    for s, r in sorted(rev, key=by_cites):
+        print(repo_line(s, r, eff[s]))
         for c in r["cands"][1:3]:
             if c.get("exists"):
                 print(f"{'':>64}alt https://github.com/{c['repo']} (score {c['score']})")
@@ -969,6 +982,9 @@ def main() -> None:
                 if c.get("private"):
                     print(f"  {s[:52]:<52} https://github.com/{c['repo']}")
 
+
+def show_pages(results: dict, eff: dict) -> None:
+    """The project-page tables, split by the same two verdicts as the repos."""
     pacc = [s for s, e in eff.items() if e["page_verdict"] == "accept"]
     prev_ = [s for s, e in eff.items() if e["page_verdict"] == "review"]
     cites = lambda s: -(results[s]["paper"].get("citations") or 0)  # noqa: E731
@@ -987,11 +1003,24 @@ def main() -> None:
               f"score {eff[s]['pscore']}")
         print(f"{'':>62}{'; '.join(r['pages'][0]['why'][:2])[:110]}")
 
+
+def show_unnamed(results: dict, eff: dict) -> None:
+    """The papers whose text names no repo, twelve of them and then a count."""
+    non = [(s, results[s]) for s, e in eff.items() if e["verdict"] == "none"]
     print(f"\n== no repo named in the text ({len(non)})")
     for s, r in sorted(non, key=lambda x: -(x[1]["paper"].get("citations") or 0))[:12]:
         print(f"  {r['paper'].get('citations') or 0:>4} cites  {s}")
     if len(non) > 12:
         print(f"  ... and {len(non) - 12} more")
+
+
+def main() -> None:
+    args = parse_args()
+    papers, results, prev, eff = deduce_all(args.slug)
+
+    show_repos(results, eff)
+    show_pages(results, eff)
+    show_unnamed(results, eff)
 
     save_decisions(papers, results, prev)
     print(f"\nwrote {os.path.relpath(DECISIONS, ROOT)}")
