@@ -388,16 +388,79 @@ ENFORCED = {"schema": "schema-enforced", "tool": "schema-enforced via a forced t
 
 
 
+# Four ways to guarantee the reply's shape, tried in order. api.anthropic.com accepts the
+# first, and a gateway in front of the same model may not -- a proxy behind
+# `ANTHROPIC_BASE_URL` answered `output_config.format: Extra inputs are not permitted` with
+# a 400. A forced tool call is schema enforcement by another route and proxies pass it
+# through; rung 3 is for an endpoint that rejects `output_config` outright; the last rung
+# asks in the prompt and parses, which is a weaker result and is labelled as one in the
+# header.
+def rungs_for(want: dict, name: str, what: str, eff: str) -> list:
+    """The four rungs around whichever shape a call asks for, strongest guarantee first.
+
+    Each is (what the request adds, how the reply is read, what to call it when refused).
+    `want` is the schema the reply is held to and `name`/`what` describe the tool the two
+    middle rungs force, so one ladder serves both a whole sidecar and a `--mend` patch --
+    enforcing the sidecar schema on a patch would reject every valid answer.
+
+    `eff` rides along on every rung that will take it. It is orthogonal to how the shape is
+    guaranteed and decides how hard the model thinks about nine coupled fields, so a rung
+    that leaves it off silently drafts at the endpoint's default.
+    """
+    tool = {"tools": [{"name": name, "description": what, "input_schema": want}],
+            "tool_choice": {"type": "tool", "name": name}}
+    return [({"output_config": {"effort": eff,
+                                "format": {"type": "json_schema", "schema": want}}},
+             "schema", "structured output"),
+            ({"output_config": {"effort": eff}, **tool},
+             "tool", f"a forced tool call at {eff} effort"),
+            (tool, "tool", "a forced tool call"),
+            ({}, "text", "a plain request")]
+
+
+def streamed(client, req: dict, extra: dict):
+    """One request, streamed and accumulated back into a single message.
+
+    Streamed rather than `create()` because the SDK refuses any non-streaming call whose
+    `max_tokens` implies more than ten minutes of generation -- at 32k it raises before
+    sending anything. The alternative was capping the reply near 21k tokens, which is a
+    limit on how long a sidecar may be, set by a client-side timeout heuristic.
+    """
+    try:
+        with client.messages.stream(**req, **extra) as run:
+            return run.get_final_message()
+    except TypeError:                                 # an SDK too old for the kwarg
+        with client.messages.stream(**req, extra_body=extra) as run:
+            return run.get_final_message()
+
+
+def read_reply(msg, how_out: str, label: str, req: dict) -> dict | None:
+    """The object a reply carries, or None with a line saying why it carries none.
+
+    `how_out` is the rung's word for where to look -- inside the forced tool call, or in
+    text to be parsed. A refusal and a truncation are told apart because the fix differs.
+    """
+    if msg.stop_reason == "refusal":
+        print(f"  refused: {label}", file=sys.stderr)
+        return None
+    if msg.stop_reason == "max_tokens":
+        too_long(label, req)
+        return None
+    if how_out == "tool":
+        sc = next((b.input for b in msg.content if b.type == "tool_use"), None)
+        if sc is None:
+            print(f"  the forced tool call came back as prose: {label}",
+                  file=sys.stderr)
+        return sc
+    return parsed(next((b.text for b in msg.content if b.type == "text"), ""), label)
+
+
 def call_api(pairs: list[tuple[dict, str]], cfg,
              on_draft=None) -> tuple[dict, str, "Callable"]:
     """One Messages API call per paper, validated against the sidecar schema.
 
-    Returns the same triple as `call_openai` -- drafts, a provenance line, and the
-    one-paper request as a closure -- so `repair` drives either backend. It used to
-    return only the drafts, which quietly made `--repair` an open-weights-only feature:
-    the loop that takes a draft from 55 findings to 0 was unavailable on the strongest
-    model the config can name, and the researcher with the better model got the worse
-    draft. Nothing about the loop was ever backend-specific; only this signature was.
+    Returns the same triple as `call_openai` -- the drafts, a provenance line, and the
+    one-paper request as a closure -- so `repair` drives either backend.
     """
     try:
         import anthropic
@@ -406,52 +469,8 @@ def call_api(pairs: list[tuple[dict, str]], cfg,
     client = anthropic.Anthropic()
     sch, out, sys_prompt = schema(), {}, system_prompt()
     eff = cfg["llm"].get("effort", "medium")
-    # Four ways to guarantee the reply's shape, tried in order; the rung that works is
-    # remembered for the rest of the run. api.anthropic.com accepts the first, and a
-    # gateway in front of the same model may not -- a proxy behind `ANTHROPIC_BASE_URL`
-    # answered `output_config.format: Extra inputs are not permitted` with a 400. A forced
-    # tool call is schema enforcement by another route and proxies pass it through; rung 3
-    # is for an endpoint that rejects `output_config` outright; the last rung asks in the
-    # prompt and parses, which is a weaker result and is labelled as one in the header.
-    #
-    # `effort` rides along on every rung that will take it: it is orthogonal to how the
-    # shape is guaranteed, and it decides how hard the model thinks about nine coupled
-    # fields. Leave it off a rung and that rung silently drafts at the endpoint's default.
-    def rungs_for(want: dict, name: str, what: str) -> list:
-        """The same four rungs around whichever shape this call asks for.
-
-        A factory rather than one list built at the top, because `--mend` asks the same
-        endpoint for a patch -- a handful of rewritten strings -- and enforcing the sidecar
-        schema on that reply would reject every valid answer.
-        """
-        tool = {"tools": [{"name": name, "description": what, "input_schema": want}],
-                "tool_choice": {"type": "tool", "name": name}}
-        return [({"output_config": {"effort": eff,
-                                    "format": {"type": "json_schema", "schema": want}}},
-                 "schema", "structured output"),
-                ({"output_config": {"effort": eff}, **tool},
-                 "tool", f"a forced tool call at {eff} effort"),
-                (tool, "tool", "a forced tool call"),
-                ({}, "text", "a plain request")]
-    # (what the request adds, how the reply is read, what to call it when refused).
-    RUNGS = rungs_for(sch, "sidecar", "The sidecar for this paper.")
+    RUNGS = rungs_for(sch, "sidecar", "The sidecar for this paper.", eff)
     rung, worked = 0, False
-
-    def send(req: dict, extra: dict):
-        """The request, streamed and accumulated back into one message.
-
-        Streamed rather than `create()` because the SDK refuses any non-streaming call
-        whose `max_tokens` implies more than ten minutes of generation -- at 32k it
-        raises before sending anything. The alternative was capping the reply near 21k
-        tokens, which is a limit on how long a sidecar may be, set by a client-side
-        timeout heuristic.
-        """
-        try:
-            with client.messages.stream(**req, **extra) as run:
-                return run.get_final_message()
-        except TypeError:                             # an SDK too old for the kwarg
-            with client.messages.stream(**req, extra_body=extra) as run:
-                return run.get_final_message()
 
     def ask(user: str, label: str, want: dict | None = None) -> dict | None:
         """One completion, or None with the reason printed. `label` is for the reader.
@@ -461,8 +480,8 @@ def call_api(pairs: list[tuple[dict, str]], cfg,
         endpoint speaks is a property of the endpoint, not of what is being asked for.
         """
         nonlocal rung, worked
-        ladder = RUNGS if want is None else rungs_for(want, "patch",
-                                                      "The rewritten fields.")
+        ladder = RUNGS if want is None else rungs_for(
+            want, "patch", "The rewritten fields.", eff)
         while True:
             extra, how_out, _ = ladder[rung]
             req = dict(model=cfg["llm"]["model"],
@@ -471,7 +490,7 @@ def call_api(pairs: list[tuple[dict, str]], cfg,
                        messages=[{"role": "user", "content":
                                   user + (JSON_ONLY if how_out == "text" else "")}])
             try:
-                msg = with_retries(lambda: send(req, extra), label)
+                msg = with_retries(lambda: streamed(client, req, extra), label)
                 worked = True
                 break
             except Exception as e:                    # noqa: BLE001 -- any 4xx means no
@@ -486,20 +505,7 @@ def call_api(pairs: list[tuple[dict, str]], cfg,
                 rung += 1
                 print(f"  {label}: the endpoint refused {ladder[rung - 1][2]}; "
                       f"retrying with {ladder[rung][2]}", file=sys.stderr)
-        if msg.stop_reason == "refusal":
-            print(f"  refused: {label}", file=sys.stderr)
-            return None
-        if msg.stop_reason == "max_tokens":
-            too_long(label, req)
-            return None
-        if how_out == "tool":
-            sc = next((b.input for b in msg.content if b.type == "tool_use"), None)
-            if sc is None:
-                print(f"  the forced tool call came back as prose: {label}",
-                      file=sys.stderr)
-            return sc
-        text = next((b.text for b in msg.content if b.type == "text"), "")
-        return parsed(text, label)
+        return read_reply(msg, how_out, label, req)
 
     # Left at 0, which `fits` reads as "do not truncate the paper". Unlike the
     # OpenAI-compatible path, `max_tokens` here is a reply budget rather than part of a
