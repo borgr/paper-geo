@@ -27,26 +27,21 @@ count more. Where it counts less, the difference is on another record.
 
 ## Copies of your papers filed under another form of your name (0)
 
-Nothing at Crossref, and OpenAlex refused every query. It meters its search
-endpoint at 100 free queries a day, and today's are spent. This pass saw one
-of its two sources.
+None found at OpenAlex or Crossref.
 
 ## Filed under your name forms but not in the bibliography (0)
 
-Nothing at Crossref, and OpenAlex refused every query. It meters its search
-endpoint at 100 free queries a day, and today's are spent. This pass saw one
-of its two sources.
+None.
 
-## Papers OpenAlex holds twice (50)
-
-**Partial: 99 of 112 papers checked.** OpenAlex meters its search endpoint at
-100 free queries a day, and today's are spent. Every answer is cached, so
-re-running `python scripts/scholar_strays.py` tomorrow resumes where this one
-stopped.
+## Papers OpenAlex holds twice (57)
 
 A paper split at OpenAlex is usually split at Scholar too, for the same
 reason: the metadata a parser read differs between copies.
 
+- [ ] `are-you-convinced-choosing-the-more-convincing-evidence-with` — [search Scholar](https://scholar.google.com/scholar?q=%22Are%20You%20Convinced%3F%20Choosing%20the%20More%20Convincing%20Evidence%20with%20a%20Siamese%20Network%22)
+      - 56 cites — Are You Convinced? Choosing the More Convincing Evidence with a Siames — <https://openalex.org/W2949473159>
+      - 3 cites — Are You Convinced? Choosing the More Convincing Evidence with a Siames — <https://openalex.org/W2962755103>
+      - 0 cites — Are You Convinced? Choosing the More Convincing Evidence with a Siames — <https://openalex.org/W4288280131>
 - [ ] `ties-merging-resolving-interference-when-merging-models` — [search Scholar](https://scholar.google.com/scholar?q=%22TIES-Merging%3A%20Resolving%20Interference%20When%20Merging%20Models%22)
       - 31 cites — TIES-Merging: Resolving Interference When Merging Models — <https://openalex.org/W7133200254>
       - 23 cites — TIES-Merging: Resolving Interference When Merging Models — <https://openalex.org/W4379528218>
@@ -106,6 +101,9 @@ reason: the metadata a parser read differs between copies.
 - [ ] `knowledge-is-a-region-in-weight-space-for-fine-tuned-languag` — [search Scholar](https://scholar.google.com/scholar?q=%22Knowledge%20is%20a%20Region%20in%20Weight%20Space%20for%20Fine-tuned%20Language%20Models%22)
       - 8 cites — Knowledge is a Region in Weight Space for Fine-tuned Language Models — <https://openalex.org/W4389520179>
       - 1 cites — Knowledge is a Region in Weight Space for Fine-tuned Language Models — <https://openalex.org/W4320343033>
+- [ ] `where-to-start-analyzing-the-potential-value-of-intermediate` — [search Scholar](https://scholar.google.com/scholar?q=%22Where%20to%20start%3F%20Analyzing%20the%20potential%20value%20of%20intermediate%20models%22)
+      - 7 cites — Where to start? Analyzing the potential value of intermediate models — <https://openalex.org/W4389532453>
+      - 2 cites — Where to start? Analyzing the potential value of intermediate models — <https://openalex.org/W4308168043>
 - [ ] `efficient-benchmarking-of-language-models` — [search Scholar](https://scholar.google.com/scholar?q=%22Efficient%20Benchmarking%20%28of%20Language%20Models%29%22)
       - 7 cites — Efficient Benchmarking (of Language Models) — <https://openalex.org/W4401042935>
       - 0 cites — Efficient Benchmarking of Language Models — <https://openalex.org/W4386150511>
@@ -118,6 +116,9 @@ reason: the metadata a parser read differs between copies.
 - [ ] `the-future-of-open-human-feedback` — [search Scholar](https://scholar.google.com/scholar?q=%22The%20Future%20of%20Open%20Human%20Feedback%22)
       - 5 cites — The future of open human feedback — <https://openalex.org/W4411497326>
       - 0 cites — The Future of Open Human Feedback — <https://openalex.org/W4403160720>
+- [ ] `deductive-closure-training-of-language-models-for-coherence` — [search Scholar](https://scholar.google.com/scholar?q=%22Deductive%20Closure%20Training%20of%20Language%20Models%20for%20Coherence%2C%20Accuracy%2C%20and%20Updatability%22)
+      - 4 cites — Deductive Closure Training of Language Models for Coherence, Accuracy, — <https://openalex.org/W4402670098>
+      - 0 cites — Deductive Closure Training of Language Models for Coherence, Accuracy, — <https://openalex.org/W4390963131>
 - [ ] `fuse-to-forget-bias-reduction-and-selective-memorization-thr` — [search Scholar](https://scholar.google.com/scholar?q=%22Fuse%20to%20Forget%3A%20Bias%20Reduction%20and%20Selective%20Memorization%20through%20Model%20Fusion%22)
       - 4 cites — Fuse to Forget: Bias Reduction and Selective Memorization through Mode — <https://openalex.org/W4404782420>
       - 0 cites — Fuse to Forget: Bias Reduction and Selective Memorization through Mode — <https://openalex.org/W4388717782>
@@ -130,6 +131,9 @@ reason: the metadata a parser read differs between copies.
 - [ ] `data-contamination-report-from-the-2024-conda-shared-task` — [search Scholar](https://scholar.google.com/scholar?q=%22Data%20Contamination%20Report%20from%20the%202024%20CONDA%20Shared%20Task%22)
       - 2 cites — Data Contamination Report from the 2024 CONDA Shared Task — <https://openalex.org/W4402671052>
       - 0 cites — Data Contamination Report from the 2024 CONDA Shared Task — <https://openalex.org/W4401306664>
+- [ ] `unitxt-flexible-shareable-and-reusable-data-preparation-and` — [search Scholar](https://scholar.google.com/scholar?q=%22Unitxt%3A%20Flexible%2C%20Shareable%20and%20Reusable%20Data%20Preparation%20and%20Evaluation%20for%20Generative%20AI%22)
+      - 1 cites — Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluati — <https://openalex.org/W4401042353>
+      - 0 cites — Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluati — <https://openalex.org/W4391272543>
 - [ ] `label-efficient-model-selection-for-text-generation` — [search Scholar](https://scholar.google.com/scholar?q=%22Label-Efficient%20Model%20Selection%20for%20Text%20Generation%22)
       - 1 cites — Label-Efficient Model Selection for Text Generation — <https://openalex.org/W4402671586>
       - 0 cites — Label-Efficient Model Selection for Text Generation — <https://openalex.org/W4391801229>
@@ -156,6 +160,9 @@ reason: the metadata a parser read differs between copies.
       - 0 cites — CommonLID: Re-evaluating State-of-the-Art Language Identification Perf — <https://openalex.org/W7166880635>
       - 0 cites — CommonLID: Re-evaluating State-of-the-Art Language Identification Perf — <https://openalex.org/W7125878514>
       - 0 cites — CommonLID: Re-evaluating State-of-the-Art Language Identification Perf — <https://openalex.org/W7125796550>
+- [ ] `do-llms-benefit-from-their-own-words` — [search Scholar](https://scholar.google.com/scholar?q=%22Do%20LLMs%20Benefit%20From%20Their%20Own%20Words%3F%22)
+      - 0 cites — Do LLMs Benefit From Their Own Words? — <https://openalex.org/W7133267517>
+      - 0 cites — Do LLMs Benefit From Their Own Words? — <https://openalex.org/W7133244810>
 - [ ] `errormap-and-erroratlas-charting-the-failure-landscape-of-la` — [search Scholar](https://scholar.google.com/scholar?q=%22ErrorMap%20and%20ErrorAtlas%3A%20Charting%20the%20Failure%20Landscape%20of%20Large%20Language%20Models%22)
       - 0 cites — ErrorMap and ErrorAtlas: Charting the Failure Landscape of Large Langu — <https://openalex.org/W7125556273>
       - 0 cites — ErrorMap and ErrorAtlas: Charting the Failure Landscape of Large Langu — <https://openalex.org/W7125566769>
@@ -167,6 +174,11 @@ reason: the metadata a parser read differs between copies.
       - 0 cites — Mediocrity is the key for LLM as a Judge Anchor Selection — <https://openalex.org/W7139147519>
       - 0 cites — Mediocrity is the key for LLM as a Judge Anchor Selection — <https://openalex.org/W7166835632>
       - 0 cites — Mediocrity is the key for LLM as a Judge Anchor Selection — <https://openalex.org/W7168410421>
+- [ ] `will-it-merge-on-the-causes-of-model-mergeability` — [search Scholar](https://scholar.google.com/scholar?q=%22Will%20it%20Merge%3F%20On%20The%20Causes%20of%20Model%20Mergeability%22)
+      - 0 cites — Will it Merge? On The Causes of Model Mergeability — <https://openalex.org/W7124118837>
+      - 0 cites — Will it Merge? On The Causes of Model Mergeability — <https://openalex.org/W7166808471>
+      - 0 cites — Will it Merge? On The Causes of Model Mergeability — <https://openalex.org/W7123670693>
+      - 0 cites — Will it Merge? On The Causes of Model Mergeability — <https://openalex.org/W7168772208>
 - [ ] `mindgames-a-live-arena-for-evaluating-social-and-strategic-r` — [search Scholar](https://scholar.google.com/scholar?q=%22MINDGAMES%3A%20A%20Live%20Arena%20for%20Evaluating%20Social%20and%20Strategic%20Reasoning%20in%20Multi-Agent%20LLMs%22)
       - 0 cites — MINDGAMES: A Live Arena for Evaluating Social and Strategic Reasoning  — <https://openalex.org/W7162786612>
       - 0 cites — MINDGAMES: A Live Arena for Evaluating Social and Strategic Reasoning  — <https://openalex.org/W7162893185>
@@ -191,6 +203,9 @@ reason: the metadata a parser read differs between copies.
 - [ ] `automated-discovery-has-no-universally-superior-harness` — [search Scholar](https://scholar.google.com/scholar?q=%22Automated%20Discovery%20Has%20No%20Universally%20Superior%20Harness%22)
       - 0 cites — Automated Discovery Has No Universally Superior Harness — <https://openalex.org/W7170111140>
       - 0 cites — Automated Discovery Has No Universally Superior Harness — <https://openalex.org/W7169874844>
+- [ ] `instructions-shape-production-of-language-not-processing` — [search Scholar](https://scholar.google.com/scholar?q=%22Instructions%20Shape%20Production%20of%20Language%2C%20not%20Processing%22)
+      - 0 cites — Instructions Shape Production of Language, not Processing — <https://openalex.org/W7161063801>
+      - 0 cites — Instructions Shape Production of Language, not Processing — <https://openalex.org/W7161354710>
 - [ ] `growing-pains-extensible-and-efficient-llm-benchmarking-via` — [search Scholar](https://scholar.google.com/scholar?q=%22Growing%20Pains%3A%20Extensible%20and%20Efficient%20LLM%20Benchmarking%20Via%20Fixed%20Parameter%20Calibration%22)
       - 0 cites — Growing Pains: Extensible and Efficient LLM Benchmarking Via Fixed Par — <https://openalex.org/W7154463862>
       - 0 cites — Growing Pains: Extensible and Efficient LLM Benchmarking Via Fixed Par — <https://openalex.org/W7154789716>
