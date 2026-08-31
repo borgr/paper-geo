@@ -599,12 +599,36 @@ def drive(pairs, ask, out: dict, on_draft, provenance, suffix: str = "") -> None
 #   PAPER_GEO_LLM_API_KEY    the key, if the gateway wants one
 #   PAPER_GEO_LLM_KEY_HEADER optional header name to send the key under, for gateways
 #                            that authenticate on a custom header instead of Bearer
-def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
-    """One chat completion per paper against an OpenAI-compatible endpoint.
+def gateway_window(client) -> int | None:
+    """The largest context window the gateway reports, or None if it will not say.
 
-    Returns (answers, provenance). The same prompt and schema as the Anthropic path -- the
-    rules are the variable under test and the model is not, so nothing here rewords
-    anything.
+    A hosted open-weight model's context window has to hold prompt and reply together --
+    unlike the Anthropic path, `max_tokens` is part of that sum, and Qwen 2.5 72B at 32768
+    rejected a batch outright because a paper's evidence runs ~10.6k tokens against a
+    32000-token reservation.
+    """
+    try:
+        return max((getattr(m, "max_model_len", None) or 0) for m in client.models.list())
+    except Exception:                                # noqa: BLE001 -- optional refinement
+        return None
+
+
+def reply_budget(msgs: list[dict], want: int, window: int | None) -> int:
+    """How many reply tokens to ask for, given what the prompt already spends.
+
+    `want` unchanged when the gateway would not name a window.
+    """
+    if not window:
+        return want
+    # 3.2 chars per token is deliberately pessimistic for English prose, so the estimate
+    # errs toward reserving less and getting a truncation warning rather than toward a 400
+    # that drops the paper entirely.
+    used = int(sum(len(m["content"]) for m in msgs) / 3.2) + 512
+    return max(2048, min(want, window - used))
+
+
+class Guided:
+    """Requests to one gateway, holding what it turned out to accept.
 
     Schema enforcement is attempted, not required: vLLM-backed gateways accept
     `response_format: json_schema`, others reject it with a 400, and refusing to run on those
@@ -612,26 +636,51 @@ def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
     otherwise ask in the prompt and parse what comes back -- and record which happened,
     because "the model produced a valid sidecar" and "the decoder could not produce anything
     else" are different results.
+
+    `enforced` is None until the first reply settles it.
+    """
+
+    def __init__(self, client):
+        self.client = client
+        self.enforced = None
+
+    def create(self, req: dict, rf: dict, label: str):
+        """One completion, guided where the gateway allows it, or None with the reason
+        printed. `label` is for the reader."""
+        try:
+            r = with_retries(
+                lambda: self.client.chat.completions.create(**req, response_format=rf),
+                label)
+            self.enforced = True if self.enforced is None else self.enforced
+            return r
+        except Exception as e:                        # noqa: BLE001 -- any 4xx means no
+            if self.enforced:                         # it worked before, so this is real
+                print(f"  failed: {label} -- {type(e).__name__}", file=sys.stderr)
+                return None
+            self.enforced = False
+        try:
+            return with_retries(lambda: self.client.chat.completions.create(**req), label)
+        except Exception as e2:                       # noqa: BLE001
+            print(f"  failed: {label} -- {type(e2).__name__}: "
+                  f"{str(e2)[:160]}", file=sys.stderr)
+            return None
+
+
+def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
+    """One chat completion per paper against an OpenAI-compatible endpoint.
+
+    Returns (answers, provenance, ask). The same prompt and schema as the Anthropic path --
+    the rules are the variable under test and the model is not, so nothing here rewords
+    anything. `ask` is the request itself, for a repair round that has to match it.
     """
     client, model = llm_client(model_default=cfg["llm"].get("model_openai"),
                                context="llm.mode: openai")
-
-    # A hosted open-weight model's context window has to hold prompt and reply together --
-    # unlike the Anthropic path, `max_tokens` is part of that sum, and Qwen 2.5 72B at 32768
-    # rejected a batch outright because a paper's evidence runs ~10.6k tokens against a
-    # 32000-token reservation. So ask `/v1/models` what the window is and reserve what is
-    # left; a gateway that does not answer leaves the configured number alone.
-    window = None
-    try:
-        window = max((getattr(m, "max_model_len", None) or 0) for m in client.models.list())
-    except Exception:                                # noqa: BLE001 -- optional refinement
-        pass
-
+    window = gateway_window(client)
+    guided = Guided(client)
     sch, out, sys_prompt = schema(), {}, system_prompt()
-    enforced = None
 
     def ask(user: str, label: str, want_schema: dict | None = None) -> dict | None:
-        """One completion, or None with the reason printed. `label` is for the reader.
+        """One completion, or None with the reason printed.
 
         Extracted so the repair round below reuses the request exactly -- same schema,
         same window arithmetic, same fallback when the gateway will not enforce. A repair
@@ -640,45 +689,26 @@ def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
         `want_schema` replaces the shape the reply is held to, for `--mend`, which asks for
         a patch rather than a whole sidecar.
         """
-        nonlocal enforced
         msgs = [{"role": "system", "content": sys_prompt}, {"role": "user", "content": user}]
         want = cfg["llm"].get("max_tokens", API_MAX_TOKENS)
-        if window:
-            # 3.2 chars per token is deliberately pessimistic for English prose, so the
-            # estimate errs toward reserving less and getting a truncation warning rather
-            # than toward a 400 that drops the paper entirely.
-            used = int(sum(len(m["content"]) for m in msgs) / 3.2) + 512
-            want = max(2048, min(want, window - used))
-        req = dict(model=model, messages=msgs, max_tokens=want,
+        req = dict(model=model, messages=msgs,
+                   max_tokens=reply_budget(msgs, want, window),
                    temperature=cfg["llm"].get("temperature", 0.2), seed=48)
         shape_of = sch if want_schema is None else want_schema
         rf = {"type": "json_schema",
               "json_schema": {"name": "sidecar" if want_schema is None else "patch",
                               "schema": decodable(shape_of), "strict": True}}
-        try:
-            r = with_retries(
-                lambda: client.chat.completions.create(**req, response_format=rf), label)
-            enforced = True if enforced is None else enforced
-        except Exception as e:                        # noqa: BLE001 -- any 4xx means no
-            if enforced:                              # it worked before, so this is real
-                print(f"  failed: {label} -- {type(e).__name__}", file=sys.stderr)
-                return None
-            enforced = False
-            try:
-                r = with_retries(lambda: client.chat.completions.create(**req), label)
-            except Exception as e2:                   # noqa: BLE001
-                print(f"  failed: {label} -- {type(e2).__name__}: "
-                      f"{str(e2)[:160]}", file=sys.stderr)
-                return None
+        r = guided.create(req, rf, label)
+        if r is None:
+            return None
         ch = r.choices[0]
         if ch.finish_reason == "length":
             too_long(label, req)
             return None
-        text = ch.message.content or ""
-        return parsed(text, label)
+        return parsed(ch.message.content or "", label)
 
     def provenance() -> str:
-        how = "schema-enforced" if enforced else "unenforced, parsed from text"
+        how = "schema-enforced" if guided.enforced else "unenforced, parsed from text"
         return f"{model} via an OpenAI-compatible endpoint ({how})"
 
     drive(pairs, ask, out, on_draft, provenance, JSON_ONLY)
