@@ -16,12 +16,14 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import re
 import subprocess
 import sys
 import time
 import xml.etree.ElementTree as ET
+from collections import Counter
 
 import yaml
 
@@ -1129,7 +1131,7 @@ def print_totals(out: str, papers: list[dict], args, tdiffs: list) -> None:
     print(f"  sidecars written              {c(lambda p: p['has_sidecar'], papers)}/{n}")
 
 
-def main() -> None:
+def parse_args():
     ap = argparse.ArgumentParser()
     ap.add_argument("--offline", action="store_true",
                     help="only re-derive from the existing papers.yaml")
@@ -1141,15 +1143,16 @@ def main() -> None:
     # `--no-arxiv` / `--no-hf` skip a source on purpose, so the drop they cause is not
     # news; the guard exists for the outage you did not ask for.
     args.allow_shrink = args.allow_shrink or args.no_arxiv or args.no_hf
-    cfg = load_config()
-    out = os.path.join(DATA, "papers.yaml")
+    return args
 
-    papers = from_papers_yaml(out) if args.offline else from_sources(cfg, args)
-    # Slugs are truncated, so two long titles can collide -- which silently made
-    # one paper overwrite the other's page. Disambiguate deterministically (year,
-    # then a title hash) so a slug never changes between runs.
-    import hashlib
-    from collections import Counter
+
+def disambiguate_slugs(papers: list[dict]) -> None:
+    """Give each paper a slug no other paper has.
+
+    Slugs are truncated, so two long titles can arrive at the same one -- and one
+    paper's page then silently overwrites the other's. The year separates them where
+    it can and a title hash where it cannot, so a slug never changes between runs.
+    """
     counts = Counter(p["slug"] for p in papers)
     for p in papers:
         if counts[p["slug"]] > 1:
@@ -1160,18 +1163,80 @@ def main() -> None:
                 cand = f"{base}-{hashlib.sha1(p['title'].encode()).hexdigest()[:6]}"
             p["slug"] = cand
 
+
+def add_display(papers: list[dict]) -> None:
+    """Add the copies everything user- and crawler-facing reads.
+
+    The raw `title` stays for matching against sources. DBLP escapes underscores for
+    LaTeX, which leaks into a URL and breaks it, so `url` and `doi` are unescaped here.
+    """
     for p in papers:
-        # Display copies. The raw title stays in `title` for matching against
-        # sources; everything user- or crawler-facing uses these.
         p["title_display"] = clean_latex(p.get("title")) or p.get("title")
         p["venue_display"] = short_venue(p.get("venue"), year=p.get("year"))
         if p.get("bibtex"):
             p["bibtex"] = clean_bibtex(p["bibtex"])
         p.pop("_norm", None)
-        # DBLP escapes underscores for LaTeX; that leaks into URLs and breaks them.
         for f in ("url", "doi"):
             if p.get(f):
                 p[f] = p[f].replace("\\_", "_").replace("\\&", "&").replace("\\%", "%")
+
+
+def baseline_of(papers_path: str, papers: list[dict]) -> list[dict]:
+    """The committed papers.yaml this run is measured against, if it is comparable.
+
+    A fresh fork commits the previous author's papers.yaml, and two corpora sharing no
+    slug at all are two different people rather than a source failure. Returning it as
+    no baseline is what stops the shrink guard firing on the one run that cannot be an
+    outage.
+    """
+    baseline = _committed_papers(papers_path)
+    if baseline and not ({p["slug"] for p in baseline} & {p["slug"] for p in papers}):
+        print(f"  the committed papers.yaml holds {len(baseline)} paper(s) with no slug in "
+              f"common with this run -- a different author's corpus, so it is not a "
+              f"baseline. Treating this as a first run.", file=sys.stderr)
+        baseline = []
+    return baseline
+
+
+def refuse_shrink(baseline: list[dict], papers: list[dict], allow: bool) -> None:
+    """Report coverage against the last commit, and exit on a drop `allow` does not cover."""
+    report, alarms = coverage_alarms(baseline, papers)
+    if report:
+        print("  coverage vs the last commit:", file=sys.stderr)
+        print("\n".join(report), file=sys.stderr)
+    if alarms and not allow:
+        sys.exit("\n".join([
+            "", "REFUSING TO WRITE -- this run has much less data than the last commit:",
+            *(f"  {a}" for a in alarms), "",
+            "That is what a source outage looks like, and writing would make the loss",
+            "permanent on the next commit. Check the '!' lines above for a failed fetch",
+            "and rerun. If the shrink is real (a big merge, papers dropped on purpose):",
+            "  python scripts/collect.py --allow-shrink", ""]))
+
+
+def note_title_diffs(papers: list[dict]) -> list[dict]:
+    """Where arXiv's title differs from the one held, written to build/title_diffs.json.
+
+    Written even when empty, so an absent file means this step has not run rather than
+    "arXiv agrees with every title we hold". `scholar_check.stale_side` decides which of
+    two titles is behind on this file, and an empty dict is its most reassuring answer.
+    """
+    tdiffs = title_diffs(papers)
+    for p in papers:
+        p.pop("_arxiv_title", None)
+    write_json(os.path.join(BUILD, "title_diffs.json"), tdiffs, indent=2,
+               ensure_ascii=False)
+    return tdiffs
+
+
+def main() -> None:
+    args = parse_args()
+    cfg = load_config()
+    out = os.path.join(DATA, "papers.yaml")
+
+    papers = from_papers_yaml(out) if args.offline else from_sources(cfg, args)
+    disambiguate_slugs(papers)
+    add_display(papers)
     papers.sort(key=lambda p: (-(p.get("citations") or 0), -(p.get("year") or 0)))
 
     # After the slug disambiguation above, which is what this looks up by, and in both
@@ -1183,37 +1248,8 @@ def main() -> None:
     for p in papers:
         p["has_sidecar"] = os.path.exists(os.path.join(sidecar_dir, f"{p['slug']}.md"))
 
-    baseline = _committed_papers(out)
-    # A fresh fork commits the previous author's papers.yaml, so the first run here would
-    # "lose" a hundred papers it never had and refuse to write -- the guard firing on the
-    # one run that cannot possibly be an outage. Two corpora that share no slug at all are
-    # two different people, not a source failure.
-    if baseline and not ({p["slug"] for p in baseline} & {p["slug"] for p in papers}):
-        print(f"  the committed papers.yaml holds {len(baseline)} paper(s) with no slug in "
-              f"common with this run -- a different author's corpus, so it is not a "
-              f"baseline. Treating this as a first run.", file=sys.stderr)
-        baseline = []
-    report, alarms = coverage_alarms(baseline, papers)
-    if report:
-        print("  coverage vs the last commit:", file=sys.stderr)
-        print("\n".join(report), file=sys.stderr)
-    if alarms and not args.allow_shrink:
-        sys.exit("\n".join([
-            "", "REFUSING TO WRITE -- this run has much less data than the last commit:",
-            *(f"  {a}" for a in alarms), "",
-            "That is what a source outage looks like, and writing would make the loss",
-            "permanent on the next commit. Check the '!' lines above for a failed fetch",
-            "and rerun. If the shrink is real (a big merge, papers dropped on purpose):",
-            "  python scripts/collect.py --allow-shrink", ""]))
-
-    tdiffs = title_diffs(papers)
-    for p in papers:
-        p.pop("_arxiv_title", None)
-    # Written even when empty, so an absent file means this step has not run rather than
-    # "arXiv agrees with every title we hold". `scholar_check.stale_side` decides which of
-    # two titles is behind on this file, and an empty dict is its most reassuring answer.
-    write_json(os.path.join(BUILD, "title_diffs.json"), tdiffs, indent=2,
-               ensure_ascii=False)
+    refuse_shrink(baseline_of(out, papers), papers, args.allow_shrink)
+    tdiffs = note_title_diffs(papers)
 
     n_retired = record_slug_moves(papers, out)
     if n_retired:
