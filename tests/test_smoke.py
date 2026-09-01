@@ -591,6 +591,25 @@ class TestWorkflowsInvokeRealCommands(unittest.TestCase):
         self.assertEqual(bad, [], "workflows call things that do not exist:\n  "
                                   + "\n  ".join(bad))
 
+    def test_a_workflow_running_gh_names_the_fallback_token(self):
+        """`gh` with no token never reaches GitHub, so the run goes red rather than degrades.
+
+        It exits asking for `gh auth login` instead of returning a 401, and
+        `sweep_github.list_repos` refuses on that. GH_TOKEN is an optional PAT -- the write
+        steps in the same file test it for emptiness -- so GITHUB_TOKEN belongs beside it.
+        """
+        import yaml
+        for path in self.workflows():
+            doc = yaml.safe_load(source(path))
+            for name, job in (doc.get("jobs") or {}).items():
+                env = job.get("env") or {}
+                if "GH_TOKEN" not in env:
+                    continue
+                with self.subTest(workflow=os.path.basename(path), job=name):
+                    self.assertEqual(env.get("GITHUB_TOKEN"), "${{ secrets.GITHUB_TOKEN }}",
+                                     "GH_TOKEN can be empty, so gh needs the fallback that "
+                                     "Actions always provides")
+
     def test_requirements_covers_what_the_workflows_install(self):
         """The dependency list is one file, and the workflows install from it.
 
@@ -5623,6 +5642,30 @@ class TestAFailedGhReadIsNotAnEmptyOne(unittest.TestCase):
                 common.gh("api", "x", check=True)
             with self.assertRaises(RuntimeError):
                 sweep_github.list_repos({"ids": {"github": "nobody"}})
+        finally:
+            common.gh = real
+
+    def test_the_refusal_carries_the_reason_gh_gave(self):
+        """A CI log is the only place this is ever read, so the exception has to hold it."""
+        import sweep_github
+        said = ("gh: To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN "
+                "environment variable.")
+        with mock.patch("subprocess.run",
+                        return_value=mock.Mock(returncode=4, stdout="", stderr=said)):
+            with self.assertRaises(RuntimeError) as caught:
+                sweep_github.list_repos({"ids": {"github": "borgr"}})
+        self.assertIn("GH_TOKEN environment variable", str(caught.exception))
+        self.assertIn("users/borgr/repos", str(caught.exception))
+
+    def test_a_body_that_is_not_json_is_a_failure_and_not_an_empty_page(self):
+        """A rate-limit HTML page comes back with exit 0, so the parse is the only tell."""
+        import common
+        real = common.gh
+        common.gh = lambda *a, **kw: (0, "<html>rate limited</html>")
+        try:
+            self.assertIsNone(common.gh_json("api", "x"))
+            with self.assertRaises(RuntimeError):
+                common.gh_json("api", "x", check=True)
         finally:
             common.gh = real
 

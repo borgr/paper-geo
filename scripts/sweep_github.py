@@ -53,9 +53,10 @@ def list_repos(cfg) -> list[dict]:
     user = cfg["ids"]["github"]
     out, page = [], 1
     while True:
-        batch = gh_json("api", f"users/{user}/repos?per_page=100&page={page}")
-        if batch is None:
-            raise RuntimeError(f"gh api users/{user}/repos page {page} failed")
+        # `check=True` puts `gh`'s own reason in the log and is what keeps the line below
+        # from reading a failed page as the last one. An empty return here means "you own no
+        # repos", and a sweep over that changes nothing while reporting success.
+        batch = gh_json("api", f"users/{user}/repos?per_page=100&page={page}", check=True)
         if not batch:
             break
         out += batch

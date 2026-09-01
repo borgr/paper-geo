@@ -100,6 +100,12 @@ jobs:
       # index has this paper" about a paper an index has.
       S2_API_KEY: ${{ secrets.S2_API_KEY }}
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      # `gh` reads GH_TOKEN first, GITHUB_TOKEN second, and with neither refuses to call the
+      # API at all -- not a 401 but "please run gh auth login", so nothing is ever asked and
+      # the health ledger records "no reply". The default token cannot push to a second repo,
+      # which is what GH_TOKEN is for, but it reads public repo metadata. An empty GH_TOKEN
+      # is skipped rather than inherited, so the `env.GH_TOKEN != ''` gates below stay false.
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       WIKIDATA_BOT_USER: ${{ secrets.WIKIDATA_BOT_USER }}
       WIKIDATA_BOT_PASSWORD: ${{ secrets.WIKIDATA_BOT_PASSWORD }}

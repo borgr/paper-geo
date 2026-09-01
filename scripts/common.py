@@ -473,7 +473,8 @@ def gh(*args: str, check: bool = False, timeout: int = 60) -> tuple[int, str]:
             raise RuntimeError(f"gh {' '.join(args)}: {type(e).__name__}") from e
         return 1, f"{type(e).__name__}: {e}"
     if r.returncode and check:
-        raise RuntimeError(r.stderr.strip() or f"gh {' '.join(args)} failed")
+        raise RuntimeError(f"gh {' '.join(args)}: "
+                           + (r.stderr.strip() or f"exited {r.returncode}, nothing on stderr"))
     return r.returncode, (r.stdout if r.returncode == 0 else r.stderr)
 
 
@@ -495,14 +496,19 @@ def gh_text(*args: str, timeout: int = 60) -> str:
     return "" if code else out
 
 
-def gh_json(*args: str, timeout: int = 60):
-    """Parsed `gh api` output, or None if the call failed or the body was not JSON."""
-    code, out = gh(*args, timeout=timeout)
+def gh_json(*args: str, check: bool = False, timeout: int = 60):
+    """Parsed `gh api` output, or None if the call failed or the body was not JSON.
+
+    `check=True` raises instead, carrying `gh`'s own message.
+    """
+    code, out = gh(*args, check=check, timeout=timeout)
     if code:
         return None
     try:
         return json.loads(out)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        if check:
+            raise RuntimeError(f"gh {' '.join(args)}: not JSON: {out[:120]!r}") from e
         return None
 
 
