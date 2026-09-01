@@ -7919,6 +7919,41 @@ class TestACoauthorOrcidIsShownForWhatItSays(unittest.TestCase):
         self.assertEqual([("C", "Q3")], [(p["orcid"], q) for p, q in link])
         self.assertEqual([], held)
 
+    def test_a_created_item_carries_the_name_its_papers_are_bylined_with(self):
+        """`namesakes` searches aliases too, so the byline form has to be on the item."""
+        wp = self._job()
+        rec = {"label": "Raj Shah", "openalex_label": "Raj Sanjay Shah", "works": 4,
+               "employers": [], "openalex_employers": []}
+        p = wp.described("0000-0002-0847-8426", rec, {})
+        self.assertEqual(["Raj Sanjay Shah"], p["aka"])
+        data = wp.payload(p, "2026-09-01")
+        self.assertEqual([{"language": "en", "value": "Raj Sanjay Shah"}],
+                         data["aliases"]["en"])
+        self.assertIn('LAST\tAen\t"Raj Sanjay Shah"', "\n".join(wp.batch([p], "2026-09-01")))
+
+    def test_the_same_name_twice_is_not_an_alias_of_itself(self):
+        wp = self._job()
+        rec = {"label": "Ran Levy", "openalex_label": "Ran  Levy", "works": 18,
+               "employers": [], "openalex_employers": []}
+        p = wp.described("0009-0008-7352-2586", rec, {})
+        self.assertEqual([], p["aka"])
+        self.assertEqual([], wp.payload(p, "2026-09-01")["aliases"]["en"])
+
+    def test_yaml_reading_a_bare_no_as_the_boolean_still_means_no(self):
+        """The task page tells the author to write `no`, which YAML hands back as False."""
+        wp = self._job()
+        with mock.patch.object(wp, "read_overrides",
+                               return_value={wp.DECIDED: {"A": False, "B": "Q7"}}):
+            self.assertEqual({"A": "no", "B": "Q7"}, wp.decided())
+
+    def test_a_bare_yes_is_a_typo_and_not_an_answer(self):
+        """Only False is rewritten. True reaches the validator and stops the run."""
+        wp = self._job()
+        with mock.patch.object(wp, "read_overrides",
+                               return_value={wp.DECIDED: {"A": True}}):
+            with self.assertRaises(ValueError):
+                wp.sorted_out([{"orcid": "A", "namesakes": [{"qid": "Q1"}]}], wp.decided())
+
     def test_a_typo_stops_the_run_rather_than_reading_as_no(self):
         """`No`, `none`, `q125454034` all mean nothing here. Treated as `no` they would drop
         a co-author silently, and the output cannot be told from a correct one."""

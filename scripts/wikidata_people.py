@@ -437,7 +437,10 @@ def decided() -> dict[str, str]:
     belongs to a namesake rather than to the co-author, which drops the person from every
     list here — no item created, no statement written, and no question asked again.
     """
-    return read_overrides().get(DECIDED) or {}
+    return {o: "no" if v is False else v
+            # YAML reads a bare `no` as the boolean, and `no` is what the task page tells
+            # the author to write, so it arrives here as False rather than as the string.
+            for o, v in (read_overrides().get(DECIDED) or {}).items()}
 
 
 def linked(p: dict, day: str) -> dict:
@@ -514,7 +517,11 @@ def described(orcid: str, rec: dict, employers: dict[str, dict]) -> dict:
     # employer Wikidata has never heard of still distinguishes two same-name researchers.
     said = (rec["employers"] or (oa_at if len(oa_at) == 1 else []) or [""])[0]
     where = at[0]["label"] if at else (plain(said) or said)
+    # `namesakes` matches on aliases as well as labels, so an item created under only the
+    # form ORCID stores is one this pipeline's own name search cannot find again.
+    aka = " ".join((rec.get("openalex_label") or "").split())
     return {"orcid": orcid, "label": label, "works": works,
+            "aka": [aka] if aka and aka != label else [],
             "description": "researcher at " + where if where else "researcher",
             "record_says": states(rec),
             "partial": bool(rec.get("partial")),
@@ -532,6 +539,7 @@ def batch(people: list[dict], day: str) -> list[str]:
         who = "https://orcid.org/" + p["orcid"]
         L.append("CREATE")
         L.append("\t".join(["LAST", "Len", '"%s"' % p["label"]]))
+        L += ["\t".join(["LAST", "Aen", '"%s"' % a]) for a in p.get("aka") or []]
         L.append("\t".join(["LAST", "Den", '"%s"' % p["description"]]))
         L.append("\t".join(["LAST", "P31", HUMAN] + ref(who)))
         L.append("\t".join(["LAST", "P106", RESEARCHER] + ref(p["works"])))
@@ -565,6 +573,7 @@ def payload(p: dict, day: str) -> dict:
     claims += [claim("P108", {"entity-type": "item", "id": qid}, "wikibase-entityid", src)
                for _, qid, src in p["employers"]]
     return {"labels": {"en": {"language": "en", "value": p["label"]}},
+            "aliases": {"en": [{"language": "en", "value": a} for a in p.get("aka") or []]},
             "descriptions": {"en": {"language": "en", "value": p["description"]}},
             "claims": claims}
 

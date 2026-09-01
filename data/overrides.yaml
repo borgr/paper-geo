@@ -229,4 +229,27 @@ fields:
 # own metadata carries no author identifiers, so on a common name it can resolve to the
 # wrong person -- the worklist prints what each ORCID record states, and a record in an
 # unrelated field is one of those. Nothing is created and nothing is written for it.
-wikidata_people: {}
+wikidata_people:
+  0000-0001-5522-1351: Q67386311   # Mohit Bansal -- UNC Chapel Hill, confirmed by the author
+  # Named by an item that states the same institution their ORCID record does.
+  0000-0003-2434-2534: Q102390975  # Carlos Alzate -- KU Leuven PhD
+  0000-0003-1971-1606: Q103328754  # Judy Hoffman -- UC Berkeley PhD
+  0000-0002-3141-5845: Q125454034  # Jacob Andreas -- MIT
+  0000-0002-0190-6459: Q107742361  # Sara Hooker -- Cohere Labs
+  0000-0003-0153-6811: Q103330754  # Mikhail Yurochkin -- statistician, MBZUAI
+  0000-0002-4083-542X: Q102407752  # Joseph Shtok -- Technion PhD, IBM Haifa
+  # The ORCID names an institution and a body of work that are not our co-author's,
+  # so it belongs to a namesake and nothing should be written from it.
+  0000-0003-1445-3150: no          # Prateek Yadav
+  0000-0002-8376-107X: no          # Michelle Lin -- UC San Diego
+  0000-0002-0836-2212: no          # Bo Liu -- Shanghai Institute of Applied Physics
+  0000-0002-4148-895X: no          # Shashank Srivastava -- Motilal Nehru NIT
+  0000-0002-6265-5307: no          # Wei Lin
+  0000-0002-4837-8411: no          # Yoon Kim -- University of Seoul, not MIT
+  0000-0002-9532-4408: no          # Yu Su -- Renewable Energy Systems, not Ohio State
+  0000-0001-5863-4856: no          # Omer Goldman -- Cambridge biochemist of the same name
+  # Every same-name item is somebody else, so these four need an item of their own.
+  0000-0002-0847-8426: new         # Raj Shah -- Georgia Tech; the four items are non-researchers
+  0009-0008-7352-2586: new         # Ran Levy -- Amazon; the one item is a naturalist
+  0000-0002-3393-8666: new         # Eli Schwartz -- IBM Haifa; the one item is an SEO author
+  0009-0003-3187-3955: new         # Wenting Zhao -- Salesforce; the one item is a biochemist
