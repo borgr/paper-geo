@@ -2393,6 +2393,22 @@ class TestAMeteredRefusalIsNotRetried(unittest.TestCase):
         self.assertIsNone(common.budget_reset("api.openalex.org"))
 
 
+class TestTheSuiteCannotWriteTheRealLedger(unittest.TestCase):
+    """`setUpModule`'s redirect has to still be in force.
+
+    Several tests reach a fetch path with only `urlopen` mocked, so their invented 429s go
+    through the real `note_fetch`. Losing the redirect puts those back in
+    `build/health.json`, where `health_report` reads them as a source that has stopped
+    answering -- and nothing about the suite passing would say so.
+    """
+
+    def test_the_ledger_is_outside_the_repo(self):
+        import common
+        self.assertFalse(os.path.abspath(common.HEALTH).startswith(ROOT + os.sep),
+                         "the suite is writing the repo's own health ledger: %s"
+                         % common.HEALTH)
+
+
 class TestPacedHostsAreTheOnesWeHammer(unittest.TestCase):
     """Every host this program fetches in a per-paper loop needs a `PACE` entry.
 
