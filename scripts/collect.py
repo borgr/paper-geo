@@ -652,32 +652,41 @@ def _is_preprint(p: dict) -> bool:
     return not v or is_preprint_venue(v)
 
 
-def dedupe(papers: list[dict], prefer: list[str] | None = None) -> tuple[list[dict], int, int]:
-    """Merge exact/near-exact duplicates; flag the uncertain band for review.
+class Groups:
+    """Union-find over the paper list, so a pair joined by any rule stays joined.
 
-    Bibliographies routinely hold both the DBLP CoRR preprint entry and the
-    published entry for one paper. Publishing two pages for one paper is exactly
-    the duplicate-title failure Scholar's docs warn about, so they must be one
-    record here. Merged records keep the published venue and the preprint's
-    arXiv id and abstract.
+    `join(a, b)` puts a's group under b's. `members(papers)` returns one list per group,
+    ordered by where each group's first paper sits in the list it was built from.
     """
-    import difflib
 
-    want_title = {norm_title(t) for t in (prefer or [])}
-    norms = [norm_title(p.get("title")) for p in papers]
-    parent = list(range(len(papers)))
+    def __init__(self, n: int):
+        self.parent = list(range(n))
 
-    def find(x):
-        while parent[x] != x:
-            parent[x] = parent[parent[x]]
-            x = parent[x]
+    def find(self, x: int) -> int:
+        while self.parent[x] != x:
+            self.parent[x] = self.parent[self.parent[x]]
+            x = self.parent[x]
         return x
 
-    # Identifiers first, without consulting titles at all: one arXiv id is one paper,
-    # however differently two sources spell it. A retitled preprint ("All Neural Networks
-    # are Created Equal" -> "Let's Agree to Agree") shares 1905.10854 and scores nowhere
-    # near the title threshold below, so the similarity pass cannot see the pair. This is
-    # not a judgment call, which is why it runs before the band that needs one.
+    def join(self, a: int, b: int) -> None:
+        self.parent[self.find(a)] = self.find(b)
+
+    def members(self, papers: list[dict]) -> list[list[dict]]:
+        groups: dict[int, list[dict]] = {}
+        for i, p in enumerate(papers):
+            groups.setdefault(self.find(i), []).append(p)
+        return list(groups.values())
+
+
+def join_on_ids(papers: list[dict], g: Groups) -> None:
+    """Join papers sharing an arXiv id or a DOI, whatever their titles say.
+
+    One arXiv id is one paper, however differently two sources spell it. A retitled
+    preprint ("All Neural Networks are Created Equal" -> "Let's Agree to Agree") shares
+    1905.10854 and scores nowhere near the title threshold below, so the similarity pass
+    cannot see the pair. This is not a judgment call, which is why it runs before the band
+    that needs one.
+    """
     for field in ("arxiv", "doi"):
         seen: dict[str, int] = {}
         for i, p in enumerate(papers):
@@ -686,14 +695,25 @@ def dedupe(papers: list[dict], prefer: list[str] | None = None) -> tuple[list[di
                 continue
             k = str(v).strip().lower()
             if k in seen:
-                parent[find(i)] = find(seen[k])
+                g.join(i, seen[k])
             else:
                 seen[k] = i
+
+
+def join_near_titles(papers: list[dict], norms: list[str], g: Groups) -> int:
+    """Join pairs whose titles all but match, and flag the uncertain band between.
+
+    Returns how many pairs were flagged rather than joined. A flagged pair is left as two
+    records, each carrying the other's title in `similar_but_distinct`. Identifiers are
+    already settled by the pass above, so a pair reaching here disagrees on both or states
+    neither.
+    """
+    import difflib
 
     flagged = 0
     for i in range(len(papers)):
         for j in range(i + 1, len(papers)):
-            if find(i) == find(j):
+            if g.find(i) == g.find(j):
                 continue
             a, b = norms[i], norms[j]
             if not a or not b or abs(len(a) - len(b)) > 20:
@@ -701,45 +721,64 @@ def dedupe(papers: list[dict], prefer: list[str] | None = None) -> tuple[list[di
             ratio = difflib.SequenceMatcher(None, a, b).ratio()
             if ratio < 0.90:
                 continue
-            same_ord = _discriminators(papers[i]["title"]) == _discriminators(papers[j]["title"])
-            ids_agree = (papers[i].get("arxiv") and papers[i]["arxiv"] == papers[j].get("arxiv")) or \
-                        (papers[i].get("doi") and papers[i]["doi"] == papers[j].get("doi"))
-            if same_ord and (ratio >= 0.97 or ids_agree):
-                parent[find(i)] = find(j)
+            same_ord = (_discriminators(papers[i]["title"])
+                        == _discriminators(papers[j]["title"]))
+            if same_ord and ratio >= 0.97:
+                g.join(i, j)
             else:
                 papers[i].setdefault("similar_but_distinct", []).append(papers[j]["title"])
                 papers[j].setdefault("similar_but_distinct", []).append(papers[i]["title"])
                 flagged += 1
+    return flagged
 
-    groups: dict[int, list[dict]] = {}
-    for i, p in enumerate(papers):
-        groups.setdefault(find(i), []).append(p)
+
+def merge_group(members: list[dict], want_title: set[str]) -> dict:
+    """One record out of a group of duplicates.
+
+    The published entry decides identity and the preprint contributes its arXiv id and
+    abstract. Among equals the longest venue string wins, and `citations` takes the larger
+    rather than the first non-empty.
+    """
+    published = [m for m in members if not _is_preprint(m)]
+    pool = published or members
+    # A title named first in a force_merge group outranks venue length: that list
+    # exists because the automatic choice was wrong, and the title decides both the
+    # slug and every page heading.
+    pick = [m for m in pool if norm_title(m.get("title")) in want_title]
+    base = dict(max(pick or pool, key=lambda m: len(m.get("venue") or "")))
+    for m in members:
+        for k, v in m.items():
+            if v in (None, "", [], {}):
+                continue
+            if base.get(k) in (None, "", [], {}):
+                base[k] = v
+            elif k == "citations":
+                base[k] = max(base[k] or 0, v or 0)
+    base["merged_from"] = sorted({m["key"] for m in members if m.get("key")})
+    return base
+
+
+def dedupe(papers: list[dict], prefer: list[str] | None = None) -> tuple[list[dict], int, int]:
+    """Merge exact/near-exact duplicates; flag the uncertain band for review.
+
+    Returns (records, how many papers were absorbed, how many pairs were flagged).
+    Bibliographies routinely hold both the DBLP CoRR preprint entry and the published
+    entry for one paper. Publishing two pages for one paper is exactly the duplicate-title
+    failure Scholar's docs warn about, so they must be one record here.
+    """
+    want_title = {norm_title(t) for t in (prefer or [])}
+    norms = [norm_title(p.get("title")) for p in papers]
+    g = Groups(len(papers))
+    join_on_ids(papers, g)
+    flagged = join_near_titles(papers, norms, g)
 
     merged_out, n_merged = [], 0
-    for members in groups.values():
+    for members in g.members(papers):
         if len(members) == 1:
             merged_out.append(members[0])
             continue
         n_merged += len(members) - 1
-        # Published entry wins for identity; preprint contributes arXiv + abstract.
-        published = [m for m in members if not _is_preprint(m)]
-        pool = published or members
-        # A title named first in a force_merge group outranks venue length: that list
-        # exists because the automatic choice was wrong, and the title decides both the
-        # slug and every page heading.
-        pick = [m for m in pool if norm_title(m.get("title")) in want_title]
-        base = dict(max(pick or pool, key=lambda m: len(m.get("venue") or "")))
-        for m in members:
-            for k, v in m.items():
-                if v in (None, "", [], {}):
-                    continue
-                if base.get(k) in (None, "", [], {}):
-                    base[k] = v
-                elif k == "citations":
-                    base[k] = max(base[k] or 0, v or 0)
-        base["merged_from"] = sorted({m["key"] for m in members if m.get("key")})
-        merged_out.append(base)
-
+        merged_out.append(merge_group(members, want_title))
     return merged_out, n_merged, flagged
 
 
