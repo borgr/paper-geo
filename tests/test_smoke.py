@@ -6267,6 +6267,58 @@ class TestNamesakesAreLeftOffThePageNotGuessedAt(unittest.TestCase):
             "-Q1\tP2093\t\"A Namesake\""])
 
 
+class TestThePastedAnswerIsNeverAnObviousNamesake(unittest.TestCase):
+    """The paste block pre-fills a QID and the author corrects it, so the pre-fill has to be
+    the likeliest answer rather than whatever came first. Live, three of the twenty-two names
+    had no research candidate at all and were pre-filled with an actor, a writer, and a
+    businessman."""
+
+    def _wl(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import worklist
+        return worklist
+
+    def _person(self, *namesakes):
+        return {"orcid": "0000-0001-0000-0009", "label": "Ada Lovelace", "papers": 3,
+                "record_says": "nothing public beyond the name",
+                "namesakes": [dict({"qid": q, "says": "says " + q}, research=r)
+                              for q, r in namesakes]}
+
+    def test_a_research_candidate_is_pre_filled_and_the_rest_are_offered(self):
+        wl = self._wl()
+        self.assertEqual("Q1", wl.prefill([{"qid": "Q1", "research": True},
+                                           {"qid": "Q2", "research": False}]))
+        self.assertEqual("Q1", wl.prefill([{"qid": "Q1", "research": False},
+                                           {"qid": "Q2", "research": True}]),
+                         "the list is already sorted research-first, so the pre-fill is the "
+                         "first entry whenever any candidate qualifies")
+
+    def test_no_research_candidate_pre_fills_new(self):
+        wl = self._wl()
+        self.assertEqual("new", wl.prefill([{"qid": "Q1", "research": False},
+                                            {"qid": "Q2"}]))
+        self.assertEqual("new", wl.prefill([{"qid": "Q1"}]))
+
+    def test_the_line_offers_every_candidate_it_did_not_pre_fill(self):
+        wl = self._wl()
+        out = "\n".join(wl.wikidata_people(
+            {"held_people": [self._person(("Q1", True), ("Q2", False), ("Q3", False))]}))
+        self.assertIn("  0000-0001-0000-0009: Q1   # Ada Lovelace — or Q2, Q3, or new, or no",
+                      out)
+        out = "\n".join(wl.wikidata_people(
+            {"held_people": [self._person(("Q1", False), ("Q2", False))]}))
+        self.assertIn("  0000-0001-0000-0009: new   # Ada Lovelace — or Q1, Q2, or new, or no",
+                      out,
+                      "a candidate dropped from the pre-fill has to still be offered")
+
+    def test_a_long_list_still_says_there_are_more(self):
+        wl = self._wl()
+        out = "\n".join(wl.wikidata_people(
+            {"held_people": [self._person(*[("Q%d" % i, False) for i in range(1, 7)])]}))
+        self.assertIn("  0000-0001-0000-0009: new   # Ada Lovelace — or Q1, Q2, Q3, …, "
+                      "or new, or no", out)
+
+
 class TestPeopleItemsRestOnPublicRecordsNotOnNames(unittest.TestCase):
     """Creating a person is the most public thing this repo generates, so the batch may
     only carry people two public records describe, and only once each."""
@@ -6528,7 +6580,8 @@ class TestPeopleItemsRestOnPublicRecordsNotOnNames(unittest.TestCase):
             {"decided": 2,
              "held_people": [{"label": "Jacob Andreas", "orcid": "0000-0002-3141-5845",
                               "papers": 10, "description": "researcher",
-                              "namesakes": [{"qid": "Q125454034", "says": "AI researcher"},
+                              "namesakes": [{"qid": "Q125454034", "says": "AI researcher",
+                                             "research": True},
                                             {"qid": "Q112760940", "says": "actor"}]}]}))
         self.assertIn("may already have a Wikidata item (1)", out)
         self.assertIn("- [Q125454034](https://www.wikidata.org/wiki/Q125454034) — "

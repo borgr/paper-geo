@@ -407,6 +407,19 @@ def wikidata_coauthors(st: dict) -> list[str]:
     return L + [""]
 
 
+def prefill(namesakes: list[dict]) -> str:
+    """The value to put in the paste block for one name.
+
+    A QID only when some candidate states a research occupation, because the block is sorted
+    to put those first and the pre-fill is then the likeliest answer. When none of them does,
+    `new` -- a duplicate item is a merge, while an ORCID written onto an actor or a
+    businessman of the same name is a false claim about a different living person.
+    """
+    if any(n.get("research") for n in namesakes):
+        return namesakes[0]["qid"]
+    return "new"
+
+
 def wikidata_people(st: dict) -> list[str]:
     """The worklist section for `build/wikidata_people.json`, or nothing.
 
@@ -435,10 +448,11 @@ def wikidata_people(st: dict) -> list[str]:
          "```yaml",
          "wikidata_people:"]
     for p in held:
-        rest = [n["qid"] for n in p["namesakes"][1:4]]
+        first = prefill(p["namesakes"])
+        rest = [n["qid"] for n in p["namesakes"] if n["qid"] != first][:3]
         # The alternatives inline, because the first candidate is the likeliest and not the
         # answer -- a block pasted unread would put an ORCID on a racing cyclist.
-        L.append(f"  {p['orcid']}: {p['namesakes'][0]['qid']}   # {p['label']}"
+        L.append(f"  {p['orcid']}: {first}   # {p['label']}"
                  + (" — or " + ", ".join(rest) if rest else "")
                  + (", …" if len(p["namesakes"]) > 4 else "")
                  + ", or new, or no")

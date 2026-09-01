@@ -154,13 +154,13 @@ wikidata_people:
   0000-0003-1971-1606: Q103328754   # Judy Hoffman — or Q22097391, Q6304478, or new, or no
   0000-0002-8376-107X: Q139550968   # Michelle Lin — or Q64785953, Q85881335, or new, or no
   0000-0001-5522-1351: Q103295310   # Mohit Bansal — or Q67386311, Q112628221, or new, or no
-  0000-0003-1445-3150: Q102070311   # Prateek Yadav, or new, or no
+  0000-0003-1445-3150: new   # Prateek Yadav — or Q102070311, or new, or no
   0000-0002-0190-6459: Q107742361   # Sara Hooker, or new, or no
   0000-0002-0836-2212: Q102196599   # Bo Liu — or Q102403237, Q102682954, Q124355855, …, or new, or no
   0000-0001-8376-4505: Q137017900   # Charles Jochim, or new, or no
-  0000-0002-3393-8666: Q110505456   # Eli Schwartz, or new, or no
+  0000-0002-3393-8666: new   # Eli Schwartz — or Q110505456, or new, or no
   0000-0002-4083-542X: Q102407752   # Joseph Shtok, or new, or no
-  0000-0001-5863-4856: Q7090102   # Omer Goldman, or new, or no
+  0000-0001-5863-4856: new   # Omer Goldman — or Q7090102, or new, or no
   0009-0008-6932-7091: Q102434002   # Pengfei Liu — or Q102925389, or new, or no
   0000-0002-0847-8426: Q1274250   # Raj Shah — or Q130379561, Q29043436, Q47460504, or new, or no
   0009-0008-7352-2586: Q118928179   # Ran Levy, or new, or no
