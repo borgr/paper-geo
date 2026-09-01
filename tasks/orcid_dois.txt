@@ -46,11 +46,11 @@
 10.1109/CLOUD67622.2025.00028	ZipNN: Lossless Compression for AI Models
 10.18653/V1/P19-1419	The Language of Legal and Illegal Activity on the Darknet
 10.18653/V1/2024.CONDA-1.4	Data Contamination Report from the 2024 CONDA Shared Task
+10.48550/arXiv.2408.10646	Beneath the Surface of Consistency: Exploring Cross-lingual Knowledge Representation Sharing in LLMs
 10.18653/v1/2024.naacl-demo.21	Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluation for Generative AI
 10.18653/V1/2020.CONLL-1.7	Classifying Syntactic Errors in Learner Language
 10.48550/arXiv.2602.16763	When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation
 10.48550/arXiv.2410.11840	A Hitchhiker's Guide to Scaling Law Estimation
-10.48550/arXiv.2408.10646	Beneath the Surface of Consistency: Exploring Cross-lingual Knowledge Representation Sharing in LLMs
 10.48550/ARXIV.2407.13696	Benchmark Agreement Testing Done Right: A Guide for LLM Benchmark Evaluation
 10.18653/v1/2025.findings-acl.611	DOVE: A Large-Scale Multi-Dimensional Predictions Dataset Towards Meaningful LLM Evaluation
 10.48550/arXiv.2311.13171	ComPEFT: Compression for Communicating Parameter Efficient Updates via Sparsification and Quantization

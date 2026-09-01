@@ -61,7 +61,7 @@ No request is made on your behalf at any point -- code reads the file you saved.
 Highest citations first, so stopping early still helps most. A commented line is a
 field the listing already has -- shown so you can check it rather than retype it.
 
-### 1. TIES-Merging: Resolving Interference When Merging Models — cited 907
+### 1. TIES-Merging: Resolving Interference When Merging Models — cited 909
 
 <https://arxiv.org/abs/2306.01708> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -358,7 +358,16 @@ Journal-ref:          The First Data Contamination Workshop, pages 41-56, 2024
 Journal version DOI:  10.18653/v1/2024.conda-1.4
 ```
 
-### 34. Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluation for Generative AI — cited 23
+### 34. Beneath the Surface of Consistency: Exploring Cross-lingual Knowledge Representation Sharing in LLMs — cited 23
+
+<https://arxiv.org/abs/2408.10646> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
+
+```
+Journal-ref:          Findings of the Association for Computational Linguistics: NAACL 2025, pages 4630-4644
+Journal version DOI:  (none minted — leave blank)
+```
+
+### 35. Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluation for Generative AI — cited 23
 
 <https://arxiv.org/abs/2401.14019> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -367,7 +376,7 @@ Journal-ref:          Proceedings of the 2024 Conference of the North American C
 Journal version DOI:  10.18653/v1/2024.naacl-demo.21
 ```
 
-### 35. Classifying Syntactic Errors in Learner Language — cited 23
+### 36. Classifying Syntactic Errors in Learner Language — cited 23
 
 <https://arxiv.org/abs/2010.11032> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -376,21 +385,12 @@ Journal-ref:          Proceedings of the 24th Conference on Computational Natura
 Journal version DOI:  10.18653/v1/2020.conll-1.7
 ```
 
-### 36. A Hitchhiker's Guide to Scaling Law Estimation — cited 22
+### 37. A Hitchhiker's Guide to Scaling Law Estimation — cited 22
 
 <https://arxiv.org/abs/2410.11840> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
 ```
 Journal-ref:          Forty-second International Conference on Machine Learning, 2025
-Journal version DOI:  (none minted — leave blank)
-```
-
-### 37. Beneath the Surface of Consistency: Exploring Cross-lingual Knowledge Representation Sharing in LLMs — cited 22
-
-<https://arxiv.org/abs/2408.10646> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
-
-```
-Journal-ref:          Findings of the Association for Computational Linguistics: NAACL 2025, pages 4630-4644
 Journal version DOI:  (none minted — leave blank)
 ```
 

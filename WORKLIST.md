@@ -29,14 +29,14 @@ is ordered so that stopping early still captures most of the value.
 6. **Wikidata author strings (107 papers by hand)** — one Author Disambiguator pass per paper, most-cited first, at the link the section gives for each. Everything an ORCID or a DBLP author page could settle is already on Wikidata, so what is left is the part where the name is all there is to go on.
 7. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
 8. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
-9. **Citations on a Scholar record you cannot see (27 rows, 166 citations measured + 93 inferred)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
+9. **Citations on a Scholar record you cannot see (27 rows, 167 citations measured + 93 inferred)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
 
 ## Waiting on the outside world
 
 - **2026-10-04** — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.
 - **2026-11-04** — Crossref and DataCite auto-update only fire on newly deposited metadata that already carries your iD, so the proof is a work whose ORCID source is Crossref or DataCite rather than your own name -- which cannot appear until something you publish is deposited.
 
-## Citations on a Scholar record you cannot see (27 rows, 166 citations measured + 93 inferred)
+## Citations on a Scholar record you cannot see (27 rows, 167 citations measured + 93 inferred)
 
 Scholar indexes preprints and theses the APIs do not, so a profile row should
 always count *more* than OpenAlex and Semantic Scholar. Where it counts less,
@@ -50,7 +50,7 @@ count on OpenAlex's smaller copy is the closest reading of what a merge
 recovers.
 
 The two numbers in the heading are different kinds of evidence.
-The measured 166 is a profile row counting fewer citations than the
+The measured 167 is a profile row counting fewer citations than the
 APIs already list for the same paper.
 The inferred 93 sits on a duplicate record at an API and stands in
 for a Scholar record nothing here has seen, so it is what a merge recovers only
@@ -85,8 +85,8 @@ your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).
 - [ ] **10 citations** — On the Weaknesses of Reinforcement Learning for Neural Machine…
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22On%20the%20Weaknesses%20of%20Reinforcement%20Learning%20for%20Neural%20Machine%20Translation%22)
-- [ ] **8 citations** — Beneath the Surface of Consistency: Exploring Cross-lingual…
-      - Scholar 14 vs 22 at the APIs
+- [ ] **9 citations** — Beneath the Surface of Consistency: Exploring Cross-lingual…
+      - Scholar 14 vs 23 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Beneath%20the%20Surface%20of%20Consistency%3A%20Exploring%20Cross-lingual%20Knowledge%20Representation%20Sharing%20in%20LLMs%22)
 - [ ] **6 citations** — Global MMLU: Understanding and Addressing Cultural and…
       - 2 OpenAlex records for one title
@@ -413,7 +413,7 @@ cannot take off you — but the typing is not: both field values are below,
 per paper, built from the publisher's own bibtex. The same for all
 64 is in [`tasks/arxiv_jref.md`](tasks/arxiv_jref.md).
 
-- [ ] **907 cites** — TIES-Merging: Resolving Interference When Merging Models
+- [ ] **909 cites** — TIES-Merging: Resolving Interference When Merging Models
       - the form: find `2306.01708` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2306.01708))
       - `Journal-ref:` `Advances in Neural Information Processing Systems 36: Annual Conference on Neural Information Processing Systems 2023`
       - `Journal version DOI:` `10.52202/075280-0310`

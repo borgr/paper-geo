@@ -42,7 +42,7 @@ items for one person, which is a merge rather than a choice.
 research -- footballer, actor, politician -- so the name is a coincidence. An
 item stating no occupation at all is still listed.
 
-- [ ] **907 citations** — TIES-Merging: Resolving Interference When Merging Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029633)
+- [ ] **909 citations** — TIES-Merging: Resolving Interference When Merging Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029633)
       - Mohit Bansal → [Q67386311](https://www.wikidata.org/wiki/Q67386311) — researcher, natural language processing and , [Q92117908](https://www.wikidata.org/wiki/Q92117908) — researcher (ORCID 0000-0002-8403-0316), [Q96127041](https://www.wikidata.org/wiki/Q96127041) — researcher (ORCID 0000-0001-8777-1980) … +2
 - [ ] **297 citations** — tinyBenchmarks: evaluating LLMs with fewer examples — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029634)
       - Yuekai Sun → [Q102433700](https://www.wikidata.org/wiki/Q102433700) — statistician

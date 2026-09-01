@@ -47,7 +47,7 @@ papers:
     \  = {Fri, 01 Mar 2024 00:00:00 +0100},\n  biburl       = {https://dblp.org/rec/conf/nips/YadavTCRB23.bib},\n\
     \  bibsource    = {dblp computer science bibliography, https://dblp.org}\n}"
   s2_author_record: '41019330'
-  citations: 907
+  citations: 909
   acl: null
   s2_corpus_id: 259064039
   arxiv_journal_ref: null
@@ -3347,6 +3347,74 @@ papers:
   title_display: Data Contamination Report from the 2024 CONDA Shared Task
   venue_display: CONDA 2024
   has_sidecar: true
+- key: ifergan2024beneath
+  slug: beneath-the-surface-of-consistency-exploring-cross-lingual-k
+  title: 'Beneath the Surface of Consistency: Exploring Cross-lingual Knowledge Representation Sharing
+    in {LLM}s'
+  authors:
+  - Maxim Ifergan
+  - Leshem Choshen
+  - Roee Aharoni
+  - Idan Szpektor
+  - Omri Abend
+  authors_truncated: null
+  year: 2025
+  venue: 'Findings of the Association for Computational Linguistics: NAACL 2025'
+  type: inproceedings
+  doi: 10.48550/arXiv.2408.10646
+  arxiv: '2408.10646'
+  url: https://aclanthology.org/2025.findings-naacl.475/
+  abstract: 'The veracity of a factoid is largely independent of the language it is written in. However,
+    language models are inconsistent in their ability to answer the same factual question across languages.
+    This raises questions about how LLMs represent a given fact across languages. We explore multilingual
+    factual knowledge through two aspects: the model''s ability to answer a query consistently across
+    languages, and the ability to ''''store'''' answers in a shared representation for several languages.
+    We propose a methodology to measure the extent of representation sharing across languages by repurposing
+    knowledge editing methods. We examine LLMs with various multilingual configurations using a new multilingual
+    dataset. We reveal that high consistency does not necessarily imply shared representation, particularly
+    for languages with different scripts. Moreover, we find that script similarity is a dominant factor
+    in representation sharing. Finally, we observe that if LLMs could fully share knowledge across languages,
+    their accuracy in their best-performing language could benefit an increase of up to 150\% on average.
+    These findings highlight the need for improved multilingual knowledge representation in LLMs and suggest
+    a path for the development of more robust and consistent multilingual LLMs.'
+  bibtex: "@inproceedings{ifergan2024beneath,\n    title = \"Beneath the Surface of Consistency: Exploring\
+    \ Cross-lingual Knowledge Representation Sharing in {LLM}s\",\n    author = \"Ifergan, Maxim  and\n\
+    \      Choshen, Leshem  and\n      Aharoni, Roee  and\n      Szpektor, Idan  and\n      Abend, Omri\"\
+    ,\n    editor = \"Chiruzzo, Luis  and\n      Ritter, Alan  and\n      Wang, Lu\",\n    booktitle =\
+    \ \"Findings of the Association for Computational Linguistics: NAACL 2025\",\n    month = apr,\n \
+    \   year = \"2025\",\n    address = \"Albuquerque, New Mexico\",\n    publisher = \"Association for\
+    \ Computational Linguistics\",\n    url = \"https://aclanthology.org/2025.findings-naacl.475/\",\n\
+    \    pages = \"4630--4644\",\n    ISBN = \"979-8-89176-195-7\"\n}"
+  s2_author_record: '41019330'
+  citations: 23
+  acl: null
+  s2_corpus_id: 271909348
+  arxiv_journal_ref: null
+  arxiv_doi: null
+  arxiv_comment: null
+  arxiv_html: true
+  hf_indexed: true
+  hf_upvotes: 0
+  hf_claimed_authors: 1
+  hf_claimed_by_me: true
+  hf_github_repo: null
+  hf_github_stars: null
+  hf_n_models: 0
+  hf_n_datasets: 0
+  links:
+    arxiv: https://arxiv.org/abs/2408.10646
+    arxiv_pdf: https://arxiv.org/pdf/2408.10646
+    html: https://arxiv.org/html/2408.10646
+    html_source: arxiv
+    huggingface: https://huggingface.co/papers/2408.10646
+    alphaxiv: https://www.alphaxiv.org/abs/2408.10646
+    doi: https://doi.org/10.48550/arXiv.2408.10646
+    semantic_scholar: https://www.semanticscholar.org/paper/271909348
+    publisher: https://aclanthology.org/2025.findings-naacl.475/
+  title_display: 'Beneath the Surface of Consistency: Exploring Cross-lingual Knowledge Representation
+    Sharing in LLMs'
+  venue_display: Findings of NAACL 2025
+  has_sidecar: true
 - key: bandel2024unitxt
   slug: unitxt-flexible-shareable-and-reusable-data-preparation-and
   title: 'Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluation for Generative {AI}'
@@ -3654,74 +3722,6 @@ papers:
     publisher: https://openreview.net/forum?id=KugSHTH0c8
   title_display: A Hitchhiker's Guide to Scaling Law Estimation
   venue_display: ICML 2025
-  has_sidecar: true
-- key: ifergan2024beneath
-  slug: beneath-the-surface-of-consistency-exploring-cross-lingual-k
-  title: 'Beneath the Surface of Consistency: Exploring Cross-lingual Knowledge Representation Sharing
-    in {LLM}s'
-  authors:
-  - Maxim Ifergan
-  - Leshem Choshen
-  - Roee Aharoni
-  - Idan Szpektor
-  - Omri Abend
-  authors_truncated: null
-  year: 2025
-  venue: 'Findings of the Association for Computational Linguistics: NAACL 2025'
-  type: inproceedings
-  doi: 10.48550/arXiv.2408.10646
-  arxiv: '2408.10646'
-  url: https://aclanthology.org/2025.findings-naacl.475/
-  abstract: 'The veracity of a factoid is largely independent of the language it is written in. However,
-    language models are inconsistent in their ability to answer the same factual question across languages.
-    This raises questions about how LLMs represent a given fact across languages. We explore multilingual
-    factual knowledge through two aspects: the model''s ability to answer a query consistently across
-    languages, and the ability to ''''store'''' answers in a shared representation for several languages.
-    We propose a methodology to measure the extent of representation sharing across languages by repurposing
-    knowledge editing methods. We examine LLMs with various multilingual configurations using a new multilingual
-    dataset. We reveal that high consistency does not necessarily imply shared representation, particularly
-    for languages with different scripts. Moreover, we find that script similarity is a dominant factor
-    in representation sharing. Finally, we observe that if LLMs could fully share knowledge across languages,
-    their accuracy in their best-performing language could benefit an increase of up to 150\% on average.
-    These findings highlight the need for improved multilingual knowledge representation in LLMs and suggest
-    a path for the development of more robust and consistent multilingual LLMs.'
-  bibtex: "@inproceedings{ifergan2024beneath,\n    title = \"Beneath the Surface of Consistency: Exploring\
-    \ Cross-lingual Knowledge Representation Sharing in {LLM}s\",\n    author = \"Ifergan, Maxim  and\n\
-    \      Choshen, Leshem  and\n      Aharoni, Roee  and\n      Szpektor, Idan  and\n      Abend, Omri\"\
-    ,\n    editor = \"Chiruzzo, Luis  and\n      Ritter, Alan  and\n      Wang, Lu\",\n    booktitle =\
-    \ \"Findings of the Association for Computational Linguistics: NAACL 2025\",\n    month = apr,\n \
-    \   year = \"2025\",\n    address = \"Albuquerque, New Mexico\",\n    publisher = \"Association for\
-    \ Computational Linguistics\",\n    url = \"https://aclanthology.org/2025.findings-naacl.475/\",\n\
-    \    pages = \"4630--4644\",\n    ISBN = \"979-8-89176-195-7\"\n}"
-  s2_author_record: '41019330'
-  citations: 22
-  acl: null
-  s2_corpus_id: 271909348
-  arxiv_journal_ref: null
-  arxiv_doi: null
-  arxiv_comment: null
-  arxiv_html: true
-  hf_indexed: true
-  hf_upvotes: 0
-  hf_claimed_authors: 1
-  hf_claimed_by_me: true
-  hf_github_repo: null
-  hf_github_stars: null
-  hf_n_models: 0
-  hf_n_datasets: 0
-  links:
-    arxiv: https://arxiv.org/abs/2408.10646
-    arxiv_pdf: https://arxiv.org/pdf/2408.10646
-    html: https://arxiv.org/html/2408.10646
-    html_source: arxiv
-    huggingface: https://huggingface.co/papers/2408.10646
-    alphaxiv: https://www.alphaxiv.org/abs/2408.10646
-    doi: https://doi.org/10.48550/arXiv.2408.10646
-    semantic_scholar: https://www.semanticscholar.org/paper/271909348
-    publisher: https://aclanthology.org/2025.findings-naacl.475/
-  title_display: 'Beneath the Surface of Consistency: Exploring Cross-lingual Knowledge Representation
-    Sharing in LLMs'
-  venue_display: Findings of NAACL 2025
   has_sidecar: true
 - key: DBLP:journals/corr/abs-2407-13696
   slug: benchmark-agreement-testing-done-right-a-guide-for-llm-bench
@@ -7639,7 +7639,7 @@ papers:
   hf_claimed_authors: 3
   hf_claimed_by_me: true
   hf_github_repo: https://github.com/babylm-org/babylm-eval
-  hf_github_stars: 9
+  hf_github_stars: 10
   hf_n_models: 5
   hf_n_datasets: 5
   links:

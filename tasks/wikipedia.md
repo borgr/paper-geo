@@ -86,10 +86,10 @@ become checks in section 2 if someone else ever writes about them.
 - joint diagonalization of LoRAs — 29 citations
 - BERT_IT:CLUST — 28 citations
 - ZipNN — 25 citations
+- CLIKE — 23 citations
 - SErCl — 23 citations
 - Unitxt — 23 citations
 - BenchBench — 22 citations
-- CLIKE — 22 citations
 - ComPEFT — 21 citations
 - DOVE — 21 citations
 - Label Sleuth — 21 citations
