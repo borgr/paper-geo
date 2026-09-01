@@ -6390,6 +6390,57 @@ class TestPeopleItemsRestOnPublicRecordsNotOnNames(unittest.TestCase):
                 self.assertIn("\tS854\t", line, line)
                 self.assertIn("\tS813\t", line, line)
 
+    def _search(self, name, qids):
+        """`wbsearchentities` answering with a label-exact hit per QID."""
+        return {"search": [{"id": q, "label": name} for q in qids]}
+
+    def _human(self, death=None):
+        """An entity claiming to be a human, optionally with a date of death."""
+        cl = {"P31": [{"mainsnak": {"datavalue": {"value": {"id": "Q5"}}}}]}
+        if death:
+            cl["P570"] = [{"mainsnak": {"datavalue": {"value": {"time": death}}}}]
+        return {"claims": cl, "descriptions": {}}
+
+    def test_a_death_date_is_read_only_when_it_precedes_the_corpus(self):
+        wp = self._job()
+        early = {"P570": [{"mainsnak": {"datavalue": {"value":
+                                                     {"time": "+1590-01-07T00:00:00Z"}}}}]}
+        late = {"P570": [{"mainsnak": {"datavalue": {"value":
+                                                    {"time": "+2020-01-07T00:00:00Z"}}}}]}
+        bce = {"P570": [{"mainsnak": {"datavalue": {"value":
+                                                   {"time": "-0044-03-15T00:00:00Z"}}}}]}
+        self.assertEqual(1590, wp.died_before(early, 2018))
+        self.assertIsNone(wp.died_before(late, 2018), "a death after the first paper is not "
+                                                      "evidence about anything")
+        self.assertEqual(44, wp.died_before(bce, 2018))
+        self.assertIsNone(wp.died_before({}, 2018))
+        self.assertIsNone(wp.died_before({"P570": [{"mainsnak": {}}]}, 2018),
+                          "a statement with no value is not a date")
+
+    def test_corpus_start_is_the_earliest_paper(self):
+        wp = self._job()
+        with mock.patch.object(wp, "read_papers",
+                               lambda: [{"year": 2021}, {"year": 2018}, {}, {"year": 2026}]):
+            self.assertEqual(2018, wp.corpus_start())
+        with mock.patch.object(wp, "read_papers", lambda: []):
+            self.assertEqual(0, wp.corpus_start(), "an empty corpus cannot rule anybody out")
+
+    def test_somebody_already_dead_is_not_a_candidate(self):
+        """Live: this search offered a theologian who died in 1590 for Jacob Andreas, and
+        pre-filled a man who died in 2010 as the answer for Eli Schwartz."""
+        wp = self._job()
+        ents = {"Q1": self._human(), "Q2": self._human("+1590-01-07T00:00:00Z"),
+                "Q3": self._human("+2010-08-31T00:00:00Z"),
+                "Q4": self._human("+2021-01-01T00:00:00Z")}
+        with mock.patch.object(wp, "asked",
+                               lambda url: self._search("Jacob Andreas", list(ents))), \
+                mock.patch.object(wp, "entities", lambda qids, props, langs="": ents), \
+                mock.patch.object(wp, "labels_of", lambda qids: {}), \
+                mock.patch.object(wp, "corpus_start", lambda: 2018):
+            got = wp.namesakes(["Jacob Andreas"])
+        self.assertEqual(["Q1", "Q4"], [n["qid"] for n in got["Jacob Andreas"]],
+                         "a candidate dead before the first paper is still on the page")
+
     def _held(self, **kw):
         """One held person with one same-name item, as `main` assembles them."""
         n = {"qid": "Q7", "orcid": "", "description": "researcher", "works": [],

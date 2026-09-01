@@ -18,10 +18,9 @@ settles which is which.
 - **Mikhail Yurochkin** ([0000-0003-0153-6811](https://orcid.org/0000-0003-0153-6811), 14 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
   - that ORCID record states nothing public beyond the name
   - [Q103330754](https://www.wikidata.org/wiki/Q103330754) — statistician · studied at Moscow Institute of Physics and Technology, University of Michigan · at IBM Research
-- **Jacob Andreas** ([0000-0002-3141-5845](https://orcid.org/0000-0002-3141-5845), 10 papers with you) — 3 item(s) carry the name, 3 of them stating no ORCID
+- **Jacob Andreas** ([0000-0002-3141-5845](https://orcid.org/0000-0002-3141-5845), 10 papers with you) — 2 item(s) carry the name, 2 of them stating no ORCID
   - that ORCID record states "Modeling Student Learning with 3.8 Million Program Traces" · "Cooperation by non-kin during birth underpins sperm…"
   - [Q125454034](https://www.wikidata.org/wiki/Q125454034) — AI researcher · artificial intelligence researcher, professor · studied at Columbia University, University of California, Berkeley, University of Cambridge
-  - [Q62754](https://www.wikidata.org/wiki/Q62754) — German lutheran theologian (1528-1590) · Protestant reformer, reformer, university teacher, writer · studied at University of Tübingen · at Evangelical-Lutheran Church in Württemberg, University of Tübingen
   - [Q112760940](https://www.wikidata.org/wiki/Q112760940) — actor
 - **Carlos Alzate** ([0000-0003-2434-2534](https://orcid.org/0000-0003-2434-2534), 6 papers with you) — 2 item(s) carry the name, 2 of them stating no ORCID
   - that ORCID record states Gaia Dynamics · "An autonomous debating system" · "Correction to: ECML PKDD 2018 Workshops"
@@ -67,9 +66,8 @@ settles which is which.
   - [Q130379561](https://www.wikidata.org/wiki/Q130379561) — venture capitalist · airman · studied at Princeton University
   - [Q29043436](https://www.wikidata.org/wiki/Q29043436) — White House Deputy Press Secretary · civil servant, opposition researcher · studied at Cornell University · at Fox Corporation, White House Office of the Press Secretary
   - [Q47460504](https://www.wikidata.org/wiki/Q47460504) — American rower and physician · coxswain, otolaryngologist · studied at Brown University, Phillips Exeter Academy
-- **Eli Schwartz** ([0000-0002-3393-8666](https://orcid.org/0000-0002-3393-8666), 2 papers with you) — 2 item(s) carry the name, 2 of them stating no ORCID
+- **Eli Schwartz** ([0000-0002-3393-8666](https://orcid.org/0000-0002-3393-8666), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
   - that ORCID record states nothing public beyond the name
-  - [Q30570617](https://www.wikidata.org/wiki/Q30570617) — economist · studied at Brown University, University of Connecticut, University of Denver
   - [Q110505456](https://www.wikidata.org/wiki/Q110505456) — Author and Consultant · writer
 - **Joseph Shtok** ([0000-0002-4083-542X](https://orcid.org/0000-0002-4083-542X), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
   - that ORCID record states nothing public beyond the name
@@ -83,25 +81,22 @@ settles which is which.
 - **Yoon Kim** ([0000-0002-4837-8411](https://orcid.org/0000-0002-4837-8411), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
   - that ORCID record states University of Seoul
   - [Q102278866](https://www.wikidata.org/wiki/Q102278866) — Ph.D. Virginia Polytechnic Institute and State University 1992 · studied at Virginia Tech
-- **Wei Lin** ([0000-0002-6265-5307](https://orcid.org/0000-0002-6265-5307), 2 papers with you) — 9 item(s) carry the name, 9 of them stating no ORCID
+- **Wei Lin** ([0000-0002-6265-5307](https://orcid.org/0000-0002-6265-5307), 2 papers with you) — 8 item(s) carry the name, 8 of them stating no ORCID
   - that ORCID record states "Numerical Study on Seismic Performance of a New…" · "Time Reversal Method for Lamb−Wave−Based Diagnostics of…"
   - [Q102200147](https://www.wikidata.org/wiki/Q102200147) — Ph.D. Washington University in St. Louis 1993 · studied at Washington University in St. Louis
   - [Q102208278](https://www.wikidata.org/wiki/Q102208278) — Ph.D. University of Newcastle 1993
   - [Q102308764](https://www.wikidata.org/wiki/Q102308764) — Ph.D. Clemson University 2006
   - [Q102399878](https://www.wikidata.org/wiki/Q102399878) — states nothing beyond the name
   - [Q103300352](https://www.wikidata.org/wiki/Q103300352) — Ph.D. University of Toronto 2016
-  - [Q109859447](https://www.wikidata.org/wiki/Q109859447) — states nothing beyond the name
   - [Q120718843](https://www.wikidata.org/wiki/Q120718843) — academic and researcher · university teacher · 6 papers including "A Study of the Monohydrate and Dihydrate Complexes of Perfluoropropionic Acid Using Chirped-Pulse Fourier Transform Microwave (CP-FTMW) Spectroscopy"
   - [Q45424520](https://www.wikidata.org/wiki/Q45424520) — Tang dynasty person CBDB=33626
-  - … 1 more
-- **Yu Su** ([0000-0002-9532-4408](https://orcid.org/0000-0002-9532-4408), 2 papers with you) — 7 item(s) carry the name, 7 of them stating no ORCID
+  - [Q5213883](https://www.wikidata.org/wiki/Q5213883) — Taiwanese-American film producer (born 1973) · studied at Harvard Business School, Harvard University, The Wharton School
+- **Yu Su** ([0000-0002-9532-4408](https://orcid.org/0000-0002-9532-4408), 2 papers with you) — 5 item(s) carry the name, 5 of them stating no ORCID
   - that ORCID record states nothing public beyond the name
   - [Q102131509](https://www.wikidata.org/wiki/Q102131509) — Ph.D. University of Arizona 1990
   - [Q102376718](https://www.wikidata.org/wiki/Q102376718) — Ph.D. Rutgers University, New Brunswick 2003
   - [Q45403146](https://www.wikidata.org/wiki/Q45403146) — Song dynasty person (CBDB = 22803)
   - [Q45419816](https://www.wikidata.org/wiki/Q45419816) — Tang dynasty person CBDB=31500
-  - [Q45481252](https://www.wikidata.org/wiki/Q45481252) — Tang dynasty person CBDB = 177576
-  - [Q45647788](https://www.wikidata.org/wiki/Q45647788) — Tang dynasty person CBDB = 185733
   - [Q113070588](https://www.wikidata.org/wiki/Q113070588) — musical artist · musician
 - **Wenting Zhao** ([0009-0003-3187-3955](https://orcid.org/0009-0003-3187-3955), 2 papers with you) — 1 item(s) carry the name, 1 of them stating no ORCID
   - that ORCID record states nothing public beyond the name

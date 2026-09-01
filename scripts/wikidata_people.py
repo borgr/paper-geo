@@ -237,6 +237,21 @@ def cased(rec: dict) -> str:
             else orcid_name) or " ".join((rec.get("openalex_label") or "").split())
 
 
+def died_before(claims: dict, year: int) -> int | None:
+    """The year a `P570` statement gives, when it is earlier than `year`."""
+    for c in claims.get("P570") or []:
+        t = ((c["mainsnak"].get("datavalue") or {}).get("value") or {}).get("time") or ""
+        m = re.match(r"[+-](\d{4})", t)
+        if m and int(m.group(1)) < year:
+            return int(m.group(1))
+    return None
+
+
+def corpus_start() -> int:
+    """The earliest year any paper here was published."""
+    return min((p["year"] for p in read_papers() if p.get("year")), default=0)
+
+
 def namesakes(labels: list[str]) -> dict[str, list[dict]]:
     """Name to every human item carrying it, with the ORCID and description each states.
 
@@ -261,11 +276,18 @@ def namesakes(labels: list[str]) -> dict[str, list[dict]]:
                     found.setdefault(n, set()).add(h["id"])
                     break
     qids = sorted({q for qs in found.values() for q in qs})
+    start = corpus_start()
     seen: dict[str, dict] = {}
     for q, e in entities(qids, "claims|descriptions", "en").items():
         cl = e.get("claims") or {}
         if not any((c["mainsnak"].get("datavalue") or {}).get("value", {}).get("id") == HUMAN
                    for c in cl.get("P31") or []):
+            continue
+        # Somebody who died before the first paper here was written is not a candidate for
+        # any of it, whatever else they state. Left in, this name search offered a
+        # 16th-century theologian for Jacob Andreas and pre-filled a man who died in 2010
+        # as the answer for Eli Schwartz.
+        if died_before(cl, start):
             continue
         orcid = ""
         for c in cl.get("P496") or []:

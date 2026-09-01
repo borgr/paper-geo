@@ -149,7 +149,7 @@ correcting the QIDs that are wrong:
 ```yaml
 wikidata_people:
   0000-0003-0153-6811: Q103330754   # Mikhail Yurochkin, or new, or no
-  0000-0002-3141-5845: Q125454034   # Jacob Andreas — or Q62754, Q112760940, or new, or no
+  0000-0002-3141-5845: Q125454034   # Jacob Andreas — or Q112760940, or new, or no
   0000-0003-2434-2534: Q102390975   # Carlos Alzate — or Q1042683, or new, or no
   0000-0003-1971-1606: Q103328754   # Judy Hoffman — or Q22097391, Q6304478, or new, or no
   0000-0002-8376-107X: Q139550968   # Michelle Lin — or Q64785953, Q85881335, or new, or no
@@ -158,7 +158,7 @@ wikidata_people:
   0000-0002-0190-6459: Q107742361   # Sara Hooker, or new, or no
   0000-0002-0836-2212: Q102196599   # Bo Liu — or Q102403237, Q102682954, Q124355855, …, or new, or no
   0000-0001-8376-4505: Q137017900   # Charles Jochim, or new, or no
-  0000-0002-3393-8666: Q30570617   # Eli Schwartz — or Q110505456, or new, or no
+  0000-0002-3393-8666: Q110505456   # Eli Schwartz, or new, or no
   0000-0002-4083-542X: Q102407752   # Joseph Shtok, or new, or no
   0000-0001-5863-4856: Q7090102   # Omer Goldman, or new, or no
   0009-0008-6932-7091: Q102434002   # Pengfei Liu — or Q102925389, or new, or no
@@ -176,7 +176,6 @@ wikidata_people:
   - [Q103330754](https://www.wikidata.org/wiki/Q103330754) — statistician · studied at Moscow Institute of Physics and Technology, University of Michigan · at IBM Research
 - [ ] **Jacob Andreas** (10 papers with you) — [their ORCID record](https://orcid.org/0000-0002-3141-5845) states "Modeling Student Learning with 3.8 Million Program Traces" · "Cooperation by non-kin during birth underpins sperm…"
   - [Q125454034](https://www.wikidata.org/wiki/Q125454034) — AI researcher · artificial intelligence researcher, professor · studied at Columbia University, University of California, Berkeley, University of Cambridge
-  - [Q62754](https://www.wikidata.org/wiki/Q62754) — German lutheran theologian (1528-1590) · Protestant reformer, reformer, university teacher, writer · studied at University of Tübingen · at Evangelical-Lutheran Church in Württemberg, University of Tübingen
   - [Q112760940](https://www.wikidata.org/wiki/Q112760940) — actor
 - [ ] **Carlos Alzate** (6 papers with you) — [their ORCID record](https://orcid.org/0000-0003-2434-2534) states Gaia Dynamics · "An autonomous debating system" · "Correction to: ECML PKDD 2018 Workshops"
   - [Q102390975](https://www.wikidata.org/wiki/Q102390975) — Ph.D. Katholieke Universiteit Leuven 2009
@@ -206,7 +205,6 @@ wikidata_people:
 - [ ] **Charles Jochim** (2 papers with you) — [their ORCID record](https://orcid.org/0000-0001-8376-4505) states "Probability Statements Extraction with Constrained…" · "Extracting Dependence Relations from Unstructured…"
   - [Q137017900](https://www.wikidata.org/wiki/Q137017900) — states nothing beyond the name
 - [ ] **Eli Schwartz** (2 papers with you) — [their ORCID record](https://orcid.org/0000-0002-3393-8666) states nothing public beyond the name
-  - [Q30570617](https://www.wikidata.org/wiki/Q30570617) — economist · studied at Brown University, University of Connecticut, University of Denver
   - [Q110505456](https://www.wikidata.org/wiki/Q110505456) — Author and Consultant · writer
 - [ ] **Joseph Shtok** (2 papers with you) — [their ORCID record](https://orcid.org/0000-0002-4083-542X) states nothing public beyond the name
   - [Q102407752](https://www.wikidata.org/wiki/Q102407752) — Ph.D. Technion-Israel Institute of Technology 2012 · studied at Technion – Israel Institute of Technology
@@ -230,7 +228,6 @@ wikidata_people:
   - [Q102308764](https://www.wikidata.org/wiki/Q102308764) — Ph.D. Clemson University 2006
   - [Q102399878](https://www.wikidata.org/wiki/Q102399878) — states nothing beyond the name
   - [Q103300352](https://www.wikidata.org/wiki/Q103300352) — Ph.D. University of Toronto 2016
-  - [Q109859447](https://www.wikidata.org/wiki/Q109859447) — states nothing beyond the name
   - [Q120718843](https://www.wikidata.org/wiki/Q120718843) — academic and researcher · university teacher · 6 papers including "A Study of the Monohydrate and Dihydrate Complexes of Perfluoropropionic Acid Using Chirped-Pulse Fourier Transform Microwave (CP-FTMW) Spectroscopy"
   - [Q45424520](https://www.wikidata.org/wiki/Q45424520) — Tang dynasty person CBDB=33626
   - [Q5213883](https://www.wikidata.org/wiki/Q5213883) — Taiwanese-American film producer (born 1973) · studied at Harvard Business School, Harvard University, The Wharton School
@@ -243,8 +240,6 @@ wikidata_people:
   - [Q102376718](https://www.wikidata.org/wiki/Q102376718) — Ph.D. Rutgers University, New Brunswick 2003
   - [Q45403146](https://www.wikidata.org/wiki/Q45403146) — Song dynasty person (CBDB = 22803)
   - [Q45419816](https://www.wikidata.org/wiki/Q45419816) — Tang dynasty person CBDB=31500
-  - [Q45481252](https://www.wikidata.org/wiki/Q45481252) — Tang dynasty person CBDB = 177576
-  - [Q45647788](https://www.wikidata.org/wiki/Q45647788) — Tang dynasty person CBDB = 185733
   - [Q113070588](https://www.wikidata.org/wiki/Q113070588) — musical artist · musician
 - [ ] **Yuting Lin** (2 papers with you) — [their ORCID record](https://orcid.org/0000-0002-4712-5527) states Shenzhen University · "We agree completely with the reviewer, but … ”: Stance…" · "Correcting the scientific record"
   - [Q117414502](https://www.wikidata.org/wiki/Q117414502) — nurse, graduated from University of Washington with a Ph.D. in Nursing · 1 paper including "Itching and parental guilt: parent responses to children's symptoms following unintentional burn injuries"
