@@ -47,7 +47,7 @@ papers:
     \  = {Fri, 01 Mar 2024 00:00:00 +0100},\n  biburl       = {https://dblp.org/rec/conf/nips/YadavTCRB23.bib},\n\
     \  bibsource    = {dblp computer science bibliography, https://dblp.org}\n}"
   s2_author_record: '41019330'
-  citations: 905
+  citations: 907
   acl: null
   s2_corpus_id: 259064039
   arxiv_journal_ref: null
@@ -59,7 +59,7 @@ papers:
   hf_claimed_authors: 3
   hf_claimed_by_me: true
   hf_github_repo: https://github.com/prateeky2806/ties-merging
-  hf_github_stars: 220
+  hf_github_stars: 221
   hf_n_models: 1000
   hf_n_datasets: 0
   links:
@@ -251,7 +251,7 @@ papers:
     \ for Computational Linguistics\",\n    url = \"https://aclanthology.org/2023.conll-babylm.1\",\n\
     \    doi = \"10.18653/v1/2023.conll-babylm.1\",\n    pages = \"1--34\",\n}"
   s2_author_record: '41019330'
-  citations: 241
+  citations: 242
   acl: null
   s2_corpus_id: 266182457
   arxiv_journal_ref: 2023. In Proceedings of the BabyLM Challenge at the 27th Conference on Computational
@@ -359,7 +359,7 @@ papers:
     \ sensitive and culturally agnostic to enable a more comprehensive and equitable benchmark for evaluating\
     \ language models across diverse linguistic and cultural contexts.\"\n}"
   s2_author_record: '41019330'
-  citations: 193
+  citations: 195
   acl: null
   s2_corpus_id: 274464561
   arxiv_journal_ref: null
@@ -1477,6 +1477,91 @@ papers:
     World Knowledge in Language Models'
   venue_display: TACL
   has_sidecar: true
+- key: yadav2024survey
+  slug: a-survey-on-model-moerging-recycling-and-routing-among-speci
+  title: 'A Survey on Model MoErging: Recycling and Routing Among Specialized Experts for Collaborative
+    Learning'
+  authors:
+  - Prateek Yadav
+  - Colin Raffel
+  - Mohammed Muqeeth
+  - Lucas Caccia
+  - Haokun Liu
+  - Tianlong Chen
+  - Mohit Bansal
+  - Leshem Choshen
+  - Alessandro Sordoni
+  authors_truncated: null
+  year: 2025
+  venue: Transactions on Machine Learning Research
+  type: article
+  doi: 10.48550/arXiv.2408.07057
+  arxiv: '2408.07057'
+  url: https://openreview.net/forum?id=u0azVc9Y0y
+  abstract: The availability of performant pre-trained models has led to a proliferation of fine-tuned
+    expert models that are specialized to a particular domain or task. Model MoErging methods aim to recycle
+    expert models to create an aggregate system with improved performance or generalization. A key component
+    of MoErging methods is the creation of a router that decides which expert model(s) to use for a particular
+    input or application. The promise, effectiveness, and large design space of MoErging has spurred the
+    development of many new methods over the past few years. This rapid pace of development has made it
+    challenging to compare different MoErging methods, which are rarely compared to one another and are
+    often validated in different experimental setups. To remedy such gaps, we present a comprehensive
+    survey of MoErging methods that includes a novel taxonomy for cataloging key design choices and clarifying
+    suitable applications for each method. Apart from surveying MoErging research, we inventory software
+    tools and applications that make use of MoErging. We additionally discuss related fields of study
+    such as model merging, multitask learning, and mixture-of-experts models. Taken as a whole, our survey
+    provides a unified overview of existing MoErging methods and creates a solid foundation for future
+    work in this burgeoning field.
+  bibtex: '@article{yadav2024survey,
+
+    title={A Survey on Model MoErging: Recycling and Routing Among Specialized Experts for Collaborative
+    Learning},
+
+    author={Prateek Yadav and Colin Raffel and Mohammed Muqeeth and Lucas Caccia and Haokun Liu and Tianlong
+    Chen and Mohit Bansal and Leshem Choshen and Alessandro Sordoni},
+
+    journal={Transactions on Machine Learning Research},
+
+    issn={2835-8856},
+
+    year={2025},
+
+    url={https://openreview.net/forum?id=u0azVc9Y0y},
+
+    note={Survey Certification}
+
+    }'
+  s2_author_record: '41019330'
+  citations: 70
+  acl: null
+  s2_corpus_id: 271859936
+  arxiv_journal_ref: null
+  arxiv_doi: null
+  arxiv_comment: 26 pages
+  arxiv_html: true
+  hf_indexed: true
+  hf_upvotes: 2
+  hf_claimed_authors: 4
+  hf_claimed_by_me: true
+  hf_github_repo: https://github.com/pclucas14/awesome-moerging
+  hf_github_stars: 5
+  hf_n_models: 0
+  hf_n_datasets: 0
+  links:
+    arxiv: https://arxiv.org/abs/2408.07057
+    arxiv_pdf: https://arxiv.org/pdf/2408.07057
+    html: https://arxiv.org/html/2408.07057
+    html_source: arxiv
+    huggingface: https://huggingface.co/papers/2408.07057
+    alphaxiv: https://www.alphaxiv.org/abs/2408.07057
+    doi: https://doi.org/10.48550/arXiv.2408.07057
+    semantic_scholar: https://www.semanticscholar.org/paper/271859936
+    publisher: https://openreview.net/forum?id=u0azVc9Y0y
+    code: https://github.com/pclucas14/awesome-moerging
+  title_display: 'A Survey on Model MoErging: Recycling and Routing Among Specialized Experts for Collaborative
+    Learning'
+  venue_display: TMLR
+  has_sidecar: true
 - key: hu-etal-2024-findings
   slug: findings-of-the-second-babylm-challenge-sample-efficient-pre
   title: 'Findings of the Second {B}aby{LM} Challenge: Sample-Efficient Pretraining on Developmentally
@@ -1790,91 +1875,6 @@ papers:
     code: https://github.com/borgr/DORA
   title_display: 'DORA The Explorer: Directed Outreaching Reinforcement Action-Selection'
   venue_display: ICLR 2018
-  has_sidecar: true
-- key: yadav2024survey
-  slug: a-survey-on-model-moerging-recycling-and-routing-among-speci
-  title: 'A Survey on Model MoErging: Recycling and Routing Among Specialized Experts for Collaborative
-    Learning'
-  authors:
-  - Prateek Yadav
-  - Colin Raffel
-  - Mohammed Muqeeth
-  - Lucas Caccia
-  - Haokun Liu
-  - Tianlong Chen
-  - Mohit Bansal
-  - Leshem Choshen
-  - Alessandro Sordoni
-  authors_truncated: null
-  year: 2025
-  venue: Transactions on Machine Learning Research
-  type: article
-  doi: 10.48550/arXiv.2408.07057
-  arxiv: '2408.07057'
-  url: https://openreview.net/forum?id=u0azVc9Y0y
-  abstract: The availability of performant pre-trained models has led to a proliferation of fine-tuned
-    expert models that are specialized to a particular domain or task. Model MoErging methods aim to recycle
-    expert models to create an aggregate system with improved performance or generalization. A key component
-    of MoErging methods is the creation of a router that decides which expert model(s) to use for a particular
-    input or application. The promise, effectiveness, and large design space of MoErging has spurred the
-    development of many new methods over the past few years. This rapid pace of development has made it
-    challenging to compare different MoErging methods, which are rarely compared to one another and are
-    often validated in different experimental setups. To remedy such gaps, we present a comprehensive
-    survey of MoErging methods that includes a novel taxonomy for cataloging key design choices and clarifying
-    suitable applications for each method. Apart from surveying MoErging research, we inventory software
-    tools and applications that make use of MoErging. We additionally discuss related fields of study
-    such as model merging, multitask learning, and mixture-of-experts models. Taken as a whole, our survey
-    provides a unified overview of existing MoErging methods and creates a solid foundation for future
-    work in this burgeoning field.
-  bibtex: '@article{yadav2024survey,
-
-    title={A Survey on Model MoErging: Recycling and Routing Among Specialized Experts for Collaborative
-    Learning},
-
-    author={Prateek Yadav and Colin Raffel and Mohammed Muqeeth and Lucas Caccia and Haokun Liu and Tianlong
-    Chen and Mohit Bansal and Leshem Choshen and Alessandro Sordoni},
-
-    journal={Transactions on Machine Learning Research},
-
-    issn={2835-8856},
-
-    year={2025},
-
-    url={https://openreview.net/forum?id=u0azVc9Y0y},
-
-    note={Survey Certification}
-
-    }'
-  s2_author_record: '41019330'
-  citations: 69
-  acl: null
-  s2_corpus_id: 271859936
-  arxiv_journal_ref: null
-  arxiv_doi: null
-  arxiv_comment: 26 pages
-  arxiv_html: true
-  hf_indexed: true
-  hf_upvotes: 2
-  hf_claimed_authors: 4
-  hf_claimed_by_me: true
-  hf_github_repo: https://github.com/pclucas14/awesome-moerging
-  hf_github_stars: 5
-  hf_n_models: 0
-  hf_n_datasets: 0
-  links:
-    arxiv: https://arxiv.org/abs/2408.07057
-    arxiv_pdf: https://arxiv.org/pdf/2408.07057
-    html: https://arxiv.org/html/2408.07057
-    html_source: arxiv
-    huggingface: https://huggingface.co/papers/2408.07057
-    alphaxiv: https://www.alphaxiv.org/abs/2408.07057
-    doi: https://doi.org/10.48550/arXiv.2408.07057
-    semantic_scholar: https://www.semanticscholar.org/paper/271859936
-    publisher: https://openreview.net/forum?id=u0azVc9Y0y
-    code: https://github.com/pclucas14/awesome-moerging
-  title_display: 'A Survey on Model MoErging: Recycling and Routing Among Specialized Experts for Collaborative
-    Learning'
-  venue_display: TMLR
   has_sidecar: true
 - key: DBLP:conf/acl/Don-YehiyaVRSC23
   slug: cold-fusion-collaborative-descent-for-distributed-multitask
@@ -2491,6 +2491,67 @@ papers:
   title_display: Reference-less Measure of Faithfulness for Grammatical Error Correction
   venue_display: NAACL 2018
   has_sidecar: true
+- key: null
+  slug: babylm-turns-3-call-for-papers-for-the-2025-babylm-workshop
+  title: 'BabyLM Turns 3: Call for papers for the 2025 BabyLM workshop'
+  authors:
+  - Lucas Charpentier
+  - Leshem Choshen
+  - Ryan Cotterell
+  - Mustafa Omer Gul
+  - Michael Hu
+  - Jaap Jumelet
+  - Tal Linzen
+  - Jing Liu
+  - Aaron Mueller
+  - Candace Ross
+  - Raj Sanjay Shah
+  - A. Warstadt
+  - E. Wilcox
+  - Adina Williams
+  year: 2025
+  venue: arXiv.org
+  type: null
+  doi: 10.48550/arXiv.2502.10645
+  arxiv: '2502.10645'
+  url: null
+  abstract: 'BabyLM aims to dissolve the boundaries between cognitive modeling and language modeling.
+    We call for both workshop papers and for researchers to join the 3rd BabyLM competition. As in previous
+    years, we call for participants in the data-efficient pretraining challenge in the general track.
+    This year, we also offer a new track: INTERACTION. This new track encourages interactive behavior,
+    learning from a teacher, and adapting the teaching material to the student. We also call for papers
+    outside the competition in any relevant areas. These include training efficiency, cognitively plausible
+    research, weak model evaluation, and more.'
+  only_in_s2: true
+  s2_author_record: '41019330'
+  citations: 35
+  acl: null
+  s2_corpus_id: 276408398
+  arxiv_journal_ref: null
+  arxiv_doi: null
+  arxiv_comment: 'EMNLP 2025 BabyLM Workshop. arXiv admin note: text overlap with arXiv:2404.06214'
+  arxiv_html: true
+  hf_indexed: true
+  hf_upvotes: 0
+  hf_claimed_authors: 2
+  hf_claimed_by_me: true
+  hf_github_repo: null
+  hf_github_stars: null
+  hf_n_models: 11
+  hf_n_datasets: 0
+  links:
+    arxiv: https://arxiv.org/abs/2502.10645
+    arxiv_pdf: https://arxiv.org/pdf/2502.10645
+    html: https://arxiv.org/html/2502.10645
+    html_source: arxiv
+    huggingface: https://huggingface.co/papers/2502.10645
+    alphaxiv: https://www.alphaxiv.org/abs/2502.10645
+    doi: https://doi.org/10.48550/arXiv.2502.10645
+    semantic_scholar: https://www.semanticscholar.org/paper/276408398
+    project: https://babylm.github.io/
+  title_display: 'BabyLM Turns 3: Call for papers for the 2025 BabyLM workshop'
+  venue_display: arXiv
+  has_sidecar: true
 - key: DBLP:conf/acl/AbendC18a
   slug: automatic-metric-validation-for-grammatical-error-correction
   title: Automatic Metric Validation for Grammatical Error Correction
@@ -2551,67 +2612,6 @@ papers:
   title_display: Automatic Metric Validation for Grammatical Error Correction
   venue_display: ACL 2018
   has_sidecar: true
-- key: null
-  slug: babylm-turns-3-call-for-papers-for-the-2025-babylm-workshop
-  title: 'BabyLM Turns 3: Call for papers for the 2025 BabyLM workshop'
-  authors:
-  - Lucas Charpentier
-  - Leshem Choshen
-  - Ryan Cotterell
-  - Mustafa Omer Gul
-  - Michael Hu
-  - Jaap Jumelet
-  - Tal Linzen
-  - Jing Liu
-  - Aaron Mueller
-  - Candace Ross
-  - Raj Sanjay Shah
-  - A. Warstadt
-  - E. Wilcox
-  - Adina Williams
-  year: 2025
-  venue: arXiv.org
-  type: null
-  doi: 10.48550/arXiv.2502.10645
-  arxiv: '2502.10645'
-  url: null
-  abstract: 'BabyLM aims to dissolve the boundaries between cognitive modeling and language modeling.
-    We call for both workshop papers and for researchers to join the 3rd BabyLM competition. As in previous
-    years, we call for participants in the data-efficient pretraining challenge in the general track.
-    This year, we also offer a new track: INTERACTION. This new track encourages interactive behavior,
-    learning from a teacher, and adapting the teaching material to the student. We also call for papers
-    outside the competition in any relevant areas. These include training efficiency, cognitively plausible
-    research, weak model evaluation, and more.'
-  only_in_s2: true
-  s2_author_record: '41019330'
-  citations: 34
-  acl: null
-  s2_corpus_id: 276408398
-  arxiv_journal_ref: null
-  arxiv_doi: null
-  arxiv_comment: 'EMNLP 2025 BabyLM Workshop. arXiv admin note: text overlap with arXiv:2404.06214'
-  arxiv_html: true
-  hf_indexed: true
-  hf_upvotes: 0
-  hf_claimed_authors: 2
-  hf_claimed_by_me: true
-  hf_github_repo: null
-  hf_github_stars: null
-  hf_n_models: 11
-  hf_n_datasets: 0
-  links:
-    arxiv: https://arxiv.org/abs/2502.10645
-    arxiv_pdf: https://arxiv.org/pdf/2502.10645
-    html: https://arxiv.org/html/2502.10645
-    html_source: arxiv
-    huggingface: https://huggingface.co/papers/2502.10645
-    alphaxiv: https://www.alphaxiv.org/abs/2502.10645
-    doi: https://doi.org/10.48550/arXiv.2502.10645
-    semantic_scholar: https://www.semanticscholar.org/paper/276408398
-    project: https://babylm.github.io/
-  title_display: 'BabyLM Turns 3: Call for papers for the 2025 BabyLM workshop'
-  venue_display: arXiv
-  has_sidecar: true
 - key: wilcox2024bigger
   slug: bigger-is-not-always-better-the-importance-of-human-scale-la
   title: 'Bigger is not always better: The importance of human-scale language modeling for psycholinguistics'
@@ -2659,7 +2659,7 @@ papers:
     \ Cotterell, Ryan and Linzen, Tal},\n  journal={Journal of Memory and Language},\n  volume={144},\n\
     \  pages={104650},\n  year={2025},\n  publisher={Elsevier}\n}"
   s2_author_record: '41019330'
-  citations: 32
+  citations: 33
   acl: null
   s2_corpus_id: 278862573
   links:
@@ -5625,6 +5625,71 @@ papers:
   title_display: 'Global PIQA: Evaluating Commonsense Reasoning Across 100+ Languages and Cultures'
   venue_display: arXiv
   has_sidecar: true
+- key: DBLP:journals/corr/abs-2404-18923
+  slug: holmes-a-benchmark-to-assess-the-linguistic-competence-of-la
+  title: 'Holmes: {A} Benchmark to Assess the Linguistic Competence of Language Models'
+  authors:
+  - Andreas Waldis
+  - Yotam Perlitz
+  - Leshem Choshen
+  - Yufang Hou
+  - Iryna Gurevych
+  authors_truncated: null
+  year: 2024
+  venue: Trans. Assoc. Comput. Linguistics
+  type: article
+  doi: 10.1162/TACL_A_00718
+  arxiv: '2404.18923'
+  url: https://doi.org/10.1162/tacl_a_00718
+  abstract: We introduce Holmes, a new benchmark designed to assess language models (LMs) linguistic competence
+    - their unconscious understanding of linguistic phenomena. Specifically, we use classifier-based probing
+    to examine LMs'internal representations regarding distinct linguistic phenomena (e.g., part-of-speech
+    tagging). As a result, we meet recent calls to disentangle LMs'linguistic competence from other cognitive
+    abilities, such as following instructions in prompting-based evaluations. Composing Holmes, we review
+    over 270 probing studies and include more than 200 datasets to assess syntax, morphology, semantics,
+    reasoning, and discourse phenomena. Analyzing over 50 LMs reveals that, aligned with known trends,
+    their linguistic competence correlates with model size. However, surprisingly, model architecture
+    and instruction tuning also significantly influence performance, particularly in morphology and syntax.
+    Finally, we propose FlashHolmes, a streamlined version that reduces the computation load while maintaining
+    high-ranking precision.
+  bibtex: "@article{DBLP:journals/corr/abs-2404-18923,author       = {Andreas Waldis and\n           \
+    \       Yotam Perlitz and\n                  Leshem Choshen and\n                  Yufang Hou and\n\
+    \                  Iryna Gurevych},\n  title        = {Holmes: {A} Benchmark to Assess the Linguistic\
+    \ Competence of Language Models},\n  journal      = {Trans. Assoc. Comput. Linguistics},\n  volume\
+    \       = {12},\n  year         = {2024},\n  url          = {https://doi.org/10.1162/tacl\\_a\\_00718},\n\
+    \  doi          = {10.1162/TACL\\_A\\_00718},\n  eprinttype    = {arXiv},\n  eprint       = {2404.18923},\n\
+    \  timestamp    = {Tue, 14 Oct 2025 01:00:00 +0200},\n  biburl       = {https://dblp.org/rec/journals/tacl/WaldisWPCCHG24.bib},\n\
+    \  bibsource    = {dblp computer science bibliography, https://dblp.org},\n  pages        = {1616--1647}\n\
+    }"
+  s2_author_record: '41019330'
+  citations: 9
+  acl: null
+  s2_corpus_id: 274625741
+  arxiv_journal_ref: null
+  arxiv_doi: null
+  arxiv_comment: null
+  arxiv_html: true
+  hf_indexed: true
+  hf_upvotes: 0
+  hf_claimed_authors: 3
+  hf_claimed_by_me: true
+  hf_github_repo: null
+  hf_github_stars: null
+  hf_n_models: 0
+  hf_n_datasets: 0
+  links:
+    arxiv: https://arxiv.org/abs/2404.18923
+    arxiv_pdf: https://arxiv.org/pdf/2404.18923
+    html: https://arxiv.org/html/2404.18923
+    html_source: arxiv
+    huggingface: https://huggingface.co/papers/2404.18923
+    alphaxiv: https://www.alphaxiv.org/abs/2404.18923
+    doi: https://doi.org/10.1162/TACL\_A\_00718
+    semantic_scholar: https://www.semanticscholar.org/paper/274625741
+    publisher: https://doi.org/10.1162/tacl\_a\_00718
+  title_display: 'Holmes: A Benchmark to Assess the Linguistic Competence of Language Models'
+  venue_display: TACL
+  has_sidecar: true
 - key: bandel2026generalagentevaluation
   slug: general-agent-evaluation
   title: General Agent Evaluation
@@ -5958,71 +6023,6 @@ papers:
     project: https://llm-efficiency-challenge.github.io/
   title_display: NeurIPS 2023 LLM Efficiency Fine-tuning Competition
   venue_display: arXiv
-  has_sidecar: true
-- key: DBLP:journals/corr/abs-2404-18923
-  slug: holmes-a-benchmark-to-assess-the-linguistic-competence-of-la
-  title: 'Holmes: {A} Benchmark to Assess the Linguistic Competence of Language Models'
-  authors:
-  - Andreas Waldis
-  - Yotam Perlitz
-  - Leshem Choshen
-  - Yufang Hou
-  - Iryna Gurevych
-  authors_truncated: null
-  year: 2024
-  venue: Trans. Assoc. Comput. Linguistics
-  type: article
-  doi: 10.1162/TACL_A_00718
-  arxiv: '2404.18923'
-  url: https://doi.org/10.1162/tacl_a_00718
-  abstract: We introduce Holmes, a new benchmark designed to assess language models (LMs) linguistic competence
-    - their unconscious understanding of linguistic phenomena. Specifically, we use classifier-based probing
-    to examine LMs'internal representations regarding distinct linguistic phenomena (e.g., part-of-speech
-    tagging). As a result, we meet recent calls to disentangle LMs'linguistic competence from other cognitive
-    abilities, such as following instructions in prompting-based evaluations. Composing Holmes, we review
-    over 270 probing studies and include more than 200 datasets to assess syntax, morphology, semantics,
-    reasoning, and discourse phenomena. Analyzing over 50 LMs reveals that, aligned with known trends,
-    their linguistic competence correlates with model size. However, surprisingly, model architecture
-    and instruction tuning also significantly influence performance, particularly in morphology and syntax.
-    Finally, we propose FlashHolmes, a streamlined version that reduces the computation load while maintaining
-    high-ranking precision.
-  bibtex: "@article{DBLP:journals/corr/abs-2404-18923,author       = {Andreas Waldis and\n           \
-    \       Yotam Perlitz and\n                  Leshem Choshen and\n                  Yufang Hou and\n\
-    \                  Iryna Gurevych},\n  title        = {Holmes: {A} Benchmark to Assess the Linguistic\
-    \ Competence of Language Models},\n  journal      = {Trans. Assoc. Comput. Linguistics},\n  volume\
-    \       = {12},\n  year         = {2024},\n  url          = {https://doi.org/10.1162/tacl\\_a\\_00718},\n\
-    \  doi          = {10.1162/TACL\\_A\\_00718},\n  eprinttype    = {arXiv},\n  eprint       = {2404.18923},\n\
-    \  timestamp    = {Tue, 14 Oct 2025 01:00:00 +0200},\n  biburl       = {https://dblp.org/rec/journals/tacl/WaldisWPCCHG24.bib},\n\
-    \  bibsource    = {dblp computer science bibliography, https://dblp.org},\n  pages        = {1616--1647}\n\
-    }"
-  s2_author_record: '41019330'
-  citations: 8
-  acl: null
-  s2_corpus_id: 274625741
-  arxiv_journal_ref: null
-  arxiv_doi: null
-  arxiv_comment: null
-  arxiv_html: true
-  hf_indexed: true
-  hf_upvotes: 0
-  hf_claimed_authors: 3
-  hf_claimed_by_me: true
-  hf_github_repo: null
-  hf_github_stars: null
-  hf_n_models: 0
-  hf_n_datasets: 0
-  links:
-    arxiv: https://arxiv.org/abs/2404.18923
-    arxiv_pdf: https://arxiv.org/pdf/2404.18923
-    html: https://arxiv.org/html/2404.18923
-    html_source: arxiv
-    huggingface: https://huggingface.co/papers/2404.18923
-    alphaxiv: https://www.alphaxiv.org/abs/2404.18923
-    doi: https://doi.org/10.1162/TACL\_A\_00718
-    semantic_scholar: https://www.semanticscholar.org/paper/274625741
-    publisher: https://doi.org/10.1162/tacl\_a\_00718
-  title_display: 'Holmes: A Benchmark to Assess the Linguistic Competence of Language Models'
-  venue_display: TACL
   has_sidecar: true
 - key: choshen2024navigating
   slug: navigating-the-modern-evaluation-landscape-considerations-in

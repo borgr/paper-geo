@@ -58,8 +58,8 @@ that gets declined, and writing the article yourself is the spam case. They
 become checks in section 2 if someone else ever writes about them.
 
 - tinyBenchmarks — 297 citations
-- BabyLM Challenge — 241 citations
-- Global-MMLU — 193 citations
+- BabyLM Challenge — 242 citations
+- Global-MMLU — 195 citations
 - PkE — 127 citations
 - peakiness effect — 127 citations
 - DisentQA — 122 citations
@@ -68,17 +68,17 @@ become checks in section 2 if someone else ever writes about them.
 - BlendNet — 72 citations
 - EWoK — 71 citations
 - Flash-HELM — 70 citations
+- MoErging — 70 citations
 - Retrospective Labeling — 70 citations
-- MoErging — 69 citations
 - ColD Fusion — 64 citations
 - TP-agreement — 64 citations
 - NumeroLogic — 47 citations
 - LCB — 38 citations
 - Low Coverage Bias — 38 citations
 - USim — 36 citations
+- BabyLM Interaction track — 35 citations
 - MAEGE — 35 citations
-- BabyLM Interaction track — 34 citations
-- BabyLM — 32 citations
+- BabyLM — 33 citations
 - DCT — 29 citations
 - Deductive Closure Training — 29 citations
 - JD-Diag — 29 citations

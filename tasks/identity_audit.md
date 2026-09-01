@@ -22,8 +22,9 @@ which is why it can be re-run — the fixes all need one.
 | Wikidata paper items | 113 of 114 | optional |
 | HF pages indexed | 106 of 106 | ok |
 | HF pages claimed | 105 of 106 claimable | **fix** |
-| arXiv records misspelling your name | 0 of 106 read | ok |
-| arXiv records omitting you | 0 of 106 read | ok |
+| arXiv records misspelling your name | 0 of 6 read | **fix** |
+| arXiv records omitting you | 0 of 6 read | **fix** |
+| arXiv records it would not serve | 100 | retried next run |
 | ORCID works we cannot place | 2 | **check** |
 | ORCID works ORCID already merged | 6 | optional |
 | Semantic Scholar records | 2 | **fix** |

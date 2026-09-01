@@ -61,7 +61,7 @@ No request is made on your behalf at any point -- code reads the file you saved.
 Highest citations first, so stopping early still helps most. A commented line is a
 field the listing already has -- shown so you can check it rather than retype it.
 
-### 1. TIES-Merging: Resolving Interference When Merging Models — cited 905
+### 1. TIES-Merging: Resolving Interference When Merging Models — cited 907
 
 <https://arxiv.org/abs/2306.01708> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -79,7 +79,7 @@ Journal-ref:          Forty-first International Conference on Machine Learning, 
 Journal version DOI:  (none minted — leave blank)
 ```
 
-### 3. Global MMLU: Understanding and Addressing Cultural and Linguistic Biases in Multilingual Evaluation — cited 193
+### 3. Global MMLU: Understanding and Addressing Cultural and Linguistic Biases in Multilingual Evaluation — cited 195
 
 <https://arxiv.org/abs/2412.03304> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -169,7 +169,16 @@ Journal-ref:          Trans. Assoc. Comput. Linguistics 13 (2025) 1245-1270
 Journal version DOI:  10.1162/TACL.A.38
 ```
 
-### 13. Findings of the Second BabyLM Challenge: Sample-Efficient Pretraining on Developmentally Plausible Corpora — cited 70
+### 13. A Survey on Model MoErging: Recycling and Routing Among Specialized Experts for Collaborative Learning — cited 70
+
+<https://arxiv.org/abs/2408.07057> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
+
+```
+Journal-ref:          Transactions on Machine Learning Research, 2025
+Journal version DOI:  (none minted — leave blank)
+```
+
+### 14. Findings of the Second BabyLM Challenge: Sample-Efficient Pretraining on Developmentally Plausible Corpora — cited 70
 
 <https://arxiv.org/abs/2412.05149> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -178,7 +187,7 @@ Journal-ref:          The 2nd BabyLM Challenge at the 28th Conference on Computa
 Journal version DOI:  (none minted — leave blank)
 ```
 
-### 14. Efficient Benchmarking (of Language Models) — cited 70
+### 15. Efficient Benchmarking (of Language Models) — cited 70
 
 <https://arxiv.org/abs/2308.11696> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -187,7 +196,7 @@ Journal-ref:          Proceedings of the 2024 Conference of the North American C
 Journal version DOI:  10.18653/v1/2024.naacl-long.139
 ```
 
-### 15. Corpus Wide Argument Mining - A Working Solution — cited 70
+### 16. Corpus Wide Argument Mining - A Working Solution — cited 70
 
 <https://arxiv.org/abs/1911.10763> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -196,21 +205,12 @@ Journal version DOI:  10.18653/v1/2024.naacl-long.139
 Journal version DOI:  10.1609/AAAI.V34I05.6270
 ```
 
-### 16. DORA The Explorer: Directed Outreaching Reinforcement Action-Selection — cited 70
+### 17. DORA The Explorer: Directed Outreaching Reinforcement Action-Selection — cited 70
 
 <https://arxiv.org/abs/1804.04012> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
 ```
 Journal-ref:          6th International Conference on Learning Representations, Conference Track Proceedings, 2018
-Journal version DOI:  (none minted — leave blank)
-```
-
-### 17. A Survey on Model MoErging: Recycling and Routing Among Specialized Experts for Collaborative Learning — cited 69
-
-<https://arxiv.org/abs/2408.07057> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
-
-```
-Journal-ref:          Transactions on Machine Learning Research, 2025
 Journal version DOI:  (none minted — leave blank)
 ```
 
@@ -520,22 +520,22 @@ Journal-ref:          Proceedings of the 63rd Annual Meeting of the Association 
 Journal version DOI:  10.18653/v1/2025.acl-demo.17
 ```
 
-### 52. CommonLID: Re-evaluating State-of-the-Art Language Identification Performance on Web Data — cited 8
-
-<https://arxiv.org/abs/2601.18026> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
-
-```
-Journal-ref:          Proceedings of the 64th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 33063-33080, 2026
-Journal version DOI:  10.18653/v1/2026.acl-long.1527
-```
-
-### 53. Holmes: A Benchmark to Assess the Linguistic Competence of Language Models — cited 8
+### 52. Holmes: A Benchmark to Assess the Linguistic Competence of Language Models — cited 9
 
 <https://arxiv.org/abs/2404.18923> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
 ```
 Journal-ref:          Trans. Assoc. Comput. Linguistics 12 (2024) 1616-1647
 Journal version DOI:  10.1162/TACL_A_00718
+```
+
+### 53. CommonLID: Re-evaluating State-of-the-Art Language Identification Performance on Web Data — cited 8
+
+<https://arxiv.org/abs/2601.18026> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
+
+```
+Journal-ref:          Proceedings of the 64th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 33063-33080, 2026
+Journal version DOI:  10.18653/v1/2026.acl-long.1527
 ```
 
 ### 54. Enhancing the Transformer Decoder with Transition-based Syntax — cited 8

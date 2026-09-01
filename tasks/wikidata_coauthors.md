@@ -42,15 +42,15 @@ items for one person, which is a merge rather than a choice.
 research -- footballer, actor, politician -- so the name is a coincidence. An
 item stating no occupation at all is still listed.
 
-- [ ] **905 citations** — TIES-Merging: Resolving Interference When Merging Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029633)
+- [ ] **907 citations** — TIES-Merging: Resolving Interference When Merging Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029633)
       - Mohit Bansal → [Q67386311](https://www.wikidata.org/wiki/Q67386311) — researcher, natural language processing and , [Q92117908](https://www.wikidata.org/wiki/Q92117908) — researcher (ORCID 0000-0002-8403-0316), [Q96127041](https://www.wikidata.org/wiki/Q96127041) — researcher (ORCID 0000-0001-8777-1980) … +2
 - [ ] **297 citations** — tinyBenchmarks: evaluating LLMs with fewer examples — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029634)
       - Yuekai Sun → [Q102433700](https://www.wikidata.org/wiki/Q102433700) — statistician
       - Gongjun Xu → [Q100674149](https://www.wikidata.org/wiki/Q100674149) — researcher
       - Mikhail Yurochkin → [Q103330754](https://www.wikidata.org/wiki/Q103330754) — statistician
 - [ ] **245 citations** — Active Learning for BERT: An Empirical Study — 7 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029635)
-- [ ] **241 citations** — Findings of the BabyLM Challenge: Sample-Efficient Pretraini — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029636)
-- [ ] **193 citations** — Global MMLU: Understanding and Addressing Cultural and Lingu — 11 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029638)
+- [ ] **242 citations** — Findings of the BabyLM Challenge: Sample-Efficient Pretraini — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029636)
+- [ ] **195 citations** — Global MMLU: Understanding and Addressing Cultural and Lingu — 11 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029638)
       - Sebastian Ruder → [Q47488652](https://www.wikidata.org/wiki/Q47488652) — computer scientist
       - Sara Hooker → [Q107742361](https://www.wikidata.org/wiki/Q107742361) — deep learning researcher
 - [ ] **167 citations** — Q²: Evaluating Factual Consistency in Knowledge-Grounded Dia — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029639)
@@ -83,6 +83,7 @@ item stating no occupation at all is still listed.
       - Ekin Akyürek → [Q141203667](https://www.wikidata.org/wiki/Q141203667) — researcher at Massachusetts Institute of Tec
 - [ ] **70 citations** — Corpus Wide Argument Mining - A Working Solution — 9 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029653)
       - Carlos Alzate → [Q102390975](https://www.wikidata.org/wiki/Q102390975) — Ph.D. Katholieke Universiteit Leuven 2009
-- [ ] **70 citations** — Efficient Benchmarking (of Language Models) — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029658)
+- [ ] **70 citations** — A Survey on Model MoErging: Recycling and Routing Among Spec — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029657)
+      - Mohit Bansal → [Q67386311](https://www.wikidata.org/wiki/Q67386311) — researcher, natural language processing and , [Q92117908](https://www.wikidata.org/wiki/Q92117908) — researcher (ORCID 0000-0002-8403-0316), [Q96127041](https://www.wikidata.org/wiki/Q96127041) — researcher (ORCID 0000-0001-8777-1980) … +2
 - … and 87 more papers, same order, in `build/wikidata_coauthors.json`
 
