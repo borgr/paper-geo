@@ -590,88 +590,130 @@ def confirm(c: dict, paper: dict, facts: RepoFacts) -> dict:
 ACCEPT = 6   # release phrase (4) plus any one corroboration, or two corroborations.
 
 
+def evidence_text(p: dict, cfg) -> str:
+    """The paper's full text, behind its abstract and its arXiv comment.
+
+    Reads `build/fulltext/<slug>.txt` when that file has anything in it, and fetches the
+    text otherwise. A fetch that fails costs the full text and not the run.
+    """
+    path = os.path.join(FULLTEXT, p["slug"] + ".txt")
+    text = ""
+    if os.path.exists(path) and os.path.getsize(path) > 0:
+        text = open(path, errors="replace").read()
+    else:
+        # Fetch it rather than fall back to the abstract. The cache is filled by the
+        # drafting step, which is batched by citations, so a paper published last
+        # week is the last one it reaches -- and a new paper is exactly the case
+        # where nobody has linked the repo yet. Cached after the first fetch, so
+        # this costs one request per paper, once, ever.
+        try:
+            text, _ = resolve_fulltext(p, cfg)
+        except Exception as e:                      # noqa: BLE001
+            print(f"  ({p['slug']}: no full text -- {e})", file=sys.stderr)
+    # The abstract is worth appending even when the full text is present: the
+    # extractor sometimes drops the abstract block, and that is where the release
+    # sentence usually lives.
+    return (p.get("abstract") or "") + "\n" + str(p.get("arxiv_comment") or "") \
+        + "\n" + text
+
+
+def several_repos(cands: list[dict], top: dict) -> bool:
+    """True when the paper released more than one repo.
+
+    Which of two released repos is *the* code link is a judgment call about what a
+    reader wants first -- the BabyLM findings paper released a preprocessor, an
+    evaluation pipeline and a submissions archive. Deciding it by score is guessing
+    with a number attached, so two repos means review.
+
+    Two tells: two release sentences, or two live repos under one owner. The second
+    catches what the first misses -- BabyLM names four `babylm/*` repos and writes a
+    release sentence for one of them.
+    """
+    owners: dict[str, int] = {}
+    for c in cands:
+        if c.get("exists") and c["score"] >= 0:
+            owners[c["repo"].split("/")[0]] = \
+                owners.get(c["repo"].split("/")[0], 0) + 1
+    return (sum(1 for c in cands if c.get("release") and c.get("exists")) > 1
+            or owners.get(top["repo"].split("/")[0], 0) > 1)
+
+
+def repo_verdict(p: dict, text: str, facts: RepoFacts) -> tuple[str, list[dict]]:
+    """A verdict on the paper's repo, and every candidate best-first.
+
+    Only the best four are confirmed against GitHub, so a fifth candidate is ranked on
+    the paper's own evidence alone. "accept" needs a live repo at ACCEPT or better, two
+    clear of the runner-up, and no sign of a second released repo. "review" is any live
+    repo scoring above nothing, and "none" is the rest.
+    """
+    cands = candidates(p, text)
+    for c in cands[:4]:
+        confirm(c, p, facts)
+    cands.sort(key=lambda c: -c["score"])
+    top = cands[0] if cands else None
+    if top and top["score"] >= ACCEPT and top.get("exists"):
+        runner = cands[1]["score"] if len(cands) > 1 else -99
+        multi = several_repos(cands, top)
+        verdict = "accept" if top["score"] - runner >= 2 and not multi else "review"
+        if multi:
+            top["why"].append("the paper releases more than one repo -- "
+                              "which is the code link is yours to pick")
+        return verdict, cands
+    if top and top.get("exists") and top["score"] > 0:
+        return "review", cands
+    return "none", cands
+
+
+def page_verdict(p: dict, text: str, repo_url: str | None,
+                 pages: PageFacts) -> tuple[str, list[dict]]:
+    """A verdict on the paper's project page, and every candidate best-first.
+
+    Decided on the same thresholds as the repo and independently of it. A paper can have
+    a page and no repo, which is most of the reason this half exists. `repo_url` is the
+    repo this run settled on, which is evidence for a page and not a requirement.
+    """
+    pc = page_candidates(p, text, repo_url)
+    for c in pc[:3]:
+        confirm_page(c, p, pages)
+    pc.sort(key=lambda c: -c["score"])
+    ptop = pc[0] if pc else None
+    if ptop and ptop.get("exists") and ptop["score"] >= ACCEPT:
+        prunner = pc[1]["score"] if len(pc) > 1 else -99
+        sibs, quiet = hf_siblings(ptop["page"], name_tokens(title_of(p)))
+        if sibs:
+            ptop["siblings"] = sibs[:4]
+            ptop["why"].append(f"the same owner publishes {len(sibs)} more for this "
+                               f"paper -- which is the page is yours to pick")
+        elif quiet:
+            # Held, because `--apply` POSTs an accepted page to Hugging Face and this
+            # is the only check that a multi-part release is not being published as
+            # one part of itself.
+            ptop["why"].append(f"Hugging Face would not list the owner's other "
+                               f"releases ({quiet}) -- held, retried next run")
+        return ("accept" if ptop["score"] - prunner >= 2 and not sibs and not quiet
+                else "review"), pc
+    if ptop and ptop.get("exists") and ptop["score"] > 0:
+        return "review", pc
+    return "none", pc
+
+
 def deduce(papers: list[dict], only: str | None, facts: RepoFacts,
            pages: PageFacts) -> dict:
+    """Every paper's repo and project-page verdicts, keyed by slug.
+
+    Each entry carries the paper, both verdicts and both candidate lists. `only` limits
+    the run to one slug.
+    """
     cfg = load_config()
     out = {}
     for p in papers:
         if only and p["slug"] != only:
             continue
-        path = os.path.join(FULLTEXT, p["slug"] + ".txt")
-        text = ""
-        if os.path.exists(path) and os.path.getsize(path) > 0:
-            text = open(path, errors="replace").read()
-        else:
-            # Fetch it rather than fall back to the abstract. The cache is filled by the
-            # drafting step, which is batched by citations, so a paper published last
-            # week is the last one it reaches -- and a new paper is exactly the case
-            # where nobody has linked the repo yet. Cached after the first fetch, so
-            # this costs one request per paper, once, ever.
-            try:
-                text, _ = resolve_fulltext(p, cfg)
-            except Exception as e:                      # noqa: BLE001
-                print(f"  ({p['slug']}: no full text -- {e})", file=sys.stderr)
-        # The abstract is worth appending even when the full text is present: the
-        # extractor sometimes drops the abstract block, and that is where the release
-        # sentence usually lives.
-        text = (p.get("abstract") or "") + "\n" + str(p.get("arxiv_comment") or "") \
-            + "\n" + text
-        cands = candidates(p, text)
-        for c in cands[:4]:
-            confirm(c, p, facts)
-        cands.sort(key=lambda c: -c["score"])
+        text = evidence_text(p, cfg)
+        verdict, cands = repo_verdict(p, text, facts)
         top = cands[0] if cands else None
-        verdict = "none"
-        if top and top["score"] >= ACCEPT and top.get("exists"):
-            runner = cands[1]["score"] if len(cands) > 1 else -99
-            # Which of two released repos is *the* code link is a judgment call about what a
-            # reader wants first -- the BabyLM findings paper released a preprocessor, an
-            # evaluation pipeline and a submissions archive. Deciding it by score is guessing
-            # with a number attached, so two repos means review.
-            #
-            # Two tells: two release sentences, or two live repos under one owner. The second
-            # catches what the first misses -- BabyLM names four `babylm/*` repos and writes a
-            # release sentence for one of them.
-            owners: dict[str, int] = {}
-            for c in cands:
-                if c.get("exists") and c["score"] >= 0:
-                    owners[c["repo"].split("/")[0]] = \
-                        owners.get(c["repo"].split("/")[0], 0) + 1
-            multi = (sum(1 for c in cands if c.get("release") and c.get("exists")) > 1
-                     or owners.get(top["repo"].split("/")[0], 0) > 1)
-            verdict = "accept" if top["score"] - runner >= 2 and not multi else "review"
-            if multi:
-                top["why"].append("the paper releases more than one repo -- "
-                                  "which is the code link is yours to pick")
-        elif top and top.get("exists") and top["score"] > 0:
-            verdict = "review"
-        # The project page is decided the same way and independently: a paper can have
-        # a page and no repo, which is most of the reason this half exists.
         repo_url = ("https://github.com/" + top["repo"]) if top else None
-        pc = page_candidates(p, text, repo_url)
-        for c in pc[:3]:
-            confirm_page(c, p, pages)
-        pc.sort(key=lambda c: -c["score"])
-        ptop = pc[0] if pc else None
-        pverdict = "none"
-        if ptop and ptop.get("exists") and ptop["score"] >= ACCEPT:
-            prunner = pc[1]["score"] if len(pc) > 1 else -99
-            sibs, quiet = hf_siblings(
-                ptop["page"], name_tokens(title_of(p)))
-            if sibs:
-                ptop["siblings"] = sibs[:4]
-                ptop["why"].append(f"the same owner publishes {len(sibs)} more for this "
-                                   f"paper -- which is the page is yours to pick")
-            elif quiet:
-                # Held, because `--apply` POSTs an accepted page to Hugging Face and this
-                # is the only check that a multi-part release is not being published as
-                # one part of itself.
-                ptop["why"].append(f"Hugging Face would not list the owner's other "
-                                   f"releases ({quiet}) -- held, retried next run")
-            pverdict = ("accept" if ptop["score"] - prunner >= 2 and not sibs and not quiet
-                        else "review")
-        elif ptop and ptop.get("exists") and ptop["score"] > 0:
-            pverdict = "review"
+        pverdict, pc = page_verdict(p, text, repo_url, pages)
         out[p["slug"]] = {"paper": p, "verdict": verdict, "cands": cands,
                           "page_verdict": pverdict, "pages": pc}
     return out
