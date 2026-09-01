@@ -127,8 +127,23 @@ def _health() -> dict:
         return {}
 
 
+_RUN_FAILS: dict[str, tuple[int, str]] = {}
+
+
+def run_failures() -> list[tuple[str, int, str]]:
+    """Sources that refused a call during this process, most refusals first.
+
+    Each entry is (source, failed calls, the last reason). `health.json` is day-granular,
+    so it cannot answer whether *this* run lost data to an outage -- a source that failed
+    an hour ago and has answered since reads there exactly like one refusing every call
+    now. `collect.refuse_shrink` needs the narrower question answered.
+    """
+    return sorted(((k, n, why) for k, (n, why) in _RUN_FAILS.items()),
+                  key=lambda r: -r[1])
+
+
 def note_fetch(url: str, ok: bool, why: str = "") -> None:
-    """Record that a source answered, or did not. See `health_report`.
+    """Record that a source answered, or did not. See `health_report` and `run_failures`.
 
     Kept in `build/` -- derived, gitignored, rebuilt from nothing after a clean clone. An
     observed fact about one machine's network has no business in a committed file.
@@ -138,6 +153,8 @@ def note_fetch(url: str, ok: bool, why: str = "") -> None:
     responses and both otherwise read as "never once answered".
     """
     h, key, today = _health(), source_key(url), time.strftime("%Y-%m-%d")
+    if not ok:
+        _RUN_FAILS[key] = (_RUN_FAILS.get(key, (0, ""))[0] + 1, why)
     r = h.setdefault(key, {"ok": 0, "fail": 0, "first_seen": today,
                            "last_ok": None, "last_fail": None})
     r["ok" if ok else "fail"] += 1

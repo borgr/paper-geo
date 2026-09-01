@@ -66,6 +66,29 @@ DOCS = ("README.md", "SKILL.md", "RUN.md", "BACKLOG.md", "CLAUDE.md",
         "docs/RULES.md", "docs/SIDECAR.md", "docs/SETUP.md", "docs/EVIDENCE.md")
 
 
+_LEDGER = {}
+
+
+def setUpModule():
+    """Point the health ledger at a scratch file for the whole suite.
+
+    `common.note_fetch` writes through the module-level `common.HEALTH`, so any test that
+    reaches a fetch path with only `urlopen` mocked records its fake failures in the real
+    `build/health.json`. That ledger is what `health_report` reads to decide a source is
+    dead, and a test's invented 429s are indistinguishable there from a live outage.
+    """
+    import common
+    _LEDGER["dir"] = tempfile.mkdtemp()
+    _LEDGER["was"] = common.HEALTH
+    common.HEALTH = os.path.join(_LEDGER["dir"], "health.json")
+
+
+def tearDownModule():
+    import common
+    common.HEALTH = _LEDGER["was"]
+    shutil.rmtree(_LEDGER["dir"], ignore_errors=True)
+
+
 def modules() -> list[tuple[str, str]]:
     """(import name, path) for every module in the program."""
     out = [("update", os.path.join(ROOT, "update.py"))]
@@ -8141,6 +8164,77 @@ class TestAFilledInFidelityRunIsNotOverwritten(unittest.TestCase):
             f.write("not json at all")
         self.assertEqual(0, fidelity.answered(junk))
         self.assertEqual(0, fidelity.answered(os.path.join(d, "absent.json")))
+
+
+class TestTheShrinkGuardNamesWhatWentDown(LedgerCase):
+    """`collect.refuse_shrink` stops a run that lost data, and says which source lost it.
+
+    Live: Semantic Scholar's author record went down mid-run, arXiv ids fell 106 -> 48
+    and abstracts 113 -> 88, and the guard's advice was "check the '!' lines above". That
+    one line was forty lines up the scroll by then, and the reader who cannot find it has
+    no way to tell an outage from a real shrink -- which is the difference between
+    rerunning and `--allow-shrink`, and `--allow-shrink` on an outage is permanent.
+    """
+
+    def _mods(self):
+        """`collect` and `common`, with the per-run tally empty."""
+        import collect
+        self.common._RUN_FAILS.clear()
+        self.addCleanup(self.common._RUN_FAILS.clear)
+        return collect, self.common
+
+    def _refuse(self, collect, allow=False):
+        """The guard's exit message over a corpus that lost half its arXiv ids."""
+        was = [{"slug": str(i), "arxiv": "2501.0000%d" % i, "title": "t"} for i in range(30)]
+        now = [dict(p, arxiv=None) for p in was]
+        with self.assertRaises(SystemExit) as e:
+            collect.refuse_shrink(was, now, allow)
+        return str(e.exception)
+
+    def test_a_failed_source_is_named_with_its_count(self):
+        collect, common = self._mods()
+        for i in (1, 2):
+            common.note_fetch("https://api.semanticscholar.org/graph/v1/author/%d" % i,
+                              False, "429")
+        common.note_fetch("https://api.semanticscholar.org/graph/v1/paper/batch", False, "503")
+        common.note_fetch("https://export.arxiv.org/api/query", True)
+        out = self._refuse(collect)
+        # The whole rendered line, both ways round: a count that does not accumulate and a
+        # plural that does not agree both read as a plausible message and say the wrong thing.
+        self.assertIn("  api.semanticscholar.org/graph/v1/author/* -- 2 failed calls, last 429",
+                      out)
+        self.assertIn("  api.semanticscholar.org/graph/v1/paper/batch -- 1 failed call, last 503",
+                      out)
+        self.assertNotIn("export.arxiv.org", out, "a source that answered was blamed")
+
+    def test_a_clean_run_says_so_rather_than_blaming_the_network(self):
+        """The branch that matters most, because it is the one where --allow-shrink is right."""
+        collect, _ = self._mods()
+        out = self._refuse(collect)
+        self.assertIn("not an outage", out)
+        self.assertIn("--allow-shrink", out)
+
+    def test_the_flag_lets_the_write_through(self):
+        collect, _ = self._mods()
+        was = [{"slug": str(i), "arxiv": "2501.0000%d" % i} for i in range(30)]
+        collect.refuse_shrink(was, [dict(p, arxiv=None) for p in was], True)
+
+    def test_a_success_does_not_clear_the_failure(self):
+        """A source that failed 58 calls and answered twice is exactly the live case."""
+        collect, common = self._mods()
+        common.note_fetch("https://api.semanticscholar.org/graph/v1/author/1", False, "429")
+        common.note_fetch("https://api.semanticscholar.org/graph/v1/author/1", True)
+        self.assertEqual([("api.semanticscholar.org/graph/v1/author/*", 1, "429")],
+                         common.run_failures())
+        self.assertIn("api.semanticscholar.org/graph/v1/author/*", self._refuse(collect))
+
+    def test_the_worst_source_is_first(self):
+        collect, common = self._mods()
+        for _ in range(3):
+            common.note_fetch("https://api.crossref.org/works", False, "503")
+        common.note_fetch("https://api.openalex.org/works", False, "429")
+        self.assertEqual([("api.crossref.org/works", 3, "503"),
+                          ("api.openalex.org/works", 1, "429")], common.run_failures())
 
 
 if __name__ == "__main__":

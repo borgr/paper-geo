@@ -31,7 +31,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (ARXIV_NS, BUILD, DATA, ROOT, arxiv_id, authors_truncated,  # noqa: E402
                     clean_bibtex, clean_latex, get, get_json, get_status, is_preprint_venue,
                     load_config, name_match, norm_title, parse_bibtex, read_overrides, read_yaml,
-                    replied, short_venue, slugify, split_authors, write_json, write_yaml)
+                    replied, run_failures, short_venue, slugify, split_authors, write_json,
+                    write_yaml)
 # The only OpenReview reader in the repo. Imported rather than reimplemented because the
 # filters are the load-bearing part -- a strict title match, an author list, and a venue
 # that is not a withdrawn or still-under-review submission -- and a second copy of them
@@ -1249,6 +1250,26 @@ def baseline_of(papers_path: str, papers: list[dict]) -> list[dict]:
     return baseline
 
 
+def _shrink_cause() -> list[str]:
+    """Whether a source refused a call during this run, which is the whole diagnosis.
+
+    A source that went down mid-run printed its `!` line forty lines further up the
+    scroll, and the reader would have to find it to tell an outage from a real shrink.
+    Those are the two branches below and they want opposite responses.
+    """
+    fails = run_failures()
+    if not fails:
+        return ["Every source answered every call this run, so this is not an outage. A",
+                "shrink this size is then either real or a bug in a merge, and the coverage",
+                "lines above say which fields lost the data."]
+    return ["That is what a source outage looks like. These sources refused a call during",
+            "this run, worst first, and one of them is where the missing data comes from:",
+            *(f"  {k} -- {n} failed call{'s' * (n != 1)}" + (f", last {w}" if w else "")
+              for k, n, w in fails),
+            "",
+            "Rerun. A source still refusing on the next run is the thing to fix."]
+
+
 def refuse_shrink(baseline: list[dict], papers: list[dict], allow: bool) -> None:
     """Report coverage against the last commit, and exit on a drop `allow` does not cover."""
     report, alarms = coverage_alarms(baseline, papers)
@@ -1259,9 +1280,9 @@ def refuse_shrink(baseline: list[dict], papers: list[dict], allow: bool) -> None
         sys.exit("\n".join([
             "", "REFUSING TO WRITE -- this run has much less data than the last commit:",
             *(f"  {a}" for a in alarms), "",
-            "That is what a source outage looks like, and writing would make the loss",
-            "permanent on the next commit. Check the '!' lines above for a failed fetch",
-            "and rerun. If the shrink is real (a big merge, papers dropped on purpose):",
+            *_shrink_cause(), "",
+            "Writing would make the loss permanent on the next commit. If the shrink is",
+            "real (a big merge, papers dropped on purpose):",
             "  python scripts/collect.py --allow-shrink", ""]))
 
 
