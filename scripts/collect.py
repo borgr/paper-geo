@@ -732,6 +732,20 @@ def join_near_titles(papers: list[dict], norms: list[str], g: Groups) -> int:
     return flagged
 
 
+def fold_into(base: dict, m: dict) -> None:
+    """Fill base's empty fields from m, in place, taking the larger citation count.
+
+    An empty value never overwrites a filled one, whichever record it came from.
+    """
+    for k, v in m.items():
+        if v in (None, "", [], {}):
+            continue
+        if base.get(k) in (None, "", [], {}):
+            base[k] = v
+        elif k == "citations":
+            base[k] = max(base[k] or 0, v or 0)
+
+
 def merge_group(members: list[dict], want_title: set[str]) -> dict:
     """One record out of a group of duplicates.
 
@@ -747,13 +761,7 @@ def merge_group(members: list[dict], want_title: set[str]) -> dict:
     pick = [m for m in pool if norm_title(m.get("title")) in want_title]
     base = dict(max(pick or pool, key=lambda m: len(m.get("venue") or "")))
     for m in members:
-        for k, v in m.items():
-            if v in (None, "", [], {}):
-                continue
-            if base.get(k) in (None, "", [], {}):
-                base[k] = v
-            elif k == "citations":
-                base[k] = max(base[k] or 0, v or 0)
+        fold_into(base, m)
     base["merged_from"] = sorted({m["key"] for m in members if m.get("key")})
     return base
 
@@ -782,19 +790,16 @@ def dedupe(papers: list[dict], prefer: list[str] | None = None) -> tuple[list[di
     return merged_out, n_merged, flagged
 
 
-def apply_overrides(papers: list[dict], ov: dict) -> list[dict]:
-    """Apply data/overrides.yaml: force merges/splits, drops, field fixes.
+def force_merge(papers: list[dict], groups: list[list[str]]) -> set[int]:
+    """Fold each group of titles into the first, in place. Returns the absorbed records' ids.
 
-    Runs after dedupe so it can override both what dedupe merged and what it
-    refused to merge. Without this, every rerun would re-flag the same pairs and
-    re-introduce the same known-bad records.
+    A group names titles a human decided are one paper. The first one's record is the one
+    that survives, so it keeps the slug and every page heading, and a group naming fewer
+    than two records that are actually here is left alone.
     """
-    ov = ov or {}
     by_norm = {norm_title(p.get("title")): p for p in papers}
-
-    # 1. force_merge: fold every listed alias into the first title in the group.
-    dropped: set[int] = set()
-    for group in ov.get("force_merge") or []:
+    absorbed: set[int] = set()
+    for group in groups:
         members = [by_norm.get(norm_title(t)) for t in group]
         # Two aliases can resolve to the SAME record, when dedupe already merged them or a
         # normalization fix folded their titles together. Without de-duplicating by identity
@@ -809,54 +814,29 @@ def apply_overrides(papers: list[dict], ov: dict) -> list[dict]:
             continue
         base = members[0]
         for m in members[1:]:
-            for k, v in m.items():
-                if v in (None, "", [], {}):
-                    continue
-                if base.get(k) in (None, "", [], {}):
-                    base[k] = v
-                elif k == "citations":
-                    base[k] = max(base[k] or 0, v or 0)
-            dropped.add(id(m))
+            fold_into(base, m)
+            absorbed.add(id(m))
         base["merged_from"] = sorted(set(base.get("merged_from") or [])
                                      | {m["key"] for m in members if m.get("key")})
         base["merged_by_override"] = True
+    return absorbed
 
-    # 2. force_distinct: suppress the flag for pairs a human confirmed differ.
-    confirmed = {tuple(sorted(norm_title(t) for t in pair))
-                 for pair in (ov.get("force_distinct") or [])}
+
+def prune_flags(papers: list[dict], keep) -> None:
+    """Drop every review flag `keep(paper, other_title)` rejects, and any list left empty."""
     for p in papers:
-        keep = []
-        for other in p.get("similar_but_distinct") or []:
-            pair = tuple(sorted([norm_title(p.get("title")), norm_title(other)]))
-            if pair not in confirmed:
-                keep.append(other)
-        if p.get("similar_but_distinct"):
-            if keep:
-                p["similar_but_distinct"] = keep
-            else:
-                p.pop("similar_but_distinct")
+        if not p.get("similar_but_distinct"):
+            continue
+        left = [t for t in p["similar_but_distinct"] if keep(p, t)]
+        if left:
+            p["similar_but_distinct"] = left
+        else:
+            p.pop("similar_but_distinct")
 
-    # 3. drop: known metadata damage.
-    drop_norm = {norm_title(t) for t in (ov.get("drop") or [])}
-    out = [p for p in papers
-           if id(p) not in dropped and norm_title(p.get("title")) not in drop_norm]
 
-    # 4. Clear review flags that point at titles no longer present as separate
-    #    records -- a force_merge resolves the flag, so leaving it would keep the
-    #    same pair in the review queue on every future run.
-    live = {norm_title(p.get("title")) for p in out}
-    for p in out:
-        keep = [t for t in (p.get("similar_but_distinct") or [])
-                if norm_title(t) in live]
-        if p.get("similar_but_distinct"):
-            if keep:
-                p["similar_but_distinct"] = keep
-            else:
-                p.pop("similar_but_distinct")
-
-    # 5. fields: per-slug hand corrections, applied last.
-    fields = ov.get("fields") or {}
-    for p in out:
+def apply_fields(papers: list[dict], fields: dict) -> None:
+    """Apply the per-slug hand corrections, naming each corrected field in the record."""
+    for p in papers:
         for k, v in (fields.get(p.get("slug")) or {}).items():
             p[k] = v
             # Sorted set, not append: on the `--offline` path the record already carries
@@ -870,6 +850,38 @@ def apply_overrides(papers: list[dict], ov: dict) -> list[dict]:
             L = p.setdefault("links", {})
             if p["url"] not in L.values():
                 L["publisher"] = p["url"]
+
+
+def apply_overrides(papers: list[dict], ov: dict) -> list[dict]:
+    """Apply data/overrides.yaml: force merges/splits, drops, field fixes.
+
+    Returns the records that survive, the absorbed and the dropped gone. Runs after dedupe
+    so it can override both what dedupe merged and what it refused to merge, and the field
+    corrections run last so nothing above can undo one.
+    """
+    ov = ov or {}
+    absorbed = force_merge(papers, ov.get("force_merge") or [])
+
+    confirmed = {tuple(sorted(norm_title(t) for t in pair))
+                 for pair in (ov.get("force_distinct") or [])}
+
+    def unconfirmed(p: dict, other: str) -> bool:
+        pair = tuple(sorted([norm_title(p.get("title")), norm_title(other)]))
+        return pair not in confirmed
+
+    prune_flags(papers, unconfirmed)
+
+    drop_norm = {norm_title(t) for t in (ov.get("drop") or [])}
+    out = [p for p in papers
+           if id(p) not in absorbed and norm_title(p.get("title")) not in drop_norm]
+
+    # A flag naming a title that is no longer a separate record is already answered -- a
+    # force_merge resolves it -- and leaving it would put the same pair back in the review
+    # queue on every future run.
+    live = {norm_title(p.get("title")) for p in out}
+    prune_flags(out, lambda p, other: norm_title(other) in live)
+
+    apply_fields(out, ov.get("fields") or {})
     return out
 
 
