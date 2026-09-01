@@ -396,11 +396,14 @@ def title_key(text: str) -> str:
                   unicodedata.normalize("NFKD", text or "").lower()).strip()
 
 
-def dblp_pages(look: dict, refresh: bool) -> dict[str, list[str]]:
+def dblp_pages(look: dict) -> dict[str, list[str]]:
     """Name candidate item to the reduced titles its DBLP author page lists.
 
     One page per author, DBLP_PER_RUN of them per run, each written to the cache as it
-    arrives so the next run carries on from there.
+    arrives so the next run carries on from there. Kept on its own DBLP_DAYS clock and
+    deliberately off `--refresh`. A full sweep costs DBLP_PER_RUN paced fetches across
+    several runs, and a stale query service is no reason to spend them again. Delete
+    build/dblp_titles.json to force one.
     """
     qids = sorted({c["qid"] for cs in (look.get("by_name") or {}).values() for c in cs})
     if not qids:
@@ -412,7 +415,7 @@ def dblp_pages(look: dict, refresh: bool) -> dict[str, list[str]]:
     except (OSError, ValueError):
         cache = {}
     fresh = (datetime.date.today() - datetime.timedelta(days=DBLP_DAYS)).isoformat()
-    if refresh or cache.get("shape") != DBLP_SHAPE or cache.get("asked", "") < fresh:
+    if cache.get("shape") != DBLP_SHAPE or cache.get("asked", "") < fresh:
         cache = {"shape": DBLP_SHAPE, "asked": datetime.date.today().isoformat(),
                  "pids": {}, "titles": {}}
     pids, titles = cache.setdefault("pids", {}), cache.setdefault("titles", {})
@@ -656,7 +659,7 @@ def lookups(names: list[str], papers: list[dict], refresh: bool) -> dict:
     cache["by_orcid"] = with_receipts(cache["by_orcid"],
                                       sorted({o for m in cache["orcids"].values()
                                               for o in m.values()}))
-    cache["dblp"] = dblp_pages(cache, refresh)
+    cache["dblp"] = dblp_pages(cache)
     return cache
 
 

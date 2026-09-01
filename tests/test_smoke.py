@@ -5813,12 +5813,12 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
             wc.get_status = fetch
             wc.dblp_ids = lambda qids: {"Q1": "g/Gone", "Q2": "h/Here"}
             look = {"by_name": {"Ada Lovelace": [{"qid": "Q1"}, {"qid": "Q2"}]}}
-            first = wc.dblp_pages(look, False)
+            first = wc.dblp_pages(look)
             self.assertEqual(len(asked), 2)
             self.assertEqual(first, {"Q2": ["a paper"]}, "an empty page is no evidence")
             with open(os.path.join(d, wc.DBLP_CACHE)) as f:
                 self.assertEqual(json.load(f)["titles"]["g/Gone"], [])
-            self.assertEqual(wc.dblp_pages(look, False), first)
+            self.assertEqual(wc.dblp_pages(look), first)
             self.assertEqual(len(asked), 2, "re-asked for a page the server said was gone")
 
     def test_a_dblp_page_that_did_not_answer_is_asked_for_again(self):
@@ -5834,9 +5834,39 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
             wc.get_status = fetch
             wc.dblp_ids = lambda qids: {"Q1": "t/Timeout"}
             look = {"by_name": {"Ada Lovelace": [{"qid": "Q1"}]}}
-            self.assertEqual(wc.dblp_pages(look, False), {})
-            self.assertEqual(wc.dblp_pages(look, False), {})
+            self.assertEqual(wc.dblp_pages(look), {})
+            self.assertEqual(wc.dblp_pages(look), {})
             self.assertEqual(len(asked), 2, "gave up on a page that never answered")
+
+    def test_a_refresh_does_not_spend_the_dblp_queue_again(self):
+        """A full DBLP sweep is DBLP_PER_RUN paced fetches across several runs.
+
+        `--refresh` is for the query service going stale, which says nothing about the
+        author pages, so it must leave their cache and its longer clock alone.
+        """
+        wc = self._module()
+        with tempfile.TemporaryDirectory() as d:
+            wc.BUILD = d
+            with open(os.path.join(d, wc.DBLP_CACHE), "w") as f:
+                json.dump({"shape": wc.DBLP_SHAPE,
+                           "asked": datetime.date.today().isoformat(),
+                           "titles": {"l/Lovelace": ["a paper"]}}, f)
+            wc.openalex_orcids = lambda papers: ({}, [])
+            wc.items_by_orcid = lambda orcids: {}
+            wc.items_by_name = lambda names: {"Ada Lovelace": [{"qid": "Q1"}]}
+            wc.venue_items = lambda names: {}
+            wc.venue_forms = lambda paper: []
+            wc.researchers = lambda qids: set()
+            wc.proceedings_of = lambda events: {}
+            wc.with_receipts = lambda by_orcid, orcids: by_orcid
+            wc.dblp_ids = lambda qids: {"Q1": "l/Lovelace"}
+
+            def fetch(url, **_kw):
+                self.fail("refresh went back to DBLP for a page already cached")
+
+            wc.get_status = fetch
+            look = wc.lookups(["Ada Lovelace"], [], True)
+            self.assertEqual(look["dblp"], {"Q1": ["a paper"]})
 
     def test_an_orcid_match_survives_a_middle_initial_on_the_byline(self):
         wc = self._module()
@@ -5900,7 +5930,7 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
         the cache is re-asked, they would not be seen for up to CACHE_DAYS -- which is every
         run between a creation and the statements it was created for."""
         wc = self._module()
-        stubs = {"dblp_pages": lambda _c, _r: {}}
+        stubs = {"dblp_pages": lambda _c: {}}
         was = {k: getattr(wc, k) for k in stubs}
         with tempfile.TemporaryDirectory() as d:
             build, data = wc.BUILD, wc.DATA
@@ -5951,7 +5981,7 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
                  "items_by_orcid": lambda _o: {}, "items_by_name": lambda _n: {},
                  "venue_items": lambda _v: {}, "researchers": lambda _q: [],
                  "proceedings_of": lambda _q: {}, "publications": lambda _c: [],
-                 "dblp_pages": lambda _c, _r: {}}
+                 "dblp_pages": lambda _c: {}}
         was = {k: getattr(wc, k) for k in stubs}
         with tempfile.TemporaryDirectory() as d:
             build = wc.BUILD
