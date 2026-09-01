@@ -512,95 +512,142 @@ def link_list(links: dict) -> str:
     return f'<ul class="links">{"".join(items)}</ul>' if items else ""
 
 
-def paper_page(p: dict, sc: dict, cfg) -> str:
-    ident = cfg["identity"]
-    base = cfg["site"]["base_url"].rstrip("/") + cfg["site"]["papers_path"]
-    url = f"{base}/{p['slug']}/"
-    links = dict(p.get("links") or {})
-    links.update(sc.get("links_extra") or {})
-
-    disp = title_of(p)
-    b = [f"<h1>{E(disp)}</h1>"]
+def heading_block(p: dict, sc: dict, links: dict) -> list[str]:
+    """Title, one-line gloss, byline and the row of links."""
+    out = [f"<h1>{E(title_of(p))}</h1>"]
     if sc.get("gloss"):
-        b.append(f'<p class="sub">{E(sc["gloss"])}</p>')
+        out.append(f'<p class="sub">{E(sc["gloss"])}</p>')
     meta = " · ".join(x for x in [", ".join(p.get("authors") or []),
                                   p.get("venue_display") or "", str(p.get("year") or "")] if x)
-    b.append(f'<p class="meta">{E(meta)}</p>')
-    b.append(link_list(links))
+    out.append(f'<p class="meta">{E(meta)}</p>')
+    out.append(link_list(links))
+    return out
 
+
+def summary_block(p: dict, sc: dict) -> list[str]:
+    """The author's one sentence, then the abstract."""
+    out = []
     if sc.get("one_liner"):
-        b.append("<h2>In one sentence</h2>")
-        b.append(f"<p>{E(' '.join(sc['one_liner'].split()))}</p>")
+        out.append("<h2>In one sentence</h2>")
+        out.append(f"<p>{E(' '.join(sc['one_liner'].split()))}</p>")
 
     # Abstract must be visible with no gate: Scholar requires it, and it is the
     # only body text on a paper that has no sidecar yet.
     if p.get("abstract"):
-        b.append("<h2>Abstract</h2>")
-        b.append(f"<p>{E(p['abstract'])}</p>")
+        out.append("<h2>Abstract</h2>")
+        out.append(f"<p>{E(p['abstract'])}</p>")
+    return out
 
-    claims = {c["id"]: c for c in (sc.get("claims") or []) if c.get("id")}
-    if sc.get("qa"):
-        b.append("<h2>Questions this paper answers</h2>")
-        b.append('<dl class="qa">')
-        for qa in sc["qa"]:
-            for q in phrasings(qa):
-                b.append(f"<dt>{E(q)}</dt>")
-            for cid in answered_by(qa):
-                c = claims.get(cid)
-                if not c:
-                    continue
-                # The claim text verbatim, never paraphrased into the answer.
-                b.append(f"<dd>{E(' '.join(c['text'].split()))}"
-                         f'<br><span class="scope">Holds for: '
-                         f"{E(' '.join(c['scope'].split()))}</span></dd>")
-        b.append("</dl>")
 
-    if claims:
-        b.append("<h2>Claims and scope</h2><ul>")
-        for c in claims.values():
-            ev = f" <span class=\"meta\">({E(c['evidence'])})</span>" if c.get("evidence") else ""
-            b.append(f"<li>{E(' '.join(c['text'].split()))}{ev}<br>"
-                     f'<span class="scope">Scope: {E(" ".join(c["scope"].split()))}</span></li>')
-        b.append("</ul>")
+def qa_block(qa: list, claims: dict) -> list[str]:
+    """Each question in all its phrasings, answered by the claims it names.
 
+    A question naming a claim the sidecar does not carry gets that phrasing and no answer.
+    """
+    if not qa:
+        return []
+    out = ["<h2>Questions this paper answers</h2>", '<dl class="qa">']
+    for item in qa:
+        for q in phrasings(item):
+            out.append(f"<dt>{E(q)}</dt>")
+        for cid in answered_by(item):
+            c = claims.get(cid)
+            if not c:
+                continue
+            # The claim text verbatim, never paraphrased into the answer.
+            out.append(f"<dd>{E(' '.join(c['text'].split()))}"
+                       f'<br><span class="scope">Holds for: '
+                       f"{E(' '.join(c['scope'].split()))}</span></dd>")
+    out.append("</dl>")
+    return out
+
+
+def claims_block(claims: dict) -> list[str]:
+    """Every claim with its scope, and its evidence wherever the sidecar names one."""
+    if not claims:
+        return []
+    out = ["<h2>Claims and scope</h2><ul>"]
+    for c in claims.values():
+        ev = f" <span class=\"meta\">({E(c['evidence'])})</span>" if c.get("evidence") else ""
+        out.append(f"<li>{E(' '.join(c['text'].split()))}{ev}<br>"
+                   f'<span class="scope">Scope: {E(" ".join(c["scope"].split()))}</span></li>')
+    out.append("</ul>")
+    return out
+
+
+def prose_blocks(sc: dict) -> list[str]:
+    """The sidecar's remaining prose -- misreadings, terminology, notes from the author."""
+    out = []
     if sc.get("misreadings"):
-        b.append("<h2>Common misreadings</h2><ul>")
+        out.append("<h2>Common misreadings</h2><ul>")
         for m in sc["misreadings"]:
-            b.append(f"<li>{E(m)}</li>")
-        b.append("</ul>")
+            out.append(f"<li>{E(m)}</li>")
+        out.append("</ul>")
 
     if sc.get("terminology"):
-        b.append("<h2>Terminology in this paper</h2><dl>")
+        out.append("<h2>Terminology in this paper</h2><dl>")
         for t, d in sc["terminology"].items():
-            b.append(f"<dt><em>{E(t)}</em></dt><dd>{E(' '.join(str(d).split()))}</dd>")
-        b.append("</dl>")
+            out.append(f"<dt><em>{E(t)}</em></dt><dd>{E(' '.join(str(d).split()))}</dd>")
+        out.append("</dl>")
 
     # Optional author prose from below the sidecar's front matter. Escaped, not
     # rendered as markdown -- blank lines split paragraphs and nothing else is
     # interpreted, so a stray character in a hand-written note cannot break the page.
     if sc.get("_body"):
-        b.append("<h2>Notes from the author</h2>")
+        out.append("<h2>Notes from the author</h2>")
         for para in re.split(r"\n\s*\n", sc["_body"].strip()):
-            b.append(f"<p>{E(' '.join(para.split()))}</p>")
+            out.append(f"<p>{E(' '.join(para.split()))}</p>")
+    return out
 
+
+def citation_block(p: dict, links: dict, url: str, cfg) -> list[str]:
+    """The BibTeX entry, the references pointer and the site footer."""
+    out = []
     if p.get("bibtex"):
-        b.append("<h2>How to cite</h2>")
-        b.append(f"<pre>{E(p['bibtex'].strip())}</pre>")
+        out.append("<h2>How to cite</h2>")
+        out.append(f"<pre>{E(p['bibtex'].strip())}</pre>")
 
     # A literal "References" heading is one of Scholar's PDF-layout fallback cues.
-    b.append("<h2>References</h2>")
-    b.append(f'<p>See the full reference list in the '
-             f'<a href="{E(links.get("html") or links.get("arxiv") or url)}">paper</a>.</p>')
+    out.append("<h2>References</h2>")
+    out.append(f'<p>See the full reference list in the '
+               f'<a href="{E(links.get("html") or links.get("arxiv") or url)}">paper</a>.</p>')
 
-    b.append(f'<footer><a href="{E(cfg["site"]["base_url"])}">{E(ident["name"])}</a> · '
-             f'<a href="llms.txt">llms.txt</a><br>{human_note(ident, box=False)}</footer>')
+    ident = cfg["identity"]
+    out.append(f'<footer><a href="{E(cfg["site"]["base_url"])}">{E(ident["name"])}</a> · '
+               f'<a href="llms.txt">llms.txt</a><br>{human_note(ident, box=False)}</footer>')
+    return out
 
-    head = highwire(p, cfg) + jsonld(article_jsonld(p, sc, cfg))
+
+def head_tags(p: dict, sc: dict, cfg) -> str:
+    """The head's machine-readable metadata -- highwire tags and every JSON-LD that applies."""
+    out = highwire(p, cfg) + jsonld(article_jsonld(p, sc, cfg))
     for extra in (faq_jsonld(p, sc, cfg), terms_jsonld(p, sc, cfg)):
         if extra:
-            head += jsonld(extra)
-    return page(f"{p['title']} — {ident['name']}", "\n".join(b),
-                head=head, canonical=url)
+            out += jsonld(extra)
+    return out
+
+
+def paper_page(p: dict, sc: dict, cfg) -> str:
+    """One paper's published page, section by section down the document.
+
+    Every section but the title, the byline and the references pointer is optional, so a
+    paper with no sidecar still renders as a page Scholar can read. `sc.links_extra`
+    overrides the record's own links of the same name.
+    """
+    base = cfg["site"]["base_url"].rstrip("/") + cfg["site"]["papers_path"]
+    url = f"{base}/{p['slug']}/"
+    links = dict(p.get("links") or {})
+    links.update(sc.get("links_extra") or {})
+    claims = {c["id"]: c for c in (sc.get("claims") or []) if c.get("id")}
+
+    b = (heading_block(p, sc, links)
+         + summary_block(p, sc)
+         + qa_block(sc.get("qa") or [], claims)
+         + claims_block(claims)
+         + prose_blocks(sc)
+         + citation_block(p, links, url, cfg))
+    return page(f"{p['title']} — {cfg['identity']['name']}", "\n".join(b),
+                head=head_tags(p, sc, cfg), canonical=url)
 
 
 def paper_llms_txt(p: dict, sc: dict, cfg) -> str:
