@@ -234,41 +234,29 @@ def same_work(want: set[str], title: str | None) -> bool:
     return bool(want) and not got - want and len(want & got) / len(want) > 0.8
 
 
-def split_records(papers, mailto, limit=None) -> dict:
-    """Corpus titles that OpenAlex holds more than one record for.
+def cached_answer(p: dict, cache: dict, fresh: str) -> bool:
+    """Whether the cache already holds the answer to the question this run would ask.
 
-    Returns `rows`, `budget_reset`, `checked` and `total`. One metered search per paper
-    against a free daily allowance of 100, so a full corpus takes more than one day.
-    Every answer is cached in `build/openalex_splits.json` for CACHE_DAYS and a run
-    resumes at the first paper without a fresh one. A search that did not answer is not
-    cached, so an outage costs a retry rather than CACHE_DAYS of reporting no split.
-
-    A split at OpenAlex is not itself a Scholar problem -- it is evidence that the
-    paper's metadata is mangled in a way Scholar splits on too, and the search string is
-    the same either way.
+    An entry asked under a different search string answers a different question, so a
+    change to `searchable` re-asks exactly the papers it changed and leaves the rest.
     """
-    cache_path = os.path.join(BUILD, "openalex_splits.json")
-    try:
-        with open(cache_path) as f:
-            cache = json.load(f)
-    except (OSError, ValueError):
-        cache = {}
-    fresh = (datetime.date.today() - datetime.timedelta(days=CACHE_DAYS)).isoformat()
+    e = cache.get(p.get("slug")) or {}
+    return (e.get("asked", "") >= fresh
+            and e.get("search") == searchable(p.get("title") or "", 12))
 
-    def answered(p) -> bool:
-        """Whether the cache already holds the answer to the question this run would ask.
 
-        An entry asked under a different search string answers a different question, so a
-        change to `searchable` re-asks exactly the papers it changed and leaves the rest.
-        """
-        e = cache.get(p.get("slug")) or {}
-        return (e.get("asked", "") >= fresh
-                and e.get("search") == searchable(p.get("title") or "", 12))
+def ask_splits(papers: list[dict], mailto: str | None, cache: dict,
+               fresh: str) -> set[str]:
+    """Ask OpenAlex which records it holds per paper, writing each answer into `cache`.
 
+    Returns the slugs answered. One metered search per paper, skipping the ones the cache
+    already answers and the titles too short to search on, and stopping at the first paper
+    the daily allowance refuses so a later run resumes there.
+    """
     asked: set[str] = set()
-    for p in papers[:limit]:
+    for p in papers:
         title, slug = p.get("title") or "", p.get("slug")
-        if len(title) < 25 or answered(p):
+        if len(title) < 25 or cached_answer(p, cache, fresh):
             continue
         ask = searchable(title, 12)
         q = ("https://api.openalex.org/works?per-page=25&select=id,display_name,"
@@ -291,18 +279,28 @@ def split_records(papers, mailto, limit=None) -> dict:
                          "citations": w.get("cited_by_count") or 0}
                         for w in (d or {}).get("results") or []
                         if same_work(want, w.get("display_name"))]}
-    if asked:
-        # Re-read before writing. Another run reaching here -- `update.py --step audit`
-        # does -- may have cached papers this one never asked about, and a plain overwrite
-        # drops them, which costs a day of credits to win back.
-        try:
-            with open(cache_path) as f:
-                merged = json.load(f)
-        except (OSError, ValueError):
-            merged = {}
-        merged.update({s: cache[s] for s in asked})
-        write_json(cache_path, merged, indent=1)
+    return asked
 
+
+def merge_cache(path: str, cache: dict, asked: set[str]) -> None:
+    """Write the answers named by `asked` into the cache file, keeping the rest of it."""
+    # Re-read before writing. Another run reaching here -- `update.py --step audit`
+    # does -- may have cached papers this one never asked about, and a plain overwrite
+    # drops them, which costs a day of credits to win back.
+    try:
+        with open(path) as f:
+            merged = json.load(f)
+    except (OSError, ValueError):
+        merged = {}
+    merged.update({s: cache[s] for s in asked})
+    write_json(path, merged, indent=1)
+
+
+def split_rows(papers: list[dict], cache: dict) -> list[dict]:
+    """One row per paper the cache holds more than one record for, most-cited first.
+
+    Each row carries the matching records and the Scholar query that finds them.
+    """
     # Filtered again on the way out, so tightening the rule takes effect on the next run
     # instead of after a second day of credits.
     def records(p):
@@ -315,11 +313,38 @@ def split_records(papers, mailto, limit=None) -> dict:
             "title": title_of(p),
             "records": records(p),
             "search": scholar_query(title_of(p))}
-           for p in papers[:limit] if len(records(p)) > 1]
-    checkable = [p for p in papers[:limit] if len(p.get("title") or "") >= 25]
-    return {"rows": sorted(out, key=lambda r: -sum(x["citations"] for x in r["records"])),
+           for p in papers if len(records(p)) > 1]
+    return sorted(out, key=lambda r: -sum(x["citations"] for x in r["records"]))
+
+
+def split_records(papers, mailto, limit=None) -> dict:
+    """Corpus titles that OpenAlex holds more than one record for.
+
+    Returns `rows`, `budget_reset`, `checked` and `total`. One metered search per paper
+    against a free daily allowance of 100, so a full corpus takes more than one day.
+    Every answer is cached in `build/openalex_splits.json` for CACHE_DAYS and a run
+    resumes at the first paper without a fresh one. A search that did not answer is not
+    cached, so an outage costs a retry rather than CACHE_DAYS of reporting no split.
+
+    A split at OpenAlex is not itself a Scholar problem -- it is evidence that the
+    paper's metadata is mangled in a way Scholar splits on too, and the search string is
+    the same either way.
+    """
+    cache_path = os.path.join(BUILD, "openalex_splits.json")
+    try:
+        with open(cache_path) as f:
+            cache = json.load(f)
+    except (OSError, ValueError):
+        cache = {}
+    fresh = (datetime.date.today() - datetime.timedelta(days=CACHE_DAYS)).isoformat()
+    here = papers[:limit]
+    asked = ask_splits(here, mailto, cache, fresh)
+    if asked:
+        merge_cache(cache_path, cache, asked)
+    checkable = [p for p in here if len(p.get("title") or "") >= 25]
+    return {"rows": split_rows(here, cache),
             "budget_reset": budget_reset("api.openalex.org"),
-            "checked": len([p for p in checkable if answered(p)]),
+            "checked": len([p for p in checkable if cached_answer(p, cache, fresh)]),
             "total": len(checkable)}
 
 
