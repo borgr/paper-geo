@@ -1,24 +1,3 @@
-<!-- DRAFT — not published, not read by anything that builds the site.
-
-Drafted by `python scripts/draft_sidecars.py` from build/sidecar_tasks.json. Every claim, number
-and scope condition below is a machine's reading of the paper and needs your eyes.
-
-What to check, in the order it pays:
-
-1. Each claim's NUMBER and BASELINE. A magnitude attributed to the wrong baseline is
-   the one error here that is worse than saying nothing, because it is quotable.
-2. Each SCOPE. This is the field summarisers drop, so it is the field this file exists
-   for. If a scope reads like a disclaimer, replace it with the condition that
-   actually bounds the result.
-3. The MISREADINGS. A drafted misreading is a guess about your readers; you know which
-   one keeps happening.
-4. `one_liner`: the sentence you will reuse verbatim in the README, the model card and
-   the talk abstract. Make it yours.
-
-Then promote it:  python scripts/draft_sidecars.py --accept skill-issue-are-skills-language-invariant-in-llms
-
-Stamp: spec=fd01ca70bea8 checks=pass body=1b3e9cef6b81
--->
 ---
 one_liner: Two instances of the same LLM playing each other through different language interfaces
   win at markedly different rates, so the skills a model has in one language are not the skills
