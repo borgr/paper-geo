@@ -5895,6 +5895,53 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
         self.assertEqual(sorted(got["s1"]), ["a lovelace", "ada lovelace"])
         self.assertEqual([], refused)
 
+    def test_a_freshly_created_item_answers_before_the_cache_expires(self):
+        """The receipts exist so an item this repo just made resolves at once. Read only when
+        the cache is re-asked, they would not be seen for up to CACHE_DAYS -- which is every
+        run between a creation and the statements it was created for."""
+        wc = self._module()
+        stubs = {"dblp_pages": lambda _c, _r: {}}
+        was = {k: getattr(wc, k) for k in stubs}
+        with tempfile.TemporaryDirectory() as d:
+            build, data = wc.BUILD, wc.DATA
+            try:
+                wc.BUILD, wc.DATA = d, d
+                for k, v in stubs.items():
+                    setattr(wc, k, v)
+                with open(os.path.join(d, "wikidata_people_created.yaml"), "w") as f:
+                    f.write('items:\n  0000-0002-0000-0004: Q900\n'
+                            'labels:\n  Q900: Ada Lovelace\n')
+                with open(os.path.join(d, wc.CACHE), "w") as f:
+                    json.dump({"shape": wc.SHAPE,
+                               "asked": datetime.date.today().isoformat(), "names": [],
+                               "orcids": {"s1": {"ada lovelace": "0000-0002-0000-0004"}},
+                               "by_orcid": {}, "by_name": {}, "venues": {},
+                               "research": [], "proceedings": {}}, f)
+                got = wc.lookups([], [{"slug": "s1"}], refresh=False)
+            finally:
+                wc.BUILD, wc.DATA = build, data
+                for k, v in was.items():
+                    setattr(wc, k, v)
+        self.assertEqual({"qid": "Q900", "label": "Ada Lovelace"},
+                         got["by_orcid"]["0000-0002-0000-0004"])
+
+    def test_a_receipt_the_query_service_contradicts_is_dropped(self):
+        """Two items for one ORCID is a merge, and guessing which would credit the wrong
+        person. An agreeing receipt is kept, and an ORCID nobody asked about is ignored."""
+        wc = self._module()
+        with tempfile.TemporaryDirectory() as d:
+            data = wc.DATA
+            try:
+                wc.DATA = d
+                with open(os.path.join(d, "wikidata_people_created.yaml"), "w") as f:
+                    f.write('items:\n  A: Q1\n  B: Q2\n  C: Q3\n'
+                            'labels:\n  Q1: One\n  Q2: Two\n  Q3: Three\n')
+                got = wc.with_receipts({"A": {"qid": "Q9", "label": "Nine"},
+                                        "B": {"qid": "Q2", "label": "Two"}}, ["A", "B"])
+            finally:
+                wc.DATA = data
+        self.assertEqual({"B": {"qid": "Q2", "label": "Two"}}, got)
+
     def test_the_cache_never_regresses_on_a_day_openalex_is_down(self):
         """The map is cached for CACHE_DAYS, so an empty answer written once is an empty
         co-author pass for a month. A refused paper keeps what the cache had, and the clock

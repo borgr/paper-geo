@@ -20,12 +20,121 @@ the paper is in, and 0 carry no link to a free copy — the publisher-hosted
 one, since a doi.org or arxiv.org link only restates an identifier the item
 already has.
 
-## Settled by a record rather than a name (0)
+## Settled by a record rather than a name (51)
 
-None left. Every co-author an ORCID or a DBLP page could reach is already
-resolved.
+Two kinds of evidence and no name compared in either, so none of these needs a
+judgement. 51 came from the paper's OpenAlex record giving the co-author's
+ORCID, with exactly one Wikidata item stating it. 0 came from DBLP, where
+exactly one candidate's author page lists this same paper -- DBLP separates
+its own namesakes, so a shared publication is a shared person.
 
-## Remaining, one paper at a time (107 papers, 976 strings)
+`python scripts/wikidata_coauthors.py --apply` writes them. Each author
+becomes *author* with the printed name kept as an *object named as* qualifier,
+and the string it replaces is dropped.
+[`tasks/wikidata_coauthors.qs`](tasks/wikidata_coauthors.qs) is the same batch
+for <https://quickstatements.toolforge.org/#/batch>, for a machine with no bot
+password.
+
+- **297 citations** — tinyBenchmarks: evaluating LLMs with fewer examples
+      - Mikhail Yurochkin → [Mikhail Yurochkin](https://www.wikidata.org/wiki/Q103330754) (ORCID 0000-0003-0153-6811)
+- **195 citations** — Global MMLU: Understanding and Addressing Cultural and Linguisti
+      - Sara Hooker → [Sara Hooker](https://www.wikidata.org/wiki/Q107742361) (ORCID 0000-0002-0190-6459)
+- **167 citations** — Q²: Evaluating Factual Consistency in Knowledge-Grounded Dialogu
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **127 citations** — On the Weaknesses of Reinforcement Learning for Neural Machine T
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **122 citations** — DisentQA: Disentangling Parametric and Contextual Knowledge with
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **118 citations** — Model merging with SVD to tie the Knots
+      - J. Hoffman → [Judy Hoffman](https://www.wikidata.org/wiki/Q103328754) (ORCID 0000-0003-1971-1606)
+- **102 citations** — Beyond Binary Rewards: Training LMs to Reason About Their Uncert
+      - Jacob Andreas → [Jacob Andreas](https://www.wikidata.org/wiki/Q125454034) (ORCID 0000-0002-3141-5845)
+- **94 citations** — Asymmetry in Low-Rank Adapters of Foundation Models
+      - Mikhail Yurochkin → [Mikhail Yurochkin](https://www.wikidata.org/wiki/Q103330754) (ORCID 0000-0003-0153-6811)
+- **87 citations** — Efficient multi-prompt evaluation of LLMs
+      - Mikhail Yurochkin → [Mikhail Yurochkin](https://www.wikidata.org/wiki/Q103330754) (ORCID 0000-0003-0153-6811)
+- **72 citations** — Will it Blend? Blending Weak and Strong Labeled Data in a Neural
+      - Carlos Alzate → [Carlos Alzate](https://www.wikidata.org/wiki/Q102390975) (ORCID 0000-0003-2434-2534)
+- **70 citations** — Corpus Wide Argument Mining - A Working Solution
+      - Carlos Alzate → [Carlos Alzate](https://www.wikidata.org/wiki/Q102390975) (ORCID 0000-0003-2434-2534)
+- **70 citations** — A Survey on Model MoErging: Recycling and Routing Among Speciali
+      - Mohit Bansal → [Mohit Bansal](https://www.wikidata.org/wiki/Q67386311) (ORCID 0000-0001-5522-1351)
+- **47 citations** — NumeroLogic: Number Encoding for Enhanced LLMs' Numerical Reason
+      - Eli Schwartz → [Eli Schwartz](https://www.wikidata.org/wiki/Q141248205) (ORCID 0000-0002-3393-8666)
+      - Joseph Shtok → [Joseph Shtok](https://www.wikidata.org/wiki/Q102407752) (ORCID 0000-0002-4083-542X)
+- **41 citations** — The Grammar-Learning Trajectories of Neural Language Models
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **38 citations** — SemEval-2019 Task 1: Cross-lingual Semantic Parsing with UCCA
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **38 citations** — Inherent Biases in Reference-based Evaluation for Grammatical Er
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **36 citations** — Reference-less Measure of Faithfulness for Grammatical Error Cor
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **35 citations** — Automatic Metric Validation for Grammatical Error Correction
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **29 citations** — Deductive Closure Training of Language Models for Coherence, Acc
+      - Jacob Andreas → [Jacob Andreas](https://www.wikidata.org/wiki/Q125454034) (ORCID 0000-0002-3141-5845)
+- **29 citations** — Compress then Serve: Serving Thousands of LoRA Adapters with Lit
+      - Mikhail Yurochkin → [Mikhail Yurochkin](https://www.wikidata.org/wiki/Q103330754) (ORCID 0000-0003-0153-6811)
+- **25 citations** — The Language of Legal and Illegal Activity on the Darknet
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **23 citations** — Classifying Syntactic Errors in Learner Language
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **23 citations** — Beneath the Surface of Consistency: Exploring Cross-lingual Know
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **22 citations** — A Hitchhiker's Guide to Scaling Law Estimation
+      - Jacob Andreas → [Jacob Andreas](https://www.wikidata.org/wiki/Q125454034) (ORCID 0000-0002-3141-5845)
+- **21 citations** — ComPEFT: Compression for Communicating Parameter Efficient Updat
+      - Mohit Bansal → [Mohit Bansal](https://www.wikidata.org/wiki/Q67386311) (ORCID 0000-0001-5522-1351)
+- **20 citations** — Automatically Extracting Challenge Sets for Non-Local Phenomena 
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **19 citations** — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Co
+      - Mikhail Yurochkin → [Mikhail Yurochkin](https://www.wikidata.org/wiki/Q103330754) (ORCID 0000-0003-0153-6811)
+- **16 citations** — The Future of Open Human Feedback
+      - Wenting Zhao → [Wenting Zhao](https://www.wikidata.org/wiki/Q141248206) (ORCID 0009-0003-3187-3955)
+      - Mikhail Yurochkin → [Mikhail Yurochkin](https://www.wikidata.org/wiki/Q103330754) (ORCID 0000-0003-0153-6811)
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+      - Sara Hooker → [Sara Hooker](https://www.wikidata.org/wiki/Q107742361) (ORCID 0000-0002-0190-6459)
+- **16 citations** — Human Learning by Model Feedback: The Dynamics of Iterative Prom
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **16 citations** — Mediators in Determining what Processing BERT Performs First
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **14 citations** — Naturally Occurring Feedback is Common, Extractable and Useful
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **13 citations** — Semantics-aware Attention Improves Neural Machine Translation
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **12 citations** — PreQuEL: Quality Estimation of Machine Translation Outputs in Ad
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **12 citations** — SERRANT: a syntactic classifier for English Grammatical Error Ty
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **11 citations** — The ShareLM Collection and Plugin: Contributing Human-Model Chat
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **8 citations** — Enhancing the Transformer Decoder with Transition-based Syntax
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **8 citations** — Reinforcement Learning with Large Action Spaces for Neural Machi
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **4 citations** — Unforgettable Generalization in Language Models
+      - Jacob Andreas → [Jacob Andreas](https://www.wikidata.org/wiki/Q125454034) (ORCID 0000-0002-3141-5845)
+- **2 citations** — On Neurons Invariant to Sentence Structural Changes in Neural Ma
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **2 citations** — SemEval 2019 Shared Task: Cross-lingual Semantic Parsing with UC
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **2 citations** — A Latent Variable Framework for Scaling Laws in Large Language M
+      - Mikhail Yurochkin → [Mikhail Yurochkin](https://www.wikidata.org/wiki/Q103330754) (ORCID 0000-0003-0153-6811)
+- **1 citations** — BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 20
+      - Raj Sanjay Shah → [Raj Shah](https://www.wikidata.org/wiki/Q141248204) (ORCID 0000-0002-0847-8426)
+- **1 citations** — Part of Speech and Universal Dependency effects on English Arabi
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **1 citations** — Resolving Interference (RI): Disentangling Models for Improved M
+      - Judy Hoffman → [Judy Hoffman](https://www.wikidata.org/wiki/Q103328754) (ORCID 0000-0003-1971-1606)
+- **0 citations** — Can Gradient Descent Simulate Prompting?
+      - Jacob Andreas → [Jacob Andreas](https://www.wikidata.org/wiki/Q125454034) (ORCID 0000-0002-3141-5845)
+- **0 citations** — MuLER: Detailed and Scalable Reference-based Evaluation
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+- **0 citations** — Some Grammatical Errors are Frequent, Others are Important
+      - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
+
+## Remaining, one paper at a time (100 papers, 925 strings)
 
 The *disambiguate* link opens Author Disambiguator on the paper item. It
 matches name forms an exact label search cannot -- a byline reading *Colin A.
@@ -38,52 +147,40 @@ matches found here. A namesake matches identically, so open the item and check
 the person before accepting. Two candidates on one name sometimes means two
 items for one person, which is a merge rather than a choice.
 
-166 name matches are not listed. Each states an occupation nothing like
+153 name matches are not listed. Each states an occupation nothing like
 research -- footballer, actor, politician -- so the name is a coincidence. An
 item stating no occupation at all is still listed.
 
 - [ ] **909 citations** — TIES-Merging: Resolving Interference When Merging Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029633)
       - Mohit Bansal → [Q67386311](https://www.wikidata.org/wiki/Q67386311) — researcher, natural language processing and , [Q92117908](https://www.wikidata.org/wiki/Q92117908) — researcher (ORCID 0000-0002-8403-0316), [Q96127041](https://www.wikidata.org/wiki/Q96127041) — researcher (ORCID 0000-0001-8777-1980) … +2
-- [ ] **297 citations** — tinyBenchmarks: evaluating LLMs with fewer examples — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029634)
+- [ ] **297 citations** — tinyBenchmarks: evaluating LLMs with fewer examples — 3 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029634)
       - Yuekai Sun → [Q102433700](https://www.wikidata.org/wiki/Q102433700) — statistician
       - Gongjun Xu → [Q100674149](https://www.wikidata.org/wiki/Q100674149) — researcher
-      - Mikhail Yurochkin → [Q103330754](https://www.wikidata.org/wiki/Q103330754) — statistician
 - [ ] **245 citations** — Active Learning for BERT: An Empirical Study — 7 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029635)
 - [ ] **242 citations** — Findings of the BabyLM Challenge: Sample-Efficient Pretraini — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029636)
-- [ ] **195 citations** — Global MMLU: Understanding and Addressing Cultural and Lingu — 11 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029638)
+- [ ] **195 citations** — Global MMLU: Understanding and Addressing Cultural and Lingu — 10 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029638)
       - Sebastian Ruder → [Q47488652](https://www.wikidata.org/wiki/Q47488652) — computer scientist
-      - Sara Hooker → [Q107742361](https://www.wikidata.org/wiki/Q107742361) — deep learning researcher
-- [ ] **167 citations** — Q²: Evaluating Factual Consistency in Knowledge-Grounded Dia — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029639)
-      - Omri Abend → [Q102687062](https://www.wikidata.org/wiki/Q102687062) — Ph.D. Hebrew University 2013
-- [ ] **127 citations** — On the Weaknesses of Reinforcement Learning for Neural Machi — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029640)
-      - Omri Abend → [Q102687062](https://www.wikidata.org/wiki/Q102687062) — Ph.D. Hebrew University 2013
-- [ ] **122 citations** — DisentQA: Disentangling Parametric and Contextual Knowledge  — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029642)
-      - Omri Abend → [Q102687062](https://www.wikidata.org/wiki/Q102687062) — Ph.D. Hebrew University 2013
+- [ ] **167 citations** — Q²: Evaluating Factual Consistency in Knowledge-Grounded Dia — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029639)
+- [ ] **127 citations** — On the Weaknesses of Reinforcement Learning for Neural Machi — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029640)
+- [ ] **122 citations** — DisentQA: Disentangling Parametric and Contextual Knowledge  — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029642)
 - [ ] **121 citations** — Fusing finetuned models for better pretraining — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029641)
-- [ ] **118 citations** — Model merging with SVD to tie the Knots — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029643)
-      - J. Hoffman → [Q59556470](https://www.wikidata.org/wiki/Q59556470) — researcher ORCID ID = 0000-0002-1571-6808, [Q76142038](https://www.wikidata.org/wiki/Q76142038) — Peerage person ID=560424, [Q138575927](https://www.wikidata.org/wiki/Q138575927) — researcher
-- [ ] **102 citations** — Beyond Binary Rewards: Training LMs to Reason About Their Un — 3 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029645)
+- [ ] **118 citations** — Model merging with SVD to tie the Knots — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029643)
+- [ ] **102 citations** — Beyond Binary Rewards: Training LMs to Reason About Their Un — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029645)
       - Yoon Kim → [Q88771001](https://www.wikidata.org/wiki/Q88771001) — researcher (ORCID 0000-0002-7404-8432), [Q60973630](https://www.wikidata.org/wiki/Q60973630) — South Korean researcher and politician, [Q91553362](https://www.wikidata.org/wiki/Q91553362) — researcher (ORCID 0000-0002-0679-6594) … +2
-      - Jacob Andreas → [Q125454034](https://www.wikidata.org/wiki/Q125454034) — AI researcher
 - [ ] **100 citations** — Jump to Conclusions: Short-Cutting Transformers with Linear  — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029646)
       - Alexander Yom Din → [Q102662940](https://www.wikidata.org/wiki/Q102662940) — Israeli mathematician
-- [ ] **94 citations** — Asymmetry in Low-Rank Adapters of Foundation Models — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029647)
-      - Mikhail Yurochkin → [Q103330754](https://www.wikidata.org/wiki/Q103330754) — statistician
-- [ ] **87 citations** — Efficient multi-prompt evaluation of LLMs — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029648)
+- [ ] **94 citations** — Asymmetry in Low-Rank Adapters of Foundation Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029647)
+- [ ] **87 citations** — Efficient multi-prompt evaluation of LLMs — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029648)
       - Yuekai Sun → [Q102433700](https://www.wikidata.org/wiki/Q102433700) — statistician
-      - Mikhail Yurochkin → [Q103330754](https://www.wikidata.org/wiki/Q103330754) — statistician
 - [ ] **78 citations** — Are You Convinced? Choosing the More Convincing Evidence wit — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029650)
 - [ ] **73 citations** — Knowledge is a Region in Weight Space for Fine-tuned Languag — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029651)
-- [ ] **72 citations** — Will it Blend? Blending Weak and Strong Labeled Data in a Ne — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029652)
-      - Carlos Alzate → [Q102390975](https://www.wikidata.org/wiki/Q102390975) — Ph.D. Katholieke Universiteit Leuven 2009
+- [ ] **72 citations** — Will it Blend? Blending Weak and Strong Labeled Data in a Ne — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029652)
 - [ ] **71 citations** — Elements of World Knowledge (EWoK): A Cognition-Inspired Fra — 18 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029655)
       - Carina Kauf → [Q126691875](https://www.wikidata.org/wiki/Q126691875) — researcher in the field of digital humanitie
       - Jennifer Hu → [Q102309422](https://www.wikidata.org/wiki/Q102309422) — Cognitive Science researcher; Ph.D. Universi
       - Maria Ryskina → [Q130838678](https://www.wikidata.org/wiki/Q130838678) — researcher
       - Ekin Akyürek → [Q141203667](https://www.wikidata.org/wiki/Q141203667) — researcher at Massachusetts Institute of Tec
-- [ ] **70 citations** — Corpus Wide Argument Mining - A Working Solution — 9 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029653)
-      - Carlos Alzate → [Q102390975](https://www.wikidata.org/wiki/Q102390975) — Ph.D. Katholieke Universiteit Leuven 2009
-- [ ] **70 citations** — A Survey on Model MoErging: Recycling and Routing Among Spec — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029657)
-      - Mohit Bansal → [Q67386311](https://www.wikidata.org/wiki/Q67386311) — researcher, natural language processing and , [Q92117908](https://www.wikidata.org/wiki/Q92117908) — researcher (ORCID 0000-0002-8403-0316), [Q96127041](https://www.wikidata.org/wiki/Q96127041) — researcher (ORCID 0000-0001-8777-1980) … +2
-- … and 87 more papers, same order, in `build/wikidata_coauthors.json`
+- [ ] **70 citations** — Corpus Wide Argument Mining - A Working Solution — 8 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029653)
+- [ ] **70 citations** — A Survey on Model MoErging: Recycling and Routing Among Spec — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029657)
+- … and 80 more papers, same order, in `build/wikidata_coauthors.json`
 

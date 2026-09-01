@@ -311,15 +311,30 @@ def items_by_orcid(orcids: list[str]) -> dict[str, dict]:
         q = qid_of(r["p"]["value"])
         found.setdefault(r["o"]["value"], set()).add(q)
         labels[q] = r.get("pLabel", {}).get("value", q)
+    return with_receipts({o: {"qid": next(iter(qs)), "label": labels.get(next(iter(qs)), "")}
+                          for o, qs in found.items() if len(qs) == 1}, orcids)
+
+
+def with_receipts(by_orcid: dict[str, dict], orcids: list[str]) -> dict[str, dict]:
+    """`by_orcid` plus the items in `data/wikidata_people_created.yaml`, conflicts dropped.
+
+    Applied to a cached answer as well as a fresh one: the cache outlives a creation by up
+    to CACHE_DAYS, and until this runs the item this repo just made is invisible to the pass
+    that needs it. An ORCID the receipts and the query service disagree about is dropped,
+    the same as an ORCID two items claim.
+    """
     led = read_yaml(os.path.join(DATA, "wikidata_people_created.yaml")) or {}
     named = led.get("labels") or {}
-    want = set(orcids)
+    out = dict(by_orcid)
     for o, q in (led.get("items") or {}).items():
-        if o in want:
-            found.setdefault(o, set()).add(q)
-            labels[q] = labels.get(q) or named.get(q, "")
-    return {o: {"qid": next(iter(qs)), "label": labels.get(next(iter(qs)), "")}
-            for o, qs in found.items() if len(qs) == 1}
+        if o not in set(orcids):
+            continue
+        was = out.get(o)
+        if was and was["qid"] != q:
+            del out[o]
+        elif not was:
+            out[o] = {"qid": q, "label": named.get(q, "")}
+    return out
 
 
 def items_by_name(names: list[str]) -> dict[str, list[dict]]:
@@ -638,6 +653,9 @@ def lookups(names: list[str], papers: list[dict], refresh: bool) -> dict:
             {c["qid"] for cs in cache["venues"].values() for c in cs
              if not publications([c])}))
         write_json(path, cache, indent=1, sort_keys=True)
+    cache["by_orcid"] = with_receipts(cache["by_orcid"],
+                                      sorted({o for m in cache["orcids"].values()
+                                              for o in m.values()}))
     cache["dblp"] = dblp_pages(cache, refresh)
     return cache
 
