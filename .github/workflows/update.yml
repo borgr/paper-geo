@@ -152,8 +152,9 @@ jobs:
       # A PDF reader, which requirements.txt deliberately does not name -- see its foot.
       # fulltext.py prefers poppler over any pure-Python reader and falls through to
       # "unavailable" when neither is installed, and an unreadable paper is one whose
-      # figures validate.py cannot check. Six of the corpus's papers are only readable as
-      # a PDF, and a box without this reported all of their numbers missing.
+      # figures validate.py cannot check. Fourteen of the corpus's papers read through a
+      # PDF, four of them from a local file CI cannot see, and a box without this reported
+      # every number on all fourteen missing.
       - name: a PDF reader for the papers that are only PDFs
         run: sudo apt-get install -y --no-install-recommends poppler-utils
 
