@@ -61,7 +61,7 @@ No request is made on your behalf at any point -- code reads the file you saved.
 Highest citations first, so stopping early still helps most. A commented line is a
 field the listing already has -- shown so you can check it rather than retype it.
 
-### 1. TIES-Merging: Resolving Interference When Merging Models — cited 912
+### 1. TIES-Merging: Resolving Interference When Merging Models — cited 913
 
 <https://arxiv.org/abs/2306.01708> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 
@@ -629,7 +629,7 @@ moves into the list above on its own once a DOI appears.
 If you know better than the test -- the event happened, the proceedings are up --
 the values are here and they are as good as any above.
 
-### 1. Beyond Binary Rewards: Training LMs to Reason About Their Uncertainty — cited 102
+### 1. Beyond Binary Rewards: Training LMs to Reason About Their Uncertainty — cited 103
 
 <https://arxiv.org/abs/2507.16806> — find this row in <https://arxiv.org/user> and use its own *journal ref* link
 

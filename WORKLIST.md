@@ -29,14 +29,20 @@ is ordered so that stopping early still captures most of the value.
 6. **Wikidata author strings (100 papers by hand)** — one Author Disambiguator pass per paper, most-cited first, at the link the section gives for each. Everything an ORCID or a DBLP author page could settle is already on Wikidata, so what is left is the part where the name is all there is to go on.
 7. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
 8. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
-9. **Citations on a Scholar record you cannot see (27 rows, 175 citations measured + 93 inferred)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
+9. **Citations on a Scholar record you cannot see (19 rows, 91 citations inferred)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
 
 ## Waiting on the outside world
 
 - **2026-10-04** — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.
 - **2026-11-04** — Crossref and DataCite auto-update only fire on newly deposited metadata that already carries your iD, so the proof is a work whose ORCID source is Crossref or DataCite rather than your own name -- which cannot appear until something you publish is deposited.
 
-## Citations on a Scholar record you cannot see (27 rows, 175 citations measured + 93 inferred)
+> **Google Scholar did not answer this run, so the coverage section is missing
+> rather than empty.** Scholar refuses most machines most of the time, and a
+> refusal says nothing about the corpus.
+> Re-run `python update.py --step audit`. What the Semantic Scholar author
+> record could answer is in [tasks/identity_audit.md](tasks/identity_audit.md).
+
+## Citations on a Scholar record you cannot see (19 rows, 91 citations inferred)
 
 Scholar indexes preprints and theses the APIs do not, so a profile row should
 always count *more* than OpenAlex and Semantic Scholar. Where it counts less,
@@ -49,10 +55,7 @@ parser that split the record there usually split it at Scholar too, and the
 count on OpenAlex's smaller copy is the closest reading of what a merge
 recovers.
 
-The two numbers in the heading are different kinds of evidence.
-The measured 175 is a profile row counting fewer citations than the
-APIs already list for the same paper.
-The inferred 93 sits on a duplicate record at an API and stands in
+The inferred 91 sits on a duplicate record at an API and stands in
 for a Scholar record nothing here has seen, so it is what a merge recovers only
 if Scholar split the paper the same way.
 
@@ -61,33 +64,21 @@ record, tick your own row and that one on your profile and press *Merge*. A
 gap can also be plain indexing lag, so read the result before merging: a wrong
 merge attaches somebody else's paper to your name.
 
-Not counted above — 37 OpenAlex splits whose smaller
+Not counted above — 27 OpenAlex splits whose smaller
 copy holds no citations, so a merge there recovers nothing.
 
 Full detail, including the 200-odd records filed under an initials-only form of
 your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).
 
-- [ ] **101 citations** — tinyBenchmarks: evaluating LLMs with fewer examples
-      - Scholar 202 vs 303 at the APIs
-      - [search Scholar for it](https://scholar.google.com/scholar?q=%22tinyBenchmarks%3A%20evaluating%20LLMs%20with%20fewer%20examples%22)
-- [ ] **41 citations** — Elements of World Knowledge (EWoK): A Cognition-Inspired…
-      - Scholar 31 vs 72 at the APIs
-      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Elements%20of%20World%20Knowledge%20%28EWoK%29%3A%20A%20Cognition-Inspired%20Framework%20for%20Evaluating%20Basic%20World%20Knowledge%20in%20Language%20Models%22)
 - [ ] **23 citations** — TIES-Merging: Resolving Interference When Merging Models
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22TIES-Merging%3A%20Resolving%20Interference%20When%20Merging%20Models%22)
 - [ ] **15 citations** — DORA The Explorer: Directed Outreaching Reinforcement…
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22DORA%20The%20Explorer%3A%20Directed%20Outreaching%20Reinforcement%20Action-Selection%22)
-- [ ] **13 citations** — The Mighty ToRR: A Benchmark for Table Reasoning and Robustness
-      - Scholar 0 vs 13 at the APIs
-      - [search Scholar for it](https://scholar.google.com/scholar?q=%22The%20Mighty%20ToRR%3A%20A%20Benchmark%20for%20Table%20Reasoning%20and%20Robustness%22)
 - [ ] **10 citations** — On the Weaknesses of Reinforcement Learning for Neural Machine…
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22On%20the%20Weaknesses%20of%20Reinforcement%20Learning%20for%20Neural%20Machine%20Translation%22)
-- [ ] **9 citations** — Beneath the Surface of Consistency: Exploring Cross-lingual…
-      - Scholar 14 vs 23 at the APIs
-      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Beneath%20the%20Surface%20of%20Consistency%3A%20Exploring%20Cross-lingual%20Knowledge%20Representation%20Sharing%20in%20LLMs%22)
 - [ ] **6 citations** — Global MMLU: Understanding and Addressing Cultural and…
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Global%20MMLU%3A%20Understanding%20and%20Addressing%20Cultural%20and%20Linguistic%20Biases%20in%20Multilingual%20Evaluation%22)
@@ -97,22 +88,34 @@ your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).
 - [ ] **5 citations** — Let's Agree to Agree: Neural Networks Share Classification…
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Let%27s%20Agree%20to%20Agree%3A%20Neural%20Networks%20Share%20Classification%20Order%20on%20Real%20Datasets%22)
-- [ ] **4 citations** — CommonLID: Re-evaluating State-of-the-Art Language…
-      - Scholar 4 vs 8 at the APIs
-      - [search Scholar for it](https://scholar.google.com/scholar?q=%22CommonLID%3A%20Re-evaluating%20State-of-the-Art%20Language%20Identification%20Performance%20on%20Web%20Data%22)
-- [ ] **4 citations** — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers…
-      - Scholar 16 vs 20 at the APIs
-      - [search Scholar for it](https://scholar.google.com/scholar?q=%22LiveXiv%20--%20A%20Multi-Modal%20Live%20Benchmark%20Based%20on%20Arxiv%20Papers%20Content%22)
 - [ ] **4 citations** — SemEval-2019 Task 1: Cross-lingual Semantic Parsing with UCCA
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22SemEval-2019%20Task%201%3A%20Cross-lingual%20Semantic%20Parsing%20with%20UCCA%22)
 - [ ] **4 citations** — Reference-less Measure of Faithfulness for Grammatical Error…
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Reference-less%20Measure%20of%20Faithfulness%20for%20Grammatical%20Error%20Correction%22)
-- [ ] **3 citations** — Mediators in Determining what Processing BERT Performs First
-      - Scholar 13 vs 16 at the APIs
-      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Mediators%20in%20Determining%20what%20Processing%20BERT%20Performs%20First%22)
-- … and 12 more in [`tasks/scholar_strays.md`](tasks/scholar_strays.md), same order
+- [ ] **3 citations** — Are You Convinced? Choosing the More Convincing Evidence with…
+      - 3 OpenAlex records for one title
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Are%20You%20Convinced%3F%20Choosing%20the%20More%20Convincing%20Evidence%20with%20a%20Siamese%20Network%22)
+- [ ] **3 citations** — Efficient multi-prompt evaluation of LLMs
+      - 2 OpenAlex records for one title
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Efficient%20multi-prompt%20evaluation%20of%20LLMs%22)
+- [ ] **2 citations** — DisentQA: Disentangling Parametric and Contextual Knowledge…
+      - 2 OpenAlex records for one title
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22DisentQA%3A%20Disentangling%20Parametric%20and%20Contextual%20Knowledge%20with%20Counterfactual%20Question%20Answering%22)
+- [ ] **2 citations** — Label Sleuth: From Unlabeled Text to a Classifier in a Few Hours
+      - 2 OpenAlex records for one title
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Label%20Sleuth%3A%20From%20Unlabeled%20Text%20to%20a%20Classifier%20in%20a%20Few%20Hours%22)
+- [ ] **2 citations** — Jump to Conclusions: Short-Cutting Transformers with Linear…
+      - 2 OpenAlex records for one title
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Jump%20to%20Conclusions%3A%20Short-Cutting%20Transformers%20with%20Linear%20Transformations%22)
+- [ ] **2 citations** — Where to start? Analyzing the potential value of intermediate…
+      - 2 OpenAlex records for one title
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Where%20to%20start%3F%20Analyzing%20the%20potential%20value%20of%20intermediate%20models%22)
+- [ ] **1 citations** — Corpus Wide Argument Mining - A Working Solution
+      - 2 OpenAlex records for one title
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Corpus%20Wide%20Argument%20Mining%20-%20A%20Working%20Solution%22)
+- … and 4 more in [`tasks/scholar_strays.md`](tasks/scholar_strays.md), same order
 
 ## Wikidata author strings (100 papers by hand)
 
@@ -321,7 +324,7 @@ cannot take off you — but the typing is not: both field values are below,
 per paper, built from the publisher's own bibtex. The same for all
 64 is in [`tasks/arxiv_jref.md`](tasks/arxiv_jref.md).
 
-- [ ] **912 cites** — TIES-Merging: Resolving Interference When Merging Models
+- [ ] **913 cites** — TIES-Merging: Resolving Interference When Merging Models
       - the form: find `2306.01708` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2306.01708))
       - `Journal-ref:` `Advances in Neural Information Processing Systems 36: Annual Conference on Neural Information Processing Systems 2023`
       - `Journal version DOI:` `10.52202/075280-0310`
@@ -349,7 +352,7 @@ per paper, built from the publisher's own bibtex. The same for all
       - the form: find `2410.19735` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2410.19735))
       - `Journal-ref:` `ICLR, 2025`
       - `Journal version DOI:` — none minted, leave blank
-- [ ] **102 cites** — Beyond Binary Rewards: Training LMs to Reason About Their Uncertainty
+- [ ] **103 cites** — Beyond Binary Rewards: Training LMs to Reason About Their Uncertainty
       - the form: find `2507.16806` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2507.16806))
       - `Journal-ref:` `The Fourteenth International Conference on Learning Representations, 2026`
       - `Journal version DOI:` — none minted, leave blank
@@ -411,5 +414,7 @@ Check `data/repos.yaml`, fix anything wrong, set `reviewed: true` to freeze it, 
 
 ---
 
-*Per `data/declines.yaml` — hidden: 3 sections (OpenAlex — 4 duplicate profiles; 2 papers absent from the source bibliography — every item declined; 5 papers whose title does not appear on your Scholar profile — every item declined) and 8 individual items. deferred to the bottom: Artifacts with no citation route (16); Repo labels awaiting your review (29/33). marked in `tasks/openalex_merge.md`, `tasks/zenodo.md`. Delete a line there to have it asked normally again.*
+*Per `data/declines.yaml` — hidden: 1 section (OpenAlex — 4 duplicate profiles) and 1 individual item. deferred to the bottom: Artifacts with no citation route (16); Repo labels awaiting your review (29/33). marked in `tasks/openalex_merge.md`, `tasks/zenodo.md`. Delete a line there to have it asked normally again.*
+
+*Matching nothing this run, so doing nothing: `Llm merging`, `True or false? faithful summarization`, `Call for Papers - The BabyLM Challenge`, `The 2nd BabyLM Challenge`, `BabyLM Turns 3`, `SemEval 2019 Shared Task`. Either the work got done, or the pattern misses its line — titles are truncated in this file, so a pattern aimed past the cut never matches. Check before trusting it as declined.*
 

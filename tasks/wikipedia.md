@@ -63,7 +63,7 @@ become checks in section 2 if someone else ever writes about them.
 - PkE — 127 citations
 - peakiness effect — 127 citations
 - DisentQA — 122 citations
-- RLCR — 102 citations
+- RLCR — 103 citations
 - IBM-EviConv — 78 citations
 - Flash-HELM — 73 citations
 - BlendNet — 72 citations

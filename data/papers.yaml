@@ -47,7 +47,7 @@ papers:
     \  = {Fri, 01 Mar 2024 00:00:00 +0100},\n  biburl       = {https://dblp.org/rec/conf/nips/YadavTCRB23.bib},\n\
     \  bibsource    = {dblp computer science bibliography, https://dblp.org}\n}"
   s2_author_record: '41019330'
-  citations: 912
+  citations: 913
   acl: null
   s2_corpus_id: 259064039
   arxiv_journal_ref: null
@@ -384,7 +384,6 @@ papers:
     doi: https://doi.org/10.18653/v1/2025.acl-long.919
     semantic_scholar: https://www.semanticscholar.org/paper/274464561
     publisher: https://aclanthology.org/2025.acl-long.919/
-    project: https://hf.co/datasets/CohereForAI/Global-MMLU
   title_display: 'Global MMLU: Understanding and Addressing Cultural and Linguistic Biases in Multilingual
     Evaluation'
   venue_display: ACL 2025
@@ -885,7 +884,7 @@ papers:
 
     }'
   s2_author_record: '41019330'
-  citations: 102
+  citations: 103
   acl: null
   s2_corpus_id: 280675947
   arxiv_journal_ref: null
@@ -2609,6 +2608,7 @@ papers:
     doi: https://doi.org/10.18653/V1/P18-1127
     acl_anthology: https://aclanthology.org/P18-1127/
     semantic_scholar: https://www.semanticscholar.org/paper/13747175
+    code: https://github.com/borgr/EoE
   title_display: Automatic Metric Validation for Grammatical Error Correction
   venue_display: ACL 2018
   has_sidecar: true
