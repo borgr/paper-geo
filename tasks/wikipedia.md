@@ -50,29 +50,29 @@ disclosure -- it is ordinary editing in an area you know.
 - *machine translation evaluation* — no article, and nothing in this field close to it
 - *efficient evaluation* — no article, and nothing in this field close to it
 
-## Absent from Wikipedia (36) — nothing to do
+## Absent from Wikipedia (37) — nothing to do
 
 Coined here, above the citation floor, and nobody independent has written them
 up. Deliberately not actionable: proposing the mention yourself is the request
 that gets declined, and writing the article yourself is the spam case. They
 become checks in section 2 if someone else ever writes about them.
 
-- tinyBenchmarks — 297 citations
+- tinyBenchmarks — 303 citations
 - BabyLM Challenge — 242 citations
-- Global-MMLU — 195 citations
+- Global-MMLU — 198 citations
 - PkE — 127 citations
 - peakiness effect — 127 citations
 - DisentQA — 122 citations
 - RLCR — 102 citations
 - IBM-EviConv — 78 citations
+- Flash-HELM — 73 citations
 - BlendNet — 72 citations
-- EWoK — 71 citations
-- Flash-HELM — 70 citations
+- EWoK — 72 citations
 - MoErging — 70 citations
 - Retrospective Labeling — 70 citations
 - ColD Fusion — 64 citations
 - TP-agreement — 64 citations
-- NumeroLogic — 47 citations
+- NumeroLogic — 48 citations
 - LCB — 38 citations
 - Low Coverage Bias — 38 citations
 - USim — 36 citations
@@ -86,10 +86,11 @@ become checks in section 2 if someone else ever writes about them.
 - joint diagonalization of LoRAs — 29 citations
 - BERT_IT:CLUST — 28 citations
 - ZipNN — 25 citations
+- BenchBench — 23 citations
 - CLIKE — 23 citations
 - SErCl — 23 citations
 - Unitxt — 23 citations
-- BenchBench — 22 citations
+- DOVE — 22 citations
 - ComPEFT — 21 citations
-- DOVE — 21 citations
 - Label Sleuth — 21 citations
+- LiveXiv — 20 citations

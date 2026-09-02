@@ -17,12 +17,12 @@
 10.48550/arXiv.2405.17202	Efficient multi-prompt evaluation of LLMs
 10.48550/arXiv.2301.11796	Call for Papers - The BabyLM Challenge: Sample-efficient pretraining on a developmentally plausible corpus
 10.18653/V1/P19-1093	Are You Convinced? Choosing the More Convincing Evidence with a Siamese Network
+10.18653/V1/2024.NAACL-LONG.139	Efficient Benchmarking (of Language Models)
 10.18653/V1/2023.FINDINGS-EMNLP.95	Knowledge is a Region in Weight Space for Fine-tuned Language Models
-10.18653/V1/P18-2095	Will it Blend? Blending Weak and Strong Labeled Data in a Neural Network for Argumentation Mining
 10.1162/TACL.A.38	Elements of World Knowledge (EWoK): A Cognition-Inspired Framework for Evaluating Basic World Knowledge in Language Models
+10.18653/V1/P18-2095	Will it Blend? Blending Weak and Strong Labeled Data in a Neural Network for Argumentation Mining
 10.48550/arXiv.2408.07057	A Survey on Model MoErging: Recycling and Routing Among Specialized Experts for Collaborative Learning
 10.48550/arXiv.2412.05149	Findings of the Second BabyLM Challenge: Sample-Efficient Pretraining on Developmentally Plausible Corpora
-10.18653/V1/2024.NAACL-LONG.139	Efficient Benchmarking (of Language Models)
 10.1609/AAAI.V34I05.6270	Corpus Wide Argument Mining - A Working Solution
 10.48550/arXiv.1804.04012	DORA The Explorer: Directed Outreaching Reinforcement Action-Selection
 10.18653/V1/2023.ACL-LONG.46	ColD Fusion: Collaborative Descent for Distributed Multitask Finetuning
@@ -45,18 +45,18 @@
 10.48550/arXiv.2412.06540	Sloth: scaling laws for LLM skills to predict multi-benchmark performance across families
 10.1109/CLOUD67622.2025.00028	ZipNN: Lossless Compression for AI Models
 10.18653/V1/P19-1419	The Language of Legal and Illegal Activity on the Darknet
+10.48550/arXiv.2602.16763	When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation
 10.18653/V1/2024.CONDA-1.4	Data Contamination Report from the 2024 CONDA Shared Task
+10.48550/arXiv.2410.11840	A Hitchhiker's Guide to Scaling Law Estimation
 10.48550/arXiv.2408.10646	Beneath the Surface of Consistency: Exploring Cross-lingual Knowledge Representation Sharing in LLMs
 10.18653/v1/2024.naacl-demo.21	Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluation for Generative AI
-10.18653/V1/2020.CONLL-1.7	Classifying Syntactic Errors in Learner Language
-10.48550/arXiv.2602.16763	When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation
-10.48550/arXiv.2410.11840	A Hitchhiker's Guide to Scaling Law Estimation
 10.48550/ARXIV.2407.13696	Benchmark Agreement Testing Done Right: A Guide for LLM Benchmark Evaluation
+10.18653/V1/2020.CONLL-1.7	Classifying Syntactic Errors in Learner Language
 10.18653/v1/2025.findings-acl.611	DOVE: A Large-Scale Multi-Dimensional Predictions Dataset Towards Meaningful LLM Evaluation
 10.48550/arXiv.2311.13171	ComPEFT: Compression for Communicating Parameter Efficient Updates via Sparsification and Quantization
 10.18653/V1/2022.EMNLP-DEMOS.16	Label Sleuth: From Unlabeled Text to a Classifier in a Few Hours
-10.18653/V1/K19-1028	Automatically Extracting Challenge Sets for Non-Local Phenomena in Neural Machine Translation
 10.48550/arXiv.2410.10783	LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content
+10.18653/V1/K19-1028	Automatically Extracting Challenge Sets for Non-Local Phenomena in Neural Machine Translation
 10.18653/v1/2025.babylm-main.28	Findings of the Third BabyLM Challenge: Accelerating Language Modeling Research with Cognitively Plausible Data
 10.1038/s42256-025-01038-2	The Future of Open Human Feedback
 10.48550/arXiv.2402.07891	Label-Efficient Model Selection for Text Generation
@@ -93,19 +93,19 @@
 10.48550/ARXIV.2605.29512	MINDGAMES: A Live Arena for Evaluating Social and Strategic Reasoning in Multi-Agent LLMs
 10.48550/arXiv.2602.03344	Robustness as an Emergent Property of Task Performance
 10.48550/ARXIV.2606.14516	Every Eval Ever: A Unifying Schema and Community Repository for AI Evaluation Results
+10.48550/ARXIV.2602.20092	BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026 BabyLM Workshop
 10.48550/arXiv.2507.02850	LLM Hypnosis: Exploiting User Feedback for Unauthorized Knowledge Injection to All Users
 10.48550/ARXIV.2512.06553	A Latent Variable Framework for Scaling Laws in Large Language Models
 10.18653/V1/2022.CONLL-1.14	On Neurons Invariant to Sentence Structural Changes in Neural Machine Translation
 10.48550/arXiv.1805.12386	SemEval 2019 Shared Task: Cross-lingual Semantic Parsing with UCCA - Call for Participation
 10.48550/ARXIV.2603.13467	Resolving Interference (RI): Disentangling Models for Improved Model Merging
-10.48550/ARXIV.2602.20092	BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026 BabyLM Workshop
+10.48550/arXiv.2606.09809	Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting
 10.48550/ARXIV.2606.24579	Cross-Lingual Exploration for Parametric Knowledge
 10.48550/arxiv.2607.18235	Automated Discovery Has No Universally Superior Harness
 10.48550/arXiv.2408.12259	How Safe is Your Safety Metric? Automatic Concatenation Tests for Metric Reliability
 10.48550/arXiv.2106.00745	Part of Speech and Universal Dependency effects on English Arabic Machine Translation
 10.48550/arXiv.2605.11206	Instructions Shape Production of Language, not Processing
 10.48550/arXiv.2604.12843	Growing Pains: Extensible and Efficient LLM Benchmarking Via Fixed Parameter Calibration
-10.48550/arXiv.2606.09809	Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting
 10.2139/ssrn.6176178	Position: Agentic Systems Should be General
 10.18653/V1/2026.FINDINGS-ACL.43	Stop Guessing When to Stop Testing: Efficient Model Evaluation with Just Enough Data
 10.48550/arXiv.2608.25832	Skill Issue: Are Skills Language-Invariant in LLMs?

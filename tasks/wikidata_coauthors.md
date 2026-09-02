@@ -35,36 +35,36 @@ items for one person, which is a merge rather than a choice.
 research -- footballer, actor, politician -- so the name is a coincidence. An
 item stating no occupation at all is still listed.
 
-- [ ] **909 citations** — TIES-Merging: Resolving Interference When Merging Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029633)
+- [ ] **912 citations** — TIES-Merging: Resolving Interference When Merging Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029633)
       - Mohit Bansal → [Q92117908](https://www.wikidata.org/wiki/Q92117908) — researcher (ORCID 0000-0002-8403-0316), [Q96127041](https://www.wikidata.org/wiki/Q96127041) — researcher (ORCID 0000-0001-8777-1980), [Q103295310](https://www.wikidata.org/wiki/Q103295310) — Ph.D. University of California, Berkeley 201 … +2
-- [ ] **297 citations** — tinyBenchmarks: evaluating LLMs with fewer examples — 3 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029634)
+- [ ] **303 citations** — tinyBenchmarks: evaluating LLMs with fewer examples — 3 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029634)
       - Yuekai Sun → [Q102433700](https://www.wikidata.org/wiki/Q102433700) — statistician
       - Gongjun Xu → [Q100674149](https://www.wikidata.org/wiki/Q100674149) — researcher
 - [ ] **245 citations** — Active Learning for BERT: An Empirical Study — 7 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029635)
 - [ ] **242 citations** — Findings of the BabyLM Challenge: Sample-Efficient Pretraini — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029636)
-- [ ] **195 citations** — Global MMLU: Understanding and Addressing Cultural and Lingu — 10 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029638)
+- [ ] **198 citations** — Global MMLU: Understanding and Addressing Cultural and Lingu — 10 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029638)
       - Sebastian Ruder → [Q47488652](https://www.wikidata.org/wiki/Q47488652) — computer scientist
-- [ ] **167 citations** — Q²: Evaluating Factual Consistency in Knowledge-Grounded Dia — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029639)
+- [ ] **168 citations** — Q²: Evaluating Factual Consistency in Knowledge-Grounded Dia — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029639)
 - [ ] **127 citations** — On the Weaknesses of Reinforcement Learning for Neural Machi — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029640)
 - [ ] **122 citations** — DisentQA: Disentangling Parametric and Contextual Knowledge  — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029642)
 - [ ] **121 citations** — Fusing finetuned models for better pretraining — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029641)
-- [ ] **118 citations** — Model merging with SVD to tie the Knots — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029643)
+- [ ] **119 citations** — Model merging with SVD to tie the Knots — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029643)
 - [ ] **102 citations** — Beyond Binary Rewards: Training LMs to Reason About Their Un — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029645)
       - Yoon Kim → [Q91553362](https://www.wikidata.org/wiki/Q91553362) — researcher (ORCID 0000-0002-0679-6594), [Q88771001](https://www.wikidata.org/wiki/Q88771001) — researcher (ORCID 0000-0002-7404-8432), [Q130808559](https://www.wikidata.org/wiki/Q130808559) — researcher (ORCID 0009-0003-8583-6324) … +2
-- [ ] **100 citations** — Jump to Conclusions: Short-Cutting Transformers with Linear  — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029646)
+- [ ] **101 citations** — Jump to Conclusions: Short-Cutting Transformers with Linear  — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029646)
       - Alexander Yom Din → [Q102662940](https://www.wikidata.org/wiki/Q102662940) — Israeli mathematician
 - [ ] **94 citations** — Asymmetry in Low-Rank Adapters of Foundation Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029647)
 - [ ] **87 citations** — Efficient multi-prompt evaluation of LLMs — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029648)
       - Yuekai Sun → [Q102433700](https://www.wikidata.org/wiki/Q102433700) — statistician
 - [ ] **78 citations** — Are You Convinced? Choosing the More Convincing Evidence wit — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029650)
 - [ ] **73 citations** — Knowledge is a Region in Weight Space for Fine-tuned Languag — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029651)
+- [ ] **73 citations** — Efficient Benchmarking (of Language Models) — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029658)
 - [ ] **72 citations** — Will it Blend? Blending Weak and Strong Labeled Data in a Ne — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029652)
-- [ ] **71 citations** — Elements of World Knowledge (EWoK): A Cognition-Inspired Fra — 18 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029655)
+- [ ] **72 citations** — Elements of World Knowledge (EWoK): A Cognition-Inspired Fra — 18 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029655)
       - Carina Kauf → [Q126691875](https://www.wikidata.org/wiki/Q126691875) — researcher in the field of digital humanitie
       - Jennifer Hu → [Q102309422](https://www.wikidata.org/wiki/Q102309422) — Cognitive Science researcher; Ph.D. Universi
       - Maria Ryskina → [Q130838678](https://www.wikidata.org/wiki/Q130838678) — researcher
       - Ekin Akyürek → [Q141203667](https://www.wikidata.org/wiki/Q141203667) — researcher at Massachusetts Institute of Tec
 - [ ] **70 citations** — Corpus Wide Argument Mining - A Working Solution — 8 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029653)
-- [ ] **70 citations** — A Survey on Model MoErging: Recycling and Routing Among Spec — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029657)
 - … and 80 more papers, same order, in `build/wikidata_coauthors.json`
 

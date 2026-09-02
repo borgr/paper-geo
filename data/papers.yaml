@@ -47,7 +47,7 @@ papers:
     \  = {Fri, 01 Mar 2024 00:00:00 +0100},\n  biburl       = {https://dblp.org/rec/conf/nips/YadavTCRB23.bib},\n\
     \  bibsource    = {dblp computer science bibliography, https://dblp.org}\n}"
   s2_author_record: '41019330'
-  citations: 909
+  citations: 912
   acl: null
   s2_corpus_id: 259064039
   arxiv_journal_ref: null
@@ -112,7 +112,7 @@ papers:
     \  timestamp    = {Mon, 02 Sep 2024 16:45:29 +0200},\n  biburl       = {https://dblp.org/rec/conf/icml/PoloWCSXY24.bib},\n\
     \  bibsource    = {dblp computer science bibliography, https://dblp.org}\n}"
   s2_author_record: '41019330'
-  citations: 297
+  citations: 303
   acl: null
   s2_corpus_id: 267897919
   arxiv_journal_ref: null
@@ -359,7 +359,7 @@ papers:
     \ sensitive and culturally agnostic to enable a more comprehensive and equitable benchmark for evaluating\
     \ language models across diverse linguistic and cultural contexts.\"\n}"
   s2_author_record: '41019330'
-  citations: 195
+  citations: 198
   acl: null
   s2_corpus_id: 274464561
   arxiv_journal_ref: null
@@ -547,7 +547,7 @@ papers:
     \ +0100},\n  biburl       = {https://dblp.org/rec/conf/emnlp/HonovichCANSA21.bib},\n  bibsource  \
     \  = {dblp computer science bibliography, https://dblp.org}\n}"
   s2_author_record: '41019330'
-  citations: 167
+  citations: 168
   acl: 2021.emnlp-main.619
   s2_corpus_id: 233289483
   arxiv_journal_ref: null
@@ -797,7 +797,7 @@ papers:
     several vision and language benchmarks, including our new setting. We release our code at: https://github.com/gstoica27/KnOTS.'
   only_in_s2: true
   s2_author_record: '41019330'
-  citations: 118
+  citations: 119
   acl: null
   s2_corpus_id: 273638541
   arxiv_journal_ref: null
@@ -956,7 +956,7 @@ papers:
     \  timestamp    = {Thu, 23 May 2024 01:00:00 +0200},\n  biburl       = {https://dblp.org/rec/conf/coling/DinKCG24.bib},\n\
     \  bibsource    = {dblp computer science bibliography, https://dblp.org}\n}"
   s2_author_record: '41019330'
-  citations: 100
+  citations: 101
   acl: 2024.lrec-main.840
   s2_corpus_id: 257557722
   arxiv_journal_ref: LREC-COLING 2024
@@ -1253,6 +1253,86 @@ papers:
   title_display: Are You Convinced? Choosing the More Convincing Evidence with a Siamese Network
   venue_display: ACL 2019
   has_sidecar: true
+- key: DBLP:conf/naacl/PerlitzBGAESSSC24
+  slug: efficient-benchmarking-of-language-models
+  title: Efficient Benchmarking (of Language Models)
+  authors:
+  - Yotam Perlitz
+  - Elron Bandel
+  - Ariel Gera
+  - Ofir Arviv
+  - Liat Ein-Dor
+  - Eyal Shnarch
+  - Noam Slonim
+  - Michal Shmueli-Scheuer
+  - Leshem Choshen
+  authors_truncated: null
+  year: 2024
+  venue: 'Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational
+    Linguistics: Human Language Technologies (Volume 1: Long Papers), {NAACL} 2024, Mexico City, Mexico,
+    June 16-21, 2024'
+  type: inproceedings
+  doi: 10.18653/V1/2024.NAACL-LONG.139
+  arxiv: '2308.11696'
+  url: https://doi.org/10.18653/v1/2024.naacl-long.139
+  abstract: The increasing versatility of language models (LMs) has given rise to a new class of benchmarks
+    that comprehensively assess a broad range of capabilities. Such benchmarks are associated with massive
+    computational costs, extending to thousands of GPU hours per model. However, the efficiency aspect
+    of these evaluation efforts had raised little discussion in the literature.In this work, we present
+    the problem of Efficient Benchmarking, namely, intelligently reducing the computation costs of LM
+    evaluation without compromising reliability. Using the HELM benchmark as a test case, we investigate
+    how different benchmark design choices affect the computation-reliability trade-off. We propose to
+    evaluate the reliability of such decisions, by using a new measure – Decision Impact on Reliability,
+    DIoR for short.We find, for example, that a benchmark leader may change by merely removing a low-ranked
+    model from the benchmark, and observe that a correct benchmark ranking can be obtained by considering
+    only a fraction of the evaluation examples.Based on our findings, we outline a set of concrete recommendations
+    for efficient benchmark design and utilization practices. To take a step further, we use our findings
+    to propose an evaluation algorithm, that, when applied to the HELM benchmark, leads to dramatic cost
+    savings with minimal loss of benchmark reliability, often reducing computation by x100 or more.
+  bibtex: "@inproceedings{DBLP:conf/naacl/PerlitzBGAESSSC24,author       = {Yotam Perlitz and\n      \
+    \            Elron Bandel and\n                  Ariel Gera and\n                  Ofir Arviv and\n\
+    \                  Liat Ein{-}Dor and\n                  Eyal Shnarch and\n                  Noam\
+    \ Slonim and\n                  Michal Shmueli{-}Scheuer and\n                  Leshem Choshen},\n\
+    \  editor       = {Kevin Duh and\n                  Helena G{\\'{o}}mez{-}Adorno and\n           \
+    \       Steven Bethard},\n  title        = {Efficient Benchmarking (of Language Models)},\n  booktitle\
+    \    = {Proceedings of the 2024 Conference of the North American Chapter of\n                  the\
+    \ Association for Computational Linguistics: Human Language Technologies\n                  (Volume\
+    \ 1: Long Papers), {NAACL} 2024, Mexico City, Mexico, June 16-21,\n                  2024},\n  pages\
+    \        = {2519--2536},\n  publisher    = {Association for Computational Linguistics},\n  year  \
+    \       = {2024},\n  url          = {https://doi.org/10.18653/v1/2024.naacl-long.139},\n  doi    \
+    \      = {10.18653/V1/2024.NAACL-LONG.139},\n  timestamp    = {Thu, 29 Aug 2024 17:13:57 +0200},\n\
+    \  biburl       = {https://dblp.org/rec/conf/naacl/PerlitzBGAESSSC24.bib},\n  bibsource    = {dblp\
+    \ computer science bibliography, https://dblp.org}\n}"
+  s2_author_record: '41019330'
+  citations: 73
+  acl: 2024.naacl-long.139
+  s2_corpus_id: 261076362
+  arxiv_journal_ref: null
+  arxiv_doi: null
+  arxiv_comment: Accepted to NAACL main track
+  arxiv_html: true
+  hf_indexed: true
+  hf_upvotes: 0
+  hf_claimed_authors: 4
+  hf_claimed_by_me: true
+  hf_github_repo: null
+  hf_github_stars: null
+  hf_n_models: 0
+  hf_n_datasets: 0
+  links:
+    arxiv: https://arxiv.org/abs/2308.11696
+    arxiv_pdf: https://arxiv.org/pdf/2308.11696
+    html: https://arxiv.org/html/2308.11696
+    html_source: arxiv
+    huggingface: https://huggingface.co/papers/2308.11696
+    alphaxiv: https://www.alphaxiv.org/abs/2308.11696
+    doi: https://doi.org/10.18653/V1/2024.NAACL-LONG.139
+    acl_anthology: https://aclanthology.org/2024.naacl-long.139/
+    semantic_scholar: https://www.semanticscholar.org/paper/261076362
+    publisher: https://doi.org/10.18653/v1/2024.naacl-long.139
+  title_display: Efficient Benchmarking (of Language Models)
+  venue_display: NAACL 2024
+  has_sidecar: true
 - key: DBLP:conf/emnlp/GuetaVRSKC23
   slug: knowledge-is-a-region-in-weight-space-for-fine-tuned-languag
   title: Knowledge is a Region in Weight Space for Fine-tuned Language Models
@@ -1327,60 +1407,6 @@ papers:
   title_display: Knowledge is a Region in Weight Space for Fine-tuned Language Models
   venue_display: Findings of EMNLP 2023
   has_sidecar: true
-- key: DBLP:conf/acl/ShnarchPDGHCAS18
-  slug: will-it-blend-blending-weak-and-strong-labeled-data-in-a-neu
-  title: Will it Blend? Blending Weak and Strong Labeled Data in a Neural Network for Argumentation Mining
-  authors:
-  - Eyal Shnarch
-  - Carlos Alzate
-  - Lena Dankin
-  - Martin Gleize
-  - Yufang Hou
-  - Leshem Choshen
-  - Ranit Aharonov
-  - Noam Slonim
-  authors_truncated: null
-  year: 2018
-  venue: 'Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics, {ACL}
-    2018, Melbourne, Australia, July 15-20, 2018, Volume 2: Short Papers'
-  type: inproceedings
-  doi: 10.18653/V1/P18-2095
-  arxiv: null
-  url: https://aclanthology.org/P18-2095/
-  abstract: The process of obtaining high quality labeled data for natural language understanding tasks
-    is often slow, error-prone, complicated and expensive. With the vast usage of neural networks, this
-    issue becomes more notorious since these networks require a large amount of labeled data to produce
-    satisfactory results. We propose a methodology to blend high quality but scarce strong labeled data
-    with noisy but abundant weak labeled data during the training of neural networks. Experiments in the
-    context of topic-dependent evidence detection with two forms of weak labeled data show the advantages
-    of the blending scheme. In addition, we provide a manually annotated data set for the task of topic-dependent
-    evidence detection. We believe that blending weak and strong labeled data is a general notion that
-    may be applicable to many language understanding tasks, and can especially assist researchers who
-    wish to train a network but have a small amount of high quality labeled data for their task of interest.
-  bibtex: "@inproceedings{DBLP:conf/acl/ShnarchPDGHCAS18,author       = {Eyal Shnarch and\n          \
-    \        Carlos Alzate and\n                  Lena Dankin and\n                  Martin Gleize and\n\
-    \                  Yufang Hou and\n                  Leshem Choshen and\n                  Ranit Aharonov\
-    \ and\n                  Noam Slonim},\n  editor       = {Iryna Gurevych and\n                  Yusuke\
-    \ Miyao},\n  title        = {Will it Blend? Blending Weak and Strong Labeled Data in a Neural Network\n\
-    \                  for Argumentation Mining},\n  booktitle    = {Proceedings of the 56th Annual Meeting\
-    \ of the Association for Computational\n                  Linguistics, {ACL} 2018, Melbourne, Australia,\
-    \ July 15-20, 2018, Volume\n                  2: Short Papers},\n  pages        = {599--605},\n  publisher\
-    \    = {Association for Computational Linguistics},\n  year         = {2018},\n  url          = {https://aclanthology.org/P18-2095/},\n\
-    \  doi          = {10.18653/V1/P18-2095},\n  timestamp    = {Fri, 06 Aug 2021 01:00:00 +0200},\n \
-    \ biburl       = {https://dblp.org/rec/conf/acl/ShnarchPDGHCAS18.bib},\n  bibsource    = {dblp computer\
-    \ science bibliography, https://dblp.org}\n}"
-  s2_author_record: '41019330'
-  citations: 72
-  acl: P18-2095
-  s2_corpus_id: 51873028
-  links:
-    doi: https://doi.org/10.18653/V1/P18-2095
-    acl_anthology: https://aclanthology.org/P18-2095/
-    semantic_scholar: https://www.semanticscholar.org/paper/51873028
-  title_display: Will it Blend? Blending Weak and Strong Labeled Data in a Neural Network for Argumentation
-    Mining
-  venue_display: ACL 2018
-  has_sidecar: true
 - key: DBLP:journals/corr/abs-2405-09605
   slug: elements-of-world-knowledge-ewok-a-cognition-inspired-framew
   title: Elements of World Knowledge {(EWoK):} {A} Cognition-Inspired Framework for Evaluating Basic World
@@ -1444,7 +1470,7 @@ papers:
     \  biburl       = {https://dblp.org/rec/journals/tacl/IvanovaSLKRCKHPGPRAWRCL25.bib},\n  bibsource\
     \    = {dblp computer science bibliography, https://dblp.org},\n  pages        = {1245--1270}\n}"
   s2_author_record: '41019330'
-  citations: 71
+  citations: 72
   acl: null
   s2_corpus_id: 269790884
   arxiv_journal_ref: null
@@ -1476,6 +1502,60 @@ papers:
   title_display: 'Elements of World Knowledge (EWoK): A Cognition-Inspired Framework for Evaluating Basic
     World Knowledge in Language Models'
   venue_display: TACL
+  has_sidecar: true
+- key: DBLP:conf/acl/ShnarchPDGHCAS18
+  slug: will-it-blend-blending-weak-and-strong-labeled-data-in-a-neu
+  title: Will it Blend? Blending Weak and Strong Labeled Data in a Neural Network for Argumentation Mining
+  authors:
+  - Eyal Shnarch
+  - Carlos Alzate
+  - Lena Dankin
+  - Martin Gleize
+  - Yufang Hou
+  - Leshem Choshen
+  - Ranit Aharonov
+  - Noam Slonim
+  authors_truncated: null
+  year: 2018
+  venue: 'Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics, {ACL}
+    2018, Melbourne, Australia, July 15-20, 2018, Volume 2: Short Papers'
+  type: inproceedings
+  doi: 10.18653/V1/P18-2095
+  arxiv: null
+  url: https://aclanthology.org/P18-2095/
+  abstract: The process of obtaining high quality labeled data for natural language understanding tasks
+    is often slow, error-prone, complicated and expensive. With the vast usage of neural networks, this
+    issue becomes more notorious since these networks require a large amount of labeled data to produce
+    satisfactory results. We propose a methodology to blend high quality but scarce strong labeled data
+    with noisy but abundant weak labeled data during the training of neural networks. Experiments in the
+    context of topic-dependent evidence detection with two forms of weak labeled data show the advantages
+    of the blending scheme. In addition, we provide a manually annotated data set for the task of topic-dependent
+    evidence detection. We believe that blending weak and strong labeled data is a general notion that
+    may be applicable to many language understanding tasks, and can especially assist researchers who
+    wish to train a network but have a small amount of high quality labeled data for their task of interest.
+  bibtex: "@inproceedings{DBLP:conf/acl/ShnarchPDGHCAS18,author       = {Eyal Shnarch and\n          \
+    \        Carlos Alzate and\n                  Lena Dankin and\n                  Martin Gleize and\n\
+    \                  Yufang Hou and\n                  Leshem Choshen and\n                  Ranit Aharonov\
+    \ and\n                  Noam Slonim},\n  editor       = {Iryna Gurevych and\n                  Yusuke\
+    \ Miyao},\n  title        = {Will it Blend? Blending Weak and Strong Labeled Data in a Neural Network\n\
+    \                  for Argumentation Mining},\n  booktitle    = {Proceedings of the 56th Annual Meeting\
+    \ of the Association for Computational\n                  Linguistics, {ACL} 2018, Melbourne, Australia,\
+    \ July 15-20, 2018, Volume\n                  2: Short Papers},\n  pages        = {599--605},\n  publisher\
+    \    = {Association for Computational Linguistics},\n  year         = {2018},\n  url          = {https://aclanthology.org/P18-2095/},\n\
+    \  doi          = {10.18653/V1/P18-2095},\n  timestamp    = {Fri, 06 Aug 2021 01:00:00 +0200},\n \
+    \ biburl       = {https://dblp.org/rec/conf/acl/ShnarchPDGHCAS18.bib},\n  bibsource    = {dblp computer\
+    \ science bibliography, https://dblp.org}\n}"
+  s2_author_record: '41019330'
+  citations: 72
+  acl: P18-2095
+  s2_corpus_id: 51873028
+  links:
+    doi: https://doi.org/10.18653/V1/P18-2095
+    acl_anthology: https://aclanthology.org/P18-2095/
+    semantic_scholar: https://www.semanticscholar.org/paper/51873028
+  title_display: Will it Blend? Blending Weak and Strong Labeled Data in a Neural Network for Argumentation
+    Mining
+  venue_display: ACL 2018
   has_sidecar: true
 - key: yadav2024survey
   slug: a-survey-on-model-moerging-recycling-and-routing-among-speci
@@ -1653,86 +1733,6 @@ papers:
   title_display: 'Findings of the Second BabyLM Challenge: Sample-Efficient Pretraining on Developmentally
     Plausible Corpora'
   venue_display: CoNLL 2024
-  has_sidecar: true
-- key: DBLP:conf/naacl/PerlitzBGAESSSC24
-  slug: efficient-benchmarking-of-language-models
-  title: Efficient Benchmarking (of Language Models)
-  authors:
-  - Yotam Perlitz
-  - Elron Bandel
-  - Ariel Gera
-  - Ofir Arviv
-  - Liat Ein-Dor
-  - Eyal Shnarch
-  - Noam Slonim
-  - Michal Shmueli-Scheuer
-  - Leshem Choshen
-  authors_truncated: null
-  year: 2024
-  venue: 'Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational
-    Linguistics: Human Language Technologies (Volume 1: Long Papers), {NAACL} 2024, Mexico City, Mexico,
-    June 16-21, 2024'
-  type: inproceedings
-  doi: 10.18653/V1/2024.NAACL-LONG.139
-  arxiv: '2308.11696'
-  url: https://doi.org/10.18653/v1/2024.naacl-long.139
-  abstract: The increasing versatility of language models (LMs) has given rise to a new class of benchmarks
-    that comprehensively assess a broad range of capabilities. Such benchmarks are associated with massive
-    computational costs, extending to thousands of GPU hours per model. However, the efficiency aspect
-    of these evaluation efforts had raised little discussion in the literature.In this work, we present
-    the problem of Efficient Benchmarking, namely, intelligently reducing the computation costs of LM
-    evaluation without compromising reliability. Using the HELM benchmark as a test case, we investigate
-    how different benchmark design choices affect the computation-reliability trade-off. We propose to
-    evaluate the reliability of such decisions, by using a new measure – Decision Impact on Reliability,
-    DIoR for short.We find, for example, that a benchmark leader may change by merely removing a low-ranked
-    model from the benchmark, and observe that a correct benchmark ranking can be obtained by considering
-    only a fraction of the evaluation examples.Based on our findings, we outline a set of concrete recommendations
-    for efficient benchmark design and utilization practices. To take a step further, we use our findings
-    to propose an evaluation algorithm, that, when applied to the HELM benchmark, leads to dramatic cost
-    savings with minimal loss of benchmark reliability, often reducing computation by x100 or more.
-  bibtex: "@inproceedings{DBLP:conf/naacl/PerlitzBGAESSSC24,author       = {Yotam Perlitz and\n      \
-    \            Elron Bandel and\n                  Ariel Gera and\n                  Ofir Arviv and\n\
-    \                  Liat Ein{-}Dor and\n                  Eyal Shnarch and\n                  Noam\
-    \ Slonim and\n                  Michal Shmueli{-}Scheuer and\n                  Leshem Choshen},\n\
-    \  editor       = {Kevin Duh and\n                  Helena G{\\'{o}}mez{-}Adorno and\n           \
-    \       Steven Bethard},\n  title        = {Efficient Benchmarking (of Language Models)},\n  booktitle\
-    \    = {Proceedings of the 2024 Conference of the North American Chapter of\n                  the\
-    \ Association for Computational Linguistics: Human Language Technologies\n                  (Volume\
-    \ 1: Long Papers), {NAACL} 2024, Mexico City, Mexico, June 16-21,\n                  2024},\n  pages\
-    \        = {2519--2536},\n  publisher    = {Association for Computational Linguistics},\n  year  \
-    \       = {2024},\n  url          = {https://doi.org/10.18653/v1/2024.naacl-long.139},\n  doi    \
-    \      = {10.18653/V1/2024.NAACL-LONG.139},\n  timestamp    = {Thu, 29 Aug 2024 17:13:57 +0200},\n\
-    \  biburl       = {https://dblp.org/rec/conf/naacl/PerlitzBGAESSSC24.bib},\n  bibsource    = {dblp\
-    \ computer science bibliography, https://dblp.org}\n}"
-  s2_author_record: '41019330'
-  citations: 70
-  acl: 2024.naacl-long.139
-  s2_corpus_id: 261076362
-  arxiv_journal_ref: null
-  arxiv_doi: null
-  arxiv_comment: Accepted to NAACL main track
-  arxiv_html: true
-  hf_indexed: true
-  hf_upvotes: 0
-  hf_claimed_authors: 4
-  hf_claimed_by_me: true
-  hf_github_repo: null
-  hf_github_stars: null
-  hf_n_models: 0
-  hf_n_datasets: 0
-  links:
-    arxiv: https://arxiv.org/abs/2308.11696
-    arxiv_pdf: https://arxiv.org/pdf/2308.11696
-    html: https://arxiv.org/html/2308.11696
-    html_source: arxiv
-    huggingface: https://huggingface.co/papers/2308.11696
-    alphaxiv: https://www.alphaxiv.org/abs/2308.11696
-    doi: https://doi.org/10.18653/V1/2024.NAACL-LONG.139
-    acl_anthology: https://aclanthology.org/2024.naacl-long.139/
-    semantic_scholar: https://www.semanticscholar.org/paper/261076362
-    publisher: https://doi.org/10.18653/v1/2024.naacl-long.139
-  title_display: Efficient Benchmarking (of Language Models)
-  venue_display: NAACL 2024
   has_sidecar: true
 - key: DBLP:conf/aaai/Ein-DorSDHSGAGC20
   slug: corpus-wide-argument-mining-a-working-solution
@@ -2063,7 +2063,7 @@ papers:
     \ general natural language modeling, improving language understanding performance in the MMLU benchmark.\"\
     \n}"
   s2_author_record: '2283849613'
-  citations: 47
+  citations: 48
   acl: 2024.emnlp-main.12
   s2_corpus_id: 268819308
   arxiv_journal_ref: null
@@ -3242,6 +3242,98 @@ papers:
   title_display: The Language of Legal and Illegal Activity on the Darknet
   venue_display: ACL 2019
   has_sidecar: true
+- key: akhtar2026ai
+  slug: when-ai-benchmarks-plateau-a-systematic-study-of-benchmark-s
+  title: 'When {AI} Benchmarks Plateau: A Systematic Study of Benchmark Saturation'
+  authors:
+  - Mubashara Akhtar
+  - Anka Reuel
+  - Prajna Soni
+  - Sanchit Ahuja
+  - Pawan Sasanka Ammanamanchi
+  - Ruchit Rawal
+  - Vilém Zouhar
+  - Srishti Yadav
+  - Chenxi Whitehouse
+  - Dayeon Ki
+  - Jennifer Mickel
+  - Leshem Choshen
+  - Marek Šuppa
+  - Jan Batzner
+  - Jenny Chim
+  - Jeba Sania
+  - Yanan Long
+  - Hossein A. Rahmani
+  - Christina Knight
+  - Yiyang Nan
+  - Jyoutir Raj
+  - Yu Fan
+  - Shubham Singh
+  - Subramanyam Sahoo
+  - Eliya Habba
+  - Usman Gohar
+  - Siddhesh Pawar
+  - Robert Scholz
+  - Arjun Subramonian
+  - Jingwei Ni
+  - Mykel Kochenderfer
+  - Sanmi Koyejo
+  - Mrinmaya Sachan
+  - Stella Biderman
+  - Zeerak Talat
+  - Avijit Ghosh
+  - Irene Solaiman
+  authors_truncated: null
+  year: 2026
+  venue: International Conference on Machine Learning (ICML) 2026
+  type: article
+  doi: 10.48550/arXiv.2602.16763
+  arxiv: '2602.16763'
+  url: null
+  abstract: Artificial intelligence benchmarks are an important mechanism to measure model progress and
+    guide deployment decisions. However, benchmarks quickly"saturate", making it difficult to differentiate
+    models and diminishing their long-term value. In this study, we define benchmark saturation and analyze
+    it across 60 language model benchmarks using 14 properties that relate to saturation. We find that
+    nearly half of our benchmarks exhibit saturation, with rates increasing with age. Further, we find
+    that resilience to saturation is impacted by expert-curation, not by public test data. Our results
+    suggest that design choices can extend benchmark longevity and inform more durable evaluation approaches.
+  bibtex: "@article{akhtar2026ai,\n  title={When {AI} Benchmarks Plateau: A Systematic Study of Benchmark\
+    \ Saturation},\n  author={Mubashara Akhtar and Anka Reuel and Prajna Soni and Sanchit Ahuja and Pawan\
+    \ Sasanka Ammanamanchi and Ruchit Rawal and Vilém Zouhar and Srishti Yadav and Chenxi Whitehouse and\
+    \ Dayeon Ki and Jennifer Mickel and Leshem Choshen and Marek Šuppa and Jan Batzner and Jenny Chim\
+    \ and Jeba Sania and Yanan Long and Hossein A. Rahmani and Christina Knight and Yiyang Nan and Jyoutir\
+    \ Raj and Yu Fan and Shubham Singh and Subramanyam Sahoo and Eliya Habba and Usman Gohar and Siddhesh\
+    \ Pawar and Robert Scholz and Arjun Subramonian and Jingwei Ni and Mykel Kochenderfer and Sanmi Koyejo\
+    \ and Mrinmaya Sachan and Stella Biderman and Zeerak Talat and Avijit Ghosh and Irene Solaiman},\n\
+    \  journal={International Conference on Machine Learning (ICML) 2026},\n  year={2026}\n}"
+  s2_author_record: '2283849613'
+  citations: 24
+  acl: null
+  s2_corpus_id: 285787943
+  arxiv_journal_ref: null
+  arxiv_doi: null
+  arxiv_comment: Published at ICML 2026 (Forty-Third International Conference on Machine Learning)
+  arxiv_html: true
+  hf_indexed: true
+  hf_upvotes: 0
+  hf_claimed_authors: 3
+  hf_claimed_by_me: true
+  hf_github_repo: null
+  hf_github_stars: null
+  hf_n_models: 0
+  hf_n_datasets: 0
+  links:
+    arxiv: https://arxiv.org/abs/2602.16763
+    arxiv_pdf: https://arxiv.org/pdf/2602.16763
+    html: https://arxiv.org/html/2602.16763
+    html_source: arxiv
+    huggingface: https://huggingface.co/papers/2602.16763
+    alphaxiv: https://www.alphaxiv.org/abs/2602.16763
+    doi: https://doi.org/10.48550/arXiv.2602.16763
+    semantic_scholar: https://www.semanticscholar.org/paper/285787943
+  title_display: 'When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation'
+  venue_display: ICML 2026
+  has_sidecar: true
 - key: DBLP:journals/corr/abs-2407-21530
   slug: data-contamination-report-from-the-2024-conda-shared-task
   title: Data Contamination Report from the 2024 {CONDA} Shared Task
@@ -3346,6 +3438,68 @@ papers:
     project: https://conda-workshop.github.io/
   title_display: Data Contamination Report from the 2024 CONDA Shared Task
   venue_display: CONDA 2024
+  has_sidecar: true
+- key: choshen2024hitchhiker
+  slug: a-hitchhiker-s-guide-to-scaling-law-estimation
+  title: A Hitchhiker's Guide to Scaling Law Estimation
+  authors:
+  - Leshem Choshen
+  - Yang Zhang
+  - Jacob Andreas
+  authors_truncated: null
+  year: 2025
+  venue: Forty-second International Conference on Machine Learning
+  type: inproceedings
+  doi: 10.48550/arXiv.2410.11840
+  arxiv: '2410.11840'
+  url: https://openreview.net/forum?id=KugSHTH0c8
+  abstract: Scaling laws predict the loss of a target machine learning model by extrapolating from easier-to-train
+    models with fewer parameters or smaller training sets. This provides an efficient way for practitioners
+    and researchers alike to compare pretraining decisions involving optimizers, datasets, and model architectures.
+    Despite the widespread use of scaling laws to model the dynamics of language model training, there
+    has been little work on understanding how to best estimate and interpret them. We collect (and release)
+    a large-scale dataset containing losses and downstream evaluations for 485 previously published pretrained
+    models. We use these to estimate more than 1000 scaling laws, then derive a set of best practices
+    for estimating scaling laws in new model families. We find that fitting scaling laws to intermediate
+    checkpoints of training runs (and not just their final losses) substantially improves accuracy, and
+    that -- all else equal -- estimates of performance are generally most accurate when derived from other
+    models of similar sizes. However, because there is a significant degree of variability across model
+    seeds, training multiple small models is sometimes more useful than training a single large one. Moreover,
+    while different model families differ scaling behavior, they are often similar enough that a target
+    model's behavior can be predicted from a single model with the same architecture, along with scaling
+    parameter estimates derived from other model families.
+  bibtex: "@inproceedings{choshen2024hitchhiker,\n  title={A Hitchhiker's Guide to Scaling Law Estimation},\n\
+    \  author={Choshen, Leshem and Zhang, Yang and Andreas, Jacob},\nbooktitle={Forty-second International\
+    \ Conference on Machine Learning},\nyear={2025},\nurl={https://openreview.net/forum?id=KugSHTH0c8}\n\
+    }"
+  s2_author_record: '2283849613'
+  citations: 23
+  acl: null
+  s2_corpus_id: 273350789
+  arxiv_journal_ref: null
+  arxiv_doi: null
+  arxiv_comment: ICML
+  arxiv_html: true
+  hf_indexed: true
+  hf_upvotes: 1
+  hf_claimed_authors: 1
+  hf_claimed_by_me: true
+  hf_github_repo: null
+  hf_github_stars: null
+  hf_n_models: 0
+  hf_n_datasets: 0
+  links:
+    arxiv: https://arxiv.org/abs/2410.11840
+    arxiv_pdf: https://arxiv.org/pdf/2410.11840
+    html: https://arxiv.org/html/2410.11840
+    html_source: arxiv
+    huggingface: https://huggingface.co/papers/2410.11840
+    alphaxiv: https://www.alphaxiv.org/abs/2410.11840
+    doi: https://doi.org/10.48550/arXiv.2410.11840
+    semantic_scholar: https://www.semanticscholar.org/paper/273350789
+    publisher: https://openreview.net/forum?id=KugSHTH0c8
+  title_display: A Hitchhiker's Guide to Scaling Law Estimation
+  venue_display: ICML 2025
   has_sidecar: true
 - key: ifergan2024beneath
   slug: beneath-the-surface-of-consistency-exploring-cross-lingual-k
@@ -3506,6 +3660,83 @@ papers:
     AI'
   venue_display: NAACL 2024 (Demo)
   has_sidecar: true
+- key: DBLP:journals/corr/abs-2407-13696
+  slug: benchmark-agreement-testing-done-right-a-guide-for-llm-bench
+  title: 'Benchmark Agreement Testing Done Right: {A} Guide for {LLM} Benchmark Evaluation'
+  authors:
+  - Yotam Perlitz
+  - Ariel Gera
+  - Ofir Arviv
+  - Asaf Yehudai
+  - Elron Bandel
+  - Eyal Shnarch
+  - Michal Shmueli-Scheuer
+  - Leshem Choshen
+  authors_truncated: null
+  year: 2024
+  venue: CoRR
+  type: article
+  doi: 10.48550/ARXIV.2407.13696
+  arxiv: '2407.13696'
+  url: https://doi.org/10.48550/arXiv.2407.13696
+  abstract: 'Recent advancements in Language Models (LMs) have catalyzed the creation of multiple benchmarks,
+    designed to assess these models'' general capabilities. A crucial task, however, is assessing the
+    validity of the benchmarks themselves. This is most commonly done via Benchmark Agreement Testing
+    (BAT), where new benchmarks are validated against established ones using some agreement metric (e.g.,
+    rank correlation). Despite the crucial role of BAT for benchmark builders and consumers, there are
+    no standardized procedures for such agreement testing. This deficiency can lead to invalid conclusions,
+    fostering mistrust in benchmarks and upending the ability to properly choose the appropriate benchmark
+    to use. By analyzing over 40 prominent benchmarks, we demonstrate how some overlooked methodological
+    choices can significantly influence BAT results, potentially undermining the validity of conclusions.
+    To address these inconsistencies, we propose a set of best practices for BAT and demonstrate how utilizing
+    these methodologies greatly improves BAT robustness and validity. To foster adoption and facilitate
+    future research,, we introduce BenchBench, a python package for BAT, and release the BenchBench-leaderboard,
+    a meta-benchmark designed to evaluate benchmarks using their peers. Our findings underscore the necessity
+    for standardized BAT, ensuring the robustness and validity of benchmark evaluations in the evolving
+    landscape of language model research. BenchBench Package: github.com/IBM/BenchBench Leaderboard: hf.co/spaces/IBM/BenchBench'
+  bibtex: "@article{DBLP:journals/corr/abs-2407-13696,author       = {Yotam Perlitz and\n            \
+    \      Ariel Gera and\n                  Ofir Arviv and\n                  Asaf Yehudai and\n    \
+    \              Elron Bandel and\n                  Eyal Shnarch and\n                  Michal Shmueli{-}Scheuer\
+    \ and\n                  Leshem Choshen},\n  title        = {Benchmark Agreement Testing Done Right:\
+    \ {A} Guide for {LLM} Benchmark\n                  Evaluation},\n  journal      = {CoRR},\n  volume\
+    \       = {abs/2407.13696},\n  year         = {2024},\n  url          = {https://doi.org/10.48550/arXiv.2407.13696},\n\
+    \  doi          = {10.48550/ARXIV.2407.13696},\n  eprinttype    = {arXiv},\n  eprint       = {2407.13696},\n\
+    \  timestamp    = {Thu, 22 Aug 2024 01:00:00 +0200},\n  biburl       = {https://dblp.org/rec/journals/corr/abs-2407-13696.bib},\n\
+    \  bibsource    = {dblp computer science bibliography, https://dblp.org}\n}"
+  s2_author_record: '2283849613'
+  citations: 23
+  acl: null
+  s2_corpus_id: 287923131
+  arxiv_journal_ref: null
+  arxiv_doi: null
+  arxiv_comment: Under Review
+  arxiv_html: true
+  abstract_source: arxiv
+  only_in_s2: true
+  merged_from:
+  - DBLP:journals/corr/abs-2407-13696
+  hf_indexed: true
+  hf_upvotes: 5
+  hf_claimed_authors: 5
+  hf_claimed_by_me: true
+  hf_github_repo: https://github.com/ibm/benchbench
+  hf_github_stars: 19
+  hf_n_models: 0
+  hf_n_datasets: 0
+  links:
+    arxiv: https://arxiv.org/abs/2407.13696
+    arxiv_pdf: https://arxiv.org/pdf/2407.13696
+    html: https://arxiv.org/html/2407.13696
+    html_source: arxiv
+    huggingface: https://huggingface.co/papers/2407.13696
+    alphaxiv: https://www.alphaxiv.org/abs/2407.13696
+    doi: https://doi.org/10.48550/ARXIV.2407.13696
+    semantic_scholar: https://www.semanticscholar.org/paper/287923131
+    publisher: https://doi.org/10.48550/arXiv.2407.13696
+    code: https://github.com/ibm/benchbench
+  title_display: 'Benchmark Agreement Testing Done Right: A Guide for LLM Benchmark Evaluation'
+  venue_display: arXiv
+  has_sidecar: true
 - key: DBLP:conf/conll/ChoshenNBA20
   slug: classifying-syntactic-errors-in-learner-language
   title: Classifying Syntactic Errors in Learner Language
@@ -3569,237 +3800,6 @@ papers:
   title_display: Classifying Syntactic Errors in Learner Language
   venue_display: CoNLL 2020
   has_sidecar: true
-- key: akhtar2026ai
-  slug: when-ai-benchmarks-plateau-a-systematic-study-of-benchmark-s
-  title: 'When {AI} Benchmarks Plateau: A Systematic Study of Benchmark Saturation'
-  authors:
-  - Mubashara Akhtar
-  - Anka Reuel
-  - Prajna Soni
-  - Sanchit Ahuja
-  - Pawan Sasanka Ammanamanchi
-  - Ruchit Rawal
-  - Vilém Zouhar
-  - Srishti Yadav
-  - Chenxi Whitehouse
-  - Dayeon Ki
-  - Jennifer Mickel
-  - Leshem Choshen
-  - Marek Šuppa
-  - Jan Batzner
-  - Jenny Chim
-  - Jeba Sania
-  - Yanan Long
-  - Hossein A. Rahmani
-  - Christina Knight
-  - Yiyang Nan
-  - Jyoutir Raj
-  - Yu Fan
-  - Shubham Singh
-  - Subramanyam Sahoo
-  - Eliya Habba
-  - Usman Gohar
-  - Siddhesh Pawar
-  - Robert Scholz
-  - Arjun Subramonian
-  - Jingwei Ni
-  - Mykel Kochenderfer
-  - Sanmi Koyejo
-  - Mrinmaya Sachan
-  - Stella Biderman
-  - Zeerak Talat
-  - Avijit Ghosh
-  - Irene Solaiman
-  authors_truncated: null
-  year: 2026
-  venue: International Conference on Machine Learning (ICML) 2026
-  type: article
-  doi: 10.48550/arXiv.2602.16763
-  arxiv: '2602.16763'
-  url: null
-  abstract: Artificial intelligence benchmarks are an important mechanism to measure model progress and
-    guide deployment decisions. However, benchmarks quickly"saturate", making it difficult to differentiate
-    models and diminishing their long-term value. In this study, we define benchmark saturation and analyze
-    it across 60 language model benchmarks using 14 properties that relate to saturation. We find that
-    nearly half of our benchmarks exhibit saturation, with rates increasing with age. Further, we find
-    that resilience to saturation is impacted by expert-curation, not by public test data. Our results
-    suggest that design choices can extend benchmark longevity and inform more durable evaluation approaches.
-  bibtex: "@article{akhtar2026ai,\n  title={When {AI} Benchmarks Plateau: A Systematic Study of Benchmark\
-    \ Saturation},\n  author={Mubashara Akhtar and Anka Reuel and Prajna Soni and Sanchit Ahuja and Pawan\
-    \ Sasanka Ammanamanchi and Ruchit Rawal and Vilém Zouhar and Srishti Yadav and Chenxi Whitehouse and\
-    \ Dayeon Ki and Jennifer Mickel and Leshem Choshen and Marek Šuppa and Jan Batzner and Jenny Chim\
-    \ and Jeba Sania and Yanan Long and Hossein A. Rahmani and Christina Knight and Yiyang Nan and Jyoutir\
-    \ Raj and Yu Fan and Shubham Singh and Subramanyam Sahoo and Eliya Habba and Usman Gohar and Siddhesh\
-    \ Pawar and Robert Scholz and Arjun Subramonian and Jingwei Ni and Mykel Kochenderfer and Sanmi Koyejo\
-    \ and Mrinmaya Sachan and Stella Biderman and Zeerak Talat and Avijit Ghosh and Irene Solaiman},\n\
-    \  journal={International Conference on Machine Learning (ICML) 2026},\n  year={2026}\n}"
-  s2_author_record: '2283849613'
-  citations: 22
-  acl: null
-  s2_corpus_id: 285787943
-  arxiv_journal_ref: null
-  arxiv_doi: null
-  arxiv_comment: Published at ICML 2026 (Forty-Third International Conference on Machine Learning)
-  arxiv_html: true
-  hf_indexed: true
-  hf_upvotes: 0
-  hf_claimed_authors: 3
-  hf_claimed_by_me: true
-  hf_github_repo: null
-  hf_github_stars: null
-  hf_n_models: 0
-  hf_n_datasets: 0
-  links:
-    arxiv: https://arxiv.org/abs/2602.16763
-    arxiv_pdf: https://arxiv.org/pdf/2602.16763
-    html: https://arxiv.org/html/2602.16763
-    html_source: arxiv
-    huggingface: https://huggingface.co/papers/2602.16763
-    alphaxiv: https://www.alphaxiv.org/abs/2602.16763
-    doi: https://doi.org/10.48550/arXiv.2602.16763
-    semantic_scholar: https://www.semanticscholar.org/paper/285787943
-  title_display: 'When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation'
-  venue_display: ICML 2026
-  has_sidecar: true
-- key: choshen2024hitchhiker
-  slug: a-hitchhiker-s-guide-to-scaling-law-estimation
-  title: A Hitchhiker's Guide to Scaling Law Estimation
-  authors:
-  - Leshem Choshen
-  - Yang Zhang
-  - Jacob Andreas
-  authors_truncated: null
-  year: 2025
-  venue: Forty-second International Conference on Machine Learning
-  type: inproceedings
-  doi: 10.48550/arXiv.2410.11840
-  arxiv: '2410.11840'
-  url: https://openreview.net/forum?id=KugSHTH0c8
-  abstract: Scaling laws predict the loss of a target machine learning model by extrapolating from easier-to-train
-    models with fewer parameters or smaller training sets. This provides an efficient way for practitioners
-    and researchers alike to compare pretraining decisions involving optimizers, datasets, and model architectures.
-    Despite the widespread use of scaling laws to model the dynamics of language model training, there
-    has been little work on understanding how to best estimate and interpret them. We collect (and release)
-    a large-scale dataset containing losses and downstream evaluations for 485 previously published pretrained
-    models. We use these to estimate more than 1000 scaling laws, then derive a set of best practices
-    for estimating scaling laws in new model families. We find that fitting scaling laws to intermediate
-    checkpoints of training runs (and not just their final losses) substantially improves accuracy, and
-    that -- all else equal -- estimates of performance are generally most accurate when derived from other
-    models of similar sizes. However, because there is a significant degree of variability across model
-    seeds, training multiple small models is sometimes more useful than training a single large one. Moreover,
-    while different model families differ scaling behavior, they are often similar enough that a target
-    model's behavior can be predicted from a single model with the same architecture, along with scaling
-    parameter estimates derived from other model families.
-  bibtex: "@inproceedings{choshen2024hitchhiker,\n  title={A Hitchhiker's Guide to Scaling Law Estimation},\n\
-    \  author={Choshen, Leshem and Zhang, Yang and Andreas, Jacob},\nbooktitle={Forty-second International\
-    \ Conference on Machine Learning},\nyear={2025},\nurl={https://openreview.net/forum?id=KugSHTH0c8}\n\
-    }"
-  s2_author_record: '2283849613'
-  citations: 22
-  acl: null
-  s2_corpus_id: 273350789
-  arxiv_journal_ref: null
-  arxiv_doi: null
-  arxiv_comment: ICML
-  arxiv_html: true
-  hf_indexed: true
-  hf_upvotes: 1
-  hf_claimed_authors: 1
-  hf_claimed_by_me: true
-  hf_github_repo: null
-  hf_github_stars: null
-  hf_n_models: 0
-  hf_n_datasets: 0
-  links:
-    arxiv: https://arxiv.org/abs/2410.11840
-    arxiv_pdf: https://arxiv.org/pdf/2410.11840
-    html: https://arxiv.org/html/2410.11840
-    html_source: arxiv
-    huggingface: https://huggingface.co/papers/2410.11840
-    alphaxiv: https://www.alphaxiv.org/abs/2410.11840
-    doi: https://doi.org/10.48550/arXiv.2410.11840
-    semantic_scholar: https://www.semanticscholar.org/paper/273350789
-    publisher: https://openreview.net/forum?id=KugSHTH0c8
-  title_display: A Hitchhiker's Guide to Scaling Law Estimation
-  venue_display: ICML 2025
-  has_sidecar: true
-- key: DBLP:journals/corr/abs-2407-13696
-  slug: benchmark-agreement-testing-done-right-a-guide-for-llm-bench
-  title: 'Benchmark Agreement Testing Done Right: {A} Guide for {LLM} Benchmark Evaluation'
-  authors:
-  - Yotam Perlitz
-  - Ariel Gera
-  - Ofir Arviv
-  - Asaf Yehudai
-  - Elron Bandel
-  - Eyal Shnarch
-  - Michal Shmueli-Scheuer
-  - Leshem Choshen
-  authors_truncated: null
-  year: 2024
-  venue: CoRR
-  type: article
-  doi: 10.48550/ARXIV.2407.13696
-  arxiv: '2407.13696'
-  url: https://doi.org/10.48550/arXiv.2407.13696
-  abstract: 'Recent advancements in Language Models (LMs) have catalyzed the creation of multiple benchmarks,
-    designed to assess these models'' general capabilities. A crucial task, however, is assessing the
-    validity of the benchmarks themselves. This is most commonly done via Benchmark Agreement Testing
-    (BAT), where new benchmarks are validated against established ones using some agreement metric (e.g.,
-    rank correlation). Despite the crucial role of BAT for benchmark builders and consumers, there are
-    no standardized procedures for such agreement testing. This deficiency can lead to invalid conclusions,
-    fostering mistrust in benchmarks and upending the ability to properly choose the appropriate benchmark
-    to use. By analyzing over 40 prominent benchmarks, we demonstrate how some overlooked methodological
-    choices can significantly influence BAT results, potentially undermining the validity of conclusions.
-    To address these inconsistencies, we propose a set of best practices for BAT and demonstrate how utilizing
-    these methodologies greatly improves BAT robustness and validity. To foster adoption and facilitate
-    future research,, we introduce BenchBench, a python package for BAT, and release the BenchBench-leaderboard,
-    a meta-benchmark designed to evaluate benchmarks using their peers. Our findings underscore the necessity
-    for standardized BAT, ensuring the robustness and validity of benchmark evaluations in the evolving
-    landscape of language model research. BenchBench Package: github.com/IBM/BenchBench Leaderboard: hf.co/spaces/IBM/BenchBench'
-  bibtex: "@article{DBLP:journals/corr/abs-2407-13696,author       = {Yotam Perlitz and\n            \
-    \      Ariel Gera and\n                  Ofir Arviv and\n                  Asaf Yehudai and\n    \
-    \              Elron Bandel and\n                  Eyal Shnarch and\n                  Michal Shmueli{-}Scheuer\
-    \ and\n                  Leshem Choshen},\n  title        = {Benchmark Agreement Testing Done Right:\
-    \ {A} Guide for {LLM} Benchmark\n                  Evaluation},\n  journal      = {CoRR},\n  volume\
-    \       = {abs/2407.13696},\n  year         = {2024},\n  url          = {https://doi.org/10.48550/arXiv.2407.13696},\n\
-    \  doi          = {10.48550/ARXIV.2407.13696},\n  eprinttype    = {arXiv},\n  eprint       = {2407.13696},\n\
-    \  timestamp    = {Thu, 22 Aug 2024 01:00:00 +0200},\n  biburl       = {https://dblp.org/rec/journals/corr/abs-2407-13696.bib},\n\
-    \  bibsource    = {dblp computer science bibliography, https://dblp.org}\n}"
-  s2_author_record: '2283849613'
-  citations: 22
-  acl: null
-  s2_corpus_id: 287923131
-  arxiv_journal_ref: null
-  arxiv_doi: null
-  arxiv_comment: Under Review
-  arxiv_html: true
-  abstract_source: arxiv
-  only_in_s2: true
-  merged_from:
-  - DBLP:journals/corr/abs-2407-13696
-  hf_indexed: true
-  hf_upvotes: 5
-  hf_claimed_authors: 5
-  hf_claimed_by_me: true
-  hf_github_repo: https://github.com/ibm/benchbench
-  hf_github_stars: 19
-  hf_n_models: 0
-  hf_n_datasets: 0
-  links:
-    arxiv: https://arxiv.org/abs/2407.13696
-    arxiv_pdf: https://arxiv.org/pdf/2407.13696
-    html: https://arxiv.org/html/2407.13696
-    html_source: arxiv
-    huggingface: https://huggingface.co/papers/2407.13696
-    alphaxiv: https://www.alphaxiv.org/abs/2407.13696
-    doi: https://doi.org/10.48550/ARXIV.2407.13696
-    semantic_scholar: https://www.semanticscholar.org/paper/287923131
-    publisher: https://doi.org/10.48550/arXiv.2407.13696
-    code: https://github.com/ibm/benchbench
-  title_display: 'Benchmark Agreement Testing Done Right: A Guide for LLM Benchmark Evaluation'
-  venue_display: arXiv
-  has_sidecar: true
 - key: habba-etal-2025-dove
   slug: dove-a-large-scale-multi-dimensional-predictions-dataset-tow
   title: '{DOVE}: A Large-Scale Multi-Dimensional Predictions Dataset Towards Meaningful {LLM} Evaluation'
@@ -3852,7 +3852,7 @@ papers:
     \ we make publicly available to spur a community-wide effort toward meaningful, robust, and efficient\
     \ evaluation. Browse the data, contribute, and more at: https://slab-nlp.github.io/DOVE\"\n}"
   s2_author_record: '2283849613'
-  citations: 21
+  citations: 22
   acl: null
   s2_corpus_id: 276774995
   arxiv_journal_ref: Findings of ACL 2025, pp. 11744-11763
@@ -4041,6 +4041,91 @@ papers:
   title_display: 'Label Sleuth: From Unlabeled Text to a Classifier in a Few Hours'
   venue_display: EMNLP 2022 (Demo)
   has_sidecar: true
+- key: shabtay2025livexiv
+  slug: livexiv-a-multi-modal-live-benchmark-based-on-arxiv-papers-c
+  title: LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content
+  authors:
+  - Nimrod Shabtay
+  - Felipe Maia Polo
+  - Sivan Doveh
+  - Wei Lin
+  - Muhammad Jehanzeb Mirza
+  - Leshem Choshen
+  - Mikhail Yurochkin
+  - Yuekai Sun
+  - Assaf Arbelle
+  - Leonid Karlinsky
+  - Raja Giryes
+  authors_truncated: null
+  year: 2025
+  venue: The Thirteenth International Conference on Learning Representations
+  type: inproceedings
+  doi: 10.48550/arXiv.2410.10783
+  arxiv: '2410.10783'
+  url: https://openreview.net/forum?id=SulRfnEVK4
+  abstract: 'The large-scale training of multi-modal models on data scraped from the web has shown outstanding
+    utility in infusing these models with the required world knowledge to perform effectively on multiple
+    downstream tasks. However, one downside of scraping data from the web can be the potential sacrifice
+    of the benchmarks on which the abilities of these models are often evaluated. To safeguard against
+    test data contamination and to truly test the abilities of these foundation models we propose LiveXiv:
+    A scalable evolving live benchmark based on scientific ArXiv papers. LiveXiv accesses domain-specific
+    manuscripts at any given timestamp and proposes to automatically generate visual question-answer pairs
+    (VQA). This is done without any human-in-the-loop, using the multi-modal content in the manuscripts,
+    like graphs, charts, and tables. Moreover, we introduce an efficient evaluation approach that estimates
+    the performance of all models on the evolving benchmark using evaluations of only a subset of models.
+    This significantly reduces the overall evaluation cost. We benchmark multiple open and proprietary
+    Large Multi-modal Models (LMMs) on the first version of our benchmark, showing its challenging nature
+    and exposing the models true abilities, avoiding contamination. Lastly, in our commitment to high
+    quality, we have collected and evaluated a manually verified subset. By comparing its overall results
+    to our automatic annotations, we have found that the performance variance is indeed minimal (<2.5%).
+    Our dataset is available online on HuggingFace, and our code will be available here.'
+  bibtex: '@inproceedings{
+
+    shabtay2025livexiv,
+
+    title={LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content},
+
+    author={Nimrod Shabtay and Felipe Maia Polo and Sivan Doveh and Wei Lin and Muhammad Jehanzeb Mirza
+    and Leshem Choshen and Mikhail Yurochkin and Yuekai Sun and Assaf Arbelle and Leonid Karlinsky and
+    Raja Giryes},
+
+    booktitle={The Thirteenth International Conference on Learning Representations},
+
+    year={2025},
+
+    url={https://openreview.net/forum?id=SulRfnEVK4}
+
+    }'
+  s2_author_record: '2283849613'
+  citations: 20
+  acl: null
+  s2_corpus_id: 273345528
+  arxiv_journal_ref: null
+  arxiv_doi: null
+  arxiv_comment: null
+  arxiv_html: true
+  hf_indexed: true
+  hf_upvotes: 26
+  hf_claimed_authors: 4
+  hf_claimed_by_me: true
+  hf_github_repo: https://github.com/nimrodshabtay/livexiv
+  hf_github_stars: 14
+  hf_n_models: 0
+  hf_n_datasets: 1
+  links:
+    arxiv: https://arxiv.org/abs/2410.10783
+    arxiv_pdf: https://arxiv.org/pdf/2410.10783
+    html: https://arxiv.org/html/2410.10783
+    html_source: arxiv
+    huggingface: https://huggingface.co/papers/2410.10783
+    alphaxiv: https://www.alphaxiv.org/abs/2410.10783
+    doi: https://doi.org/10.48550/arXiv.2410.10783
+    semantic_scholar: https://www.semanticscholar.org/paper/273345528
+    publisher: https://openreview.net/forum?id=SulRfnEVK4
+    code: https://github.com/nimrodshabtay/livexiv
+  title_display: LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content
+  venue_display: ICLR 2025
+  has_sidecar: true
 - key: DBLP:conf/conll/ChoshenA19
   slug: automatically-extracting-challenge-sets-for-non-local-phenom
   title: Automatically Extracting Challenge Sets for Non-Local Phenomena in Neural Machine Translation
@@ -4104,91 +4189,6 @@ papers:
     code: https://github.com/borgr/auto_challenge_sets
   title_display: Automatically Extracting Challenge Sets for Non-Local Phenomena in Neural Machine Translation
   venue_display: CoNLL 2019
-  has_sidecar: true
-- key: shabtay2025livexiv
-  slug: livexiv-a-multi-modal-live-benchmark-based-on-arxiv-papers-c
-  title: LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content
-  authors:
-  - Nimrod Shabtay
-  - Felipe Maia Polo
-  - Sivan Doveh
-  - Wei Lin
-  - Muhammad Jehanzeb Mirza
-  - Leshem Choshen
-  - Mikhail Yurochkin
-  - Yuekai Sun
-  - Assaf Arbelle
-  - Leonid Karlinsky
-  - Raja Giryes
-  authors_truncated: null
-  year: 2025
-  venue: The Thirteenth International Conference on Learning Representations
-  type: inproceedings
-  doi: 10.48550/arXiv.2410.10783
-  arxiv: '2410.10783'
-  url: https://openreview.net/forum?id=SulRfnEVK4
-  abstract: 'The large-scale training of multi-modal models on data scraped from the web has shown outstanding
-    utility in infusing these models with the required world knowledge to perform effectively on multiple
-    downstream tasks. However, one downside of scraping data from the web can be the potential sacrifice
-    of the benchmarks on which the abilities of these models are often evaluated. To safeguard against
-    test data contamination and to truly test the abilities of these foundation models we propose LiveXiv:
-    A scalable evolving live benchmark based on scientific ArXiv papers. LiveXiv accesses domain-specific
-    manuscripts at any given timestamp and proposes to automatically generate visual question-answer pairs
-    (VQA). This is done without any human-in-the-loop, using the multi-modal content in the manuscripts,
-    like graphs, charts, and tables. Moreover, we introduce an efficient evaluation approach that estimates
-    the performance of all models on the evolving benchmark using evaluations of only a subset of models.
-    This significantly reduces the overall evaluation cost. We benchmark multiple open and proprietary
-    Large Multi-modal Models (LMMs) on the first version of our benchmark, showing its challenging nature
-    and exposing the models true abilities, avoiding contamination. Lastly, in our commitment to high
-    quality, we have collected and evaluated a manually verified subset. By comparing its overall results
-    to our automatic annotations, we have found that the performance variance is indeed minimal (<2.5%).
-    Our dataset is available online on HuggingFace, and our code will be available here.'
-  bibtex: '@inproceedings{
-
-    shabtay2025livexiv,
-
-    title={LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content},
-
-    author={Nimrod Shabtay and Felipe Maia Polo and Sivan Doveh and Wei Lin and Muhammad Jehanzeb Mirza
-    and Leshem Choshen and Mikhail Yurochkin and Yuekai Sun and Assaf Arbelle and Leonid Karlinsky and
-    Raja Giryes},
-
-    booktitle={The Thirteenth International Conference on Learning Representations},
-
-    year={2025},
-
-    url={https://openreview.net/forum?id=SulRfnEVK4}
-
-    }'
-  s2_author_record: '2283849613'
-  citations: 19
-  acl: null
-  s2_corpus_id: 273345528
-  arxiv_journal_ref: null
-  arxiv_doi: null
-  arxiv_comment: null
-  arxiv_html: true
-  hf_indexed: true
-  hf_upvotes: 26
-  hf_claimed_authors: 4
-  hf_claimed_by_me: true
-  hf_github_repo: https://github.com/nimrodshabtay/livexiv
-  hf_github_stars: 14
-  hf_n_models: 0
-  hf_n_datasets: 1
-  links:
-    arxiv: https://arxiv.org/abs/2410.10783
-    arxiv_pdf: https://arxiv.org/pdf/2410.10783
-    html: https://arxiv.org/html/2410.10783
-    html_source: arxiv
-    huggingface: https://huggingface.co/papers/2410.10783
-    alphaxiv: https://www.alphaxiv.org/abs/2410.10783
-    doi: https://doi.org/10.48550/arXiv.2410.10783
-    semantic_scholar: https://www.semanticscholar.org/paper/273345528
-    publisher: https://openreview.net/forum?id=SulRfnEVK4
-    code: https://github.com/nimrodshabtay/livexiv
-  title_display: LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content
-  venue_display: ICLR 2025
   has_sidecar: true
 - key: charpentier-etal-2025-findings
   slug: findings-of-the-third-babylm-challenge-accelerating-language
@@ -7275,6 +7275,76 @@ papers:
   title_display: 'Every Eval Ever: A Unifying Schema and Community Repository for AI Evaluation Results'
   venue_display: arXiv
   has_sidecar: true
+- key: choshen2026babylm
+  slug: babylm-turns-4-and-goes-multilingual-call-for-papers-for-the
+  title: 'BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026 BabyLM Workshop'
+  authors:
+  - Leshem Choshen
+  - Ryan Cotterell
+  - Mustafa Omer Gul
+  - Jaap Jumelet
+  - Tal Linzen
+  - Aaron Mueller
+  - Suchir Salhan
+  - Raj Sanjay Shah
+  - Alex Warstadt
+  - Ethan Gotlieb Wilcox
+  authors_truncated: null
+  year: 2026
+  venue: CoRR
+  type: article
+  doi: 10.48550/ARXIV.2602.20092
+  arxiv: '2602.20092'
+  url: https://doi.org/10.48550/arXiv.2602.20092
+  abstract: The goal of the BabyLM is to stimulate new research connections between cognitive modeling
+    and language model pretraining. We invite contributions in this vein to the BabyLM Workshop, which
+    will also include the 4th iteration of the BabyLM Challenge. As in previous years, the challenge features
+    two ``standard''tracks (Strict and Strict-Small), in which participants must train language models
+    on under 100M or 10M words of data, respectively. This year, we move beyond our previous English-only
+    pretraining datasets with a new Multilingual track, focusing on English, Dutch, and Chinese. For the
+    workshop, we call for papers related to the overall theme of BabyLM, which includes training efficiency,
+    small-scale training datasets, cognitive modeling, model evaluation, and architecture innovation.
+  bibtex: "@article{choshen2026babylm,\n  author       = {Leshem Choshen and\n                  Ryan Cotterell\
+    \ and\n                  Mustafa Omer Gul and\n                  Jaap Jumelet and\n              \
+    \    Tal Linzen and\n                  Aaron Mueller and\n                  Suchir Salhan and\n  \
+    \                Raj Sanjay Shah and\n                  Alex Warstadt and\n                  Ethan\
+    \ Gotlieb Wilcox},\n  title        = {BabyLM Turns 4 and Goes Multilingual: Call for Papers for the\
+    \ 2026\n                  BabyLM Workshop},\n  journal      = {CoRR},\n  volume       = {abs/2602.20092},\n\
+    \  year         = {2026},\n  url          = {https://doi.org/10.48550/arXiv.2602.20092},\n  doi  \
+    \        = {10.48550/ARXIV.2602.20092},\n  eprinttype   = {arXiv},\n  eprint       = {2602.20092},\n\
+    \  timestamp    = {Sun, 29 Mar 2026 00:00:00 +0100},\n  biburl       = {https://dblp.org/rec/journals/corr/abs-2602-20092.bib},\n\
+    \  bibsource    = {dblp computer science bibliography, https://dblp.org}\n}"
+  s2_author_record: '41019330'
+  citations: 2
+  acl: null
+  s2_corpus_id: 285973452
+  arxiv_journal_ref: null
+  arxiv_doi: null
+  arxiv_comment: '8 pages, 1 table. arXiv admin note: substantial text overlap with arXiv:2502.10645'
+  arxiv_html: true
+  hf_indexed: true
+  hf_upvotes: 2
+  hf_claimed_authors: 3
+  hf_claimed_by_me: true
+  hf_github_repo: https://github.com/babylm-org/babylm-eval
+  hf_github_stars: 10
+  hf_n_models: 5
+  hf_n_datasets: 5
+  links:
+    arxiv: https://arxiv.org/abs/2602.20092
+    arxiv_pdf: https://arxiv.org/pdf/2602.20092
+    html: https://arxiv.org/html/2602.20092
+    html_source: arxiv
+    huggingface: https://huggingface.co/papers/2602.20092
+    alphaxiv: https://www.alphaxiv.org/abs/2602.20092
+    doi: https://doi.org/10.48550/ARXIV.2602.20092
+    semantic_scholar: https://www.semanticscholar.org/paper/285973452
+    publisher: https://doi.org/10.48550/arXiv.2602.20092
+    code: https://github.com/babylm-org/babylm-eval
+    project: https://babylm.github.io/
+  title_display: 'BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026 BabyLM Workshop'
+  venue_display: arXiv
+  has_sidecar: true
 - key: hilel2025llm
   slug: llm-hypnosis-exploiting-user-feedback-for-unauthorized-knowl
   title: 'LLM Hypnosis: Exploiting User Feedback for Unauthorized Knowledge Injection to All Users'
@@ -7587,75 +7657,119 @@ papers:
   title_display: 'Resolving Interference (RI): Disentangling Models for Improved Model Merging'
   venue_display: arXiv
   has_sidecar: true
-- key: choshen2026babylm
-  slug: babylm-turns-4-and-goes-multilingual-call-for-papers-for-the
-  title: 'BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026 BabyLM Workshop'
+- key: ghosh2026evaluationcardsinterpretivelayer
+  slug: evaluation-cards-an-interpretive-layer-for-ai-evaluation-rep
+  title: 'Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting'
   authors:
+  - Avijit Ghosh
+  - Anka Reuel
+  - Jenny Chim
+  - Wm. Matthew Kennedy
+  - Srishti Yadav
+  - Jennifer Mickel
+  - Yanan Long
+  - Andrew Tran
+  - Anastassia Kornilova
+  - Damian Stachura
+  - Kevin Klyman
+  - Felix Friedrich
+  - Jeba Sania
+  - Jan Batzner
+  - Anoop Mishra
+  - Eliya Habba
+  - Yixiong Hao
+  - Nathan Heath
+  - Shalaleh Rismani
+  - Usman Gohar
+  - Andrea Loehr
+  - David Manheim
+  - Ruchira Dhar
+  - Sree Harsha Nelaturu
+  - Aarush Sinha
   - Leshem Choshen
-  - Ryan Cotterell
-  - Mustafa Omer Gul
-  - Jaap Jumelet
-  - Tal Linzen
-  - Aaron Mueller
-  - Suchir Salhan
-  - Raj Sanjay Shah
-  - Alex Warstadt
-  - Ethan Gotlieb Wilcox
+  - Drishti Sharma
+  - Ishan Khire
+  - Amit Saha
+  - Subramanyam Sahoo
+  - Michael Hardy
+  - Michael Alexander Riegler
+  - Kabir Manghnani
+  - Michelle Lin
+  - Yanan Jiang
+  - Yilin Huang
+  - Asaf Yehudai
+  - Jessica Ji
+  - Aris Hofmann
+  - Mubashara Akhtar
+  - Max Lamparth
+  - Nuno Moniz
+  - Yacine Jernite
+  - Stella Biderman
+  - Zeerak Talat
+  - Sanmi Koyejo
+  - Mykel Kochenderfer
+  - Irene Solaiman
   authors_truncated: null
   year: 2026
-  venue: CoRR
-  type: article
-  doi: 10.48550/ARXIV.2602.20092
-  arxiv: '2602.20092'
-  url: https://doi.org/10.48550/arXiv.2602.20092
-  abstract: The goal of the BabyLM is to stimulate new research connections between cognitive modeling
-    and language model pretraining. We invite contributions in this vein to the BabyLM Workshop, which
-    will also include the 4th iteration of the BabyLM Challenge. As in previous years, the challenge features
-    two ``standard''tracks (Strict and Strict-Small), in which participants must train language models
-    on under 100M or 10M words of data, respectively. This year, we move beyond our previous English-only
-    pretraining datasets with a new Multilingual track, focusing on English, Dutch, and Chinese. For the
-    workshop, we call for papers related to the overall theme of BabyLM, which includes training efficiency,
-    small-scale training datasets, cognitive modeling, model evaluation, and architecture innovation.
-  bibtex: "@article{choshen2026babylm,\n  author       = {Leshem Choshen and\n                  Ryan Cotterell\
-    \ and\n                  Mustafa Omer Gul and\n                  Jaap Jumelet and\n              \
-    \    Tal Linzen and\n                  Aaron Mueller and\n                  Suchir Salhan and\n  \
-    \                Raj Sanjay Shah and\n                  Alex Warstadt and\n                  Ethan\
-    \ Gotlieb Wilcox},\n  title        = {BabyLM Turns 4 and Goes Multilingual: Call for Papers for the\
-    \ 2026\n                  BabyLM Workshop},\n  journal      = {CoRR},\n  volume       = {abs/2602.20092},\n\
-    \  year         = {2026},\n  url          = {https://doi.org/10.48550/arXiv.2602.20092},\n  doi  \
-    \        = {10.48550/ARXIV.2602.20092},\n  eprinttype   = {arXiv},\n  eprint       = {2602.20092},\n\
-    \  timestamp    = {Sun, 29 Mar 2026 00:00:00 +0100},\n  biburl       = {https://dblp.org/rec/journals/corr/abs-2602-20092.bib},\n\
-    \  bibsource    = {dblp computer science bibliography, https://dblp.org}\n}"
-  s2_author_record: '41019330'
+  venue: null
+  type: misc
+  doi: 10.48550/arXiv.2606.09809
+  arxiv: '2606.09809'
+  url: https://arxiv.org/abs/2606.09809
+  abstract: 'AI evaluation results are produced at scale but reported inconsistently across leaderboards,
+    model cards, benchmark papers, and company blogs. The cost is interpretive: readers cannot reliably
+    compare results across sources, identify what a report omits, or trace an aggregate claim to its underlying
+    evidence. Recent efforts address isolated components but leave three gaps: they cover only narrow
+    slices of the evaluation lifecycle and do not compose into a single interpretable record; they specify
+    static representations that do not differentiate the questions different stakeholders bring to the
+    same evidence; and they remain proposals on paper, lacking the extraction infrastructure required
+    for adoption at scale. We present \EvalCards{}, an operational reporting layer that composes benchmark
+    metadata, evaluation run data, and model metadata into a unified record. We (1) derive a reporting
+    schema from a structured review of 52 papers and 10 stakeholder interviews, (2) implement four interpretive
+    signals (reproducibility, documentation completeness, provenance and risk, and score comparability),
+    rendered through reader modes calibrated to research and non-research audiences, and (3) deploy a
+    monitoring tool that applies \EvalCards{} across 5,816 models, 635 benchmarks, and 101,843 results,
+    surfacing systematic gaps in current reporting practice.'
+  bibtex: "@misc{ghosh2026evaluationcardsinterpretivelayer,\n      title={Evaluation Cards: An Interpretive\
+    \ Layer for AI Evaluation Reporting}, \n      author={Avijit Ghosh and Anka Reuel and Jenny Chim and\
+    \ Wm. Matthew Kennedy and Srishti Yadav and Jennifer Mickel and Yanan Long and Andrew Tran and Anastassia\
+    \ Kornilova and Damian Stachura and Kevin Klyman and Felix Friedrich and Jeba Sania and Jan Batzner\
+    \ and Anoop Mishra and Eliya Habba and Yixiong Hao and Nathan Heath and Shalaleh Rismani and Usman\
+    \ Gohar and Andrea Loehr and David Manheim and Ruchira Dhar and Sree Harsha Nelaturu and Aarush Sinha\
+    \ and Leshem Choshen and Drishti Sharma and Ishan Khire and Amit Saha and Subramanyam Sahoo and Michael\
+    \ Hardy and Michael Alexander Riegler and Kabir Manghnani and Michelle Lin and Yanan Jiang and Yilin\
+    \ Huang and Asaf Yehudai and Jessica Ji and Aris Hofmann and Mubashara Akhtar and Max Lamparth and\
+    \ Nuno Moniz and Yacine Jernite and Stella Biderman and Zeerak Talat and Sanmi Koyejo and Mykel Kochenderfer\
+    \ and Irene Solaiman},\n      year={2026},\n      eprint={2606.09809},\n      archivePrefix={arXiv},\n\
+    \      primaryClass={cs.AI},\n      url={https://arxiv.org/abs/2606.09809}, \n}"
+  s2_author_record: '2283849613'
   citations: 1
   acl: null
-  s2_corpus_id: 285973452
+  s2_corpus_id: 289098621
   arxiv_journal_ref: null
   arxiv_doi: null
-  arxiv_comment: '8 pages, 1 table. arXiv admin note: substantial text overlap with arXiv:2502.10645'
+  arxiv_comment: null
   arxiv_html: true
   hf_indexed: true
-  hf_upvotes: 2
-  hf_claimed_authors: 3
+  hf_upvotes: 4
+  hf_claimed_authors: 7
   hf_claimed_by_me: true
-  hf_github_repo: https://github.com/babylm-org/babylm-eval
-  hf_github_stars: 10
-  hf_n_models: 5
-  hf_n_datasets: 5
+  hf_github_repo: null
+  hf_github_stars: null
+  hf_n_models: 0
+  hf_n_datasets: 0
   links:
-    arxiv: https://arxiv.org/abs/2602.20092
-    arxiv_pdf: https://arxiv.org/pdf/2602.20092
-    html: https://arxiv.org/html/2602.20092
+    arxiv: https://arxiv.org/abs/2606.09809
+    arxiv_pdf: https://arxiv.org/pdf/2606.09809
+    html: https://arxiv.org/html/2606.09809
     html_source: arxiv
-    huggingface: https://huggingface.co/papers/2602.20092
-    alphaxiv: https://www.alphaxiv.org/abs/2602.20092
-    doi: https://doi.org/10.48550/ARXIV.2602.20092
-    semantic_scholar: https://www.semanticscholar.org/paper/285973452
-    publisher: https://doi.org/10.48550/arXiv.2602.20092
-    code: https://github.com/babylm-org/babylm-eval
-    project: https://babylm.github.io/
-  title_display: 'BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026 BabyLM Workshop'
-  venue_display: arXiv
+    huggingface: https://huggingface.co/papers/2606.09809
+    alphaxiv: https://www.alphaxiv.org/abs/2606.09809
+    doi: https://doi.org/10.48550/arXiv.2606.09809
+    semantic_scholar: https://www.semanticscholar.org/paper/289098621
+    project: https://evalcards.evalevalai.com
+  title_display: 'Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting'
+  venue_display: ''
   has_sidecar: true
 - key: diskind2026cross
   slug: cross-lingual-exploration-for-parametric-knowledge
@@ -8025,120 +8139,6 @@ papers:
   title_display: 'Growing Pains: Extensible and Efficient LLM Benchmarking Via Fixed Parameter Calibration'
   venue_display: arXiv
   has_sidecar: true
-- key: ghosh2026evaluationcardsinterpretivelayer
-  slug: evaluation-cards-an-interpretive-layer-for-ai-evaluation-rep
-  title: 'Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting'
-  authors:
-  - Avijit Ghosh
-  - Anka Reuel
-  - Jenny Chim
-  - Wm. Matthew Kennedy
-  - Srishti Yadav
-  - Jennifer Mickel
-  - Yanan Long
-  - Andrew Tran
-  - Anastassia Kornilova
-  - Damian Stachura
-  - Kevin Klyman
-  - Felix Friedrich
-  - Jeba Sania
-  - Jan Batzner
-  - Anoop Mishra
-  - Eliya Habba
-  - Yixiong Hao
-  - Nathan Heath
-  - Shalaleh Rismani
-  - Usman Gohar
-  - Andrea Loehr
-  - David Manheim
-  - Ruchira Dhar
-  - Sree Harsha Nelaturu
-  - Aarush Sinha
-  - Leshem Choshen
-  - Drishti Sharma
-  - Ishan Khire
-  - Amit Saha
-  - Subramanyam Sahoo
-  - Michael Hardy
-  - Michael Alexander Riegler
-  - Kabir Manghnani
-  - Michelle Lin
-  - Yanan Jiang
-  - Yilin Huang
-  - Asaf Yehudai
-  - Jessica Ji
-  - Aris Hofmann
-  - Mubashara Akhtar
-  - Max Lamparth
-  - Nuno Moniz
-  - Yacine Jernite
-  - Stella Biderman
-  - Zeerak Talat
-  - Sanmi Koyejo
-  - Mykel Kochenderfer
-  - Irene Solaiman
-  authors_truncated: null
-  year: 2026
-  venue: null
-  type: misc
-  doi: 10.48550/arXiv.2606.09809
-  arxiv: '2606.09809'
-  url: https://arxiv.org/abs/2606.09809
-  abstract: 'AI evaluation results are produced at scale but reported inconsistently across leaderboards,
-    model cards, benchmark papers, and company blogs. The cost is interpretive: readers cannot reliably
-    compare results across sources, identify what a report omits, or trace an aggregate claim to its underlying
-    evidence. Recent efforts address isolated components but leave three gaps: they cover only narrow
-    slices of the evaluation lifecycle and do not compose into a single interpretable record; they specify
-    static representations that do not differentiate the questions different stakeholders bring to the
-    same evidence; and they remain proposals on paper, lacking the extraction infrastructure required
-    for adoption at scale. We present \EvalCards{}, an operational reporting layer that composes benchmark
-    metadata, evaluation run data, and model metadata into a unified record. We (1) derive a reporting
-    schema from a structured review of 52 papers and 10 stakeholder interviews, (2) implement four interpretive
-    signals (reproducibility, documentation completeness, provenance and risk, and score comparability),
-    rendered through reader modes calibrated to research and non-research audiences, and (3) deploy a
-    monitoring tool that applies \EvalCards{} across 5,816 models, 635 benchmarks, and 101,843 results,
-    surfacing systematic gaps in current reporting practice.'
-  bibtex: "@misc{ghosh2026evaluationcardsinterpretivelayer,\n      title={Evaluation Cards: An Interpretive\
-    \ Layer for AI Evaluation Reporting}, \n      author={Avijit Ghosh and Anka Reuel and Jenny Chim and\
-    \ Wm. Matthew Kennedy and Srishti Yadav and Jennifer Mickel and Yanan Long and Andrew Tran and Anastassia\
-    \ Kornilova and Damian Stachura and Kevin Klyman and Felix Friedrich and Jeba Sania and Jan Batzner\
-    \ and Anoop Mishra and Eliya Habba and Yixiong Hao and Nathan Heath and Shalaleh Rismani and Usman\
-    \ Gohar and Andrea Loehr and David Manheim and Ruchira Dhar and Sree Harsha Nelaturu and Aarush Sinha\
-    \ and Leshem Choshen and Drishti Sharma and Ishan Khire and Amit Saha and Subramanyam Sahoo and Michael\
-    \ Hardy and Michael Alexander Riegler and Kabir Manghnani and Michelle Lin and Yanan Jiang and Yilin\
-    \ Huang and Asaf Yehudai and Jessica Ji and Aris Hofmann and Mubashara Akhtar and Max Lamparth and\
-    \ Nuno Moniz and Yacine Jernite and Stella Biderman and Zeerak Talat and Sanmi Koyejo and Mykel Kochenderfer\
-    \ and Irene Solaiman},\n      year={2026},\n      eprint={2606.09809},\n      archivePrefix={arXiv},\n\
-    \      primaryClass={cs.AI},\n      url={https://arxiv.org/abs/2606.09809}, \n}"
-  s2_author_record: '2283849613'
-  citations: 0
-  acl: null
-  s2_corpus_id: 289098621
-  arxiv_journal_ref: null
-  arxiv_doi: null
-  arxiv_comment: null
-  arxiv_html: true
-  hf_indexed: true
-  hf_upvotes: 4
-  hf_claimed_authors: 7
-  hf_claimed_by_me: true
-  hf_github_repo: null
-  hf_github_stars: null
-  hf_n_models: 0
-  hf_n_datasets: 0
-  links:
-    arxiv: https://arxiv.org/abs/2606.09809
-    arxiv_pdf: https://arxiv.org/pdf/2606.09809
-    html: https://arxiv.org/html/2606.09809
-    html_source: arxiv
-    huggingface: https://huggingface.co/papers/2606.09809
-    alphaxiv: https://www.alphaxiv.org/abs/2606.09809
-    doi: https://doi.org/10.48550/arXiv.2606.09809
-    semantic_scholar: https://www.semanticscholar.org/paper/289098621
-    project: https://evalcards.evalevalai.com
-  title_display: 'Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting'
-  venue_display: ''
-  has_sidecar: true
 - key: bandel2026agentic
   slug: position-agentic-systems-should-be-general
   title: 'Position: Agentic Systems Should be General'
@@ -8326,7 +8326,7 @@ papers:
     code: https://github.com/TextArena/TextArena
   title_display: 'Skill Issue: Are Skills Language-Invariant in LLMs?'
   venue_display: ''
-  has_sidecar: false
+  has_sidecar: true
 - key: vetzler2025crisp
   slug: crisp-complex-reasoning-with-interpretable-step-based-plans
   title: 'CRISP: Complex Reasoning with Interpretable Step-based Plans'

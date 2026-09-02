@@ -29,14 +29,14 @@ is ordered so that stopping early still captures most of the value.
 6. **Wikidata author strings (100 papers by hand)** — one Author Disambiguator pass per paper, most-cited first, at the link the section gives for each. Everything an ORCID or a DBLP author page could settle is already on Wikidata, so what is left is the part where the name is all there is to go on.
 7. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
 8. **Semantic Scholar — 34 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
-9. **Citations on a Scholar record you cannot see (27 rows, 167 citations measured + 93 inferred)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
+9. **Citations on a Scholar record you cannot see (27 rows, 175 citations measured + 93 inferred)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
 
 ## Waiting on the outside world
 
 - **2026-10-04** — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.
 - **2026-11-04** — Crossref and DataCite auto-update only fire on newly deposited metadata that already carries your iD, so the proof is a work whose ORCID source is Crossref or DataCite rather than your own name -- which cannot appear until something you publish is deposited.
 
-## Citations on a Scholar record you cannot see (27 rows, 167 citations measured + 93 inferred)
+## Citations on a Scholar record you cannot see (27 rows, 175 citations measured + 93 inferred)
 
 Scholar indexes preprints and theses the APIs do not, so a profile row should
 always count *more* than OpenAlex and Semantic Scholar. Where it counts less,
@@ -50,7 +50,7 @@ count on OpenAlex's smaller copy is the closest reading of what a merge
 recovers.
 
 The two numbers in the heading are different kinds of evidence.
-The measured 167 is a profile row counting fewer citations than the
+The measured 175 is a profile row counting fewer citations than the
 APIs already list for the same paper.
 The inferred 93 sits on a duplicate record at an API and stands in
 for a Scholar record nothing here has seen, so it is what a merge recovers only
@@ -67,11 +67,11 @@ copy holds no citations, so a merge there recovers nothing.
 Full detail, including the 200-odd records filed under an initials-only form of
 your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).
 
-- [ ] **95 citations** — tinyBenchmarks: evaluating LLMs with fewer examples
-      - Scholar 202 vs 297 at the APIs
+- [ ] **101 citations** — tinyBenchmarks: evaluating LLMs with fewer examples
+      - Scholar 202 vs 303 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22tinyBenchmarks%3A%20evaluating%20LLMs%20with%20fewer%20examples%22)
-- [ ] **40 citations** — Elements of World Knowledge (EWoK): A Cognition-Inspired…
-      - Scholar 31 vs 71 at the APIs
+- [ ] **41 citations** — Elements of World Knowledge (EWoK): A Cognition-Inspired…
+      - Scholar 31 vs 72 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Elements%20of%20World%20Knowledge%20%28EWoK%29%3A%20A%20Cognition-Inspired%20Framework%20for%20Evaluating%20Basic%20World%20Knowledge%20in%20Language%20Models%22)
 - [ ] **23 citations** — TIES-Merging: Resolving Interference When Merging Models
       - 2 OpenAlex records for one title
@@ -100,15 +100,15 @@ your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).
 - [ ] **4 citations** — CommonLID: Re-evaluating State-of-the-Art Language…
       - Scholar 4 vs 8 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22CommonLID%3A%20Re-evaluating%20State-of-the-Art%20Language%20Identification%20Performance%20on%20Web%20Data%22)
+- [ ] **4 citations** — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers…
+      - Scholar 16 vs 20 at the APIs
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22LiveXiv%20--%20A%20Multi-Modal%20Live%20Benchmark%20Based%20on%20Arxiv%20Papers%20Content%22)
 - [ ] **4 citations** — SemEval-2019 Task 1: Cross-lingual Semantic Parsing with UCCA
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22SemEval-2019%20Task%201%3A%20Cross-lingual%20Semantic%20Parsing%20with%20UCCA%22)
 - [ ] **4 citations** — Reference-less Measure of Faithfulness for Grammatical Error…
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Reference-less%20Measure%20of%20Faithfulness%20for%20Grammatical%20Error%20Correction%22)
-- [ ] **3 citations** — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers…
-      - Scholar 16 vs 19 at the APIs
-      - [search Scholar for it](https://scholar.google.com/scholar?q=%22LiveXiv%20--%20A%20Multi-Modal%20Live%20Benchmark%20Based%20on%20Arxiv%20Papers%20Content%22)
 - [ ] **3 citations** — Mediators in Determining what Processing BERT Performs First
       - Scholar 13 vs 16 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Mediators%20in%20Determining%20what%20Processing%20BERT%20Performs%20First%22)
@@ -233,13 +233,13 @@ Highest-citation first, so stopping early still captures most of the loss.
 **Do not claim the second page as well** — a second claimed record is harder to
 undo than an unclaimed one, and it makes the split look deliberate.
 
-- [ ] 47 cites — NumeroLogic: Number Encoding for Enhanced LLMs'… — <https://www.semanticscholar.org/paper/268819308>
+- [ ] 48 cites — NumeroLogic: Number Encoding for Enhanced LLMs'… — <https://www.semanticscholar.org/paper/268819308>
 - [ ] 27 cites — Sloth: scaling laws for LLM skills to predict… — <https://www.semanticscholar.org/paper/274597594>
-- [ ] 22 cites — When AI Benchmarks Plateau: A Systematic Study of… — <https://www.semanticscholar.org/paper/285787943>
-- [ ] 22 cites — A Hitchhiker's Guide to Scaling Law Estimation — <https://www.semanticscholar.org/paper/273350789>
-- [ ] 22 cites — Benchmark Agreement Testing Done Right: A Guide for… — <https://www.semanticscholar.org/paper/287923131>
-- [ ] 21 cites — DOVE: A Large-Scale Multi-Dimensional Predictions… — <https://www.semanticscholar.org/paper/276774995>
-- [ ] 19 cites — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv… — <https://www.semanticscholar.org/paper/273345528>
+- [ ] 24 cites — When AI Benchmarks Plateau: A Systematic Study of… — <https://www.semanticscholar.org/paper/285787943>
+- [ ] 23 cites — A Hitchhiker's Guide to Scaling Law Estimation — <https://www.semanticscholar.org/paper/273350789>
+- [ ] 23 cites — Benchmark Agreement Testing Done Right: A Guide for… — <https://www.semanticscholar.org/paper/287923131>
+- [ ] 22 cites — DOVE: A Large-Scale Multi-Dimensional Predictions… — <https://www.semanticscholar.org/paper/276774995>
+- [ ] 20 cites — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv… — <https://www.semanticscholar.org/paper/273345528>
 - [ ] 16 cites — Label-Efficient Model Selection for Text Generation — <https://www.semanticscholar.org/paper/267627835>
 - [ ] 13 cites — The Mighty ToRR: A Benchmark for Table Reasoning and… — <https://www.semanticscholar.org/paper/276617897>
 - [ ] 8 cites — CommonLID: Re-evaluating State-of-the-Art Language… — <https://www.semanticscholar.org/paper/285049960>
@@ -269,7 +269,7 @@ own work — that is the edit that gets reverted on sight.
 - [ ] **PromptEval** in [Prompt engineering](https://en.wikipedia.org/wiki/Prompt_engineering) ([talk](https://en.wikipedia.org/wiki/Talk:Prompt_engineering))
   > more comprehensive performance interval. Similarly, PromptEval estimates performance distributions across diverse prompts, enabling robust
 
-The 36 coinages Wikipedia does not mention are listed in
+The 37 coinages Wikipedia does not mention are listed in
 [`tasks/wikipedia.md`](tasks/wikipedia.md) as deliberately not actionable, along with
 the field articles you could improve with other people's sources.
 
@@ -321,19 +321,19 @@ cannot take off you — but the typing is not: both field values are below,
 per paper, built from the publisher's own bibtex. The same for all
 64 is in [`tasks/arxiv_jref.md`](tasks/arxiv_jref.md).
 
-- [ ] **909 cites** — TIES-Merging: Resolving Interference When Merging Models
+- [ ] **912 cites** — TIES-Merging: Resolving Interference When Merging Models
       - the form: find `2306.01708` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2306.01708))
       - `Journal-ref:` `Advances in Neural Information Processing Systems 36: Annual Conference on Neural Information Processing Systems 2023`
       - `Journal version DOI:` `10.52202/075280-0310`
-- [ ] **297 cites** — tinyBenchmarks: evaluating LLMs with fewer examples
+- [ ] **303 cites** — tinyBenchmarks: evaluating LLMs with fewer examples
       - the form: find `2402.14992` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2402.14992))
       - `Journal-ref:` `Forty-first International Conference on Machine Learning, 2024`
       - `Journal version DOI:` — none minted, leave blank
-- [ ] **195 cites** — Global MMLU: Understanding and Addressing Cultural and Linguistic Biases in Multilingual Evaluation
+- [ ] **198 cites** — Global MMLU: Understanding and Addressing Cultural and Linguistic Biases in Multilingual Evaluation
       - the form: find `2412.03304` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2412.03304))
       - `Journal-ref:` `Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 18761-18799, 2025`
       - `Journal version DOI:` `10.18653/v1/2025.acl-long.919`
-- [ ] **167 cites** — Q²: Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question Generation and Question Answering
+- [ ] **168 cites** — Q²: Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question Generation and Question Answering
       - the form: find `2104.08202` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2104.08202))
       - `Journal-ref:` `Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing, pages 7856-7870`
       - `Journal version DOI:` `10.18653/v1/2021.emnlp-main.619`
@@ -345,7 +345,7 @@ per paper, built from the publisher's own bibtex. The same for all
       - the form: find `2211.05655` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2211.05655))
       - `Journal-ref:` `Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 10056-10070, 2023`
       - `Journal version DOI:` `10.18653/v1/2023.acl-long.559`
-- [ ] **118 cites** — Model merging with SVD to tie the Knots
+- [ ] **119 cites** — Model merging with SVD to tie the Knots
       - the form: find `2410.19735` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2410.19735))
       - `Journal-ref:` `ICLR, 2025`
       - `Journal version DOI:` — none minted, leave blank
@@ -365,10 +365,10 @@ per paper, built from the publisher's own bibtex. The same for all
       - the form: find `1907.08971` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/1907.08971))
       - `Journal-ref:` `Proceedings of the 57th Conference of the Association for Computational Linguistics, Volume 1: Long Papers, pages 967-976, 2019`
       - `Journal version DOI:` `10.18653/v1/p19-1093`
-- [ ] **73 cites** — Knowledge is a Region in Weight Space for Fine-tuned Language Models
-      - the form: find `2302.04863` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2302.04863))
-      - `Journal-ref:` `Findings of the Association for Computational Linguistics: EMNLP 2023, pages 1350-1370`
-      - `Journal version DOI:` `10.18653/v1/2023.findings-emnlp.95`
+- [ ] **73 cites** — Efficient Benchmarking (of Language Models)
+      - the form: find `2308.11696` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2308.11696))
+      - `Journal-ref:` `Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers), pages 2519-2536`
+      - `Journal version DOI:` `10.18653/v1/2024.naacl-long.139`
 
 `Report number:` stays blank on all of them: it means an *institutional* preprint
 number (a lab's own report series) and none of these has one.

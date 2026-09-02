@@ -17,13 +17,13 @@ Highest-citation first, so stopping early still helps most.
 
 | citations | paper | S2 |
 |---|---|---|
-| 47 | NumeroLogic: Number Encoding for Enhanced LLMs' Numerical Reasoning | https://www.semanticscholar.org/paper/268819308 |
+| 48 | NumeroLogic: Number Encoding for Enhanced LLMs' Numerical Reasoning | https://www.semanticscholar.org/paper/268819308 |
 | 27 | Sloth: scaling laws for LLM skills to predict multi-benchmark performa | https://www.semanticscholar.org/paper/274597594 |
-| 22 | When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation | https://www.semanticscholar.org/paper/285787943 |
-| 22 | A Hitchhiker's Guide to Scaling Law Estimation | https://www.semanticscholar.org/paper/273350789 |
-| 22 | Benchmark Agreement Testing Done Right: A Guide for LLM Benchmark Eval | https://www.semanticscholar.org/paper/287923131 |
-| 21 | DOVE: A Large-Scale Multi-Dimensional Predictions Dataset Towards Mean | https://www.semanticscholar.org/paper/276774995 |
-| 19 | LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content | https://www.semanticscholar.org/paper/273345528 |
+| 24 | When AI Benchmarks Plateau: A Systematic Study of Benchmark Saturation | https://www.semanticscholar.org/paper/285787943 |
+| 23 | A Hitchhiker's Guide to Scaling Law Estimation | https://www.semanticscholar.org/paper/273350789 |
+| 23 | Benchmark Agreement Testing Done Right: A Guide for LLM Benchmark Eval | https://www.semanticscholar.org/paper/287923131 |
+| 22 | DOVE: A Large-Scale Multi-Dimensional Predictions Dataset Towards Mean | https://www.semanticscholar.org/paper/276774995 |
+| 20 | LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content | https://www.semanticscholar.org/paper/273345528 |
 | 16 | Label-Efficient Model Selection for Text Generation | https://www.semanticscholar.org/paper/267627835 |
 | 15 | Lossless and Near-Lossless Compression for Foundation Models | https://www.semanticscholar.org/paper/269197564 |
 | 13 | The Mighty ToRR: A Benchmark for Table Reasoning and Robustness | https://www.semanticscholar.org/paper/276617897 |
@@ -42,10 +42,10 @@ Highest-citation first, so stopping early still helps most.
 | 2 | LLM Hypnosis: Exploiting User Feedback for Unauthorized Knowledge Inje | https://www.semanticscholar.org/paper/280148936 |
 | 2 | A Latent Variable Framework for Scaling Laws in Large Language Models | https://www.semanticscholar.org/paper/283693989 |
 | 1 | Resolving Interference (RI): Disentangling Models for Improved Model M | https://www.semanticscholar.org/paper/286568386 |
+| 1 | Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting | https://www.semanticscholar.org/paper/289098621 |
 | 1 | Automated Discovery Has No Universally Superior Harness | https://www.semanticscholar.org/paper/290376866 |
 | 1 | How Safe is Your Safety Metric? Automatic Concatenation Tests for Metr | https://www.semanticscholar.org/paper/271923863 |
 | 0 | Instructions Shape Production of Language, not Processing | https://www.semanticscholar.org/paper/288257161 |
-| 0 | Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting | https://www.semanticscholar.org/paper/289098621 |
 | 0 | Position: Agentic Systems Should be General | https://www.semanticscholar.org/paper/287926756 |
 | 0 | Stop Guessing When to Stop Testing: Efficient Model Evaluation with Ju | https://www.semanticscholar.org/paper/289773796 |
 | 0 | Skill Issue: Are Skills Language-Invariant in LLMs? | https://www.semanticscholar.org/paper/291371154 |

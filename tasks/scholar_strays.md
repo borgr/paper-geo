@@ -17,12 +17,12 @@ count more. Where it counts less, the difference is on another record.
 
 | gap | Scholar | index | paper | search |
 |---|---|---|---|---|
-| 95 | 202 | 297 | tinyBenchmarks: evaluating LLMs with fewer examples | [search](https://scholar.google.com/scholar?q=%22tinyBenchmarks%3A%20evaluating%20LLMs%20with%20fewer%20examples%22) |
-| 40 | 31 | 71 | Elements of World Knowledge (EWoK): A Cognition-Inspired Fra | [search](https://scholar.google.com/scholar?q=%22Elements%20of%20World%20Knowledge%20%28EWoK%29%3A%20A%20Cognition-Inspired%20Framework%20for%20Evaluating%20Basic%20World%20Knowledge%20in%20Language%20Models%22) |
+| 101 | 202 | 303 | tinyBenchmarks: evaluating LLMs with fewer examples | [search](https://scholar.google.com/scholar?q=%22tinyBenchmarks%3A%20evaluating%20LLMs%20with%20fewer%20examples%22) |
+| 41 | 31 | 72 | Elements of World Knowledge (EWoK): A Cognition-Inspired Fra | [search](https://scholar.google.com/scholar?q=%22Elements%20of%20World%20Knowledge%20%28EWoK%29%3A%20A%20Cognition-Inspired%20Framework%20for%20Evaluating%20Basic%20World%20Knowledge%20in%20Language%20Models%22) |
 | 13 | 0 | 13 | The Mighty ToRR: A Benchmark for Table Reasoning and Robustn | [search](https://scholar.google.com/scholar?q=%22The%20Mighty%20ToRR%3A%20A%20Benchmark%20for%20Table%20Reasoning%20and%20Robustness%22) |
 | 9 | 14 | 23 | Beneath the Surface of Consistency: Exploring Cross-lingual  | [search](https://scholar.google.com/scholar?q=%22Beneath%20the%20Surface%20of%20Consistency%3A%20Exploring%20Cross-lingual%20Knowledge%20Representation%20Sharing%20in%20LLMs%22) |
 | 4 | 4 | 8 | CommonLID: Re-evaluating State-of-the-Art Language Identific | [search](https://scholar.google.com/scholar?q=%22CommonLID%3A%20Re-evaluating%20State-of-the-Art%20Language%20Identification%20Performance%20on%20Web%20Data%22) |
-| 3 | 16 | 19 | LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Paper | [search](https://scholar.google.com/scholar?q=%22LiveXiv%20--%20A%20Multi-Modal%20Live%20Benchmark%20Based%20on%20Arxiv%20Papers%20Content%22) |
+| 4 | 16 | 20 | LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Paper | [search](https://scholar.google.com/scholar?q=%22LiveXiv%20--%20A%20Multi-Modal%20Live%20Benchmark%20Based%20on%20Arxiv%20Papers%20Content%22) |
 | 3 | 13 | 16 | Mediators in Determining what Processing BERT Performs First | [search](https://scholar.google.com/scholar?q=%22Mediators%20in%20Determining%20what%20Processing%20BERT%20Performs%20First%22) |
 
 ## Copies of your papers filed under another form of your name (0)
@@ -188,15 +188,18 @@ reason: the metadata a parser read differs between copies.
 - [ ] `every-eval-ever-a-unifying-schema-and-community-repository-f` — [search Scholar](https://scholar.google.com/scholar?q=%22Every%20Eval%20Ever%3A%20A%20Unifying%20Schema%20and%20Community%20Repository%20for%20AI%20Evaluation%20Results%22)
       - 0 cites — Every Eval Ever: A Unifying Schema and Community Repository for AI Eva — <https://openalex.org/W7164838414>
       - 0 cites — Every Eval Ever: A Unifying Schema and Community Repository for AI Eva — <https://openalex.org/W7164974068>
+- [ ] `babylm-turns-4-and-goes-multilingual-call-for-papers-for-the` — [search Scholar](https://scholar.google.com/scholar?q=%22BabyLM%20Turns%204%20and%20Goes%20Multilingual%3A%20Call%20for%20Papers%20for%20the%202026%20BabyLM%20Workshop%22)
+      - 0 cites — BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026 Bab — <https://openalex.org/W7131404560>
+      - 0 cites — BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026 Bab — <https://openalex.org/W7131319326>
 - [ ] `a-latent-variable-framework-for-scaling-laws-in-large-langua` — [search Scholar](https://scholar.google.com/scholar?q=%22A%20Latent%20Variable%20Framework%20for%20Scaling%20Laws%20in%20Large%20Language%20Models%22)
       - 0 cites — A Latent Variable Framework for Scaling Laws in Large Language Models — <https://openalex.org/W7113915261>
       - 0 cites — A Latent Variable Framework for Scaling Laws in Large Language Models — <https://openalex.org/W7111156187>
 - [ ] `resolving-interference-ri-disentangling-models-for-improved` — [search Scholar](https://scholar.google.com/scholar?q=%22Resolving%20Interference%20%28RI%29%3A%20Disentangling%20Models%20for%20Improved%20Model%20Merging%22)
       - 0 cites — Resolving Interference (RI): Disentangling Models for Improved Model M — <https://openalex.org/W7139145332>
       - 0 cites — Resolving Interference (RI): Disentangling Models for Improved Model M — <https://openalex.org/W7138233437>
-- [ ] `babylm-turns-4-and-goes-multilingual-call-for-papers-for-the` — [search Scholar](https://scholar.google.com/scholar?q=%22BabyLM%20Turns%204%20and%20Goes%20Multilingual%3A%20Call%20for%20Papers%20for%20the%202026%20BabyLM%20Workshop%22)
-      - 0 cites — BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026 Bab — <https://openalex.org/W7131404560>
-      - 0 cites — BabyLM Turns 4 and Goes Multilingual: Call for Papers for the 2026 Bab — <https://openalex.org/W7131319326>
+- [ ] `evaluation-cards-an-interpretive-layer-for-ai-evaluation-rep` — [search Scholar](https://scholar.google.com/scholar?q=%22Evaluation%20Cards%3A%20An%20Interpretive%20Layer%20for%20AI%20Evaluation%20Reporting%22)
+      - 0 cites — Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting — <https://openalex.org/W7164018997>
+      - 0 cites — Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting — <https://openalex.org/W7164447656>
 - [ ] `cross-lingual-exploration-for-parametric-knowledge` — [search Scholar](https://scholar.google.com/scholar?q=%22Cross-Lingual%20Exploration%20for%20Parametric%20Knowledge%22)
       - 0 cites — Cross-Lingual Exploration for Parametric Knowledge — <https://openalex.org/W7165973310>
       - 0 cites — Cross-Lingual Exploration for Parametric Knowledge — <https://openalex.org/W7165758602>
@@ -209,9 +212,6 @@ reason: the metadata a parser read differs between copies.
 - [ ] `growing-pains-extensible-and-efficient-llm-benchmarking-via` — [search Scholar](https://scholar.google.com/scholar?q=%22Growing%20Pains%3A%20Extensible%20and%20Efficient%20LLM%20Benchmarking%20Via%20Fixed%20Parameter%20Calibration%22)
       - 0 cites — Growing Pains: Extensible and Efficient LLM Benchmarking Via Fixed Par — <https://openalex.org/W7154463862>
       - 0 cites — Growing Pains: Extensible and Efficient LLM Benchmarking Via Fixed Par — <https://openalex.org/W7154789716>
-- [ ] `evaluation-cards-an-interpretive-layer-for-ai-evaluation-rep` — [search Scholar](https://scholar.google.com/scholar?q=%22Evaluation%20Cards%3A%20An%20Interpretive%20Layer%20for%20AI%20Evaluation%20Reporting%22)
-      - 0 cites — Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting — <https://openalex.org/W7164018997>
-      - 0 cites — Evaluation Cards: An Interpretive Layer for AI Evaluation Reporting — <https://openalex.org/W7164447656>
 - [ ] `stop-guessing-when-to-stop-testing-efficient-model-evaluatio` — [search Scholar](https://scholar.google.com/scholar?q=%22Stop%20Guessing%20When%20to%20Stop%20Testing%3A%20Efficient%20Model%20Evaluation%20with%20Just%20Enough%20Data%22)
       - 0 cites — Stop Guessing When to Stop Testing: Efficient Model Evaluation with Ju — <https://openalex.org/W7166854554>
       - 0 cites — Stop Guessing When to Stop Testing: Efficient Model Evaluation with Ju — <https://openalex.org/W7168054044>

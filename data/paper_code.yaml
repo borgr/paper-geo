@@ -32,7 +32,8 @@ papers:
     verdict: accept
     repo: https://github.com/akshat57/harness-generalization
   automatic-metric-validation-for-grammatical-error-correction:
-    verdict: none
+    verdict: accept
+    repo: https://github.com/borgr/EoE
   automatically-extracting-challenge-sets-for-non-local-phenom:
     verdict: accept
     repo: https://github.com/borgr/auto_challenge_sets
@@ -186,8 +187,10 @@ papers:
     verdict: none
   global-mmlu-understanding-and-addressing-cultural-and-lingui:
     verdict: none
-    page_verdict: accept
+    page_verdict: review
     project_page: https://hf.co/datasets/CohereForAI/Global-MMLU
+    other_pages:
+    - https://www.pewresearch.org/global/2013/06/04/regional-categorization/
   global-piqa-evaluating-commonsense-reasoning-across-100-lang:
     verdict: review
     repo: https://github.com/mrlbenchmarks/lm-eval-global-piqa
@@ -203,8 +206,8 @@ papers:
     project_page: https://plkumjorn.github.io/GrASP
     reviewed: true
   growing-pains-extensible-and-efficient-llm-benchmarking-via:
-    verdict: accept
-    repo: https://github.com/eliyahabba/growing-pains
+    verdict: none
+    was: https://github.com/eliyahabba/growing-pains
     page_verdict: accept
     project_page: https://eliyahabba.github.io/growing-pains/
   high-dimensional-learning-dynamics-2024-the-emergence-of-str:
