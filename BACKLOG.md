@@ -175,15 +175,29 @@ Recorded rather than fixed, so the next person does not rediscover it as a bug.
       thin extraction weakens it silently rather than failing. Everything else about
       "did the model follow the drafting rules" — voice, paraphrase axes, whether a
       scope states the real bound — is still checked only by a human reading the draft.
-- [ ] **Nothing notices when a paper is revised.** `_stale()` refetches a full text
-      whose extractor was superseded and there is no equivalent for the paper moving
-      underneath it, so arXiv v2 arrives as a figure check failing on a sidecar that was
-      right about v1. `do-llms-benefit-from-their-own-words` is the live case, found by CI
-      going red while a desk with the v1 text cached stayed green — four claims' figures
-      and four section pointers, all correct for the version they were drafted from. The
-      fix wants a durable record of which version each sidecar was drafted against, and
-      the only committed place for it is `data/papers.yaml`, which the item above already
-      argues is the wrong home for observed state.
+- [ ] **Nothing notices when the text under a sidecar changes.** `_stale()` refetches a
+      full text whose extractor was superseded and there is no equivalent for the paper
+      itself moving, so arXiv v2 arrives as a figure check failing on a sidecar that was
+      right about v1. `do-llms-benefit-from-their-own-words` is the live revision case,
+      found by CI going red while a desk with the v1 text cached stayed green — four
+      claims' figures and four section pointers, all correct for the version they were
+      drafted from.
+
+      A renderer changing counts the same and turned out to be the larger case. arXiv
+      finished backfilling its own LaTeXML HTML over the corpus, `links.html` moved off
+      ar5iv onto arxiv.org/html for 41 papers, and the official rendering collapses
+      `Figure 1a/b/c` into one `Figure 1`, drops appendix subsection numbers from
+      headings, and loses numbers set in math. Six of the 41 broke. A desk cache from
+      before the backfill hid all six, exactly as it hid the revision.
+
+      The interim lever exists and is one line per paper. `fulltext_source` in
+      `data/overrides.yaml` pins a paper to a source measured to carry the evidence its
+      claims cite, committed so CI reads the same text as the desk, and that is how all
+      seven are held. What is missing is the detection. A durable record of which text
+      each sidecar was drafted against would give it, and the only committed place for
+      that is `data/papers.yaml`, which the item above already argues is the wrong home
+      for observed state. Until then each change costs one red run and one pin, and the
+      only way to find them early is `scripts/fulltext.py --refetch` before a push.
 
 - [ ] **`WORKLIST.md` mixes two kinds of instruction.** Account actions no code can
       take ("open this arXiv form and paste this journal-ref") sit in the same ranked

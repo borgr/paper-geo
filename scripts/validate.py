@@ -413,7 +413,7 @@ def fallback_papers(doc) -> list[str]:
 
 OVERRIDE_KEYS = {"force_merge", "force_distinct", "also_mine", "extra_arxiv",
                  "extra_openreview", "drop", "hf_claim_requested", "fields", "absent",
-                 "wikidata_people"}
+                 "wikidata_people", "fulltext_source"}
 
 
 def check_overrides() -> list[str]:
@@ -443,13 +443,14 @@ def check_overrides() -> list[str]:
     if papers:
         live = {p.get("slug") for p in papers}
         hist = (read_yaml(os.path.join(DATA, "slug_history.yaml")) or {}).get("retired") or {}
-        for slug in (ov.get("fields") or {}):
-            if slug in live:
-                continue
-            moved = hist.get(slug)
-            errs.append(f"overrides.yaml: `fields` has no paper with slug `{slug}`"
-                        + (f" -- it moved to `{moved}`, update the key" if moved else
-                           " -- the correction is not being applied"))
+        for key in ("fields", "fulltext_source"):
+            for slug in (ov.get(key) or {}):
+                if slug in live:
+                    continue
+                moved = hist.get(slug)
+                errs.append(f"overrides.yaml: `{key}` has no paper with slug `{slug}`"
+                            + (f" -- it moved to `{moved}`, update the key" if moved else
+                               " -- the correction is not being applied"))
     return errs
 
 

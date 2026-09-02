@@ -5,7 +5,8 @@ A chain, tried in order, stopping at the first source long enough to be a paper.
 covers a different slice of one person's corpus, and a hole here means a sidecar
 drafted from a title:
 
-  0. data/fulltext/<slug>.pdf|.txt   a file you put there yourself
+  0. data/fulltext/<slug>.pdf|.txt   a file you put there yourself, then the URL in
+                                     overrides.yaml `fulltext_source` if there is one
   1. links.html                      arXiv LaTeXML / ar5iv -- real HTML, best text
   2. ACL Anthology PDF               from links.acl_anthology, or a 10.18653/... DOI
   3. links.arxiv_pdf                 when the HTML rendering is missing or a stub
@@ -46,8 +47,8 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from common import (BUILD, DATA, get, get_json, load_config, paper_doi, read_papers,  # noqa: E402
-                    write_json)
+from common import (BUILD, DATA, get, get_json, load_config, paper_doi,  # noqa: E402
+                    read_overrides, read_papers, write_json)
 
 CACHE = os.path.join(BUILD, "fulltext")
 LOCAL = os.path.join(DATA, "fulltext")
@@ -322,6 +323,9 @@ def _candidates(p: dict, cfg: dict):
     doi = paper_doi(p)
     email = ((cfg.get("identity") or {}).get("email") or "").strip()
 
+    pin = (read_overrides().get("fulltext_source") or {}).get(p.get("slug"))
+    if pin:
+        yield ("pinned", "pdf" if _looks_pdf(pin) else "html", pin)
     if L.get("html"):
         yield ("arxiv-html", "html", L["html"])
     aid = _anthology_id(p, doi)
@@ -352,6 +356,13 @@ def _candidates(p: dict, cfg: dict):
     orid = _openreview_id(p)
     if orid:
         yield ("openreview", "pdf", f"https://openreview.net/pdf?id={orid}")
+
+
+def _looks_pdf(url: str) -> bool:
+    # `openreview.net/pdf?id=...` is why the query string goes first and why a bare
+    # trailing `/pdf` counts. Every source in the chain above matches one of these three.
+    u = url.lower().split("?")[0].rstrip("/")
+    return u.endswith(".pdf") or u.endswith("/pdf") or "/pdf/" in u
 
 
 def _local(slug: str) -> tuple[str, str] | None:

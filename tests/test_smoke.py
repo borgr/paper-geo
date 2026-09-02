@@ -4952,6 +4952,64 @@ class TestAnArxivLandingPageIsNotAPaper(unittest.TestCase):
         self.assertIn("Introduction", text)
 
 
+class TestAPinnedFullTextSourceIsTriedFirst(unittest.TestCase):
+    """A paper revised under a sidecar that was right about it needs the old version.
+
+    `overrides.yaml` `fulltext_source` is the committed way to say so, which is what makes
+    it different from dropping a file in the gitignored data/fulltext -- CI reads the same
+    text as the desk. validate.py checks the key is spelled right and names a live paper.
+    """
+
+    def test_the_pin_comes_before_the_whole_chain(self):
+        import fulltext
+        p = {"slug": "_t_pinned", "arxiv": "2602.24287",
+             "links": {"html": "https://arxiv.org/html/2602.24287"}}
+        with mock.patch.object(fulltext, "read_overrides", return_value={
+                "fulltext_source": {"_t_pinned": "https://arxiv.org/html/2602.24287v1"}}):
+            first = next(fulltext._candidates(p, {}))
+        self.assertEqual(("pinned", "html", "https://arxiv.org/html/2602.24287v1"), first)
+
+    def test_a_pinned_pdf_is_read_as_a_pdf(self):
+        import fulltext
+        for url, kind in (("https://arxiv.org/pdf/1234.5678v1", "pdf"),
+                          ("https://aclanthology.org/2020.emnlp-main.638.pdf", "pdf"),
+                          ("https://openreview.net/pdf?id=abc", "pdf"),
+                          ("https://arxiv.org/html/1234.5678v1", "html")):
+            with self.subTest(url=url):
+                with mock.patch.object(fulltext, "read_overrides", return_value={
+                        "fulltext_source": {"_t_pinned": url}}):
+                    got = next(fulltext._candidates({"slug": "_t_pinned"}, {}))
+                self.assertEqual(kind, got[1])
+
+    def test_no_pin_leaves_the_chain_alone(self):
+        import fulltext
+        p = {"slug": "_t_pinned", "links": {"html": "https://arxiv.org/html/2602.24287"}}
+        with mock.patch.object(fulltext, "read_overrides", return_value={}):
+            first = next(fulltext._candidates(p, {}))
+        self.assertEqual("arxiv-html", first[0])
+
+    def test_validate_knows_the_key(self):
+        """An unknown key in overrides.yaml is a silent no-op, so it is checked."""
+        import validate
+        self.assertIn("fulltext_source", validate.OVERRIDE_KEYS)
+
+    def test_a_pin_on_a_slug_that_moved_is_reported(self):
+        import validate
+        real = validate.read_yaml
+
+        def yaml_for(path, default=None):
+            if path.endswith("overrides.yaml"):
+                return {"fulltext_source": {"_t_no_such_paper": "https://example.org/x.pdf"}}
+            return real(path, default)
+
+        with mock.patch.object(validate, "read_yaml", side_effect=yaml_for), \
+             mock.patch.object(validate, "read_papers",
+                               return_value=[{"slug": "a-real-paper"}]):
+            errs = validate.check_overrides()
+        self.assertTrue(any("fulltext_source" in e and "_t_no_such_paper" in e
+                            for e in errs), errs)
+
+
 class TestAnUnreadablePaperLeavesNoCacheFile(unittest.TestCase):
     """No source answering must leave build/fulltext/<slug>.txt absent, never empty.
 
