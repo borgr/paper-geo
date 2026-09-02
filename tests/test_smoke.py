@@ -633,6 +633,30 @@ class TestWorkflowsInvokeRealCommands(unittest.TestCase):
                 self.assertIn(f"inputs.{inp}", text)
                 self.assertIn(secret, text)
 
+    def test_a_committing_workflow_names_its_committer_unconditionally(self):
+        """`git commit` needs user.name and user.email from a step no condition can skip.
+
+        A name is not a credential and must not be gated like one. Behind `if: env.PAT !=
+        ''` it leaves every run without that PAT dying on `fatal: empty ident name`, and
+        the failure surfaces in the commit step rather than where the mistake is. Pushing
+        the workflow's own repo needs no PAT -- GITHUB_TOKEN and `contents: write` do it.
+        """
+        import yaml
+        for path in self.workflows():
+            doc = yaml.safe_load(source(path))
+            for job, spec in (doc.get("jobs") or {}).items():
+                steps = spec.get("steps") or []
+                at = [i for i, st in enumerate(steps) if "git commit" in (st.get("run") or "")]
+                if not at:
+                    continue
+                with self.subTest(workflow=os.path.basename(path), job=job):
+                    named = [st.get("name") for i, st in enumerate(steps[:at[0] + 1])
+                             if not st.get("if")
+                             and "user.name" in (st.get("run") or "")
+                             and "user.email" in (st.get("run") or "")]
+                    self.assertTrue(named, "no ungated step sets a committer before "
+                                           f"step {at[0]}, so git commit exits 128")
+
     def test_requirements_covers_what_the_workflows_install(self):
         """The dependency list is one file, and the workflows install from it.
 

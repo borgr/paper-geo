@@ -207,12 +207,20 @@ jobs:
       # `gh` reads GH_TOKEN from the environment, but the site deploy is a `git push` into
       # a second repo, and git does not. The default GITHUB_TOKEN cannot do it at all --
       # it is scoped to this repository -- which is why the deploy needs a PAT.
+      # Ungated, and separate from the token below, because a committer name is not a
+      # credential. Filed with one it took `commit what changed` down with `fatal: empty
+      # ident name` on every run that had no PAT -- which is every run, since the PAT is
+      # only ever needed to push to the *second* repo the site deploys into. This repo's
+      # own commit rides the default GITHUB_TOKEN and `permissions: contents: write`.
+      - name: name the committer
+        run: |
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - name: let git use the token
         if: env.GH_TOKEN != ''
         run: |
           git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
-          git config --global user.name  "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       # Creating the missing Wikidata paper items -- both legs, differing only in who is
       # watching, which is the line the two triggers are drawn on everywhere else here.
