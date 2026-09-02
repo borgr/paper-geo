@@ -175,6 +175,16 @@ Recorded rather than fixed, so the next person does not rediscover it as a bug.
       thin extraction weakens it silently rather than failing. Everything else about
       "did the model follow the drafting rules" — voice, paraphrase axes, whether a
       scope states the real bound — is still checked only by a human reading the draft.
+- [ ] **Nothing notices when a paper is revised.** `_stale()` refetches a full text
+      whose extractor was superseded and there is no equivalent for the paper moving
+      underneath it, so arXiv v2 arrives as a figure check failing on a sidecar that was
+      right about v1. `do-llms-benefit-from-their-own-words` is the live case, found by CI
+      going red while a desk with the v1 text cached stayed green — four claims' figures
+      and four section pointers, all correct for the version they were drafted from. The
+      fix wants a durable record of which version each sidecar was drafted against, and
+      the only committed place for it is `data/papers.yaml`, which the item above already
+      argues is the wrong home for observed state.
+
 - [ ] **`WORKLIST.md` mixes two kinds of instruction.** Account actions no code can
       take ("open this arXiv form and paste this journal-ref") sit in the same ranked
       list as commands to run, and a reader has to notice which is which per item.
