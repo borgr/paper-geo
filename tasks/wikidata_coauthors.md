@@ -50,7 +50,7 @@ item stating no occupation at all is still listed.
 - [ ] **121 citations** — Fusing finetuned models for better pretraining — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029641)
 - [ ] **119 citations** — Model merging with SVD to tie the Knots — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029643)
 - [ ] **103 citations** — Beyond Binary Rewards: Training LMs to Reason About Their Un — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029645)
-      - Yoon Kim → [Q91553362](https://www.wikidata.org/wiki/Q91553362) — researcher (ORCID 0000-0002-0679-6594), [Q60973630](https://www.wikidata.org/wiki/Q60973630) — South Korean researcher and politician, [Q88771001](https://www.wikidata.org/wiki/Q88771001) — researcher (ORCID 0000-0002-7404-8432) … +2
+      - Yoon Kim → [Q91553362](https://www.wikidata.org/wiki/Q91553362) — researcher (ORCID 0000-0002-0679-6594), [Q102278866](https://www.wikidata.org/wiki/Q102278866) — Ph.D. Virginia Polytechnic Institute and Sta, [Q60973630](https://www.wikidata.org/wiki/Q60973630) — South Korean researcher and politician … +2
 - [ ] **101 citations** — Jump to Conclusions: Short-Cutting Transformers with Linear  — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029646)
       - Alexander Yom Din → [Q102662940](https://www.wikidata.org/wiki/Q102662940) — Israeli mathematician
 - [ ] **94 citations** — Asymmetry in Low-Rank Adapters of Foundation Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029647)
