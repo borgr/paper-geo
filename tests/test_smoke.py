@@ -7610,6 +7610,42 @@ class TestAnUnreadablePaperKeepsItsStoredCodeDecision(unittest.TestCase):
         self.assertEqual("https://github.com/o/n", row.get("was"))
         self.assertIsNone(row.get("repo"))
 
+    def test_a_refused_github_keeps_the_stored_repo(self):
+        """The verdict half of the quiet-GitHub bug: exists=False also means "would not say".
+
+        `confirm` already writes "GitHub would not answer -- retried next run" into the
+        candidate's why, but the verdict read only `exists` and came out `none`, so a
+        rate-limited minute rewrote the row anyway.
+        """
+        pc = self._pc()
+        r = self._blank(True)
+        r["cands"] = [{"repo": "o/n", "score": 8, "exists": False, "unconfirmed": True,
+                       "why": []}]
+        r["unconfirmed"] = True
+        prev = {"s": {"verdict": "accept", "repo": "https://github.com/o/n"}}
+        row = self._saved(pc, {"s": r}, prev)["s"]
+        self.assertEqual("https://github.com/o/n", row.get("repo"))
+        self.assertNotIn("was", row)
+
+    def test_a_real_404_still_demotes(self):
+        pc = self._pc()
+        r = self._blank(True)
+        r["cands"] = [{"repo": "o/n", "score": 8, "exists": False, "why": []}]
+        prev = {"s": {"verdict": "accept", "repo": "https://github.com/o/n"}}
+        row = self._saved(pc, {"s": r}, prev)["s"]
+        self.assertEqual("none", row["verdict"])
+        self.assertEqual("https://github.com/o/n", row.get("was"))
+
+    def test_confirm_marks_a_refusal_and_not_a_404(self):
+        pc = self._pc()
+        for st, unconfirmed in ((404, False), (410, False), (403, True), (500, True)):
+            with self.subTest(status=st):
+                facts = mock.Mock()
+                facts.get.return_value = {"exists": False, "status": st}
+                c = {"repo": "o/n", "score": 8, "why": []}
+                pc.confirm(c, {"slug": "s", "title": "T"}, facts)
+                self.assertEqual(unconfirmed, bool(c.get("unconfirmed")))
+
     def test_no_text_and_nothing_stored_is_left_alone(self):
         pc = self._pc()
         row = self._saved(pc, {"s": self._blank(False)}, {})["s"]

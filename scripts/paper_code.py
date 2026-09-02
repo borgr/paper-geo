@@ -519,6 +519,7 @@ def confirm_page(c: dict, paper: dict, pages: PageFacts) -> dict:
     f = pages.get(c["page"])
     c["exists"] = bool(f.get("exists"))
     if not c["exists"]:
+        c["unconfirmed"] = f.get("status") not in (404, 410, None)
         c["why"].append(f"unreachable ({f.get('status')}) -- rejected")
         c["score"] -= 10
         return c
@@ -548,6 +549,10 @@ def confirm(c: dict, paper: dict, facts: RepoFacts) -> dict:
         # unconfirmed, so neither is accepted. Only the first is a reason to stop looking,
         # and saying "404" for the second sends the reader to delete a working link.
         st = f.get("status")
+        # `unconfirmed` is the difference between the two, carried rather than only said:
+        # a run GitHub would not talk to must not write "this paper names no repo" over a
+        # link a run it did talk to had accepted.
+        c["unconfirmed"] = st not in (404, 410, None)
         c["why"].append("GitHub 404 -- rejected" if st in (404, 410, None) else
                         f"GitHub would not answer (HTTP {st or 'no reply'}) -- "
                         "retried next run")
@@ -716,7 +721,9 @@ def deduce(papers: list[dict], only: str | None, facts: RepoFacts,
         repo_url = ("https://github.com/" + top["repo"]) if top else None
         pverdict, pc = page_verdict(p, text, repo_url, pages)
         out[p["slug"]] = {"paper": p, "verdict": verdict, "cands": cands,
-                          "page_verdict": pverdict, "pages": pc, "text_seen": seen}
+                          "page_verdict": pverdict, "pages": pc, "text_seen": seen,
+                          "unconfirmed": any(c.get("unconfirmed")
+                                             for c in cands + pc)}
     return out
 
 
@@ -774,11 +781,13 @@ def save_decisions(papers: list[dict], results: dict, prev: dict) -> None:
     rows, why, blind = {}, {}, []
     for slug, r in results.items():
         keep = prev.get(slug) or {}
-        # A run that could not read the paper carries the stored row forward, the same way
-        # a reviewed one is carried. Without this a runner whose fetch came up empty finds
-        # no release phrase, deduces `none`, and overwrites a repo a run that *could* read
-        # the paper had accepted -- leaving `was:` where a live link used to be.
-        if not r.get("text_seen", True) and (keep.get("repo") or keep.get("project_page")):
+        # A run that could not see carries the stored row forward, the same way a reviewed
+        # one is carried -- either it could not read the paper, so it found no release
+        # phrase, or GitHub and Hugging Face would not confirm a candidate it did find.
+        # Both deduce `none` on no evidence, and written out that leaves `was:` where a
+        # live link used to be, with nothing on the row to say the run was blind.
+        if (not r.get("text_seen", True) or r.get("unconfirmed")) \
+                and (keep.get("repo") or keep.get("project_page")):
             blind.append(slug)
         if keep.get("reviewed") or slug in blind:
             rows[slug] = {k: v for k, v in keep.items() if k not in ("score", "why",
@@ -830,7 +839,7 @@ def save_decisions(papers: list[dict], results: dict, prev: dict) -> None:
         "papers": dict(sorted(rows.items())),
     })
     if blind:
-        print(f"  {len(blind)} paper(s) could not be read this run, so their stored "
+        print(f"  {len(blind)} paper(s) this run could not see, so their stored "
               f"decision was kept: {', '.join(sorted(blind)[:3])}"
               + (" ..." if len(blind) > 3 else ""), file=sys.stderr)
 
