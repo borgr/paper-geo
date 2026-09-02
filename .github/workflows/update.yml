@@ -184,6 +184,20 @@ jobs:
           key: paper-geo-fulltext-${{ github.run_id }}
           restore-keys: paper-geo-fulltext-
 
+      # What GitHub and the project-page hosts said about each candidate. Several hundred
+      # `gh api repos/...` calls and a fetch of every page, all for facts that change when
+      # somebody renames a repo and not otherwise. Safe to carry across runs because a
+      # refusal is never written to either file -- only 200, 404 and 410 are cached, which
+      # is what keeps a rate-limited minute from being remembered as "no such repo".
+      - name: restore what the hosts said
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/github_repos.json
+            build/project_pages.json
+          key: paper-geo-hosts-${{ github.run_id }}
+          restore-keys: paper-geo-hosts-
+
       # Only for the leg that drafts. See the note at the foot of requirements.txt for why
       # this is not a line in it.
       - name: the api-mode dependency
