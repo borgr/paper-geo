@@ -30,8 +30,8 @@ import sys
 import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import (DATA, QA_ROLES, ROOT, answered_by, load_config, norm_name,  # noqa: E402
-                    phrasings, read_papers, read_yaml, rules_block)
+from common import (DATA, QA_ROLES, ROOT, answered_by, has_live_sidecar,  # noqa: E402
+                    load_config, norm_name, phrasings, read_papers, read_yaml, rules_block)
 
 SCHEMA_DIR = os.path.join(ROOT, "schema")
 
@@ -499,6 +499,31 @@ def check_wikidata_created() -> list[str]:
                 f"`{qid}` no longer suppresses anything and the next "
                 f"`wikidata_apply.py --papers` may create a duplicate. Point the key at "
                 f"the paper's current slug, or add the rename to slug_history.yaml")
+    return errs
+
+
+def check_sidecar_versions() -> list[str]:
+    """Every recorded sidecar version must name a live sidecar and be a version number.
+
+    A renamed paper is the failure worth catching. The record matches by slug, so the new slug
+    arrives unrecorded and `--record-versions` would then write whichever version arXiv serves
+    today -- asserting the sidecar is current when a revision is exactly what nobody checked.
+    `slug_history.yaml` is honoured, since a rename that went through the chain still resolves.
+    """
+    rec = (read_yaml(os.path.join(DATA, "sidecar_versions.yaml")) or {}).get("drafted_against")
+    if not rec:
+        return []
+    hist = (read_yaml(os.path.join(DATA, "slug_history.yaml")) or {}).get("retired") or {}
+    known = {k for k, v in hist.items() if v}
+    errs = []
+    for slug, ver in sorted(rec.items()):
+        if not (isinstance(ver, int) and not isinstance(ver, bool) and ver > 0):
+            errs.append(f"sidecar_versions.yaml: `{slug}` -> `{ver}` is not a version number")
+        if not (has_live_sidecar(slug) or slug in known):
+            errs.append(
+                f"sidecar_versions.yaml: `{slug}` has no live sidecar, so nothing reads this "
+                f"entry and the sidecar that replaced it counts as unrecorded. Point the key "
+                f"at the current slug, add the rename to slug_history.yaml, or drop the entry")
     return errs
 
 
@@ -1785,6 +1810,7 @@ def main() -> None:
     errs += check_overrides()
     errs += check_slug_history()
     errs += check_wikidata_created()
+    errs += check_sidecar_versions()
     errs += check_name_lists()
     errs += check_affiliations()
     errs += check_prompt_blocks()

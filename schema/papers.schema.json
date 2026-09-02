@@ -172,6 +172,20 @@
           "type": "boolean",
           "description": "A LaTeXML rendering exists (post-2023 submissions). When false, links.html falls back to ar5iv."
         },
+        "arxiv_updated": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Date of the newest arXiv version, YYYY-MM-DD. A date after the sidecar last changed means the paper moved under it."
+        },
+        "arxiv_version": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Version number arXiv currently serves."
+        },
         "hf_indexed": {
           "type": "boolean"
         },

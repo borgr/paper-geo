@@ -35,7 +35,7 @@ from common import (DATA, DECLINE_STAMP, health_report, load_config, read_papers
                     read_yaml)
 from worklist import (arxiv_journal_refs, arxiv_name_typos,  # noqa: E402
                       arxiv_ownership, hf_pages, identity_surfaces,
-                      repo_gaps, same_or_different, scholar_gaps,
+                      repo_gaps, revised_papers, same_or_different, scholar_gaps,
                       scholar_split_records, sidecar_drafts, starving_papers,
                       upstream_gaps, wikidata_coauthors, wikidata_orgs,
                       wikidata_people, wikipedia_checks)
@@ -795,6 +795,7 @@ def step_worklist(cfg, args) -> None:
     lines += same_or_different(papers)
 
     lines += sidecar_drafts(papers)
+    lines += revised_papers(papers)
     lines += starving_papers(papers)
 
     lines += repo_gaps(repos)

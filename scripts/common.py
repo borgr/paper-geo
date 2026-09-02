@@ -1263,6 +1263,53 @@ def read_overrides() -> dict:
     return read_yaml(os.path.join(DATA, "overrides.yaml")) or {}
 
 
+SIDECAR_VERSIONS = os.path.join(DATA, "sidecar_versions.yaml")
+
+VERSIONS_COMMENT = (
+    "The arXiv version each live sidecar was drafted against. Written by "
+    "scripts/draft_sidecars.py on --accept and by --record-versions, read by "
+    "scripts/worklist.py, which asks for a re-draft when arXiv moves past the "
+    "recorded number. A slug absent from here is unknown rather than v1. Dates and "
+    "git both fail at this -- a commit touching every sidecar at once resets them "
+    "and hides a revision that landed before it.")
+
+
+def sidecar_versions() -> dict[str, int]:
+    """{slug: arXiv version the live sidecar was drafted against}, from the committed record.
+
+    Empty when the file is absent. A slug missing from it means unknown rather than v1 --
+    treating unknown as v1 would report every sidecar as revised the moment a paper reached
+    v2, whether or not the sidecar had already been written against it.
+    """
+    got = read_yaml(SIDECAR_VERSIONS) or {}
+    return {k: int(v) for k, v in (got.get("drafted_against") or {}).items()
+            if str(v).isdigit()}
+
+
+def record_sidecar_versions(slugs: list[str]) -> tuple[int, list[str]]:
+    """Record the arXiv version each named slug's live sidecar was drafted against.
+
+    Returns (written, skipped). Skipped is every slug `papers.yaml` has no `arxiv_version`
+    for, which is a non-arXiv paper or a corpus that has not been collected since the field
+    existed. Reads no network -- the version comes from the last `collect`, so a version
+    arXiv published between that collect and this call is recorded as the one drafted
+    against.
+    """
+    live = {p["slug"]: p.get("arxiv_version") for p in read_papers()}
+    got = read_yaml(SIDECAR_VERSIONS) or {}
+    rec = dict(got.get("drafted_against") or {})
+    skipped = []
+    for slug in slugs:
+        v = live.get(slug)
+        if not v:
+            skipped.append(slug)
+            continue
+        rec[slug] = int(v)
+    write_yaml(SIDECAR_VERSIONS, {"_comment": VERSIONS_COMMENT,
+                                 "drafted_against": dict(sorted(rec.items()))})
+    return len(slugs) - len(skipped), skipped
+
+
 def has_live_sidecar(slug: str) -> bool:
     """Whether `data/sidecars/<slug>.md` exists right now, asked of the disk.
 

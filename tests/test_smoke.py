@@ -8848,5 +8848,185 @@ class TestTheShrinkGuardNamesWhatWentDown(LedgerCase):
                           ("api.openalex.org/works", 1, "429")], common.run_failures())
 
 
+class RevisedPapers(unittest.TestCase):
+    """`worklist.revised_papers` against synthetic versions.
+
+    The paper that motivated it: arXiv served a v2 that renumbered every figure, and every
+    check kept passing because a renumbered figure still exists under its new number.
+    """
+
+    def _render(self, papers, recorded, live=("s",)):
+        import worklist
+        old = worklist.sidecar_versions, worklist.has_live_sidecar
+        worklist.sidecar_versions = lambda: recorded
+        worklist.has_live_sidecar = lambda slug: slug in live
+        try:
+            return "\n".join(worklist.revised_papers(papers))
+        finally:
+            worklist.sidecar_versions, worklist.has_live_sidecar = old
+
+    def test_a_paper_past_its_recorded_version_is_reported(self):
+        out = self._render([{"slug": "s", "arxiv": "2602.24287", "arxiv_version": 2,
+                             "arxiv_updated": "2026-08-11", "citations": 5}], {"s": 1})
+        self.assertIn("revised since their sidecar", out)
+        self.assertIn("arXiv 2602.24287 is at v2, the sidecar was drafted against v1", out)
+        self.assertIn("revised 2026-08-11", out)
+
+    def test_a_sidecar_drafted_against_the_live_version_is_not(self):
+        self.assertEqual("", self._render(
+            [{"slug": "s", "arxiv": "1", "arxiv_version": 2}], {"s": 2}))
+
+    def test_a_commit_touching_every_sidecar_cannot_hide_a_revision(self):
+        """Why this reads a recorded version and not a date. The v2 landed 2026-08-11 and a
+        reroute touched all 114 sidecars on 2026-08-21, so any date comparison reads the
+        sidecar as newer than the paper and reports nothing."""
+        out = self._render([{"slug": "s", "arxiv": "2602.24287", "arxiv_version": 2,
+                             "arxiv_updated": "2026-08-11"}], {"s": 1})
+        self.assertIn("- [ ] `s`", out)
+
+    def test_an_unrecorded_sidecar_is_counted_apart_not_called_revised(self):
+        out = self._render([{"slug": "s", "arxiv": "1", "arxiv_version": 3}], {})
+        self.assertNotIn("revised since their sidecar", out)
+        self.assertIn("no recorded version (1)", out)
+        self.assertIn("--record-versions", out)
+
+    def test_a_paper_with_no_sidecar_is_left_to_the_drafting_sections(self):
+        self.assertEqual("", self._render(
+            [{"slug": "other", "arxiv": "1", "arxiv_version": 9}], {"other": 1}))
+
+    def test_a_paper_that_is_not_on_arxiv_is_skipped(self):
+        self.assertEqual("", self._render(
+            [{"slug": "s", "arxiv": None, "arxiv_version": None}], {"s": 1}))
+
+    def test_an_arxiv_paper_with_no_readable_version_is_named_not_dropped(self):
+        """A degraded collect leaves the version null, and skipping it silently makes a
+        corpus nothing can check look like a corpus with nothing wrong."""
+        out = self._render([{"slug": "s", "arxiv": "1", "arxiv_version": None}], {"s": 1})
+        self.assertIn("nothing could read", out)
+        self.assertIn("1 arXiv paper carries no version number", out)
+
+    def test_an_unreadable_version_is_reported_alongside_a_revision(self):
+        out = self._render(
+            [{"slug": "s", "arxiv": "1", "arxiv_version": 2},
+             {"slug": "t", "arxiv": "2", "arxiv_version": None}],
+            {"s": 1}, live=("s", "t"))
+        self.assertIn("- [ ] `s`", out)
+        self.assertIn("1 arXiv paper carries no version number", out)
+
+    def test_a_recorded_version_ahead_of_arxiv_is_not_a_revision(self):
+        """Nothing should report a paper as revised because a record ran ahead of a
+        collect, which is what a stale papers.yaml looks like."""
+        self.assertEqual("", self._render(
+            [{"slug": "s", "arxiv": "1", "arxiv_version": 1}], {"s": 2}))
+
+    def test_the_most_cited_revision_is_first(self):
+        out = self._render(
+            [{"slug": "s", "arxiv": "1", "arxiv_version": 2, "citations": 5},
+             {"slug": "t", "arxiv": "2", "arxiv_version": 2, "citations": 198}],
+            {"s": 1, "t": 1}, live=("s", "t"))
+        self.assertLess(out.index("`t`"), out.index("`s`"))
+
+    def test_the_printed_commands_are_flags_the_drafter_takes(self):
+        """The section hands over four commands, and a flag that does not exist is a
+        worklist item nobody can act on."""
+        import draft_sidecars
+        out = self._render([{"slug": "s", "arxiv": "1", "arxiv_version": 2}], {"s": 1})
+        out += "\n" + self._render([{"slug": "s", "arxiv": "1", "arxiv_version": 2}], {})
+        flags = {a for line in out.splitlines() if line.startswith("python scripts/")
+                 for a in line.split() if a.startswith("--")}
+        self.assertIn("--record-versions", flags)
+        known = {s for a in draft_sidecars.parser()._actions for s in a.option_strings}
+        self.assertEqual(set(), flags - known)
+
+
+class SidecarVersionRecord(unittest.TestCase):
+    """`common.sidecar_versions` and `record_sidecar_versions` against a temp data dir."""
+
+    def _in_temp(self, fn):
+        import tempfile
+
+        import common
+        with tempfile.TemporaryDirectory() as d:
+            old = common.SIDECAR_VERSIONS
+            common.SIDECAR_VERSIONS = os.path.join(d, "sidecar_versions.yaml")
+            try:
+                return fn(common)
+            finally:
+                common.SIDECAR_VERSIONS = old
+
+    def test_an_absent_file_reads_as_no_record_at_all(self):
+        self.assertEqual({}, self._in_temp(lambda c: c.sidecar_versions()))
+
+    def test_a_write_round_trips(self):
+        def go(common):
+            common.read_papers = lambda: [{"slug": "s", "arxiv_version": 3}]
+            wrote, skipped = common.record_sidecar_versions(["s"])
+            return wrote, skipped, common.sidecar_versions()
+        got = self._in_temp(go)
+        self.assertEqual((1, [], {"s": 3}), got)
+
+    def test_a_paper_with_no_arxiv_version_is_skipped_not_written(self):
+        def go(common):
+            common.read_papers = lambda: [{"slug": "s", "arxiv_version": None}]
+            return common.record_sidecar_versions(["s"]), common.sidecar_versions()
+        (wrote, skipped), rec = self._in_temp(go)
+        self.assertEqual((0, ["s"]), (wrote, skipped))
+        self.assertEqual({}, rec)
+
+    def test_a_second_write_keeps_the_slugs_it_was_not_asked_about(self):
+        def go(common):
+            common.read_papers = lambda: [{"slug": "s", "arxiv_version": 1},
+                                          {"slug": "t", "arxiv_version": 4}]
+            common.record_sidecar_versions(["s"])
+            common.record_sidecar_versions(["t"])
+            return common.sidecar_versions()
+        self.assertEqual({"s": 1, "t": 4}, self._in_temp(go))
+
+    def test_the_file_says_what_writes_it_and_what_reads_it(self):
+        """A committed data file nobody can place is a file the next reader deletes."""
+        import common
+        for name in ("draft_sidecars.py", "worklist.py", "--record-versions"):
+            self.assertIn(name, common.VERSIONS_COMMENT)
+
+
+class SidecarVersionsCheck(unittest.TestCase):
+    """`validate.check_sidecar_versions` against synthetic records."""
+
+    def _errs(self, record, live=("s",), retired=None):
+        import validate
+        old = validate.read_yaml, validate.has_live_sidecar
+        canned = {"sidecar_versions.yaml": {"drafted_against": record},
+                  "slug_history.yaml": {"retired": retired or {}}}
+        validate.read_yaml = lambda path: canned.get(os.path.basename(path))
+        validate.has_live_sidecar = lambda slug: slug in live
+        try:
+            return validate.check_sidecar_versions()
+        finally:
+            validate.read_yaml, validate.has_live_sidecar = old
+
+    def test_a_record_matching_a_live_sidecar_passes(self):
+        self.assertEqual([], self._errs({"s": 2}))
+
+    def test_a_record_for_a_slug_with_no_sidecar_is_an_error(self):
+        """The rename case. The record matches by slug, so a renamed paper arrives
+        unrecorded and --record-versions would then assert it is current."""
+        errs = self._errs({"gone": 2})
+        self.assertEqual(1, len(errs))
+        self.assertIn("has no live sidecar", errs[0])
+        self.assertIn("slug_history.yaml", errs[0])
+
+    def test_a_rename_through_slug_history_passes(self):
+        self.assertEqual([], self._errs({"old": 2}, retired={"old": "s"}))
+
+    def test_a_non_version_passes_nothing(self):
+        for bad in ("2", 0, -1, True, None):
+            with self.subTest(bad=bad):
+                errs = self._errs({"s": bad})
+                self.assertTrue(any("not a version number" in e for e in errs), errs)
+
+    def test_an_absent_record_is_not_an_error(self):
+        self.assertEqual([], self._errs({}))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -56,7 +56,8 @@ import yaml  # noqa: E402
 
 from llm import JSON_ONLY, decodable, first_json, with_retries  # noqa: E402
 from llm import client as llm_client  # noqa: E402
-from common import (BUILD, README_NAMES, ROOT, get_status, load_config, read_papers,  # noqa: E402
+from common import (BUILD, README_NAMES, ROOT, get_status, has_live_sidecar,  # noqa: E402
+                    load_config, plural, read_papers, record_sidecar_versions,
                     rules_block, title_of, write_json)
 from fulltext import LIMIT as FULLTEXT_LIMIT  # noqa: E402
 from fulltext import cut_chars  # noqa: E402
@@ -748,6 +749,7 @@ def accept(slugs: list[str], replace: bool = False, anyway: bool = False) -> int
     `--replace` is the opt-in, and it prints the git command that shows what changed.
     """
     n = 0
+    promoted: list[str] = []
     for slug in slugs:
         src = draft_path(slug)
         if not os.path.exists(src):
@@ -788,8 +790,42 @@ def accept(slugs: list[str], replace: bool = False, anyway: bool = False) -> int
             f.write(text)
         os.remove(src)
         print(f"  promoted {slug} -> data/sidecars/{slug}.md")
+        promoted.append(slug)
         n += 1
+    if promoted:
+        # The sidecar is already on disk, so a failure here is bookkeeping to redo rather
+        # than a promotion to undo. --record-versions redoes it.
+        try:
+            wrote, skipped = record_sidecar_versions(promoted)
+        except Exception as e:
+            print(f"  could not record the arXiv version: {e}\n"
+                  f"  run: python scripts/draft_sidecars.py --record-versions")
+            return n
+        if wrote:
+            print(f"  recorded the arXiv version {plural(wrote, 'sidecar')} was drafted "
+                  f"against, in data/sidecar_versions.yaml")
+        for slug in skipped:
+            print(f"  no arXiv version on record for {slug}, so nothing will notice a "
+                  f"revision of it")
     return n
+
+
+def run_record_versions(papers: list[dict]) -> None:
+    """Record the current arXiv version for every paper that has a live sidecar.
+
+    An assertion that every live sidecar is right about the version arXiv serves today,
+    which is what `--accept` records one sidecar at a time. Run it after checking the
+    corpus, never to clear a list.
+    """
+    slugs = [p["slug"] for p in papers if has_live_sidecar(p["slug"])]
+    wrote, skipped = record_sidecar_versions(slugs)
+    print(f"recorded a version for {plural(wrote, 'sidecar')} in "
+          f"data/sidecar_versions.yaml")
+    if skipped:
+        print(f"{plural(len(skipped), 'sidecar')} left unrecorded, having no arXiv version "
+              f"in data/papers.yaml:")
+        for slug in skipped:
+            print(f"  {slug}")
 
 
 def parser() -> argparse.ArgumentParser:
@@ -803,6 +839,11 @@ def parser() -> argparse.ArgumentParser:
                          "after editing a check, so a rule change does not cost the "
                          "reviewing already done. Refuses any draft that now fails. "
                          "No slugs means every draft")
+    ap.add_argument("--record-versions", action="store_true",
+                    help="record which arXiv version every live sidecar was drafted "
+                         "against, so the worklist can notice a paper being revised. "
+                         "Reads the last collect, not the network. Says every live sidecar "
+                         "is current, so run it only when that is true")
     ap.add_argument("--show", nargs="+", metavar="SLUG",
                     help="print each claim beside the evidence it cites, and the "
                          "paper's own sentence for every figure it states")
@@ -1082,6 +1123,8 @@ def main() -> None:
         return
     if args.restamp is not None:
         return run_restamp(args.restamp)
+    if args.record_versions:
+        return run_record_versions(papers)
     if args.review:
         return review(papers)
     if args.suspect is not None:

@@ -12,7 +12,8 @@ import re
 import textwrap
 
 from common import (DATA, ROOT, clipped, has_live_sidecar, is_preprint_venue, norm_title,
-                    plural, read_overrides, read_yaml, synth_bibtex, title_of)
+                    plural, read_overrides, read_yaml, sidecar_versions, synth_bibtex,
+                    title_of)
 from sweep_github import ZENODO_KINDS
 
 def held_until(fragment: str) -> str | None:
@@ -830,6 +831,79 @@ def sidecar_drafts(papers: list[dict]) -> list[str]:
         L += _review_block(drafted, {p["slug"]: p for p in papers}, papers)
     if todraft:
         L += _undrafted_block(todraft, papers, stale_drafts)
+    return L
+
+
+def revised_papers(papers: list[dict]) -> list[str]:
+    """Papers arXiv has revised since their sidecar was drafted.
+
+    A revision renumbers figures and sections and restates numbers, so a sidecar that was
+    right about the version it was drafted from can be wrong about the one a reader now
+    opens while every check still passes. The checks read whichever text the chain
+    resolves, and a renumbered `Figure 6` still exists under its new number.
+
+    Two version numbers. `arxiv_version` is what arXiv serves now, refreshed by every
+    `collect` run, and `data/sidecar_versions.yaml` is what the sidecar was accepted
+    against. Three things are counted apart rather than guessed at -- a sidecar with no
+    recorded version, an arXiv paper the last `collect` read no version for, and a paper
+    that is not on arXiv at all, which cannot be revised and so is dropped.
+
+    The file dates rather than git. A commit touching every sidecar at once is routine --
+    one reroute of the question groups did it on 2026-08-21, ten days after the paper that
+    motivated this got its v2 -- and it would reset a git date and hide exactly this.
+    """
+    known = sidecar_versions()
+    hits, unrecorded, unknown = [], [], 0
+    for p in papers:
+        if not p.get("arxiv") or not has_live_sidecar(p["slug"]):
+            continue
+        live = p.get("arxiv_version")
+        if not live:
+            unknown += 1
+            continue
+        was = known.get(p["slug"])
+        if was is None:
+            unrecorded.append(p)
+        elif live > was:
+            hits.append((p, live, was))
+    if not (hits or unrecorded or unknown):
+        return []
+    L = []
+    if hits:
+        L += [f"## Papers revised since their sidecar was drafted ({len(hits)})", "",
+              "arXiv serves a newer version of each of these than the one its sidecar was",
+              "drafted against. Nothing here is failing — a revision renumbers figures and",
+              "sections and restates numbers, so a claim can point at the wrong Figure 6",
+              "while a Figure 6 still exists and every check still passes.",
+              "",
+              "Re-draft each one and read the result against the new version:", "",
+              "```",
+              "python scripts/draft_sidecars.py --slug SLUG --mode api",
+              "python scripts/draft_sidecars.py --review",
+              "python scripts/draft_sidecars.py --accept SLUG --replace",
+              "```",
+              "",
+              "Accepting records the new version, so an answered one leaves this list.", ""]
+        for p, live, was in sorted(hits, key=lambda h: -(h[0].get("citations") or 0)):
+            L.append(f"- [ ] `{p['slug']}` — arXiv {p['arxiv']} is at v{live}, "
+                     f"the sidecar was drafted against v{was}"
+                     + (f", revised {p['arxiv_updated']}" if p.get("arxiv_updated") else ""))
+        L.append("")
+    if unrecorded:
+        L += [f"## Sidecars with no recorded version ({len(unrecorded)})", "",
+              f"{plural(len(unrecorded), 'sidecar')} predates the version record, so "
+              "nothing can say whether", "the paper has moved under "
+              + ("it" if len(unrecorded) == 1 else "them") + ". One command answers all of "
+              "them, and it", "reads no network:", "",
+              "```", "python scripts/draft_sidecars.py --record-versions", "```", ""]
+    if unknown:
+        if not (hits or unrecorded):
+            L += ["## Papers whose version nothing could read", ""]
+        L += [f"{plural(unknown, 'arXiv paper')} carries no version number, because the last "
+              "`collect`", "did not reach arXiv for "
+              + ("it" if unknown == 1 else "them") + ". A revision of "
+              + ("it" if unknown == 1 else "any of them") + " would go unnoticed until",
+              "`python update.py --step collect` runs again.", ""]
     return L
 
 

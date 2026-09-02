@@ -192,14 +192,24 @@ Recorded rather than fixed, so the next person does not rediscover it as a bug.
       headings, and loses numbers set in math. Six of the 41 broke. A desk cache from
       before the backfill hid all six, exactly as it hid the revision.
 
-      The interim lever exists and is one line per paper. `fulltext_source` in
-      `data/overrides.yaml` pins a paper to a source measured to carry the evidence its
-      claims cite, committed so CI reads the same text as the desk, and that is how the
-      remaining five are held. What is missing is the detection. A durable record of which text
-      each sidecar was drafted against would give it, and the only committed place for
-      that is `data/papers.yaml`, which the item above already argues is the wrong home
-      for observed state. Until then each change costs one red run and one pin, and the
-      only way to find them early is `scripts/fulltext.py --refetch` before a push.
+      Revisions are now detected. `data/sidecar_versions.yaml` records the arXiv version
+      each live sidecar was drafted against, written by `--accept` and by
+      `--record-versions`, and `worklist.revised_papers` asks for a re-draft when a
+      `collect` finds arXiv past the recorded number. Dates cannot do this job. The v2 that
+      motivated the whole item landed on 2026-08-11 and a question-group reroute touched all
+      114 sidecars on 2026-08-21, so every date comparison reads the sidecar as the newer of
+      the two and reports nothing. Two things guard the record itself.
+      `validate.check_sidecar_versions` fails a build where an entry names a slug with no
+      sidecar, which is what a rename looks like, and the worklist names any arXiv paper the
+      last `collect` read no version for rather than skipping it.
+
+      Renderer changes are still invisible, and they were the larger case. A re-render
+      carries no version number, so there is nothing to compare. The lever is still one
+      line per paper — `fulltext_source` in `data/overrides.yaml` pins a paper to a source
+      measured to carry the evidence its claims cite, committed so CI reads the same text as
+      the desk, and that is how the remaining five are held. Detecting one costs a stored
+      digest of the resolved text per paper, and the only way to find one early is
+      `scripts/fulltext.py --refetch` before a push.
 
 - [ ] **`WORKLIST.md` mixes two kinds of instruction.** Account actions no code can
       take ("open this arXiv form and paste this journal-ref") sit in the same ranked

@@ -522,10 +522,16 @@ def merge_arxiv(papers: list[dict]) -> None:
             doi = e.find("ar:doi", ARXIV_NS)
             com = e.find("ar:comment", ARXIV_NS)
             ti = e.find("a:title", ARXIV_NS)
+            up = e.find("a:updated", ARXIV_NS)
+            ver = tail.rsplit("v", 1)[-1] if "v" in tail.split("/")[-1] else "1"
             meta[base] = {
                 "arxiv_journal_ref": jr.text.strip() if jr is not None else None,
                 "arxiv_doi": doi.text.strip() if doi is not None else None,
                 "arxiv_comment": " ".join((com.text or "").split()) if com is not None else None,
+                # The date of the newest version, which is how `revised_papers` notices a
+                # paper moving under a sidecar that was right about the version before it.
+                "arxiv_updated": (up.text or "")[:10] if up is not None else None,
+                "arxiv_version": int(ver) if ver.isdigit() else None,
                 # Compared against ours, then discarded -- see `title_diffs`.
                 "_arxiv_title": " ".join((ti.text or "").split()) if ti is not None else None,
             }
