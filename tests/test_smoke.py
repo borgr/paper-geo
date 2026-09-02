@@ -610,6 +610,29 @@ class TestWorkflowsInvokeRealCommands(unittest.TestCase):
                                      "GH_TOKEN can be empty, so gh needs the fallback that "
                                      "Actions always provides")
 
+    def test_a_ticked_box_with_no_credential_is_announced(self):
+        """Every dispatch step gated on a secret being present is named where that is said.
+
+        Such a step skips in silence, which is a dry run for a fork and a no-op press for
+        the author. Add a credential-gated step and name its input and its secret in the
+        announcing step too.
+        """
+        import yaml
+        path = os.path.join(ROOT, ".github", "workflows", "update.yml")
+        steps = yaml.safe_load(source(path))["jobs"]["update"]["steps"]
+        said = [s for s in steps if "no credential" in (s.get("name") or "")]
+        self.assertEqual(len(said), 1, "update.yml names no step for the skipped boxes")
+        text = said[0]["run"]
+        gated = re.compile(r"inputs\.(\w+)[^|]*?env\.(\w+) != ''"
+                           r"|env\.(\w+) != ''[^|]*?inputs\.(\w+)")
+        pairs = {(m.group(1) or m.group(4), m.group(2) or m.group(3))
+                 for s in steps for m in gated.finditer(s.get("if") or "")}
+        self.assertTrue(pairs, "no credential-gated dispatch step found to check against")
+        for inp, secret in sorted(pairs):
+            with self.subTest(input=inp, secret=secret):
+                self.assertIn(f"inputs.{inp}", text)
+                self.assertIn(secret, text)
+
     def test_requirements_covers_what_the_workflows_install(self):
         """The dependency list is one file, and the workflows install from it.
 

@@ -111,6 +111,37 @@ jobs:
       WIKIDATA_BOT_PASSWORD: ${{ secrets.WIKIDATA_BOT_PASSWORD }}
 
     steps:
+      # A tick-box with no credential behind it is skipped in silence. Right for a fork's
+      # dispatch and wrong for the author's own press -- the log shows a grey chip twenty
+      # minutes before the step it belongs to, and a run that wrote nothing outward reads
+      # exactly like a run that did. So say it at the top, as annotations that reach the run
+      # summary, and fail nothing. The re-derive is still worth the run.
+      - name: name the ticked boxes with no credential
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          say() { echo "::warning title=Ticked but skipped::$1"; }
+          if [ "${{ inputs.drafts }}" = "draft" ] && [ -z "$ANTHROPIC_API_KEY" ]; then
+            say "sidecar drafts -- no ANTHROPIC_API_KEY, so this run drafts nothing"
+          fi
+          if [ "${{ inputs.wikidata }}" = "true" ] && [ -z "$WIKIDATA_BOT_PASSWORD" ]; then
+            say "Wikidata author gaps -- no WIKIDATA_BOT_PASSWORD, so nothing is published"
+          fi
+          if [ "${{ inputs.wikidata_papers }}" != "0" ] && [ -z "$WIKIDATA_BOT_PASSWORD" ]; then
+            say "Wikidata paper items -- no WIKIDATA_BOT_PASSWORD, so no item is created"
+          fi
+          if [ "${{ inputs.apply }}" = "true" ] && [ -z "$GH_TOKEN" ]; then
+            say "repo metadata and Hugging Face links -- no GH_TOKEN, so nothing is pushed"
+          fi
+          if [ "${{ inputs.deploy }}" = "true" ] && [ -z "$GH_TOKEN" ]; then
+            say "site deploy -- no GH_TOKEN, so the site is not published"
+          fi
+          # Presence, never a value. `${VAR:+yes}` is empty when the variable is, and this
+          # is the last line on purpose: under `bash -e` a failing test here would take the
+          # step down, and a missing secret is the thing being reported, not a failure.
+          echo "credentials present -- ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:+yes}" \
+               "GH_TOKEN=${GH_TOKEN:+yes} WIKIDATA_BOT_PASSWORD=${WIKIDATA_BOT_PASSWORD:+yes}" \
+               "S2_API_KEY=${S2_API_KEY:+yes}"
+
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
