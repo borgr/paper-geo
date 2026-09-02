@@ -386,31 +386,6 @@ Full list and the other buckets: `tasks/hf_worklist.md`.
 
 - [ ] <https://hf.co/papers/2608.25832>  (0 cites)
 
-## Sidecars not yet drafted (1/114)
-
-**Not yours.** Drafting reads each paper's full text and writes claims,
-scope and glosses into a draft file — agent work, and the queue drains
-when you ask an agent for a batch or when a full run takes one. It is here
-so the number is visible, not so you will do it. What comes back is the
-section above, and that one is yours.
-
-```bash
-python scripts/draft_sidecars.py --review      # every paper: live, draft, or neither
-python scripts/draft_sidecars.py --limit 20    # queue the next 20 (then an agent fills them)
-python scripts/draft_sidecars.py --ingest      # fold the answers in
-```
-
-`--review` is the whole list; the six below are the top of it by
-citations, which is where drafting pays. A draft lands in
-`data/sidecars/drafts/<slug>.md` and nothing reads it until you
-`--accept` it, which moves it to `data/sidecars/<slug>.md` — the
-published one, and the only one the site builds from.
-
-`update.py` also drafts a batch on every run, so this number falls on
-its own.
-
-- `skill-issue-are-skills-language-invariant-in-llms` — 0 cites — Skill Issue: Are Skills Language-Invariant in LLMs?
-
 
 ## Deferred
 
