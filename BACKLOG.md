@@ -178,10 +178,12 @@ Recorded rather than fixed, so the next person does not rediscover it as a bug.
 - [ ] **Nothing notices when the text under a sidecar changes.** `_stale()` refetches a
       full text whose extractor was superseded and there is no equivalent for the paper
       itself moving, so arXiv v2 arrives as a figure check failing on a sidecar that was
-      right about v1. `do-llms-benefit-from-their-own-words` is the live revision case,
+      right about v1. `do-llms-benefit-from-their-own-words` was the live revision case,
       found by CI going red while a desk with the v1 text cached stayed green — four
       claims' figures and four section pointers, all correct for the version they were
-      drafted from.
+      drafted from. It has since been redrafted against v2 and unpinned, and the redraft
+      turned up four more wrong figure pointers that no check can catch. A renumbered
+      `Figure 6` still exists, so a claim citing it passes.
 
       A renderer changing counts the same and turned out to be the larger case. arXiv
       finished backfilling its own LaTeXML HTML over the corpus, `links.html` moved off
@@ -192,8 +194,8 @@ Recorded rather than fixed, so the next person does not rediscover it as a bug.
 
       The interim lever exists and is one line per paper. `fulltext_source` in
       `data/overrides.yaml` pins a paper to a source measured to carry the evidence its
-      claims cite, committed so CI reads the same text as the desk, and that is how all
-      seven are held. What is missing is the detection. A durable record of which text
+      claims cite, committed so CI reads the same text as the desk, and that is how the
+      remaining five are held. What is missing is the detection. A durable record of which text
       each sidecar was drafted against would give it, and the only committed place for
       that is `data/papers.yaml`, which the item above already argues is the wrong home
       for observed state. Until then each change costs one red run and one pin, and the

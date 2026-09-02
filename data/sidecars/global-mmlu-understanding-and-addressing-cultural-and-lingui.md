@@ -85,7 +85,7 @@ claims:
   scope: Restricted to languages overlapping between the two machine-translated sets and human-translated
     MMMLU; GPT-3.5-Turbo is the system used for the widely adopted 26-language translated
     MMLU.
-  evidence: Figure 7 and Appendix D.1
+  evidence: Figure 7 and Appendix I.1
 - id: edit-rate
   kind: result
   text: 'Human review changed a substantial share of the machine-translated MMLU: 7,565 edits

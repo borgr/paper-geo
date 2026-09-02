@@ -224,21 +224,13 @@ fields:
 # gitignored and so invisible to CI, and that is the difference -- this key is committed,
 # so CI reads the same text as the desk.
 fulltext_source:
-  # arXiv 2602.24287 got a v2 on 2026-08-11, nearly twice the size, and it revised the
-  # numbers. Three figures this sidecar states are in v1 and not in v2 (25,000 and 51.5
-  # and 91.7), and four claims cite sections v2 renumbered. Everything the sidecar says is
-  # true of the version it was drafted from, so it is pinned there rather than corrected
-  # to a paper nobody has read yet. It is owed a re-draft against v2, which needs a model
-  # -- see BACKLOG.md, "Nothing notices when a paper is revised".
-  do-llms-benefit-from-their-own-words: "https://arxiv.org/html/2602.24287v1"
-
-  # The six below all come from one event. arXiv finished backfilling its own LaTeXML HTML
+  # The five below come from one event. arXiv finished backfilling its own LaTeXML HTML
   # over the corpus, so `arxiv_html` flipped to true and `links.html` moved off ar5iv onto
   # arxiv.org/html for 41 papers. Same paper, same version, different renderer -- and the
   # official one collapses `Figure 1a/b/c` to a single `Figure 1`, drops appendix subsection
   # numbers from headings, and loses some numbers set in math. Thirty-five of the 41 read the
-  # same either way. These six do not, so each is pinned to a source measured to carry the
-  # evidence its claims cite.
+  # same either way. Six do not, and five of those are pinned to a source measured to carry
+  # the evidence its claims cite. The sixth was redrafted against the current rendering.
   llm-hypnosis-exploiting-user-feedback-for-unauthorized-knowl:
     "https://ar5iv.labs.arxiv.org/html/2507.02850"
   pretraining-language-models-for-diachronic-linguistic-change:
@@ -248,11 +240,6 @@ fulltext_source:
   # ar5iv renders about half of this one -- 40,608 characters against the PDF's 75,958 --
   # and the half it drops holds the counts four claims cite.
   the-future-of-open-human-feedback: "https://arxiv.org/pdf/2408.16961"
-  # ar5iv is no help here. It used to serve a v1 rendering carrying the heading `D.1
-  # Translation Quality`, regenerated against v2, and v2 renumbered that appendix away. The
-  # v1 PDF is the only place left that has it.
-  global-mmlu-understanding-and-addressing-cultural-and-lingui:
-    "https://arxiv.org/pdf/2412.03304v1"
   # A 2018 paper, so nothing revised. Both HTML renderers write the subfigure references as
   # a bare `Figure 1`; the Anthology PDF the sidecar was drafted from writes `Figure 1a`.
   inherent-biases-in-reference-based-evaluation-for-grammatica:
