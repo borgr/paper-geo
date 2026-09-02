@@ -523,8 +523,15 @@ def resolve(p: dict, cfg: dict | None = None, limit: int = LIMIT,
         if cached and (found(source_of(p["slug"])) or len(cached) >= MIN_CHARS):
             return fit(cached, limit)[0], f"{source_of(p['slug'])} (refetch failed)"
 
-    with open(path, "w") as f:
-        f.write(text)
+    if text:
+        with open(path, "w") as f:
+            f.write(text)
+    elif os.path.exists(path):
+        # Removed rather than overwritten with nothing. Every other reader of this
+        # directory tests the cache's content before honouring it, but validate.py's
+        # figure check tests only that the file is there, and zero bytes tells it the
+        # paper states no numbers when what happened is that no source answered.
+        os.remove(path)
     _remember(p["slug"], source or NONE, len(text))
     return fit(text, limit)[0], source or NONE
 

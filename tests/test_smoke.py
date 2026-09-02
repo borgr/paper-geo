@@ -4952,6 +4952,64 @@ class TestAnArxivLandingPageIsNotAPaper(unittest.TestCase):
         self.assertIn("Introduction", text)
 
 
+class TestAnUnreadablePaperLeavesNoCacheFile(unittest.TestCase):
+    """No source answering must leave build/fulltext/<slug>.txt absent, never empty.
+
+    validate.py's figure check reads that directory and tests only that the file is there.
+    A missing file is a clean skip. Zero bytes reads as "the paper states none of its own
+    numbers" and fails every claim on it, which is what a CI box with no PDF extractor
+    installed turned into 183 errors on 7 papers.
+    """
+
+    def _paper(self):
+        return {"slug": "_t_unreadable", "title": "A Paper", "links": {}}
+
+    def test_nothing_found_writes_no_file(self):
+        import fulltext
+        with tempfile.TemporaryDirectory() as d:
+            with mock.patch.multiple(fulltext, CACHE=d,
+                                     INDEX=os.path.join(d, "sources.json")), \
+                 mock.patch.object(fulltext, "_local", return_value=None), \
+                 mock.patch.object(fulltext, "_candidates", return_value=[]):
+                text, src = fulltext.resolve(self._paper(), {})
+            self.assertEqual("", text)
+            self.assertEqual(fulltext.NONE, src)
+            self.assertFalse(os.path.exists(os.path.join(d, "_t_unreadable.txt")),
+                             "an empty cache file fails every figure instead of skipping")
+
+    def test_an_empty_file_already_there_is_removed(self):
+        import fulltext
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "_t_unreadable.txt")
+            open(path, "w").close()
+            with mock.patch.multiple(fulltext, CACHE=d,
+                                     INDEX=os.path.join(d, "sources.json")), \
+                 mock.patch.object(fulltext, "_local", return_value=None), \
+                 mock.patch.object(fulltext, "_candidates", return_value=[]):
+                fulltext.resolve(self._paper(), {})
+            self.assertFalse(os.path.exists(path), "a run that found nothing left it behind")
+
+    def test_a_readable_cache_survives_a_failed_refetch(self):
+        """The removal must not reach a paper we can already read."""
+        import fulltext
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "_t_unreadable.txt")
+            body = "1 Introduction " + "content " * 900
+            with open(path, "w") as f:
+                f.write(body)
+            index = os.path.join(d, "sources.json")
+            with open(index, "w") as f:
+                json.dump({"_t_unreadable": {
+                    "source": "arxiv-html https://arxiv.org/html/1", "chars": len(body),
+                    "extractor": fulltext.EXTRACTOR}}, f)
+            with mock.patch.multiple(fulltext, CACHE=d, INDEX=index), \
+                 mock.patch.object(fulltext, "_local", return_value=None), \
+                 mock.patch.object(fulltext, "_candidates", return_value=[]):
+                text, _ = fulltext.resolve(self._paper(), {}, refetch=True)
+            self.assertIn("Introduction", text)
+            self.assertTrue(os.path.exists(path), "a 503 this minute must not lose the text")
+
+
 class TestAQuoteLinksIntoThePaper(unittest.TestCase):
     """The review page's quotes are links; the published page's are not.
 
