@@ -7560,6 +7560,79 @@ class TestAQuietGitHubIsNotAMissingRepo(unittest.TestCase):
                             "HTTP %s reported as %r" % (st, c["why"]))
 
 
+class TestAnUnreadablePaperKeepsItsStoredCodeDecision(unittest.TestCase):
+    """`save_decisions` overwrote a repo with `verdict: none` when the text would not fetch.
+
+    The hunt reads the paper looking for a release phrase, so a run with no text deduces
+    `none` for a paper that names its repo plainly. Written straight out, that replaces a
+    live link with `was:` and the loss is invisible -- the row still looks deduced. A
+    GitHub runner starting from an empty cache lost two decisions this way.
+    """
+
+    def _pc(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        import paper_code
+        return paper_code
+
+    def _saved(self, pc, results, prev):
+        from common import read_yaml
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d, True)
+        out = os.path.join(d, "paper_code.yaml")
+        with mock.patch.multiple(pc, DECISIONS=out, WHY=os.path.join(d, "why.json")):
+            pc.save_decisions([], results, prev)
+        return (read_yaml(out) or {}).get("papers") or {}
+
+    def _blank(self, seen):
+        return {"verdict": "none", "cands": [], "page_verdict": "none", "pages": [],
+                "text_seen": seen}
+
+    def test_no_text_keeps_the_stored_repo(self):
+        pc = self._pc()
+        prev = {"s": {"verdict": "accept", "repo": "https://github.com/o/n"}}
+        row = self._saved(pc, {"s": self._blank(False)}, prev)["s"]
+        self.assertEqual("https://github.com/o/n", row.get("repo"))
+        self.assertNotIn("was", row, "a run that could not read the paper dropped its repo")
+
+    def test_no_text_keeps_the_stored_project_page(self):
+        pc = self._pc()
+        prev = {"s": {"verdict": "none", "page_verdict": "review",
+                      "project_page": "https://hf.co/datasets/o/n"}}
+        row = self._saved(pc, {"s": self._blank(False)}, prev)["s"]
+        self.assertEqual("https://hf.co/datasets/o/n", row.get("project_page"))
+
+    def test_text_read_and_no_repo_found_still_demotes(self):
+        """The carry-forward must not freeze a repo that genuinely stopped being named."""
+        pc = self._pc()
+        prev = {"s": {"verdict": "accept", "repo": "https://github.com/o/n"}}
+        row = self._saved(pc, {"s": self._blank(True)}, prev)["s"]
+        self.assertEqual("none", row["verdict"])
+        self.assertEqual("https://github.com/o/n", row.get("was"))
+        self.assertIsNone(row.get("repo"))
+
+    def test_no_text_and_nothing_stored_is_left_alone(self):
+        pc = self._pc()
+        row = self._saved(pc, {"s": self._blank(False)}, {})["s"]
+        self.assertEqual("none", row["verdict"])
+        self.assertNotIn("was", row)
+
+    def test_evidence_text_says_whether_it_read_the_paper(self):
+        pc = self._pc()
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d, True)
+        p = {"slug": "s", "abstract": "An abstract."}
+        with mock.patch.object(pc, "FULLTEXT", d), \
+             mock.patch.object(pc, "resolve_fulltext", return_value=("", "(none found)")):
+            text, seen = pc.evidence_text(p, {})
+        self.assertFalse(seen, "the abstract alone must not count as having read the paper")
+        self.assertIn("An abstract.", text)
+        with open(os.path.join(d, "s.txt"), "w") as f:
+            f.write("We release our code at github.com/o/n")
+        with mock.patch.object(pc, "FULLTEXT", d):
+            text, seen = pc.evidence_text(p, {})
+        self.assertTrue(seen)
+        self.assertIn("github.com/o/n", text)
+
 class TestAQuietHostIsNotADeadLink(unittest.TestCase):
     """`check_structure --links` called anything that did not return a body dead.
 

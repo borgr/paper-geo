@@ -590,8 +590,8 @@ def confirm(c: dict, paper: dict, facts: RepoFacts) -> dict:
 ACCEPT = 6   # release phrase (4) plus any one corroboration, or two corroborations.
 
 
-def evidence_text(p: dict, cfg) -> str:
-    """The paper's full text, behind its abstract and its arXiv comment.
+def evidence_text(p: dict, cfg) -> tuple[str, bool]:
+    """(the paper's full text behind its abstract and arXiv comment, whether text was read).
 
     Reads `build/fulltext/<slug>.txt` when that file has anything in it, and fetches the
     text otherwise. A fetch that fails costs the full text and not the run.
@@ -599,7 +599,8 @@ def evidence_text(p: dict, cfg) -> str:
     path = os.path.join(FULLTEXT, p["slug"] + ".txt")
     text = ""
     if os.path.exists(path) and os.path.getsize(path) > 0:
-        text = open(path, errors="replace").read()
+        with open(path, errors="replace") as f:
+            text = f.read()
     else:
         # Fetch it rather than fall back to the abstract. The cache is filled by the
         # drafting step, which is batched by citations, so a paper published last
@@ -613,8 +614,8 @@ def evidence_text(p: dict, cfg) -> str:
     # The abstract is worth appending even when the full text is present: the
     # extractor sometimes drops the abstract block, and that is where the release
     # sentence usually lives.
-    return (p.get("abstract") or "") + "\n" + str(p.get("arxiv_comment") or "") \
-        + "\n" + text
+    return ((p.get("abstract") or "") + "\n" + str(p.get("arxiv_comment") or "")
+            + "\n" + text), bool(text.strip())
 
 
 def several_repos(cands: list[dict], top: dict) -> bool:
@@ -709,13 +710,13 @@ def deduce(papers: list[dict], only: str | None, facts: RepoFacts,
     for p in papers:
         if only and p["slug"] != only:
             continue
-        text = evidence_text(p, cfg)
+        text, seen = evidence_text(p, cfg)
         verdict, cands = repo_verdict(p, text, facts)
         top = cands[0] if cands else None
         repo_url = ("https://github.com/" + top["repo"]) if top else None
         pverdict, pc = page_verdict(p, text, repo_url, pages)
         out[p["slug"]] = {"paper": p, "verdict": verdict, "cands": cands,
-                          "page_verdict": pverdict, "pages": pc}
+                          "page_verdict": pverdict, "pages": pc, "text_seen": seen}
     return out
 
 
@@ -770,12 +771,18 @@ def save_decisions(papers: list[dict], results: dict, prev: dict) -> None:
     build/paper_code_why.json, regenerated with everything else in `build/` and still there when
     the report says "review" and you want to know why.
     """
-    rows, why = {}, {}
+    rows, why, blind = {}, {}, []
     for slug, r in results.items():
         keep = prev.get(slug) or {}
-        if keep.get("reviewed"):
+        # A run that could not read the paper carries the stored row forward, the same way
+        # a reviewed one is carried. Without this a runner whose fetch came up empty finds
+        # no release phrase, deduces `none`, and overwrites a repo a run that *could* read
+        # the paper had accepted -- leaving `was:` where a live link used to be.
+        if not r.get("text_seen", True) and (keep.get("repo") or keep.get("project_page")):
+            blind.append(slug)
+        if keep.get("reviewed") or slug in blind:
             rows[slug] = {k: v for k, v in keep.items() if k not in ("score", "why",
-                                                                     "page_why")}
+                                                                    "page_why")}
             continue
         top = r["cands"][0] if r["cands"] else None
         row = {"verdict": r["verdict"]}
@@ -822,6 +829,10 @@ def save_decisions(papers: list[dict], results: dict, prev: dict) -> None:
                 "stays a record of decisions rather than of readings.",
         "papers": dict(sorted(rows.items())),
     })
+    if blind:
+        print(f"  {len(blind)} paper(s) could not be read this run, so their stored "
+              f"decision was kept: {', '.join(sorted(blind)[:3])}"
+              + (" ..." if len(blind) > 3 else ""), file=sys.stderr)
 
 
 def hf_token() -> str | None:
