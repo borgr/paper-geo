@@ -5010,6 +5010,70 @@ class TestAPinnedFullTextSourceIsTriedFirst(unittest.TestCase):
                             for e in errs), errs)
 
 
+class TestAddingAPinRefetchesTheTextUnderIt(unittest.TestCase):
+    """A pin has to beat a cache that predates it, or it only takes on a fresh checkout.
+
+    The cache is keyed by slug and honoured on sight, so a paper already read through the
+    chain would keep its old text and the pin would apply to nobody. `sources.json` records
+    the pin in force at fetch time and a mismatch counts as stale.
+    """
+
+    def _cached(self, d, source, extra=None):
+        with open(os.path.join(d, "_t_pin.txt"), "w") as f:
+            f.write("1 Introduction " + "content " * 900)
+        rec = {"source": source, "chars": 7214, "extractor": 3}
+        rec.update(extra or {})
+        with open(os.path.join(d, "sources.json"), "w") as f:
+            json.dump({"_t_pin": rec}, f)
+
+    def _stale(self, d, pin, source, extra=None):
+        import fulltext
+        self._cached(d, source, extra)
+        ov = {"fulltext_source": {"_t_pin": pin}} if pin else {}
+        with mock.patch.multiple(fulltext, CACHE=d, INDEX=os.path.join(d, "sources.json")), \
+             mock.patch.object(fulltext, "read_overrides", return_value=ov):
+            return fulltext._stale("_t_pin", source)
+
+    def test_a_cache_from_before_the_pin_is_stale(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertTrue(self._stale(d, "https://ar5iv.org/abs/1", "arxiv-html https://x"))
+
+    def test_a_cache_fetched_under_that_pin_is_not(self):
+        pin = "https://ar5iv.org/abs/1"
+        with tempfile.TemporaryDirectory() as d:
+            self.assertFalse(self._stale(d, pin, f"pinned {pin}", {"pin": pin}))
+
+    def test_a_pin_that_would_not_answer_costs_one_refetch_and_not_every_read(self):
+        """The chain fell past it, so the recorded source is not the pin -- the pin still is."""
+        pin = "https://dead.example.org/x.pdf"
+        with tempfile.TemporaryDirectory() as d:
+            self.assertFalse(self._stale(d, pin, "arxiv-html https://x", {"pin": pin}))
+
+    def test_removing_a_pin_is_stale_too(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertTrue(self._stale(d, "", "pinned https://ar5iv.org/abs/1",
+                                        {"pin": "https://ar5iv.org/abs/1"}))
+
+    def test_an_unpinned_paper_is_judged_on_the_extractor_alone(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertFalse(self._stale(d, "", "arxiv-html https://x"))
+            self.assertTrue(self._stale(d, "", "arxiv-html https://x", {"extractor": 1}))
+
+    def test_the_pin_reaches_sources_json(self):
+        import fulltext
+        pin = "https://ar5iv.org/abs/1"
+        with tempfile.TemporaryDirectory() as d:
+            index = os.path.join(d, "sources.json")
+            with mock.patch.multiple(fulltext, CACHE=d, INDEX=index), \
+                 mock.patch.object(fulltext, "read_overrides",
+                                   return_value={"fulltext_source": {"_t_pin": pin}}), \
+                 mock.patch.object(fulltext, "_local", return_value=None), \
+                 mock.patch.object(fulltext, "_candidates", return_value=[]):
+                fulltext.resolve({"slug": "_t_pin", "links": {}}, {})
+            with open(index) as f:
+                self.assertEqual(pin, json.load(f)["_t_pin"].get("pin"))
+
+
 class TestAnUnreadablePaperLeavesNoCacheFile(unittest.TestCase):
     """No source answering must leave build/fulltext/<slug>.txt absent, never empty.
 

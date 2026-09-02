@@ -323,7 +323,7 @@ def _candidates(p: dict, cfg: dict):
     doi = paper_doi(p)
     email = ((cfg.get("identity") or {}).get("email") or "").strip()
 
-    pin = (read_overrides().get("fulltext_source") or {}).get(p.get("slug"))
+    pin = _pin(p.get("slug") or "")
     if pin:
         yield ("pinned", "pdf" if _looks_pdf(pin) else "html", pin)
     if L.get("html"):
@@ -405,10 +405,20 @@ def _read_json(path: str) -> dict:
         return {}
 
 
-def _remember(slug: str, source: str, chars: int, version: int = EXTRACTOR) -> None:
+def _remember(slug: str, source: str, chars: int, version: int = EXTRACTOR,
+              pin: str | None = None) -> None:
     idx = _read_json(INDEX)
     idx[slug] = {"source": source, "chars": chars, "extractor": version}
+    if pin:
+        # Recorded even when the chain fell past a pin that would not answer, so a dead pin
+        # costs one refetch instead of one on every read.
+        idx[slug]["pin"] = pin
     write_json(INDEX, idx, indent=1, sort_keys=True)
+
+
+def _pin(slug: str) -> str:
+    """The `fulltext_source` override for this paper, or "" if it has none."""
+    return (read_overrides().get("fulltext_source") or {}).get(slug) or ""
 
 
 def source_of(slug: str) -> str:
@@ -416,15 +426,18 @@ def source_of(slug: str) -> str:
 
 
 def _stale(slug: str, source: str) -> bool:
-    """Was this cache written by an extractor since replaced?
+    """Is this cache due a refetch -- superseded extractor, or a pin it predates?
 
-    Coarse on purpose. Deciding per source which extractor change could have touched it
-    is the kind of bookkeeping that is right until the day it is quietly wrong, and the
+    Coarse on the extractor. Deciding per source which extractor change could have touched
+    it is the kind of bookkeeping that is right until the day it is quietly wrong, and the
     cost of being coarse is one download of a paper we already have.
     """
     if not found(source):
         return False
-    return int((_read_json(INDEX).get(slug) or {}).get("extractor") or 0) < EXTRACTOR
+    rec = _read_json(INDEX).get(slug) or {}
+    if _pin(slug) != (rec.get("pin") or ""):
+        return True
+    return int(rec.get("extractor") or 0) < EXTRACTOR
 
 
 NONE = "(none found)"
@@ -543,7 +556,7 @@ def resolve(p: dict, cfg: dict | None = None, limit: int = LIMIT,
         # figure check tests only that the file is there, and zero bytes tells it the
         # paper states no numbers when what happened is that no source answered.
         os.remove(path)
-    _remember(p["slug"], source or NONE, len(text))
+    _remember(p["slug"], source or NONE, len(text), pin=_pin(p["slug"]))
     return fit(text, limit)[0], source or NONE
 
 
