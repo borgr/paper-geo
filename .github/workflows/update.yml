@@ -153,10 +153,25 @@ jobs:
       # fulltext.py prefers poppler over any pure-Python reader and falls through to
       # "unavailable" when neither is installed, and an unreadable paper is one whose
       # figures validate.py cannot check. Fourteen of the corpus's papers read through a
-      # PDF, four of them from a local file CI cannot see, and a box without this reported
-      # every number on all fourteen missing.
+      # PDF, four of them from a local file CI cannot see.
+      #
+      # Nothing here exits non-zero. An apt index a few hours stale 404s on the .deb, and
+      # a package manager having a bad minute is not a reason to abandon a re-derive that
+      # does not need it -- with no reader those papers resolve to nothing, leave no cache
+      # file, and their figure checks skip. The warning is so a run that quietly stopped
+      # checking ten papers does not read like a run that checked them.
       - name: a PDF reader for the papers that are only PDFs
-        run: sudo apt-get install -y --no-install-recommends poppler-utils
+        run: |
+          if ! command -v pdftotext >/dev/null; then
+            sudo apt-get update -qq || true
+            sudo apt-get install -y --no-install-recommends poppler-utils || true
+          fi
+          if command -v pdftotext >/dev/null; then
+            pdftotext -v 2>&1 | head -1
+          else
+            echo "::warning title=No PDF reader::poppler-utils would not install, so the" \
+                 "figure and pointer checks skip every paper that reads through a PDF"
+          fi
 
       # 211 fetches from arXiv on every run, for text that changes when a paper is
       # revised and not otherwise. arXiv asks for that restraint and fulltext.py is built
