@@ -1054,8 +1054,13 @@ def deploy(cfg) -> None:
     work = os.path.join(BUILD, "deploy")
     if os.path.isdir(work):
         shutil.rmtree(work)
-    if subprocess.call(["gh", "repo", "clone", repo, work, "--", "--depth", "1"],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL):
+    # gh when it is there -- CI authenticates through it -- and plain git otherwise, so a
+    # machine with only git and a credential helper can deploy too.
+    if shutil.which("gh"):
+        clone = ["gh", "repo", "clone", repo, work, "--", "--depth", "1"]
+    else:
+        clone = ["git", "clone", "--depth", "1", f"https://github.com/{repo}.git", work]
+    if subprocess.call(clone, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL):
         sys.exit(f"could not clone {repo}")
     for name in os.listdir(work):
         if name != ".git":
