@@ -22,21 +22,20 @@ backlogs the rest of the page is waiting on, and the run does the work.
 the page gets visibly shorter.
 
 2. **Co-authors who may already have a Wikidata item (18)** — pick the line that is them and paste the QID into `data/overrides.yaml`, or `new` where none is. What every candidate item states about itself is in the section, so most rows need nothing opened, and answering the top few is worth doing on its own — each answer turns one co-author into `author` statements on the papers you share.
-3. **Sidecar drafts awaiting your verification (1)** — read the draft and `--accept` it. The only place on this page where your judgement is the input rather than the check, because accepting publishes an assertion under your name.
-4. **ORCID is missing 4 of your 117 papers** — one BibTeX upload. Highest leverage on the page — Semantic Scholar and OpenAlex both re-cluster off ORCID, so this is the fix that makes other sections shrink without you.
-5. **2 field corrections the bibliography does not carry (1 entry)** — one paste per line, into the entry `orig.bib` already has for that paper. Every line is given ready to drop in, and the override lines go after. Worth more than its size — Scholar, Semantic Scholar and OpenAlex all read the paper's own record, and none of them reads this repo.
-6. **Wikipedia mentions 2 of your coinages across 5 article(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
-7. **Hugging Face paper page missing (2)** — open each link while logged in — the visit is the action, there is no form. Nothing happens logged out, so log in first or the clicking is wasted.
-8. **Hugging Face page indexed but not claimed by you (2)** — one claim request per link, then wait: the author→user link only appears once moderation grants it. Record what you asked for under `hf_claim_requested` so it does not come back onto the list while it is pending.
+3. **ORCID is missing 4 of your 117 papers** — one BibTeX upload. Highest leverage on the page — Semantic Scholar and OpenAlex both re-cluster off ORCID, so this is the fix that makes other sections shrink without you.
+4. **2 field corrections the bibliography does not carry (1 entry)** — one paste per line, into the entry `orig.bib` already has for that paper. Every line is given ready to drop in, and the override lines go after. Worth more than its size — Scholar, Semantic Scholar and OpenAlex all read the paper's own record, and none of them reads this repo.
+5. **Wikipedia mentions 2 of your coinages across 5 article(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
+6. **Hugging Face paper page missing (2)** — open each link while logged in — the visit is the action, there is no form. Nothing happens logged out, so log in first or the clicking is wasted.
+7. **Hugging Face page indexed but not claimed by you (2)** — one claim request per link, then wait: the author→user link only appears once moderation grants it. Record what you asked for under `hf_claim_requested` so it does not come back onto the list while it is pending.
 
 **As much as you have patience for.** Per-paper clicking, because
 no write API can make the judgement each one needs — and every section
 is ordered so that stopping early still captures most of the value.
 
-9. **Wikidata author strings (100 papers by hand)** — one Author Disambiguator pass per paper, most-cited first, at the link the section gives for each. Everything an ORCID or a DBLP author page could settle is already on Wikidata, so what is left is the part where the name is all there is to go on.
-10. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
-11. **Semantic Scholar — 33 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
-12. **Citations on a Scholar record you cannot see (24 rows, 136 citations measured + 89 inferred)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
+8. **Wikidata author strings (100 papers by hand)** — one Author Disambiguator pass per paper, most-cited first, at the link the section gives for each. Everything an ORCID or a DBLP author page could settle is already on Wikidata, so what is left is the part where the name is all there is to go on.
+9. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
+10. **Semantic Scholar — 33 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
+11. **Citations on a Scholar record you cannot see (24 rows, 136 citations measured + 89 inferred)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
 
 ## Waiting on the outside world
 
@@ -482,27 +481,6 @@ Full list and the other buckets: `tasks/hf_worklist.md`.
 
 - [ ] <https://hf.co/papers/2608.25832>  (1 cites)
 - [ ] <https://hf.co/papers/2609.04173>  (0 cites)
-
-## Sidecar drafts awaiting your verification (1)
-
-Drafted from each paper's own full text: claims with their magnitudes,
-scope conditions, terminology and likely misreadings. Every number is a
-machine's reading and needs your eyes — but you are correcting a page,
-not writing one.
-
-**Read it here — one page, no commands:**
-<file://C:\Users\micha\claude-code\paper-geo\build\sidecar_review.html>
-
-This run generated it. Every figure a draft states is printed beside the
-paper's own sentence containing that number, and anything the paper does
-not say is flagged in red at the top of the page and again on the claim —
-so the check is comparing two lines, never opening a PDF. The only thing
-left is `--accept`, which is below and which publishes the page under your
-name.
-
-- [ ] **SERRANT: a syntactic classifier for English Grammatical…** — 12 cites  **replaces the live sidecar**
-      - read: [in the review page](file://C:\Users\micha\claude-code\paper-geo\build\sidecar_review.html#serrant-a-syntactic-classifier-for-english-grammatical-error) · [raw draft](data/sidecars/drafts/serrant-a-syntactic-classifier-for-english-grammatical-error.md)
-      - publish: `python scripts/draft_sidecars.py --accept serrant-a-syntactic-classifier-for-english-grammatical-error --replace`
 
 ## Papers revised since their sidecar was drafted (2)
 
