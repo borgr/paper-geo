@@ -7,7 +7,7 @@ which is why it can be re-run — the fixes all need one.
 | surface | state | |
 |---|---|---|
 | ORCID works (public) | 116 | ok |
-| ORCID holds your papers | 113 of 114 | **fix** |
+| ORCID holds your papers | 113 of 117 | **fix** |
 | ORCID identifiers point at the right paper | 116 of 116 works | ok |
 | ORCID canonical URL | present | ok |
 | ORCID name variants | 2 listed | ok |
@@ -16,14 +16,14 @@ which is why it can be re-run — the fixes all need one.
 | ORCID employment | 3 listed, 0 missing | ok |
 | ORCID education | 2 listed, 0 missing, 0 incomplete, 1 institution-asserted | ok |
 | ORCID works added by Crossref/DataCite | 0 | nothing yet |
-| arXiv registered author | 105 of 106 | **fix** |
+| arXiv registered author | 105 of 109 | **fix** |
 | Wikidata author item | Q140867203 | ok |
 | Wikidata item complete | 0 gaps | ok |
-| Wikidata paper items | 113 of 114 | optional |
-| HF pages indexed | 106 of 106 | ok |
-| HF pages claimed | 105 of 106 claimable | **fix** |
-| arXiv records misspelling your name | 0 of 106 read | ok |
-| arXiv records omitting you | 0 of 106 read | ok |
+| Wikidata paper items | 113 of 117 | optional |
+| HF pages indexed | 107 of 109 | **fix** |
+| HF pages claimed | 105 of 107 claimable | **fix** |
+| arXiv records misspelling your name | 0 of 109 read | ok |
+| arXiv records omitting you | 0 of 109 read | ok |
 | ORCID works we cannot place | 2 | **check** |
 | ORCID works ORCID already merged | 6 | optional |
 | Semantic Scholar records | 2 | **fix** |
@@ -99,13 +99,13 @@ Do not delete it and re-add your own: that trades a vouched-for entry for a
 self-asserted one, which is a downgrade in exactly the signal this section
 exists to provide.
 
-## arXiv: 1 papers you are not registered as author on
+## arXiv: 4 papers you are not registered as author on
 
 The biggest finding here, and a prerequisite rather than a task: you cannot
 add a journal-ref to a paper you do not own. Full list and both claim
 routes: [arxiv_ownership.md](arxiv_ownership.md).
 
-## Wikidata paper coverage: 113 of 114
+## Wikidata paper coverage: 113 of 117
 
 Matched on DOI and arXiv id, not on name. This number matters because it
 decides which Wikidata job is worth doing: relinking author strings on
@@ -118,7 +118,9 @@ answer. This uses `query-scholarly.wikidata.org`.
 
 The endpoint would not answer about 1 paper on this run, so it is missing from that number. Whether it has an item is unknown, and nothing creates one until a run gets an answer.
 
-## Hugging Face: 0 to index, 1 to claim, 0 blocked
+The 3 missing items are created by `python scripts/wikidata_apply.py --papers --apply --limit 10`, which needs the bot password and nothing else; `tasks/wikidata_papers.qs` is the same statements as a QuickStatements batch, as a fallback. Read the cautions in [wikidata_followup.md](wikidata_followup.md) first — these are permanent public items.
+
+## Hugging Face: 2 to index, 2 to claim, 0 blocked
 
 Live counts, not the ones cached in `papers.yaml`. Lists:
 [hf_worklist.md](hf_worklist.md).
@@ -140,7 +142,7 @@ it from ORCID loses a real work. Anything that is not a paper (a workshop
 listing, a proceedings volume) is a deletion. Titles and put-codes:
 [orcid_remove.md](orcid_remove.md).
 
-## 1 of your papers is missing from ORCID
+## 4 of your papers are missing from ORCID
 
 Measured by identifier, not by counting: each of these has no work group on
 the record carrying its DOI or arXiv id.
@@ -154,5 +156,8 @@ split S2 record is made of.
 Highest citations first; the full list with DOIs is
 [orcid_missing.md](orcid_missing.md).
 
-- [ ]    0 cites — Skill Issue: Are Skills Language-Invariant in LLMs?
+- [ ]    1 cites — Skill Issue: Are Skills Language-Invariant in LLMs?
+- [ ]    0 cites — Last Translation Benchmark
+- [ ]    0 cites — User Feedback Provides a Unique Signal that LLMs Can not Detect
+- [ ]    0 cites — Why Pretraining Fails to Share Cross-Lingual Knowledge
 

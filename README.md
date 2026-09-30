@@ -8,7 +8,7 @@ GEO stands for generative engine optimization, which is SEO's counterpart for to
 that answer in prose instead of returning a list of links. The goal is not to rank. It
 is to be retrieved, and then described accurately, by whatever writes the answer.
 
-Built for one researcher's corpus (114 papers, 33 repos) and config-driven, so it runs
+Built for one researcher's corpus (117 papers, 33 repos) and config-driven, so it runs
 for yours too. [Set it up for your own papers](#set-it-up-for-your-own-papers) is the
 five-step version of that.
 

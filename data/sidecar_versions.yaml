@@ -64,6 +64,7 @@ drafted_against:
   knowledge-is-a-region-in-weight-space-for-fine-tuned-languag: 3
   label-efficient-model-selection-for-text-generation: 3
   label-sleuth-from-unlabeled-text-to-a-classifier-in-a-few-ho: 2
+  last-translation-benchmark: 2
   learning-to-combine-grammatical-error-corrections: 1
   let-s-agree-to-agree-neural-networks-share-classification-or: 7
   livexiv-a-multi-modal-live-benchmark-based-on-arxiv-papers-c: 4
@@ -106,7 +107,9 @@ drafted_against:
   unforgettable-generalization-in-language-models: 2
   unitxt-flexible-shareable-and-reusable-data-preparation-and: 1
   unsupervised-expressive-rules-provide-explainability-and-ass: 1
+  user-feedback-provides-a-unique-signal-that-llms-can-not-det: 1
   when-ai-benchmarks-plateau-a-systematic-study-of-benchmark-s: 4
   where-to-start-analyzing-the-potential-value-of-intermediate: 3
+  why-pretraining-fails-to-share-cross-lingual-knowledge: 1
   will-it-merge-on-the-causes-of-model-mergeability: 1
   zipnn-lossless-compression-for-ai-models: 2

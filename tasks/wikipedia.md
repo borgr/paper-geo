@@ -17,7 +17,7 @@ yours and may be wrong. Same rule: read it, and only raise a talk-page item
 if it misstates the work. The quoted line is what that article says about the
 term — enough to tick most rows without opening anything.
 
-- **Project Debater** (174 citations)
+- **Project Debater** (175 citations)
   - [ ] [Project Debater](https://en.wikipedia.org/wiki/Project_Debater) — [talk](https://en.wikipedia.org/wiki/Talk:Project_Debater)
     > Project Debater is an IBM artificial intelligence project, designed to participate in a full live debate with expert human debaters.
   - [ ] [Outline of artificial intelligence](https://en.wikipedia.org/wiki/Outline_of_artificial_intelligence) — [talk](https://en.wikipedia.org/wiki/Talk:Outline_of_artificial_intelligence)
@@ -26,7 +26,7 @@ term — enough to tick most rows without opening anything.
     > been growing rapidly, with, for example, IBM's Grand Challenge, Project Debater, results for which were published in Nature
   - [ ] [Open to Debate](https://en.wikipedia.org/wiki/Open_to_Debate) — [talk](https://en.wikipedia.org/wiki/Talk:Open_to_Debate)
     > intelligence and a human being, in partnership with IBM's "Project Debater".
-- **PromptEval** (87 citations)
+- **PromptEval** (92 citations)
   - [ ] [Prompt engineering](https://en.wikipedia.org/wiki/Prompt_engineering) — [talk](https://en.wikipedia.org/wiki/Talk:Prompt_engineering)
     > more comprehensive performance interval. Similarly, PromptEval estimates performance distributions across diverse prompts, enabling robust
 
@@ -43,41 +43,40 @@ disclosure -- it is ordinary editing in an area you know.
 - *evaluation of language models* — no article under that title; the nearest field article is [Language model](https://en.wikipedia.org/wiki/Language_model)
 - *model merging* — no article, and nothing in this field close to it
 - *benchmark reliability* — no article, and nothing in this field close to it
-- *language model pretraining* — no article under that title; the nearest field article is [Generative pre-trained transformer](https://en.wikipedia.org/wiki/Generative_pre-trained_transformer)
+- *language model pretraining* — no article under that title; the nearest field article is [Large language model](https://en.wikipedia.org/wiki/Large_language_model)
 - *human feedback* — no article under that title; the nearest field article is [Reinforcement learning from human feedback](https://en.wikipedia.org/wiki/Reinforcement_learning_from_human_feedback)
-- [Language acquisition](https://en.wikipedia.org/wiki/Language_acquisition) — 114,607 bytes
+- [Language acquisition](https://en.wikipedia.org/wiki/Language_acquisition) — 114,881 bytes
 - *efficient pretraining* — no article under that title; the nearest field article is [Generative pre-trained transformer](https://en.wikipedia.org/wiki/Generative_pre-trained_transformer)
 - *machine translation evaluation* — no article, and nothing in this field close to it
 - *efficient evaluation* — no article, and nothing in this field close to it
 
-## Absent from Wikipedia (37) — nothing to do
+## Absent from Wikipedia (36) — nothing to do
 
 Coined here, above the citation floor, and nobody independent has written them
 up. Deliberately not actionable: proposing the mention yourself is the request
 that gets declined, and writing the article yourself is the spam case. They
 become checks in section 2 if someone else ever writes about them.
 
-- tinyBenchmarks — 303 citations
-- BabyLM Challenge — 242 citations
-- Global-MMLU — 198 citations
+- tinyBenchmarks — 336 citations
+- BabyLM Challenge — 255 citations
+- Global-MMLU — 207 citations
 - PkE — 127 citations
 - peakiness effect — 127 citations
-- DisentQA — 122 citations
-- RLCR — 103 citations
+- DisentQA — 125 citations
+- RLCR — 113 citations
+- Flash-HELM — 80 citations
 - IBM-EviConv — 78 citations
-- Flash-HELM — 73 citations
+- MoErging — 73 citations
 - BlendNet — 72 citations
-- EWoK — 72 citations
-- MoErging — 70 citations
 - Retrospective Labeling — 70 citations
+- TP-agreement — 66 citations
 - ColD Fusion — 64 citations
-- TP-agreement — 64 citations
 - NumeroLogic — 48 citations
-- LCB — 38 citations
-- Low Coverage Bias — 38 citations
-- USim — 36 citations
-- BabyLM Interaction track — 35 citations
-- MAEGE — 35 citations
+- LCB — 39 citations
+- Low Coverage Bias — 39 citations
+- BabyLM Interaction track — 38 citations
+- USim — 37 citations
+- MAEGE — 36 citations
 - BabyLM — 33 citations
 - DCT — 29 citations
 - Deductive Closure Training — 29 citations
@@ -85,12 +84,12 @@ become checks in section 2 if someone else ever writes about them.
 - JD-Full — 29 citations
 - joint diagonalization of LoRAs — 29 citations
 - BERT_IT:CLUST — 28 citations
-- ZipNN — 25 citations
+- ZipNN — 28 citations
+- CLIKE — 25 citations
+- Unitxt — 24 citations
 - BenchBench — 23 citations
-- CLIKE — 23 citations
+- DOVE — 23 citations
 - SErCl — 23 citations
-- Unitxt — 23 citations
-- DOVE — 22 citations
+- Label Sleuth — 22 citations
 - ComPEFT — 21 citations
-- Label Sleuth — 21 citations
 - LiveXiv — 20 citations
