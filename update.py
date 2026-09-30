@@ -341,8 +341,11 @@ PLAN = (
 #
 # `Sidecars not yet drafted` is the agent's job under `CLAUDE.md`'s code > agent > human
 # ranking. What is the author's is the draft that comes out, one section above it.
+# `Papers revised since their sidecar was drafted` is the same: a re-draft is the agent's,
+# and the author's half surfaces as a draft awaiting verification.
 NOT_STEPS = ("Due now", "Waiting on the outside world", "Coverage:", "Identity surfaces",
              "Deferred", "Artifacts with no citation route", "Sidecars not yet drafted",
+             "Papers revised since their sidecar was drafted",
              "Repo labels awaiting your review")
 
 
