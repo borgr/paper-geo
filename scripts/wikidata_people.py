@@ -73,7 +73,7 @@ def wanted() -> dict[str, int]:
     Read from the co-author job's cache, which `update.py` refreshes just before this
     runs.
     """
-    with open(os.path.join(BUILD, CACHE)) as f:
+    with open(os.path.join(BUILD, CACHE), encoding="utf-8") as f:
         cache = json.load(f)
     claimed = dict(cache.get("by_orcid") or {})
     claimed.update(recorded(os.path.join(DATA, LEDGER)))
@@ -148,7 +148,7 @@ def records(orcids: list[str], refresh: bool) -> dict[str, dict]:
     """ORCID to its reduced record, cached in `build/` for CACHE_DAYS."""
     path = os.path.join(BUILD, CACHE_PEOPLE)
     try:
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             cache = json.load(f)
     except (OSError, ValueError):
         cache = {}
@@ -343,7 +343,7 @@ def coauthored() -> dict[str, set[str]]:
     turns that inside out. Reduced with `title_key`, because a Wikidata paper title and a
     bibliography one differ in punctuation and case and in nothing else.
     """
-    with open(os.path.join(BUILD, CACHE)) as f:
+    with open(os.path.join(BUILD, CACHE), encoding="utf-8") as f:
         by_slug = (json.load(f).get("orcids") or {})
     titles = {p["slug"]: title_key(p.get("title") or "") for p in read_papers()}
     out: dict[str, set[str]] = {}
@@ -755,7 +755,7 @@ def quickstatements(people: list[dict], day: str) -> str | None:
     lines = batch(people, day)
     qs = os.path.join(TASKS, "wikidata_people.qs")
     if lines:
-        with open(qs, "w") as f:
+        with open(qs, "w", encoding="utf-8") as f:
             f.write("\n".join(lines) + "\n")
         return qs
     if os.path.exists(qs):

@@ -138,7 +138,7 @@ def facts(out_dir: str) -> dict:
     """Hand-found values, keyed like config.yaml. An input to the generator, never output."""
     import yaml
     p = os.path.join(out_dir, "facts.yaml")
-    return (yaml.safe_load(open(p)) if os.path.exists(p) else None) or {}
+    return (yaml.safe_load(open(p, encoding="utf-8")) if os.path.exists(p) else None) or {}
 
 
 def yaml_value(v) -> str:
@@ -316,14 +316,14 @@ def dry_run(bundle: str, name: str) -> str | None:
     if not step([sys.executable, "scripts/bootstrap_fork.py", "--yes"], "bootstrap"):
         return None
     cfg_path = os.path.join(scratch, "config.yaml")
-    cfg = yaml.safe_load(open(cfg_path))
-    for k, v in (yaml.safe_load(open(os.path.join(bundle, "config.yaml"))) or {}).items():
+    cfg = yaml.safe_load(open(cfg_path, encoding="utf-8"))
+    for k, v in (yaml.safe_load(open(os.path.join(bundle, "config.yaml"), encoding="utf-8")) or {}).items():
         cfg.setdefault(k, {}).update(v) if isinstance(v, dict) else cfg.__setitem__(k, v)
     # Not a real handle, and the collaboration step only uses it to tell their repos from
     # everyone else's. A leftover value here would mine the wrong person's GitHub.
     cfg["collaboration"]["me"] = cfg["ids"].get("github") or "unknown"
     cfg["sources"]["publications_path"] = None
-    yaml.safe_dump(cfg, open(cfg_path, "w"), sort_keys=False, allow_unicode=True)
+    yaml.safe_dump(cfg, open(cfg_path, "w", encoding="utf-8"), sort_keys=False, allow_unicode=True)
 
     if not step([sys.executable, "update.py"], "update"):
         return None
@@ -335,7 +335,7 @@ def dry_run(bundle: str, name: str) -> str | None:
             f"preview: what one\n     `python update.py` finds for {name} from public "
             f"records alone, with none of\n     the CONFIRM values in config.yaml filled "
             f"in yet. Every count here is a floor. -->\n\n")
-    open(dst, "w").write(head + open(src).read())
+    open(dst, "w", encoding="utf-8").write(head + open(src, encoding="utf-8").read())
     return dst
 
 
@@ -502,25 +502,25 @@ def main() -> None:
     d = os.path.join(args.out, slugify(args.name))
     os.makedirs(d, exist_ok=True)
     extra = facts(d)
-    with open(os.path.join(d, "config.yaml"), "w") as f:
+    with open(os.path.join(d, "config.yaml"), "w", encoding="utf-8") as f:
         f.write(config_text(args.name, found, args.github, args.homepage, extra))
-    with open(os.path.join(d, "README.md"), "w") as f:
+    with open(os.path.join(d, "README.md"), "w", encoding="utf-8") as f:
         f.write(readme_text(args.name, found))
-    with open(os.path.join(d, "MESSAGE.md"), "w") as f:
+    with open(os.path.join(d, "MESSAGE.md"), "w", encoding="utf-8") as f:
         f.write(message_text(args.name, found))
     write_json(os.path.join(d, "records.json"), found, indent=1)
-    print(f"wrote {os.path.relpath(d, ROOT)}/ -- config.yaml, README.md, "
+    print(f"wrote {os.path.relpath(d, ROOT).replace(os.sep, "/")}/ -- config.yaml, README.md, "
           f"MESSAGE.md, records.json")
-    todo = sum(1 for line in open(os.path.join(d, "config.yaml")) if "CONFIRM" in line)
+    todo = sum(1 for line in open(os.path.join(d, "config.yaml"), encoding="utf-8") if "CONFIRM" in line)
     print(f"  {len(recs)} S2 record(s), {found['arxiv_count']} arXiv papers, "
           f"{todo} value(s) left for them to confirm")
     if extra:
-        print(f"  merged {os.path.relpath(d, ROOT)}/facts.yaml over the lookup")
+        print(f"  merged {os.path.relpath(d, ROOT).replace(os.sep, "/")}/facts.yaml over the lookup")
     if args.dry_run:
         preview = dry_run(d, args.name)
         if preview:
-            n = sum(1 for line in open(preview) if line.startswith("- [ ]"))
-            print(f"  wrote {os.path.relpath(preview, ROOT)}: {n} open item(s) the "
+            n = sum(1 for line in open(preview, encoding="utf-8") if line.startswith("- [ ]"))
+            print(f"  wrote {os.path.relpath(preview, ROOT).replace(os.sep, "/")}: {n} open item(s) the "
                   f"pipeline already found for them")
 
 

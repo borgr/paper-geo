@@ -161,7 +161,7 @@ def sidecars() -> list[tuple[str, dict]]:
     import yaml
     out = []
     for path in sorted(glob.glob(os.path.join(DATA, "sidecars", "*.md"))):
-        m = re.match(r"^---\n(.*?)\n---", open(path).read(), re.S)
+        m = re.match(r"^---\n(.*?)\n---", open(path, encoding="utf-8").read(), re.S)
         if m:
             fm = yaml.safe_load(m.group(1)) or {}
             if fm.get("claims"):
@@ -172,7 +172,7 @@ def sidecars() -> list[tuple[str, dict]]:
 def answered(path: str) -> int:
     """How many answers a tasks file already holds. 0 for a file that is not one."""
     try:
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             return sum(1 for t in json.load(f)["tasks"] if (t.get("answer") or "").strip())
     except (OSError, ValueError, KeyError, TypeError):
         return 0
@@ -215,7 +215,7 @@ def emit(sc: list, papers: dict, args) -> None:
          "tasks": tasks}, indent=1)
     print(f"wrote {TASKS}: {len(tasks)} paper(s)")
     if args.mode == "api":
-        print(f"Now: python {os.path.relpath(__file__, ROOT)} --ingest")
+        print(f"Now: python {os.path.relpath(__file__, ROOT).replace(os.sep, "/")} --ingest")
     else:
         print("For each task: put the engine's answer in `answer`, grade it into "
               "`score`, then run --ingest.")
@@ -369,9 +369,9 @@ def ingest() -> None:
     """
     if not os.path.exists(TASKS):
         sys.exit(f"no {TASKS} -- run without --ingest first")
-    doc = json.load(open(TASKS))
+    doc = json.load(open(TASKS, encoding="utf-8"))
     rows, tally, n = scored(doc)
-    with open(REPORT, "w") as f:
+    with open(REPORT, "w", encoding="utf-8") as f:
         f.write("\n".join(_summary(tally, n) + _floor_note(n) + _excluded(n)
                           + _table(rows, n)) + "\n")
     _say(tally, n)

@@ -141,7 +141,7 @@ class TestEveryModuleImports(unittest.TestCase):
                 try:
                     importlib.import_module(name)
                 except Exception as e:                              # noqa: BLE001
-                    self.fail(f"{os.path.relpath(path, ROOT)} does not import: "
+                    self.fail(f"{os.path.relpath(path, ROOT).replace(os.sep, "/")} does not import: "
                               f"{type(e).__name__}: {e}")
 
 
@@ -174,7 +174,7 @@ class TestEveryJsonFileIsWrittenThroughOnePlace(unittest.TestCase):
             common.write_json(path, {"kept": 1})
             with self.assertRaises(TypeError):
                 common.write_json(path, {"kept": 1, "unserializable": object()})
-            with open(path) as fh:
+            with open(path, encoding="utf-8") as fh:
                 self.assertEqual({"kept": 1}, json.load(fh),
                                  "the previous file survives a dump that raised")
             self.assertEqual(["cache.json"], sorted(os.listdir(d)),
@@ -200,7 +200,7 @@ class TestAConcurrentRunDoesNotCostADayOfOpenAlexCredits(unittest.TestCase):
             def lookup(url):
                 """Stands in for the fetch, and writes as a second run would while it is
                 in flight."""
-                with open(cache, "w") as fh:
+                with open(cache, "w", encoding="utf-8") as fh:
                     json.dump({"another-run": {"asked": "2999-01-01", "search": "x",
                                                "records": []}}, fh)
                 return {"results": [{"id": "https://openalex.org/W1",
@@ -211,7 +211,7 @@ class TestAConcurrentRunDoesNotCostADayOfOpenAlexCredits(unittest.TestCase):
                  mock.patch.object(S, "lookup", lookup), \
                  mock.patch.object(S, "budget_reset", lambda host: None):
                 S.split_records([{"slug": "s1", "title": self.TITLE}], "")
-            with open(cache) as fh:
+            with open(cache, encoding="utf-8") as fh:
                 got = json.load(fh)
         self.assertIn("s1", got, "this run's own answer is written")
         self.assertIn("another-run", got,
@@ -237,7 +237,7 @@ class TestNoSyntaxWarnings(unittest.TestCase):
                 try:
                     compile(source(path), path, "exec")
                 except (SyntaxWarning, DeprecationWarning) as e:
-                    self.fail(f"{os.path.relpath(path, ROOT)}: {e}")
+                    self.fail(f"{os.path.relpath(path, ROOT).replace(os.sep, "/")}: {e}")
 
 
 class TestEveryCliAnswersHelp(unittest.TestCase):
@@ -257,10 +257,10 @@ class TestEveryCliAnswersHelp(unittest.TestCase):
                 r = subprocess.run([sys.executable, path, "--help"], cwd=ROOT,
                                    capture_output=True, text=True, timeout=120)
                 self.assertEqual(r.returncode, 0,
-                                 f"{os.path.relpath(path, ROOT)} --help exited "
+                                 f"{os.path.relpath(path, ROOT).replace(os.sep, "/")} --help exited "
                                  f"{r.returncode}:\n{r.stderr[-2000:]}")
                 self.assertIn("usage", r.stdout.lower(),
-                              f"{os.path.relpath(path, ROOT)} --help printed no usage")
+                              f"{os.path.relpath(path, ROOT).replace(os.sep, "/")} --help printed no usage")
 
 
 class TestUpdateWiring(unittest.TestCase):
@@ -404,7 +404,7 @@ class TestReferencedScriptsExist(unittest.TestCase):
         for path in self.files():
             for ref in sorted(set(self.PAT.findall(source(path)))):
                 if not os.path.exists(os.path.join(ROOT, ref)):
-                    bad.append(f"{os.path.relpath(path, ROOT)} -> {ref}")
+                    bad.append(f"{os.path.relpath(path, ROOT).replace(os.sep, "/")} -> {ref}")
         self.assertEqual(bad, [], "references to scripts that do not exist:\n  "
                                   + "\n  ".join(bad))
 
@@ -424,7 +424,7 @@ class TestEveryRunnableScriptIsInTheReference(unittest.TestCase):
         for _, path in modules():
             if 'if __name__ == "__main__":' not in source(path):
                 continue
-            rel = os.path.relpath(path, ROOT)
+            rel = os.path.relpath(path, ROOT).replace(os.sep, "/")
             if rel not in ref:
                 missing.append(rel)
         self.assertEqual(missing, [], "runnable scripts missing from RUN.md §12:\n  "
@@ -1597,7 +1597,7 @@ class TestNobodyReDerivesARootPathByHand(unittest.TestCase):
                 [os.path.join(ROOT, "update.py")]:
             for i, ln in enumerate(source(rel).splitlines(), 1):
                 if re.search(r'os\.path\.join\([A-Z_]+,\s*"\.\."', ln):
-                    offenders.append(f"{os.path.relpath(rel, ROOT)}:{i}")
+                    offenders.append(f"{os.path.relpath(rel, ROOT).replace(os.sep, "/")}:{i}")
         self.assertEqual([], offenders,
                          "these re-derive a path `common.py` already exports")
 
@@ -1635,7 +1635,7 @@ class TestAGateThatRejectedNothingSaysNothing(unittest.TestCase):
         kept, rejected = self._gate([self.MINE, self.THEIRS], d)
         self.assertEqual((1, 1), (len(kept), len(rejected)))
         self.assertEqual(["Somebody else's paper"],
-                         [r["title"] for r in json.load(open(f))])
+                         [r["title"] for r in json.load(open(f, encoding="utf-8"))])
 
     def test_a_run_that_rejects_nothing_clears_the_last_run_s_list(self):
         """The whole defect. Same directory, two runs, and the second disagrees."""
@@ -1751,7 +1751,7 @@ class TestAQuietGithubIsNotARepoWithNoReadme(unittest.TestCase):
         path = os.path.join(d, "s.readme.txt")
         if not os.path.exists(path):
             return text, None
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             return text, f.read()
 
     def test_a_refusal_is_not_cached_as_a_repo_with_no_readme(self):
@@ -1880,7 +1880,7 @@ class TestConfigHasWhatTheStepsIndex(unittest.TestCase):
                     chain.insert(0, inner.slice.value)
                     inner = inner.value
                 if isinstance(inner, ast.Name) and inner.id == "cfg":
-                    yield os.path.relpath(path, ROOT), tuple(chain)
+                    yield os.path.relpath(path, ROOT).replace(os.sep, "/"), tuple(chain)
 
     def test_indexed_keys_exist(self):
         from common import load_config
@@ -1923,7 +1923,7 @@ class LedgerCase(unittest.TestCase):
         old = time.strftime("%Y-%m-%d", time.localtime(time.time() - 9 * 86400))
         base = {"ok": 0, "fail": 9, "first_seen": old, "last_ok": None,
                 "last_fail": time.strftime("%Y-%m-%d")}
-        with open(self.common.HEALTH, "w") as f:
+        with open(self.common.HEALTH, "w", encoding="utf-8") as f:
             json.dump({"example.org/thing": {**base, **rec}}, f)
         return self.common.health_report()
 
@@ -1938,7 +1938,7 @@ class LedgerCase(unittest.TestCase):
                 mock.patch.object(self.common, "_pace", lambda u: None), \
                 mock.patch.object(self.common.time, "sleep", lambda n: None):
             self.common.get_status(url, retries=1, **kw)
-        with open(self.common.HEALTH) as f:
+        with open(self.common.HEALTH, encoding="utf-8") as f:
             rows = json.load(f)
         self.assertEqual(len(rows), 1, rows)
         return next(iter(rows.values()))
@@ -1971,10 +1971,10 @@ class TestLedgerAdviceMatchesTheEvidence(LedgerCase):
 
     def test_note_fetch_records_the_reason_only_for_failures(self):
         self.common.note_fetch("https://example.org/thing", False, "429")
-        with open(self.common.HEALTH) as f:
+        with open(self.common.HEALTH, encoding="utf-8") as f:
             self.assertEqual("429", json.load(f)["example.org/thing"]["last_error"])
         self.common.note_fetch("https://example.org/thing", True, "ignored")
-        with open(self.common.HEALTH) as f:
+        with open(self.common.HEALTH, encoding="utf-8") as f:
             r = json.load(f)["example.org/thing"]
         # Two claims, and the second one used to be false. A success does not record its
         # own `why`, and it clears the failure's -- a reason survives only as long as it
@@ -2014,10 +2014,10 @@ class TestLedgerAdviceMatchesTheEvidence(LedgerCase):
     def test_note_fetch_resets_the_counter_on_success(self):
         for _ in range(4):
             self.common.note_fetch("https://example.org/thing", False, "429")
-        with open(self.common.HEALTH) as f:
+        with open(self.common.HEALTH, encoding="utf-8") as f:
             self.assertEqual(4, json.load(f)["example.org/thing"]["since_ok"])
         self.common.note_fetch("https://example.org/thing", True)
-        with open(self.common.HEALTH) as f:
+        with open(self.common.HEALTH, encoding="utf-8") as f:
             self.assertEqual(0, json.load(f)["example.org/thing"]["since_ok"])
 
 
@@ -2140,7 +2140,7 @@ class TestTheSplitPassResumesTomorrow(unittest.TestCase):
         importlib.reload(ss)
         self.addCleanup(importlib.reload, ss)
         d = tempfile.mkdtemp()
-        with open(os.path.join(d, "openalex_splits.json"), "w") as f:
+        with open(os.path.join(d, "openalex_splits.json"), "w", encoding="utf-8") as f:
             json.dump(cache, f)
         ss.BUILD = d
         asked = []
@@ -2186,7 +2186,7 @@ class TestTheSplitPassResumesTomorrow(unittest.TestCase):
         self.assertEqual([r["slug"] for r in out["rows"]], ["p0"])
         self.assertEqual([r["citations"] for r in out["rows"][0]["records"]], [9, 4],
                          "records are not ordered by citations")
-        with open(os.path.join(d, "openalex_splits.json")) as f:
+        with open(os.path.join(d, "openalex_splits.json"), encoding="utf-8") as f:
             self.assertEqual(sorted(json.load(f)), ["p0", "p1"], "the cache did not persist")
 
     def test_a_character_the_filter_reserves_never_reaches_the_query(self):
@@ -2242,7 +2242,7 @@ class TestTheSplitPassResumesTomorrow(unittest.TestCase):
         ss, asked, d = self._module({}, [None, {"results": []}])
         out = ss.split_records(self._papers(2), None)
         self.assertEqual(2, len(asked), "stopped asking after a refusal")
-        with open(os.path.join(d, "openalex_splits.json")) as f:
+        with open(os.path.join(d, "openalex_splits.json"), encoding="utf-8") as f:
             self.assertEqual(["p1"], sorted(json.load(f)), "a refusal was cached")
         self.assertEqual(1, out["checked"])
         self.assertEqual(2, out["total"])
@@ -2302,9 +2302,9 @@ class TestTheSplitPassResumesTomorrow(unittest.TestCase):
              answering(500, mods=(ss,)), \
              mock.patch.object(sys, "argv", ["scholar_strays.py", "--quiet", "--limit", "1"]):
             self.assertEqual(0, ss.main())
-        with open(os.path.join(d, "scholar_strays.json")) as f:
+        with open(os.path.join(d, "scholar_strays.json"), encoding="utf-8") as f:
             self.assertIn("api.openalex.org", json.load(f)["silent"])
-        with open(os.path.join(d, "scholar_strays.md")) as f:
+        with open(os.path.join(d, "scholar_strays.md"), encoding="utf-8") as f:
             self.assertIn("did not answer this run", f.read())
 
     def _page(self, ss, over):
@@ -2314,7 +2314,7 @@ class TestTheSplitPassResumesTomorrow(unittest.TestCase):
         d = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, d, True)
         with mock.patch.object(ss, "TASKS", d):
-            return open(ss.write_page(dict(state, **over))).read()
+            return open(ss.write_page(dict(state, **over)), encoding="utf-8").read()
 
     def test_a_record_with_a_word_the_title_lacks_is_a_different_paper(self):
         import scholar_strays as ss
@@ -2359,7 +2359,7 @@ class TestTheSplitPassResumesTomorrow(unittest.TestCase):
         self.assertEqual(out["budget_reset"], 26000)
         self.assertEqual((out["checked"], out["total"]), (1, 6),
                          "the partial notice would misreport how far it got")
-        with open(os.path.join(d, "openalex_splits.json")) as f:
+        with open(os.path.join(d, "openalex_splits.json"), encoding="utf-8") as f:
             self.assertEqual(list(json.load(f)), ["p0"], "the paid-for answer was dropped")
 
 
@@ -2375,7 +2375,7 @@ class TestTheReadmeSiteExampleIsTheRealOne(unittest.TestCase):
         import common
         cfg = common.load_config()
         site = cfg["site"]
-        readme = open(os.path.join(common.ROOT, "README.md")).read()
+        readme = open(os.path.join(common.ROOT, "README.md"), encoding="utf-8").read()
         prefix = site["base_url"].rstrip("/") + site["papers_path"].rstrip("/") + "/"
         found = re.findall(re.escape(prefix) + r"([a-z0-9-]+)/", readme)
         self.assertTrue(found, f"README shows no paper URL under {prefix}")
@@ -2387,7 +2387,7 @@ class TestTheReadmeSiteExampleIsTheRealOne(unittest.TestCase):
     def test_the_bare_site_link_is_the_configured_one(self):
         import common
         base = common.load_config()["site"]["base_url"].rstrip("/")
-        readme = open(os.path.join(common.ROOT, "README.md")).read()
+        readme = open(os.path.join(common.ROOT, "README.md"), encoding="utf-8").read()
         self.assertIn(base, readme, "README names no published site")
 
 
@@ -3468,7 +3468,7 @@ class TestAnUnfetchedArxivTitleIsNotAgreement(unittest.TestCase):
             old, sc.BUILD = sc.BUILD, d
             try:
                 self.assertIsNone(sc.arxiv_titles(), "a missing file read as full agreement")
-                with open(os.path.join(d, "title_diffs.json"), "w") as f:
+                with open(os.path.join(d, "title_diffs.json"), "w", encoding="utf-8") as f:
                     f.write("[]")
                 self.assertEqual({}, sc.arxiv_titles())
             finally:
@@ -3536,7 +3536,7 @@ class TestAnAbsentStateFileIsNotAnEmptySection(unittest.TestCase):
         u = self._u()
         with tempfile.TemporaryDirectory() as d:
             os.makedirs(os.path.join(d, "build"))
-            with open(os.path.join(d, "build", "wikidata_people.json"), "w") as f:
+            with open(os.path.join(d, "build", "wikidata_people.json"), "w", encoding="utf-8") as f:
                 f.write('{"people": [{"name": "A')
             old, u.ROOT = u.ROOT, d
             try:
@@ -3695,12 +3695,12 @@ class TestADeclinedSectionTakesItsPayloadWithIt(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             os.makedirs(os.path.join(d, "tasks"))
             path = os.path.join(d, "tasks", "thing.md")
-            with open(path, "w") as f:
+            with open(path, "w", encoding="utf-8") as f:
                 f.write(body)
             old, update.ROOT = update.ROOT, d
             try:
                 got = update.stamp_payloads(off or {}, later or {})
-                with open(path) as f:
+                with open(path, encoding="utf-8") as f:
                     return got, f.read()
             finally:
                 update.ROOT = old
@@ -3750,7 +3750,7 @@ class TestADeclinedSectionTakesItsPayloadWithIt(unittest.TestCase):
             with tempfile.TemporaryDirectory() as d:
                 os.makedirs(os.path.join(d, "tasks"))
                 path = os.path.join(d, "tasks", name)
-                with open(path, "w") as f:
+                with open(path, "w", encoding="utf-8") as f:
                     f.write("Q1\tP31\tQ5\n")
                 old, update.ROOT = update.ROOT, d
                 try:
@@ -3758,7 +3758,7 @@ class TestADeclinedSectionTakesItsPayloadWithIt(unittest.TestCase):
                 finally:
                     update.ROOT = old
                 self.assertEqual([], got, f"stamped tasks/{name}")
-                with open(path) as f:
+                with open(path, encoding="utf-8") as f:
                     self.assertEqual("Q1\tP31\tQ5\n", f.read())
 
     def test_a_regenerated_payload_keeps_the_banner(self):
@@ -3772,10 +3772,10 @@ class TestADeclinedSectionTakesItsPayloadWithIt(unittest.TestCase):
         from common import DECLINE_STAMP, write_task
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "thing.md")
-            with open(path, "w") as f:
+            with open(path, "w", encoding="utf-8") as f:
                 f.write(f"{DECLINE_STAMP}\n> **Declined.** `OpenAlex`\n\n# Old body\n")
             write_task(path, ["# New body", "", "Route 1."])
-            with open(path) as f:
+            with open(path, encoding="utf-8") as f:
                 out = f.read()
         self.assertTrue(out.startswith(DECLINE_STAMP), "the banner was overwritten")
         self.assertIn("`OpenAlex`", out)
@@ -3796,7 +3796,7 @@ class TestADeclinedSectionTakesItsPayloadWithIt(unittest.TestCase):
                     and 'OUT = os.path.join(TASKS' not in src:
                 continue
             if "write_task" not in src:
-                offenders.append(os.path.relpath(path, ROOT))
+                offenders.append(os.path.relpath(path, ROOT).replace(os.sep, "/"))
         self.assertEqual([], offenders, "writes a tasks/*.md without keeping its banner")
 
     def test_every_real_payload_extension_is_matchable(self):
@@ -3999,7 +3999,7 @@ class TestGeneratedFilesRenderTitles(unittest.TestCase):
                 continue
             with open(f, encoding="utf-8") as fh:
                 body = fh.read()
-            leaks += [f"{os.path.relpath(f, ROOT)}: {slug}"
+            leaks += [f"{os.path.relpath(f, ROOT).replace(os.sep, "/")}: {slug}"
                       for raw, slug in probes.items() if raw in body]
         self.assertEqual([], leaks, f"{len(leaks)} raw title(s) reached a generated file")
 
@@ -4425,7 +4425,7 @@ class TestAGeneratedTaskFileSaysWhatWroteIt(unittest.TestCase):
         v = self._v()
         with tempfile.TemporaryDirectory() as d:
             os.makedirs(os.path.join(d, "tasks"))
-            with open(os.path.join(d, "tasks", "t.md"), "w") as f:
+            with open(os.path.join(d, "tasks", "t.md"), "w", encoding="utf-8") as f:
                 f.write("# A task\n\nOpen the form and paste each row.\n")
             with mock.patch.object(v, "ROOT", d):
                 errs = v.check_task_provenance()
@@ -4438,7 +4438,7 @@ class TestAGeneratedTaskFileSaysWhatWroteIt(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             os.makedirs(os.path.join(d, "tasks"))
             for name in ("p.qs", "p.bib", "p.txt"):
-                with open(os.path.join(d, "tasks", name), "w") as f:
+                with open(os.path.join(d, "tasks", name), "w", encoding="utf-8") as f:
                     f.write("Q1\tP31\tQ5\n")
             with mock.patch.object(v, "ROOT", d):
                 self.assertEqual([], v.check_task_provenance())
@@ -4455,15 +4455,15 @@ class TestAGeneratedTaskFileSaysWhatWroteIt(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             os.makedirs(os.path.join(d, "tasks"))
             os.makedirs(os.path.join(d, "scripts"))
-            open(os.path.join(d, "scripts", "w.py"), "w").close()
+            open(os.path.join(d, "scripts", "w.py"), "w", encoding="utf-8").close()
             t = os.path.join(d, "tasks", "t.md")
-            with open(t, "w") as f:
+            with open(t, "w", encoding="utf-8") as f:
                 f.write(banner + "# A task\n\nOpen the form and paste each row.\n")
             with mock.patch.object(v, "ROOT", d):
                 errs = v.check_task_provenance()
                 self.assertEqual(1, len(errs), errs)
                 # And the same file, with the line where it belongs, is clean under a banner.
-                with open(t, "w") as f:
+                with open(t, "w", encoding="utf-8") as f:
                     f.write(banner + "# A task\n\nGenerated by `python scripts/w.py`.\n")
                 self.assertEqual([], v.check_task_provenance())
 
@@ -4472,7 +4472,7 @@ class TestAGeneratedTaskFileSaysWhatWroteIt(unittest.TestCase):
         v = self._v()
         with tempfile.TemporaryDirectory() as d:
             os.makedirs(os.path.join(d, "tasks"))
-            with open(os.path.join(d, "tasks", "t.md"), "w") as f:
+            with open(os.path.join(d, "tasks", "t.md"), "w", encoding="utf-8") as f:
                 f.write("# A task\n\nGenerated by `python scripts/gone.py`.\n")
             with mock.patch.object(v, "ROOT", d):
                 errs = v.check_task_provenance()
@@ -4724,7 +4724,7 @@ class TestARequeuedPaperIsRepairedNotRewritten(unittest.TestCase):
         import sidecar_io
         with tempfile.TemporaryDirectory() as d:
             os.makedirs(os.path.join(d, "drafts"))
-            with open(os.path.join(d, "p.md"), "w") as f:
+            with open(os.path.join(d, "p.md"), "w", encoding="utf-8") as f:
                 f.write("---\none_liner: x\nclaims: []\n---\n")
             with mock.patch.object(sidecar_io, "SIDECARS", d), \
                  mock.patch.object(sidecar_io, "DRAFTS",
@@ -4741,7 +4741,7 @@ class TestARequeuedPaperIsRepairedNotRewritten(unittest.TestCase):
         import sidecar_io
         with tempfile.TemporaryDirectory() as d:
             os.makedirs(os.path.join(d, "drafts"))
-            with open(os.path.join(d, "p.md"), "w") as f:
+            with open(os.path.join(d, "p.md"), "w", encoding="utf-8") as f:
                 f.write("---\nclaims: [1,\n  qa: {\n---\n")
             err = io.StringIO()
             with mock.patch.object(sidecar_io, "SIDECARS", d), \
@@ -4776,7 +4776,7 @@ class TestBrokenFrontMatterIsNotAMissingFile(unittest.TestCase):
 
     def _write(self, d, body):
         path = os.path.join(d, "s.md")
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(body)
         return path
 
@@ -4896,7 +4896,7 @@ class TestALiveSidecarIsAskedOfTheDisk(unittest.TestCase):
         import common
         with tempfile.TemporaryDirectory() as d:
             os.makedirs(os.path.join(d, "data", "sidecars"))
-            open(os.path.join(d, "data", "sidecars", "here.md"), "w").close()
+            open(os.path.join(d, "data", "sidecars", "here.md"), "w", encoding="utf-8").close()
             with mock.patch.object(common, "ROOT", d):
                 self.assertTrue(common.has_live_sidecar("here"))
                 self.assertFalse(common.has_live_sidecar("gone"))
@@ -5043,11 +5043,11 @@ class TestAddingAPinRefetchesTheTextUnderIt(unittest.TestCase):
     """
 
     def _cached(self, d, source, extra=None):
-        with open(os.path.join(d, "_t_pin.txt"), "w") as f:
+        with open(os.path.join(d, "_t_pin.txt"), "w", encoding="utf-8") as f:
             f.write("1 Introduction " + "content " * 900)
         rec = {"source": source, "chars": 7214, "extractor": 3}
         rec.update(extra or {})
-        with open(os.path.join(d, "sources.json"), "w") as f:
+        with open(os.path.join(d, "sources.json"), "w", encoding="utf-8") as f:
             json.dump({"_t_pin": rec}, f)
 
     def _stale(self, d, pin, source, extra=None):
@@ -5094,7 +5094,7 @@ class TestAddingAPinRefetchesTheTextUnderIt(unittest.TestCase):
                  mock.patch.object(fulltext, "_local", return_value=None), \
                  mock.patch.object(fulltext, "_candidates", return_value=[]):
                 fulltext.resolve({"slug": "_t_pin", "links": {}}, {})
-            with open(index) as f:
+            with open(index, encoding="utf-8") as f:
                 self.assertEqual(pin, json.load(f)["_t_pin"].get("pin"))
 
 
@@ -5127,7 +5127,7 @@ class TestAnUnreadablePaperLeavesNoCacheFile(unittest.TestCase):
         import fulltext
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "_t_unreadable.txt")
-            open(path, "w").close()
+            open(path, "w", encoding="utf-8").close()
             with mock.patch.multiple(fulltext, CACHE=d,
                                      INDEX=os.path.join(d, "sources.json")), \
                  mock.patch.object(fulltext, "_local", return_value=None), \
@@ -5141,10 +5141,10 @@ class TestAnUnreadablePaperLeavesNoCacheFile(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "_t_unreadable.txt")
             body = "1 Introduction " + "content " * 900
-            with open(path, "w") as f:
+            with open(path, "w", encoding="utf-8") as f:
                 f.write(body)
             index = os.path.join(d, "sources.json")
-            with open(index, "w") as f:
+            with open(index, "w", encoding="utf-8") as f:
                 json.dump({"_t_unreadable": {
                     "source": "arxiv-html https://arxiv.org/html/1", "chars": len(body),
                     "extractor": fulltext.EXTRACTOR}}, f)
@@ -5346,7 +5346,7 @@ class TestAPaperWithNoMeasurementsIsNotAskedForFigures(unittest.TestCase):
         os.makedirs(d, exist_ok=True)
         path = os.path.join(d, f"{slug}.txt")
         self.addCleanup(lambda: os.path.exists(path) and os.remove(path))
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(text)
 
     def test_a_paper_that_reports_nothing_exempts_its_page(self):
@@ -5389,10 +5389,10 @@ class TestAForkKeepsTheCommentsAndDropsTheDecisions(unittest.TestCase):
         from bootstrap_fork import rewrite
         with tempfile.TemporaryDirectory() as d:
             p = os.path.join(d, "declines.yaml")
-            open(p, "w").write("# why this file exists\nnote: read me\n"
+            open(p, "w", encoding="utf-8").write("# why this file exists\nnote: read me\n"
                                "sections: [worklist]\nitems: [one, two]\n")
             rewrite(p, {"sections": [], "items": []})
-            out = open(p).read()
+            out = open(p, encoding="utf-8").read()
             self.assertIn("# why this file exists", out)
             got = yaml.safe_load(out)
             self.assertEqual(got, {"note": "read me", "sections": [], "items": []})
@@ -5405,7 +5405,7 @@ class TestAForkKeepsTheCommentsAndDropsTheDecisions(unittest.TestCase):
             path = os.path.join(ROOT, "data", name)
             if not os.path.exists(path):
                 continue
-            doc = yaml.safe_load(open(path)) or {}
+            doc = yaml.safe_load(open(path, encoding="utf-8")) or {}
             for key, blank in empties.items():
                 self.assertIn(key, doc, f"data/{name}: {key} no longer exists")
                 self.assertIsInstance(doc[key], type(blank),
@@ -5698,11 +5698,11 @@ class TestWikipediaAsksOnlyForCorrections(unittest.TestCase):
 
     def test_no_insertion_is_ever_asked_for(self):
         """The whole page is checks. A drafted request to add a mention is the regression."""
-        text = open(os.path.join(ROOT, "tasks", "wikipedia.md")).read().lower()
+        text = open(os.path.join(ROOT, "tasks", "wikipedia.md"), encoding="utf-8").read().lower()
         for banned in ("edit coi", "suggested addition", "== ", "propose a mention"):
             self.assertNotIn(banned, text, f"{banned!r} is back in tasks/wikipedia.md")
         for banned in ("{{edit coi", "suggested addition"):
-            self.assertNotIn(banned, open(os.path.join(ROOT, "WORKLIST.md")).read().lower())
+            self.assertNotIn(banned, open(os.path.join(ROOT, "WORKLIST.md"), encoding="utf-8").read().lower())
 
     def test_an_unread_api_does_not_write_a_page_saying_there_is_nothing_to_check(self):
         """Every section of this page is built from the absence of a hit, so a refused run
@@ -5792,7 +5792,7 @@ class TestAQuestionGroupIsAFormNotAList(unittest.TestCase):
 
         import yaml
         for path in sorted(glob.glob(os.path.join(ROOT, "data", "sidecars", "*.md"))):
-            m = re.search(r"^---\n(.*?)^---\n", open(path).read(), re.S | re.M)
+            m = re.search(r"^---\n(.*?)^---\n", open(path, encoding="utf-8").read(), re.S | re.M)
             fm = yaml.safe_load(m.group(1)) or {}
             for i, g in enumerate(fm.get("qa") or []):
                 where = f"{os.path.basename(path)} qa[{i}]"
@@ -5914,7 +5914,7 @@ class TestAFailedGhReadIsNotAnEmptyOne(unittest.TestCase):
                            + glob.glob(os.path.join(root, "measure", "*.py"))):
             if os.path.basename(path) in ("common.py", "build_site.py"):
                 continue          # build_site clones a repo, it does not read the API
-            if re.search(r'subprocess\.\w+\(\s*\[\s*"gh"', open(path).read()):
+            if re.search(r'subprocess\.\w+\(\s*\[\s*"gh"', open(path, encoding="utf-8").read()):
                 offenders.append(os.path.basename(path))
         self.assertEqual(offenders, [], "re-implements common.gh")
 
@@ -6043,7 +6043,7 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
             first = wc.dblp_pages(look)
             self.assertEqual(len(asked), 2)
             self.assertEqual(first, {"Q2": ["a paper"]}, "an empty page is no evidence")
-            with open(os.path.join(d, wc.DBLP_CACHE)) as f:
+            with open(os.path.join(d, wc.DBLP_CACHE), encoding="utf-8") as f:
                 self.assertEqual(json.load(f)["titles"]["g/Gone"], [])
             self.assertEqual(wc.dblp_pages(look), first)
             self.assertEqual(len(asked), 2, "re-asked for a page the server said was gone")
@@ -6074,7 +6074,7 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
         wc = self._module()
         with tempfile.TemporaryDirectory() as d:
             wc.BUILD = d
-            with open(os.path.join(d, wc.DBLP_CACHE), "w") as f:
+            with open(os.path.join(d, wc.DBLP_CACHE), "w", encoding="utf-8") as f:
                 json.dump({"shape": wc.DBLP_SHAPE,
                            "asked": datetime.date.today().isoformat(),
                            "titles": {"l/Lovelace": ["a paper"]}}, f)
@@ -6165,10 +6165,10 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
                 wc.BUILD, wc.DATA = d, d
                 for k, v in stubs.items():
                     setattr(wc, k, v)
-                with open(os.path.join(d, "wikidata_people_created.yaml"), "w") as f:
+                with open(os.path.join(d, "wikidata_people_created.yaml"), "w", encoding="utf-8") as f:
                     f.write('items:\n  0000-0002-0000-0004: Q900\n'
                             'labels:\n  Q900: Ada Lovelace\n')
-                with open(os.path.join(d, wc.CACHE), "w") as f:
+                with open(os.path.join(d, wc.CACHE), "w", encoding="utf-8") as f:
                     json.dump({"shape": wc.SHAPE,
                                "asked": datetime.date.today().isoformat(), "names": [],
                                "orcids": {"s1": {"ada lovelace": "0000-0002-0000-0004"}},
@@ -6190,7 +6190,7 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
             data = wc.DATA
             try:
                 wc.DATA = d
-                with open(os.path.join(d, "wikidata_people_created.yaml"), "w") as f:
+                with open(os.path.join(d, "wikidata_people_created.yaml"), "w", encoding="utf-8") as f:
                     f.write('items:\n  A: Q1\n  B: Q2\n  C: Q3\n'
                             'labels:\n  Q1: One\n  Q2: Two\n  Q3: Three\n')
                 got = wc.with_receipts({"A": {"qid": "Q9", "label": "Nine"},
@@ -6216,11 +6216,11 @@ class TestCoauthorResolutionBatchesOnlyIdentifierMatches(unittest.TestCase):
                 wc.BUILD = d
                 for k, v in stubs.items():
                     setattr(wc, k, v)
-                with open(os.path.join(d, wc.CACHE), "w") as f:
+                with open(os.path.join(d, wc.CACHE), "w", encoding="utf-8") as f:
                     json.dump({"shape": wc.SHAPE, "asked": "2026-08-01", "names": [],
                                "orcids": {"s1": {"ada lovelace": "0000-0002-0000-0004"}}}, f)
                 got = wc.lookups([], [{"slug": "s1", "doi": "10.1/x"}], refresh=True)
-                with open(os.path.join(d, wc.CACHE)) as f:
+                with open(os.path.join(d, wc.CACHE), encoding="utf-8") as f:
                     kept = json.load(f)
             finally:
                 wc.BUILD = build
@@ -6774,7 +6774,7 @@ class TestPeopleItemsRestOnPublicRecordsNotOnNames(unittest.TestCase):
                  "orcids": {"s1": {"a b": "0000-0000-0000-0003",
                                    "c d": "0000-0000-0000-0004"}}}
         with tempfile.TemporaryDirectory() as d:
-            with open(os.path.join(d, wp.CACHE), "w") as f:
+            with open(os.path.join(d, wp.CACHE), "w", encoding="utf-8") as f:
                 json.dump(cache, f)
             with mock.patch.object(wp, "BUILD", d):
                 self.assertEqual(wp.wanted(), {"0000-0000-0000-0004": 1})
@@ -6952,7 +6952,7 @@ class TestPeopleItemsRestOnPublicRecordsNotOnNames(unittest.TestCase):
         path = os.path.join(ROOT, "tasks", "wikidata_people.qs")
         if not os.path.exists(path):
             self.skipTest("no batch generated")
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             text = f.read()
         blocks = [b for b in text.split("CREATE\n") if b.strip()]
         self.assertTrue(blocks)
@@ -7225,7 +7225,7 @@ class TestEveryFetchReachesTheHealthLedger(unittest.TestCase):
         for path in sorted(glob.glob(os.path.join(ROOT, "scripts", "*.py"))
                            + glob.glob(os.path.join(ROOT, "measure", "*.py"))
                            + [os.path.join(ROOT, "update.py")]):
-            rel = os.path.relpath(path, ROOT)
+            rel = os.path.relpath(path, ROOT).replace(os.sep, "/")
             tree = ast.parse(source(path))
             stack = [(tree, "")]
             while stack:
@@ -7662,7 +7662,7 @@ class TestAnUnreadablePaperKeepsItsStoredCodeDecision(unittest.TestCase):
             text, seen = pc.evidence_text(p, {})
         self.assertFalse(seen, "the abstract alone must not count as having read the paper")
         self.assertIn("An abstract.", text)
-        with open(os.path.join(d, "s.txt"), "w") as f:
+        with open(os.path.join(d, "s.txt"), "w", encoding="utf-8") as f:
             f.write("We release our code at github.com/o/n")
         with mock.patch.object(pc, "FULLTEXT", d):
             text, seen = pc.evidence_text(p, {})
@@ -7901,7 +7901,7 @@ class TestAQuietWikidataLeavesTheWorkOnThePage(unittest.TestCase):
                 wc._api_quiet = ""
                 d = tempfile.mkdtemp()
                 self.addCleanup(shutil.rmtree, d, True)
-                with open(os.path.join(d, "wikidata_coauthors.qs"), "w") as f:
+                with open(os.path.join(d, "wikidata_coauthors.qs"), "w", encoding="utf-8") as f:
                     f.write("Q1\tP50\tQ2\n")
                 with mock.patch.object(wc, "TASKS", d), \
                      mock.patch.object(wc, "BUILD", d), \
@@ -8132,7 +8132,7 @@ class TestAQuietWikidataCreatesNobody(unittest.TestCase):
                     self.assertEqual([], os.listdir(d), "a quiet read wrote a batch")
                 else:
                     self.assertEqual(0, code)
-                    with open(os.path.join(d, "wikidata_people.qs")) as f:
+                    with open(os.path.join(d, "wikidata_people.qs"), encoding="utf-8") as f:
                         self.assertIn("CREATE", f.read())
         finally:
             wc._api_quiet = old
@@ -8404,7 +8404,7 @@ class TestACoauthorOrcidIsShownForWhatItSays(unittest.TestCase):
                 page = wp.write_page([], [], [], [], {}, None,
                                      [{"orcid": "0000-0001-0000-0000",
                                        "later": "no works on either record"}])
-                with open(page) as f:
+                with open(page, encoding="utf-8") as f:
                     text = f.read()
             finally:
                 wp.TASKS = real
@@ -8425,7 +8425,7 @@ class TestACoauthorOrcidIsShownForWhatItSays(unittest.TestCase):
                                        "openalex_works": 0}
                 got = wp.records(["A", "B"], refresh=True)
                 self.assertEqual({"A", "B"}, set(got))
-                with open(os.path.join(d, wp.CACHE_PEOPLE)) as f:
+                with open(os.path.join(d, wp.CACHE_PEOPLE), encoding="utf-8") as f:
                     kept = json.load(f)["records"]
             finally:
                 wp.BUILD, wp.record = real_build, real_record
@@ -8455,7 +8455,7 @@ class TestARefusalReachesTheRunThatCalledIt(unittest.TestCase):
             self.assertRegex(
                 mark + tail, r"(sys\.exit|raise SystemExit)\(main\(\)\)",
                 "%s: main returns %s and nothing carries it out, so a caller reads success"
-                % (os.path.relpath(path, ROOT), sorted(codes)))
+                % (os.path.relpath(path, ROOT).replace(os.sep, "/"), sorted(codes)))
 
 
 class TestAnUnreadRecordIsNotAnEmptyOne(unittest.TestCase):
@@ -8706,7 +8706,7 @@ class TestTheAuditKeepsThePagesItCouldNotRead(unittest.TestCase):
                 self.assertEqual([], os.listdir(d), "a refusal wrote a page")
                 path, gap = ai.arxiv_ownership_file(cfg, papers, set())
                 self.assertEqual(0, gap)
-                self.assertIn("does not resolve yet", open(path).read())
+                self.assertIn("does not resolve yet", open(path, encoding="utf-8").read())
             finally:
                 ai.TASKS = old
 
@@ -8741,12 +8741,12 @@ class TestAFilledInFidelityRunIsNotOverwritten(unittest.TestCase):
         d = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, d)
         path = os.path.join(d, "tasks.json")
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump({"tasks": [{"slug": "a", "answer": answer, "score": None}]}, f)
         with mock.patch.object(fidelity, "TASKS", path), \
                 contextlib.redirect_stdout(io.StringIO()):
             fidelity.emit([("a", {"claims": []})], {}, self.Args(**kw))
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
 
     def test_answers_already_pasted_in_stop_a_re_emit(self):
@@ -8771,7 +8771,7 @@ class TestAFilledInFidelityRunIsNotOverwritten(unittest.TestCase):
         d = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, d)
         junk = os.path.join(d, "junk.json")
-        with open(junk, "w") as f:
+        with open(junk, "w", encoding="utf-8") as f:
             f.write("not json at all")
         self.assertEqual(0, fidelity.answered(junk))
         self.assertEqual(0, fidelity.answered(os.path.join(d, "absent.json")))

@@ -125,7 +125,7 @@ def _committed_papers(papers_path: str) -> list[dict]:
     unavailable or the file is not committed yet.
     """
     try:
-        out = subprocess.run(["git", "show", f"HEAD:{os.path.relpath(papers_path, ROOT)}"],
+        out = subprocess.run(["git", "show", f"HEAD:{os.path.relpath(papers_path, ROOT).replace(os.sep, "/")}"],
                              cwd=ROOT, capture_output=True, text=True, timeout=30)
         if out.returncode == 0 and out.stdout.strip():
             return (yaml.safe_load(out.stdout) or {}).get("papers") or []
@@ -239,7 +239,7 @@ def bibtex_source(cfg) -> tuple[str, str]:
     if raw:
         try:
             os.makedirs(BUILD, exist_ok=True)
-            with open(BIB_CACHE, "w") as f:
+            with open(BIB_CACHE, "w", encoding="utf-8") as f:
                 f.write(raw)
         except OSError:
             pass
@@ -263,7 +263,7 @@ def from_bibtex(cfg) -> list[dict]:
         return []
     if not raw:
         sys.exit(f"could not read bibliography from {origin}, and no cached copy in "
-                 f"{os.path.relpath(BIB_CACHE, ROOT)}. Nothing downstream can run "
+                 f"{os.path.relpath(BIB_CACHE, ROOT).replace(os.sep, "/")}. Nothing downstream can run "
                  f"without the corpus, so this is the one failure that stops a run.")
     if origin == BIB_CACHE:
         print(f"  bibliography: {cfg['sources']['bibtex_url']} did not answer -- using "

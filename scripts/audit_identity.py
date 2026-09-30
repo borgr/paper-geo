@@ -924,7 +924,7 @@ def wikidata_paper_gaps(wd_cov: dict, wd_qs: str | None) -> list[str]:
             L += [f"The {len(wd_cov['absent'])} missing items are created by "
                   "`python scripts/wikidata_apply.py --papers --apply --limit 10`, which "
                   "needs the bot password and nothing else; "
-                  f"`{os.path.relpath(wd_qs, ROOT)}` is the same statements as a "
+                  f"`{os.path.relpath(wd_qs, ROOT).replace(os.sep, "/")}` is the same statements as a "
                   "QuickStatements batch, as a fallback. Read the cautions in "
                   "[wikidata_followup.md](wikidata_followup.md) first — these are "
                   "permanent public items.", ""]
@@ -1106,7 +1106,7 @@ def arxiv_misspellings(n_typo: list) -> list[str]:
 def _last_reading(path: str) -> dict:
     """The state file from the previous run, or `{}` when there is not one yet."""
     try:
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
     except (OSError, ValueError):
         return {}

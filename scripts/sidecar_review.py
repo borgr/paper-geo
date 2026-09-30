@@ -50,7 +50,7 @@ def checked(slug: str) -> dict | str:
         return f"no draft and no live sidecar for {slug}"
     fm = front_matter(path)
     if fm is None:
-        return f"{os.path.relpath(path, ROOT)}: unreadable front matter"
+        return f"{os.path.relpath(path, ROOT).replace(os.sep, "/")}: unreadable front matter"
 
     from validate import (deline, evidence_pointers, figures, figures_in, readability,
                           rounds_to, values_in)
@@ -60,7 +60,7 @@ def checked(slug: str) -> dict | str:
     for kind, at, msg in readability(fm):
         prose.setdefault((kind, at), []).append(msg)
     cache = os.path.join(CACHE, f"{slug}.txt")
-    text = deline(open(cache, errors="replace").read()) if os.path.exists(cache) else ""
+    text = deline(open(cache, errors="replace", encoding="utf-8").read()) if os.path.exists(cache) else ""
     have, vals = (figures_in(text), values_in(text)) if text else (set(), [])
     flat = re.sub(r"\s+", " ", text)
 
@@ -100,7 +100,7 @@ def checked(slug: str) -> dict | str:
     # Left in the drafted order, which is the order the sidecar file has and therefore the
     # order the site publishes: both renderers walk the questions instead, so a sort here
     # would only reorder the orphan list while looking like it decided the page.
-    return {"slug": slug, "path": os.path.relpath(path, ROOT), "has_text": bool(text),
+    return {"slug": slug, "path": os.path.relpath(path, ROOT).replace(os.sep, "/"), "has_text": bool(text),
             "live": live, "one_liner": oneline(fm.get("one_liner")),
             "claims": claims, "qa": fm.get("qa") or [],
             "prose_q": {k[1]: v for k, v in prose.items() if k[0] == "question"},
@@ -591,13 +591,13 @@ def _outdated(slugs: list[str]) -> list[str]:
 
 
 def write_review_page(papers: list[dict]) -> str:
-    # Build first, write second. `open(..., "w")` truncates on the way in, so building the
+    # Build first, write second. `open(..., "w", encoding="utf-8")` truncates on the way in, so building the
     # page inside the `with` meant one draft that made a check raise left a zero-byte
     # review page behind -- the previous good page destroyed by the run that failed to
     # replace it.
     html = review_page(papers)
     os.makedirs(BUILD, exist_ok=True)
-    with open(REVIEW_PAGE, "w") as fh:
+    with open(REVIEW_PAGE, "w", encoding="utf-8") as fh:
         fh.write(html)
     return REVIEW_PAGE
 
@@ -660,7 +660,7 @@ def suspicion(path: str) -> tuple[int, list[str]]:
         # rule is the one rule with no exceptions, and here it did not run at all.
         return 4, ["no cached paper text, so not one figure in this draft was checked "
                    f"(python scripts/fulltext.py --slug {slug})"]
-    with open(cached, errors="replace") as fh:
+    with open(cached, errors="replace", encoding="utf-8") as fh:
         text = deline(fh.read())
     low, have, vals = text.lower(), figures_in(text), values_in(text)
     loud, round_only, thin = [], [], []

@@ -124,7 +124,7 @@ def readme(p: dict, limit: int = 6000) -> str:
     os.makedirs(CACHE, exist_ok=True)
     path = os.path.join(CACHE, f"{p['slug']}.readme.txt")
     if os.path.exists(path):
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             return f.read()[:limit]
     owner_repo = repo.rstrip("/").split("github.com/")[-1].removesuffix(".git")
     text, refused = "", False
@@ -141,7 +141,7 @@ def readme(p: dict, limit: int = 6000) -> str:
         if text:
             break
     if text or not refused:
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(text)
     return text[:limit]
 
@@ -338,7 +338,7 @@ def standing(slug: str) -> tuple[dict | None, list[str]]:
             if unread:
                 # Said out loud, because the empty `sidecar` below is the from-scratch job
                 # this docstring is about, and the file it would replace is on disk.
-                print(f"  {os.path.relpath(path, ROOT)}: {unread} -- drafting this paper "
+                print(f"  {os.path.relpath(path, ROOT).replace(os.sep, "/")}: {unread} -- drafting this paper "
                       f"from scratch rather than repairing it", file=sys.stderr)
     return None, []
 
@@ -724,7 +724,7 @@ def call_openai(pairs, cfg, on_draft=None) -> tuple[dict, str, "object"]:
 def ingest(papers: list[dict]) -> int:
     if not os.path.exists(TASKS):
         sys.exit(f"no {TASKS} -- run without --ingest first")
-    with open(TASKS) as f:
+    with open(TASKS, encoding="utf-8") as f:
         d = json.load(f)
     n = 0
     for t in d["tasks"]:
@@ -773,7 +773,7 @@ def accept(slugs: list[str], replace: bool = False, anyway: bool = False) -> int
         if os.path.exists(dst) and not replace:
             print(f"  {slug}: a live sidecar already exists; not overwriting.\n"
                   f"      This draft is a *replacement*. Compare them first:\n"
-                  f"        diff data/sidecars/{slug}.md {os.path.relpath(src, ROOT)}\n"
+                  f"        diff data/sidecars/{slug}.md {os.path.relpath(src, ROOT).replace(os.sep, "/")}\n"
                   f"      then, if the replacement is the one you want:\n"
                   f"        python scripts/draft_sidecars.py --accept {slug} --replace")
             continue
@@ -783,10 +783,10 @@ def accept(slugs: list[str], replace: bool = False, anyway: bool = False) -> int
         # Strip the DRAFT banner on the way out. It is addressed to the reviewer, and a
         # promoted sidecar has been reviewed -- leaving it in would make every published
         # sidecar claim to be unverified.
-        with open(src) as f:
+        with open(src, encoding="utf-8") as f:
             text = f.read()
         text = re.sub(r"^<!-- DRAFT.*?-->\n+", "", text, flags=re.S)
-        with open(dst, "w") as f:
+        with open(dst, "w", encoding="utf-8") as f:
             f.write(text)
         os.remove(src)
         print(f"  promoted {slug} -> data/sidecars/{slug}.md")

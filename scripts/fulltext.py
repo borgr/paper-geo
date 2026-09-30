@@ -174,7 +174,7 @@ def pdf_to_text(raw: bytes) -> str:
                 subprocess.run([exe, "-q", "-nopgbrk", src, out],
                                check=True, timeout=180,
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                with open(out, errors="replace") as f:
+                with open(out, errors="replace", encoding="utf-8") as f:
                     return clean_pdf_text(f.read())
             except Exception:
                 pass
@@ -399,7 +399,7 @@ def _fetch(kind: str, url: str) -> tuple[str, int]:
 
 def _read_json(path: str) -> dict:
     try:
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
     except Exception:
         return {}
@@ -507,7 +507,7 @@ def resolve(p: dict, cfg: dict | None = None, limit: int = LIMIT,
     os.makedirs(CACHE, exist_ok=True)
     path = os.path.join(CACHE, f"{p['slug']}.txt")
     if os.path.exists(path) and not refetch:
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             cached = f.read()
         src = source_of(p["slug"])
         # Long-and-unattributed caches are honoured too, from before this file recorded a
@@ -542,13 +542,13 @@ def resolve(p: dict, cfg: dict | None = None, limit: int = LIMIT,
         # Keep what we have. A refetch this file initiated (a bumped extractor, not a
         # user asking) must not turn a paper we can read into one we cannot because
         # arXiv answered 503 this minute.
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             cached = f.read()
         if cached and (found(source_of(p["slug"])) or len(cached) >= MIN_CHARS):
             return fit(cached, limit)[0], f"{source_of(p['slug'])} (refetch failed)"
 
     if text:
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(text)
     elif os.path.exists(path):
         # Removed rather than overwritten with nothing. Every other reader of this

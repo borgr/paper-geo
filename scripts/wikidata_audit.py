@@ -341,7 +341,7 @@ def wikidata_papers_qs(cov: dict, cfg) -> tuple[str | None, int]:
         for a in it["authors"]:
             val = a["qid"] if a["pid"] == "P50" else '"%s"' % a["name"]
             L.append(f'LAST\t{a["pid"]}\t{val}\tP1545\t"{a["ordinal"]}"')
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(L) + "\n")
     return path, len(items)
 
@@ -576,7 +576,7 @@ def paper_link_section(q: str, cov: dict, qs_path: str | None) -> list[str]:
           "50 elsewhere or skip QuickStatements and edit by hand — the item's own",
           "statements are a 15-minute job either way.", ""]
     if qs_path:
-        n_new = sum(1 for x in open(qs_path) if x.strip() == "CREATE")
+        n_new = sum(1 for x in open(qs_path, encoding="utf-8") if x.strip() == "CREATE")
         L += ["**Creating the missing items — read this first, then run it in batches.**",
               "",
               f"{n_new} papers have no Wikidata item. Each would get its title,",
@@ -594,7 +594,7 @@ def paper_link_section(q: str, cov: dict, qs_path: str | None) -> list[str]:
               "`data/wikidata_created.yaml` before the next one starts — so an interrupted",
               "run resumes where it stopped, and a re-run in the hours before the query",
               "service catches up does not create everything twice.",
-              f"`{os.path.relpath(qs_path, ROOT)}` holds the same statements as a",
+              f"`{os.path.relpath(qs_path, ROOT).replace(os.sep, "/")}` holds the same statements as a",
               "QuickStatements batch, kept as the fallback if the bot password is ever",
               "revoked.", "",
               "Honest accounting before you run it: this buys a Scholia profile, a",

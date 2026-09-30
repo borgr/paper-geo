@@ -81,7 +81,7 @@ def read_creds() -> tuple[str | None, str | None]:
                      f"before putting a password in it:\n"
                      f"  git rm --cached .wikidata_bot")
         vals = {}
-        with open(CREDS_FILE) as f:
+        with open(CREDS_FILE, encoding="utf-8") as f:
             for line in f:
                 line = line.strip().removeprefix("export ").strip()
                 if "=" in line and not line.startswith("#"):

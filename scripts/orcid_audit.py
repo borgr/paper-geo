@@ -164,7 +164,7 @@ def _index(papers) -> dict:
 def _rejected() -> dict:
     """Works the collector threw out on author name, keyed by normalised title."""
     try:
-        with open(os.path.join(BUILD, "not_mine.json")) as f:
+        with open(os.path.join(BUILD, "not_mine.json"), encoding="utf-8") as f:
             return {norm_title(x["title"]): x for x in json.load(f)}
     except (OSError, ValueError):
         return {}

@@ -604,7 +604,7 @@ def evidence_text(p: dict, cfg) -> tuple[str, bool]:
     path = os.path.join(FULLTEXT, p["slug"] + ".txt")
     text = ""
     if os.path.exists(path) and os.path.getsize(path) > 0:
-        with open(path, errors="replace") as f:
+        with open(path, errors="replace", encoding="utf-8") as f:
             text = f.read()
     else:
         # Fetch it rather than fall back to the abstract. The cache is filled by the
@@ -850,7 +850,7 @@ def hf_token() -> str | None:
             return os.environ[env]
     path = os.path.expanduser("~/.cache/huggingface/token")
     if os.path.exists(path):
-        t = open(path).read().strip()
+        t = open(path, encoding="utf-8").read().strip()
         return t or None
     return None
 
@@ -1085,7 +1085,7 @@ def main() -> None:
     show_unnamed(results, eff)
 
     save_decisions(papers, results, prev)
-    print(f"\nwrote {os.path.relpath(DECISIONS, ROOT)}")
+    print(f"\nwrote {os.path.relpath(DECISIONS, ROOT).replace(os.sep, "/")}")
 
     if not args.apply:
         print("\nNothing has left this machine. To publish the accepted links:")

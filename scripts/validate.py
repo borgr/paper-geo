@@ -37,7 +37,7 @@ SCHEMA_DIR = os.path.join(ROOT, "schema")
 
 
 def load_schema(name: str) -> dict:
-    with open(os.path.join(SCHEMA_DIR, f"{name}.schema.json")) as f:
+    with open(os.path.join(SCHEMA_DIR, f"{name}.schema.json"), encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -605,7 +605,7 @@ def read_sidecars(paths: list[str] | None = None) -> tuple[list[tuple[str, dict]
         # A leading HTML comment is dropped first so this works unchanged on a draft,
         # which carries the `<!-- DRAFT -->` banner: `--accept` has to be able to run
         # every check on the file it is about to promote, not on the promoted copy.
-        text = re.sub(r"\A\s*<!--.*?-->\s*", "", open(path).read(), flags=re.S)
+        text = re.sub(r"\A\s*<!--.*?-->\s*", "", open(path, encoding="utf-8").read(), flags=re.S)
         m = re.match(r"^---\n(.*?)\n---\n?", text, re.S)
         if not m:
             errs.append(f"{name}: no YAML front matter delimited by ---")
@@ -1435,7 +1435,7 @@ def paper_reports_figures(slug: str | None) -> bool:
         # No text to judge by. The checks that need the fulltext already say so, and
         # guessing here would either excuse every page or flag every page.
         return True
-    have = {f for f in figures_in(open(path).read())
+    have = {f for f in figures_in(open(path, encoding="utf-8").read())
             if len(f) > 1 and not re.fullmatch(r"(?:19|20)\d\d", f)}
     return len(have) >= PAPER_FIGURES_FLOOR
 
@@ -1591,7 +1591,7 @@ def check_claim_numbers(entries: list[tuple[str, dict]]) -> tuple[list[str], lis
         if not os.path.exists(path):
             skipped.append(name)
             continue
-        with open(path, errors="replace") as fh:
+        with open(path, errors="replace", encoding="utf-8") as fh:
             text = deline(fh.read())
         have, vals = figures_in(text), values_in(text)
         for c in (fm.get("claims") or []):
@@ -1630,7 +1630,7 @@ def check_claim_evidence(entries: list[tuple[str, dict]]) -> tuple[list[str], li
         if not os.path.exists(path):
             skipped.append(name)
             continue
-        with open(path, errors="replace") as fh:
+        with open(path, errors="replace", encoding="utf-8") as fh:
             text = deline(fh.read())
         for c in (fm.get("claims") or []):
             if not isinstance(c, dict):
@@ -1704,11 +1704,11 @@ def check_task_provenance() -> list[str]:
     """
     errs = []
     for path in sorted(glob.glob(os.path.join(ROOT, "tasks", "*.md"))):
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             head = [l for l in f.read().split("\n")[:16]
                     if not l.startswith((">", "<!--"))]
         named = re.findall(r"`python ((?:scripts/)?[\w./]+\.py)[^`]*`", "\n".join(head))
-        name = os.path.relpath(path, ROOT)
+        name = os.path.relpath(path, ROOT).replace(os.sep, "/")
         if not named:
             errs.append(f"{name}: nothing in its opening lines names the command that "
                         f"writes it, so a reader cannot tell it is generated -- and "
@@ -1759,13 +1759,13 @@ def check_doc_counts(papers: list[dict], repos: list[dict], fix: bool = False) -
                         f"(scripts/validate.py DOC_COUNTS)")
             continue
         want = template.format(**counts)
-        text = open(path).read()
+        text = open(path, encoding="utf-8").read()
         if want in text:
             continue
         if fix and not note:
             fixed, n = count_pattern(template).subn(want, text)
             if n:
-                with open(path, "w") as f:
+                with open(path, "w", encoding="utf-8") as f:
                     f.write(fixed)
                 print(f"  {fname}: updated {n} sentence"
                       f"{'s' * (n != 1)} to {want!r}")

@@ -22,6 +22,25 @@ BUILD = os.path.join(ROOT, "build")
 # Committed, unlike BUILD: these are the payloads a human works through over days,
 # so they have to survive a clean checkout and be readable on the web.
 TASKS = os.path.join(ROOT, "tasks")
+
+
+def use_utf8_stdio() -> None:
+    """Re-encode stdout and stderr as UTF-8, and have child Pythons do the same.
+
+    On Windows a redirected stream -- a log file, a pipe, a step run by
+    update.py -- is encoded with the locale's codepage (cp1252), so the first
+    non-Latin-1 character in a title raised UnicodeEncodeError. Called on import,
+    because every script imports this module and none should have to remember it.
+    """
+    import sys
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="backslashreplace")
+    os.environ.setdefault("PYTHONUTF8", "1")
+
+
+use_utf8_stdio()
 # arXiv's API answers Atom, and every caller here needs both prefixes: `ar:` carries
 # journal_ref and doi, which is most of what a run wants from arXiv.
 ARXIV_NS = {"a": "http://www.w3.org/2005/Atom", "ar": "http://arxiv.org/schemas/atom"}
@@ -38,7 +57,7 @@ def load_config(path: str | None = None) -> dict:
     That one field only. A general env-overrides-config mechanism would invite putting a
     secret in `config.yaml` and overriding it there.
     """
-    with open(path or os.path.join(ROOT, "config.yaml")) as f:
+    with open(path or os.path.join(ROOT, "config.yaml"), encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
     if (mode := os.environ.get("PAPER_GEO_LLM_MODE", "").strip()) in ("skill", "api"):
         cfg.setdefault("llm", {})["mode"] = mode
@@ -60,7 +79,7 @@ def rules_block(doc: str) -> str:
     """
     path = os.path.join(ROOT, doc)
     try:
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             text = f.read()
     except OSError as e:
         raise RuntimeError(f"{doc} is the source of a model prompt and is unreadable: {e}")
@@ -121,7 +140,7 @@ def source_key(url: str) -> str:
 
 def _health() -> dict:
     try:
-        with open(HEALTH) as f:
+        with open(HEALTH, encoding="utf-8") as f:
             return json.load(f)
     except (OSError, json.JSONDecodeError):
         return {}
@@ -1199,7 +1218,7 @@ def slugify(s: str, maxlen: int = 60) -> str:
 def write_yaml(path: str, obj) -> None:
     if d := os.path.dirname(path):
         os.makedirs(d, exist_ok=True)
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         yaml.safe_dump(obj, f, sort_keys=False, allow_unicode=True, width=100)
 
 
@@ -1214,7 +1233,7 @@ def write_json(path: str, obj, **kw) -> None:
         os.makedirs(d, exist_ok=True)
     tmp = f"{path}.tmp"
     try:
-        with open(tmp, "w") as f:
+        with open(tmp, "w", encoding="utf-8") as f:
             json.dump(obj, f, **kw)
         os.replace(tmp, path)
     finally:
@@ -1237,11 +1256,11 @@ def write_task(path: str, body: "list[str] | str") -> str:
     """
     head = ""
     if os.path.exists(path):
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             old = f.read()
         if old.startswith(DECLINE_STAMP):
             head = old.split("\n\n", 1)[0] + "\n\n"
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(head + (body if isinstance(body, str) else "\n".join(body) + "\n"))
     return path
 
@@ -1249,7 +1268,7 @@ def write_task(path: str, body: "list[str] | str") -> str:
 def read_yaml(path: str, default=None):
     if not os.path.exists(path):
         return default
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 

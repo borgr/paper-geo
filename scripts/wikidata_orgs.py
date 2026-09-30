@@ -318,7 +318,7 @@ def main() -> int:
     qs = batch(items, state, day)
     qs_path = os.path.join(TASKS, "wikidata_orgs.qs")
     if qs:
-        with open(qs_path, "w") as f:
+        with open(qs_path, "w", encoding="utf-8") as f:
             f.write("\n".join(qs) + "\n")
     elif os.path.exists(qs_path):
         os.remove(qs_path)

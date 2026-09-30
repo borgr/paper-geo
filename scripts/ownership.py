@@ -231,7 +231,7 @@ def main() -> None:
 
     if args.manifest:
         path_m = write_manifest(cfg, papers)
-        n = len(json.load(open(path_m))["claims"])
+        n = len(json.load(open(path_m, encoding="utf-8"))["claims"])
         print(f"\nwrote {path_m}: {n} claim(s)")
         if not n:
             # Not a failure, and worth a sentence rather than a silent empty file: with

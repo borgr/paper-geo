@@ -283,7 +283,7 @@ def arxiv_titles() -> dict[str, str] | None:
     every title variant into `stale_side`'s reassuring outcome.
     """
     try:
-        with open(os.path.join(BUILD, "title_diffs.json")) as f:
+        with open(os.path.join(BUILD, "title_diffs.json"), encoding="utf-8") as f:
             return {d["slug"]: d["arxiv_says"] for d in json.load(f)
                     if d.get("slug") and d.get("arxiv_says")}
     except (OSError, ValueError, AttributeError, TypeError):
@@ -887,7 +887,7 @@ def _corpus_index(papers: list) -> tuple[dict, dict, dict]:
     mine = index(p.get("title") for p in papers)
     slug = {norm_title(p.get("title")): p.get("slug") for p in papers}
     try:
-        with open(os.path.join(BUILD, "not_mine.json")) as f:
+        with open(os.path.join(BUILD, "not_mine.json"), encoding="utf-8") as f:
             dropped = json.load(f)
     except (OSError, ValueError):
         dropped = []
@@ -1032,7 +1032,7 @@ def _say_absent_from_bib(missing: list, cfg: dict, attributed: list | None,
                f"{retry} of them -- a re-run may resolve those" if retry else
                "none of them known to any index")
         print(f"  {len(real)} Scholar paper(s) absent from the bibliography, {how} "
-              f"-- {os.path.relpath(path, ROOT)}:", file=sys.stderr)
+              f"-- {os.path.relpath(path, ROOT).replace(os.sep, "/")}:", file=sys.stderr)
         if not quiet:
             for r in real[:20]:
                 print(f"    [{r['citations']:>5} cites] {r['year'] or '????'} "

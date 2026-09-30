@@ -230,7 +230,7 @@ def ingest(repos: list[dict]) -> list[str]:
     path = os.path.join(BUILD, "llm_tasks.json")
     if not os.path.exists(path):
         sys.exit(f"no {path} -- run without --ingest first")
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         answers = {t["repo"]: t.get("proposal") for t in json.load(f)["tasks"]}
     by_name = {r["repo"]: r for r in repos}
     done = []

@@ -131,7 +131,7 @@ def main() -> None:
         block = render(p, read_sidecar(p["slug"]), cfg)
         if a.phase == "propose":
             path = os.path.join(OUT, repo.replace("/", "__") + ".md")
-            with open(path, "w") as f:
+            with open(path, "w", encoding="utf-8") as f:
                 f.write(block + "\n")
             print(f"  {repo} -> {path}")
             n += 1

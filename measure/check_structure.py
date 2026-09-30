@@ -79,14 +79,14 @@ def pages(results) -> None:
     # abstract, no highwire tags and almost no words on purpose. Counted separately
     # rather than skipped silently, so a build that starts emitting hundreds of them
     # is visible instead of just quietly shrinking the checked set.
-    stubs = [f for f in files if 'http-equiv="refresh"' in open(f).read()]
+    stubs = [f for f in files if 'http-equiv="refresh"' in open(f, encoding="utf-8").read()]
     files = [f for f in files if f not in set(stubs)]
     rec(results, "site built", bool(files), f"{len(files)} paper pages"
         + (f" (+{len(stubs)} redirects from retired URLs)" if stubs else ""))
 
     bad_json, no_hw, no_abs, needs_js, no_canon = [], [], [], [], []
     for f in files:
-        h = open(f).read()
+        h = open(f, encoding="utf-8").read()
         for m in re.findall(r'<script type="application/ld\+json">(.*?)</script>', h, re.S):
             try:
                 json.loads(m.replace("<\\/", "</"))
@@ -119,7 +119,7 @@ def pages(results) -> None:
     print(f"  {len(no_abs)}/{len(files)}  pages with neither abstract nor one-liner")
 
     robots = os.path.join(SITE, "robots.txt")
-    txt = open(robots).read() if os.path.exists(robots) else ""
+    txt = open(robots, encoding="utf-8").read() if os.path.exists(robots) else ""
     missing = [b for b in AI_BOTS if b not in txt]
     rec(results, "robots.txt names every AI crawler", not missing, ", ".join(missing))
     rec(results, "sitemap.xml present", os.path.exists(os.path.join(SITE, "sitemap.xml")))
@@ -138,7 +138,7 @@ def claim_consistency(papers, results) -> None:
     drift = []
     for path in glob.glob(os.path.join(DATA, "sidecars", "*.md")):
         slug = os.path.basename(path)[:-3]
-        m = re.match(r"^---\n(.*?)\n---", open(path).read(), re.S)
+        m = re.match(r"^---\n(.*?)\n---", open(path, encoding="utf-8").read(), re.S)
         if not m:
             continue
         one = " ".join((yaml.safe_load(m.group(1)) or {}).get("one_liner", "").split())
@@ -147,11 +147,11 @@ def claim_consistency(papers, results) -> None:
         page = os.path.join(SITE, "papers", slug, "index.html")
         if os.path.exists(page):
             import html as _h
-            if _h.escape(one) not in open(page).read():
+            if _h.escape(one) not in open(page, encoding="utf-8").read():
                 drift.append(f"{slug}: page")
         blk = os.path.join(BUILD, "readme_blocks")
         for f in glob.glob(os.path.join(blk, "*.md")):
-            t = open(f).read()
+            t = open(f, encoding="utf-8").read()
             if slug.split("-")[0] in t and one not in t:
                 drift.append(f"{slug}: {os.path.basename(f)}")
     rec(results, "claim sentence identical across surfaces", not drift,

@@ -407,7 +407,7 @@ def stamp_payloads(off: dict[str, str], later: dict[str, dict]) -> list[str]:
         # blockquote at the top of one of those is a line the far end tries to parse.
         if not path.endswith(".md"):
             continue
-        with open(full) as f:
+        with open(full, encoding="utf-8") as f:
             body = f.read()
         if body.startswith(DECLINE_STAMP):
             body = body.split("\n\n", 1)[-1]
@@ -424,7 +424,7 @@ def stamp_payloads(off: dict[str, str], later: dict[str, dict]) -> list[str]:
                     f"on purpose in [`data/declines.yaml`](../data/declines.yaml), not "
                     f"declined — this is real work, just not before the rest.",
                     "> It is at the bottom of `WORKLIST.md` under *Deferred*."]
-        with open(full, "w") as f:
+        with open(full, "w", encoding="utf-8") as f:
             f.write("\n".join(head) + "\n\n" + body)
         done.append(path)
     return sorted(done)
@@ -715,7 +715,7 @@ def built(name: str) -> dict:
     run removes its whole section from a page whose first line says an absent section is done.
     """
     try:
-        with open(os.path.join(ROOT, "build", name)) as f:
+        with open(os.path.join(ROOT, "build", name), encoding="utf-8") as f:
             return json.load(f)
     except (OSError, ValueError) as e:
         why = "not there" if isinstance(e, FileNotFoundError) else "there and unreadable"
@@ -813,7 +813,7 @@ def step_worklist(cfg, args) -> None:
             print("  built without: " + "; ".join(UNBUILT))
 
     out = os.path.join(ROOT, "WORKLIST.md")
-    with open(out, "w") as f:
+    with open(out, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
     print(f"\nwrote {out}")
     print("\n".join(l for l in lines if l.startswith("## ")))
@@ -853,7 +853,7 @@ def closing(args) -> None:
         # waiting list and the deferred pile -- so the first number of the run was both
         # the wrong unit and inflated by the sections promising the least.
         n = 0
-        with open(worklist) as f:
+        with open(worklist, encoding="utf-8") as f:
             for l in f:
                 if l.startswith("## Deferred"):
                     break
@@ -871,7 +871,7 @@ def closing(args) -> None:
                      f"you run `--accept <slug>`")
     backlog = os.path.join(ROOT, "BACKLOG.md")
     if os.path.exists(backlog):
-        with open(backlog) as f:
+        with open(backlog, encoding="utf-8") as f:
             n = sum(1 for l in f if l.lstrip().startswith("- [ ]"))
         # The one list here that nothing can re-derive, so the one that can be
         # forgotten. Counted rather than quoted: the tasks are in the file, and a

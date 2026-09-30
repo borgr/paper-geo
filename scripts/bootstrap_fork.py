@@ -68,14 +68,14 @@ def header(text: str) -> str:
 def rewrite(path: str, empties: dict) -> str:
     """Empty a decision file, keeping its comments and its documentation strings."""
     import yaml
-    text = open(path).read()
+    text = open(path, encoding="utf-8").read()
     doc = yaml.safe_load(text) or {}
     keep = {k: v for k, v in doc.items() if isinstance(v, str)}   # note:, _comment:
     keep.update({k: empties[k] for k in doc if k in empties})
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(header(text))
         f.write(yaml.safe_dump(keep, sort_keys=False, allow_unicode=True, width=100))
-    return f"emptied {os.path.relpath(path, ROOT)}"
+    return f"emptied {os.path.relpath(path, ROOT).replace(os.sep, "/")}"
 
 
 def check() -> list[str]:
@@ -95,7 +95,7 @@ def check() -> list[str]:
         needles.add(str(ids["github"]))
     needles = {n for n in needles if len(str(n)) > 3}
     hits = []
-    for i, line in enumerate(open(os.path.join(ROOT, "config.yaml")), 1):
+    for i, line in enumerate(open(os.path.join(ROOT, "config.yaml"), encoding="utf-8"), 1):
         if line.lstrip().startswith("#"):
             continue                      # a comment naming the author is documentation
         for n in sorted(needles, key=len, reverse=True):
@@ -124,7 +124,7 @@ def main() -> None:
             p = os.path.join(DATA, name)
             if os.path.exists(p):
                 if args.yes:
-                    open(p, "w").write(header(open(p).read()))
+                    open(p, "w", encoding="utf-8").write(header(open(p, encoding="utf-8").read()))
                 acts.append(f"{'wiped' if args.yes else 'would wipe'} data/{name}")
         for name in DERIVED:
             p = os.path.join(DATA, name)

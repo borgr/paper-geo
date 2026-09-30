@@ -285,7 +285,7 @@ def phase_propose(cfg) -> None:
         print(f"  no longer present (kept in file): {', '.join(gone)}")
     print(f"  reviewed (frozen):  {sum(1 for r in proposal if r.get('reviewed'))}")
     zpath, nz = zenodo_candidates(cfg)
-    print(f"  artifacts with no citation route: {nz} -> {os.path.relpath(zpath, ROOT)}")
+    print(f"  artifacts with no citation route: {nz} -> {os.path.relpath(zpath, ROOT).replace(os.sep, "/")}")
     # Reviewed and skipped rows are excluded, or the count could never reach zero. A settled
     # "nothing to say" -- the three early-exploratory repos, now `skip: true` with the reason
     # in `notes` -- reported as an open item forever is how a number stops being read.
@@ -408,7 +408,7 @@ def phase_apply(cfg, yes: bool) -> None:
                     path = os.path.join(BUILD, "citation_cff",
                                         f"{r['paper_slug']}.cff")
                     os.makedirs(os.path.dirname(path), exist_ok=True)
-                    with open(path, "w") as f:
+                    with open(path, "w", encoding="utf-8") as f:
                         f.write(body)
                     # The Contents API refuses a PUT over an existing file without its
                     # blob sha ("\"sha\" wasn't supplied", 422). Every write after the

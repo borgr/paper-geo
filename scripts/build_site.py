@@ -66,7 +66,7 @@ def read_sidecar(slug: str) -> dict:
     if not os.path.exists(path):
         return {}
     import yaml
-    text = open(path).read()
+    text = open(path, encoding="utf-8").read()
     m = re.match(r"^---\n(.*?)\n---\n?(.*)$", text, re.S)
     if not m:
         return {}
@@ -747,7 +747,7 @@ def build(cfg) -> dict:
     if os.path.isdir(OUT):
         shutil.rmtree(OUT)
     os.makedirs(OUT, exist_ok=True)
-    open(os.path.join(OUT, ".nojekyll"), "w").close()
+    open(os.path.join(OUT, ".nojekyll"), "w", encoding="utf-8").close()
 
     stats = {"pages": 0, "with_sidecar": 0, "peer_owned": 0, "redirects": 0}
     urls = [site + "/", f"{site}/papers/", f"{site}/guides/"]
@@ -788,9 +788,9 @@ def _write_paper_pages(papers: list[dict], cfg, site: str,
             stats["with_sidecar"] += 1
         d = os.path.join(OUT, "papers", slug)
         os.makedirs(d, exist_ok=True)
-        with open(os.path.join(d, "index.html"), "w") as f:
+        with open(os.path.join(d, "index.html"), "w", encoding="utf-8") as f:
             f.write(paper_page(p, sc, cfg))
-        with open(os.path.join(d, "llms.txt"), "w") as f:
+        with open(os.path.join(d, "llms.txt"), "w", encoding="utf-8") as f:
             f.write(paper_llms_txt(p, sc, cfg))
         stats["pages"] += 1
         urls.append(f"{site}/papers/{slug}/")
@@ -821,14 +821,14 @@ def _write_redirect_stubs(papers: list[dict], site: str, stats: dict) -> None:
         d = os.path.join(OUT, "papers", old)
         os.makedirs(d, exist_ok=True)
         surv = by_slug.get(new) or {}
-        with open(os.path.join(d, "index.html"), "w") as f:
+        with open(os.path.join(d, "index.html"), "w", encoding="utf-8") as f:
             f.write(redirect_stub(site, new, title_of(surv) or "this paper"))
         stats["redirects"] += 1
 
 
 def _write_paper_index(ident: dict, site: str, rows: list, stats: dict) -> None:
     """`/papers/` -- every paper this site publishes, most cited first."""
-    with open(os.path.join(OUT, "papers", "index.html"), "w") as f:
+    with open(os.path.join(OUT, "papers", "index.html"), "w", encoding="utf-8") as f:
         f.write(page(f"Papers — {ident['name']}",
                      f'<h1>Papers</h1>\n<p class="meta">All {stats["pages"] + stats["peer_owned"]} '
                      f'papers, most cited first. <a href="/">The same list by year</a> · '
@@ -850,7 +850,7 @@ def _write_guides(guides: list[dict], ident: dict, site: str) -> None:
     g += ["</ul>", f'<footer><a href="/">{E(ident["name"])}</a><br>'
                     f'{human_note(ident, box=False)}</footer>']
     os.makedirs(os.path.join(OUT, "guides"), exist_ok=True)
-    with open(os.path.join(OUT, "guides", "index.html"), "w") as f:
+    with open(os.path.join(OUT, "guides", "index.html"), "w", encoding="utf-8") as f:
         f.write(page(f"Guides — {ident['name']}", "\n".join(g),
                      canonical=f"{site}/guides/"))
 
@@ -893,7 +893,7 @@ def _write_home(papers: list[dict], guides: list[dict], cfg, site: str, stats: d
                 f'<a href="/papers/">The same list by citation count</a> · '
                 f'<a href="/llms.txt">the same list with a one-line summary of each</a></p>')
     home += year_sections(papers)
-    with open(os.path.join(OUT, "index.html"), "w") as f:
+    with open(os.path.join(OUT, "index.html"), "w", encoding="utf-8") as f:
         f.write(page(ident["name"], "\n".join(home),
                      head=jsonld(person_jsonld(cfg)) + verification_meta(cfg),
                      canonical=site + "/"))
@@ -901,7 +901,7 @@ def _write_home(papers: list[dict], guides: list[dict], cfg, site: str, stats: d
 
 def _write_site_llms(ident: dict, guides: list[dict], llms: list, questions: list) -> None:
     """`/llms.txt` -- the paper list, the question index and the guides, in plain text."""
-    with open(os.path.join(OUT, "llms.txt"), "w") as f:
+    with open(os.path.join(OUT, "llms.txt"), "w", encoding="utf-8") as f:
         f.write(f"""# {ident['name']}
 
 {ident['job_title']} at {', '.join(org_name(a) for a in ident['affiliations'])}.
@@ -927,7 +927,7 @@ that answers it. The answer and the conditions it holds under are on that page.
 
 def _write_sitemap(urls: list[str]) -> None:
     """`/sitemap.xml` -- the canonical URLs, and nothing that redirects."""
-    with open(os.path.join(OUT, "sitemap.xml"), "w") as f:
+    with open(os.path.join(OUT, "sitemap.xml"), "w", encoding="utf-8") as f:
         f.write('<?xml version="1.0" encoding="UTF-8"?>\n'
                 '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
                 + "".join(f"  <url><loc>{E(u)}</loc></url>\n" for u in urls)
@@ -936,7 +936,7 @@ def _write_sitemap(urls: list[str]) -> None:
 
 def _write_robots(site: str) -> None:
     """`/robots.txt` -- explicitly welcoming the AI crawlers."""
-    with open(os.path.join(OUT, "robots.txt"), "w") as f:
+    with open(os.path.join(OUT, "robots.txt"), "w", encoding="utf-8") as f:
         f.write("User-agent: *\nAllow: /\n\n"
                 "# AI crawlers are welcome; blocking them removes this site from the\n"
                 "# retrieval path of ChatGPT, Claude, Perplexity and Google AI Mode.\n"
@@ -961,7 +961,7 @@ def copy_static() -> int:
         return 0
     n = 0
     for root, _, files in os.walk(STATIC):
-        rel = os.path.relpath(root, STATIC)
+        rel = os.path.relpath(root, STATIC).replace(os.sep, "/")
         dst_dir = OUT if rel == "." else os.path.join(OUT, rel)
         os.makedirs(dst_dir, exist_ok=True)
         for name in files:
@@ -987,7 +987,7 @@ def write_indexnow_key(cfg) -> None:
     key = ((cfg.get("site") or {}).get("indexnow_key") or "").strip()
     if not key:
         return
-    with open(os.path.join(OUT, f"{key}.txt"), "w") as f:
+    with open(os.path.join(OUT, f"{key}.txt"), "w", encoding="utf-8") as f:
         f.write(key + "\n")
 
 
@@ -1008,7 +1008,7 @@ def submit_indexnow(cfg) -> None:
         return
     base = site_cfg["base_url"].rstrip("/")
     sitemap = os.path.join(OUT, "sitemap.xml")
-    urls = re.findall(r"<loc>([^<]+)</loc>", open(sitemap).read()) if \
+    urls = re.findall(r"<loc>([^<]+)</loc>", open(sitemap, encoding="utf-8").read()) if \
         os.path.exists(sitemap) else []
     if not urls:
         return

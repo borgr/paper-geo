@@ -410,7 +410,7 @@ def dblp_pages(look: dict) -> dict[str, list[str]]:
         return {}
     path = os.path.join(BUILD, DBLP_CACHE)
     try:
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             cache = json.load(f)
     except (OSError, ValueError):
         cache = {}
@@ -624,7 +624,7 @@ def lookups(names: list[str], papers: list[dict], refresh: bool) -> dict:
     """
     path = os.path.join(BUILD, CACHE)
     try:
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             cache = json.load(f)
     except (OSError, ValueError):
         cache = {}
@@ -945,7 +945,7 @@ def _coauth_settled(rows_: list[dict], qs_path: str | None) -> list[str]:
     L += [fill("`python scripts/wikidata_coauthors.py --apply` writes them. Each "
                "author becomes *author* with the printed name kept as an *object "
                "named as* qualifier, and the string it replaces is dropped."
-               + (f" [`{os.path.relpath(qs_path)}`]({os.path.relpath(qs_path)}) is "
+               + (f" [`{os.path.relpath(qs_path).replace(os.sep, "/")}`]({os.path.relpath(qs_path).replace(os.sep, "/")}) is "
                   "the same batch for <https://quickstatements.toolforge.org/#/batch>, "
                   "for a machine with no bot password." if qs_path else "")), ""]
     for r in rows_:
@@ -1050,7 +1050,7 @@ def main() -> int:
     qs = batch(rows_)
     qs_path = os.path.join(TASKS, "wikidata_coauthors.qs")
     if qs:
-        with open(qs_path, "w") as f:
+        with open(qs_path, "w", encoding="utf-8") as f:
             f.write("\n".join(qs) + "\n")
     elif os.path.exists(qs_path):
         # A batch of edits keyed to statements that may already be gone. Pasting a stale
@@ -1079,8 +1079,8 @@ def main() -> int:
               f"{out['papers_left']} papers")
         print(f"venues: {out['venues']} resolved, {out['venues_ask']} ambiguous; "
               f"{out['fills']} language and full-text statements")
-        print(f"wrote {os.path.relpath(page)}"
-              + (f" and {os.path.relpath(qs_path)}" if qs else ""))
+        print(f"wrote {os.path.relpath(page).replace(os.sep, "/")}"
+              + (f" and {os.path.relpath(qs_path).replace(os.sep, "/")}" if qs else ""))
     if not args.apply or not qs:
         return 0
     s = logged_in()

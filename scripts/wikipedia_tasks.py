@@ -205,7 +205,7 @@ def sidecar_terms() -> dict[str, list[str]]:
     """
     out: dict[str, list[str]] = {}
     for path in sorted(glob.glob(os.path.join(DATA, "sidecars", "*.md"))):
-        m = re.match(r"^---\n(.*?)\n---", open(path).read(), re.S)
+        m = re.match(r"^---\n(.*?)\n---", open(path, encoding="utf-8").read(), re.S)
         fm = yaml.safe_load(m.group(1)) if m else None
         if not fm or not fm.get("coined"):
             continue
@@ -378,7 +378,7 @@ def main() -> None:
         # Every list above is empty because the API did not answer, not because there is
         # nothing to check, and the worklist section is built from the state file.
         print(f"wikipedia did not answer ({_refused}), so "
-              f"{os.path.relpath(OUT, ROOT)} and {os.path.relpath(STATE, ROOT)} are left "
+              f"{os.path.relpath(OUT, ROOT).replace(os.sep, "/")} and {os.path.relpath(STATE, ROOT).replace(os.sep, "/")} are left "
               f"as the last run read them", file=sys.stderr)
         raise SystemExit(1)
 
@@ -386,7 +386,7 @@ def main() -> None:
     os.makedirs(TASKS, exist_ok=True)
     write_task(OUT, _preamble() + _named_section(mine, surname) + _coined_section(checks)
                + _fields_section(rows) + _absent_section(absent))
-    print(f"wrote {os.path.relpath(OUT, ROOT)}: {len(mine)} article(s) naming you, "
+    print(f"wrote {os.path.relpath(OUT, ROOT).replace(os.sep, "/")}: {len(mine)} article(s) naming you, "
           f"{len(checks)} term(s) to check, {len(absent)} left alone")
 
 

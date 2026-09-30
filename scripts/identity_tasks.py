@@ -133,7 +133,7 @@ def orcid_files(cfg, papers) -> tuple[str, str, int]:
                   f"duplicates later. Import them last, or not at all. ----"]
                + [t[1] for t in without])
     bib = os.path.join(TASKS, "orcid_import.bib")
-    with open(bib, "w") as f:
+    with open(bib, "w", encoding="utf-8") as f:
         f.write("\n\n".join(entries) + "\n")
 
     dois, seen = [], set()
@@ -143,7 +143,7 @@ def orcid_files(cfg, papers) -> tuple[str, str, int]:
             seen.add(d.lower())
             dois.append(f"{d}\t{title_of(p)}")
     doi_path = os.path.join(TASKS, "orcid_dois.txt")
-    with open(doi_path, "w") as f:
+    with open(doi_path, "w", encoding="utf-8") as f:
         f.write("# The bulk route is orcid_import.bib -- one upload instead of this\n"
                 "# list one form at a time. Keep this for spot-fixing single works.\n"
                 + "\n".join(dois) + "\n")
@@ -208,7 +208,7 @@ def wikidata_qs(cfg, papers) -> str:
         if v and pid not in (P["orcid"], P["website"]):
             add(pid, f'"{str(v).rsplit("/", 1)[-1] if pid == P["openalex"] else v}"')
     path = os.path.join(TASKS, "wikidata.qs")
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(L) + "\n")
     return path
 
@@ -632,7 +632,7 @@ SUBS_HEADER = """\
 
 
 def save_submissions(path: str, subs: dict) -> None:
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(SUBS_HEADER)
         yaml.safe_dump(dict(sorted(subs.items())), f, sort_keys=False, default_style="'")
 

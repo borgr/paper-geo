@@ -86,13 +86,13 @@ STAMP = re.compile(r"^Stamp: spec=(\S+) checks=(\S+) body=(\S+)$", re.M)
 
 def stamp_of(path: str) -> tuple[str, str, str] | None:
     """(spec, checks, body) as recorded when this draft was written, or None if unstamped."""
-    m = STAMP.search(open(path).read())
+    m = STAMP.search(open(path, encoding="utf-8").read())
     return (m.group(1), m.group(2), m.group(3)) if m else None
 
 
 def body_of(path: str) -> str:
     """The draft's front matter verbatim -- everything a person would edit."""
-    m = re.search(r"^---\n(.*?)^---\n", open(path).read(), re.S | re.M)
+    m = re.search(r"^---\n(.*?)^---\n", open(path, encoding="utf-8").read(), re.S | re.M)
     return m.group(1) if m else ""
 
 
@@ -149,7 +149,7 @@ def stale(path: str, spec: str) -> str | None:
 # --------------------------------------------------------------- queue / write
 
 def schema() -> dict:
-    with open(os.path.join(ROOT, "schema", "sidecar.schema.json")) as f:
+    with open(os.path.join(ROOT, "schema", "sidecar.schema.json"), encoding="utf-8") as f:
         s = json.load(f)
     # The same file the validator uses, minus the two meta keys the Messages API
     # rejects. One definition rather than two that drift.
@@ -276,15 +276,15 @@ def write_draft(slug: str, sidecar: dict, source: str) -> str:
     banner = _BANNER_REPLACE.format(slug=slug) if live else ""
     promote = (_PROMOTE_REPLACE if live else _PROMOTE_NEW).format(slug=slug)
     stamp = f"Stamp: spec={spec_sha()} checks=? body={sha(body)}"
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(HEADER.format(source=source, banner=banner, promote=promote,
                               stamp=stamp) + "---\n" + body + "---\n")
     # The checks have to run against the written file, so the stamp is finished in
     # place. Recording the verdict is what makes "the rules moved under this draft"
     # distinguishable later from "the model wrote a draft that never passed".
     n = sum(len(x) for x in validate_draft(path, note=False))
-    text = open(path).read().replace("checks=?", "checks=pass" if not n else f"checks={n}")
-    with open(path, "w") as f:
+    text = open(path, encoding="utf-8").read().replace("checks=?", "checks=pass" if not n else f"checks={n}")
+    with open(path, "w", encoding="utf-8") as f:
         f.write(text)
     return path
 
@@ -315,14 +315,14 @@ def restamp(slugs: list[str] | None = None) -> tuple[list[str], list[tuple[str, 
             why = f"{n} finding(s) against the current checks"
             refused.append((slug, why if stale(f, spec) else f"{why} -- not stale, yours"))
             continue
-        text = open(f).read()
+        text = open(f, encoding="utf-8").read()
         want = f"Stamp: spec={spec} checks=pass body={sha(body_of(f))}"
         if STAMP.search(text):
             text = STAMP.sub(want, text, count=1)
         else:
             refused.append((slug, "no Stamp line to rewrite -- re-draft it instead"))
             continue
-        with open(f, "w") as fh:
+        with open(f, "w", encoding="utf-8") as fh:
             fh.write(text)
         done.append(slug)
     return done, refused
@@ -335,7 +335,7 @@ def read_front_matter(path: str) -> tuple[dict | None, str]:
     whose YAML will not parse -- two states with different remedies, since the first is a
     file nothing has drafted and the second is one somebody edited by hand.
     """
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         m = re.search(r"^---\n(.*?)^---\n", f.read(), re.S | re.M)
     if not m:
         return None, "no YAML front matter"

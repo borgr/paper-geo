@@ -288,7 +288,7 @@ def merge_cache(path: str, cache: dict, asked: set[str]) -> None:
     # does -- may have cached papers this one never asked about, and a plain overwrite
     # drops them, which costs a day of credits to win back.
     try:
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             merged = json.load(f)
     except (OSError, ValueError):
         merged = {}
@@ -332,7 +332,7 @@ def split_records(papers, mailto, limit=None) -> dict:
     """
     cache_path = os.path.join(BUILD, "openalex_splits.json")
     try:
-        with open(cache_path) as f:
+        with open(cache_path, encoding="utf-8") as f:
             cache = json.load(f)
     except (OSError, ValueError):
         cache = {}
@@ -538,7 +538,7 @@ def main() -> int:
     papers = read_papers()
     mailto = (cfg.get("identity") or {}).get("email")
     try:
-        with open(os.path.join(BUILD, "scholar_diff.json")) as f:
+        with open(os.path.join(BUILD, "scholar_diff.json"), encoding="utf-8") as f:
             diff = json.load(f)
     except (OSError, ValueError):
         diff = {}
@@ -559,7 +559,7 @@ def main() -> int:
 
     print(summary_line(state))
     if not args.quiet:
-        print(f"  wrote {os.path.relpath(path, ROOT)}")
+        print(f"  wrote {os.path.relpath(path, ROOT).replace(os.sep, "/")}")
     return 0
 
 
