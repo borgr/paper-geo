@@ -11,6 +11,7 @@ Output:
                                 meta, visible abstract, Q&A, claims, citation
     papers/<slug>/llms.txt      the sidecar as plain text
     guides/index.html           the guide repos -- question-shaped content
+    tools/index.html            the tool repos -- software and agent skills
     llms.txt                    site index
     sitemap.xml
     paper-geo.json              ownership manifest for collaborators
@@ -767,20 +768,24 @@ def build(cfg) -> dict:
     ident = cfg["identity"]
     site = cfg["site"]["base_url"].rstrip("/")
     guides = [r for r in repos if r.get("kind") == "guide" and not r.get("skip")]
+    tools = [r for r in repos if r.get("kind") == "tool" and not r.get("skip")]
     if os.path.isdir(OUT):
         shutil.rmtree(OUT)
     os.makedirs(OUT, exist_ok=True)
     open(os.path.join(OUT, ".nojekyll"), "w", encoding="utf-8").close()
 
     stats = {"pages": 0, "with_sidecar": 0, "peer_owned": 0, "redirects": 0}
-    urls = [site + "/", f"{site}/papers/", f"{site}/guides/"]
+    urls = [site + "/", f"{site}/papers/", f"{site}/guides/", f"{site}/tools/"]
     rows, llms, questions, paper_urls = _write_paper_pages(papers, cfg, site, stats)
     urls += paper_urls
     _write_redirect_stubs(papers, site, stats)
     _write_paper_index(ident, site, rows, stats)
-    _write_guides(guides, cfg, site)
-    _write_home(papers, guides, cfg, site, stats)
-    _write_site_llms(ident, guides, llms, questions)
+    _write_repo_list("guides", "Guides", "Practical guides, each answering one question.",
+                     guides, cfg, site)
+    _write_repo_list("tools", "Tools", "Software and agent skills, each doing one job.",
+                     tools, cfg, site)
+    _write_home(papers, guides, tools, cfg, site, stats)
+    _write_site_llms(ident, guides, tools, llms, questions)
     _write_sitemap(urls)
     _write_robots(site, subsites(repos, cfg))
     write_indexnow_key(cfg)
@@ -862,27 +867,29 @@ def _write_paper_index(ident: dict, site: str, rows: list, stats: dict) -> None:
                      canonical=f"{site}/papers/"))
 
 
-def _write_guides(guides: list[dict], cfg, site: str) -> None:
-    """`/guides/` -- question-shaped content, and its own page shape."""
+def _write_repo_list(slug: str, heading: str, intro: str, repos: list[dict], cfg,
+                     site: str) -> None:
+    """`/guides/` or `/tools/` -- the repos of one `kind`, each linked to its own site when it
+    has one, so the subsites hang off the hub rather than off GitHub."""
     ident = cfg["identity"]
-    title = f"Guides — {ident['name']}"
-    g = ["<h1>Guides</h1>",
-         "<p>Practical guides, each answering one question.</p>", "<ul>"]
-    for r in sorted(guides, key=lambda r: r["repo"]):
+    title = f"{heading} — {ident['name']}"
+    g = [f"<h1>{E(heading)}</h1>", f"<p>{E(intro)}</p>", "<ul>"]
+    for r in sorted(repos, key=lambda r: r["repo"].lower()):
         u = r.get("homepage") or f"https://github.com/{r['repo']}"
         g.append(f'<li><a href="{E(u)}">{E(r["repo"].split("/")[-1])}</a> — '
                  f'{E(r.get("description") or "")}</li>')
     g += ["</ul>", f'<footer><a href="/">{E(ident["name"])}</a><br>'
                     f'{human_note(ident, box=False)}</footer>']
-    os.makedirs(os.path.join(OUT, "guides"), exist_ok=True)
-    with open(os.path.join(OUT, "guides", "index.html"), "w", encoding="utf-8") as f:
+    os.makedirs(os.path.join(OUT, slug), exist_ok=True)
+    with open(os.path.join(OUT, slug, "index.html"), "w", encoding="utf-8") as f:
         f.write(page(title, "\n".join(g),
                      head=card_meta(cfg, title, (cfg["site"].get("description") or {})
-                                    .get("guides") or "", f"{site}/guides/"),
-                     canonical=f"{site}/guides/"))
+                                    .get(slug) or "", f"{site}/{slug}/"),
+                     canonical=f"{site}/{slug}/"))
 
 
-def _write_home(papers: list[dict], guides: list[dict], cfg, site: str, stats: dict) -> None:
+def _write_home(papers: list[dict], guides: list[dict], tools: list[dict], cfg, site: str,
+                stats: dict) -> None:
     """`/` -- the entity home, which is the canonical URL every registry points at."""
     ident = cfg["identity"]
     home = [f"<h1>{E(ident['name'])}</h1>",
@@ -898,6 +905,7 @@ def _write_home(papers: list[dict], guides: list[dict], cfg, site: str, stats: d
              f'{E(ident["email"])}</a></p>',
              f'<p><a href="/papers/">{stats["pages"]} papers</a> · '
              f'<a href="/guides/">{len(guides)} guides</a> · '
+             f'<a href="/tools/">{len(tools)} tools</a> · '
              + "".join(f'teaching: <a href="{E(c["url"])}">{E(c["name"])}</a> · '
                        for c in cfg["site"].get("teaching") or []) +
              f'<a href="https://github.com/{cfg["ids"]["github"]}">code</a> · '
@@ -930,8 +938,16 @@ def _write_home(papers: list[dict], guides: list[dict], cfg, site: str, stats: d
                      canonical=site + "/"))
 
 
-def _write_site_llms(ident: dict, guides: list[dict], llms: list, questions: list) -> None:
-    """`/llms.txt` -- the paper list, the question index and the guides, in plain text."""
+def _repo_lines(repos: list[dict]) -> str:
+    return "\n".join(f"- [{r['repo'].split('/')[-1]}]"
+                     f"({r.get('homepage') or 'https://github.com/' + r['repo']})"
+                     f" — {r.get('description') or ''}"
+                     for r in sorted(repos, key=lambda r: r["repo"].lower()))
+
+
+def _write_site_llms(ident: dict, guides: list[dict], tools: list[dict], llms: list,
+                     questions: list) -> None:
+    """`/llms.txt` -- the paper list, the question index, the guides and the tools."""
     with open(os.path.join(OUT, "llms.txt"), "w", encoding="utf-8") as f:
         f.write(f"""# {ident['name']}
 
@@ -952,7 +968,10 @@ that answers it. The answer and the conditions it holds under are on that page.
 {chr(10).join(sorted(questions))}
 ''' if questions else ''}
 ## Guides
-{chr(10).join(f"- [{r['repo'].split('/')[-1]}]({r.get('homepage') or 'https://github.com/' + r['repo']}) — {r.get('description') or ''}" for r in sorted(guides, key=lambda r: r['repo']))}
+{_repo_lines(guides)}
+
+## Tools
+{_repo_lines(tools)}
 """)
 
 

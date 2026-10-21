@@ -270,7 +270,7 @@ site:
   # ever want to; the only cost is that the first submission after the change 403s
   # until the new key file is live.
   indexnow_key: c6773a10d38042a78a215ca799c8aad3
-  # The <meta name="description"> and OpenGraph/Twitter card text for `/` and `/guides/`.
+  # The <meta name="description"> and OpenGraph/Twitter card text for `/`, `/guides/` and `/tools/`.
   # Search engines show it as the snippet and link previews show it under the title, so
   # 110-160 characters: shorter wastes the slot, longer is cut mid-word. The card image
   # is `identity.image`.
@@ -281,6 +281,9 @@ site:
     guides: >-
       Practical guides for researchers by Leshem Choshen: faculty and postdoc job
       hunting, keeping up with new papers, LLM evaluation, arXiv holds, ERC grants.
+    tools: >-
+      Open-source tools and Claude Code skills by Leshem Choshen for researchers: paper
+      writing and review, grant search, cross-posting, and making papers findable.
   # Courses taught, linked from the homepage next to the guides. Here rather than in
   # data/repos.yaml because a course site usually lives under a course organisation,
   # not this GitHub account, so the repo sweep never sees it.

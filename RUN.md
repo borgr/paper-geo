@@ -567,7 +567,7 @@ matters sits on claims.
 | `CITATION.cff` | derived from `papers.yaml` | code | no | permanent in git history |
 | Links block in a README | accepted sidecar + derived links | code | the sidecar was | revert; stays in history |
 | HF paper-page links (`paper_code.py --apply`) | "this repo is this paper's code" | code, from the paper's own text | no | edit the HF page |
-| Repo topics / description / homepage | an interpreted claim | **model** | **no** — 29 of 33 repos | one API call; GitHub keeps no history |
+| Repo topics / description / homepage | an interpreted claim | **model** | **no** — 26 of 33 repos | one API call; GitHub keeps no history |
 | Paper pages on the site | derived + accepted claims | code | the claims were | re-deploy, minutes; caches days |
 | Wikidata statements | derived identifiers | code | no | one-click undo, full public history |
 | IndexNow ping | nothing — a notification | code | no | nothing to retract |
@@ -575,7 +575,7 @@ matters sits on claims.
 Three rows need more than a table row.
 
 **Repo topics and descriptions are the deliberate exception** — an interpreted claim
-published unread. Gating them would leave 29 of 33 repos unlabelled indefinitely, and the
+published unread. Gating them would leave 26 of 33 repos unlabelled indefinitely, and the
 undo is one API call against a repo you own. `diff` marks which values are model-written
 and unread, so the `--yes` moment has that fact. To change one, edit `data/repos.yaml`. To
 freeze a row against future proposals, set `reviewed: true`. A `confidence: low` proposal

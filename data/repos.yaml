@@ -283,7 +283,7 @@ repos:
   - grammatical-error-correction
   - meta-evaluation
   - nlp
-  homepage: https://ktilana.wixsite.com/leshem-choshen
+  homepage: https://borgr.github.io/papers/automatic-metric-validation-for-grammatical-error-correction/
   write_citation_cff: false
   skip: false
   reviewed: false
@@ -371,9 +371,10 @@ repos:
   - semantic-role-labeling
   - syntax
   - tensorflow
-  homepage: https://ktilana.wixsite.com/leshem-choshen
+  homepage: null
   write_citation_cff: false
-  skip: false
+  skip: true
+  notes: Old code, kept off the site's /tools/ list. Description and topics are already set.
   reviewed: false
   llm_proposal:
     description: TensorFlow implementation of a labelled, gated syntactic graph convolutional network
@@ -484,7 +485,7 @@ repos:
   - human-annotation
   - nlp
   - text-simplification
-  homepage: https://ktilana.wixsite.com/leshem-choshen
+  homepage: https://borgr.github.io/papers/inherent-biases-in-reference-based-evaluation-for-grammatica/
   write_citation_cff: false
   skip: false
   reviewed: false
@@ -691,7 +692,8 @@ repos:
   - statistics
   homepage: null
   write_citation_cff: false
-  skip: false
+  skip: true
+  notes: Old code, kept off the site's /tools/ list. Description and topics are already set.
   reviewed: false
   llm_proposal:
     description: Python module computing Poisson binomial PMF, CDF, mean and standard deviation via recursive
@@ -834,7 +836,8 @@ repos:
   - parallel-corpus
   homepage: null
   write_citation_cff: false
-  skip: false
+  skip: true
+  notes: Old code, kept off the site's /tools/ list. Description and topics are already set.
   reviewed: false
   llm_proposal:
     description: Wrapper scripts for preprocessing the WIT3 multilingual TED-talk translation corpus with
