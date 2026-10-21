@@ -67,7 +67,7 @@ repos:
   - bluesky
   - discord-bot
   - python
-  homepage: null
+  homepage: https://borgr.github.io/ATProto-links-bot/
   write_citation_cff: false
   skip: false
   reviewed: false
@@ -343,7 +343,7 @@ repos:
   - faculty-jobs
   - research-tools
   - tenure-track
-  homepage: null
+  homepage: https://borgr.github.io/facultips/
   write_citation_cff: false
   skip: false
   reviewed: false
@@ -662,7 +662,7 @@ repos:
   - awesome-list
   - literature-review
   - research-tools
-  homepage: null
+  homepage: https://borgr.github.io/paper_updated/
   write_citation_cff: false
   skip: false
   reviewed: false
@@ -715,7 +715,7 @@ repos:
   - career-advice
   - postdoc
   - research-tools
-  homepage: null
+  homepage: https://borgr.github.io/post/
   write_citation_cff: false
   skip: false
   reviewed: false
@@ -772,7 +772,7 @@ repos:
   - llm-evaluation
   - nlp
   - tutorial
-  homepage: null
+  homepage: https://borgr.github.io/tutEval/
   write_citation_cff: false
   skip: false
   reviewed: false

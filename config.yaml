@@ -270,6 +270,23 @@ site:
   # ever want to; the only cost is that the first submission after the change 403s
   # until the new key file is live.
   indexnow_key: c6773a10d38042a78a215ca799c8aad3
+  # The <meta name="description"> and OpenGraph/Twitter card text for `/` and `/guides/`.
+  # Search engines show it as the snippet and link previews show it under the title, so
+  # 110-160 characters: shorter wastes the slot, longer is cut mid-word. The card image
+  # is `identity.image`.
+  description:
+    home: >-
+      Leshem Choshen, PI at the Weizmann Institute of Science: all papers by year with
+      plain-language summaries, practical guides for researchers, and code.
+    guides: >-
+      Practical guides for researchers by Leshem Choshen: faculty and postdoc job
+      hunting, keeping up with new papers, LLM evaluation, arXiv holds, ERC grants.
+  # Courses taught, linked from the homepage next to the guides. Here rather than in
+  # data/repos.yaml because a course site usually lives under a course organisation,
+  # not this GitHub account, so the repo sweep never sees it.
+  teaching:
+    - name: Active AI Reading
+      url: https://active-ai-reading.github.io/
   # The only instrument that can show an AI answer sent a real person here: a referral
   # from chatgpt.com, perplexity.ai or claude.ai. Everything else measurable at this
   # scale is either confounded (citation counters) or about how a model describes the

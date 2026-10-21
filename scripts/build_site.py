@@ -243,6 +243,29 @@ def page(title: str, body: str, *, head: str = "", canonical: str = "") -> str:
 """
 
 
+def card_meta(cfg, title: str, desc: str, url: str) -> str:
+    """Meta description, OpenGraph and Twitter card tags: what a search snippet and a
+    link preview show. JSON-LD feeds the knowledge graph; neither of those reads it."""
+    ident = cfg["identity"]
+    img = ident.get("image") or ""
+    if img and "//" not in img:
+        img = ident["canonical_url"].rstrip("/") + "/" + img.lstrip("/")
+    desc = " ".join(desc.split())
+    tags = [f'<meta name="description" content="{E(desc)}">',
+            '<meta property="og:type" content="website">',
+            f'<meta property="og:site_name" content="{E(ident["name"])}">',
+            f'<meta property="og:title" content="{E(title)}">',
+            f'<meta property="og:description" content="{E(desc)}">',
+            f'<meta property="og:url" content="{E(url)}">',
+            '<meta name="twitter:card" content="summary_large_image">',
+            f'<meta name="twitter:title" content="{E(title)}">',
+            f'<meta name="twitter:description" content="{E(desc)}">']
+    if img:
+        tags += [f'<meta property="og:image" content="{E(img)}">',
+                 f'<meta name="twitter:image" content="{E(img)}">']
+    return "".join(f"  {t}\n" for t in tags)
+
+
 def jsonld(obj: dict) -> str:
     """Serialize with json.dumps, never by string concatenation.
 
@@ -755,11 +778,11 @@ def build(cfg) -> dict:
     urls += paper_urls
     _write_redirect_stubs(papers, site, stats)
     _write_paper_index(ident, site, rows, stats)
-    _write_guides(guides, ident, site)
+    _write_guides(guides, cfg, site)
     _write_home(papers, guides, cfg, site, stats)
     _write_site_llms(ident, guides, llms, questions)
     _write_sitemap(urls)
-    _write_robots(site)
+    _write_robots(site, subsites(repos, cfg))
     write_indexnow_key(cfg)
     stats["static"] = copy_static()
     write_manifest(cfg, papers)
@@ -839,8 +862,10 @@ def _write_paper_index(ident: dict, site: str, rows: list, stats: dict) -> None:
                      canonical=f"{site}/papers/"))
 
 
-def _write_guides(guides: list[dict], ident: dict, site: str) -> None:
+def _write_guides(guides: list[dict], cfg, site: str) -> None:
     """`/guides/` -- question-shaped content, and its own page shape."""
+    ident = cfg["identity"]
+    title = f"Guides — {ident['name']}"
     g = ["<h1>Guides</h1>",
          "<p>Practical guides, each answering one question.</p>", "<ul>"]
     for r in sorted(guides, key=lambda r: r["repo"]):
@@ -851,7 +876,9 @@ def _write_guides(guides: list[dict], ident: dict, site: str) -> None:
                     f'{human_note(ident, box=False)}</footer>']
     os.makedirs(os.path.join(OUT, "guides"), exist_ok=True)
     with open(os.path.join(OUT, "guides", "index.html"), "w", encoding="utf-8") as f:
-        f.write(page(f"Guides — {ident['name']}", "\n".join(g),
+        f.write(page(title, "\n".join(g),
+                     head=card_meta(cfg, title, (cfg["site"].get("description") or {})
+                                    .get("guides") or "", f"{site}/guides/"),
                      canonical=f"{site}/guides/"))
 
 
@@ -871,6 +898,8 @@ def _write_home(papers: list[dict], guides: list[dict], cfg, site: str, stats: d
              f'{E(ident["email"])}</a></p>',
              f'<p><a href="/papers/">{stats["pages"]} papers</a> · '
              f'<a href="/guides/">{len(guides)} guides</a> · '
+             + "".join(f'teaching: <a href="{E(c["url"])}">{E(c["name"])}</a> · '
+                       for c in cfg["site"].get("teaching") or []) +
              f'<a href="https://github.com/{cfg["ids"]["github"]}">code</a> · '
              f'<a href="/llms.txt">llms.txt</a></p>']
     # rel="me" on every profile we hold. Mastodon reads it to show a verified badge
@@ -895,7 +924,9 @@ def _write_home(papers: list[dict], guides: list[dict], cfg, site: str, stats: d
     home += year_sections(papers)
     with open(os.path.join(OUT, "index.html"), "w", encoding="utf-8") as f:
         f.write(page(ident["name"], "\n".join(home),
-                     head=jsonld(person_jsonld(cfg)) + verification_meta(cfg),
+                     head=card_meta(cfg, ident["name"], (cfg["site"].get("description") or {})
+                                    .get("home") or "", site + "/")
+                     + jsonld(person_jsonld(cfg)) + verification_meta(cfg),
                      canonical=site + "/"))
 
 
@@ -934,8 +965,23 @@ def _write_sitemap(urls: list[str]) -> None:
                 + "</urlset>\n")
 
 
-def _write_robots(site: str) -> None:
-    """`/robots.txt` -- explicitly welcoming the AI crawlers."""
+def subsites(repos: list[dict], cfg) -> list[str]:
+    """The repo homepages that are other sites on this host -- `<base_url>/<repo>/`, a
+    project Pages site -- read off `data/repos.yaml` so a new one needs no second list.
+    Paper pages are ours, not subsites. Each is assumed to serve `sitemap.xml`
+    (jekyll-sitemap on a Jekyll site); one that does not shows up in Search Console as a
+    sitemap error, not as a silent gap."""
+    site = cfg["site"]["base_url"].rstrip("/")
+    papers = site + cfg["site"]["papers_path"]
+    return sorted({r["homepage"] for r in repos
+                   if not r.get("skip") and (r.get("homepage") or "").startswith(site + "/")
+                   and not r["homepage"].startswith(papers)})
+
+
+def _write_robots(site: str, subsite_urls: list[str]) -> None:
+    """`/robots.txt` -- explicitly welcoming the AI crawlers, and pointing at every sitemap
+    on the host. A robots.txt is read only at the host root, so this one file is the only
+    place the subsites' own sitemaps can be announced."""
     with open(os.path.join(OUT, "robots.txt"), "w", encoding="utf-8") as f:
         f.write("User-agent: *\nAllow: /\n\n"
                 "# AI crawlers are welcome; blocking them removes this site from the\n"
@@ -943,7 +989,8 @@ def _write_robots(site: str) -> None:
                 + "".join(f"User-agent: {b}\nAllow: /\n\n" for b in
                           ("GPTBot", "OAI-SearchBot", "ChatGPT-User", "ClaudeBot",
                            "Claude-SearchBot", "PerplexityBot", "Google-Extended"))
-                + f"Sitemap: {site}/sitemap.xml\n")
+                + f"Sitemap: {site}/sitemap.xml\n"
+                + "".join(f"Sitemap: {u.rstrip('/')}/sitemap.xml\n" for u in subsite_urls))
 
 
 def copy_static() -> int:
