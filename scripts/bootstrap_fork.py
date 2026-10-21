@@ -75,7 +75,7 @@ def rewrite(path: str, empties: dict) -> str:
     with open(path, "w", encoding="utf-8") as f:
         f.write(header(text))
         f.write(yaml.safe_dump(keep, sort_keys=False, allow_unicode=True, width=100))
-    return f"emptied {os.path.relpath(path, ROOT).replace(os.sep, "/")}"
+    return f"emptied {os.path.relpath(path, ROOT).replace(os.sep, '/')}"
 
 
 def check() -> list[str]:

@@ -1032,7 +1032,7 @@ def _say_absent_from_bib(missing: list, cfg: dict, attributed: list | None,
                f"{retry} of them -- a re-run may resolve those" if retry else
                "none of them known to any index")
         print(f"  {len(real)} Scholar paper(s) absent from the bibliography, {how} "
-              f"-- {os.path.relpath(path, ROOT).replace(os.sep, "/")}:", file=sys.stderr)
+              f"-- {os.path.relpath(path, ROOT).replace(os.sep, '/')}:", file=sys.stderr)
         if not quiet:
             for r in real[:20]:
                 print(f"    [{r['citations']:>5} cites] {r['year'] or '????'} "

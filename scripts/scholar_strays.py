@@ -559,7 +559,7 @@ def main() -> int:
 
     print(summary_line(state))
     if not args.quiet:
-        print(f"  wrote {os.path.relpath(path, ROOT).replace(os.sep, "/")}")
+        print(f"  wrote {os.path.relpath(path, ROOT).replace(os.sep, '/')}")
     return 0
 
 

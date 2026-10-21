@@ -338,7 +338,7 @@ def standing(slug: str) -> tuple[dict | None, list[str]]:
             if unread:
                 # Said out loud, because the empty `sidecar` below is the from-scratch job
                 # this docstring is about, and the file it would replace is on disk.
-                print(f"  {os.path.relpath(path, ROOT).replace(os.sep, "/")}: {unread} -- drafting this paper "
+                print(f"  {os.path.relpath(path, ROOT).replace(os.sep, '/')}: {unread} -- drafting this paper "
                       f"from scratch rather than repairing it", file=sys.stderr)
     return None, []
 
@@ -773,7 +773,7 @@ def accept(slugs: list[str], replace: bool = False, anyway: bool = False) -> int
         if os.path.exists(dst) and not replace:
             print(f"  {slug}: a live sidecar already exists; not overwriting.\n"
                   f"      This draft is a *replacement*. Compare them first:\n"
-                  f"        diff data/sidecars/{slug}.md {os.path.relpath(src, ROOT).replace(os.sep, "/")}\n"
+                  f"        diff data/sidecars/{slug}.md {os.path.relpath(src, ROOT).replace(os.sep, '/')}\n"
                   f"      then, if the replacement is the one you want:\n"
                   f"        python scripts/draft_sidecars.py --accept {slug} --replace")
             continue

@@ -1085,7 +1085,7 @@ def main() -> None:
     show_unnamed(results, eff)
 
     save_decisions(papers, results, prev)
-    print(f"\nwrote {os.path.relpath(DECISIONS, ROOT).replace(os.sep, "/")}")
+    print(f"\nwrote {os.path.relpath(DECISIONS, ROOT).replace(os.sep, '/')}")
 
     if not args.apply:
         print("\nNothing has left this machine. To publish the accepted links:")

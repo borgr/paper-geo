@@ -285,7 +285,7 @@ def phase_propose(cfg) -> None:
         print(f"  no longer present (kept in file): {', '.join(gone)}")
     print(f"  reviewed (frozen):  {sum(1 for r in proposal if r.get('reviewed'))}")
     zpath, nz = zenodo_candidates(cfg)
-    print(f"  artifacts with no citation route: {nz} -> {os.path.relpath(zpath, ROOT).replace(os.sep, "/")}")
+    print(f"  artifacts with no citation route: {nz} -> {os.path.relpath(zpath, ROOT).replace(os.sep, '/')}")
     # Reviewed and skipped rows are excluded, or the count could never reach zero. A settled
     # "nothing to say" -- the three early-exploratory repos, now `skip: true` with the reason
     # in `notes` -- reported as an open item forever is how a number stops being read.

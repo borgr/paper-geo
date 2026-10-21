@@ -141,7 +141,7 @@ class TestEveryModuleImports(unittest.TestCase):
                 try:
                     importlib.import_module(name)
                 except Exception as e:                              # noqa: BLE001
-                    self.fail(f"{os.path.relpath(path, ROOT).replace(os.sep, "/")} does not import: "
+                    self.fail(f"{os.path.relpath(path, ROOT).replace(os.sep, '/')} does not import: "
                               f"{type(e).__name__}: {e}")
 
 
@@ -237,7 +237,7 @@ class TestNoSyntaxWarnings(unittest.TestCase):
                 try:
                     compile(source(path), path, "exec")
                 except (SyntaxWarning, DeprecationWarning) as e:
-                    self.fail(f"{os.path.relpath(path, ROOT).replace(os.sep, "/")}: {e}")
+                    self.fail(f"{os.path.relpath(path, ROOT).replace(os.sep, '/')}: {e}")
 
 
 class TestEveryCliAnswersHelp(unittest.TestCase):
@@ -257,10 +257,10 @@ class TestEveryCliAnswersHelp(unittest.TestCase):
                 r = subprocess.run([sys.executable, path, "--help"], cwd=ROOT,
                                    capture_output=True, text=True, timeout=120)
                 self.assertEqual(r.returncode, 0,
-                                 f"{os.path.relpath(path, ROOT).replace(os.sep, "/")} --help exited "
+                                 f"{os.path.relpath(path, ROOT).replace(os.sep, '/')} --help exited "
                                  f"{r.returncode}:\n{r.stderr[-2000:]}")
                 self.assertIn("usage", r.stdout.lower(),
-                              f"{os.path.relpath(path, ROOT).replace(os.sep, "/")} --help printed no usage")
+                              f"{os.path.relpath(path, ROOT).replace(os.sep, '/')} --help printed no usage")
 
 
 class TestUpdateWiring(unittest.TestCase):
@@ -404,7 +404,7 @@ class TestReferencedScriptsExist(unittest.TestCase):
         for path in self.files():
             for ref in sorted(set(self.PAT.findall(source(path)))):
                 if not os.path.exists(os.path.join(ROOT, ref)):
-                    bad.append(f"{os.path.relpath(path, ROOT).replace(os.sep, "/")} -> {ref}")
+                    bad.append(f"{os.path.relpath(path, ROOT).replace(os.sep, '/')} -> {ref}")
         self.assertEqual(bad, [], "references to scripts that do not exist:\n  "
                                   + "\n  ".join(bad))
 
@@ -1597,7 +1597,7 @@ class TestNobodyReDerivesARootPathByHand(unittest.TestCase):
                 [os.path.join(ROOT, "update.py")]:
             for i, ln in enumerate(source(rel).splitlines(), 1):
                 if re.search(r'os\.path\.join\([A-Z_]+,\s*"\.\."', ln):
-                    offenders.append(f"{os.path.relpath(rel, ROOT).replace(os.sep, "/")}:{i}")
+                    offenders.append(f"{os.path.relpath(rel, ROOT).replace(os.sep, '/')}:{i}")
         self.assertEqual([], offenders,
                          "these re-derive a path `common.py` already exports")
 
@@ -3999,7 +3999,7 @@ class TestGeneratedFilesRenderTitles(unittest.TestCase):
                 continue
             with open(f, encoding="utf-8") as fh:
                 body = fh.read()
-            leaks += [f"{os.path.relpath(f, ROOT).replace(os.sep, "/")}: {slug}"
+            leaks += [f"{os.path.relpath(f, ROOT).replace(os.sep, '/')}: {slug}"
                       for raw, slug in probes.items() if raw in body]
         self.assertEqual([], leaks, f"{len(leaks)} raw title(s) reached a generated file")
 

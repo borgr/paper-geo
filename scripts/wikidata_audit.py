@@ -594,7 +594,7 @@ def paper_link_section(q: str, cov: dict, qs_path: str | None) -> list[str]:
               "`data/wikidata_created.yaml` before the next one starts — so an interrupted",
               "run resumes where it stopped, and a re-run in the hours before the query",
               "service catches up does not create everything twice.",
-              f"`{os.path.relpath(qs_path, ROOT).replace(os.sep, "/")}` holds the same statements as a",
+              f"`{os.path.relpath(qs_path, ROOT).replace(os.sep, '/')}` holds the same statements as a",
               "QuickStatements batch, kept as the fallback if the bot password is ever",
               "revoked.", "",
               "Honest accounting before you run it: this buys a Scholia profile, a",

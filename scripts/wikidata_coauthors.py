@@ -945,7 +945,7 @@ def _coauth_settled(rows_: list[dict], qs_path: str | None) -> list[str]:
     L += [fill("`python scripts/wikidata_coauthors.py --apply` writes them. Each "
                "author becomes *author* with the printed name kept as an *object "
                "named as* qualifier, and the string it replaces is dropped."
-               + (f" [`{os.path.relpath(qs_path).replace(os.sep, "/")}`]({os.path.relpath(qs_path).replace(os.sep, "/")}) is "
+               + (f" [`{os.path.relpath(qs_path).replace(os.sep, '/')}`]({os.path.relpath(qs_path).replace(os.sep, '/')}) is "
                   "the same batch for <https://quickstatements.toolforge.org/#/batch>, "
                   "for a machine with no bot password." if qs_path else "")), ""]
     for r in rows_:
@@ -1079,8 +1079,8 @@ def main() -> int:
               f"{out['papers_left']} papers")
         print(f"venues: {out['venues']} resolved, {out['venues_ask']} ambiguous; "
               f"{out['fills']} language and full-text statements")
-        print(f"wrote {os.path.relpath(page).replace(os.sep, "/")}"
-              + (f" and {os.path.relpath(qs_path).replace(os.sep, "/")}" if qs else ""))
+        print(f"wrote {os.path.relpath(page).replace(os.sep, '/')}"
+              + (f" and {os.path.relpath(qs_path).replace(os.sep, '/')}" if qs else ""))
     if not args.apply or not qs:
         return 0
     s = logged_in()

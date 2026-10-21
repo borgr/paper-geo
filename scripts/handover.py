@@ -509,18 +509,18 @@ def main() -> None:
     with open(os.path.join(d, "MESSAGE.md"), "w", encoding="utf-8") as f:
         f.write(message_text(args.name, found))
     write_json(os.path.join(d, "records.json"), found, indent=1)
-    print(f"wrote {os.path.relpath(d, ROOT).replace(os.sep, "/")}/ -- config.yaml, README.md, "
+    print(f"wrote {os.path.relpath(d, ROOT).replace(os.sep, '/')}/ -- config.yaml, README.md, "
           f"MESSAGE.md, records.json")
     todo = sum(1 for line in open(os.path.join(d, "config.yaml"), encoding="utf-8") if "CONFIRM" in line)
     print(f"  {len(recs)} S2 record(s), {found['arxiv_count']} arXiv papers, "
           f"{todo} value(s) left for them to confirm")
     if extra:
-        print(f"  merged {os.path.relpath(d, ROOT).replace(os.sep, "/")}/facts.yaml over the lookup")
+        print(f"  merged {os.path.relpath(d, ROOT).replace(os.sep, '/')}/facts.yaml over the lookup")
     if args.dry_run:
         preview = dry_run(d, args.name)
         if preview:
             n = sum(1 for line in open(preview, encoding="utf-8") if line.startswith("- [ ]"))
-            print(f"  wrote {os.path.relpath(preview, ROOT).replace(os.sep, "/")}: {n} open item(s) the "
+            print(f"  wrote {os.path.relpath(preview, ROOT).replace(os.sep, '/')}: {n} open item(s) the "
                   f"pipeline already found for them")
 
 

@@ -215,7 +215,7 @@ def emit(sc: list, papers: dict, args) -> None:
          "tasks": tasks}, indent=1)
     print(f"wrote {TASKS}: {len(tasks)} paper(s)")
     if args.mode == "api":
-        print(f"Now: python {os.path.relpath(__file__, ROOT).replace(os.sep, "/")} --ingest")
+        print(f"Now: python {os.path.relpath(__file__, ROOT).replace(os.sep, '/')} --ingest")
     else:
         print("For each task: put the engine's answer in `answer`, grade it into "
               "`score`, then run --ingest.")

@@ -50,7 +50,7 @@ def checked(slug: str) -> dict | str:
         return f"no draft and no live sidecar for {slug}"
     fm = front_matter(path)
     if fm is None:
-        return f"{os.path.relpath(path, ROOT).replace(os.sep, "/")}: unreadable front matter"
+        return f"{os.path.relpath(path, ROOT).replace(os.sep, '/')}: unreadable front matter"
 
     from validate import (deline, evidence_pointers, figures, figures_in, readability,
                           rounds_to, values_in)
