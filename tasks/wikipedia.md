@@ -17,7 +17,7 @@ yours and may be wrong. Same rule: read it, and only raise a talk-page item
 if it misstates the work. The quoted line is what that article says about the
 term — enough to tick most rows without opening anything.
 
-- **Project Debater** (175 citations)
+- **Project Debater** (184 citations)
   - [ ] [Project Debater](https://en.wikipedia.org/wiki/Project_Debater) — [talk](https://en.wikipedia.org/wiki/Talk:Project_Debater)
     > Project Debater is an IBM artificial intelligence project, designed to participate in a full live debate with expert human debaters.
   - [ ] [Outline of artificial intelligence](https://en.wikipedia.org/wiki/Outline_of_artificial_intelligence) — [talk](https://en.wikipedia.org/wiki/Talk:Outline_of_artificial_intelligence)
@@ -26,7 +26,7 @@ term — enough to tick most rows without opening anything.
     > been growing rapidly, with, for example, IBM's Grand Challenge, Project Debater, results for which were published in Nature
   - [ ] [Open to Debate](https://en.wikipedia.org/wiki/Open_to_Debate) — [talk](https://en.wikipedia.org/wiki/Talk:Open_to_Debate)
     > intelligence and a human being, in partnership with IBM's "Project Debater".
-- **PromptEval** (92 citations)
+- **PromptEval** (106 citations)
   - [ ] [Prompt engineering](https://en.wikipedia.org/wiki/Prompt_engineering) — [talk](https://en.wikipedia.org/wiki/Talk:Prompt_engineering)
     > more comprehensive performance interval. Similarly, PromptEval estimates performance distributions across diverse prompts, enabling robust
 
@@ -36,60 +36,61 @@ Improve these with *other people's* sources. Nothing about your own work, no
 citation of it. Unlike everything above, this needs no permission and no
 disclosure -- it is ordinary editing in an area you know.
 
-- [Natural language processing](https://en.wikipedia.org/wiki/Natural_language_processing) — 58,176 bytes
+- [Natural language processing](https://en.wikipedia.org/wiki/Natural_language_processing) — 58,117 bytes
 - *self-improving AI* — no article under that title; the nearest field article is [Technological singularity](https://en.wikipedia.org/wiki/Technological_singularity)
 - *AI interaction* — no article under that title; the nearest field article is [Human–AI interaction](https://en.wikipedia.org/wiki/Human%E2%80%93AI_interaction)
 - *AI and humanity* — no article, and nothing in this field close to it
 - *evaluation of language models* — no article under that title; the nearest field article is [Language model](https://en.wikipedia.org/wiki/Language_model)
 - *model merging* — no article, and nothing in this field close to it
 - *benchmark reliability* — no article, and nothing in this field close to it
-- *language model pretraining* — no article under that title; the nearest field article is [Large language model](https://en.wikipedia.org/wiki/Large_language_model)
+- *language model pretraining* — no article under that title; the nearest field article is [Generative pre-trained transformer](https://en.wikipedia.org/wiki/Generative_pre-trained_transformer)
 - *human feedback* — no article under that title; the nearest field article is [Reinforcement learning from human feedback](https://en.wikipedia.org/wiki/Reinforcement_learning_from_human_feedback)
 - [Language acquisition](https://en.wikipedia.org/wiki/Language_acquisition) — 114,881 bytes
 - *efficient pretraining* — no article under that title; the nearest field article is [Generative pre-trained transformer](https://en.wikipedia.org/wiki/Generative_pre-trained_transformer)
 - *machine translation evaluation* — no article, and nothing in this field close to it
 - *efficient evaluation* — no article, and nothing in this field close to it
 
-## Absent from Wikipedia (36) — nothing to do
+## Absent from Wikipedia (37) — nothing to do
 
 Coined here, above the citation floor, and nobody independent has written them
 up. Deliberately not actionable: proposing the mention yourself is the request
 that gets declined, and writing the article yourself is the spam case. They
 become checks in section 2 if someone else ever writes about them.
 
-- tinyBenchmarks — 336 citations
-- BabyLM Challenge — 255 citations
-- Global-MMLU — 207 citations
-- PkE — 127 citations
-- peakiness effect — 127 citations
-- DisentQA — 125 citations
-- RLCR — 113 citations
-- Flash-HELM — 80 citations
-- IBM-EviConv — 78 citations
-- MoErging — 73 citations
-- BlendNet — 72 citations
-- Retrospective Labeling — 70 citations
-- TP-agreement — 66 citations
+- tinyBenchmarks — 379 citations
+- BabyLM Challenge — 266 citations
+- Global-MMLU — 229 citations
+- RLCR — 137 citations
+- DisentQA — 133 citations
+- PkE — 125 citations
+- peakiness effect — 125 citations
+- Flash-HELM — 84 citations
+- EWoK — 79 citations
+- IBM-EviConv — 79 citations
+- MoErging — 77 citations
+- Retrospective Labeling — 74 citations
+- BlendNet — 73 citations
+- TP-agreement — 68 citations
 - ColD Fusion — 64 citations
-- NumeroLogic — 48 citations
-- LCB — 39 citations
-- Low Coverage Bias — 39 citations
-- BabyLM Interaction track — 38 citations
+- NumeroLogic — 53 citations
+- BabyLM Interaction track — 40 citations
+- LCB — 40 citations
+- Low Coverage Bias — 40 citations
 - USim — 37 citations
 - MAEGE — 36 citations
-- BabyLM — 33 citations
+- BabyLM — 35 citations
+- ZipNN — 34 citations
+- JD-Diag — 31 citations
+- JD-Full — 31 citations
+- joint diagonalization of LoRAs — 31 citations
+- BERT_IT:CLUST — 29 citations
 - DCT — 29 citations
 - Deductive Closure Training — 29 citations
-- JD-Diag — 29 citations
-- JD-Full — 29 citations
-- joint diagonalization of LoRAs — 29 citations
-- BERT_IT:CLUST — 28 citations
-- ZipNN — 28 citations
-- CLIKE — 25 citations
-- Unitxt — 24 citations
-- BenchBench — 23 citations
-- DOVE — 23 citations
-- SErCl — 23 citations
+- CLIKE — 27 citations
+- BenchBench — 25 citations
+- DOVE — 25 citations
+- Unitxt — 25 citations
+- SErCl — 24 citations
+- ComPEFT — 22 citations
 - Label Sleuth — 22 citations
-- ComPEFT — 21 citations
 - LiveXiv — 20 citations

@@ -25,6 +25,9 @@ papers:
     verdict: none
   are-you-convinced-choosing-the-more-convincing-evidence-with:
     verdict: none
+  asking-for-what-was-never-requested-horizontal-and-vertical:
+    verdict: accept
+    repo: https://github.com/dolev31/ProactiveInquirer
   asymmetry-in-low-rank-adapters-of-foundation-models:
     verdict: accept
     repo: https://github.com/Jiacheng-Zhu-AIML/AsymmetryLoRA
@@ -59,7 +62,7 @@ papers:
     verdict: none
   beyond-binary-rewards-training-lms-to-reason-about-their-unc:
     verdict: none
-    page_verdict: accept
+    page_verdict: review
     project_page: https://rl-calibration.github.io/
   bigger-is-not-always-better-the-importance-of-human-scale-la:
     verdict: none
@@ -190,16 +193,16 @@ papers:
     page_verdict: review
     project_page: https://hf.co/datasets/CohereForAI/Global-MMLU
     other_pages:
+    - https://huggingface.co/datasets/CohereForAI/Global-MMLU-Lite
     - https://www.pewresearch.org/global/2013/06/04/regional-categorization/
   global-piqa-evaluating-commonsense-reasoning-across-100-lang:
-    verdict: review
-    repo: https://github.com/mrlbenchmarks/lm-eval-global-piqa
-    other_candidates:
-    - https://github.com/mrlbenchmarks/global-piqa
+    verdict: none
+    was: https://github.com/mrlbenchmarks/lm-eval-global-piqa
     page_verdict: review
     project_page: https://huggingface.co/datasets/mrlbenchmarks/global-piqa-nonparallel
     other_pages:
     - https://huggingface.co/datasets/mrlbenchmarks/global-piqa-parallel
+    - https://huggingface.co/datasets/mrlbenchmarks/global_eclektic
   grasp-a-library-for-extracting-and-exploring-human-interpret:
     verdict: none
     page_verdict: accept
@@ -222,6 +225,8 @@ papers:
   inherent-biases-in-reference-based-evaluation-for-grammatica:
     verdict: review
     repo: https://github.com/borgr/IBGEC
+    other_candidates:
+    - https://github.com/borgr/PoissonBinomial
   insights-from-the-first-babylm-challenge-training-sample-eff:
     verdict: none
   instructions-shape-production-of-language-not-processing:
@@ -239,6 +244,8 @@ papers:
     page_verdict: accept
     project_page: https://www.label-sleuth.org
     reviewed: true
+  last-translation-benchmark:
+    verdict: none
   learning-to-combine-grammatical-error-corrections:
     verdict: none
   let-s-agree-to-agree-neural-networks-share-classification-or:
@@ -295,6 +302,14 @@ papers:
     repo: https://github.com/shachardon/PreQuEL
   pretraining-language-models-for-diachronic-linguistic-change:
     verdict: none
+  proceedings-of-the-17th-international-conference-on-parsing:
+    verdict: none
+  proceedings-of-the-59th-annual-meeting-of-the-association-fo:
+    verdict: none
+  proceedings-of-the-5th-workshop-on-structured-prediction-for:
+    verdict: none
+  proceedings-of-the-second-workshop-on-fact-extraction-and-ve:
+    verdict: none
   q2-evaluating-factual-consistency-in-knowledge-grounded-dial:
     verdict: accept
     repo: https://github.com/orhonovich/q-squared
@@ -306,8 +321,15 @@ papers:
     repo: https://github.com/AsafYehudai/Reinforcement-Learning-with-Large-Action-Spaces-for-Neural-Machine-Translation
     reviewed: true
   resolving-interference-ri-disentangling-models-for-improved:
-    verdict: accept
+    verdict: review
     repo: https://github.com/pramesh39/resolving_interference
+    other_candidates:
+    - https://github.com/pramesh39/learning-not-to-interfere
+  retrieval-augmented-generation-compositionality:
+    verdict: review
+    repo: https://github.com/dolev31/lasagna
+    other_candidates:
+    - https://github.com/dolev31/Lasagna-Retrieval-Augmented-Generation-Compositionality
   robustness-as-an-emergent-property-of-task-performance:
     verdict: none
   semantics-aware-attention-improves-neural-machine-translatio:
@@ -342,6 +364,9 @@ papers:
     verdict: accept
     repo: https://github.com/OfirArviv/adaptive-eval
     reviewed: true
+  tabagent-distilling-llm-agent-components-into-cheap-classifi:
+    verdict: accept
+    repo: https://github.com/dolev31/TabAgent
   textarena:
     verdict: accept
     repo: https://github.com/LeonGuertler/TextArena
@@ -377,12 +402,22 @@ papers:
     repo: https://github.com/IBM/unitxt
   unsupervised-expressive-rules-provide-explainability-and-ass:
     verdict: none
+  user-feedback-provides-a-unique-signal-that-llms-can-not-det:
+    verdict: accept
+    repo: https://github.com/shachardon/feedback-blindspot
+    page_verdict: review
+    project_page: https://huggingface.co/datasets/shachardon/feedback-blindspot
+    other_pages:
+    - https://huggingface.co/datasets/shachardon/naturally_occurring_feedback
   when-ai-benchmarks-plateau-a-systematic-study-of-benchmark-s:
     verdict: none
   where-to-start-analyzing-the-potential-value-of-intermediate:
     verdict: none
     page_verdict: accept
     project_page: https://ibm.github.io/model-recycling/
+  why-pretraining-fails-to-share-cross-lingual-knowledge:
+    verdict: accept
+    repo: https://github.com/AdamJaber03/torchtitan-mulitlingual
   will-it-blend-blending-weak-and-strong-labeled-data-in-a-neu:
     verdict: none
   will-it-merge-on-the-causes-of-model-mergeability:

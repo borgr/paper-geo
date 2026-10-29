@@ -5,6 +5,10 @@ not here is done, and nothing on this page is a general instruction. The
 how-to for every item below is [docs/SETUP.md](docs/SETUP.md); the live
 reading of each external surface is [tasks/identity_audit.md](tasks/identity_audit.md).
 
+> **A step of this run did not finish.** `scripts/wikidata_people.py --quiet` (exit 1). Whatever rests on it below was built from what the last run that did finish left behind, so that section may be behind rather than done. The run's own output says what refused.
+
+> **A file this page is built from could not be read.** `build/wikidata_people.json` (not there). The section it feeds is absent here for want of input rather than because it holds nothing. A full `python update.py` writes it first.
+
 ## Start here
 
 The page below is ordered by leverage and citation count, which is the right
@@ -16,33 +20,93 @@ holds the instructions; nothing here repeats them.
 **A command, and nothing to decide.** Any day, in any order: these drain
 backlogs the rest of the page is waiting on, and the run does the work.
 
-1. **Wikidata — 3 of your papers have no item** — `python scripts/wikidata_apply.py --papers --limit 10`, repeated. The monthly CI leg refuses to touch new papers while a backlog this size exists, so this is the one item that turns maintenance back on.
+1. **Wikidata — 10 of your papers have no item** — `python scripts/wikidata_apply.py --papers --limit 10`, repeated. The monthly CI leg refuses to touch new papers while a backlog this size exists, so this is the one item that turns maintenance back on.
 
 **One edit each, and each one closes a section outright.** This is where
 the page gets visibly shorter.
 
-2. **Co-authors who may already have a Wikidata item (18)** — pick the line that is them and paste the QID into `data/overrides.yaml`, or `new` where none is. What every candidate item states about itself is in the section, so most rows need nothing opened, and answering the top few is worth doing on its own — each answer turns one co-author into `author` statements on the papers you share.
-3. **ORCID is missing 4 of your 117 papers** — one BibTeX upload. Highest leverage on the page — Semantic Scholar and OpenAlex both re-cluster off ORCID, so this is the fix that makes other sections shrink without you.
-4. **2 field corrections the bibliography does not carry (1 entry)** — one paste per line, into the entry `orig.bib` already has for that paper. Every line is given ready to drop in, and the override lines go after. Worth more than its size — Scholar, Semantic Scholar and OpenAlex all read the paper's own record, and none of them reads this repo.
-5. **Wikipedia mentions 2 of your coinages across 5 article(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
+2. **ORCID is missing 11 of your 124 papers** — one BibTeX upload. Highest leverage on the page — Semantic Scholar and OpenAlex both re-cluster off ORCID, so this is the fix that makes other sections shrink without you.
+3. **Papers whose full text nothing can fetch (4)** — drop the PDF you already have into `data/fulltext/` (gitignored, so it stays on your machine and only the sidecar it produces is committed).
+4. **Wikipedia mentions 2 of your coinages across 5 article(s) — check the facts** — read each article and tick it if it is right. Only a wrong description is work, and it goes on the talk page -- you may not edit these, and a correct mention needs nothing from you.
+5. **1 paper listed twice on Scholar** — tick both rows on your Scholar profile and press *Merge*; both titles and the link to the second row are in the section.
 6. **Hugging Face paper page missing (2)** — open each link while logged in — the visit is the action, there is no form. Nothing happens logged out, so log in first or the clicking is wasted.
-7. **Hugging Face page indexed but not claimed by you (2)** — one claim request per link, then wait: the author→user link only appears once moderation grants it. Record what you asked for under `hf_claim_requested` so it does not come back onto the list while it is pending.
+7. **Hugging Face page indexed but not claimed by you (4)** — one claim request per link, then wait: the author→user link only appears once moderation grants it. Record what you asked for under `hf_claim_requested` so it does not come back onto the list while it is pending.
+8. **5 papers whose title does not appear on your Scholar profile** — check the profile for a record Scholar folded this paper into before adding anything — a merged paper looks identical here to a missing one, and adding it by hand splits future citations. Decline the line if a related record covers it.
 
 **As much as you have patience for.** Per-paper clicking, because
 no write API can make the judgement each one needs — and every section
 is ordered so that stopping early still captures most of the value.
 
-8. **Wikidata author strings (100 papers by hand)** — one Author Disambiguator pass per paper, most-cited first, at the link the section gives for each. Everything an ORCID or a DBLP author page could settle is already on Wikidata, so what is left is the part where the name is all there is to go on.
-9. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
-10. **Semantic Scholar — 33 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
-11. **Citations on a Scholar record you cannot see (24 rows, 136 citations measured + 89 inferred)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
+9. **Wikidata author strings (100 papers by hand)** — one Author Disambiguator pass per paper, most-cited first, at the link the section gives for each. Everything an ORCID or a DBLP author page could settle is already on Wikidata, so what is left is the part where the name is all there is to go on.
+10. **arXiv journal-ref missing (64 papers)** — save <https://arxiv.org/user> and feed it to `identity_tasks.py --user-page` first: two minutes, once, and it turns every hunt-by-eye row into a one-click link. Then the top few and stop — that section argues its own case honestly.
+11. **Semantic Scholar — 37 papers on a second author record** — one paste per paper into the Add Papers form, highest-citation first; every URL is in the section — read its first paragraph first, because a dated follow-up may do all of it for you.
+12. **Citations on a Scholar record you cannot see (16 rows, 154 citations measured + 41 inferred)** — one search each, and a merge only where the result really is your paper. The biggest single gap on the page, and the only section where the payoff is citations you already earned rather than a surface that reads better.
+
+## Due now (1)
+
+From `data/followups.yaml`. Each of these was waiting on something outside this repo that should have landed by now.
+
+- [ ] **2026-10-04** (25 days ago) — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.
+      → Re-run collect and read the counts. Today 34 papers sit on the secondary Semantic Scholar record and 4 duplicate OpenAlex profiles are open. If the S2 count has not moved, the manual pulls in tasks/s2_merge.md are the only route left, and S2 support has already declined the merge once.
+      `python update.py --step collect && python update.py --step worklist`
 
 ## Waiting on the outside world
 
-- **2026-10-04** — ORCID auto-update, and the ORCID-driven author re-clustering at Semantic Scholar and OpenAlex, run on their own schedule.
 - **2026-11-04** — Crossref and DataCite auto-update only fire on newly deposited metadata that already carries your iD, so the proof is a work whose ORCID source is Crossref or DataCite rather than your own name -- which cannot appear until something you publish is deposited.
 
-## Citations on a Scholar record you cannot see (24 rows, 136 citations measured + 89 inferred)
+## Coverage: Google Scholar and the corpus disagree
+
+Scholar lists **124** works and matched **112** of the corpus's **124**. Scholar is
+the one list of your papers that is built by a different process, so it is the
+only check that can see a paper this pipeline never received.
+
+Every bucket in full, including what is truncated below, is in
+`build/scholar_diff.json` on the machine that last ran the audit. `build/` is
+gitignored, so `python update.py --step audit` is the one command between a
+fresh clone and the file.
+
+### 5 papers whose title does not appear on your Scholar profile
+
+That is all this check knows, and the heading says so deliberately. It reads
+the profile listing, which shows **one title per record** — so a paper Scholar
+has folded into another record is indistinguishable here from a paper Scholar
+does not have. Both look like a title that is not in the list.
+
+**So check for a merge before adding anything.** Scholar merges a call for
+papers into the findings paper of the same workshop, and a preprint into its
+retitled successor — the citations are all on the surviving record, which is
+the outcome you want. Adding the folded paper by hand does not recover
+anything; it creates a second record that splits future citations.
+
+Open <https://scholar.google.com/citations?user=8b8IhUYAAAAJ&view_op=list_works&sortby=pubdate> and look for
+the related record — the findings paper, the newer title. If your paper is
+inside it, decline the line here and you will not be asked again. Only if
+nothing on the profile covers it is *+ → Add article manually* the fix.
+Together these carry **242 citations** in the corpus. Treat that as
+the most this could be worth, not as citations you are missing — on a
+merged record they are already counted under the surviving title.
+
+Declining is one line in [`data/declines.yaml`](data/declines.yaml) under `items:`.
+
+- [ ] 26 cites — 2021 — Proceedings of the 59th Annual Meeting of the… <https://doi.org/10.18653/v1/2021.acl-tutorials>
+- [ ] 4 cites — 2019 — Proceedings of the Second Workshop on Fact Extraction… <https://doi.org/10.18653/v1/d19-66>
+- [ ] 3 cites — 2021 — Proceedings of the 5th Workshop on Structured Prediction… <https://doi.org/10.18653/v1/2021.spnlp-1>
+- [ ] 2 cites — 2026 — TabAgent: Distilling LLM Agent Components into Cheap… <https://arxiv.org/abs/2602.16429>
+- [ ] 2 cites — 2021 — Proceedings of the 17th International Conference on… <https://doi.org/10.18653/v1/2021.iwpt-1>
+
+### 1 paper listed twice on Scholar
+
+Two rows for one paper splits its citation count, and nothing here can fix
+it: tick both rows and press *Merge*. Both titles are below, because on the
+profile they sort apart and neither reads as the other's duplicate.
+
+Open <https://scholar.google.com/citations?user=8b8IhUYAAAAJ&view_op=list_works&sortby=title>.
+
+- [ ] `mindgames-a-live-arena-for-evaluating-social-and-strategic-r`
+      - one row: {MINDGAMES:} {A} Live Arena for Evaluating Social and Strategic 
+      - the other: MindGames: A Multi-Agent Benchmark and Trajectory Dataset for Ev — <https://scholar.google.com/citations?view_op=view_citation&hl=en&user=8b8IhUYAAAAJ&citation_for_view=8b8IhUYAAAAJ:-FonjvnnhkoC>
+
+## Citations on a Scholar record you cannot see (16 rows, 154 citations measured + 41 inferred)
 
 Scholar indexes preprints and theses the APIs do not, so a profile row should
 always count *more* than OpenAlex and Semantic Scholar. Where it counts less,
@@ -56,9 +120,9 @@ count on OpenAlex's smaller copy is the closest reading of what a merge
 recovers.
 
 The two numbers in the heading are different kinds of evidence.
-The measured 136 is a profile row counting fewer citations than the
+The measured 154 is a profile row counting fewer citations than the
 APIs already list for the same paper.
-The inferred 89 sits on a duplicate record at an API and stands in
+The inferred 41 sits on a duplicate record at an API and stands in
 for a Scholar record nothing here has seen, so it is what a merge recovers only
 if Scholar split the paper the same way.
 
@@ -67,29 +131,26 @@ record, tick your own row and that one on your profile and press *Merge*. A
 gap can also be plain indexing lag, so read the result before merging: a wrong
 merge attaches somebody else's paper to your name.
 
-Not counted above — 19 OpenAlex splits whose smaller
+Not counted above — 9 OpenAlex splits whose smaller
 copy holds no citations, so a merge there recovers nothing.
 
 Full detail, including the 200-odd records filed under an initials-only form of
 your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).
 
-- [ ] **114 citations** — tinyBenchmarks: evaluating LLMs with fewer examples
-      - Scholar 222 vs 336 at the APIs
+- [ ] **116 citations** — tinyBenchmarks: evaluating LLMs with fewer examples
+      - Scholar 263 vs 379 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22tinyBenchmarks%3A%20evaluating%20LLMs%20with%20fewer%20examples%22)
-- [ ] **23 citations** — TIES-Merging: Resolving Interference When Merging Models
-      - 2 OpenAlex records for one title
-      - [search Scholar for it](https://scholar.google.com/scholar?q=%22TIES-Merging%3A%20Resolving%20Interference%20When%20Merging%20Models%22)
-- [ ] **14 citations** — DORA The Explorer: Directed Outreaching Reinforcement…
+- [ ] **18 citations** — DORA The Explorer: Directed Outreaching Reinforcement…
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22DORA%20The%20Explorer%3A%20Directed%20Outreaching%20Reinforcement%20Action-Selection%22)
-- [ ] **10 citations** — Beneath the Surface of Consistency: Exploring Cross-lingual…
-      - Scholar 15 vs 25 at the APIs
+- [ ] **14 citations** — Elements of World Knowledge (EWoK): A Cognition-Inspired…
+      - Scholar 65 vs 79 at the APIs
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Elements%20of%20World%20Knowledge%20%28EWoK%29%3A%20A%20Cognition-Inspired%20Framework%20for%20Evaluating%20Basic%20World%20Knowledge%20in%20Language%20Models%22)
+- [ ] **8 citations** — Beneath the Surface of Consistency: Exploring Cross-lingual…
+      - Scholar 19 vs 27 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Beneath%20the%20Surface%20of%20Consistency%3A%20Exploring%20Cross-lingual%20Knowledge%20Representation%20Sharing%20in%20LLMs%22)
-- [ ] **10 citations** — On the Weaknesses of Reinforcement Learning for Neural Machine…
-      - 2 OpenAlex records for one title
-      - [search Scholar for it](https://scholar.google.com/scholar?q=%22On%20the%20Weaknesses%20of%20Reinforcement%20Learning%20for%20Neural%20Machine%20Translation%22)
-- [ ] **6 citations** — CommonLID: Re-evaluating State-of-the-Art Language…
-      - Scholar 4 vs 10 at the APIs
+- [ ] **7 citations** — CommonLID: Re-evaluating State-of-the-Art Language…
+      - Scholar 5 vs 12 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22CommonLID%3A%20Re-evaluating%20State-of-the-Art%20Language%20Identification%20Performance%20on%20Web%20Data%22)
 - [ ] **6 citations** — Global MMLU: Understanding and Addressing Cultural and…
       - 2 OpenAlex records for one title
@@ -97,28 +158,31 @@ your name: [`tasks/scholar_strays.md`](tasks/scholar_strays.md).
 - [ ] **5 citations** — Bigger is not always better: The importance of human-scale…
       - 4 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Bigger%20is%20not%20always%20better%3A%20The%20importance%20of%20human-scale%20language%20modeling%20for%20psycholinguistics%22)
-- [ ] **5 citations** — Let's Agree to Agree: Neural Networks Share Classification…
-      - 2 OpenAlex records for one title
-      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Let%27s%20Agree%20to%20Agree%3A%20Neural%20Networks%20Share%20Classification%20Order%20on%20Real%20Datasets%22)
 - [ ] **4 citations** — Reference-less Measure of Faithfulness for Grammatical Error…
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Reference-less%20Measure%20of%20Faithfulness%20for%20Grammatical%20Error%20Correction%22)
+- [ ] **3 citations** — Automated Discovery Has No Universally Superior Harness
+      - Scholar 4 vs 7 at the APIs
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Automated%20Discovery%20Has%20No%20Universally%20Superior%20Harness%22)
 - [ ] **3 citations** — Mediocrity is the key for LLM as a Judge Anchor Selection
-      - Scholar 3 vs 6 at the APIs
+      - Scholar 4 vs 7 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Mediocrity%20is%20the%20key%20for%20LLM%20as%20a%20Judge%20Anchor%20Selection%22)
 - [ ] **3 citations** — Mediators in Determining what Processing BERT Performs First
       - Scholar 13 vs 16 at the APIs
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22Mediators%20in%20Determining%20what%20Processing%20BERT%20Performs%20First%22)
-- [ ] **3 citations** — Are You Convinced? Choosing the More Convincing Evidence with…
-      - 3 OpenAlex records for one title
-      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Are%20You%20Convinced%3F%20Choosing%20the%20More%20Convincing%20Evidence%20with%20a%20Siamese%20Network%22)
-- [ ] **3 citations** — SemEval-2019 Task 1: Cross-lingual Semantic Parsing with UCCA
+- [ ] **2 citations** — SemEval-2019 Task 1: Cross-lingual Semantic Parsing with UCCA
       - 2 OpenAlex records for one title
       - [search Scholar for it](https://scholar.google.com/scholar?q=%22SemEval-2019%20Task%201%3A%20Cross-lingual%20Semantic%20Parsing%20with%20UCCA%22)
-- [ ] **3 citations** — Efficient multi-prompt evaluation of LLMs
+- [ ] **2 citations** — DisentQA: Disentangling Parametric and Contextual Knowledge…
       - 2 OpenAlex records for one title
-      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Efficient%20multi-prompt%20evaluation%20of%20LLMs%22)
-- … and 9 more in [`tasks/scholar_strays.md`](tasks/scholar_strays.md), same order
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22DisentQA%3A%20Disentangling%20Parametric%20and%20Contextual%20Knowledge%20with%20Counterfactual%20Question%20Answering%22)
+- [ ] **2 citations** — Label Sleuth: From Unlabeled Text to a Classifier in a Few Hours
+      - 2 OpenAlex records for one title
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Label%20Sleuth%3A%20From%20Unlabeled%20Text%20to%20a%20Classifier%20in%20a%20Few%20Hours%22)
+- [ ] **1 citations** — Corpus Wide Argument Mining - A Working Solution
+      - 2 OpenAlex records for one title
+      - [search Scholar for it](https://scholar.google.com/scholar?q=%22Corpus%20Wide%20Argument%20Mining%20-%20A%20Working%20Solution%22)
+- … and 1 more in [`tasks/scholar_strays.md`](tasks/scholar_strays.md), same order
 
 ## Wikidata author strings (100 papers by hand)
 
@@ -128,107 +192,15 @@ item alone. Resolving a string to that person's own item is what connects them,
 and many independent paths into your item is the point of having them at all.
 
 - [ ] **100 papers, one Author Disambiguator pass each** — most-cited first, and one pass answers every string on the paper
-      - 162 strings on 37 papers already have a candidate item found — what each of them states about itself is in [`tasks/wikidata_coauthors.md`](tasks/wikidata_coauthors.md)
-      - 740 have no item under that exact name. The pass reaches name forms an exact search cannot, and a co-author with no item at all stays a string, which is the right answer rather than a gap.
-      - 152 name matches are left out as namesakes, on a stated occupation nothing like research
+      - 142 strings on 35 papers already have a candidate item found — what each of them states about itself is in [`tasks/wikidata_coauthors.md`](tasks/wikidata_coauthors.md)
+      - 734 have no item under that exact name. The pass reaches name forms an exact search cannot, and a co-author with no item at all stays a string, which is the right answer rather than a gap.
+      - 148 name matches are left out as namesakes, on a stated occupation nothing like research
 
-23 more statements need no decision from you — an ORCID or a DBLP
+49 more statements need no decision from you — an ORCID or a DBLP
 page matched the name, or the value came straight from the bibliography.
 `python scripts/wikidata_coauthors.py --apply` writes them.
 
-## Co-authors who may already have a Wikidata item (18)
-
-Wikidata carries a human item under each of these names and none of them states an
-ORCID, so each is either this co-author reached from a paper rather than a profile
-or somebody else of the same name. Under each name is what every candidate item
-says about itself, the ones stating a research occupation first. The answer is
-which line is them, or `new` if none is.
-
-Each name also carries what its ORCID record states. That identifier came from
-OpenAlex reading a paper whose own metadata names no author identifiers, so on a
-common name it can be a namesake's — a record listing papers in another field
-entirely is one, and the answer for it is `no`, which drops the ORCID for good.
-
-Paste into [`data/overrides.yaml`](data/overrides.yaml) under `wikidata_people`,
-correcting the QIDs that are wrong:
-
-```yaml
-wikidata_people:
-  0000-0002-8989-5052: Q139892759   # Alexandre Lacoste — or Q98250367, or new, or no
-  0000-0001-8376-4505: Q137017900   # Charles Jochim, or new, or no
-  0000-0001-8387-793X: Q113675327   # Felix Friedrich — or Q133328986, Q133496180, Q137349114, …, or new, or no
-  0009-0007-7881-9090: new   # Idan Amit — or Q12410284, or new, or no
-  0000-0002-4349-1327: Q102432223   # Jagannathan Ramanujam, or new, or no
-  0000-0001-6841-9877: new   # Joseph Attieh — or Q4119360, or new, or no
-  0000-0003-4882-8336: Q103016139   # Luan Nguyen, or new, or no
-  0009-0009-4703-3348: Q132192770   # María Grandury, or new, or no
-  0009-0000-1888-9408: Q126367559   # Mattes Ruckdeschel, or new, or no
-  0000-0003-1218-5201: Q122665827   # Mike Zhang, or new, or no
-  0000-0002-3260-1375: new   # Nuhu Ibrahim — or Q116496601, Q131438678, or new, or no
-  0000-0002-9836-4413: Q123935770   # Omar — or Q135997321, or new, or no
-  0000-0003-1505-3060: Q102315387   # Orna Raz, or new, or no
-  0009-0008-6932-7091: Q102434002   # Pengfei Liu — or Q102925389, or new, or no
-  0000-0002-4494-8886: new   # Sara Papi — or Q31294733, or new, or no
-  0000-0002-8439-390X: new   # Sergey Troshin — or Q4464006, or new, or no
-  0000-0002-6280-5045: Q139666707   # Yonatan Belinkov, or new, or no
-  0000-0002-4712-5527: Q117414502   # Yuting Lin, or new, or no
-```
-
-- [ ] **Alexandre Lacoste** (4 papers with you) — [their ORCID record](https://orcid.org/0000-0002-8989-5052) states "Malice in Agentland: Down the Rabbit Hole of Backdoors…"
-  - [Q139892759](https://www.wikidata.org/wiki/Q139892759) — researcher · studied at Laval University, Université de Montréal · at ServiceNow
-  - [Q98250367](https://www.wikidata.org/wiki/Q98250367) — politician
-- [ ] **Charles Jochim** (2 papers with you) — [their ORCID record](https://orcid.org/0000-0001-8376-4505) states "Probability Statements Extraction with Constrained…" · "Extracting Dependence Relations from Unstructured…"
-  - [Q137017900](https://www.wikidata.org/wiki/Q137017900) — states nothing beyond the name
-- [ ] **Felix Friedrich** (2 papers with you) — [their ORCID record](https://orcid.org/0000-0001-8387-793X) states Technical University of Darmstadt · "Auditing and instructing text-to-image generation models…" · "A typology for exploring the mitigation of shortcut…"
-  - [Q113675327](https://www.wikidata.org/wiki/Q113675327) — German particle physicist · researcher · at TU Dresden · 560 papers including "A measurement of material in the ATLAS tracker using secondary hadronic interactions in 7 TeVppcollisions"
-  - [Q133328986](https://www.wikidata.org/wiki/Q133328986) — physicist
-  - [Q133496180](https://www.wikidata.org/wiki/Q133496180) — states nothing beyond the name
-  - [Q137349114](https://www.wikidata.org/wiki/Q137349114) — states nothing beyond the name
-  - [Q139507690](https://www.wikidata.org/wiki/Q139507690) — states nothing beyond the name
-  - [Q1403463](https://www.wikidata.org/wiki/Q1403463) — German organist · church musician, editor, harpsichordist, music arranger, musician, musicologist
-  - [Q136583680](https://www.wikidata.org/wiki/Q136583680) — physician
-- [ ] **Idan Amit** (2 papers with you) — [their ORCID record](https://orcid.org/0009-0007-7881-9090) states Hebrew University of Jerusalem · "A large scale survey of motivation in software development" · "Motivation Research Using Labeling Functions"
-  - [Q12410284](https://www.wikidata.org/wiki/Q12410284) — Israeli actor · playwright, stage actor, theatre director · studied at Marymount Manhattan College, Tel Aviv University
-- [ ] **Jagannathan Ramanujam** (2 papers with you) — [their ORCID record](https://orcid.org/0000-0002-4349-1327) states Louisiana State University · "SynerGNet: A Graph Neural Network Model to Predict…" · "Insights from Augmented Data Integration and Strong…"
-  - [Q102432223](https://www.wikidata.org/wiki/Q102432223) — Ph.D. The Ohio State University
-- [ ] **Joseph Attieh** (2 papers with you) — [their ORCID record](https://orcid.org/0000-0001-6841-9877) states University of Helsinki · "SemEval-2025 Task 3" · "Scaling Low-Resource MT via Synthetic Data Generation…"
-  - [Q4119360](https://www.wikidata.org/wiki/Q4119360) — Lebanese singer
-- [ ] **Luan Nguyen** (2 papers with you) — [their ORCID record](https://orcid.org/0000-0003-4882-8336) states Vietnam National University Ho Chi Minh City · "ZeST: A Zero-Resourced Speech-to-Speech Translation…" · "VGSAlign: Bilingual Speech Alignment of Unpaired and…"
-  - [Q103016139](https://www.wikidata.org/wiki/Q103016139) — Ph.D. University of Texas at Arlington 2018 · electrical engineer · at University of Dayton
-- [ ] **María Grandury** (2 papers with you) — [their ORCID record](https://orcid.org/0009-0009-4703-3348) states École Polytechnique Fédérale de Lausanne · "Updating the German Psycholinguistic Word Toolbox with…" · "Multiple Choice Questions: Reasoning Makes Large…"
-  - [Q132192770](https://www.wikidata.org/wiki/Q132192770) — Spanish engineer and researcher specializing in machine learning and natural language processing · studied at Technical University of Madrid, University of Oviedo
-- [ ] **Mattes Ruckdeschel** (2 papers with you) — [their ORCID record](https://orcid.org/0009-0000-1888-9408) states IT University of Copenhagen
-  - [Q126367559](https://www.wikidata.org/wiki/Q126367559) — researcher
-- [ ] **Mike Zhang** (2 papers with you) — [their ORCID record](https://orcid.org/0000-0003-1218-5201) states Københavns Universitet · "WorkRB: A Community-Driven Evaluation Framework for AI…" · "SEFL: A Framework for Generating Synthetic Educational…"
-  - [Q122665827](https://www.wikidata.org/wiki/Q122665827) — Head, Global Metals and Mining Group, Institutional Banking Group, DBS Bank
-- [ ] **Nuhu Ibrahim** (2 papers with you) — [their ORCID record](https://orcid.org/0000-0002-3260-1375) states "ReciFine" · "Lost in Formatting: How Output Formats Skew LLM…"
-  - [Q116496601](https://www.wikidata.org/wiki/Q116496601) — rugby league footballer · rugby league player
-  - [Q131438678](https://www.wikidata.org/wiki/Q131438678) — Nigerian Politician
-- [ ] **Omar** (2 papers with you) — [their ORCID record](https://orcid.org/0000-0002-9836-4413) states Massachusetts Institute of Technology
-  - [Q123935770](https://www.wikidata.org/wiki/Q123935770) — teacher
-  - [Q135997321](https://www.wikidata.org/wiki/Q135997321) — video game developer
-- [ ] **Orna Raz** (2 papers with you) — [their ORCID record](https://orcid.org/0000-0003-1505-3060) states nothing public beyond the name
-  - [Q102315387](https://www.wikidata.org/wiki/Q102315387) — Ph.D. Carnegie Mellon University 2004 · at IBM · 7 papers including "An effective method for keeping design artifacts up-to-date"
-- [ ] **Pengfei Liu** (2 papers with you) — [their ORCID record](https://orcid.org/0009-0008-6932-7091) states "Improving Rare Words Recognition through Homophone…" · "Out-of-Scope Domain and Intent Classification through…"
-  - [Q102434002](https://www.wikidata.org/wiki/Q102434002) — Ph.D. Université Bordeaux 1 2013 · studied at University of Bordeaux 1
-  - [Q102925389](https://www.wikidata.org/wiki/Q102925389) — Ph.D. Chinese University of Hong Kong 2013 · studied at The Chinese University of Hong Kong
-- [ ] **Sara Papi** (2 papers with you) — [their ORCID record](https://orcid.org/0000-0002-4494-8886) states "Prepending or Cross-Attention for Speech-to-Text? An…" · "MCIF: Multimodal Crosslingual Instruction-Following…"
-  - [Q31294733](https://www.wikidata.org/wiki/Q31294733) — Italian rhythmic gymnast
-- [ ] **Sergey Troshin** (2 papers with you) — [their ORCID record](https://orcid.org/0000-0002-8439-390X) states National Research University Higher School of Economics · "Empirical study of transformers for source code"
-  - [Q4464006](https://www.wikidata.org/wiki/Q4464006) — aircraft pilot
-- [ ] **Yonatan Belinkov** (2 papers with you) — [their ORCID record](https://orcid.org/0000-0002-6280-5045) states Technion Israel Institute of Technology
-  - [Q139666707](https://www.wikidata.org/wiki/Q139666707) — computer scientist
-- [ ] **Yuting Lin** (2 papers with you) — [their ORCID record](https://orcid.org/0000-0002-4712-5527) states Shenzhen University · "We agree completely with the reviewer, but … ”: Stance…" · "Correcting the scientific record"
-  - [Q117414502](https://www.wikidata.org/wiki/Q117414502) — nurse, graduated from University of Washington with a Ph.D. in Nursing · 1 paper including "Itching and parental guilt: parent responses to children's symptoms following unintentional burn injuries"
-
-Nothing else follows by hand. The next run adds the ORCID to the item named, or
-creates a separate one, and writes the *author* statements from it.
-
-1 more needed no answer -- a paper or an employer both records
-name says which item they are, and [`tasks/wikidata_people.md`](tasks/wikidata_people.md)
-lists which and why.
-
-## 2 field corrections the bibliography does not carry (1 entry)
+## 1 field correction the bibliography does not carry (1 entry)
 
 `fields:` in [`data/overrides.yaml`](data/overrides.yaml) corrects these for
 the corpus and nothing else. Scholar, Semantic Scholar and OpenAlex read the
@@ -241,7 +213,6 @@ Edit the bibliography here: <https://github.com/borgr/publications/edit/master/o
 
   ```bibtex
   url          = {https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6176178},
-  doi          = {10.2139/ssrn.6176178},
   ```
 
 ## Identity surfaces (3 open)
@@ -250,7 +221,7 @@ Each is blocked on an account you are logged into, not on knowing what to
 do. `python scripts/identity_tasks.py` regenerates every payload under
 `tasks/` — committed, so browsable on GitHub.
 
-### ORCID is missing 4 of your 117 papers
+### ORCID is missing 11 of your 124 papers
 
 Highest leverage on this page. Semantic Scholar's disambiguation and
 OpenAlex's profile merges are both ORCID-driven, so this is the one fix that
@@ -265,24 +236,23 @@ duplicates). It previews the entries and you confirm — nothing lands unseen.
 Why it matters, once:
 [docs/SETUP.md §1](docs/SETUP.md#1-orcid--populate-it-then-wire-it-everywhere).
 
+- [ ] 26 cites — Proceedings of the 59th Annual Meeting of the Association for…
+- [ ] 4 cites — Proceedings of the Second Workshop on Fact Extraction and…
+- [ ] 3 cites — Proceedings of the 5th Workshop on Structured Prediction for NLP…
+- [ ] 2 cites — TabAgent: Distilling LLM Agent Components into Cheap Classifiers
+- [ ] 2 cites — Proceedings of the 17th International Conference on Parsing…
 - [ ] 1 cites — Skill Issue: Are Skills Language-Invariant in LLMs?
 - [ ] 0 cites — Last Translation Benchmark
 - [ ] 0 cites — User Feedback Provides a Unique Signal that LLMs Can not Detect
-- [ ] 0 cites — Why Pretraining Fails to Share Cross-Lingual Knowledge
+- … and 3 more in [`tasks/orcid_missing.md`](tasks/orcid_missing.md)
 
-### Semantic Scholar — 33 papers on a second author record
+### Semantic Scholar — 37 papers on a second author record
 
 Every S2-backed tool (Elicit, Consensus, SciSpace, most literature agents)
 resolves you to one page, so each currently sees about half the corpus.
 Support has already been asked to merge the two records and declined, so the
 self-service route is the only one: a claimed page can pull papers across one
 at a time.
-
-**Worth waiting until 2026-10-04 before starting.**
-S2 re-clusters authors off ORCID, the ORCID record already asserts every
-paper here, and re-clustering would move all of them at no cost to you. It
-cannot merge the two records, so the second one stays either way — but the
-pastes below may be work that does itself.
 
 1. Open your claimed page: <https://www.semanticscholar.org/author/41019330>
 2. *Edit Author Page → Add Papers*.
@@ -293,20 +263,20 @@ Highest-citation first, so stopping early still captures most of the loss.
 **Do not claim the second page as well** — a second claimed record is harder to
 undo than an unclaimed one, and it makes the split look deliberate.
 
-- [ ] 48 cites — NumeroLogic: Number Encoding for Enhanced LLMs'… — <https://www.semanticscholar.org/paper/268819308>
-- [ ] 30 cites — When AI Benchmarks Plateau: A Systematic Study of… — <https://www.semanticscholar.org/paper/285787943>
-- [ ] 28 cites — Sloth: scaling laws for LLM skills to predict… — <https://www.semanticscholar.org/paper/274597594>
-- [ ] 25 cites — A Hitchhiker's Guide to Scaling Law Estimation — <https://www.semanticscholar.org/paper/273350789>
-- [ ] 23 cites — DOVE: A Large-Scale Multi-Dimensional Predictions… — <https://www.semanticscholar.org/paper/276774995>
-- [ ] 23 cites — Benchmark Agreement Testing Done Right: A Guide for… — <https://www.semanticscholar.org/paper/287923131>
+- [ ] 79 cites — Elements of World Knowledge (EWoK): A… — <https://www.semanticscholar.org/paper/269790884>
+- [ ] 53 cites — NumeroLogic: Number Encoding for Enhanced LLMs'… — <https://www.semanticscholar.org/paper/268819308>
+- [ ] 35 cites — When AI Benchmarks Plateau: A Systematic Study of… — <https://www.semanticscholar.org/paper/285787943>
+- [ ] 31 cites — Sloth: scaling laws for LLM skills to predict… — <https://www.semanticscholar.org/paper/274597594>
+- [ ] 30 cites — A Hitchhiker's Guide to Scaling Law Estimation — <https://www.semanticscholar.org/paper/273350789>
+- [ ] 25 cites — DOVE: A Large-Scale Multi-Dimensional Predictions… — <https://www.semanticscholar.org/paper/276774995>
+- [ ] 25 cites — Benchmark Agreement Testing Done Right: A Guide for… — <https://www.semanticscholar.org/paper/287923131>
 - [ ] 20 cites — LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv… — <https://www.semanticscholar.org/paper/273345528>
-- [ ] 15 cites — Label-Efficient Model Selection for Text Generation — <https://www.semanticscholar.org/paper/267627835>
+- [ ] 18 cites — Label-Efficient Model Selection for Text Generation — <https://www.semanticscholar.org/paper/267627835>
 - [ ] 14 cites — The Mighty ToRR: A Benchmark for Table Reasoning and… — <https://www.semanticscholar.org/paper/276617897>
-- [ ] 10 cites — CommonLID: Re-evaluating State-of-the-Art Language… — <https://www.semanticscholar.org/paper/285049960>
-- [ ] 8 cites — NeurIPS 2023 LLM Efficiency Fine-tuning Competition — <https://www.semanticscholar.org/paper/277104779>
-- … and 21 more in [`tasks/s2_merge.md`](tasks/s2_merge.md), same order
+- [ ] 12 cites — CommonLID: Re-evaluating State-of-the-Art Language… — <https://www.semanticscholar.org/paper/285049960>
+- … and 25 more in [`tasks/s2_merge.md`](tasks/s2_merge.md), same order
 
-### Wikidata — 3 of your papers have no item
+### Wikidata — 10 of your papers have no item
 
 Same bot password, and the same statements as the QuickStatements batch in
 `tasks/wikidata_papers.qs` — which is now only the fallback. This is where
@@ -352,7 +322,7 @@ own work — that is the edit that gets reverted on sight.
 - [ ] **PromptEval** in [Prompt engineering](https://en.wikipedia.org/wiki/Prompt_engineering) ([talk](https://en.wikipedia.org/wiki/Talk:Prompt_engineering))
   > more comprehensive performance interval. Similarly, PromptEval estimates performance distributions across diverse prompts, enabling robust
 
-The 36 coinages Wikipedia does not mention are listed in
+The 37 coinages Wikipedia does not mention are listed in
 [`tasks/wikipedia.md`](tasks/wikipedia.md) as deliberately not actionable, along with
 the field articles you could improve with other people's sources.
 
@@ -388,7 +358,7 @@ its own form.
 1. *Weak here.* Scholar merges preprint and published versions largely on
    venue agreement, and a venue-less arXiv record can stay a separate
    cluster with the citations split across the two.
-   Measured on your own profile: **0 split pairs out of 117**, so for this
+   Measured on your own profile: **1 split pair out of 124**, so for this
    corpus that is mostly already handled — do not do this for that reason.
 2. **The arXiv DataCite record gains a `container-title`.** This is the real
    one and it is not visible on Scholar at all: that field is what flows to
@@ -404,54 +374,54 @@ cannot take off you — but the typing is not: both field values are below,
 per paper, built from the publisher's own bibtex. The same for all
 64 is in [`tasks/arxiv_jref.md`](tasks/arxiv_jref.md).
 
-- [ ] **963 cites** — TIES-Merging: Resolving Interference When Merging Models
+- [ ] **1066 cites** — TIES-Merging: Resolving Interference When Merging Models
       - the form: find `2306.01708` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2306.01708))
       - `Journal-ref:` `Advances in Neural Information Processing Systems 36: Annual Conference on Neural Information Processing Systems 2023`
       - `Journal version DOI:` `10.52202/075280-0310`
-- [ ] **336 cites** — tinyBenchmarks: evaluating LLMs with fewer examples
+- [ ] **379 cites** — tinyBenchmarks: evaluating LLMs with fewer examples
       - the form: find `2402.14992` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2402.14992))
       - `Journal-ref:` `Forty-first International Conference on Machine Learning, 2024`
       - `Journal version DOI:` — none minted, leave blank
-- [ ] **207 cites** — Global MMLU: Understanding and Addressing Cultural and Linguistic Biases in Multilingual Evaluation
+- [ ] **229 cites** — Global MMLU: Understanding and Addressing Cultural and Linguistic Biases in Multilingual Evaluation
       - the form: find `2412.03304` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2412.03304))
       - `Journal-ref:` `Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 18761-18799, 2025`
       - `Journal version DOI:` `10.18653/v1/2025.acl-long.919`
-- [ ] **170 cites** — Q²: Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question Generation and Question Answering
+- [ ] **172 cites** — Q²: Evaluating Factual Consistency in Knowledge-Grounded Dialogues via Question Generation and Question Answering
       - the form: find `2104.08202` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2104.08202))
       - `Journal-ref:` `Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing, pages 7856-7870`
       - `Journal version DOI:` `10.18653/v1/2021.emnlp-main.619`
-- [ ] **131 cites** — Model merging with SVD to tie the Knots
+- [ ] **157 cites** — Model merging with SVD to tie the Knots
       - the form: find `2410.19735` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2410.19735))
       - `Journal-ref:` `ICLR, 2025`
       - `Journal version DOI:` — none minted, leave blank
-- [ ] **127 cites** — On the Weaknesses of Reinforcement Learning for Neural Machine Translation
-      - the form: find `1907.01752` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/1907.01752))
-      - `Journal-ref:` `8th International Conference on Learning Representations, 2020`
-      - `Journal version DOI:` — none minted, leave blank
-- [ ] **125 cites** — DisentQA: Disentangling Parametric and Contextual Knowledge with Counterfactual Question Answering
-      - the form: find `2211.05655` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2211.05655))
-      - `Journal-ref:` `Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 10056-10070, 2023`
-      - `Journal version DOI:` `10.18653/v1/2023.acl-long.559`
-- [ ] **113 cites** — Beyond Binary Rewards: Training LMs to Reason About Their Uncertainty
+- [ ] **137 cites** — Beyond Binary Rewards: Training LMs to Reason About Their Uncertainty
       - the form: find `2507.16806` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2507.16806))
       - `Journal-ref:` `The Fourteenth International Conference on Learning Representations, 2026`
       - `Journal version DOI:` — none minted, leave blank
-- [ ] **97 cites** — Asymmetry in Low-Rank Adapters of Foundation Models
+- [ ] **133 cites** — DisentQA: Disentangling Parametric and Contextual Knowledge with Counterfactual Question Answering
+      - the form: find `2211.05655` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2211.05655))
+      - `Journal-ref:` `Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 10056-10070, 2023`
+      - `Journal version DOI:` `10.18653/v1/2023.acl-long.559`
+- [ ] **125 cites** — On the Weaknesses of Reinforcement Learning for Neural Machine Translation
+      - the form: find `1907.01752` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/1907.01752))
+      - `Journal-ref:` `8th International Conference on Learning Representations, 2020`
+      - `Journal version DOI:` — none minted, leave blank
+- [ ] **108 cites** — Asymmetry in Low-Rank Adapters of Foundation Models
       - the form: find `2402.16842` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2402.16842))
       - `Journal-ref:` `Forty-first International Conference on Machine Learning, 2024`
       - `Journal version DOI:` — none minted, leave blank
-- [ ] **92 cites** — Efficient multi-prompt evaluation of LLMs
+- [ ] **106 cites** — Efficient multi-prompt evaluation of LLMs
       - the form: find `2405.17202` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2405.17202))
       - `Journal-ref:` `The Thirty-eighth Annual Conference on Neural Information Processing Systems, 2024`
-      - `Journal version DOI:` — none minted, leave blank
-- [ ] **80 cites** — Efficient Benchmarking (of Language Models)
+      - `Journal version DOI:` `10.52202/079017-0707`
+- [ ] **84 cites** — Efficient Benchmarking (of Language Models)
       - the form: find `2308.11696` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2308.11696))
       - `Journal-ref:` `Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers), pages 2519-2536`
       - `Journal version DOI:` `10.18653/v1/2024.naacl-long.139`
-- [ ] **78 cites** — Are You Convinced? Choosing the More Convincing Evidence with a Siamese Network
-      - the form: find `1907.08971` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/1907.08971))
-      - `Journal-ref:` `Proceedings of the 57th Conference of the Association for Computational Linguistics, Volume 1: Long Papers, pages 967-976, 2019`
-      - `Journal version DOI:` `10.18653/v1/p19-1093`
+- [ ] **79 cites** — Elements of World Knowledge (EWoK): A Cognition-Inspired Framework for Evaluating Basic World Knowledge in Language Models
+      - the form: find `2405.09605` on <https://arxiv.org/user> → its *journal ref* link ([abs](https://arxiv.org/abs/2405.09605))
+      - `Journal-ref:` `Trans. Assoc. Comput. Linguistics 13 (2025) 1245-1270`
+      - `Journal version DOI:` `10.1162/TACL.A.38`
 
 `Report number:` stays blank on all of them: it means an *institutional* preprint
 number (a lab's own report series) and none of these has one.
@@ -468,7 +438,7 @@ after a session of clicking: `python scripts/audit_identity.py --no-names`.
 - [ ] <https://hf.co/papers/2609.02859>  (0 cites)
 - [ ] <https://hf.co/papers/2609.19291>  (0 cites)
 
-## Hugging Face page indexed but not claimed by you (2)
+## Hugging Face page indexed but not claimed by you (4)
 
 Claims go through moderation and Hugging Face only publishes the
 author→user link once it is granted, so a request already submitted is
@@ -481,8 +451,40 @@ Full list and the other buckets: `tasks/hf_worklist.md`.
 
 - [ ] <https://hf.co/papers/2608.25832>  (1 cites)
 - [ ] <https://hf.co/papers/2609.04173>  (0 cites)
+- [ ] <https://hf.co/papers/2609.37236>  (0 cites)
+- [ ] <https://hf.co/papers/2610.29722>  (0 cites)
 
-## Papers revised since their sidecar was drafted (2)
+## Sidecars not yet drafted (7/124)
+
+**Not yours.** Drafting reads each paper's full text and writes claims,
+scope and glosses into a draft file — agent work, and the queue drains
+when you ask an agent for a batch or when a full run takes one. It is here
+so the number is visible, not so you will do it. What comes back is the
+section above, and that one is yours.
+
+```bash
+python scripts/draft_sidecars.py --review      # every paper: live, draft, or neither
+python scripts/draft_sidecars.py --limit 20    # queue the next 20 (then an agent fills them)
+python scripts/draft_sidecars.py --ingest      # fold the answers in
+```
+
+`--review` is the whole list; the six below are the top of it by
+citations, which is where drafting pays. A draft lands in
+`data/sidecars/drafts/<slug>.md` and nothing reads it until you
+`--accept` it, which moves it to `data/sidecars/<slug>.md` — the
+published one, and the only one the site builds from.
+
+`update.py` also drafts a batch on every run, so this number falls on
+its own.
+
+- `proceedings-of-the-59th-annual-meeting-of-the-association-fo` — 26 cites — Proceedings of the 59th Annual Meeting of the…
+- `proceedings-of-the-second-workshop-on-fact-extraction-and-ve` — 4 cites — Proceedings of the Second Workshop on Fact Extraction…
+- `proceedings-of-the-5th-workshop-on-structured-prediction-for` — 3 cites — Proceedings of the 5th Workshop on Structured…
+- `tabagent-distilling-llm-agent-components-into-cheap-classifi` — 2 cites — TabAgent: Distilling LLM Agent Components into Cheap…
+- `proceedings-of-the-17th-international-conference-on-parsing` — 2 cites — Proceedings of the 17th International Conference on…
+- `asking-for-what-was-never-requested-horizontal-and-vertical` — 0 cites — Asking for What Was Never Requested: Horizontal and…
+
+## Papers revised since their sidecar was drafted (3)
 
 arXiv serves a newer version of each of these than the one its sidecar was
 drafted against. Nothing here is failing — a revision renumbers figures and
@@ -502,6 +504,34 @@ Accepting records the new version, so an answered one leaves this list.
 
 - [ ] `mediocrity-is-the-key-for-llm-as-a-judge-anchor-selection` — arXiv 2603.16848 is at v2, the sidecar was drafted against v1, revised 2026-09-02
 - [ ] `robustness-as-an-emergent-property-of-task-performance` — arXiv 2602.03344 is at v2, the sidecar was drafted against v1, revised 2026-09-15
+- [ ] `resolving-interference-ri-disentangling-models-for-improved` — arXiv 2603.13467 is at v2, the sidecar was drafted against v1, revised 2026-10-14
+
+## Papers whose full text nothing can fetch (4)
+
+Every one of these is a real paper that is not on arXiv, so there is no
+HTML rendering and no open PDF to extract — a Nature paywall, an Elsevier
+page that serves an open-access licence to browsers and 403s to everything
+else, an SSRN download behind a click. They are not slow, they are blocked,
+and no rerun will change that.
+
+You are an author on each of them, so you already have the PDFs. Drop each one in as
+`data/fulltext/<slug>.pdf` — the directory is gitignored, so the PDF stays
+on your machine and only the sidecar it produces is committed. That path is
+read before any network source, so the next run picks it up and the paper
+joins the drafting queue.
+
+- [ ] **Proceedings of the 59th Annual Meeting of the Association…** — 26 cites, no venue
+      - get it from <https://doi.org/10.18653/v1/2021.acl-tutorials>
+      - save it as `data/fulltext/proceedings-of-the-59th-annual-meeting-of-the-association-fo.pdf`
+- [ ] **Proceedings of the Second Workshop on Fact Extraction and…** — 4 cites, no venue
+      - get it from <https://doi.org/10.18653/v1/d19-66>
+      - save it as `data/fulltext/proceedings-of-the-second-workshop-on-fact-extraction-and-ve.pdf`
+- [ ] **Proceedings of the 5th Workshop on Structured Prediction…** — 3 cites, no venue
+      - get it from <https://doi.org/10.18653/v1/2021.spnlp-1>
+      - save it as `data/fulltext/proceedings-of-the-5th-workshop-on-structured-prediction-for.pdf`
+- [ ] **Proceedings of the 17th International Conference on…** — 2 cites, no venue
+      - get it from <https://doi.org/10.18653/v1/2021.iwpt-1>
+      - save it as `data/fulltext/proceedings-of-the-17th-international-conference-on-parsing.pdf`
 
 
 ## Deferred
@@ -509,7 +539,7 @@ Accepting records the new version, so an answered one leaves this list.
 Real work, parked on purpose. Regenerated from live state like
 everything else, so it stays accurate while it waits.
 
-### Artifacts with no citation route (16)
+### Artifacts with no citation route (13)
 
 *Deferred until an artifact is cited or asked about somewhere you can see it, or the paper work is done.*
 
@@ -519,7 +549,7 @@ and your ORCID works list — so they stop being GitHub-only objects.
 Steps, and the honest case for skipping some: `tasks/zenodo.md`.
 
 
-### Repo labels awaiting your review (29/33)
+### Repo labels awaiting your review (26/33)
 
 *Deferred until the sidecar format is settled and the papers are done.*
 
@@ -528,5 +558,5 @@ Check `data/repos.yaml`, fix anything wrong, set `reviewed: true` to freeze it, 
 
 ---
 
-*Per `data/declines.yaml` — hidden: 3 sections (OpenAlex — 4 duplicate profiles; 2 papers absent from the source bibliography — every item declined; 5 papers whose title does not appear on your Scholar profile — every item declined) and 8 individual items. deferred to the bottom: Artifacts with no citation route (16); Repo labels awaiting your review (29/33). marked in `tasks/openalex_merge.md`, `tasks/zenodo.md`. Delete a line there to have it asked normally again.*
+*Per `data/declines.yaml` — hidden: 2 sections (OpenAlex — 4 duplicate profiles; 2 papers absent from the source bibliography — every item declined) and 8 individual items. deferred to the bottom: Artifacts with no citation route (13); Repo labels awaiting your review (26/33). marked in `tasks/openalex_merge.md`, `tasks/zenodo.md`. Delete a line there to have it asked normally again.*
 

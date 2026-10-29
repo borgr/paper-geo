@@ -13,10 +13,10 @@ string, which is the correct end state for them.
 
 None to add.
 
-## Settled by a record rather than a name (23)
+## Settled by a record rather than a name (49)
 
 Two kinds of evidence and no name compared in either, so none of these needs a
-judgement. 23 came from the paper's OpenAlex record giving the co-author's
+judgement. 49 came from the paper's OpenAlex record giving the co-author's
 ORCID, with exactly one Wikidata item stating it. 0 came from DBLP, where
 exactly one candidate's author page lists this same paper -- DBLP separates
 its own namesakes, so a shared publication is a shared person.
@@ -28,32 +28,66 @@ and the string it replaces is dropped.
 for <https://quickstatements.toolforge.org/#/batch>, for a machine with no bot
 password.
 
-- **30 citations** — When AI Benchmarks Plateau: A Systematic Study of Benchmark Satu
+- **79 citations** — Elements of World Knowledge (EWoK): A Cognition-Inspired Framewo
+      - Vivian C. Paulun → [Q133478150](https://www.wikidata.org/wiki/Q133478150) (ORCID 0000-0003-0211-6106)
+      - Maria Ryskina → [Maria Ryskina](https://www.wikidata.org/wiki/Q130838678) (ORCID 0009-0002-5936-1380)
+      - Ekin Akyürek → [Ekin Akyürek](https://www.wikidata.org/wiki/Q141203667) (ORCID 0000-0002-5166-4689)
+      - Ethan Wilcox → [Ethan Gotlieb Wilcox](https://www.wikidata.org/wiki/Q141203666) (ORCID 0000-0002-5128-9890)
+      - Jacob Andreas → [Jacob Andreas](https://www.wikidata.org/wiki/Q125454034) (ORCID 0000-0002-3141-5845)
+- **35 citations** — When AI Benchmarks Plateau: A Systematic Study of Benchmark Satu
       - Vilém Zouhar → [Vilém Zouhar](https://www.wikidata.org/wiki/Q130800023) (ORCID 0000-0001-9874-2069)
+      - Jan Batzner → [Jan Batzner](https://www.wikidata.org/wiki/Q134704719) (ORCID 0009-0003-0994-362X)
       - Mrinmaya Sachan → [Mrinmaya Sachan](https://www.wikidata.org/wiki/Q130800028) (ORCID 0000-0001-8787-8681)
+- **31 citations** — Sloth: scaling laws for LLM skills to predict multi-benchmark pe
+      - Felipe Maia Polo → [Felipe Maia Polo](https://www.wikidata.org/wiki/Q141203665) (ORCID 0000-0002-4950-2795)
+      - Mikhail Yurochkin → [Mikhail Yurochkin](https://www.wikidata.org/wiki/Q103330754) (ORCID 0000-0003-0153-6811)
 - **17 citations** — The Future of Open Human Feedback
       - Cailean Osborne → [Cailean Osborne](https://www.wikidata.org/wiki/Q130811507) (ORCID 0000-0002-4018-8488)
       - Andi Peng → [Andi Peng](https://www.wikidata.org/wiki/Q130808454) (ORCID 0000-0001-8136-6175)
-- **14 citations** — Holmes: A Benchmark to Assess the Linguistic Competence of Langu
+- **15 citations** — Holmes: A Benchmark to Assess the Linguistic Competence of Langu
       - Yufang Hou → [Yufang Hou](https://www.wikidata.org/wiki/Q126462463) (ORCID 0000-0003-2897-6075)
+- **12 citations** — CommonLID: Re-evaluating State-of-the-Art Language Identificatio
+      - Hande Celikkanat → [Hande Çelikkanat](https://www.wikidata.org/wiki/Q59545820) (ORCID 0000-0003-2858-5867)
+      - Thibault Clérice → [Thibault Clérice](https://www.wikidata.org/wiki/Q126596094) (ORCID 0000-0003-1852-9204)
 - **11 citations** — Global PIQA: Evaluating Commonsense Reasoning Across 100+ Langua
+      - Akintunde Oladipo → [Akintunde Oladipo](https://www.wikidata.org/wiki/Q130931304) (ORCID 0009-0000-2630-8167)
+      - Allan Hanbury → [Allan Hanbury](https://www.wikidata.org/wiki/Q91276938) (ORCID 0000-0002-7149-5843)
       - Anna Vacalopoulou → [Anna Vacalopoulou](https://www.wikidata.org/wiki/Q113016044) (ORCID 0000-0002-1509-2951)
       - Francesco Periti → [Francesco Periti](https://www.wikidata.org/wiki/Q130883726) (ORCID 0000-0001-8388-2317)
+      - Jennifer Mickel → [Jennifer Mickel](https://www.wikidata.org/wiki/Q130807785) (ORCID 0009-0006-7517-0460)
+      - John Yi → [John Seon Keun Yi](https://www.wikidata.org/wiki/Q99214483) (ORCID 0000-0001-5226-6546)
+      - Joseph Marvin Imperial → [Joseph Marvin Imperial](https://www.wikidata.org/wiki/Q130877888) (ORCID 0000-0003-1073-6129)
+      - Sander Land → [Sander Land](https://www.wikidata.org/wiki/Q41045693) (ORCID 0000-0001-8572-251X)
+      - Silvia Paniagua Suárez → [Silvia Espinoza Suárez](https://www.wikidata.org/wiki/Q124031242) (ORCID 0000-0001-5333-4045)
+      - David Ifeoluwa Adelani → [David Ifeoluwa Adelani](https://www.wikidata.org/wiki/Q141203650) (ORCID 0000-0002-0193-2083)
+- **11 citations** — BabyBabelLM: A Multilingual Benchmark of Developmentally Plausib
+      - Alexander Scott Warstadt → [Alex Warstadt](https://www.wikidata.org/wiki/Q141203670) (ORCID 0000-0002-5397-3151)
+- **8 citations** — NeurIPS 2023 LLM Efficiency Fine-tuning Competition
+      - Mark Saroufim → [Mark Saroufim](https://www.wikidata.org/wiki/Q130845983) (ORCID 0009-0009-2612-6588)
+      - Luca Antiga → [Luca Antiga](https://www.wikidata.org/wiki/Q122908575) (ORCID 0000-0002-8367-227X)
+      - Christian Puhrsch → [Christian Puhrsch](https://www.wikidata.org/wiki/Q130845981) (ORCID 0009-0002-3925-967X)
 - **8 citations** — Navigating the Modern Evaluation Landscape: Considerations in Be
       - Gabriel Stanovsky → [Gabriel Stanovsky](https://www.wikidata.org/wiki/Q141203655) (ORCID 0000-0002-2420-8979)
-- **7 citations** — Do LLMs Benefit From Their Own Words?
+- **8 citations** — Do LLMs Benefit From Their Own Words?
       - Tamara Broderick → [Tamara Broderick](https://www.wikidata.org/wiki/Q60191593) (ORCID 0000-0003-4704-5196)
-- **6 citations** — Mediocrity is the key for LLM as a Judge Anchor Selection
+      - Jacob Andreas → [Jacob Andreas](https://www.wikidata.org/wiki/Q125454034) (ORCID 0000-0002-3141-5845)
+- **7 citations** — Mediocrity is the key for LLM as a Judge Anchor Selection
       - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
-- **3 citations** — Every Eval Ever: A Unifying Schema and Community Repository for 
+- **7 citations** — Automated Discovery Has No Universally Superior Harness
+      - A. Gupta → [Alok C. Gupta](https://www.wikidata.org/wiki/Q59670946) (ORCID 0000-0002-9331-4388)
+- **4 citations** — Every Eval Ever: A Unifying Schema and Community Repository for 
       - Jan Batzner → [Jan Batzner](https://www.wikidata.org/wiki/Q134704719) (ORCID 0009-0003-0994-362X)
+      - John P. Lalor → [John P Lalor](https://www.wikidata.org/wiki/Q59770616) (ORCID 0000-0003-0848-4786)
       - Steven Dillmann → [Steven Dillmann](https://www.wikidata.org/wiki/Q138605252) (ORCID 0000-0002-4773-1463)
       - Arman Cohan → [Arman Cohan](https://www.wikidata.org/wiki/Q104433082) (ORCID 0000-0002-8954-2724)
-- **3 citations** — Evaluation Cards: An Interpretive Layer for AI Evaluation Report
+      - Avijit Ghosh → [Avijit Ghosh](https://www.wikidata.org/wiki/Q130838690) (ORCID 0000-0002-8540-3698)
+- **4 citations** — Evaluation Cards: An Interpretive Layer for AI Evaluation Report
       - Jan Batzner → [Jan Batzner](https://www.wikidata.org/wiki/Q134704719) (ORCID 0009-0003-0994-362X)
       - Max Lamparth → [Max Lamparth](https://www.wikidata.org/wiki/Q130898625) (ORCID 0000-0001-6405-513X)
-- **2 citations** — Automated Discovery Has No Universally Superior Harness
-      - A. Gupta → [Alok C. Gupta](https://www.wikidata.org/wiki/Q59670946) (ORCID 0000-0002-9331-4388)
+- **3 citations** — LLM Hypnosis: Exploiting User Feedback for Unauthorized Knowledg
+      - Jacob Andreas → [Jacob Andreas](https://www.wikidata.org/wiki/Q125454034) (ORCID 0000-0002-3141-5845)
+- **1 citations** — Instructions Shape Production of Language, not Processing
+      - Andreas Waldis → [Andreas Waldis](https://www.wikidata.org/wiki/Q141203656) (ORCID 0000-0002-2772-5701)
 - **1 citations** — Cross-Lingual Exploration for Parametric Knowledge
       - Omri Abend → [Omri Abend](https://www.wikidata.org/wiki/Q102687062) (ORCID 0000-0003-4311-3876)
 - **1 citations** — Skill Issue: Are Skills Language-Invariant in LLMs?
@@ -61,14 +95,12 @@ password.
 - **0 citations** — MINDGAMES: A Live Arena for Evaluating Social and Strategic Reas
       - Aditya Ranjan → [Aditya Ranjan](https://www.wikidata.org/wiki/Q130910738) (ORCID 0009-0007-6808-0093)
       - Cheston Tan → [Cheston Tan](https://www.wikidata.org/wiki/Q141203683) (ORCID 0000-0003-1248-4906)
-- **0 citations** — Instructions Shape Production of Language, not Processing
-      - Andreas Waldis → [Andreas Waldis](https://www.wikidata.org/wiki/Q141203656) (ORCID 0000-0002-2772-5701)
 - **0 citations** — Growing Pains: Extensible and Efficient LLM Benchmarking Via Fix
       - Gabriel Stanovsky → [Gabriel Stanovsky](https://www.wikidata.org/wiki/Q141203655) (ORCID 0000-0002-2420-8979)
 - **0 citations** — Position: Agentic Systems Should be General
       - Graham Neubig → [Graham Neubig](https://www.wikidata.org/wiki/Q102439560) (ORCID 0000-0002-2072-3789)
 
-## Remaining, one paper at a time (100 papers, 902 strings)
+## Remaining, one paper at a time (100 papers, 876 strings)
 
 The *disambiguate* link opens Author Disambiguator on the paper item. It
 matches name forms an exact label search cannot -- a byline reading *Colin A.
@@ -81,36 +113,40 @@ matches found here. A namesake matches identically, so open the item and check
 the person before accepting. Two candidates on one name sometimes means two
 items for one person, which is a merge rather than a choice.
 
-152 name matches are not listed. Each states an occupation nothing like
+148 name matches are not listed. Each states an occupation nothing like
 research -- footballer, actor, politician -- so the name is a coincidence. An
 item stating no occupation at all is still listed.
 
-- [ ] **963 citations** — TIES-Merging: Resolving Interference When Merging Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029633)
+- [ ] **1066 citations** — TIES-Merging: Resolving Interference When Merging Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029633)
       - Mohit Bansal → [Q67386311](https://www.wikidata.org/wiki/Q67386311) — researcher, [Q92117908](https://www.wikidata.org/wiki/Q92117908) — researcher (ORCID 0000-0002-8403-0316), [Q96127041](https://www.wikidata.org/wiki/Q96127041) — researcher (ORCID 0000-0001-8777-1980) … +2
-- [ ] **336 citations** — tinyBenchmarks: evaluating LLMs with fewer examples — 3 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029634)
+- [ ] **379 citations** — tinyBenchmarks: evaluating LLMs with fewer examples — 3 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029634)
       - Yuekai Sun → [Q102433700](https://www.wikidata.org/wiki/Q102433700) — statistician
       - Gongjun Xu → [Q100674149](https://www.wikidata.org/wiki/Q100674149) — researcher
-- [ ] **255 citations** — Findings of the BabyLM Challenge: Sample-Efficient Pretraini — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029636)
-- [ ] **247 citations** — Active Learning for BERT: An Empirical Study — 7 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029635)
-- [ ] **207 citations** — Global MMLU: Understanding and Addressing Cultural and Lingu — 10 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029638)
+- [ ] **266 citations** — Findings of the BabyLM Challenge: Sample-Efficient Pretraini — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029636)
+- [ ] **252 citations** — Active Learning for BERT: An Empirical Study — 7 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029635)
+- [ ] **229 citations** — Global MMLU: Understanding and Addressing Cultural and Lingu — 10 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029638)
       - Sebastian Ruder → [Q47488652](https://www.wikidata.org/wiki/Q47488652) — computer scientist
-- [ ] **170 citations** — Q²: Evaluating Factual Consistency in Knowledge-Grounded Dia — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029639)
-- [ ] **131 citations** — Model merging with SVD to tie the Knots — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029643)
-- [ ] **127 citations** — On the Weaknesses of Reinforcement Learning for Neural Machi — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029640)
-- [ ] **125 citations** — DisentQA: Disentangling Parametric and Contextual Knowledge  — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029642)
-- [ ] **121 citations** — Fusing finetuned models for better pretraining — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029641)
-- [ ] **113 citations** — Beyond Binary Rewards: Training LMs to Reason About Their Un — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029645)
-      - Yoon Kim → [Q88771001](https://www.wikidata.org/wiki/Q88771001) — researcher (ORCID 0000-0002-7404-8432), [Q91553362](https://www.wikidata.org/wiki/Q91553362) — researcher (ORCID 0000-0002-0679-6594), [Q102278866](https://www.wikidata.org/wiki/Q102278866) — Ph.D. Virginia Polytechnic Institute and Sta … +2
-- [ ] **104 citations** — Jump to Conclusions: Short-Cutting Transformers with Linear  — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029646)
+- [ ] **172 citations** — Q²: Evaluating Factual Consistency in Knowledge-Grounded Dia — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029639)
+- [ ] **157 citations** — Model merging with SVD to tie the Knots — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029643)
+- [ ] **137 citations** — Beyond Binary Rewards: Training LMs to Reason About Their Un — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029645)
+      - Yoon Kim → [Q91553362](https://www.wikidata.org/wiki/Q91553362) — researcher (ORCID 0000-0002-0679-6594), [Q102278866](https://www.wikidata.org/wiki/Q102278866) — Ph.D. Virginia Polytechnic Institute and Sta, [Q88771001](https://www.wikidata.org/wiki/Q88771001) — researcher (ORCID 0000-0002-7404-8432) … +2
+- [ ] **133 citations** — DisentQA: Disentangling Parametric and Contextual Knowledge  — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029642)
+- [ ] **125 citations** — On the Weaknesses of Reinforcement Learning for Neural Machi — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029640)
+- [ ] **124 citations** — Fusing finetuned models for better pretraining — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029641)
+- [ ] **108 citations** — Asymmetry in Low-Rank Adapters of Foundation Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029647)
+- [ ] **107 citations** — Jump to Conclusions: Short-Cutting Transformers with Linear  — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029646)
       - Alexander Yom Din → [Q102662940](https://www.wikidata.org/wiki/Q102662940) — Israeli mathematician
-- [ ] **97 citations** — Asymmetry in Low-Rank Adapters of Foundation Models — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029647)
-- [ ] **92 citations** — Efficient multi-prompt evaluation of LLMs — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029648)
+- [ ] **106 citations** — Efficient multi-prompt evaluation of LLMs — 5 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029648)
       - Yuekai Sun → [Q102433700](https://www.wikidata.org/wiki/Q102433700) — statistician
-- [ ] **80 citations** — Efficient Benchmarking (of Language Models) — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029658)
-- [ ] **78 citations** — Are You Convinced? Choosing the More Convincing Evidence wit — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029650)
-- [ ] **74 citations** — Knowledge is a Region in Weight Space for Fine-tuned Languag — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029651)
-- [ ] **74 citations** — Findings of the Second BabyLM Challenge: Sample-Efficient Pr — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029660)
-- [ ] **73 citations** — A Survey on Model MoErging: Recycling and Routing Among Spec — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029657)
-- [ ] **72 citations** — Will it Blend? Blending Weak and Strong Labeled Data in a Ne — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029652)
+- [ ] **84 citations** — Efficient Benchmarking (of Language Models) — 6 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029658)
+- [ ] **79 citations** — Are You Convinced? Choosing the More Convincing Evidence wit — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029650)
+- [ ] **79 citations** — Elements of World Knowledge (EWoK): A Cognition-Inspired Fra — 13 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029655)
+      - Carina Kauf → [Q126691875](https://www.wikidata.org/wiki/Q126691875) — researcher in the field of digital humanitie
+      - Jennifer Hu → [Q102309422](https://www.wikidata.org/wiki/Q102309422) — Cognitive Science researcher; Ph.D. Universi
+      - Roger Levy → [Q42695765](https://www.wikidata.org/wiki/Q42695765) — researcher, [Q98768301](https://www.wikidata.org/wiki/Q98768301), [Q100305600](https://www.wikidata.org/wiki/Q100305600) — member or fellow of the New York Academy of  … +1
+      - Joshua B. Tenenbaum → [Q16976397](https://www.wikidata.org/wiki/Q16976397) — American professor of cognitive science
+- [ ] **77 citations** — A Survey on Model MoErging: Recycling and Routing Among Spec — 4 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029657)
+- [ ] **76 citations** — Knowledge is a Region in Weight Space for Fine-tuned Languag — 2 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029651)
+- [ ] **76 citations** — Findings of the Second BabyLM Challenge: Sample-Efficient Pr — 1 left — [disambiguate](https://author-disambiguator.toolforge.org/work_item_oauth.php?id=Q141029660)
 - … and 80 more papers, same order, in `build/wikidata_coauthors.json`
 
