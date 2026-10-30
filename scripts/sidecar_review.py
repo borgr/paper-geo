@@ -498,7 +498,8 @@ def _routes(d: dict) -> list[str]:
            "<b>plain</b> in the words of someone who has not read the paper, "
            "<b>jargon</b> in the field’s own vocabulary, <b>task</b> as the "
            "thing they are trying to do, <b>practitioner</b> in the first person "
-           "and deciding. Three rewordings of one sentence match one query; "
+           "and deciding, <b>adjacent</b> from a neighbouring community or a "
+           "better-known name. Three rewordings of one sentence match one query; "
            "three vocabularies match three. Anything marked "
            "<b>unsorted</b> predates the routes and is what a redraft "
            "replaces.</p>"]

@@ -5,6 +5,7 @@ are the source, the scripts read them. See its docstring.
 """
 from __future__ import annotations
 
+import datetime
 import json
 import os
 import re
@@ -1297,7 +1298,10 @@ VERSIONS_COMMENT = (
     "scripts/worklist.py, which asks for a re-draft when arXiv moves past the "
     "recorded number. A slug absent from here is unknown rather than v1. Dates and "
     "git both fail at this -- a commit touching every sidecar at once resets them "
-    "and hides a revision that landed before it.")
+    "and hides a revision that landed before it. `framed_at` is when each sidecar "
+    "was last accepted and the paper's citations then; scripts/draft_sidecars.py "
+    "reads it to queue the one-off framing refreshes at 1 year, 3 years and 10 "
+    "citations.")
 
 
 def sidecar_versions() -> dict[str, int]:
@@ -1331,9 +1335,27 @@ def record_sidecar_versions(slugs: list[str]) -> tuple[int, list[str]]:
             skipped.append(slug)
             continue
         rec[slug] = int(v)
+    # Every slug, arXiv or not: what a framing refresh compares against is when the sidecar
+    # was accepted and how cited the paper was then, and a journal paper has both.
+    cites = {p["slug"]: p.get("citations") or 0 for p in read_papers()}
+    framed = dict(got.get("framed_at") or {})
+    for slug in slugs:
+        framed[slug] = {"on": datetime.date.today().isoformat(),
+                        "citations": int(cites.get(slug, 0))}
     write_yaml(SIDECAR_VERSIONS, {"_comment": VERSIONS_COMMENT,
-                                 "drafted_against": dict(sorted(rec.items()))})
+                                 "drafted_against": dict(sorted(rec.items())),
+                                 "framed_at": dict(sorted(framed.items()))})
     return len(slugs) - len(skipped), skipped
+
+
+def framed_at() -> dict[str, dict]:
+    """{slug: {on: ISO date, citations: n}} -- when each live sidecar was last accepted.
+
+    Read by `draft_sidecars.refresh_due`. A slug absent from it is unknown, and an unknown
+    sidecar is never due: absence must not turn into a corpus-wide refresh.
+    """
+    got = read_yaml(SIDECAR_VERSIONS) or {}
+    return {k: v for k, v in (got.get("framed_at") or {}).items() if isinstance(v, dict)}
 
 
 def has_live_sidecar(slug: str) -> bool:
@@ -1379,11 +1401,13 @@ def declined(text: str | None) -> str | None:
 #   jargon        the field's vocabulary, the way a specialist would type it
 #   task          the thing they are trying to do ("how do I merge two adapters")
 #   practitioner  first person, deciding ("should I use this for my model")
+#   adjacent      another community's vocabulary, or a better-known system's name, for the
+#                 same question ("does AlphaEvolve-style search beat best-of-N?")
 #
 # `unsorted` is the legacy bucket: phrasings written before the roles existed. A draft may
 # not emit it, and a redraft of any paper empties it -- so it shrinks and never grows.
 
-QA_ROLES = ("plain", "jargon", "task", "practitioner")
+QA_ROLES = ("plain", "jargon", "task", "practitioner", "adjacent")
 
 
 def phrasings(group: dict) -> list[str]:

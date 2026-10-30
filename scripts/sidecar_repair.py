@@ -311,6 +311,93 @@ def reroute(slug: str, again, source: str = "a model") -> tuple[int, int]:
     return done, len(errs) + len(qual)
 
 
+FRAMES = """Below is one paper's claims and its question groups, already accepted by the
+paper's author, and how other work currently names the topic. Add an `adjacent` wording to
+the groups where someone from a neighbouring community, or someone who knows a better-known
+system or a newer term, would ask that same question in their own words.
+
+You are changing nothing else. Each group's answer is fixed -- the claims under
+`answered_by` -- and an `adjacent` wording asks for exactly that answer.
+
+CLAIMS:
+{claims}
+
+GROUPS (JSON):
+{groups}
+
+HOW OTHER WORK NAMES THIS TOPIC:
+{vocabulary}
+
+Rules for your answer:
+- One entry per group you fill, with `index` copied exactly as given. Leave a group out
+  when no neighbouring framing asks its question; most groups have none.
+- Use a term only if it appears above or in the group's own phrasings, and prefer the one
+  the listed work uses most over an accurate name nobody types.
+- A group that already has an `adjacent` wording gets a new one only if the vocabulary
+  above has moved past it.
+- Never state an answer, a magnitude, or a claim, and never a claim about another system.
+
+The question rules, from {doc}:
+
+{rules}
+"""
+
+FRAMES_SCHEMA = {
+    "type": "object", "additionalProperties": False, "required": ["groups"],
+    "properties": {"groups": {
+        "type": "array", "items": {
+            "type": "object", "additionalProperties": False,
+            "required": ["index", "adjacent"],
+            "properties": {
+                "index": {"type": "integer",
+                          "description": "The group index, copied exactly as given."},
+                "adjacent": {"type": "string",
+                             "description": "The group's question in a neighbouring "
+                                            "community's words, ending in '?'."}}}}},
+}
+
+
+def reframe(slug: str, again, vocabulary: str, source: str = "a model") -> tuple[int, int]:
+    """Add `adjacent` wordings to one live sidecar's groups. Nothing else moves.
+
+    The narrow pass behind a framing refresh, for the same reason `reroute` is narrow: a
+    full redraft of an accepted sidecar rewrites claims the author already verified, and a
+    refresh exists to widen who arrives, not to change what the page asserts. So the model
+    sees the claims, the groups and the vocabulary, and the schema accepts nothing but
+    `adjacent`. Returns `(groups reframed, findings left on the draft)`.
+    """
+    path = next((f for f in (draft_path(slug), live_path(slug)) if os.path.exists(f)), None)
+    fm, unread = read_front_matter(path) if path else (None, "")
+    if unread:
+        print(f"    {os.path.basename(path)}: {unread} -- reframing nothing in it",
+              file=sys.stderr)
+    groups = (fm or {}).get("qa") or []
+    if not groups or not vocabulary.strip():
+        return 0, 0
+    claims = "\n".join(f"[{c['id']}] ({c.get('kind')}) {oneline(c.get('text'))}"
+                       for c in (fm.get("claims") or []))
+    pieces = json.dumps([{"index": i, "answered_by": g.get("answered_by"),
+                          "ask": g.get("ask")} for i, g in enumerate(groups)],
+                        ensure_ascii=False, indent=1)
+    got = again(FRAMES.format(claims=claims, groups=pieces, vocabulary=vocabulary,
+                              doc=RULES_DOC, rules=rules_block(RULES_DOC)),
+                f"{slug} reframe", FRAMES_SCHEMA)
+    done = 0
+    for item in (got or {}).get("groups") or []:
+        i = item.get("index") if isinstance(item, dict) else None
+        q = " ".join(str(item.get("adjacent") or "").split()) if i is not None else ""
+        if not (isinstance(i, int) and 0 <= i < len(groups) and q.endswith("?")
+                and isinstance(groups[i].get("ask"), dict)):
+            continue
+        groups[i]["ask"]["adjacent"] = q
+        done += 1
+    if not done:
+        return 0, 0
+    write_draft(slug, fm, source + " + adjacent wordings")
+    errs, qual = validate_draft(draft_path(slug), note=False)
+    return done, len(errs) + len(qual)
+
+
 def where(finding: str, fm: dict | None = None) -> str | None:
     """The single field a finding is about, as a locus, or None if it is about no one field.
 
@@ -479,7 +566,9 @@ def limits(locus: str) -> str:
                           "jargon and no coined name",
                  "jargon": "in the field's own vocabulary",
                  "task": "phrased as the thing they are trying to do",
-                 "practitioner": "in the first person, deciding whether to use this"}
+                 "practitioner": "in the first person, deciding whether to use this",
+                 "adjacent": "in a neighbouring community's vocabulary, or naming the "
+                             "better-known system or newer term it arrives with"}
         return ("a question someone would type, ending in `?`, answerable on its own with "
                 "no paper title beside it, so every reference in it has to name what it "
                 "points at"

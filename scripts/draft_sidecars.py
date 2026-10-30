@@ -43,12 +43,14 @@ reading `--review`.
 from __future__ import annotations
 
 import argparse
+import datetime
 import glob
 import json
 import os
 import re
 import sys
 import time
+import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -56,16 +58,16 @@ import yaml  # noqa: E402
 
 from llm import JSON_ONLY, decodable, first_json, with_retries  # noqa: E402
 from llm import client as llm_client  # noqa: E402
-from common import (BUILD, README_NAMES, ROOT, get_status, has_live_sidecar,  # noqa: E402
-                    load_config, plural, read_papers, record_sidecar_versions,
-                    rules_block, title_of, write_json)
+from common import (BUILD, README_NAMES, ROOT, framed_at, get_status,  # noqa: E402
+                    has_live_sidecar, load_config, paper_doi, plural, read_papers,
+                    record_sidecar_versions, replied, rules_block, title_of, write_json)
 from fulltext import LIMIT as FULLTEXT_LIMIT  # noqa: E402
 from fulltext import cut_chars  # noqa: E402
 from fulltext import resolve as resolve_fulltext  # noqa: E402
 from sidecar_io import (CACHE, RULES_DOC, draft_path, draft_paths,  # noqa: E402
                         held, live_path, live_paths, read_front_matter, restamp, schema,
                         spec_sha, validate_draft, write_draft)
-from sidecar_repair import mend, repair, reroute  # noqa: E402
+from sidecar_repair import mend, reframe, repair, reroute  # noqa: E402
 from sidecar_review import review, show, suspects, write_review_page  # noqa: E402
 
 TASKS = os.path.join(BUILD, "sidecar_tasks.json")
@@ -250,6 +252,102 @@ def evidence(p: dict, cfg: dict, no_fulltext: bool = False) -> str:
     return "\n".join(parts)
 
 
+NEIGHBOURS = 10   # related works read from OpenAlex
+CITING = 25      # citing papers read from Semantic Scholar, on a refresh
+
+
+def neighbours(p: dict, citing: bool = False) -> str:
+    """How other work currently names this paper's topic, as an evidence block, or "".
+
+    The paper's own text shows the framing it chose. This shows the ones readers arrive
+    with: OpenAlex's related works for the paper, and on a refresh how citing papers
+    describe it, which is where a term coined after publication first appears. Two or three
+    requests per paper, so it is cheap next to the full text; any failure is just a
+    shorter block, because the draft is still writable without it.
+    """
+    lines = []
+    doi = paper_doi(p)
+    if doi:
+        _, got, _ = replied("https://api.openalex.org/works/doi:"
+                            + urllib.parse.quote(doi) + "?select=related_works")
+        ids = [w.rsplit("/", 1)[-1] for w in ((got or {}).get("related_works") or [])]
+        if ids:
+            _, got, _ = replied("https://api.openalex.org/works?per_page=25&select=title"
+                                "&filter=openalex_id:" + "|".join(ids[:NEIGHBOURS]))
+            titles = [w.get("title") for w in ((got or {}).get("results") or [])]
+            lines += [f"- {t}" for t in titles if t]
+    if lines:
+        lines.insert(0, "titles of related recent work (OpenAlex):")
+    key = f"arXiv:{p['arxiv']}" if p.get("arxiv") else f"DOI:{doi}" if doi else ""
+    if citing and key:
+        _, got, _ = replied(f"https://api.semanticscholar.org/graph/v1/paper/{key}"
+                            f"/citations?fields=title,contexts&limit={CITING}")
+        cites, seen = [], set()
+        for c in (got or {}).get("data") or []:
+            t = (c.get("citingPaper") or {}).get("title")
+            if t and t not in seen:
+                seen.add(t)
+                cites.append(f"- {t}")
+                cites += [f"    > {' '.join(x.split())[:240]}" for x in
+                          (c.get("contexts") or [])[:2]]
+        if cites:
+            lines += ["how citing papers describe it (Semantic Scholar):"] + cites
+    return "\n".join(lines)
+
+
+# The one-off framing refreshes: (label, days after publication). Plus the citation
+# milestone. Each fires once per sidecar, and only for a sidecar accepted before it.
+AGES = (("1 year", 365), ("3 years", 3 * 365))
+CITED = 10
+
+
+def published(p: dict) -> datetime.date | None:
+    """Month precision from a new-style arXiv id, else mid-year, else unknown."""
+    m = re.match(r"(\d{2})(\d{2})\.\d{4,5}$", str(p.get("arxiv") or ""))
+    if m:
+        return datetime.date(2000 + int(m.group(1)), int(m.group(2)), 1)
+    y = p.get("year")
+    return datetime.date(int(y), 7, 1) if str(y).isdigit() else None
+
+
+def refresh_due(p: dict, rec: dict | None, today: datetime.date) -> list[str]:
+    """The framing milestones this paper has passed since its sidecar was last accepted.
+
+    An unrecorded sidecar is never due: `framed_at` was seeded when the refresh was
+    introduced, so absence means a sidecar no accept has recorded, and refreshing it would
+    be a guess. A milestone already passed at the last accept is done -- that accept was
+    reviewed against the paper as it then stood.
+    """
+    if not rec:
+        return []
+    try:
+        on = datetime.date.fromisoformat(str(rec.get("on")))
+    except ValueError:
+        return []
+    out = []
+    pub = published(p)
+    for label, days in AGES:
+        if pub and on < pub + datetime.timedelta(days=days) <= today:
+            out.append(label)
+    if (p.get("citations") or 0) >= CITED > int(rec.get("citations") or 0):
+        out.append(f"{CITED} citations")
+    return out
+
+
+def refreshes(papers: list[dict], today: datetime.date | None = None) -> dict[str, list[str]]:
+    """{slug: milestones} for live sidecars due a framing refresh, with no draft pending.
+
+    A paper that already has a draft is left alone: that draft is what `--accept` will
+    promote, and the accept is what records the refresh as done.
+    """
+    today = today or datetime.date.today()
+    rec, drafted = framed_at(), {os.path.basename(f)[:-3] for f in draft_paths()}
+    live = {os.path.basename(f)[:-3] for f in live_paths()}
+    return {p["slug"]: due for p in papers
+            if p["slug"] in live and p["slug"] not in drafted
+            and (due := refresh_due(p, rec.get(p["slug"]), today))}
+
+
 def pending(papers: list[dict], do_all: bool, limit: int | None) -> list[dict]:
     """Papers with no live sidecar and no current draft, most cited first.
 
@@ -296,6 +394,10 @@ def with_evidence(cands: list[dict], cfg, no_fulltext: bool,
         if not no_fulltext and NO_TEXT in ev:
             skipped.append(p)
             continue
+        nb = "" if no_fulltext else neighbours(p)
+        if nb:
+            ev += ("\nhow other work names this topic, for `adjacent` wordings:\n"
+                   + nb + "\n")
         ok.append((p, ev))
         if limit and len(ok) >= limit:
             break
@@ -343,11 +445,21 @@ def standing(slug: str) -> tuple[dict | None, list[str]]:
     return None, []
 
 
-def emit_tasks(pairs: list[tuple[dict, str]], cfg) -> str:
+def refresh_finding(due: list[str]) -> str:
+    """The instruction a framing refresh hands the drafter, as one finding."""
+    return (f"framing refresh due ({', '.join(due)}): add an `adjacent` wording to each "
+            f"question group a neighbouring community would ask, using the vocabulary in "
+            f"the evidence, and change nothing else")
+
+
+def emit_tasks(pairs: list[tuple[dict, str]], cfg,
+               due: dict[str, list[str]] | None = None) -> str:
     os.makedirs(BUILD, exist_ok=True)
     tasks = []
     for p, ev in pairs:
         fm, found = standing(p["slug"])
+        if fm is not None and p["slug"] in (due or {}):
+            found = found + [refresh_finding(due[p["slug"]])]
         t = {"slug": p["slug"], "title": title_of(p),
              "evidence": ev, "sidecar": fm}
         if fm is not None:
@@ -890,6 +1002,11 @@ def parser() -> argparse.ArgumentParser:
                          "group already asks, never the paper, so no claim can move. No "
                          "slugs means every sidecar still holding phrasings in "
                          "`ask.unsorted`. api and openai modes")
+    ap.add_argument("--reframe", nargs="*", metavar="SLUG",
+                    help="add `adjacent` wordings to live sidecars from how related and "
+                         "citing work names the topic, changing nothing else. No slugs "
+                         "means every sidecar due its one-off refresh at 1 year, 3 years "
+                         "or 10 citations; a plain run already includes those")
     ap.add_argument("--repair", type=int, default=0, metavar="N",
                     help="after drafting, show the model its own findings and ask it to "
                          "fix them, up to N times. Stops early when a round stops "
@@ -1075,15 +1192,46 @@ def note_batch(pairs: list[tuple[dict, str]]) -> None:
     print()
 
 
-def draft_batch(args, cfg, pairs: list[tuple[dict, str]]) -> None:
-    """Draft the batch through whichever backend the mode names.
+def refresh_pairs(papers: list[dict], due: dict[str, list[str]]) -> list[tuple[dict, str]]:
+    """(paper, vocabulary) for each refresh that found any; the rest wait for the next run.
 
-    `skill` writes the task file and the drafting happens outside this process. `api` and
-    `openai` ask for each paper in turn and write each draft as it lands.
+    No paper text: the claims are fixed and only the vocabulary is new, which is also what
+    keeps a refresh at three requests rather than a full-text resolve.
+    """
+    by = {p["slug"]: p for p in papers}
+    out = []
+    for slug in due:
+        p = by.get(slug)
+        vocab = neighbours(p, citing=True) if p else ""
+        if vocab:
+            out.append((p, vocab))
+        else:
+            print(f"  {slug}: refresh due ({', '.join(due[slug])}), but no related or "
+                  f"citing work came back -- retried next run")
+    return out
+
+
+def draft_batch(args, cfg, pairs: list[tuple[dict, str]],
+                due: dict[str, list[str]] | None = None,
+                papers: list[dict] | None = None) -> None:
+    """Draft the batch, and the framing refreshes, through whichever backend the mode names.
+
+    `skill` writes the task file and the drafting happens outside this process: a refresh
+    is a repair task there, the live sidecar plus one finding. `api` and `openai` ask for
+    each paper in turn and write each draft as it lands, and a refresh goes through the
+    narrow `reframe` pass, because their drafting call writes a sidecar from scratch.
     """
     mode = llm_mode(args, cfg)
+    fresh = refresh_pairs(papers or [], due) if due else []
+    if fresh:
+        print(f"{len(fresh)} framing refresh(es): "
+              + ", ".join(f"{p['slug']} ({', '.join(due[p['slug']])})" for p, _ in fresh))
+    if not pairs and not fresh:
+        print("Nothing to draft this run.")
+        return
     if mode not in ("api", "openai"):
-        path = emit_tasks(pairs, cfg)
+        path = emit_tasks(pairs + [(p, f"title: {title_of(p)}\n\n{v}") for p, v in fresh],
+                          cfg, due)
         print(f"wrote {path}")
         print("Fill each task's `sidecar` field (the paper-geo skill does this), then:")
         print("  python scripts/draft_sidecars.py --ingest")
@@ -1107,8 +1255,13 @@ def draft_batch(args, cfg, pairs: list[tuple[dict, str]]) -> None:
     if args.repair:
         print(f"drafting, then repairing each against the checks, up to "
               f"{args.repair} round(s) per paper:")
-    answers, _how, _asker = caller(pairs, cfg, landed)
-    print(f"\nwrote {len(answers)} draft(s) to data/sidecars/drafts/")
+    answers, how, asker = caller(pairs, cfg, landed)
+    for p, vocab in fresh:
+        done, found = reframe(p["slug"], asker, vocab, how)
+        print(f"  {'ok ' if done else '-- '} {p['slug'][:56]:56} {done} adjacent wording(s)"
+              + (f", {found} finding(s) to fix" if found else ""))
+    print(f"\nwrote {len(answers) + sum(1 for _ in fresh)} draft(s) to "
+          f"data/sidecars/drafts/")
     print("Next: python scripts/draft_sidecars.py --review")
 
 
@@ -1142,21 +1295,32 @@ def main() -> None:
     if args.mend is not None:
         return run_mend(args, papers, cfg)
 
-    cands, limit = queued(args, papers)
-    if not cands:
-        print("Nothing to draft: every paper has a sidecar or a draft.")
+    # A framing refresh rides along with every plain run, so a paper reaching a milestone
+    # needs no one to remember it. `--reframe` runs only the refreshes, or forces named ones.
+    due = {} if args.slug else refreshes(papers)
+    if args.reframe is not None:
+        due = {s: due.get(s, ["on request"]) for s in (args.reframe or due)}
+        cands = []
+    else:
+        cands, limit = queued(args, papers)
+    if not cands and not due:
+        print("Nothing to draft: every paper has a sidecar or a draft, and none is due "
+              "a framing refresh.")
         print("  python scripts/draft_sidecars.py --review")
         return
 
-    print(f"resolving each paper's full text, most cited first "
-          f"(up to {limit or len(cands)})...")
-    pairs, skipped = with_evidence(cands, cfg, args.no_fulltext, limit)
-    note_skipped(skipped)
-    if not pairs:
+    pairs: list[tuple[dict, str]] = []
+    if cands:
+        print(f"resolving each paper's full text, most cited first "
+              f"(up to {limit or len(cands)})...")
+        pairs, skipped = with_evidence(cands, cfg, args.no_fulltext, limit)
+        note_skipped(skipped)
+        if pairs:
+            note_batch(pairs)
+    if not pairs and not due:
         print("\nNothing draftable in this batch.")
         return
-    note_batch(pairs)
-    draft_batch(args, cfg, pairs)
+    draft_batch(args, cfg, pairs, due, papers)
 
 
 if __name__ == "__main__":

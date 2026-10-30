@@ -9028,5 +9028,111 @@ class SidecarVersionsCheck(unittest.TestCase):
         self.assertEqual([], self._errs({}))
 
 
+
+class TestFramingRefresh(unittest.TestCase):
+    """The one-off `adjacent` refreshes: when they fire, what they read, what they touch."""
+
+    def setUp(self):
+        import draft_sidecars
+        self.D = draft_sidecars
+        self.p = {"slug": "p", "arxiv": "2607.18235", "citations": 3}
+
+    def test_publication_month_comes_from_the_arxiv_id_and_falls_back_to_the_year(self):
+        import datetime
+        self.assertEqual(datetime.date(2026, 7, 1), self.D.published(self.p))
+        self.assertEqual(datetime.date(2019, 7, 1), self.D.published({"year": 2019}))
+        self.assertIsNone(self.D.published({}))
+
+    def test_a_milestone_fires_once_and_only_if_it_came_after_the_accept(self):
+        import datetime
+        rec = {"on": "2026-10-30", "citations": 3}
+        due = self.D.refresh_due
+        self.assertEqual([], due(self.p, rec, datetime.date(2027, 6, 30)))
+        self.assertEqual(["1 year"], due(self.p, rec, datetime.date(2027, 7, 1)))
+        # Accepted after the first birthday: that accept already was the refresh.
+        self.assertEqual([], due(self.p, {"on": "2027-08-01", "citations": 3},
+                                 datetime.date(2027, 9, 1)))
+        cited = dict(self.p, citations=12)
+        self.assertEqual(["10 citations"], due(cited, rec, datetime.date(2026, 11, 1)))
+        self.assertEqual([], due(cited, {"on": "2026-10-30", "citations": 11},
+                                 datetime.date(2026, 11, 1)))
+
+    def test_an_unrecorded_sidecar_is_never_due(self):
+        """Absence must not turn into a corpus-wide refresh."""
+        import datetime
+        self.assertEqual([], self.D.refresh_due(dict(self.p, citations=500), None,
+                                                datetime.date(2040, 1, 1)))
+
+    def test_every_live_sidecar_has_a_record(self):
+        """Seeded when the refresh was introduced, and written by every accept since."""
+        from common import framed_at
+        from sidecar_io import live_paths
+        rec = framed_at()
+        missing = [os.path.basename(f)[:-3] for f in live_paths()
+                   if os.path.basename(f)[:-3] not in rec]
+        self.assertEqual([], missing)
+
+    def test_neighbouring_vocabulary_is_read_and_a_dead_source_costs_nothing(self):
+        import json as j
+
+        def answer(url, **kw):
+            if "related_works" in url:
+                return 200, j.dumps({"related_works": ["https://openalex.org/W1"]}).encode()
+            if "openalex_id:W1" in url:
+                return 200, j.dumps({"results": [{"title": "Agent harness search"}]}).encode()
+            if "/citations" in url:
+                return 200, j.dumps({"data": [{"citingPaper": {"title": "Evolve it"},
+                                               "contexts": ["as in  AlphaEvolve"]}]}).encode()
+            return 404, b""
+        with answering(answer):
+            got = self.D.neighbours(self.p, citing=True)
+        self.assertIn("- Agent harness search", got)
+        self.assertIn("- Evolve it", got)
+        self.assertIn("> as in AlphaEvolve", got)
+        with answering(0):
+            self.assertEqual("", self.D.neighbours(self.p, citing=True))
+
+    def test_a_reframe_adds_adjacent_wordings_and_moves_nothing_else(self):
+        import sidecar_io
+        import sidecar_repair
+        import yaml
+        live = {"one_liner": "x", "claims": [{"id": "c1", "kind": "result",
+                                               "text": "A finding.", "scope": "Here."}],
+                "qa": [{"ask": {"plain": "does it work?", "jargon": "does X work?"},
+                        "answered_by": ["c1"]},
+                       {"ask": {"plain": "is it cheap?"}, "answered_by": ["c1"]}]}
+
+        def ask(prompt, label, want):
+            self.assertIn("Agent harness", prompt)
+            return {"groups": [{"index": 0, "adjacent": "does AlphaEvolve-style search work?"},
+                               {"index": 1, "adjacent": "a keyword string"},
+                               {"index": 7, "adjacent": "out of range?"}]}
+        with tempfile.TemporaryDirectory() as d:
+            os.makedirs(os.path.join(d, "drafts"))
+            with open(os.path.join(d, "p.md"), "w", encoding="utf-8") as f:
+                f.write("---\n" + yaml.safe_dump(live, sort_keys=False) + "---\n")
+            with mock.patch.object(sidecar_io, "SIDECARS", d), \
+                 mock.patch.object(sidecar_io, "DRAFTS", os.path.join(d, "drafts")):
+                done, _ = sidecar_repair.reframe("p", ask, "- Agent harness")
+                fm, _ = sidecar_io.read_front_matter(sidecar_io.draft_path("p"))
+        self.assertEqual(1, done)
+        self.assertEqual("does AlphaEvolve-style search work?", fm["qa"][0]["ask"]["adjacent"])
+        self.assertNotIn("adjacent", fm["qa"][1]["ask"])
+        self.assertEqual(live["claims"], fm["claims"])
+        self.assertEqual(live["qa"][1], fm["qa"][1])
+
+    def test_in_skill_mode_a_refresh_is_a_repair_task_on_the_live_sidecar(self):
+        """The default mode's drafter is told to change nothing but the one finding."""
+        import json as j
+        with tempfile.TemporaryDirectory() as d, \
+                mock.patch.object(self.D, "TASKS", os.path.join(d, "t.json")), \
+                mock.patch.object(self.D, "standing", return_value=({"qa": []}, [])):
+            self.D.emit_tasks([(dict(self.p, title="T"), "vocab")], {}, {"p": ["1 year"]})
+            task = j.load(open(os.path.join(d, "t.json"), encoding="utf-8"))["tasks"][0]
+        self.assertEqual("repair", task["job"])
+        self.assertIn("framing refresh due (1 year)", task["findings"][0])
+        self.assertIn("change nothing else", task["findings"][0])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

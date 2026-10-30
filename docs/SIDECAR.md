@@ -330,6 +330,18 @@ real questions. The roles are not four wordings of one sentence — each is a di
 | `jargon` | a specialist, in the field's own terms |
 | `task` | the same question asked in terms of what they are trying to do — *"how do I merge two adapters without retraining?"*. Asked, never described: *"I am trying to merge two adapters without retraining."* is a sentence about a person, and no one types it into anything |
 | `practitioner` | someone deciding, in the first person — *"should I use this for my model"*. The highest-intent phrasing, and the one a person asks an assistant |
+| `adjacent` | someone arriving from outside the paper's own framing — another community's term, a better-known system, or a newer name for the same thing — *"does AlphaEvolve-style evolutionary search beat best-of-N sampling?"* |
+
+`adjacent` is optional, and filled only when both hold: the paper's text or the
+related-work evidence you were given names that community, system or term, and the same
+claims answer the question asked in its words. A paper chooses one framing to tell its
+story; readers arrive from others, and those readers are often the ones it was written
+for. Prefer the name the evidence shows people actually use — the best-known system of a
+family, the term recent related work puts in its titles — over an accurate name nobody
+types. An `adjacent` question may name another system; its answer still asserts only this
+paper's finding, so never write one that needs a claim about the other system to answer.
+Most papers have two or three real neighbouring framings: fill the groups they fit and
+leave the rest out.
 
 Engines fan one query into many synthetic sub-queries and you cannot know which
 phrasing wins, so cover several routes. Three lexical routes reach three query

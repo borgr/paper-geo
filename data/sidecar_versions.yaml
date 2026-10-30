@@ -2,7 +2,8 @@ _comment: The arXiv version each live sidecar was drafted against. Written by sc
   on --accept and by --record-versions, read by scripts/worklist.py, which asks for a re-draft when arXiv
   moves past the recorded number. A slug absent from here is unknown rather than v1. Dates and git both
   fail at this -- a commit touching every sidecar at once resets them and hides a revision that landed
-  before it.
+  before it. `framed_at` is when each sidecar was last accepted and the paper's citations then; scripts/draft_sidecars.py
+  reads it to queue the one-off framing refreshes at 1 year, 3 years and 10 citations.
 drafted_against:
   a-hitchhiker-s-guide-to-scaling-law-estimation: 2
   a-latent-variable-framework-for-scaling-laws-in-large-langua: 2
@@ -113,3 +114,355 @@ drafted_against:
   why-pretraining-fails-to-share-cross-lingual-knowledge: 1
   will-it-merge-on-the-causes-of-model-mergeability: 1
   zipnn-lossless-compression-for-ai-models: 2
+framed_at:
+  a-hitchhiker-s-guide-to-scaling-law-estimation:
+    'on': '2026-10-30'
+    citations: 30
+  a-latent-variable-framework-for-scaling-laws-in-large-langua:
+    'on': '2026-10-30'
+    citations: 3
+  a-statistical-framework-for-game-based-ai-evaluation:
+    'on': '2026-10-30'
+    citations: 0
+  a-survey-on-model-moerging-recycling-and-routing-among-speci:
+    'on': '2026-10-30'
+    citations: 77
+  active-learning-for-bert-an-empirical-study:
+    'on': '2026-10-30'
+    citations: 252
+  an-autonomous-debating-system:
+    'on': '2026-10-30'
+    citations: 184
+  are-you-convinced-choosing-the-more-convincing-evidence-with:
+    'on': '2026-10-30'
+    citations: 79
+  asymmetry-in-low-rank-adapters-of-foundation-models:
+    'on': '2026-10-30'
+    citations: 108
+  automated-discovery-has-no-universally-superior-harness:
+    'on': '2026-10-30'
+    citations: 7
+  automatic-metric-validation-for-grammatical-error-correction:
+    'on': '2026-10-30'
+    citations: 36
+  automatically-extracting-challenge-sets-for-non-local-phenom:
+    'on': '2026-10-30'
+    citations: 21
+  babybabellm-a-multilingual-benchmark-of-developmentally-plau:
+    'on': '2026-10-30'
+    citations: 11
+  babylm-turns-3-call-for-papers-for-the-2025-babylm-workshop:
+    'on': '2026-10-30'
+    citations: 40
+  babylm-turns-4-and-goes-multilingual-call-for-papers-for-the:
+    'on': '2026-10-30'
+    citations: 14
+  benchmark-agreement-testing-done-right-a-guide-for-llm-bench:
+    'on': '2026-10-30'
+    citations: 25
+  beneath-the-surface-of-consistency-exploring-cross-lingual-k:
+    'on': '2026-10-30'
+    citations: 27
+  beyond-binary-rewards-training-lms-to-reason-about-their-unc:
+    'on': '2026-10-30'
+    citations: 137
+  bigger-is-not-always-better-the-importance-of-human-scale-la:
+    'on': '2026-10-30'
+    citations: 35
+  call-for-papers-the-2nd-babylm-challenge-sample-efficient-pr:
+    'on': '2026-10-30'
+    citations: 40
+  call-for-papers-the-babylm-challenge-sample-efficient-pretra:
+    'on': '2026-10-30'
+    citations: 108
+  can-gradient-descent-simulate-prompting:
+    'on': '2026-10-30'
+    citations: 0
+  classifying-syntactic-errors-in-learner-language:
+    'on': '2026-10-30'
+    citations: 24
+  cluster-tune-boost-cold-start-performance-in-text-classifica:
+    'on': '2026-10-30'
+    citations: 29
+  cold-fusion-collaborative-descent-for-distributed-multitask:
+    'on': '2026-10-30'
+    citations: 64
+  commonlid-re-evaluating-state-of-the-art-language-identifica:
+    'on': '2026-10-30'
+    citations: 12
+  compeft-compression-for-communicating-parameter-efficient-up:
+    'on': '2026-10-30'
+    citations: 22
+  compress-then-serve-serving-thousands-of-lora-adapters-with:
+    'on': '2026-10-30'
+    citations: 31
+  comsum-commit-messages-summarization-and-meaning-preservatio:
+    'on': '2026-10-30'
+    citations: 6
+  corpus-wide-argument-mining-a-working-solution:
+    'on': '2026-10-30'
+    citations: 74
+  crisp-complex-reasoning-with-interpretable-step-based-plans:
+    'on': '2026-10-30'
+    citations: 0
+  cross-lingual-exploration-for-parametric-knowledge:
+    'on': '2026-10-30'
+    citations: 1
+  cube-a-standard-for-unifying-agent-benchmarks:
+    'on': '2026-10-30'
+    citations: 3
+  data-contamination-report-from-the-2024-conda-shared-task:
+    'on': '2026-10-30'
+    citations: 27
+  deductive-closure-training-of-language-models-for-coherence:
+    'on': '2026-10-30'
+    citations: 29
+  disentqa-disentangling-parametric-and-contextual-knowledge-w:
+    'on': '2026-10-30'
+    citations: 133
+  do-llms-benefit-from-their-own-words:
+    'on': '2026-10-30'
+    citations: 8
+  dora-the-explorer-directed-outreaching-reinforcement-action:
+    'on': '2026-10-30'
+    citations: 70
+  dove-a-large-scale-multi-dimensional-predictions-dataset-tow:
+    'on': '2026-10-30'
+    citations: 25
+  efficient-benchmarking-of-language-models:
+    'on': '2026-10-30'
+    citations: 84
+  efficient-multi-prompt-evaluation-of-llms:
+    'on': '2026-10-30'
+    citations: 106
+  elements-of-world-knowledge-ewok-a-cognition-inspired-framew:
+    'on': '2026-10-30'
+    citations: 79
+  enhancing-the-transformer-decoder-with-transition-based-synt:
+    'on': '2026-10-30'
+    citations: 8
+  errormap-and-erroratlas-charting-the-failure-landscape-of-la:
+    'on': '2026-10-30'
+    citations: 6
+  evaluation-cards-an-interpretive-layer-for-ai-evaluation-rep:
+    'on': '2026-10-30'
+    citations: 4
+  every-eval-ever-a-unifying-schema-and-community-repository-f:
+    'on': '2026-10-30'
+    citations: 4
+  findings-of-the-babylm-challenge-sample-efficient-pretrainin:
+    'on': '2026-10-30'
+    citations: 266
+  findings-of-the-second-babylm-challenge-sample-efficient-pre:
+    'on': '2026-10-30'
+    citations: 76
+  findings-of-the-third-babylm-challenge-accelerating-language:
+    'on': '2026-10-30'
+    citations: 22
+  fuse-to-forget-bias-reduction-and-selective-memorization-thr:
+    'on': '2026-10-30'
+    citations: 17
+  fusing-finetuned-models-for-better-pretraining:
+    'on': '2026-10-30'
+    citations: 124
+  general-agent-evaluation:
+    'on': '2026-10-30'
+    citations: 11
+  genie-achieving-human-parity-in-content-grounded-datasets-ge:
+    'on': '2026-10-30'
+    citations: 42
+  global-mmlu-understanding-and-addressing-cultural-and-lingui:
+    'on': '2026-10-30'
+    citations: 229
+  global-piqa-evaluating-commonsense-reasoning-across-100-lang:
+    'on': '2026-10-30'
+    citations: 11
+  grasp-a-library-for-extracting-and-exploring-human-interpret:
+    'on': '2026-10-30'
+    citations: 8
+  growing-pains-extensible-and-efficient-llm-benchmarking-via:
+    'on': '2026-10-30'
+    citations: 0
+  holmes-a-benchmark-to-assess-the-linguistic-competence-of-la:
+    'on': '2026-10-30'
+    citations: 15
+  how-safe-is-your-safety-metric-automatic-concatenation-tests:
+    'on': '2026-10-30'
+    citations: 1
+  human-learning-by-model-feedback-the-dynamics-of-iterative-p:
+    'on': '2026-10-30'
+    citations: 21
+  inherent-biases-in-reference-based-evaluation-for-grammatica:
+    'on': '2026-10-30'
+    citations: 40
+  instructions-shape-production-of-language-not-processing:
+    'on': '2026-10-30'
+    citations: 1
+  jump-to-conclusions-short-cutting-transformers-with-linear-t:
+    'on': '2026-10-30'
+    citations: 107
+  knowledge-is-a-region-in-weight-space-for-fine-tuned-languag:
+    'on': '2026-10-30'
+    citations: 76
+  label-efficient-model-selection-for-text-generation:
+    'on': '2026-10-30'
+    citations: 18
+  label-sleuth-from-unlabeled-text-to-a-classifier-in-a-few-ho:
+    'on': '2026-10-30'
+    citations: 22
+  last-translation-benchmark:
+    'on': '2026-10-30'
+    citations: 0
+  learning-to-combine-grammatical-error-corrections:
+    'on': '2026-10-30'
+    citations: 32
+  let-s-agree-to-agree-neural-networks-share-classification-or:
+    'on': '2026-10-30'
+    citations: 68
+  livexiv-a-multi-modal-live-benchmark-based-on-arxiv-papers-c:
+    'on': '2026-10-30'
+    citations: 20
+  llm-hypnosis-exploiting-user-feedback-for-unauthorized-knowl:
+    'on': '2026-10-30'
+    citations: 3
+  lossless-and-near-lossless-compression-for-foundation-models:
+    'on': '2026-10-30'
+    citations: 15
+  mediators-in-determining-what-processing-bert-performs-first:
+    'on': '2026-10-30'
+    citations: 16
+  mediocrity-is-the-key-for-llm-as-a-judge-anchor-selection:
+    'on': '2026-10-30'
+    citations: 7
+  mindgames-a-live-arena-for-evaluating-social-and-strategic-r:
+    'on': '2026-10-30'
+    citations: 0
+  model-merging-with-svd-to-tie-the-knots:
+    'on': '2026-10-30'
+    citations: 157
+  muler-detailed-and-scalable-reference-based-evaluation:
+    'on': '2026-10-30'
+    citations: 0
+  naturally-occurring-feedback-is-common-extractable-and-usefu:
+    'on': '2026-10-30'
+    citations: 15
+  navigating-the-modern-evaluation-landscape-considerations-in:
+    'on': '2026-10-30'
+    citations: 8
+  neurips-2023-llm-efficiency-fine-tuning-competition:
+    'on': '2026-10-30'
+    citations: 8
+  numerologic-number-encoding-for-enhanced-llms-numerical-reas:
+    'on': '2026-10-30'
+    citations: 53
+  on-neurons-invariant-to-sentence-structural-changes-in-neura:
+    'on': '2026-10-30'
+    citations: 2
+  on-the-weaknesses-of-reinforcement-learning-for-neural-machi:
+    'on': '2026-10-30'
+    citations: 125
+  part-of-speech-and-universal-dependency-effects-on-english-a:
+    'on': '2026-10-30'
+    citations: 1
+  position-agentic-systems-should-be-general:
+    'on': '2026-10-30'
+    citations: 0
+  prequel-quality-estimation-of-machine-translation-outputs-in:
+    'on': '2026-10-30'
+    citations: 12
+  pretraining-language-models-for-diachronic-linguistic-change:
+    'on': '2026-10-30'
+    citations: 7
+  q2-evaluating-factual-consistency-in-knowledge-grounded-dial:
+    'on': '2026-10-30'
+    citations: 172
+  reference-less-measure-of-faithfulness-for-grammatical-error:
+    'on': '2026-10-30'
+    citations: 37
+  reinforcement-learning-with-large-action-spaces-for-neural-m:
+    'on': '2026-10-30'
+    citations: 8
+  resolving-interference-ri-disentangling-models-for-improved:
+    'on': '2026-10-30'
+    citations: 1
+  robustness-as-an-emergent-property-of-task-performance:
+    'on': '2026-10-30'
+    citations: 2
+  semantics-aware-attention-improves-neural-machine-translatio:
+    'on': '2026-10-30'
+    citations: 13
+  semeval-2019-shared-task-cross-lingual-semantic-parsing-with:
+    'on': '2026-10-30'
+    citations: 2
+  semeval-2019-task-1-cross-lingual-semantic-parsing-with-ucca:
+    'on': '2026-10-30'
+    citations: 38
+  serrant-a-syntactic-classifier-for-english-grammatical-error:
+    'on': '2026-10-30'
+    citations: 12
+  skill-issue-are-skills-language-invariant-in-llms:
+    'on': '2026-10-30'
+    citations: 1
+  sloth-scaling-laws-for-llm-skills-to-predict-multi-benchmark:
+    'on': '2026-10-30'
+    citations: 31
+  some-grammatical-errors-are-frequent-others-are-important:
+    'on': '2026-10-30'
+    citations: 0
+  stop-guessing-when-to-stop-testing-efficient-model-evaluatio:
+    'on': '2026-10-30'
+    citations: 2
+  textarena:
+    'on': '2026-10-30'
+    citations: 9
+  the-future-of-open-human-feedback:
+    'on': '2026-10-30'
+    citations: 17
+  the-grammar-learning-trajectories-of-neural-language-models:
+    'on': '2026-10-30'
+    citations: 42
+  the-language-of-legal-and-illegal-activity-on-the-darknet:
+    'on': '2026-10-30'
+    citations: 25
+  the-mighty-torr-a-benchmark-for-table-reasoning-and-robustne:
+    'on': '2026-10-30'
+    citations: 14
+  the-sharelm-collection-and-plugin-contributing-human-model-c:
+    'on': '2026-10-30'
+    citations: 15
+  ties-merging-resolving-interference-when-merging-models:
+    'on': '2026-10-30'
+    citations: 1066
+  tinybenchmarks-evaluating-llms-with-fewer-examples:
+    'on': '2026-10-30'
+    citations: 379
+  unforgettable-generalization-in-language-models:
+    'on': '2026-10-30'
+    citations: 5
+  unitxt-flexible-shareable-and-reusable-data-preparation-and:
+    'on': '2026-10-30'
+    citations: 25
+  unsupervised-expressive-rules-provide-explainability-and-ass:
+    'on': '2026-10-30'
+    citations: 15
+  user-feedback-provides-a-unique-signal-that-llms-can-not-det:
+    'on': '2026-10-30'
+    citations: 0
+  when-ai-benchmarks-plateau-a-systematic-study-of-benchmark-s:
+    'on': '2026-10-30'
+    citations: 35
+  where-to-start-analyzing-the-potential-value-of-intermediate:
+    'on': '2026-10-30'
+    citations: 30
+  why-pretraining-fails-to-share-cross-lingual-knowledge:
+    'on': '2026-10-30'
+    citations: 0
+  will-it-blend-blending-weak-and-strong-labeled-data-in-a-neu:
+    'on': '2026-10-30'
+    citations: 73
+  will-it-merge-on-the-causes-of-model-mergeability:
+    'on': '2026-10-30'
+    citations: 3
+  zipnn-lossless-compression-for-ai-models:
+    'on': '2026-10-30'
+    citations: 34

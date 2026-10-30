@@ -159,6 +159,14 @@ them** — the site, the validator, the fidelity check and the coverage count al
 `data/sidecars/*.md` one level up, so a draft cannot reach a published page by
 accident.
 
+The same run handles the one-off **framing refreshes**. When a paper passes 1 year,
+3 years or 10 citations after its sidecar was accepted, it is queued for a pass that
+adds `adjacent` wordings (questions asked in a neighbouring community's words, or under a
+newer term) from how related and citing work now names the topic. That pass changes
+nothing else, so what you review is only those questions. Each accept records the date
+and citation count in `data/sidecar_versions.yaml`, which is what keeps a milestone from
+firing twice. `--reframe <slug>` runs one on request.
+
 `--accept` refuses twice over. A structural failure means the file is broken. A quality
 finding — a band in [SIDECAR §2](docs/SIDECAR.md) broken, or a figure that is not in
 the paper — means it is well-formed and says something you would not want to have said.

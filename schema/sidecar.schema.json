@@ -41,7 +41,7 @@
     "properties": {
      "ask": {
       "type": "object",
-      "description": "ONE question, asked by four different kinds of person. Fill `plain` always and at least one other: each role is a different lexical route to the same answer, and engines fan a query into synthetic sub-queries you cannot predict, so three vocabularies beat three rewordings of one. Every role is a natural question ending in `?`, never a keyword string.",
+      "description": "ONE question, asked by four different kinds of person, and optionally from a neighbouring community. Fill `plain` always and at least one other: each role is a different lexical route to the same answer, and engines fan a query into synthetic sub-queries you cannot predict, so three vocabularies beat three rewordings of one. Every role is a natural question ending in `?`, never a keyword string.",
       "minProperties": 1,
       "additionalProperties": false,
       "properties": {
@@ -60,6 +60,10 @@
        "practitioner": {
         "type": "string",
         "description": "The same question in the first person, deciding -- 'should I use this for my model'. This is the highest-intent phrasing and the one a person asks an assistant."
+       },
+       "adjacent": {
+        "type": "string",
+        "description": "The same question as a neighbouring community, or someone who knows a better-known system or a newer term, would ask it -- 'does AlphaEvolve-style search beat best-of-N sampling?'. Only where the paper's text or the related-work evidence names that community or term, and the same claims answer it. Leave out otherwise."
        },
        "unsorted": {
         "type": "array",

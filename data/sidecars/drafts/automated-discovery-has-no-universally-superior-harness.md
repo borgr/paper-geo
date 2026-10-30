@@ -1,0 +1,316 @@
+<!-- DRAFT — not published, not read by anything that builds the site.
+
+Drafted by `python scripts/draft_sidecars.py` from build/sidecar_tasks.json. Every claim, number
+and scope condition below is a machine's reading of the paper and needs your eyes.
+
+THIS PAPER ALREADY HAS A LIVE SIDECAR, and this draft would replace it. Start here:
+
+  diff data/sidecars/automated-discovery-has-no-universally-superior-harness.md data/sidecars/drafts/automated-discovery-has-no-universally-superior-harness.md
+
+Anything the live file says in your own words is worth keeping over a rewrite of the
+same point, so read that diff before the checklist below.
+
+What to check, in the order it pays:
+
+1. Each claim's NUMBER and BASELINE. A magnitude attributed to the wrong baseline is
+   the one error here that is worse than saying nothing, because it is quotable.
+2. Each SCOPE. This is the field summarisers drop, so it is the field this file exists
+   for. If a scope reads like a disclaimer, replace it with the condition that
+   actually bounds the result.
+3. The MISREADINGS. A drafted misreading is a guess about your readers; you know which
+   one keeps happening.
+4. `one_liner`: the sentence you will reuse verbatim in the README, the model card and
+   the talk abstract. Make it yours.
+
+Then, if the replacement is the one you want:
+
+  python scripts/draft_sidecars.py --accept automated-discovery-has-no-universally-superior-harness --replace
+
+Stamp: spec=c66468b7280b checks=pass body=d0f1c4757e52
+-->
+---
+key: gupta2026harness
+coined: Adaptive Harness Ensemble
+gloss: start several LLM-discovery search harnesses partially, prune the weak partial runs,
+  and give their remaining compute to the survivors
+one_liner: Decomposing OpenEvolve-style evolutionary search and TTT-Discover-style PUCT search
+  into their components and re-evaluating 30 budget-matched harnesses over 12 model–problem
+  pairs and 3.1 million LLM rollouts shows no fixed discovery harness is reliably best, so
+  harness choice should be adapted online.
+claims:
+- id: no-universal-harness
+  kind: result
+  text: Across 30 budget-matched discovery harnesses on 12 model–problem pairs, no fixed harness
+    is significantly better than a Sequential Best-of-N baseline after Holm correction. The
+    top-ranked configuration (epsilon-greedy with K=1, epsilon=20%) has a cross-pair majority-win
+    probability of 0.914 but a corrected p-value of 0.678.
+  scope: Qwen2.5-3B-Instruct, Qwen3-4B-Instruct-2507, GPT-OSS-20B and GPT-OSS-120B on circle
+    packing, Heilbronn triangle and the second autocorrelation inequality; 5 runs per harness
+    against 100-run (Qwen) or 30-run (GPT-OSS) Sequential BoN pools; Holm correction across
+    all 30 configurations.
+  evidence: Figure 5(a)
+- id: openevolve-bottom
+  kind: result
+  text: Full OpenEvolve-style configurations rank last on the cross-pair majority-win leaderboard,
+    with a majority-win probability of 0.033 against Sequential Best-of-N. Lightweight epsilon-greedy
+    and UCT/PUCT variants occupy the top positions, led by K=1, epsilon=20% at 0.914.
+  scope: 'Max-statistic leaderboard over 12 model–problem pairs at matched per-pair rollout
+    budgets: 1600 rollouts per run for Qwen models, 320 for GPT-OSS-20B, 160 for GPT-OSS-120B,
+    5 runs per configuration.'
+  evidence: Figure 20
+- id: openevolve-nonmonotonic
+  kind: result
+  text: Progressively adding OpenEvolve components (depth-shifted budget, MAP-Elites inspiration
+    sampling, multiple islands) does not produce monotonic gains. The full recipe is nominally
+    significant only for GPT-OSS-20B on Heilbronn triangle and often reduces performance on
+    circle packing and the second autocorrelation inequality.
+  scope: Fixed per-pair rollout budget with breadth–depth ladders of (N,T) from (16,100) to
+    (1,1600) for Qwen models and (4,80) to (1,320) for GPT-OSS-20B, followed by 1-island and
+    4-island OpenEvolve variants; 5 runs per configuration.
+  evidence: Figure 3
+- id: tree-search-gains-front-loaded
+  kind: result
+  text: In the TTT-Discover progression, the largest pair-level gains over Sequential Best-of-N
+    come from introducing UCT/PUCT parent selection. Later additions of deeper search and
+    multi-parent expansion do not consistently help and sometimes reverse those gains.
+  scope: Exploration constant C, child batch size N and parent count P swept at matched rollout
+    budgets across the 4 models and 3 tasks; only the TTT-Discover search harness is ablated,
+    not its test-time-training component.
+  evidence: Figure 4
+- id: early-progress-predicts
+  kind: result
+  text: Best-so-far score at the halfway point of a discovery run correlates with final score
+    at Spearman rho above 0.70 for 11 of the 12 model–problem pairs. The remaining pair, GPT-OSS-120B
+    on the second autocorrelation inequality, reaches 0.651, while at the 10% checkpoint correlations
+    span only 0.000 to 0.474.
+  scope: Checkpoints at 10%, 25% and 50% of allocated steps, Spearman rank correlation between
+    partial-run and final scores computed over the harness configurations available for each
+    pair.
+  evidence: Figure 5(b)
+- id: adaptive-beats-baselines
+  kind: result
+  text: Under a budget of 5 full-run equivalents, the best adaptive pruning schedule (12→5→2→1,
+    pruning at 25%, 50% and 75%) reaches an average score of 85.75%. The matched baselines
+    reach 84.54% for an unpruned 5-harness portfolio, 84.35% for 5 Sequential Best-of-N runs,
+    and 82.49% for committing to one randomly sampled harness.
+  scope: Mean over 100,000 empirical resampling trials per model–problem pair drawn from the
+    released run pools, unweighted average across the 12 pairs with Monte Carlo standard error
+    0.02; scores are task-normalized percentages, not comparable across tasks.
+  evidence: Table 1
+- id: adaptive-per-pair
+  kind: result
+  text: The 12→5→2→1 adaptive pruning schedule beats the unpruned harness portfolio on 11
+    of the 12 model–problem pairs under the same 5-full-run-equivalent budget. Every evaluated
+    adaptive schedule also exceeds the single-harness and unpruned-portfolio baselines on
+    average.
+  scope: Simulated allocation over the released empirical run pools with 100,000 resampling
+    trials; the adaptive and unpruned policies draw from the same harness pool, so the difference
+    isolates the use of partial-run feedback rather than harness diversity.
+  evidence: Table 1
+- id: broad-then-cut
+  kind: result
+  text: Adaptive allocation schedules that start broad and prune hard perform best, with average
+    scores from 84.87% for a single-stage 17→1 schedule to 85.75% for the three-stage 12→5→2→1
+    schedule. All of these exceed the 84.35% Sequential Best-of-N reference.
+  scope: Budget fixed at 5 full-run equivalents with pruning checkpoints drawn from 25%, 50%
+    and 75% and final survivor counts in 1 to 4; schedules with 3 or more final survivors
+    are never column-best in this experiment.
+  evidence: Table 13
+- id: harness-as-hyperparameter
+  kind: context
+  text: '"Automated Discovery Has No Universally Superior Harness" reframes the search harness
+    of an LLM-guided discovery system as a model- and problem-dependent hyperparameter to
+    be chosen online rather than a transferable methodological recipe.'
+  scope: Argued from 12 model–problem pairs and 30 harnesses on 3 mathematical discovery tasks,
+    as of the 2026 preprint; no new bandit or early-stopping algorithm is proposed, and transfer
+    to other discovery domains is untested.
+  evidence: Section 6
+- id: released-null-distributions
+  kind: context
+  text: The harness-generalization study releases over 3.1 million rollout records with per-step
+    evaluator scores, including repeated-run Sequential Best-of-N null distributions for every
+    model–problem pair, as reusable reference distributions for testing future discovery-harness
+    proposals.
+  scope: Baseline pools contain 100 runs per Qwen model–problem pair and 30 runs per GPT-OSS
+    pair, on circle packing, Heilbronn triangle and the second autocorrelation inequality
+    only; budgets are matched within a model–problem pair, not across models.
+- id: baseline-model-effect
+  kind: result
+  text: 'Model identity dominates harness choice on Heilbronn triangle: mean Sequential Best-of-N
+    final score is 0.1066 for Qwen2.5-3B, 0.3213 for Qwen3-4B, 0.8300 for GPT-OSS-20B and
+    0.7738 for GPT-OSS-120B. That spread is far larger than any harness effect measured on
+    the task.'
+  scope: Baseline pools of 100 runs for Qwen models and 30 runs for GPT-OSS models; per-run
+    rollout budgets differ across models (1600 for Qwen, 320 for GPT-OSS-20B, 160 for GPT-OSS-120B),
+    so cross-model scores are not budget-matched.
+  evidence: Table 3
+- id: five-run-protocol
+  kind: context
+  text: The harness-generalization study compares each candidate discovery harness against
+    a bootstrapped best-of-five Sequential Best-of-N null distribution using 100,000 resampling
+    trials, a protocol stricter than the 3-run comparisons common in prior discovery-system
+    papers.
+  scope: Non-parametric one-sided bootstrap and permutation tests at a prespecified 0.05 threshold,
+    with Holm step-down correction across the 30 evaluated configurations; failure to reject
+    indicates insufficient evidence, not evidence of no effect.
+qa:
+- ask:
+    plain: is there one best way to organise an LLM's repeated attempts at a hard math or
+      coding problem?
+    jargon: does any fixed search harness beat a budget-matched Sequential Best-of-N baseline
+      across model-problem pairs?
+    task: how do I pick a search loop for an LLM code-discovery run when I do not know which
+      one transfers?
+    practitioner: should I adopt an evolutionary search loop for my discovery runs, or just
+      sample repeatedly and keep the best?
+    adjacent: is there a best agent harness for algorithm discovery with coding agents, or
+      does the best one depend on the model and the problem?
+  answered_by:
+  - no-universal-harness
+  - openevolve-bottom
+- ask:
+    plain: do the extra bells and whistles in evolutionary code-search systems actually make
+      the results better?
+    jargon: do MAP-Elites inspiration sampling, island populations and depth-shifted budgets
+      add gains over lightweight epsilon-greedy parent selection?
+    task: how do I decide which components of an OpenEvolve-style discovery pipeline to keep
+      when compute is fixed?
+    practitioner: is it worth the engineering effort to run the full OpenEvolve recipe instead
+      of a simple sampling loop?
+    adjacent: do the extra components of LLM evolutionary search strategies actually beat
+      simple repeated sampling at the same budget?
+  answered_by:
+  - openevolve-nonmonotonic
+  - openevolve-bottom
+- ask:
+    plain: in an automated discovery loop that builds a tree of candidate solutions, which
+      design choice gives the improvement?
+    jargon: within the TTT-Discover progression, does the gain over Sequential Best-of-N come
+      from UCT/PUCT parent selection or from deeper search and multi-parent expansion?
+    task: how do I get the most out of a tree-search discovery harness without adding depth
+      and multi-parent expansion?
+    practitioner: if I only add one thing to my discovery loop, should it be bandit-style
+      parent selection?
+    adjacent: in test-time scaling with tree search over candidate programs, does UCT/PUCT
+      parent selection or deeper search deliver the gain?
+  answered_by:
+  - tree-search-gains-front-loaded
+- ask:
+    plain: can you tell partway through a long automated search run whether it will end up
+      being one of the good ones?
+    jargon: how strongly does best-so-far score at intermediate checkpoints correlate with
+      final score in LLM-guided discovery runs?
+    task: how do I kill unpromising discovery runs early without throwing away the eventual
+      winner?
+    practitioner: at what fraction of my compute budget can I safely start cutting the weaker
+      search runs?
+    adjacent: can I stop a weak autonomous research run early by looking at its best score
+      at the halfway point?
+  answered_by:
+  - early-progress-predicts
+- ask:
+    plain: does starting several search runs and dropping the weak ones beat spending the
+      whole budget on one?
+    jargon: does an adaptive pruning schedule over candidate harnesses outperform a budget-matched
+      unpruned portfolio and repeated Sequential Best-of-N?
+    task: how do I spend a fixed discovery compute budget across several candidate harnesses
+      instead of committing to one?
+    practitioner: given 5 runs' worth of compute, should I run one harness or run many partially
+      and prune?
+    adjacent: in harness engineering for coding agents, is it better to start several harnesses
+      and prune the weak ones than to commit to one?
+  answered_by:
+  - adaptive-beats-baselines
+  - adaptive-per-pair
+- ask:
+    plain: when splitting a fixed compute budget across many candidate search setups, how
+      many should survive each cut?
+    jargon: which successive-halving-style pruning schedule over discovery harnesses gives
+      the best average final score under a matched budget?
+    task: how do I design the stage sizes and pruning points of a harness allocation schedule
+      for a discovery run?
+    practitioner: should I start broad with 12 candidate harnesses and prune hard, or start
+      with fewer and run them longer?
+  answered_by:
+  - broad-then-cut
+- ask:
+    plain: what should I read about whether search-loop design choices in automated discovery
+      really hold up?
+    jargon: which study treats the discovery harness as a model- and problem-dependent hyperparameter
+      rather than a transferable recipe?
+    task: where do I start reading about evaluation rigour and reusable baselines for LLM-guided
+      discovery systems?
+    adjacent: what work shows that agent harness effectiveness depends on the model and the
+      task?
+  answered_by:
+  - harness-as-hyperparameter
+  - released-null-distributions
+- ask:
+    plain: how many repeat runs do you need before you can say a new automated search setup
+      is genuinely better?
+    jargon: what null-distribution protocol supports significance testing of discovery harnesses
+      against Sequential Best-of-N under run-to-run variance?
+    task: how do I test a new discovery harness against a baseline so the result is not run-to-run
+      noise?
+    practitioner: are the 3-run comparisons I see in evolutionary coding-agent papers enough
+      for me to trust the reported gain?
+  answered_by:
+  - five-run-protocol
+  - no-universal-harness
+- ask:
+    plain: for automated math and code discovery, does the choice of language model matter
+      more than the choice of search algorithm?
+    jargon: how does the spread in Sequential Best-of-N final score across Qwen2.5-3B, Qwen3-4B
+      and GPT-OSS models compare with harness effects on Heilbronn triangle?
+    task: where do I get the bigger win on a discovery benchmark, upgrading the base model
+      or tuning the search harness?
+    practitioner: should I spend my budget on a stronger base model or on a smarter search
+      loop for discovery tasks?
+  answered_by:
+  - baseline-model-effect
+- ask:
+    plain: are there public run logs I can use to check whether a new automated search method
+      beats chance?
+    jargon: what rollout and per-step evaluator data are released as reference null distributions
+      for discovery-harness comparisons?
+    task: how do I benchmark a new discovery harness without regenerating baseline runs myself?
+    practitioner: can I reuse existing baseline run pools instead of paying for my own Sequential
+      Best-of-N reference runs?
+  answered_by:
+  - released-null-distributions
+misreadings:
+- Finding that OpenEvolve-style configurations rank last on the cross-pair leaderboard is
+  not evidence that OpenEvolve cannot solve discovery tasks; the ranking is about whether
+  its extra components transfer as general improvements over Sequential Best-of-N at matched
+  rollout budgets.
+- 'The epsilon-greedy harness with K=1 and epsilon=20% is not a recommended universal replacement
+  recipe: its cross-pair advantage stops being statistically significant once Holm correction
+  is applied across all 30 configurations.'
+- Failure to reject the null for a candidate harness on a model–problem pair means insufficient
+  evidence of improvement in that 5-run experiment, not evidence that the harness has no effect.
+- The TTT-Discover ablations cover only its search harness; the test-time-training component
+  of TTT-Discover was not ablated or evaluated.
+- The adaptive harness ensemble is not a new bandit or early-stopping algorithm; it is a budget-matched
+  test of whether partial-run evaluator feedback is informative enough to reallocate compute
+  across whole harness configurations.
+- Rollout budgets are matched within each model–problem pair, not across models, so the reported
+  per-pair scores for Qwen and GPT-OSS models are not a like-for-like model comparison.
+terminology:
+  harness: The rule set inside an LLM-guided discovery system that decides which previously
+    evaluated program is expanded next, covering archive construction, parent selection, exploration,
+    search structure and budget allocation.
+  Sequential Best-of-N: The greedy discovery baseline that always mutates the single best
+    program found so far, equivalent to sampling the parent from a top-1 elite archive.
+  cross-pair majority-win probability: The bootstrap-estimated probability that a harness's
+    best-of-five score vector beats a resampled Sequential Best-of-N best-of-five vector on
+    at least 7 of 12 model–problem pairs.
+  Adaptive Harness Ensemble: An online allocation policy that starts several discovery harness
+    configurations, advances them to checkpoints, ranks partial runs by best evaluator score
+    so far, prunes the weakest, and completes only the survivors within a fixed full-run-equivalent
+    budget.
+  full-run equivalent: The compute unit used to budget-match allocation policies, where one
+    unit is one complete discovery run and a run advanced to its 25% checkpoint costs 0.25
+    units.
+links_extra:
+  code: https://github.com/akshat57/harness-generalization
+---
