@@ -99,6 +99,7 @@ jobs:
       # but a wrong sentence -- the search endpoint 429s and the audit then reports "no
       # index has this paper" about a paper an index has.
       S2_API_KEY: ${{ secrets.S2_API_KEY }}
+      OPENALEX_API_KEY: ${{ secrets.OPENALEX_API_KEY }}
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
       # `gh` reads GH_TOKEN first, GITHUB_TOKEN second, and with neither refuses to call the
       # API at all -- not a 401 but "please run gh auth login", so nothing is ever asked and
@@ -140,7 +141,7 @@ jobs:
           # step down, and a missing secret is the thing being reported, not a failure.
           echo "credentials present -- ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:+yes}" \
                "GH_TOKEN=${GH_TOKEN:+yes} WIKIDATA_BOT_PASSWORD=${WIKIDATA_BOT_PASSWORD:+yes}" \
-               "S2_API_KEY=${S2_API_KEY:+yes}"
+               "S2_API_KEY=${S2_API_KEY:+yes} OPENALEX_API_KEY=${OPENALEX_API_KEY:+yes}"
 
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

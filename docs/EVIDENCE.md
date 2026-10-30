@@ -381,7 +381,7 @@ of that paper's questions**, then compare `cited` on covered vs uncovered questi
 
 Paper prominence, citation count, venue, topic, year and the whole "me factor" are
 identical across arms, so they difference out instead of needing to be balanced. The
-unit is a question: ~117 papers × 6 questions ≈ 702 questions, ~351 per arm, with the
+unit is a question: ~124 papers × 6 questions ≈ 744 questions, ~372 per arm, with the
 contrast taken within cluster. Nothing is withheld permanently — you add the
 uncovered questions afterwards. And **spillover biases toward null**, since an
 uncovered question may still be helped by the page existing, which makes the estimate
@@ -404,7 +404,7 @@ afterwards, and against papers with 5–20 year lifespans a one-quarter delay is
 rounding error. And sidecars get written incrementally over months regardless, so
 partial coverage exists whether or not you call it an experiment.
 
-Put a number on it: ~117 papers × ~4 months × half coverage ≈ 234 paper-months of
+Put a number on it: ~124 papers × ~4 months × half coverage ≈ 248 paper-months of
 half-coverage against a corpus lifetime on the order of 14,000 paper-months. **Under
 2% of lifetime coverage, and recoverable.**
 
@@ -416,7 +416,7 @@ The real costs are elsewhere:
 | Discipline | Recording the assignment and not back-filling early. Cheap but easy to fumble |
 | **Mis-reading a null** | The real hazard. At ~50% power a null is weak evidence, and it would be easy to conclude "sidecars don't work" when the honest statement is "no *large* effect detected" |
 
-The payoff if it does not work: you stop writing sidecars for 117 papers (~20 hours)
+The payoff if it does not work: you stop writing sidecars for 124 papers (~21 hours)
 and stop maintaining them indefinitely, and you redirect that effort to the
 third-party-mention layer where the observational evidence is better. That asymmetry
 is what makes a cheap version worth it.

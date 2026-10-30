@@ -11,7 +11,7 @@ import os
 import re
 import textwrap
 
-from common import (DATA, ROOT, clipped, has_live_sidecar, is_preprint_venue, norm_title,
+from common import (DATA, ROOT, clean_latex, clipped, has_live_sidecar, is_preprint_venue, norm_title,
                     plural, read_overrides, read_yaml, sidecar_versions, synth_bibtex,
                     title_of)
 from sweep_github import ZENODO_KINDS
@@ -267,8 +267,8 @@ def _listed_twice(dup: list[dict], sc: dict) -> list[str]:
          f"{sc.get('scholar_profile')}&view_op=list_works&sortby=title>.", ""]
     for d in dup:
         L += [f"- [ ] `{d.get('slug')}`",
-              f"      - one row: {(d.get('corpus') or '')[:64]}",
-              f"      - the other: {(d.get('scholar') or '')[:64]}"
+              f"      - one row: {clean_latex(d.get('corpus') or '')[:64]}",
+              f"      - the other: {clean_latex(d.get('scholar') or '')[:64]}"
               + (f" — <{d['scholar_url']}>" if d.get("scholar_url") else "")]
     return L + [""]
 
@@ -1529,9 +1529,10 @@ def hf_pages(papers: list[dict], state: dict) -> list[str]:
         (set(state.get("hf_missing") or []),
          lambda p: p.get("arxiv") and p.get("hf_indexed") is False,
          "Hugging Face paper page missing",
-         ["Log in to Hugging Face first: an unauthenticated visit creates nothing",
-          "(verified, 0 of 50). Visiting the URL while logged in *is* the action --",
-          "there is no form.",
+         ["Log in to Hugging Face, search the arXiv id at <https://huggingface.co/papers>,",
+          "and choose the option to index it that the search offers for a missing paper.",
+          "Opening `hf.co/papers/<id>` alone returns 404 and creates nothing, logged in",
+          "or not (2026-10).",
           "",
           "Full list, clickable: `tasks/hf_worklist.md`. Re-read the pages live",
           "after a session of clicking: `python scripts/audit_identity.py --no-names`."]),

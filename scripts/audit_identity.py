@@ -188,13 +188,13 @@ def hf_worklist_file(st: dict) -> str:
          f"**{n['claimed']} claimed**, **{n['pending']} pending**, "
          f"**{n['unclaimed']} to claim**, **{n['missing']} to index**, "
          f"**{n['blocked']} blocked upstream**.", "",
-         "Indexing and claiming both need a logged-in browser. An unauthenticated visit",
-         "to a paper URL returns 404 and creates nothing (verified on 50 papers — 0",
-         "created), which is why this is a list and not a script.", ""]
+         "Indexing and claiming both need a logged-in browser. Opening a paper URL",
+         "returns 404 and creates nothing; indexing goes through the search at",
+         "<https://huggingface.co/papers>, which offers to index a missing arXiv paper.", ""]
     if n["missing"]:
         L += [f"## Index — {n['missing']} papers with no page yet", "",
-              "Log in to Hugging Face, then open each link. The visit is what creates",
-              "the page. Nothing else to fill in.", ""] + rows(st["missing"]) + [""]
+              "Log in to Hugging Face, search each arXiv id at",
+              "<https://huggingface.co/papers>, and choose the option to index it.", ""] + rows(st["missing"]) + [""]
     if n["unclaimed"]:
         L += [f"## Claim — {n['unclaimed']} pages that exist but are not linked to you", "",
               "On each page: find your name in the author list and use the claim control",

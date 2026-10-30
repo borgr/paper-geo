@@ -351,6 +351,10 @@ def get_status(url: str, timeout: int = 40, retries: int = 6,
     audit report "no index has this paper" about a paper an index has. Environment
     only, never `config.yaml` -- that file is committed.
 
+    `OPENALEX_API_KEY` is sent to OpenAlex the same way. Since 2026 OpenAlex meters every
+    caller against a daily budget, and the keyless one runs out partway through a single
+    run -- the `429 budget` that failed the monthly CI leg. A free key raises it tenfold.
+
     `probe=True` says this URL names one thing the caller is asking about, so a 404 or 410
     is the host answering and the ledger counts it as working.
     """
@@ -360,6 +364,9 @@ def get_status(url: str, timeout: int = 40, retries: int = 6,
     key = os.environ.get("S2_API_KEY", "").strip()
     if key and "api.semanticscholar.org" in url:
         headers["x-api-key"] = key
+    oa_key = os.environ.get("OPENALEX_API_KEY", "").strip()
+    if oa_key and "api.openalex.org" in url:
+        headers["Authorization"] = f"Bearer {oa_key}"
     if accept:
         headers["Accept"] = accept
     if host_of(url) in _BUDGET_OUT and metered(url):

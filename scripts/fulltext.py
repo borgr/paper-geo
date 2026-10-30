@@ -44,6 +44,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -304,9 +305,14 @@ def _s2_pdf(p: dict, doi: str | None) -> str | None:
 
 
 def _epmc_record(doi: str) -> dict | None:
-    """Europe PMC's record for a DOI. Holds the abstract even when the text is closed."""
+    """Europe PMC's record for a DOI. Holds the abstract even when the text is closed.
+
+    The query is encoded: Europe PMC answers a raw `"` in the query string with HTTP
+    400, which is why this source failed on every paper since it was added.
+    """
+    query = urllib.parse.quote(f'DOI:"{doi}"')
     d = get_json("https://www.ebi.ac.uk/europepmc/webservices/rest/search"
-                 f'?query=DOI:"{doi}"&format=json&resultType=core&pageSize=1',
+                 f"?query={query}&format=json&resultType=core&pageSize=1",
                  retries=3)
     hits = ((d or {}).get("resultList") or {}).get("result") or []
     return hits[0] if hits else None

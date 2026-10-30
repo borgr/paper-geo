@@ -292,7 +292,7 @@ PLAN = (
     ("the bibliography does not have", "minute",
      "one paste into `orig.bib`. The pipeline's only real input is that file, and the "
      "override line standing in for it goes on the next run"),
-    ("field corrections the bibliography does not carry", "minute",
+    ("the bibliography does not carry", "minute",
      "one paste per line, into the entry `orig.bib` already has for that paper. Every "
      "line is given ready to drop in, and the override lines go after. Worth more than "
      "its size — Scholar, "
@@ -321,8 +321,8 @@ PLAN = (
      "tick both rows on your Scholar profile and press *Merge*; both titles and the "
      "link to the second row are in the section"),
     ("Hugging Face paper page missing", "minute",
-     "open each link while logged in — the visit is the action, there is no form. "
-     "Nothing happens logged out, so log in first or the clicking is wasted"),
+     "logged in, search each arXiv id at huggingface.co/papers and choose the option "
+     "to index it — opening the URL alone returns 404 and creates nothing"),
     ("Hugging Face page indexed but not claimed", "minute",
      "one claim request per link, then wait: the author→user link only appears once "
      "moderation grants it. Record what you asked for under `hf_claim_requested` so it "

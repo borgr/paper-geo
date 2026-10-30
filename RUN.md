@@ -210,9 +210,10 @@ Then, highest value first:
    (<https://arxiv.org/auth/need-paper-password>, instant) or file
    <https://arxiv.org/auth/request-ownership>. Step 3 is blocked until this lands.
 2. **Index its Hugging Face paper page.** `WORKLIST.md` and `tasks/hf_worklist.md`
-   give the link; log in to HF first, because an unauthenticated visit returns 404 and
-   creates nothing (verified on 50 pages, 0 created). Visiting the URL while logged in
-   *is* the action — there is no form and no API.
+   give the arXiv id. Log in to HF, search the id at <https://huggingface.co/papers>,
+   and choose the option to index it. Opening `hf.co/papers/<id>` alone returns 404
+   and creates nothing. (An API, `POST /api/papers/index`, exists but needs an HF
+   write token.)
    `python scripts/audit_identity.py --no-names` re-reads the pages afterwards.
 3. **Once it has a venue, add the journal-ref on arXiv.** `WORKLIST.md` gives the link
    and the venue string. One web form per paper; no API exists. This is what Scholar
@@ -449,6 +450,7 @@ Two optional environment variables for the data sources, both secrets:
 
 ```bash
 export S2_API_KEY=…      # free, https://www.semanticscholar.org/product/api
+export OPENALEX_API_KEY=…  # free, https://docs.openalex.org/how-to-use-the-api/rate-limits-and-authentication
 ```
 
 Without it, Semantic Scholar is reached through a rate-limit pool shared with every
@@ -487,6 +489,7 @@ not travel, because they are gitignored on purpose.
 | Key | Needed for | If you arrive without it |
 |---|---|---|
 | `S2_API_KEY` | every run that reads Semantic Scholar | **Copy this one before you wipe the old machine.** Semantic Scholar issues it through a request form and delivers it by email, no page shows an existing key, and a repository secret cannot be read back out of GitHub — so your shell profile is the only readable copy you have |
+| `OPENALEX_API_KEY` | every run that reads OpenAlex | sign in at openalex.org and copy it again. Without it the keyless daily budget runs out partway through a run (`429 budget`) |
 | `gh` login | the sweep, the HF links, the deploy | `gh auth login` again. Nothing to preserve |
 | `GH_TOKEN` | the same three under Actions | mint a new PAT. Nothing to preserve |
 | `WIKIDATA_BOT_PASSWORD` | Wikidata writes | `Special:BotPasswords` issues a replacement and retires the old one. Nothing to preserve |
@@ -524,6 +527,7 @@ is what makes a dispatch from a fork a dry run.
 | Secret | Needed for | Without it |
 |---|---|---|
 | `S2_API_KEY` | every leg | the anonymous rate-limit pool; the audit starts reporting papers as unindexed that are indexed |
+| `OPENALEX_API_KEY` | every leg | the keyless daily budget, which a single run exhausts: OpenAlex answers `429 budget` and the run fails |
 | `GH_TOKEN` | repo metadata, HF links, site deploy | those three skip. Must be a PAT — the built-in `GITHUB_TOKEN` cannot push to the Pages repo, which is a different repository |
 | `WIKIDATA_BOT_USER`, `WIKIDATA_BOT_PASSWORD` | the Wikidata tick-box | it skips |
 | `ANTHROPIC_API_KEY` | drafting sidecars unattended | nothing is drafted, and nothing is queued either |
