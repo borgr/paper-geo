@@ -9134,5 +9134,38 @@ class TestFramingRefresh(unittest.TestCase):
         self.assertIn("change nothing else", task["findings"][0])
 
 
+    def test_a_refresh_is_spent_when_it_runs_not_when_it_is_accepted(self):
+        """A refresh that found nothing, or a draft deleted unread, must not come back."""
+        import json as j
+        import yaml
+        import common
+        import sidecar_io
+        live = {"one_liner": "x", "qa": []}
+        with tempfile.TemporaryDirectory() as d:
+            os.makedirs(os.path.join(d, "drafts"))
+            with open(os.path.join(d, "p.md"), "w", encoding="utf-8") as f:
+                f.write("---\n" + yaml.safe_dump(live, sort_keys=False) + "---\n")
+            tasks = os.path.join(d, "t.json")
+            with open(tasks, "w", encoding="utf-8") as f:
+                j.dump({"tasks": [{"slug": "p", "sidecar": live,
+                                   "findings": [self.D.refresh_finding(["1 year"])]}]}, f)
+            versions = os.path.join(d, "v.yaml")
+            with mock.patch.object(sidecar_io, "SIDECARS", d), \
+                 mock.patch.object(sidecar_io, "DRAFTS", os.path.join(d, "drafts")), \
+                 mock.patch.object(self.D, "TASKS", tasks), \
+                 mock.patch.object(common, "SIDECAR_VERSIONS", versions), \
+                 mock.patch.object(common, "read_papers", return_value=[self.p]):
+                self.assertEqual(0, self.D.ingest([self.p]))
+                rec = common.framed_at()
+            self.assertEqual([], os.listdir(os.path.join(d, "drafts")))
+        self.assertEqual(3, rec["p"]["citations"])
+
+    def test_a_redraft_is_shown_as_what_it_changes(self):
+        from sidecar_review import changes
+        was = {"one_liner": "x", "qa": [{"ask": {"plain": "a?"}}]}
+        now = {"one_liner": "x", "qa": [{"ask": {"plain": "a?", "adjacent": "b?"}}]}
+        self.assertEqual([("qa[0].ask.adjacent", "—", "b?")], changes(was, now))
+        self.assertEqual([], changes(was, was))
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

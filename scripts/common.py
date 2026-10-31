@@ -1299,7 +1299,7 @@ VERSIONS_COMMENT = (
     "recorded number. A slug absent from here is unknown rather than v1. Dates and "
     "git both fail at this -- a commit touching every sidecar at once resets them "
     "and hides a revision that landed before it. `framed_at` is when each sidecar "
-    "was last accepted and the paper's citations then; scripts/draft_sidecars.py "
+    "was last accepted or refreshed and the paper's citations then; scripts/draft_sidecars.py "
     "reads it to queue the one-off framing refreshes at 1 year, 3 years and 10 "
     "citations.")
 
@@ -1335,17 +1335,29 @@ def record_sidecar_versions(slugs: list[str]) -> tuple[int, list[str]]:
             skipped.append(slug)
             continue
         rec[slug] = int(v)
-    # Every slug, arXiv or not: what a framing refresh compares against is when the sidecar
-    # was accepted and how cited the paper was then, and a journal paper has both.
+    write_yaml(SIDECAR_VERSIONS, {"_comment": VERSIONS_COMMENT,
+                                 "drafted_against": dict(sorted(rec.items())),
+                                 "framed_at": got.get("framed_at") or {}})
+    record_framed(slugs)
+    return len(slugs) - len(skipped), skipped
+
+
+def record_framed(slugs: list[str]) -> None:
+    """Stamp each slug as framed today, at the paper's current citations.
+
+    Every slug, arXiv or not: a journal paper has an age and citations too. Called on
+    accept, and when a framing refresh has run -- whatever it found -- so a refresh that
+    added nothing, or a draft the author deleted, does not come back the next run.
+    """
+    got = read_yaml(SIDECAR_VERSIONS) or {}
     cites = {p["slug"]: p.get("citations") or 0 for p in read_papers()}
     framed = dict(got.get("framed_at") or {})
     for slug in slugs:
         framed[slug] = {"on": datetime.date.today().isoformat(),
                         "citations": int(cites.get(slug, 0))}
     write_yaml(SIDECAR_VERSIONS, {"_comment": VERSIONS_COMMENT,
-                                 "drafted_against": dict(sorted(rec.items())),
+                                 "drafted_against": got.get("drafted_against") or {},
                                  "framed_at": dict(sorted(framed.items()))})
-    return len(slugs) - len(skipped), skipped
 
 
 def framed_at() -> dict[str, dict]:

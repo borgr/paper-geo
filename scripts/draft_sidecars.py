@@ -58,7 +58,7 @@ import yaml  # noqa: E402
 
 from llm import JSON_ONLY, decodable, first_json, with_retries  # noqa: E402
 from llm import client as llm_client  # noqa: E402
-from common import (BUILD, README_NAMES, ROOT, framed_at, get_status,  # noqa: E402
+from common import (BUILD, README_NAMES, ROOT, framed_at, get_status, record_framed,  # noqa: E402
                     has_live_sidecar, load_config, paper_doi, plural, read_papers,
                     record_sidecar_versions, replied, rules_block, title_of, write_json)
 from fulltext import LIMIT as FULLTEXT_LIMIT  # noqa: E402
@@ -838,12 +838,22 @@ def ingest(papers: list[dict]) -> int:
         sys.exit(f"no {TASKS} -- run without --ingest first")
     with open(TASKS, encoding="utf-8") as f:
         d = json.load(f)
-    n = 0
+    n, framed = 0, []
     for t in d["tasks"]:
         if not t.get("sidecar"):
             continue
+        if any(str(f).startswith("framing refresh due") for f in t.get("findings") or []):
+            framed.append(t["slug"])
+        # An answer identical to the live sidecar is a repair that found nothing to do,
+        # and a draft of it would only be a no-op to read and accept.
+        live = live_path(t["slug"])
+        if os.path.exists(live) and t["sidecar"] == read_front_matter(live)[0]:
+            print(f"  {t['slug']}: unchanged from the live sidecar -- no draft written")
+            continue
         write_draft(t["slug"], t["sidecar"], "build/sidecar_tasks.json")
         n += 1
+    if framed:
+        record_framed(framed)
     unfilled = [t["slug"] for t in d["tasks"] if not t.get("sidecar")]
     if unfilled:
         print(f"  {len(unfilled)} task(s) still unanswered: "
@@ -1256,11 +1266,14 @@ def draft_batch(args, cfg, pairs: list[tuple[dict, str]],
         print(f"drafting, then repairing each against the checks, up to "
               f"{args.repair} round(s) per paper:")
     answers, how, asker = caller(pairs, cfg, landed)
+    drafted = 0
     for p, vocab in fresh:
         done, found = reframe(p["slug"], asker, vocab, how)
+        record_framed([p["slug"]])
+        drafted += bool(done)
         print(f"  {'ok ' if done else '-- '} {p['slug'][:56]:56} {done} adjacent wording(s)"
               + (f", {found} finding(s) to fix" if found else ""))
-    print(f"\nwrote {len(answers) + sum(1 for _ in fresh)} draft(s) to "
+    print(f"\nwrote {len(answers) + drafted} draft(s) to "
           f"data/sidecars/drafts/")
     print("Next: python scripts/draft_sidecars.py --review")
 

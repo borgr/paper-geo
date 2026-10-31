@@ -102,6 +102,8 @@ def checked(slug: str) -> dict | str:
     # would only reorder the orphan list while looking like it decided the page.
     return {"slug": slug, "path": os.path.relpath(path, ROOT).replace(os.sep, "/"), "has_text": bool(text),
             "live": live, "one_liner": oneline(fm.get("one_liner")),
+            "changes": [] if live or not os.path.exists(live_path(slug))
+                       else changes(front_matter(live_path(slug)) or {}, fm),
             "claims": claims, "qa": fm.get("qa") or [],
             "prose_q": {k[1]: v for k, v in prose.items() if k[0] == "question"},
             # Same bucketing for the fields below the claims, each keyed by the handle
@@ -114,6 +116,25 @@ def checked(slug: str) -> dict | str:
             "terminology": fm.get("terminology") or {}}
 
 
+def changes(was, now, at: str = "") -> list[tuple[str, str, str]]:
+    """[(path, old, new)] for every leaf that differs between two front matters.
+
+    Lists are walked by index, so a claim moved rather than edited reads as two changes;
+    that is the honest description of a re-draft that reordered. "—" stands for absent.
+    """
+    if isinstance(was, dict) and isinstance(now, dict):
+        return [ch for k in list(was) + [k for k in now if k not in was]
+                for ch in changes(was.get(k), now.get(k), f"{at}.{k}" if at else str(k))]
+    if isinstance(was, list) and isinstance(now, list):
+        return [ch for i in range(max(len(was), len(now)))
+                for ch in changes(was[i] if i < len(was) else None,
+                                  now[i] if i < len(now) else None, f"{at}[{i}]")]
+    if was == now:
+        return []
+    return [(at, "—" if was is None else oneline(str(was)),
+             "—" if now is None else oneline(str(now)))]
+
+
 def show(slug: str) -> None:
     """`checked` for a terminal."""
     d = checked(slug)
@@ -122,6 +143,8 @@ def show(slug: str) -> None:
 
     print(f"\n{d['path']}")
     print("one_liner: " + d["one_liner"])
+    for at, was, now in d["changes"]:
+        print(f"  CHANGES THE LIVE SIDECAR  {at}: {was} -> {now}")
     if not d["has_text"]:
         print("  (no cached full text -- figures and pointers cannot be checked here)")
     for m in d["prose_page"]:
@@ -376,6 +399,14 @@ def _paper(d: dict, p: dict) -> list[str]:
         out += ["<p class=note><b>Worth a second look:</b></p><ul class=sus>"]
         out += [f"<li>{e(line)}</li>" for line in look]
         out.append("</ul>")
+    if d["changes"]:
+        # A re-draft of a reviewed sidecar is read as what it changes: the rest was already
+        # accepted, and a framing refresh that adds six wordings should cost six lines.
+        out += [f"<p class=note><b>What this changes in the live sidecar "
+                f"({len(d['changes'])}):</b></p><ul class=sus>"]
+        out += [f"<li><code>{e(at)}</code> {e(was)} → <b>{e(now)}</b></li>"
+                for at, was, now in d["changes"]]
+        out.append("</ul>")
     out.append(f"<p class=one>{e(d['one_liner'])}</p>")
     out.append("<div class=cmd>python scripts/draft_sidecars.py --accept "
                + e(slug) + (" --replace" if has_live_sidecar(slug) else "") + "</div>")
@@ -492,7 +523,7 @@ def _routes(d: dict) -> list[str]:
     """Every phrasing of every question, by the route it is meant to catch."""
     if not d["qa"]:
         return []
-    out = ["<h3>The four routes to each question</h3>",
+    out = ["<h3>The routes to each question</h3>",
            "<p class=sub>The answers are above. What is left to read here is "
            "whether each labelled route is really a different route — "
            "<b>plain</b> in the words of someone who has not read the paper, "
