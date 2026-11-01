@@ -31,7 +31,7 @@ claims:
     so reference-based scores drastically under-estimate correct output.
   scope: Accelerated bootstrap with 1000 iterations, N = 1312 and Ncor = 136 to match NUCLE
     test-set statistics.
-  evidence: Figure 1b
+  evidence: Figure 4
 - id: more-references-saturate
   kind: result
   text: Adding reference corrections gives sharply diminishing returns in GEC evaluation.
@@ -40,14 +40,14 @@ claims:
   scope: Sampling 1000 reference sets per sentence for M = 1..20 over the estimated correction
     distributions of 52 short NUCLE sentences; sampling without replacement gives a faster
     increase, above 0.47 at M = 10.
-  evidence: Figure 1a
+  evidence: Figure 3
 - id: gleu-same-saturation
   kind: result
   text: GLEU shows the same low-coverage saturation as M2 in GEC, scoring a perfect system
     only about 2% higher than M2 does across reference-set sizes.
   scope: Mean GLEU sentence score, bootstrapped on 52 short NUCLE sentences; I-measure untested,
     its runtime being prohibitive.
-  evidence: Figure 1b
+  evidence: Figure 4
 - id: systems-beat-humans
   kind: result
   text: The GEC systems RoRo and JMGR surpass the F0.5 score of a perfect system evaluated
@@ -98,7 +98,7 @@ claims:
   scope: 2500 crowdsourced simplifications for 47 sentences using the corpus and protocol
     of Xu et al. (2016), UNSEENEST-estimated distributions, and the same bootstrapping protocol
     as the GEC experiments.
-  evidence: Figure 1c
+  evidence: Figure 5
 - id: simplification-long-tail
   kind: result
   text: Valid simplifications are even more numerous than valid corrections. A sentence has

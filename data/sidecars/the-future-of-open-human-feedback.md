@@ -16,12 +16,12 @@ claims:
   evidence: Section 1.1
 - id: no-dataset-open-on-all-axes
   kind: result
-  text: Of 16 human feedback datasets and model reports surveyed, only ShareLM and Chatbot
-    Arena are marked open on all 5 axes of openness. Chatbot Arena's open access is flagged
-    because the largest volume of its prompts and feedback remains unpublished.
-  scope: The 16 rows span ShareLM, Chatbot Arena, WildChat, PRISM, HelpSteer2, DICES, AnthropicHH,
-    WebGPT, LLaMa 2 and 3.1, InstructGPT, GPT4, Claude 2 and 3, and Gemini 1.0 and 1.5, as
-    of the 2024 preprint.
+  text: Of the human feedback datasets and model reports surveyed in Table 1, only ShareLM
+    and Chatbot Arena are marked open on all 5 axes of openness. Chatbot Arena's open access
+    is flagged because the largest volume of its prompts and feedback remains unpublished.
+  scope: The surveyed rows span ShareLM, Chatbot Arena, WildChat, PRISM, HelpSteer2, DICES,
+    AnthropicHH, WebGPT, LLaMa 2 and 3.1, InstructGPT, GPT4, Claude 2 and 3, and Gemini 1.0
+    and 1.5, as of the 2024 preprint.
   evidence: Table 1
 - id: frontier-model-reports-closed
   kind: result
@@ -47,9 +47,9 @@ claims:
     into 7 themes, each with existing approaches and recommendations. The themes are incentives,
     effort and involvement, expert contributions, linguistic and cultural diversity, dynamic
     feedback, privacy, and legal ownership.
-  scope: A survey-and-recommendation structure produced by 20 interdisciplinary co-authors
-    from academia, industry and open-source communities as of 2024; the themes are argued
-    and cited, not experimentally ranked or weighted.
+  scope: A survey-and-recommendation structure produced by interdisciplinary co-authors from
+    academia, industry and open-source communities as of 2024; the themes are argued and cited,
+    not experimentally ranked or weighted.
   evidence: Section 3
 - id: peer-production-lessons
   kind: result
@@ -82,7 +82,7 @@ claims:
   kind: result
   text: 'Existing open feedback collections skew toward English speakers from narrow communities,
     with a few annotators contributing the majority of data even in explicitly multilingual
-    efforts. Only 4 of the 16 surveyed datasets are marked open on human participation: ShareLM,
+    efforts. Only 4 of the surveyed datasets are marked open on human participation: ShareLM,
     Chatbot Arena, WildChat and PRISM.'
   scope: Argued from cited analyses of WildChat, Chatbot Arena, OpenAssistant and the Aya
     Dataset; the skew toward bulk contributors is reported qualitatively, with no per-dataset
@@ -131,8 +131,8 @@ claims:
   text: The Future of Open Human Feedback closes with a checklist of concrete actions across
     its 7 themes, each labelled with 1 of 3 readiness levels. The levels are feasible with
     existing tools, partially feasible with some R&D, or requiring R&D.
-  scope: Readiness labels are the 20 co-authors' collective assessment as of 2024, covering
-    actions for incentives, contribution barriers, expert annotation, diversity, updated feedback,
+  scope: Readiness labels are the co-authors' collective assessment as of 2024, covering actions
+    for incentives, contribution barriers, expert annotation, diversity, updated feedback,
     privacy and legal practice.
   evidence: Section 3
 qa:

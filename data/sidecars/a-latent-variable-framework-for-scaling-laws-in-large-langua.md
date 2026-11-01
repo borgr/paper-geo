@@ -10,7 +10,7 @@ claims:
     benchmarks and hundreds of models. AIC over latent dimensions K from 1 to 12 drops sharply
     from K=1 to K=3 and flattens after K=4.
   kind: result
-  evidence: Section 4.2, with the AIC curve in Figure S1 of Appendix D.2
+  evidence: Section 4.2, with the AIC curve in Figure S1 of Appendix E.2
   scope: 168 LLMs from 75 families on Open LLM Leaderboard v1 and 216 LLMs from 146 families
     on v2, combined; anchor benchmarks MATH, IFEval, HellaSwag and BBH chosen by domain knowledge;
     K=6 results also reported.
@@ -56,7 +56,7 @@ claims:
     families. That asymptotic distribution supplies the standard errors on the size and token
     coefficients.
   kind: result
-  evidence: Theorems 1 and 2 in Section 2.3, with assumptions in Appendix A.1
+  evidence: Theorems 1 and 2 in Section 2.3, with assumptions in Appendix B.1
   scope: Number of families N diverges while models per family and number of benchmarks J
     stay fixed; requires anchor-benchmark and unit-diagonal identifiability constraints, known
     guessing parameters, and standard M-estimation regularity conditions.
