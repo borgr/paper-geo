@@ -9166,6 +9166,10 @@ class TestFramingRefresh(unittest.TestCase):
         now = {"one_liner": "x", "qa": [{"ask": {"plain": "a?", "adjacent": "b?"}}]}
         self.assertEqual([("qa[0].ask.adjacent", "—", "b?")], changes(was, now))
         self.assertEqual([], changes(was, was))
+        a, b = {"id": "a", "text": "A."}, {"id": "b", "text": "B."}
+        self.assertEqual([("claims[n]", "—", "{'id': 'n', 'text': 'N.'}")],
+                         changes({"claims": [a, b]},
+                                 {"claims": [{"id": "n", "text": "N."}, a, b]}))
 
 class TestAPaperThatMovedIsRedraftedNotLeftFailing(unittest.TestCase):
     """A live sidecar the paper's current text contradicts is queued, not just reported."""

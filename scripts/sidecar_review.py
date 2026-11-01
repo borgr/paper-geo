@@ -116,15 +116,26 @@ def checked(slug: str) -> dict | str:
             "terminology": fm.get("terminology") or {}}
 
 
+def keyed(xs) -> bool:
+    """A list whose items carry unique ids, so it can be compared item by item."""
+    ids = [x.get("id") for x in xs if isinstance(x, dict)] if isinstance(xs, list) else []
+    return bool(xs) and len(ids) == len(xs) and None not in ids and len(set(ids)) == len(ids)
+
+
 def changes(was, now, at: str = "") -> list[tuple[str, str, str]]:
     """[(path, old, new)] for every leaf that differs between two front matters.
 
-    Lists are walked by index, so a claim moved rather than edited reads as two changes;
-    that is the honest description of a re-draft that reordered. "—" stands for absent.
+    Claims are matched by `id`, so a re-draft that adds one claim near the top reads as
+    one addition rather than as every later claim changed. Other lists are walked by index.
+    "—" stands for absent.
     """
     if isinstance(was, dict) and isinstance(now, dict):
         return [ch for k in list(was) + [k for k in now if k not in was]
                 for ch in changes(was.get(k), now.get(k), f"{at}.{k}" if at else str(k))]
+    if keyed(was) and keyed(now):
+        old, new = {c["id"]: c for c in was}, {c["id"]: c for c in now}
+        return [ch for i in list(old) + [i for i in new if i not in old]
+                for ch in changes(old.get(i), new.get(i), f"{at}[{i}]")]
     if isinstance(was, list) and isinstance(now, list):
         return [ch for i in range(max(len(was), len(now)))
                 for ch in changes(was[i] if i < len(was) else None,
