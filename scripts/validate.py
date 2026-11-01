@@ -1373,9 +1373,18 @@ def outdated_live(entries: list[tuple[str, dict]]) -> dict[str, int]:
     Reported and re-queued, not fatal. The remedy is a re-draft and an accept, and a gate that
     fails until those happen blocks every unrelated commit; `pending()` reads this instead, so
     the papers come back round as drafts on their own.
+
+    The two checks against the paper's text count too: a figure or a pointer the text no
+    longer has is a finding against the published file like any other, and leaving it out
+    left those sidecars failing `--strict` with nothing ever queuing their repair.
     """
-    return {slug_of(name): n
-            for name, fm in entries if (n := len(readability(fm, slug_of(name))))}
+    out = {}
+    for name, fm in entries:
+        n = (len(readability(fm, slug_of(name))) + len(check_claim_numbers([(name, fm)])[0])
+             + len(check_claim_evidence([(name, fm)])[0]))
+        if n:
+            out[slug_of(name)] = n
+    return out
 
 
 # --------------------------------------------------------------- accept-time tier
@@ -1840,8 +1849,8 @@ def main() -> None:
         # Every run, next to the other note: this is drift in what is already published,
         # so it should not need someone to go looking for it.
         print(f"note: {len(old)} of {len(sidecars)} live sidecar(s) carry "
-              f"{sum(old.values())} finding(s) against accept-time rules written after "
-              f"they were accepted, so a re-draft is queued for them "
+              f"{sum(old.values())} finding(s) against today's accept-time checks or the "
+              f"paper's current text, so a re-draft is queued for them "
               f"({', '.join(f'{k} ({v})' for k, v in sorted(old.items()))})")
     problems = errs + soft
     if problems:

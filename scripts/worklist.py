@@ -872,19 +872,13 @@ def revised_papers(papers: list[dict]) -> list[str]:
     if hits:
         L += [f"## Papers revised since their sidecar was drafted ({len(hits)})", "",
               "arXiv serves a newer version of each of these than the one its sidecar was",
-              "drafted against. Nothing here is failing — a revision renumbers figures and",
-              "sections and restates numbers, so a claim can point at the wrong Figure 6",
-              "while a Figure 6 still exists and every check still passes.",
-              "",
-              "Re-draft each one with `python scripts/draft_sidecars.py` and read the result",
-              "against the new version:", "",
+              "drafted against. Each is queued for a re-draft from scratch against the new",
+              "version, which lands in the review page with what it changes in the live",
+              "sidecar listed first. Accepting it records the new version and it leaves",
+              "this list:", "",
               "```",
-              "python scripts/draft_sidecars.py --slug SLUG --mode api",
-              "python scripts/draft_sidecars.py --review",
               "python scripts/draft_sidecars.py --accept SLUG --replace",
-              "```",
-              "",
-              "Accepting records the new version, so an answered one leaves this list.", ""]
+              "```", ""]
         for p, live, was in sorted(hits, key=lambda h: -(h[0].get("citations") or 0)):
             L.append(f"- [ ] `{p['slug']}` — arXiv {p['arxiv']} is at v{live}, "
                      f"the sidecar was drafted against v{was}"

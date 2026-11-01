@@ -60,7 +60,8 @@ from llm import JSON_ONLY, decodable, first_json, with_retries  # noqa: E402
 from llm import client as llm_client  # noqa: E402
 from common import (BUILD, README_NAMES, ROOT, framed_at, get_status, record_framed,  # noqa: E402
                     has_live_sidecar, load_config, paper_doi, plural, read_papers,
-                    record_sidecar_versions, replied, rules_block, title_of, write_json)
+                    record_sidecar_versions, replied, rules_block, sidecar_versions,
+                    title_of, write_json)
 from fulltext import LIMIT as FULLTEXT_LIMIT  # noqa: E402
 from fulltext import cut_chars  # noqa: E402
 from fulltext import resolve as resolve_fulltext  # noqa: E402
@@ -348,6 +349,21 @@ def refreshes(papers: list[dict], today: datetime.date | None = None) -> dict[st
             and (due := refresh_due(p, rec.get(p["slug"]), today))}
 
 
+def revised(papers: list[dict]) -> set[str]:
+    """Slugs whose live sidecar was drafted against an older arXiv version than arXiv serves.
+
+    Queued for a re-draft from scratch rather than a repair: a revision can change what the
+    paper claims, not just where it says it, and a repair keeps every sentence no check
+    flags -- so a method the new version describes differently would survive it. Only a
+    recorded version counts; an unrecorded one is unknown, not old.
+    """
+    known = sidecar_versions()
+    return {p["slug"] for p in papers
+            if p.get("arxiv_version") and p["slug"] in known
+            and int(p["arxiv_version"]) > known[p["slug"]]
+            and os.path.exists(live_path(p["slug"]))}
+
+
 def pending(papers: list[dict], do_all: bool, limit: int | None) -> list[dict]:
     """Papers with no live sidecar and no current draft, most cited first.
 
@@ -362,7 +378,7 @@ def pending(papers: list[dict], do_all: bool, limit: int | None) -> list[dict]:
     """
     live = {os.path.basename(f)[:-3] for f in live_paths()}
     from validate import outdated_live, read_sidecars
-    live -= set(outdated_live(read_sidecars()[0]))
+    live -= set(outdated_live(read_sidecars()[0])) | revised(papers)
     keep = {} if do_all else held(spec_sha())
     out = [p for p in sorted(papers, key=lambda q: -(q.get("citations") or 0))
            if p["slug"] not in live and p["slug"] not in keep]
@@ -417,7 +433,7 @@ CONTRACT = [
 ]
 
 
-def standing(slug: str) -> tuple[dict | None, list[str]]:
+def standing(slug: str, fresh: bool = False) -> tuple[dict | None, list[str]]:
     """The text already written for this paper, and what today's checks say about it.
 
     A paper re-queued by `--all` usually has something on disk: an unaccepted draft, or a
@@ -429,7 +445,13 @@ def standing(slug: str) -> tuple[dict | None, list[str]]:
 
     The draft is preferred over the live file when both exist: it is newer, and it is the one
     `--ingest` will overwrite.
+
+    `fresh` is a paper arXiv has revised since: the text on disk describes the old version,
+    so there is nothing to repair and the job is a draft from scratch. The live file stays
+    where it is, and the review page lists what the new draft changes in it.
     """
+    if fresh:
+        return None, []
     for path in (draft_path(slug),
                  live_path(slug)):
         if os.path.exists(path):
@@ -456,8 +478,9 @@ def emit_tasks(pairs: list[tuple[dict, str]], cfg,
                due: dict[str, list[str]] | None = None) -> str:
     os.makedirs(BUILD, exist_ok=True)
     tasks = []
+    moved = revised([p for p, _ in pairs])
     for p, ev in pairs:
-        fm, found = standing(p["slug"])
+        fm, found = standing(p["slug"], fresh=p["slug"] in moved)
         if fm is not None and p["slug"] in (due or {}):
             found = found + [refresh_finding(due[p["slug"]])]
         t = {"slug": p["slug"], "title": title_of(p),

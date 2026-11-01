@@ -9167,5 +9167,51 @@ class TestFramingRefresh(unittest.TestCase):
         self.assertEqual([("qa[0].ask.adjacent", "—", "b?")], changes(was, now))
         self.assertEqual([], changes(was, was))
 
+class TestAPaperThatMovedIsRedraftedNotLeftFailing(unittest.TestCase):
+    """A live sidecar the paper's current text contradicts is queued, not just reported."""
+
+    def setUp(self):
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+
+    def test_a_figure_the_text_lacks_queues_a_redraft(self):
+        import validate
+        fm = {"claims": [{"id": "c", "kind": "result", "text": "It gains 8.6 points.",
+                          "scope": "On one benchmark.", "evidence": "Table 9"}]}
+        with tempfile.TemporaryDirectory() as d:
+            os.makedirs(os.path.join(d, "build", "fulltext"))
+            with open(os.path.join(d, "build", "fulltext", "x.txt"), "w") as f:
+                f.write("Table 1 shows a gain of 9.1 points. " * 20)
+            with mock.patch.object(validate, "ROOT", d), \
+                    mock.patch.object(validate, "readability", return_value=[]):
+                self.assertEqual({"x": 2}, validate.outdated_live([("x.md", fm)]))
+
+    def test_a_revised_paper_is_queued_and_drafted_from_scratch(self):
+        import draft_sidecars as D
+        with tempfile.TemporaryDirectory() as d:
+            for s in ("old", "same"):
+                with open(os.path.join(d, f"{s}.md"), "w") as f:
+                    f.write("---\nqa: []\n---\n")
+            papers = [{"slug": "old", "arxiv_version": 2}, {"slug": "same", "arxiv_version": 1},
+                      {"slug": "unrecorded", "arxiv_version": 3}]
+            with mock.patch.object(D, "sidecar_versions", return_value={"old": 1, "same": 1}), \
+                    mock.patch.object(D, "live_path", lambda s: os.path.join(d, f"{s}.md")):
+                self.assertEqual({"old"}, D.revised(papers))
+        self.assertEqual((None, []), D.standing("anything", fresh=True))
+
+    def test_a_cache_of_an_older_arxiv_version_is_refetched(self):
+        import fulltext
+        with tempfile.TemporaryDirectory() as d:
+            index = os.path.join(d, "sources.json")
+            with mock.patch.object(fulltext, "INDEX", index), \
+                    mock.patch.object(fulltext, "_pin", return_value=""):
+                src = "arxiv-html https://arxiv.org/html/2603.13467"
+                fulltext._remember("p", src, 50000, arxiv=1)
+                self.assertTrue(fulltext._stale("p", src, 2))
+                self.assertFalse(fulltext._stale("p", src, 1))
+                fulltext._remember("p", src, 50000)   # from before versions were recorded
+                self.assertTrue(fulltext._stale("p", src, 2))
+                self.assertFalse(fulltext._stale("p", src, 1))
+                self.assertFalse(fulltext._stale("p", src, None))
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

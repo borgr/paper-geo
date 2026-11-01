@@ -412,9 +412,11 @@ def _read_json(path: str) -> dict:
 
 
 def _remember(slug: str, source: str, chars: int, version: int = EXTRACTOR,
-              pin: str | None = None) -> None:
+              pin: str | None = None, arxiv: int | None = None) -> None:
     idx = _read_json(INDEX)
     idx[slug] = {"source": source, "chars": chars, "extractor": version}
+    if arxiv:
+        idx[slug]["arxiv_version"] = int(arxiv)
     if pin:
         # Recorded even when the chain fell past a pin that would not answer, so a dead pin
         # costs one refetch instead of one on every read.
@@ -431,17 +433,25 @@ def source_of(slug: str) -> str:
     return (_read_json(INDEX).get(slug) or {}).get("source") or "(unrecorded)"
 
 
-def _stale(slug: str, source: str) -> bool:
-    """Is this cache due a refetch -- superseded extractor, or a pin it predates?
+def _stale(slug: str, source: str, arxiv: int | None = None) -> bool:
+    """Is this cache due a refetch -- superseded extractor, a pin it predates, or an arXiv
+    version newer than the one it holds?
 
     Coarse on the extractor. Deciding per source which extractor change could have touched
     it is the kind of bookkeeping that is right until the day it is quietly wrong, and the
     cost of being coarse is one download of a paper we already have.
+
+    The arXiv version matters because every check and every draft reads this file: a v1
+    cache kept after v2 appeared validates the sidecar against text no reader opens. A
+    cache from before the version was recorded is refetched once if the paper is past v1,
+    since it may predate the revision; a v1 paper cannot have moved.
     """
     if not found(source):
         return False
     rec = _read_json(INDEX).get(slug) or {}
     if _pin(slug) != (rec.get("pin") or ""):
+        return True
+    if arxiv and int(arxiv) > int(rec.get("arxiv_version") or 1):
         return True
     return int(rec.get("extractor") or 0) < EXTRACTOR
 
@@ -527,7 +537,7 @@ def resolve(p: dict, cfg: dict | None = None, limit: int = LIMIT,
             # only ever read links.html, so it is html-extracted and due a refetch.
             _remember(p["slug"], src, len(cached), version=1)
         if cached and (found(src) or len(cached) >= MIN_CHARS) \
-                and not _stale(p["slug"], src):
+                and not _stale(p["slug"], src, p.get("arxiv_version")):
             return fit(cached, limit)[0], src
 
     got = _local(p["slug"])
@@ -562,7 +572,8 @@ def resolve(p: dict, cfg: dict | None = None, limit: int = LIMIT,
         # figure check tests only that the file is there, and zero bytes tells it the
         # paper states no numbers when what happened is that no source answered.
         os.remove(path)
-    _remember(p["slug"], source or NONE, len(text), pin=_pin(p["slug"]))
+    _remember(p["slug"], source or NONE, len(text), pin=_pin(p["slug"]),
+              arxiv=p.get("arxiv_version") if text else None)
     return fit(text, limit)[0], source or NONE
 
 
