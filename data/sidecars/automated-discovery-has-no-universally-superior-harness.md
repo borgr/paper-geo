@@ -133,6 +133,8 @@ qa:
       one transfers?
     practitioner: should I adopt an evolutionary search loop for my discovery runs, or just
       sample repeatedly and keep the best?
+    adjacent: is there a best agent harness for algorithm discovery with coding agents, or
+      does the best one depend on the model and the problem?
   answered_by:
   - no-universal-harness
   - openevolve-bottom
@@ -145,6 +147,8 @@ qa:
       when compute is fixed?
     practitioner: is it worth the engineering effort to run the full OpenEvolve recipe instead
       of a simple sampling loop?
+    adjacent: do the extra components of LLM evolutionary search strategies actually beat
+      simple repeated sampling at the same budget?
   answered_by:
   - openevolve-nonmonotonic
   - openevolve-bottom
@@ -157,6 +161,8 @@ qa:
       and multi-parent expansion?
     practitioner: if I only add one thing to my discovery loop, should it be bandit-style
       parent selection?
+    adjacent: in test-time scaling with tree search over candidate programs, does UCT/PUCT
+      parent selection or deeper search deliver the gain?
   answered_by:
   - tree-search-gains-front-loaded
 - ask:
@@ -168,6 +174,8 @@ qa:
       winner?
     practitioner: at what fraction of my compute budget can I safely start cutting the weaker
       search runs?
+    adjacent: can I stop a weak autonomous research run early by looking at its best score
+      at the halfway point?
   answered_by:
   - early-progress-predicts
 - ask:
@@ -179,6 +187,8 @@ qa:
       instead of committing to one?
     practitioner: given 5 runs' worth of compute, should I run one harness or run many partially
       and prune?
+    adjacent: in harness engineering for coding agents, is it better to start several harnesses
+      and prune the weak ones than to commit to one?
   answered_by:
   - adaptive-beats-baselines
   - adaptive-per-pair
@@ -200,6 +210,8 @@ qa:
       rather than a transferable recipe?
     task: where do I start reading about evaluation rigour and reusable baselines for LLM-guided
       discovery systems?
+    adjacent: what work shows that agent harness effectiveness depends on the model and the
+      task?
   answered_by:
   - harness-as-hyperparameter
   - released-null-distributions

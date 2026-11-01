@@ -2,8 +2,9 @@ _comment: The arXiv version each live sidecar was drafted against. Written by sc
   on --accept and by --record-versions, read by scripts/worklist.py, which asks for a re-draft when arXiv
   moves past the recorded number. A slug absent from here is unknown rather than v1. Dates and git both
   fail at this -- a commit touching every sidecar at once resets them and hides a revision that landed
-  before it. `framed_at` is when each sidecar was last accepted and the paper's citations then; scripts/draft_sidecars.py
-  reads it to queue the one-off framing refreshes at 1 year, 3 years and 10 citations.
+  before it. `framed_at` is when each sidecar was last accepted or refreshed and the paper's citations
+  then; scripts/draft_sidecars.py reads it to queue the one-off framing refreshes at 1 year, 3 years and
+  10 citations.
 drafted_against:
   a-hitchhiker-s-guide-to-scaling-law-estimation: 2
   a-latent-variable-framework-for-scaling-laws-in-large-langua: 2
@@ -140,7 +141,7 @@ framed_at:
     'on': '2026-10-30'
     citations: 108
   automated-discovery-has-no-universally-superior-harness:
-    'on': '2026-10-30'
+    'on': '2026-11-01'
     citations: 7
   automatic-metric-validation-for-grammatical-error-correction:
     'on': '2026-10-30'
