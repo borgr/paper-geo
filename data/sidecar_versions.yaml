@@ -73,7 +73,7 @@ drafted_against:
   llm-hypnosis-exploiting-user-feedback-for-unauthorized-knowl: 3
   lossless-and-near-lossless-compression-for-foundation-models: 1
   mediators-in-determining-what-processing-bert-performs-first: 1
-  mediocrity-is-the-key-for-llm-as-a-judge-anchor-selection: 1
+  mediocrity-is-the-key-for-llm-as-a-judge-anchor-selection: 2
   mindgames-a-live-arena-for-evaluating-social-and-strategic-r: 1
   model-merging-with-svd-to-tie-the-knots: 1
   muler-detailed-and-scalable-reference-based-evaluation: 2
@@ -88,8 +88,8 @@ drafted_against:
   q2-evaluating-factual-consistency-in-knowledge-grounded-dial: 2
   reference-less-measure-of-faithfulness-for-grammatical-error: 4
   reinforcement-learning-with-large-action-spaces-for-neural-m: 1
-  resolving-interference-ri-disentangling-models-for-improved: 1
-  robustness-as-an-emergent-property-of-task-performance: 1
+  resolving-interference-ri-disentangling-models-for-improved: 2
+  robustness-as-an-emergent-property-of-task-performance: 2
   semantics-aware-attention-improves-neural-machine-translatio: 2
   semeval-2019-shared-task-cross-lingual-semantic-parsing-with: 4
   semeval-2019-task-1-cross-lingual-semantic-parsing-with-ucca: 3
@@ -333,7 +333,7 @@ framed_at:
     'on': '2026-10-30'
     citations: 16
   mediocrity-is-the-key-for-llm-as-a-judge-anchor-selection:
-    'on': '2026-10-30'
+    'on': '2026-11-02'
     citations: 7
   mindgames-a-live-arena-for-evaluating-social-and-strategic-r:
     'on': '2026-10-30'
@@ -384,10 +384,10 @@ framed_at:
     'on': '2026-10-30'
     citations: 8
   resolving-interference-ri-disentangling-models-for-improved:
-    'on': '2026-10-30'
+    'on': '2026-11-02'
     citations: 1
   robustness-as-an-emergent-property-of-task-performance:
-    'on': '2026-10-30'
+    'on': '2026-11-02'
     citations: 2
   semantics-aware-attention-improves-neural-machine-translatio:
     'on': '2026-10-30'

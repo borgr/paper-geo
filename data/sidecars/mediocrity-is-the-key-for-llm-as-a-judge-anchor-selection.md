@@ -1,266 +1,274 @@
 ---
 key: donyehiya2026mediocrity
-one_liner: 'Across 866,250 pairwise LLM-as-a-judge comparisons on Arena-Hard-v2.0, anchor
-  quality follows an inverted U-shape in model strength: mid-ranked ("mediocre") anchors give
-  rankings closest to the all-pairs and human gold, while the strongest and weakest models
-  — the usual choices — are the worst anchors.'
+one_liner: In anchor-based LLM-as-a-judge evaluation, where every model is compared only to
+  one fixed anchor, mid-ranked ("mediocre") anchors give the most faithful rankings, while
+  the strongest and weakest models, the usual choices, are the worst anchors because they
+  decide most comparisons in advance.
 terminology:
   Anchor-based evaluation: An LLM-as-a-judge protocol in which every evaluated model is compared
     only against one fixed reference model (the anchor), reducing the number of judgments
     from quadratic to linear in the number of models.
   Anchor informativeness: The fraction of (sample, model pair) cases in which two models receive
     different verdicts against the same anchor, so the sample can discriminate between them;
-    comparisons where both models tie or both win identically carry no ranking signal.
-  Quadratic ranking: The ranking obtained by judging all possible pairs of evaluated models
-    on every benchmark instruction and aggregating with Bradley-Terry, used as the gold standard
-    that anchor-based ranking approximates.
+    cases where both models get the same verdict carry no ranking signal.
+  Quadratic ranking: The ranking obtained by judging every pair of evaluated models on every
+    benchmark instruction and aggregating the verdicts with Bradley-Terry, used as the gold
+    standard that an anchor-based ranking approximates.
 claims:
 - id: inverted-u
   kind: result
-  text: Anchor quality in LLM-as-a-judge pairwise evaluation follows an inverted U-shape in
-    the anchor's own strength. Top-ranked and bottom-ranked models yield the lowest Kendall's
-    tau with the all-pairs gold ranking, and mid-ranked models the highest.
-  scope: Arena-Hard-v2.0, 750 instructions, 22 models each used as anchor and competitor;
-    Deepseek-V3 judge, replicated for GPT-OSS 120B, GPT-OSS 20B, Qwen3 235B A22B, Qwen3 8B,
-    and on AlpacaEval with 11 models.
-  evidence: Figure 1; Figures 12-16; Figure 17
-- id: worst-anchor-drop
-  kind: result
-  text: Choosing a bad anchor instead of the best one costs up to .30 Kendall's tau in correlation
-    with the human ranking on Arena-Hard-v2.0. The gap against the all-pairs quadratic ranking
-    reaches .19.
-  scope: 22 anchors, 5 judges, 750 Arena-Hard-v2.0 instructions; the .30 human gap is the
-    GPT-OSS 20B judge, and per-judge human gaps span .181-.305.
-  evidence: Table 3
+  text: Anchor quality in pairwise LLM-as-a-judge evaluation follows an inverted U-shape in
+    the anchor's own strength. Top-ranked and bottom-ranked anchors give the lowest Kendall's
+    tau with the gold ranking, and mid-ranked anchors the highest.
+  scope: Arena-Hard-v2.0, 750 instructions, 22 models each used as anchor and competitor,
+    5 judges, against both the all-pairs and the human ranking. Replicated on AlpacaEval with
+    11 models, where anchor tau ranges from .600 to .964.
+  evidence: Figure 1; Figures 12-16; Figures 18-22; Figure 17; Table 8
 - id: o3-worst
   kind: result
-  text: o3, the top-performing model in the pool, is the worst anchor for every one of the
-    5 judges tested. Under the Deepseek-V3 judge it reaches only .818 Kendall's tau with the
-    quadratic ranking and .324 with the human ranking.
-  scope: Arena-Hard-v2.0 with 22 evaluated models; "top-performing" is relative to this pool,
-    and o3's failure as an anchor follows from its position at the top rather than from the
-    model itself.
+  text: o3, the top-performing model among 22 on Arena-Hard-v2.0, is the worst anchor under
+    all 5 judges tested. With a Deepseek-V3 judge it reaches only .818 Kendall's tau with
+    the all-pairs ranking and .324 with the human ranking.
+  scope: Worst on both the all-pairs and the human ranking for every judge; with GPT-OSS 120B
+    as judge its all-pairs tau falls to .662. Top-performing is relative to this 22-model
+    pool.
   evidence: Table 1; Tables 4-7
+- id: worst-anchor-drop
+  kind: result
+  text: A bad anchor instead of the best one costs up to .30 Kendall's tau in correlation
+    with the human ranking on Arena-Hard-v2.0. The loss against the all-pairs ranking reaches
+    .19.
+  scope: 22 candidate anchors and 5 judges; best and worst are the anchors with the highest
+    and lowest all-pairs correlation. The .305 human gap is the GPT-OSS 20B judge.
+  evidence: Table 3
 - id: anchor-vs-judge
   kind: result
-  text: Anchor selection matters as much as judge selection in LLM-as-a-judge evaluation.
-    The best-to-worst anchor gap in correlation with human ranking is .181-.305 depending
-    on the judge, comparable to or larger than the spread across the 5 judges.
-  scope: 5 judges (Deepseek-V3, GPT-OSS 120B, GPT-OSS 20B, Qwen3 235B A22B, Qwen3 8B) on Arena-Hard-v2.0
-    with 22 models; anchor effects are similar at every judge quality level.
+  text: Choosing the anchor moves ranking accuracy as much as choosing the judge model. The
+    best-to-worst anchor gap in human correlation is .181 to .305 per judge, while the judges'
+    own human correlations span .333 to .514.
+  scope: 5 open-weight judges (Deepseek-V3, GPT-OSS 120B, GPT-OSS 20B, Qwen3 235B A22B, Qwen3
+    8B) on Arena-Hard-v2.0 with 22 models. Similar anchor effects appear at every judge quality
+    level.
   evidence: Table 3
 - id: wasted-budget
   kind: result
-  text: 'A strong anchor throws away most of the evaluation budget: o3 beats every opposing
-    model on roughly 500 of the 750 Arena-Hard-v2.0 samples. Only 45% of o3''s comparisons
-    are informative, against 61% for the most informative anchor, o3 Mini.'
-  scope: Deepseek-V3 as judge on Arena-Hard-v2.0 with 22 models; informativeness is the fraction
-    of model pairs receiving different verdicts against the anchor, and the empirical range
-    across the 22 anchors is 45.5% to 61.1%.
+  text: A top-performing anchor wastes most of the judging budget. o3 beats every other model
+    on about 500 of 750 Arena-Hard-v2.0 samples, and only 45.5% of its comparisons are informative,
+    against 61.1% for o3 Mini.
+  scope: Deepseek-V3 as judge, 22 models; informativeness is the share of model pairs that
+    receive different verdicts against the anchor.
   evidence: Figure 2; Table 9
 - id: informativeness-correlates
   kind: result
-  text: Anchor informativeness predicts ranking accuracy, with R^2 = 0.5940 between an anchor's
-    informativeness rate and the Kendall's tau of its induced ranking with the quadratic ranking.
-  scope: 22 anchors on Arena-Hard-v2.0, Deepseek-V3 as judge; a single-judge regression over
-    22 points, so the relation is directional evidence rather than a calibrated predictor.
-  evidence: Figure 3
+  text: An anchor's informativeness rate predicts how accurate its ranking is, with R^2 =
+    0.5940 between informativeness and Kendall's tau with the all-pairs ranking across 22
+    anchors.
+  scope: Arena-Hard-v2.0 with Deepseek-V3 as judge; a single-judge fit over 22 points.
+  evidence: Figure 3; Figure 6
 - id: benchmark-too-small
   kind: result
-  text: Standard benchmark sizes are statistically insufficient for anchor-based pairwise
-    evaluation. Detecting a +5% win-rate edge at 80% power needs 617 discordant samples, which
-    becomes 1,372 total samples at o3's tie rate, far more than Arena-Hard-v2.0's 750.
-  scope: One-sided sign test, alpha = 0.05, power = 0.80, with the total inflated by 1/informativeness;
-    larger effects stay detectable, as +10% needs 341 total samples at a 55% tie rate.
+  text: Arena-Hard-v2.0's 750 samples are too few to separate models with a +5% win-rate edge
+    against an anchor. A sign test needs 617 discordant samples, which becomes 1,372 total
+    at a 55% tie rate.
+  scope: One-sided sign test, alpha = 0.05, power = 0.80, total inflated by 1/informativeness.
+    Larger edges fit, as +10% needs 341 samples at 55% ties.
   evidence: Table 2
+- id: wilcoxon-power
+  kind: result
+  text: Using the judge's win margins through a Wilcoxon signed-rank test cuts the samples
+    needed for a +5% edge to 930, from 1143 under the sign test. That is still more than Arena-Hard-v2.0's
+    750.
+  scope: Simulation over the empirical verdict distributions at the mean informativeness of
+    54%, alpha = 0.05, power = 0.80.
+  evidence: Section 4.3; Appendix C
 - id: informativeness-ceiling
   kind: result
-  text: Anchor-based evaluation caps its own informativeness at 0.5 with magnitude-free tie/win/loss
-    verdicts, maximised when the anchor sits exactly in the middle of the ranking. Even the
-    best empirical anchor leaves 39% of Arena-Hard-v2.0 samples uninformative.
-  scope: The 0.5 bound assumes verdicts in {-1,0,1} and that transitivity holds; empirical
-    rates above 0.5 arise because the judge's 5-level verdicts carry magnitude. Arena-Hard-v2.0,
-    22 models.
+  text: Anchor-based evaluation limits informativeness to at most 0.5 under tie, win or loss
+    verdicts, with equality only when the anchor is ranked exactly in the middle. Even the
+    most informative anchor tested wastes roughly 39% of the evaluation budget.
+  scope: The 0.5 bound assumes magnitude-free verdicts and transitivity. The 39% is o3 Mini
+    under a Deepseek-V3 judge on Arena-Hard-v2.0.
   evidence: Section 4.3
 - id: anchor-count
   kind: result
-  text: Adding more anchors helps less than picking the right one. Averaging over random anchor
-    sets raises Kendall's tau with the quadratic ranking, but a single random anchor already
-    reaches .92 versus .82 for the strongest model as anchor.
-  scope: Iterative Bradley-Terry aggregation over anchor sets growing from 1 to 22 models,
-    40 shuffled permutations, Deepseek-V3 judge on Arena-Hard-v2.0; converges to tau = 1.0
-    by construction when all 22 models are anchors.
+  text: Adding anchors helps less than choosing the first one well. A single random anchor
+    already averages .92 Kendall's tau with the all-pairs ranking, against .82 for the strongest
+    model as anchor.
+  scope: Bradley-Terry over random anchor sets grown from 1 to 22 models, 40 shuffled permutations,
+    Deepseek-V3 judge on Arena-Hard-v2.0. Tau reaches 1.0 by construction at 22 anchors.
   evidence: Figure 7
 - id: cheap-estimation
   kind: result
-  text: An anchor's informativeness can be screened with only 10 benchmark samples, correlating
-    with full-dataset informativeness at Pearson r above 0.86 for 3 or more evaluated models.
-    For 8 or more models the correlation is above 0.91.
-  scope: Arena-Hard-v2.0, pool sizes swept over 3-22 models, 30 repetitions, informativeness
-    estimated from 10 random samples; rates span 0.42-0.65 versus 0.44-0.61 on the full data.
-  evidence: Table 10; Section 5.3
+  text: Anchor informativeness can be screened with only 10 benchmark samples. The estimate
+    correlates with full-dataset informativeness at Pearson r above 0.86 for 3 or more models,
+    and above 0.91 for 8 or more.
+  scope: Arena-Hard-v2.0, pool sizes 3 to 22, 30 repetitions. The 10-sample screen always
+    placed the best and worst models among the 3 least informative anchors.
+  evidence: Section 5.3; Table 10
 - id: sample-size-sensitivity
   kind: result
-  text: Anchor-based rankings are far more sensitive to benchmark size than all-pairs rankings.
-    Averaged over anchors, anchor-based correlation with human ranking converges to the quadratic
-    correlation only at around 600 samples, while o3 as anchor stays well below at every size.
-  scope: Sample sizes swept from 50 to 750 on Arena-Hard-v2.0, 30 repetitions, Deepseek-V3
-    judge; the same trend holds for GPT-OSS 120B, GPT-OSS 20B and Qwen3 235B A22B, but with
-    the Qwen3 8B judge the mean anchor-based correlation exceeds the quadratic one from about
-    150 samples.
+  text: Anchor-based rankings depend far more on benchmark size than all-pairs rankings. The
+    mean anchor-based human correlation only approaches the all-pairs one at about 600 samples,
+    and o3 as anchor stays far below at every size.
+  scope: Sample sizes 50 to 750 on Arena-Hard-v2.0, 4 of 5 judges. With the Qwen3 8B judge
+    the mean anchor-based correlation exceeds the all-pairs one from about 150 samples.
   evidence: Figure 4; Figures 8-11
 - id: contribution
   kind: context
-  text: '"Mediocrity is the key for LLM as a Judge Anchor Selection" is a systematic study
-    of anchor choice in LLM-as-a-judge leaderboards. It treats the anchor, rather than the
-    judge, as the neglected design decision in Arena-Hard- and AlpacaEval-style evaluation.'
-  scope: As of publication in 2026; earlier work on anchor-based evaluation focused on transitivity
-    violations and proposed alternative protocols, while this study keeps the anchor protocol.
-    English-language open-ended generation benchmarks only.
+  text: '"Mediocrity is the key for LLM as a Judge Anchor Selection" (ACL 2026) is a systematic
+    study of anchor choice in LLM-as-a-judge leaderboards. It treats the anchor, not the judge,
+    as the overlooked design decision in Arena-Hard- and AlpacaEval-style evaluation.'
+  scope: As of publication in 2026; it keeps the anchor protocol and gives practices for it,
+    rather than proposing an alternative. Open-ended generation benchmarks in English.
   evidence: Section 7
 - id: recommendations
   kind: context
-  text: '"Mediocrity is the key for LLM as a Judge Anchor Selection" offers a decision procedure
-    for pairwise evaluation. Avoid an external anchor when a natural baseline exists or when
-    3 or fewer models are compared, otherwise pick a mid-performing anchor and report its
-    informativeness.'
-  scope: Leaderboard settings where a full ranking of 4 or more models is needed; with 3 models
-    all-pairs comparison costs the same 3N judgments as an external anchor. "Mediocre" is
-    relative to the pool being ranked, so the choice must be recalibrated per model set.
-  evidence: Figure 5
+  text: '"Mediocrity is the key for LLM as a Judge Anchor Selection" gives a decision procedure
+    for pairwise evaluation. Avoid an external anchor if a natural baseline exists or 3 or
+    fewer models are compared, else pick a mid-performing anchor and report its informativeness.'
+  scope: Leaderboards needing a full ranking of 4 or more models; with 3 models all pairs
+    cost the same 3N judgments. Mediocre is relative to the pool being ranked.
+  evidence: Figure 5; Section 6
 - id: released-judgments
   kind: context
   text: '"Mediocrity is the key for LLM as a Judge Anchor Selection" releases about 900K LLM
-    judge verdicts, covering all 22-choose-2 model pairs on 750 Arena-Hard-v2.0 instructions
-    for 5 judges.'
-  scope: Arena-Hard-v2.0 and AlpacaEval instructions, 5 open-weight judges (no commercial
-    judge models); verdicts are on a 5-level scale from clear loss to clear win.
+    judge verdicts. They cover all pairs of 22 models on 750 Arena-Hard-v2.0 instructions
+    for each of 5 judges.'
+  scope: 5 open-weight judges and no commercial judge; verdicts on a 5-level scale from clear
+    loss to clear win. Hosted on Hugging Face as ibm-research/900K-Judgements.
   evidence: Section 3.2
 qa:
 - ask:
-    plain: When one model is used as the common opponent for scoring every other model, should
-      that opponent be the strongest one or an average one?
-    jargon: How does Kendall's tau with the all-pairs gold ranking vary with the strength
-      of the baseline model in pairwise LLM-as-a-judge evaluation?
+    plain: When every model is scored against one common opponent, should that opponent be
+      the strongest model or an average one?
+    jargon: How does Kendall's tau with the all-pairs ranking vary with the strength of the
+      anchor model in pairwise LLM-as-a-judge evaluation?
     task: How do I choose which model to use as the fixed reference opponent in an Arena-Hard-style
       leaderboard?
-    practitioner: I am setting up a pairwise judge leaderboard for my models — which reference
-      model should I score everyone against?
+    practitioner: Which reference model should I score all my models against in a pairwise
+      judge leaderboard?
+    adjacent: Is AlpacaEval-style win rate against a single reference model a reliable way
+      to rank language models?
   answered_by:
   - inverted-u
   - recommendations
 - ask:
-    plain: Does scoring every model against the strongest available model make the resulting
-      ranking worse?
+    plain: Does comparing every model against the best available model make an automatic leaderboard
+      less accurate?
     jargon: How much Kendall's tau with human and all-pairs rankings is lost when a frontier
-      model such as o3 serves as the pairwise baseline?
-    task: How do I avoid ranking errors caused by picking a top-tier model as the fixed opponent
-      in pairwise evaluation?
-    practitioner: I was planning to benchmark my models against o3 as the reference — how
-      much accuracy would that cost me?
+      model such as o3 serves as the pairwise anchor?
+    task: How do I avoid ranking errors from using a top-tier model as the fixed opponent
+      in pairwise LLM evaluation?
+    practitioner: Would benchmarking my models against o3 as the reference distort my leaderboard?
   answered_by:
   - o3-worst
   - worst-anchor-drop
 - ask:
-    plain: 'In head-to-head model comparisons scored by a language model, which choice changes
-      the ranking more: the model doing the scoring, or the model everyone is compared against?'
-    jargon: Is the best-to-worst baseline spread in correlation with human ranking comparable
-      to the spread across judge models in LLM-as-a-judge evaluation?
-    task: How do I decide whether to spend effort on selecting the judge or on selecting the
-      reference opponent for a pairwise leaderboard?
-    practitioner: Should I upgrade the judge model or rethink the baseline model I compare
+    plain: 'In head-to-head model comparisons scored by a language model, which matters more:
+      the judging model or the model everyone is compared against?'
+    jargon: Is the best-to-worst anchor spread in human correlation comparable to the spread
+      across judge models in LLM-as-a-judge evaluation?
+    task: How do I decide whether to spend effort on picking the judge or on picking the reference
+      opponent for a pairwise leaderboard?
+    practitioner: Should I upgrade my judge model or rethink the baseline model I compare
       everything against?
+    adjacent: Beyond benchmarking LLM judges for system ranking, does the choice of reference
+      system change the ranking as much as the judge does?
   answered_by:
   - anchor-vs-judge
 - ask:
-    plain: When every model is compared against one fixed opponent by an automatic judge,
-      how many of those comparisons tell you nothing about the ranking?
-    jargon: What is the informativeness rate of a fixed baseline in pairwise LLM-as-a-judge
-      evaluation, and what caps it under tie/win/loss verdicts?
-    task: How do I stop wasting judge API calls on comparisons whose outcome is decided before
-      they run?
-    practitioner: How much of my evaluation spend on pairwise judging is actually buying ranking
-      signal?
+    plain: When every model is compared with one fixed opponent by an automatic judge, how
+      many comparisons tell you nothing about the ranking?
+    jargon: What is the informativeness rate of an anchor in pairwise LLM-as-a-judge evaluation,
+      and what caps it under win/tie/loss verdicts?
+    task: How do I stop wasting LLM judge calls on pairwise comparisons whose outcome is decided
+      before they run?
+    practitioner: How much of my pairwise LLM judging budget is actually buying ranking signal?
   answered_by:
   - wasted-budget
   - informativeness-ceiling
 - ask:
-    plain: Is a 750-prompt benchmark big enough to separate two language models whose win
-      rates differ only slightly?
-    jargon: How many discordant samples are needed to detect a 5% win-rate gap at 80% power,
-      and how does that scale with the baseline's tie rate?
-    task: How many prompts do I need to run so a pairwise win-rate difference between two
-      models is statistically meaningful?
-    practitioner: Can I trust a small win-rate lead measured on Arena-Hard-v2.0, or do I need
-      more prompts?
+    plain: Do opponent models that produce more decisive comparisons give more accurate LLM
+      leaderboards?
+    jargon: Does an anchor's informativeness rate predict the Kendall's tau between its induced
+      ranking and the all-pairs ranking?
+    task: What should I measure about a candidate reference model to predict how accurate
+      its pairwise LLM ranking will be?
+  answered_by:
+  - informativeness-correlates
+- ask:
+    plain: Is a 750-prompt benchmark big enough to tell apart two language models with slightly
+      different win rates?
+    jargon: How many samples are needed to detect a 5% win-rate edge at 80% power in anchor-based
+      pairwise evaluation, given anchor tie rates?
+    task: How many prompts do I need so a pairwise win-rate difference between two LLMs is
+      statistically significant?
+    practitioner: Can I trust a small win-rate lead my model shows on Arena-Hard-v2.0?
   answered_by:
   - benchmark-too-small
+  - wilcoxon-power
+- ask:
+    plain: Does an automatic leaderboard built by comparing against one opponent need more
+      test prompts than one comparing all pairs?
+    jargon: How does Kendall's tau of anchor-based versus all-pairs Bradley-Terry rankings
+      change with the number of benchmark instructions?
+    task: How do I tell whether my benchmark is large enough for an anchor-based LLM-as-a-judge
+      ranking?
+  answered_by:
   - sample-size-sensitivity
 - ask:
-    plain: Can you tell in advance, from a handful of prompts, whether a candidate opponent
-      model will produce decisive comparisons?
-    jargon: How well does informativeness measured on 10 benchmark samples correlate with
-      full-dataset informativeness for a candidate baseline?
-    task: How do I screen several candidate reference models cheaply before committing the
-      full benchmark budget to one?
-    practitioner: Can I run a tiny pilot to pick my baseline model instead of judging the
+    plain: Can a handful of prompts tell you in advance whether a candidate opponent model
+      will produce decisive comparisons?
+    jargon: How well does anchor informativeness measured on 10 samples correlate with full-dataset
+      informativeness?
+    task: How do I screen candidate reference models cheaply before running the full pairwise
+      LLM evaluation?
+    practitioner: Can I run a small pilot to pick my baseline model instead of judging the
       whole benchmark for each candidate?
   answered_by:
   - cheap-estimation
 - ask:
-    plain: If several different opponent models are used instead of one, does that remove
-      the problem of picking a bad opponent?
-    jargon: Does averaging rankings over random baseline sets recover the all-pairs Kendall's
-      tau better than a single well-chosen baseline?
-    task: How do I get a reliable pairwise ranking — add more reference models, or spend the
-      effort choosing one?
-    practitioner: Is it worth paying for judgments against multiple reference models rather
-      than one mid-ranked one?
+    plain: If several opponent models are used instead of one, does that remove the risk of
+      picking a bad opponent?
+    jargon: Does aggregating rankings over multiple random anchors recover all-pairs Kendall's
+      tau better than one well-chosen anchor?
+    task: 'How do I get a reliable pairwise LLM ranking: add more reference models, or spend
+      the effort choosing one?'
+    practitioner: Is it worth paying for LLM judgments against several reference models instead
+      of one mid-ranked one?
   answered_by:
   - anchor-count
 - ask:
     plain: What should I read about how reliable leaderboards built from automatic head-to-head
-      model comparisons really are?
-    jargon: Which study systematically examines baseline selection, rather than judge selection,
-      in Arena-Hard- and AlpacaEval-style LLM-as-a-judge leaderboards?
-    task: Where do I start reading before designing an automatic pairwise evaluation of my
-      models?
+      model comparisons are?
+    jargon: Which study examines anchor selection, rather than judge selection, in Arena-Hard-
+      and AlpacaEval-style LLM-as-a-judge leaderboards?
+    task: Where should I start reading before designing a pairwise LLM-as-a-judge evaluation
+      of my models?
   answered_by:
   - contribution
   - inverted-u
 - ask:
     plain: Is there a public collection of automatic judge decisions covering many pairs of
       language models on the same prompts?
-    jargon: Are there released pairwise LLM judge verdicts spanning all model pairs on Arena-Hard-v2.0
-      instructions across multiple judges?
-    task: Where can I get existing pairwise judge verdicts so I can test ranking methods without
+    jargon: Are there released pairwise LLM judge verdicts over all model pairs on Arena-Hard-v2.0
+      for multiple judges?
+    task: Where can I get existing pairwise LLM judge verdicts to test ranking methods without
       paying for inference?
-    practitioner: Can I reuse someone else's judge verdicts instead of running all the pairwise
+    practitioner: Can I reuse existing LLM judge verdicts instead of running all the pairwise
       comparisons myself?
   answered_by:
   - released-judgments
-- ask:
-    plain: Do opponent models that produce more decisive comparisons actually give more accurate
-      model rankings?
-    jargon: Is a baseline's informativeness rate predictive of the Kendall's tau between its
-      induced ranking and the all-pairs quadratic ranking?
-    task: What should I measure about a candidate reference model to predict how accurate
-      the ranking it induces will be?
-    practitioner: If I pick the reference model with the fewest lopsided comparisons, will
-      my leaderboard actually be more accurate?
-  answered_by:
-  - informativeness-correlates
 misreadings:
-- '"Mediocre" anchors are not weak models: mediocrity is defined relative to the pool being
-  ranked, so a pool of frontier models needs a frontier-level mid-ranked anchor.'
-- The inverted U-shape is not a claim that o3 is a bad model; o3 fails as an anchor because
-  it sits at the top of the evaluated pool, and any model in that position would fail the
-  same way.
-- 'Using several anchors instead of one does not remove the need to choose well: a single
-  random anchor reaches .92 Kendall''s tau with the quadratic ranking while the strongest
-  model reaches .82.'
-- The study does not propose replacing anchor-based evaluation with an alternative protocol;
-  it keeps the protocol and gives guidelines for using it reliably.
+- '"Mediocre" anchors are not weak models: mediocrity is relative to the pool being ranked,
+  so a pool of frontier models needs a frontier-level mid-ranked anchor.'
+- o3 being the worst anchor does not mean o3 is a bad model; it fails as an anchor because
+  it sits at the top of the evaluated pool and beats most opponents on most samples.
+- 'Using several anchors does not remove the need to choose well: a single random anchor averages
+  .92 Kendall''s tau with the all-pairs ranking, while the strongest model as anchor reaches
+  .82.'
+- The anchor-selection study does not replace anchor-based evaluation with an alternative
+  protocol; it keeps the protocol and gives practices for using it reliably.
 links_extra:
   code: https://github.com/IBM/Anchor-Selection
   dataset: https://huggingface.co/datasets/ibm-research/900K-Judgements

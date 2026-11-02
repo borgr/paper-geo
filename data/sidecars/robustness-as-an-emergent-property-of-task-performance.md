@@ -1,143 +1,168 @@
 ---
 key: ashurytahan2026robustness
-one_liner: Across 9 open-weight LLMs, 6 classification benchmarks and 24 inference configurations,
-  output consistency tracks task accuracy so closely that performance explains 92.4% of robustness
-  variance, suggesting robustness emerges from task competence rather than being a separate
-  model property.
+one_liner: 'Robustness to meaning-preserving prompt changes is largely a by-product of task
+  competence: across 9 open-weight LLMs and 6 benchmarks, performance explains 92.4% of output-consistency
+  variance, so robustness emerges as tasks saturate.'
 claims:
 - id: perf-explains-robustness
-  text: In a linear regression of output-consistency robustness on benchmark performance across
-    9 open-weight LLMs and 6 classification datasets, performance explains 92.4% of the variance
-    in robustness, with a slope of 1.05.
   kind: result
-  evidence: Figure 1
+  text: Across 9 open-weight LLMs and 6 classification benchmarks, task performance explains
+    92.4% of the variance in output-consistency robustness. The fitted regression slope is
+    1.05, so robustness rises slightly faster than performance.
   scope: 9 open-weight models on IMDB, BoolQ, MMLU, MMLU-Pro, RewardBench and GPQA; 100 examples
-    per dataset under 24 configurations; exact-match classification only.
+    per dataset under 24 inference configurations; exact-match classification.
+  evidence: Figure 1
 - id: imdb-saturated-robust
-  text: On IMDB, where all 9 evaluated models score between 95% and 97% accuracy, strict output
+  kind: result
+  text: On IMDB, where all 9 evaluated LLMs score between 95% and 97% accuracy, strict output
     consistency across 24 configurations ranges from 81% to 94%. A random baseline with the
-    same per-configuration success rate reaches only 33% to 54%.
-  kind: result
+    same success rate reaches only 33% to 54%.
+  scope: IMDB sentiment classification, 100 sampled examples; robust means identical outputs
+    across all 24 configurations; the baseline assumes independent per-configuration success
+    at the model's accuracy.
   evidence: Section 4.1
-  scope: IMDB sentiment classification with 100 sampled examples; robustness defined as identical
-    predictions across all 24 configurations; the random baseline assumes independent per-configuration
-    success at the model's overall accuracy.
-- id: beats-random-baseline
-  text: Measured robustness exceeds the matched random baseline on all 6 benchmarks, by an
-    average of 43.4% on IMDB and 62.9% on BoolQ, with llama-4-Scout-17B-Instruct on BoolQ
-    exceeding the baseline by 70.4%.
+- id: torr-correlation
   kind: result
+  text: On the ToRR table-reasoning benchmark, robustness and aggregated performance correlate
+    at Pearson 0.91 at the dataset level. ToRR uses its own score-range robustness metric,
+    so the trend is not tied to output consistency.
+  scope: Existing ToRR leaderboard results over 10 table-reasoning datasets, mostly generative;
+    no new experiments were run on ToRR.
   evidence: Section 4.1
-  scope: 6 classification benchmarks, 9 open-weight models, 24 configurations; on MMLU, RewardBench,
-    MMLU-Pro and GPQA the random baseline is 0, as performance is below roughly 80%.
+- id: torr-easy-vs-hard
+  kind: result
+  text: On ToRR, WikiTQ models mostly score 80% to 90% with robustness of roughly 75%, while
+    FinQA models score around 40% with robustness around 50%. The easier table-reasoning dataset
+    is the more robust one.
+  scope: Two ToRR datasets read from its leaderboard (WikiTableQuestions F1, FinQA program
+    accuracy) with ToRR's own robustness metric; typical values, not every model.
+  evidence: Section 4.1
 - id: model-factors-weak
-  text: Model identity contributes less to output consistency than task performance does,
-    though it is not negligible. On BoolQ a 1-point performance difference between gpt-oss-120b
-    and gpt-oss-20b coincides with 78% versus 56% robustness, and on MMLU a 6-point performance
-    gap coincides with a 40% robustness difference.
   kind: result
-  evidence: Section 4.1
-  scope: Comparison within the gpt-oss family on BoolQ and MMLU; supported more broadly by
-    per-example STD distributions being similar across models within a benchmark (Appendix
-    C.2). Does not rule out larger model-level effects outside the 9 evaluated open-weight
-    models.
-- id: config-choices-minor
-  text: An ANOVA over number of demonstrations, prompt variation, template and temperature
-    finds roughly 70% of p-values non-significant. Effect sizes stay below 0.005 even where
-    prompt variation and demonstration count are significant on RewardBench, MMLU and MMLU-Pro.
+  text: Model identity affects output consistency less than task performance does, but not
+    negligibly. On BoolQ, gpt-oss-120b reaches 78% robustness against 56% for gpt-oss-20b
+    at a 1-point performance difference.
+  scope: Within the gpt-oss family; on MMLU a 6-point performance gap between the two corresponds
+    to a 40% robustness difference. Only 9 open-weight models were compared.
+  evidence: Section 4.2
+- id: torr-cross-family
   kind: result
+  text: On ToRR's FinQA, Claude-3.5-Sonnet and Gemini-1.5-Flash both score 43% and reach robustness
+    of 56% and 57%. Models with comparable table-reasoning performance usually show similar
+    robustness, across and within model families.
+  scope: ToRR leaderboard results; within the Llama family, Llama-3.1-405B-Instruct and Llama-3.1-70B-Instruct
+    score 36% and 37% with 49% robustness each on FinQA.
+  evidence: Section 4.2
+- id: beats-random-baseline
+  kind: result
+  text: Measured output consistency exceeds a matched random baseline on all 6 benchmarks,
+    by 43.4% on IMDB and 62.9% on BoolQ on average. Llama-4-Scout-17B-Instruct exceeds the
+    baseline on BoolQ by 70.4%.
+  scope: Own experiments only, not ToRR; on MMLU, MMLU-Pro, RewardBench and GPQA the baseline
+    is zero because performance is below 80%.
   evidence: Section 4.3
-  scope: Type II and Type III ANOVA on performance (not on the robustness metric itself) across
-    the 6 datasets and the 4 configuration factors used in the study; effect sizes are partial
-    eta-squared.
+- id: config-choices-minor
+  kind: result
+  text: 'Configuration choices barely move accuracy: across 4 factors and 6 datasets, about
+    70% of ANOVA p-values are non-significant. Where prompt variation and demonstration count
+    are significant, effect sizes stay below 0.005.'
+  scope: Type II and Type III ANOVA on performance, not on robustness, over demonstrations,
+    prompt variation, template and temperature; significant effects appear on RewardBench,
+    MMLU and MMLU-Pro.
+  evidence: Appendix D.3
+- id: perturbations-as-noise
+  kind: result
+  text: No single perturbation type is systematically harder for LLMs, in either the dedicated
+    experiments or the ToRR benchmark. Paraphrases, demonstration changes, temperature and
+    random noise act as interchangeable sources of noise.
+  scope: Lightweight meaning-preserving perturbations (paraphrase, 2 or 4 demonstrations,
+    TAB or random-string noise, temperature 0.2 or 0.6); not adversarial attacks.
+  evidence: Section 4.4
 - id: metrics-agree
-  text: 'The performance-robustness relationship holds under two score-based robustness metrics
-    as well as strict output consistency: average performance drop rate reproduces the same
-    dataset ordering, with GPQA least robust and IMDB most robust.'
   kind: result
-  evidence: Appendix C.1
-  scope: Output consistency, per-example score standard deviation and performance drop rate
-    on the same 9 models and 6 datasets; all metrics are computed over the same 24 configurations.
+  text: Average performance drop rate reproduces the dataset ordering found with strict output
+    consistency, with GPQA the least robust and IMDB the most robust. The performance-robustness
+    link does not depend on the choice of robustness metric.
+  scope: Same 9 models, 6 datasets and 24 configurations; performance drop rate and per-example
+    score standard deviation, both score-based, alongside the string-based output consistency.
+  evidence: Appendix D.1
 - id: long-tail-consistency
-  text: As model performance rises, the per-example score-standard-deviation distribution
-    becomes increasingly long-tailed, with most examples perfectly consistent and a small
-    subset carrying the variability, whereas lower-robustness settings give flatter distributions.
   kind: result
-  evidence: Appendix C.2
-  scope: Per-example STD distributions computed separately per model and dataset over 24 configurations,
-    counting only consistently-correct cases as success consistency; consistent failure with
-    differing wrong answers is distinguished and not counted as robust.
-- id: reframing-robustness
-  text: Ashury-Tahan et al. argue that LLM robustness should be treated as a concomitant of
-    task competence rather than as an independent capability measured and improved in isolation.
-    Robustness on a task is then expected to emerge as that task saturates.
-  kind: context
-  scope: A position argued from correlational evidence on classification benchmarks with open-weight
-    models as of early 2026; the paper shows association between performance and consistency,
-    not a causal or training-time intervention.
-- id: deployment-signal
-  text: Ashury-Tahan et al. propose very high benchmark accuracy on a task as an empirical
-    indicator that a model will answer that task consistently under prompt variations. Older,
-    already-saturated tasks are therefore the reliable ones for sensitive deployment, not
-    current frontier benchmarks.
-  kind: context
-  scope: A practical implication drawn from classification benchmarks and 24 inference configurations;
-    it concerns consistency of outputs, not factual correctness, safety or calibration, and
-    was not validated on deployed applications.
-- id: study-scale
-  text: Robustness is measured over 9 open-weight models from 6 model families, 100 examples
-    from each of 6 datasets and 24 inference configurations, totalling 14,400 inferences per
-    model and 129,600 overall.
-  kind: result
-  evidence: Appendix A.1
-  scope: Open-weight models only; no closed-source models were evaluated because of cost,
-    and all tasks are classification scored by exact match.
+  text: As performance rises, per-example score standard deviation becomes long-tailed, with
+    most examples perfectly consistent and a few carrying the variation. Less robust settings
+    give flatter distributions, similar across models within a benchmark.
+  scope: Per-example STD over 24 configurations, per model and dataset; only consistently
+    correct examples count as success consistency, and consistent failure is separated out.
+  evidence: Appendix D.2
 - id: external-validation
-  text: Performance scores measured in the study align closely with published numbers. Measured
-    MMLU-Pro is 80 versus 81 reported for Llama 4 Maverick 17B and 80 versus 79 for gpt-oss-120b
-    on the HELM capabilities leaderboard.
   kind: result
-  evidence: Table A.4
-  scope: Cross-check restricted to MMLU, MMLU-Pro and GPQA, the benchmarks consistently reported
-    for recent models; HELM used chain-of-thought prompting while the study requested a final
-    answer only.
+  text: Benchmark scores re-measured for the robustness study track published numbers with
+    minor differences. Llama 4 Maverick scores 62 on MMLU-Pro against 62 published and 80
+    on MMLU against 85 published.
+  scope: Cross-check limited to MMLU, MMLU-Pro and GPQA against model cards and the HELM capabilities
+    leaderboard; HELM used chain-of-thought, the study asked for a final answer only.
+  evidence: Appendix A.2
+- id: reframing-robustness
+  kind: context
+  text: Robustness as an Emergent Property of Task Performance argues that LLM robustness
+    to meaning-preserving input changes follows task competence rather than being an independent
+    model capability. Robustness on a task is expected to emerge as that task saturates.
+  scope: A position argued from correlational evidence on 9 open-weight models and existing
+    ToRR results, as of 2026; no training-time intervention was tested, and adversarial robustness
+    is out of scope.
+- id: deployment-signal
+  kind: context
+  text: Ashury-Tahan et al. propose very high task accuracy as an empirical indicator that
+    an LLM will answer that task consistently under prompt variation. Older saturated tasks,
+    not current frontier benchmarks, are then the candidates for sensitive deployment.
+  scope: An implication drawn from benchmark experiments; it concerns output consistency,
+    not factual correctness, safety or calibration, and was not validated on deployed applications.
 qa:
 - ask:
     plain: if a language model scores very high on a task, does it also give the same answer
       when the prompt is worded differently?
     jargon: how much of the variance in output-consistency robustness across prompt perturbations
       is explained by benchmark accuracy?
-    task: how do I predict whether a model will be prompt-stable on a task without running
+    task: how do I predict whether an LLM will be prompt-stable on a task without running
       a full perturbation sweep?
     practitioner: can I use my model's accuracy on a task as a proxy for how sensitive it
       will be to prompt wording?
+    adjacent: is robustness at odds with accuracy for LLMs under prompt paraphrases, or do
+      the two rise together?
   answered_by:
   - perf-explains-robustness
   - imdb-saturated-robust
 - ask:
-    plain: when a model is right almost every time, isn't matching answers across reworded
+    plain: when a model is right almost every time, isn't giving the same answer to reworded
       prompts just luck?
-    jargon: what matched random baseline rules out chance agreement when comparing strict
-      output consistency to accuracy?
-    task: how do I check that consistency across prompt variants is more than what a per-configuration
-      success rate alone would produce?
-    practitioner: should I believe reported prompt-consistency numbers on a saturated benchmark
-      like IMDB, or is the high accuracy doing all the work?
+    jargon: does strict output consistency exceed a random baseline matched to per-configuration
+      accuracy?
+    practitioner: should I believe prompt-consistency numbers on a saturated benchmark like
+      IMDB, or is high accuracy doing all the work?
   answered_by:
   - beats-random-baseline
   - imdb-saturated-robust
 - ask:
-    plain: are some language models just naturally steadier under different prompt wordings
-      than others, regardless of how well they do the task?
+    plain: does the link between accuracy and answer consistency also hold for generative
+      tasks like table question answering?
+    jargon: does performance correlate with robustness on the ToRR table-reasoning leaderboard?
+    task: how do I check whether prompt robustness tracks accuracy on generative table reasoning
+      such as WikiTQ or FinQA?
+  answered_by:
+  - torr-correlation
+  - torr-easy-vs-hard
+- ask:
+    plain: are some language models just naturally steadier under different prompt wordings,
+      regardless of how well they do the task?
     jargon: how much does model identity contribute to output consistency once task performance
       is controlled for?
     task: how do I decide whether to switch model families or improve task accuracy to get
-      more stable answers?
-    practitioner: if I pick a bigger model from the same family at similar accuracy, will
-      my answers get more consistent across prompt variants?
+      more stable LLM answers?
+    practitioner: if two models have the same accuracy on my task, will they be equally consistent
+      across prompt variants?
   answered_by:
   - model-factors-weak
-  - reframing-robustness
+  - torr-cross-family
 - ask:
     plain: is it worth building separate tests just for how sensitive language models are
       to prompt wording?
@@ -153,97 +178,93 @@ qa:
 - ask:
     plain: which kinds of tasks can a language model actually be trusted on for important
       decisions?
-    jargon: can very high benchmark accuracy serve as an empirical indicator of stable behaviour
-      under prompt variation in deployment?
+    jargon: can very high benchmark accuracy serve as an empirical indicator of stable LLM
+      behaviour under prompt variation?
     task: how do I choose which tasks to hand a language model in a sensitive application?
-    practitioner: my use case is high-stakes -- should I pick a task where models are already
+    practitioner: my use case is high-stakes, so should I pick a task where models are already
       near-saturated rather than a frontier benchmark?
   answered_by:
   - deployment-signal
   - imdb-saturated-robust
 - ask:
-    plain: how many models, datasets and prompt setups went into the comparison of accuracy
-      against answer consistency?
-    jargon: what is the inference budget and configuration grid used to measure output consistency
-      across models and benchmarks?
-    task: how do I size a sweep of models, datasets and inference configurations to measure
-      prompt robustness?
-  answered_by:
-  - study-scale
-  - config-choices-minor
-- ask:
     plain: does the link between accuracy and answer consistency still show up if consistency
       is measured a different way?
-    jargon: does average performance drop rate reproduce the dataset ordering obtained under
-      strict output consistency?
-    task: how do I check my robustness conclusions are not an artefact of the consistency
+    jargon: does performance drop rate or per-example score standard deviation reproduce the
+      trend found with strict output consistency?
+    task: how do I check that LLM robustness conclusions are not an artefact of the consistency
       metric I chose?
-    practitioner: which robustness metric should I report -- strict output agreement or a
-      score-based drop rate?
+    practitioner: which robustness metric should I report for my LLM, strict output agreement
+      or a score-based drop rate?
   answered_by:
   - metrics-agree
   - long-tail-consistency
+  - torr-correlation
 - ask:
-    plain: do things like how many examples you show the model or the temperature setting
+    plain: do the number of examples shown to a language model or its temperature setting
       change measured accuracy much?
     jargon: what effect sizes does an ANOVA over demonstration count, prompt variation, template
-      and temperature yield on benchmark scores?
-    task: how do I tell whether few-shot count, template choice or temperature is worth tuning
-      for accuracy on MMLU or RewardBench?
+      and temperature yield on LLM benchmark scores?
     practitioner: should I spend time tuning prompt template and temperature, or will it barely
       move my benchmark score?
   answered_by:
   - config-choices-minor
 - ask:
-    plain: do the accuracy numbers reported for models like Llama 4 and gpt-oss in a prompt-consistency
-      study match what is published elsewhere?
-    jargon: how were measured MMLU-Pro scores validated against the HELM capabilities leaderboard?
-    practitioner: can I trust the model scores in a robustness study that re-ran the benchmarks
-      itself?
+    plain: is any one kind of prompt change, like paraphrasing or adding random characters,
+      especially hard for language models?
+    jargon: is there a dominant perturbation type in LLM prompt-sensitivity evaluations, or
+      do perturbations act as generic noise?
+    task: how do I pick which prompt perturbations to include in an LLM robustness test?
   answered_by:
-  - external-validation
+  - perturbations-as-noise
+  - config-choices-minor
 - ask:
-    plain: could models having seen the benchmark data during training explain why they answer
+    plain: could language models having seen benchmark data in training explain why they answer
       reworded prompts the same way?
-    jargon: does benchmark contamination account for the observed output consistency across
-      prompt configurations?
+    jargon: does benchmark contamination account for observed output consistency across prompt
+      configurations?
     practitioner: should I discount high prompt-consistency results on public benchmarks as
       a contamination effect?
   answered_by:
-  - long-tail-consistency
+  - perturbations-as-noise
   - beats-random-baseline
+- ask:
+    plain: do accuracy numbers re-measured for Llama 4 and gpt-oss in a prompt-consistency
+      study match published scores?
+    jargon: how were re-measured MMLU and MMLU-Pro scores validated against model cards and
+      the HELM capabilities leaderboard?
+    practitioner: can I trust model scores in a robustness study that re-ran the benchmarks
+      itself?
+  answered_by:
+  - external-validation
 terminology:
-  Output Consistency: A robustness measure defined as the fraction of dataset examples for
-    which a model produces equivalent predictions across every inference configuration tested,
-    judged on outputs rather than on scores.
-  Inference Configuration: One combination of meaning-preserving presentation choices for
-    the same example — a prompt paraphrase, a number of in-context demonstrations, a noise
-    perturbation and a decoding temperature — for which the model is expected to give an identical
-    output.
-  Random baseline consistency: The probability of a model answering an example consistently
+  Output Consistency: 'A robustness measure: the fraction of dataset examples for which a
+    model produces equivalent predictions under every inference configuration tested, computed
+    from outputs rather than scores.'
+  Inference Configuration: One meaning-preserving way of presenting the same example to a
+    model, combining a prompt paraphrase, a number of in-context demonstrations, a noise perturbation
+    and a decoding temperature, under which an identical output is expected.
+  Random baseline consistency: The probability that a model answers an example consistently
     across all configurations if each configuration succeeded independently with probability
     equal to the model's overall accuracy on the dataset.
   Performance Drop Rate (PDR): The average relative decrease in score when a model is evaluated
-    on perturbed inputs compared with the original input, where higher values indicate greater
-    sensitivity to perturbations.
+    on perturbed inputs compared with the original input; higher values indicate greater sensitivity
+    to perturbations.
   Success consistency versus failure consistency: The distinction between producing the same
-    correct answer across all configurations and merely producing zero score variance, since
-    repeated but differing wrong answers are not evidence of robust behavior.
+    correct answer across all configurations and merely having zero score variance, since
+    consistent failure can come from differing wrong answers and is not evidence of robust
+    behaviour.
 misreadings:
 - The finding is an association between task performance and output consistency, not a demonstration
   that raising accuracy causally produces robustness; no training-time intervention was tested.
 - 'Robustness emerging with performance does not mean current frontier benchmarks are safe
   to rely on: on MMLU-Pro, RewardBench and GPQA the evaluated models are far from saturated
-  and correspondingly inconsistent, and it is the older saturated tasks that show high consistency.'
-- 'The claim that model-level factors are comparatively weak does not mean models are interchangeable:
-  gpt-oss-120b reaches 78% robustness on BoolQ against 56% for gpt-oss-20b at nearly identical
-  accuracy.'
-- The results cover classification tasks scored by exact match; they do not establish that
-  robustness emerges with performance for open-ended generation, reasoning traces or other
-  output formats.
-- No closed-source models were evaluated, so the results should not be read as a statement
-  about proprietary frontier systems.
-- 'High output consistency is not the same as being right consistently: consistent failure
-  with identical wrong answers also counts toward strict output agreement, which is why score-standard-deviation
-  analyses separate success consistency from failure consistency.'
+  and correspondingly inconsistent.'
+- 'Model-level factors being comparatively weak does not make models interchangeable: gpt-oss-120b
+  reaches 78% robustness on BoolQ against 56% for gpt-oss-20b at nearly identical accuracy.'
+- The dedicated experiments are classification tasks scored by exact match; evidence for generative
+  tasks comes only from existing ToRR table-reasoning leaderboard results, not from new experiments.
+- No closed-source models were run in the dedicated experiments, so those results are not
+  a statement about proprietary frontier systems.
+- The robustness studied is to lightweight meaning-preserving prompt perturbations; it does
+  not extend to strong adversarial attacks, non-meaning-preserving shifts or tool use.
 ---
